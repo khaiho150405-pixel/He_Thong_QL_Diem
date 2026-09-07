@@ -1,0 +1,19 @@
+name: Implementation task
+description: Một lát cắt triển khai có thể nghiệm thu
+body:
+  - type: textarea
+    id: scope
+    attributes:
+      label: Phạm vi và UC/bất biến
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria và cách kiểm thử
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependency và phần không làm

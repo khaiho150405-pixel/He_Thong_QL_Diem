@@ -1,6 +1,6 @@
 # Implementation Plan — Giai đoạn 0: Nền móng và cộng tác GitHub
 
-Trạng thái: kế hoạch triển khai, chưa thực hiện. Cập nhật: 2026-09-07.
+Trạng thái: đang triển khai Giai đoạn 0. Kết quả và phần còn bị chặn được ghi tại [docs/development/status.md](docs/development/status.md). Cập nhật: 2026-09-07.
 
 ## 1. Mục tiêu và nguồn chuẩn
 

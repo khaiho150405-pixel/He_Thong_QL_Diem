@@ -1,0 +1,12 @@
+pnpm-lock.yaml
+pubspec.lock
+apps/client_flutter/
+packages/api_client_dart/
+database/migrations/
+database/prisma/
+PHAN_TICH_THIET_KE_HE_THONG.html
+AGENTS.md
+implementation_plan1.md
+.local/
+apps/api/src/generated/
+dist/
