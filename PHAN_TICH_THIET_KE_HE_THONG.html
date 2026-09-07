@@ -1,0 +1,1763 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phân tích Thiết kế Hệ thống Quản lý Điểm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<style>
+:root{
+  --paper:#ECEEF1; --surface:#FFFFFF; --surface-2:#E2E6EB; --surface-3:#D5DBE2;
+  --ink:#151C24; --ink-2:#3C4A57; --muted:#6D7B88;
+  --rule:#CFD6DD; --rule-2:#AEB9C4;
+  --accent:#A85D28; --accent-soft:#F6E6D8; --accent-ink:#7E4419;
+  --ok:#2C6A4B; --ok-soft:#DCEBE2;
+  --warn:#8A6410; --warn-soft:#F4E9CE;
+  --stop:#9C3A31; --stop-soft:#F4DEDB;
+  --shadow:0 1px 2px rgba(21,28,36,.05), 0 10px 26px -18px rgba(21,28,36,.28);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#11161B; --surface:#192027; --surface-2:#212B33; --surface-3:#2A353E;
+    --ink:#E3E9EE; --ink-2:#AFBECA; --muted:#82919E;
+    --rule:#28333C; --rule-2:#3A4750;
+    --accent:#E09A5E; --accent-soft:#38230F; --accent-ink:#F0C39A;
+    --ok:#73BE95; --ok-soft:#152C21;
+    --warn:#D5B266; --warn-soft:#2E2711;
+    --stop:#DE8B81; --stop-soft:#31201D;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#11161B; --surface:#192027; --surface-2:#212B33; --surface-3:#2A353E;
+  --ink:#E3E9EE; --ink-2:#AFBECA; --muted:#82919E;
+  --rule:#28333C; --rule-2:#3A4750;
+  --accent:#E09A5E; --accent-soft:#38230F; --accent-ink:#F0C39A;
+  --ok:#73BE95; --ok-soft:#152C21;
+  --warn:#D5B266; --warn-soft:#2E2711;
+  --stop:#DE8B81; --stop-soft:#31201D;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:"Source Serif 4",Georgia,serif; text-wrap:balance; margin:0}
+p{margin:0 0 13px; max-width:70ch}
+ul,ol{max-width:70ch; padding-left:21px; margin:0 0 13px}
+li{margin:0 0 6px}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:.9em}
+a{color:var(--accent)}
+.wrap{max-width:1180px; margin:0 auto; padding:0 26px 110px}
+
+/* masthead */
+.mast{border-bottom:2px solid var(--ink); padding:44px 0 20px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--accent); font-weight:500; margin:0 0 15px}
+.mast h1{font-size:clamp(29px,5vw,46px); line-height:1.08; font-weight:700; letter-spacing:-.02em}
+.mast .sub{margin:16px 0 0; max-width:62ch; color:var(--ink-2); font-size:17px}
+.facts{display:flex; flex-wrap:wrap; margin:26px 0 0; border-top:1px solid var(--rule); gap:0}
+.fact{padding:12px 24px 12px 0; margin-right:24px; border-right:1px solid var(--rule)}
+.fact:last-child{border-right:0; margin-right:0}
+.fact dt{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600}
+.fact dd{margin:4px 0 0; font-family:"Source Serif 4",serif; font-size:19px; font-weight:600; font-variant-numeric:tabular-nums}
+
+/* nav */
+nav.toc{position:sticky; top:0; z-index:40; background:var(--paper); border-bottom:1px solid var(--rule); margin-bottom:48px; overflow-x:auto}
+nav.toc ol{display:flex; list-style:none; margin:0; padding:0; min-width:max-content; max-width:none}
+nav.toc li{margin:0}
+nav.toc a{display:block; padding:11px 13px; font-size:13px; font-weight:500; color:var(--ink-2); text-decoration:none; border-bottom:2px solid transparent; white-space:nowrap}
+nav.toc a:hover{color:var(--accent); border-bottom-color:var(--rule-2)}
+nav.toc a:focus-visible{outline:2px solid var(--accent); outline-offset:-3px}
+nav.toc a .n{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted); margin-right:6px}
+
+/* sections */
+section{margin:0 0 74px; scroll-margin-top:58px}
+.shead{display:flex; align-items:baseline; gap:14px; border-bottom:1px solid var(--rule-2); padding-bottom:9px; margin-bottom:22px}
+.shead .idx{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.05em}
+.shead h2{font-size:clamp(21px,3vw,29px); font-weight:600; letter-spacing:-.014em}
+.lede{max-width:68ch; color:var(--ink-2); margin:0 0 24px; font-size:16.5px}
+h3.grp{font-family:"IBM Plex Sans",sans-serif; font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:36px 0 14px; padding-bottom:6px; border-bottom:1px solid var(--rule)}
+
+/* tables */
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--surface); box-shadow:var(--shadow); margin:0 0 18px}
+table{border-collapse:collapse; width:100%; min-width:660px; font-size:14.5px}
+th,td{text-align:left; padding:10px 13px; border-bottom:1px solid var(--rule); vertical-align:top}
+thead th{background:var(--surface-2); font-family:"Source Serif 4",serif; font-weight:600; font-size:12.5px; letter-spacing:.03em; text-transform:uppercase; color:var(--ink-2); border-bottom:1px solid var(--rule-2); position:sticky; top:0}
+tbody tr:last-child td{border-bottom:0}
+td.c,th.c{text-align:center}
+td.m,th.m{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+tr.tot td{background:var(--surface-2); font-weight:700; border-top:2px solid var(--rule-2)}
+caption{caption-side:top; text-align:left; padding:11px 13px; font-size:13px; color:var(--muted); background:var(--surface-2); border-bottom:1px solid var(--rule-2); font-weight:500}
+
+/* chips */
+.chip{font-size:11.5px; font-weight:600; padding:2px 7px; border-radius:2px; white-space:nowrap; display:inline-block; font-family:"IBM Plex Sans",sans-serif}
+.chip.a{background:var(--accent-soft); color:var(--accent-ink)}
+.chip.g{background:var(--ok-soft); color:var(--ok)}
+.chip.w{background:var(--warn-soft); color:var(--warn)}
+.chip.r{background:var(--stop-soft); color:var(--stop)}
+.chip.n{background:var(--surface-3); color:var(--ink-2)}
+.yes{color:var(--ok); font-weight:700}
+.no{color:var(--muted)}
+.part{color:var(--warn); font-weight:600}
+
+/* callout */
+.call{background:var(--surface); border:1px solid var(--rule); border-left:4px solid var(--accent); border-radius:0 3px 3px 0; padding:16px 20px; margin:0 0 20px; box-shadow:var(--shadow)}
+.call.w{border-left-color:var(--warn)} .call.s{border-left-color:var(--stop)} .call.g{border-left-color:var(--ok)}
+.call h4{font-family:"Source Serif 4",serif; font-size:16px; margin:0 0 7px; font-weight:600}
+.call p{max-width:74ch} .call p:last-child{margin-bottom:0}
+.call ul{margin:0; max-width:74ch} .call ul li:last-child{margin-bottom:0}
+
+/* figures */
+figure{margin:0 0 24px; background:var(--surface); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow); overflow:hidden}
+figure .fbody{overflow-x:auto; padding:20px}
+figure svg{display:block; max-width:100%; height:auto; color:var(--ink-2)}
+figcaption{font-size:13px; color:var(--muted); padding:11px 20px; border-top:1px solid var(--rule); background:var(--surface-2)}
+figcaption b{color:var(--ink-2); font-weight:600}
+
+/* use-case spec card */
+.uc{background:var(--surface); border:1px solid var(--rule); border-radius:3px; box-shadow:var(--shadow); margin:0 0 18px; overflow:hidden}
+.uc > .uchead{padding:14px 18px; background:var(--surface-2); border-bottom:1px solid var(--rule-2); display:flex; align-items:baseline; gap:11px; flex-wrap:wrap}
+.uc .ucid{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--accent)}
+.uc h4{font-family:"Source Serif 4",serif; font-size:17px; font-weight:600; margin:0; flex:1 1 260px}
+.uc .ucbody{padding:0}
+.uc dl{margin:0; display:grid; grid-template-columns:190px 1fr}
+.uc dt{padding:10px 14px 10px 18px; font-size:12px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--rule); background:var(--surface)}
+.uc dd{margin:0; padding:10px 18px 10px 14px; font-size:14.5px; border-bottom:1px solid var(--rule); color:var(--ink-2)}
+.uc dd:last-of-type,.uc dt:last-of-type{border-bottom:0}
+.uc dd ol,.uc dd ul{margin:0; padding-left:19px; max-width:none}
+.uc dd li{margin:0 0 4px; font-size:14.5px}
+.uc dd p{margin:0 0 7px; max-width:none}
+.uc dd p:last-child{margin:0}
+
+/* flow list */
+.flow{counter-reset:step; list-style:none; padding:0; margin:0}
+.flow li{counter-increment:step; position:relative; padding-left:30px; margin:0 0 6px}
+.flow li::before{content:counter(step); position:absolute; left:0; top:1px; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; color:var(--accent); background:var(--accent-soft); width:21px; height:21px; border-radius:2px; display:flex; align-items:center; justify-content:center}
+
+/* levels grid */
+.levels{display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); margin:0 0 20px}
+.lv{border-radius:3px; padding:14px 16px; border:1px solid}
+.lv h4{font-family:"IBM Plex Sans",sans-serif; font-size:14px; margin:0 0 6px; display:flex; align-items:center; gap:7px; font-weight:600}
+.lv p{margin:0; font-size:13.5px; max-width:none}
+.lv .dot{width:9px; height:9px; border-radius:50%; display:inline-block; flex:0 0 auto}
+.lv.g{background:var(--ok-soft); border-color:var(--ok); color:var(--ok)} .lv.g .dot{background:var(--ok)}
+.lv.y{background:var(--warn-soft); border-color:var(--warn); color:var(--warn)} .lv.y .dot{background:var(--warn)}
+.lv.r{background:var(--stop-soft); border-color:var(--stop); color:var(--stop)} .lv.r .dot{background:var(--stop)}
+
+footer{border-top:2px solid var(--ink); margin-top:26px; padding-top:18px; font-size:13px; color:var(--muted)}
+footer p{max-width:74ch}
+
+@media (max-width:680px){
+  .wrap{padding:0 15px 80px}
+  .uc dl{grid-template-columns:1fr}
+  .uc dt{padding:9px 16px 2px; border-bottom:0; background:var(--surface)}
+  .uc dd{padding:0 16px 10px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">CNTT-KLCN233 · Yêu cầu 3 &amp; 4 của đề cương · Tuần 3–4</p>
+  <h1>Phân tích Thiết kế Hệ thống Quản lý Điểm</h1>
+  <p class="sub">Hồ sơ phân tích – thiết kế phần ứng dụng của đề tài <em>Nhận dạng bảng điểm viết tay hỗ trợ nhập điểm tự động</em>. Đủ các sản phẩm mà đề cương chấm điểm: use-case nghiệp vụ, use-case hệ thống kèm đặc tả, sơ đồ lớp phân tích, sơ đồ tuần tự, sơ đồ lớp thiết kế và mô hình dữ liệu.</p>
+  <dl class="facts">
+    <div class="fact"><dt>Chức năng</dt><dd>14 · 5 nhóm</dd></div>
+    <div class="fact"><dt>Use case hệ thống</dt><dd>18</dd></div>
+    <div class="fact"><dt>Lớp phân tích</dt><dd>17</dd></div>
+    <div class="fact"><dt>Bảng dữ liệu</dt><dd>16</dd></div>
+    <div class="fact"><dt>Điểm hồ sơ này gánh</dt><dd>1,25 / 10</dd></div>
+  </dl>
+</header>
+
+<nav class="toc" aria-label="Mục lục">
+  <ol>
+    <li><a href="#pham-vi"><span class="n">01</span>Phạm vi &amp; tác nhân</a></li>
+    <li><a href="#uc-nghiep-vu"><span class="n">02</span>Use-case nghiệp vụ</a></li>
+    <li><a href="#uc-he-thong"><span class="n">03</span>Use-case hệ thống</a></li>
+    <li><a href="#dac-ta"><span class="n">04</span>Đặc tả 18 use case</a></li>
+    <li><a href="#lop-phan-tich"><span class="n">05</span>Sơ đồ lớp phân tích</a></li>
+    <li><a href="#tuan-tu"><span class="n">06</span>Sơ đồ tuần tự</a></li>
+    <li><a href="#lop-thiet-ke"><span class="n">07</span>Sơ đồ lớp thiết kế</a></li>
+    <li><a href="#du-lieu"><span class="n">08</span>Mô hình dữ liệu</a></li>
+    <li><a href="#truy-vet"><span class="n">09</span>Truy vết &amp; nghiệm thu</a></li>
+  </ol>
+</nav>
+
+<section id="pham-vi">
+  <div class="shead"><span class="idx">01</span><h2>Phạm vi hệ thống và tác nhân</h2></div>
+  <p class="lede">Hồ sơ này chỉ mô hình hoá <strong>phần ứng dụng quản lý điểm</strong> — phần đáng 3,0 điểm trong thang điểm. Thuật toán nhận dạng được xem như một <em>dịch vụ</em> mà hệ thống gọi tới qua đúng một giao diện; nội dung bên trong nó thuộc phần Yêu cầu 5 của đề cương và không vẽ lại ở đây.</p>
+
+  <h3 class="grp">Ranh giới: cái gì nằm trong, cái gì nằm ngoài</h3>
+  <div class="tw"><table>
+    <thead><tr><th style="width:34%">Hạng mục</th><th style="width:20%">Vị trí</th><th>Ghi chú khi bảo vệ</th></tr></thead>
+    <tbody>
+      <tr><td>Danh mục học sinh, lớp, môn học, giáo viên</td><td><span class="chip g">Trong hệ thống</span></td><td>Nhập tay hoặc nhập từ danh sách phòng đào tạo</td></tr>
+      <tr><td>Bảng điểm theo lớp – môn – học kỳ</td><td><span class="chip g">Trong hệ thống</span></td><td>Là đối tượng trung tâm của toàn bộ nghiệp vụ</td></tr>
+      <tr><td>Nhận diện ảnh bảng điểm viết tay</td><td><span class="chip w">Gọi dịch vụ</span></td><td>Ứng dụng gọi hàm <code>predict(ảnh_ô) → (giá_trị, độ_tin_cậy)</code>; ruột hàm thuộc phần thuật toán</td></tr>
+      <tr><td>Đối chiếu, duyệt và ghi nhận điểm</td><td><span class="chip g">Trong hệ thống</span></td><td>Nghiệp vụ phức tạp thứ hai, là nơi con người ra quyết định cuối</td></tr>
+      <tr><td>Tổng kết, xếp loại, thống kê, xuất Excel</td><td><span class="chip g">Trong hệ thống</span></td><td>Excel xuất đúng mẫu để nhập ngược vào phần mềm nhà trường</td></tr>
+      <tr><td>Phần mềm Vietschool của nhà trường</td><td><span class="chip n">Ngoài hệ thống</span></td><td>Không tích hợp trực tiếp; trao đổi dữ liệu qua tệp Excel</td></tr>
+      <tr><td>Quản lý học phí, hạnh kiểm, thời khoá biểu</td><td><span class="chip n">Ngoài hệ thống</span></td><td>Nêu rõ để hội đồng không hỏi “sao thiếu”</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Tác nhân nghiệp vụ — con người và bộ phận ngoài đời</h3>
+  <div class="tw"><table>
+    <caption>Bảng 1.1 — Tác nhân nghiệp vụ (dùng cho sơ đồ use-case nghiệp vụ ở §02)</caption>
+    <thead><tr><th style="width:22%">Tác nhân</th><th style="width:38%">Vai trò trong quy trình hiện tại</th><th>Mối quan tâm chính</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Giáo viên bộ môn</strong></td><td>Chấm bài, ghi điểm bằng tay vào bảng điểm giấy theo mẫu, nộp cho giáo vụ</td><td>Ghi đúng điểm mình đã chấm; không phải gõ lại nhiều lần</td></tr>
+      <tr><td><strong>Nhân viên giáo vụ</strong></td><td>Nhận bảng điểm giấy, gõ tay vào phần mềm, in bản đối chiếu</td><td>Gõ nhanh mà không sai; khối lượng dồn vào cuối kỳ</td></tr>
+      <tr><td><strong>Tổ trưởng chuyên môn / BGH</strong></td><td>Kiểm tra bản in đối chiếu, ký duyệt trước khi chốt sổ</td><td>Có bằng chứng để truy trách nhiệm khi điểm sai</td></tr>
+      <tr><td><strong>Giáo viên chủ nhiệm</strong></td><td>Nhận điểm tổng kết của lớp, thông báo cho học sinh và phụ huynh</td><td>Nhận được số liệu đã chốt, không phải bản nháp</td></tr>
+      <tr><td><strong>Học sinh &amp; phụ huynh</strong></td><td>Nhận kết quả, phản hồi khi thấy điểm bất thường</td><td>Điểm đúng với bài làm; biết được điểm sớm</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Tác nhân hệ thống — ba vai trò đăng nhập</h3>
+  <p>Đề cương chốt ba vai trò: Quản trị viên – Giáo viên – Học sinh. Đây là <strong>vai trò đăng nhập</strong>, không phải chức danh ngoài đời: một nhân viên giáo vụ khi dùng hệ thống sẽ đăng nhập bằng tài khoản vai trò Giáo viên có thêm quyền quản lý danh mục.</p>
+  <div class="tw"><table>
+    <caption>Bảng 1.2 — Tác nhân hệ thống và ánh xạ từ tác nhân nghiệp vụ</caption>
+    <thead><tr><th style="width:19%">Tác nhân hệ thống</th><th style="width:24%">Tương ứng ngoài đời</th><th>Phạm vi thao tác</th><th style="width:13%">Số use case</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Quản trị viên</strong><br><span class="chip a">QTV</span></td><td>Nhân viên giáo vụ, quản trị hệ thống</td><td>Toàn quyền danh mục, tài khoản, phân quyền; xem mọi báo cáo; không tự sửa điểm của lớp mình không phụ trách</td><td class="c m">14</td></tr>
+      <tr><td><strong>Giáo viên</strong><br><span class="chip a">GV</span></td><td>Giáo viên bộ môn, giáo viên chủ nhiệm</td><td>Toàn bộ vòng đời bảng điểm của lớp – môn được phân công: nhập, tải ảnh nhận diện, đối chiếu, duyệt, tổng kết, xuất báo cáo</td><td class="c m">12</td></tr>
+      <tr><td><strong>Học sinh</strong><br><span class="chip a">HS</span></td><td>Học sinh (và phụ huynh dùng chung tài khoản)</td><td>Chỉ đọc: xem điểm thành phần, điểm tổng kết và xếp loại của <em>chính mình</em></td><td class="c m">4</td></tr>
+      <tr><td><strong>Dịch vụ nhận dạng</strong><br><span class="chip n">tác nhân phụ</span></td><td>Không phải người — là mô hình CRNN + CTC và OCR tiếng Việt</td><td>Được hệ thống gọi trong UC11; trả về giá trị đọc được kèm độ tin cậy cho từng ô</td><td class="c m">2</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call w">
+    <h4>Một lỗ hổng phải vá trước khi vẽ sơ đồ: tác nhân Học sinh đang không có việc gì làm</h4>
+    <p>Danh sách 14 chức năng hiện tại <strong>không có chức năng nào do Học sinh thực hiện</strong>. Nếu cứ thế vẽ, sơ đồ use-case hệ thống sẽ có một tác nhân đứng trơ không nối vào đâu — hội đồng nhìn ba giây là thấy, và câu hỏi kế tiếp sẽ là “vậy tạo vai trò Học sinh để làm gì?”.</p>
+    <p>Cách vá <strong>không làm tăng số chức năng</strong>: bổ sung <code>UC18 — Tra cứu điểm cá nhân</code> vào Nhóm 5, coi như phần giao diện chỉ-đọc của các chức năng 6, 10 và 11 đã có. Nhóm 5 vẫn tính 0,5 điểm như cũ, thang điểm không đổi, mà sơ đồ thì kín.</p>
+  </div>
+</section>
+<section id="uc-nghiep-vu">
+  <div class="shead"><span class="idx">02</span><h2>Use-case nghiệp vụ và đặc tả</h2></div>
+  <p class="lede">Sơ đồ này mô tả công việc <strong>ngoài đời, khi chưa có phần mềm của nhóm</strong>. Tác nhân là con người và bộ phận, không phải vai trò đăng nhập. Dấu hiệu nhận biết đã vẽ đúng: trong sơ đồ dưới đây không có ô nào tên là “Đăng nhập”.</p>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 960 660" role="img" aria-label="Sơ đồ use-case nghiệp vụ quản lý điểm với năm tác nhân nghiệp vụ và sáu nghiệp vụ, trong đó nghiệp vụ nhập điểm vào phần mềm là điểm nghẽn được đánh dấu" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <g id="actor" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="0" cy="-23" r="8.5"/>
+            <path d="M0 -14.5 V 6 M-13 -4 H 13 M0 6 -10 24 M0 6 10 24"/>
+          </g>
+        </defs>
+
+        <rect x="215" y="34" width="530" height="592" rx="4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="0"/>
+        <text x="480" y="22" text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">Nghiệp vụ quản lý điểm — Trường THPT Bà Điểm</text>
+
+        <g stroke="currentColor" stroke-width="1.1" opacity=".75">
+          <line x1="118" y1="140" x2="336" y2="92"/>
+          <line x1="118" y1="145" x2="336" y2="180"/>
+          <line x1="118" y1="152" x2="336" y2="356"/>
+          <line x1="840" y1="205" x2="624" y2="182"/>
+          <line x1="840" y1="208" x2="624" y2="268"/>
+          <line x1="840" y1="216" x2="624" y2="444"/>
+          <line x1="840" y1="378" x2="624" y2="358"/>
+          <line x1="118" y1="498" x2="336" y2="532"/>
+          <line x1="840" y1="543" x2="624" y2="534"/>
+        </g>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <ellipse cx="480" cy="92" rx="146" ry="29"/>
+          <ellipse cx="480" cy="180" rx="146" ry="29"/>
+          <ellipse cx="480" cy="356" rx="146" ry="29"/>
+          <ellipse cx="480" cy="444" rx="146" ry="29"/>
+          <ellipse cx="480" cy="532" rx="146" ry="29"/>
+        </g>
+        <ellipse cx="480" cy="268" rx="146" ry="29" fill="none" stroke="#A85D28" stroke-width="2.4"/>
+
+        <g font-size="12.5" text-anchor="middle" fill="currentColor">
+          <text x="480" y="88">Chấm bài và ghi điểm</text><text x="480" y="103">vào bảng điểm giấy</text>
+          <text x="480" y="176">Nộp và tiếp nhận</text><text x="480" y="191">bảng điểm</text>
+          <text x="480" y="264" fill="#A85D28" font-weight="600">Nhập điểm vào</text><text x="480" y="279" fill="#A85D28" font-weight="600">phần mềm quản lý</text>
+          <text x="480" y="352">Đối chiếu và ký duyệt</text><text x="480" y="367">bảng điểm</text>
+          <text x="480" y="440">Tổng kết học kỳ</text><text x="480" y="455">và xếp loại</text>
+          <text x="480" y="528">Công bố kết quả</text><text x="480" y="543">cho học sinh và PHHS</text>
+        </g>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" text-anchor="middle">
+          <circle cx="334" cy="92" r="11" fill="currentColor" opacity=".12"/><text x="334" y="96" fill="currentColor">1</text>
+          <circle cx="334" cy="180" r="11" fill="currentColor" opacity=".12"/><text x="334" y="184" fill="currentColor">2</text>
+          <circle cx="334" cy="268" r="11" fill="#A85D28"/><text x="334" y="272" fill="#FFFFFF">3</text>
+          <circle cx="334" cy="356" r="11" fill="currentColor" opacity=".12"/><text x="334" y="360" fill="currentColor">4</text>
+          <circle cx="334" cy="444" r="11" fill="currentColor" opacity=".12"/><text x="334" y="448" fill="currentColor">5</text>
+          <circle cx="334" cy="532" r="11" fill="currentColor" opacity=".12"/><text x="334" y="536" fill="currentColor">6</text>
+        </g>
+
+        <use href="#actor" x="100" y="140"/>
+        <use href="#actor" x="100" y="498"/>
+        <use href="#actor" x="858" y="205"/>
+        <use href="#actor" x="858" y="378"/>
+        <use href="#actor" x="858" y="543"/>
+        <g font-size="12" text-anchor="middle" fill="currentColor">
+          <text x="100" y="182">Giáo viên</text><text x="100" y="196">bộ môn</text>
+          <text x="100" y="540">Giáo viên</text><text x="100" y="554">chủ nhiệm</text>
+          <text x="858" y="247">Nhân viên</text><text x="858" y="261">giáo vụ</text>
+          <text x="858" y="420">Tổ trưởng CM</text><text x="858" y="434">/ BGH</text>
+          <text x="858" y="585">Học sinh</text><text x="858" y="599">&amp; PHHS</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 2.1 — Use-case nghiệp vụ.</b> Số trong ô tròn là thứ tự thời gian của quy trình, không phải quan hệ UML. Nghiệp vụ số 3 được tô đậm vì đó là <b>điểm nghẽn mà đề tài nhắm vào</b>: toàn bộ công sức gõ lại bằng tay và toàn bộ rủi ro sai sót nằm ở đúng một ô này.</figcaption>
+  </figure>
+
+  <h3 class="grp">Đặc tả use-case nghiệp vụ</h3>
+  <div class="tw"><table>
+    <caption>Bảng 2.1 — Đặc tả sáu nghiệp vụ, kèm điểm nghẽn làm căn cứ cho quy trình đề xuất</caption>
+    <thead><tr><th style="width:5%" class="m">Mã</th><th style="width:17%">Nghiệp vụ</th><th style="width:14%">Tác nhân</th><th style="width:15%">Đầu vào</th><th style="width:15%">Đầu ra</th><th>Điểm nghẽn hiện tại</th></tr></thead>
+    <tbody>
+      <tr><td class="m">BUC1</td><td><strong>Chấm bài và ghi điểm vào bảng điểm giấy</strong></td><td>Giáo viên bộ môn</td><td>Bài làm của học sinh; biểu mẫu bảng điểm in sẵn</td><td>Bảng điểm giấy đã ghi tay hai cột Điểm số và Điểm chữ</td><td>Không có — đây là công đoạn chuyên môn, hệ thống không thay thế</td></tr>
+      <tr><td class="m">BUC2</td><td><strong>Nộp và tiếp nhận bảng điểm</strong></td><td>Giáo viên bộ môn → Nhân viên giáo vụ</td><td>Bảng điểm giấy đã ký</td><td>Sổ tiếp nhận; xấp bảng điểm chờ nhập</td><td>Dồn về cuối kỳ; không biết bảng nào đã nhập, bảng nào chưa</td></tr>
+      <tr><td class="m">BUC3</td><td><strong>Nhập điểm vào phần mềm quản lý</strong></td><td>Nhân viên giáo vụ</td><td>Bảng điểm giấy</td><td>Điểm đã nằm trong phần mềm Vietschool</td><td><strong>Gõ tay từng ô.</strong> Chậm, mỏi mắt, và sai sót không có cơ chế nào phát hiện — gõ 7,5 thành 7,3 thì không ai biết cho tới khi học sinh khiếu nại</td></tr>
+      <tr><td class="m">BUC4</td><td><strong>Đối chiếu và ký duyệt bảng điểm</strong></td><td>Giáo viên bộ môn; Tổ trưởng CM / BGH</td><td>Bản in từ phần mềm; bảng điểm giấy gốc</td><td>Bản in đã ký duyệt, lưu hồ sơ</td><td>Đối chiếu thủ công toàn bộ, mất thời gian ngang lúc nhập; người đối chiếu dễ lướt qua vì tin bản gõ</td></tr>
+      <tr><td class="m">BUC5</td><td><strong>Tổng kết học kỳ và xếp loại</strong></td><td>Nhân viên giáo vụ</td><td>Điểm thành phần đã duyệt; hệ số từng thành phần</td><td>Điểm tổng kết môn, xếp loại học lực</td><td>Phụ thuộc hoàn toàn vào chất lượng dữ liệu ở BUC3; sai một ô là sai dây chuyền tới xếp loại</td></tr>
+      <tr><td class="m">BUC6</td><td><strong>Công bố kết quả cho học sinh và PHHS</strong></td><td>Giáo viên chủ nhiệm → Học sinh &amp; PHHS</td><td>Bảng điểm tổng kết đã chốt</td><td>Học sinh nhận được kết quả; phản hồi nếu bất thường</td><td>Phản hồi quay lại rất muộn — thường là sau khi sổ đã chốt</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Quy trình đề xuất: hệ thống thay đúng một mắt xích</h3>
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 940 250" role="img" aria-label="So sánh quy trình hiện tại và quy trình đề xuất, khác nhau ở bước nhập điểm được thay bằng tải ảnh, nhận diện và đối chiếu ba màu" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#A85D28"/>
+          </marker>
+        </defs>
+
+        <text x="16" y="26" font-size="12" font-weight="600" letter-spacing=".08em" fill="currentColor" opacity=".7">HIỆN TẠI</text>
+        <g fill="none" stroke="currentColor" stroke-width="1.3">
+          <rect x="16" y="40" width="150" height="46" rx="3"/>
+          <rect x="206" y="40" width="150" height="46" rx="3"/>
+          <rect x="396" y="40" width="150" height="46" rx="3"/>
+          <rect x="586" y="40" width="150" height="46" rx="3"/>
+          <rect x="776" y="40" width="148" height="46" rx="3"/>
+        </g>
+        <g font-size="12" text-anchor="middle" fill="currentColor">
+          <text x="91" y="60">Ghi điểm</text><text x="91" y="75">bảng giấy</text>
+          <text x="281" y="60">Nộp cho</text><text x="281" y="75">giáo vụ</text>
+          <text x="471" y="60" font-weight="600">Gõ tay</text><text x="471" y="75" font-weight="600">từng ô</text>
+          <text x="661" y="60">In ra và</text><text x="661" y="75">đối chiếu tay</text>
+          <text x="850" y="60">Ký duyệt,</text><text x="850" y="75">chốt sổ</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.3" marker-end="url(#ar1)">
+          <line x1="166" y1="63" x2="200" y2="63"/><line x1="356" y1="63" x2="390" y2="63"/>
+          <line x1="546" y1="63" x2="580" y2="63"/><line x1="736" y1="63" x2="770" y2="63"/>
+        </g>
+
+        <text x="16" y="152" font-size="12" font-weight="600" letter-spacing=".08em" fill="#A85D28">ĐỀ XUẤT</text>
+        <g fill="none" stroke="currentColor" stroke-width="1.3">
+          <rect x="16" y="166" width="150" height="46" rx="3"/>
+          <rect x="206" y="166" width="150" height="46" rx="3"/>
+          <rect x="776" y="166" width="148" height="46" rx="3"/>
+        </g>
+        <rect x="396" y="166" width="150" height="46" rx="3" fill="none" stroke="#A85D28" stroke-width="2.2"/>
+        <rect x="586" y="166" width="150" height="46" rx="3" fill="none" stroke="#A85D28" stroke-width="2.2"/>
+        <g font-size="12" text-anchor="middle" fill="currentColor">
+          <text x="91" y="186">Ghi điểm</text><text x="91" y="201">bảng giấy</text>
+          <text x="281" y="186">Chụp ảnh</text><text x="281" y="201">và tải lên</text>
+          <text x="471" y="186" fill="#A85D28" font-weight="600">Máy đọc hai kênh</text><text x="471" y="201" fill="#A85D28" font-weight="600">+ chấm tin cậy</text>
+          <text x="661" y="186" fill="#A85D28" font-weight="600">Soát ba màu,</text><text x="661" y="201" fill="#A85D28" font-weight="600">GV chốt</text>
+          <text x="850" y="186">Tổng kết,</text><text x="850" y="201">xuất Excel</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.3" marker-end="url(#ar1)"><line x1="166" y1="189" x2="200" y2="189"/></g>
+        <g stroke="#A85D28" stroke-width="1.5" marker-end="url(#ar2)">
+          <line x1="356" y1="189" x2="390" y2="189"/><line x1="546" y1="189" x2="580" y2="189"/><line x1="736" y1="189" x2="770" y2="189"/>
+        </g>
+        <text x="471" y="238" font-size="11.5" text-anchor="middle" fill="currentColor" opacity=".72">Hai bước gõ tay và đối chiếu tay bị thay bằng hai bước có máy hỗ trợ — người vẫn giữ quyền quyết định cuối</text>
+      </svg>
+    </div>
+    <figcaption><b>Hình 2.2 — Quy trình hiện tại đặt cạnh quy trình đề xuất.</b> Hai đầu chuỗi giữ nguyên: giáo viên vẫn chấm và ghi tay, nhà trường vẫn ký duyệt. Chỉ hai mắt xích giữa đổi, và đó chính là phạm vi hệ thống.</figcaption>
+  </figure>
+</section>
+<section id="uc-he-thong">
+  <div class="shead"><span class="idx">03</span><h2>Use-case hệ thống</h2></div>
+  <p class="lede">Từ đây trở đi tác nhân là <strong>vai trò đăng nhập</strong>, không còn là bộ phận ngoài đời. 14 chức năng của đề cương được phân rã thành <strong>18 use case</strong> — một chức năng lớn có thể gồm vài use case, và bảng ánh xạ ở cuối mục này giữ cho hai cách đếm luôn khớp nhau.</p>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 960 540" role="img" aria-label="Sơ đồ use-case hệ thống mức tổng quát: ba vai trò đăng nhập và một dịch vụ nhận dạng nối vào sáu nhóm chức năng" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <g id="actor2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="0" cy="-23" r="8.5"/>
+            <path d="M0 -14.5 V 6 M-13 -4 H 13 M0 6 -10 24 M0 6 10 24"/>
+          </g>
+        </defs>
+
+        <rect x="250" y="30" width="440" height="470" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="470" y="20" text-anchor="middle" font-size="12.5" font-weight="600" fill="currentColor">Hệ thống quản lý điểm có nhận diện bảng điểm viết tay</text>
+
+        <g stroke="currentColor" stroke-width="1.1" opacity=".7">
+          <line x1="148" y1="128" x2="266" y2="76"/>
+          <line x1="148" y1="133" x2="266" y2="148"/>
+          <line x1="148" y1="360" x2="266" y2="90"/>
+          <line x1="148" y1="364" x2="266" y2="222"/>
+          <line x1="148" y1="368" x2="266" y2="296"/>
+          <line x1="148" y1="372" x2="266" y2="370"/>
+          <line x1="148" y1="378" x2="266" y2="440"/>
+          <line x1="822" y1="452" x2="676" y2="448"/>
+        </g>
+        <line x1="148" y1="140" x2="266" y2="215" stroke="currentColor" stroke-width="1.1" stroke-dasharray="4 3" opacity=".6"/>
+        <text x="200" y="196" font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".65">chỉ xem</text>
+        <line x1="822" y1="288" x2="676" y2="292" stroke="#A85D28" stroke-width="1.4"/>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.3">
+          <rect x="268" y="50" width="404" height="52" rx="3"/>
+          <rect x="268" y="122" width="404" height="52" rx="3"/>
+          <rect x="268" y="194" width="404" height="52" rx="3"/>
+          <rect x="268" y="410" width="404" height="52" rx="3"/>
+        </g>
+        <g fill="none" stroke="#A85D28" stroke-width="2.2">
+          <rect x="268" y="266" width="404" height="52" rx="3"/>
+          <rect x="268" y="338" width="404" height="52" rx="3"/>
+        </g>
+
+        <g font-size="13" fill="currentColor">
+          <text x="286" y="72" font-weight="600">Nhóm cơ bản</text><text x="286" y="90" font-size="11.5" opacity=".72">Đăng nhập · tài khoản · phân quyền</text>
+          <text x="286" y="144" font-weight="600">Nhóm 1 — Danh mục</text><text x="286" y="162" font-size="11.5" opacity=".72">Học sinh · lớp · môn học · giáo viên</text>
+          <text x="286" y="216" font-weight="600">Nhóm 2 — Bảng điểm</text><text x="286" y="234" font-size="11.5" opacity=".72">Bảng điểm theo lớp–môn · lịch sử sửa</text>
+          <text x="286" y="288" font-weight="600" fill="#A85D28">Nhóm 3 — Nhận diện</text><text x="286" y="306" font-size="11.5" fill="#A85D28" opacity=".85">Tải ảnh · đọc hai kênh · chấm tin cậy</text>
+          <text x="286" y="360" font-weight="600" fill="#A85D28">Nhóm 4 — Đối chiếu</text><text x="286" y="378" font-size="11.5" fill="#A85D28" opacity=".85">Soát ba màu · sửa · duyệt · ghi nhận</text>
+          <text x="286" y="432" font-weight="600">Nhóm 5 — Tổng kết</text><text x="286" y="450" font-size="11.5" opacity=".72">Tổng kết · xếp loại · thống kê · Excel</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" text-anchor="end" fill="currentColor" opacity=".6">
+          <text x="656" y="80">UC01–04</text><text x="656" y="152">UC05–08</text><text x="656" y="224">UC09–10</text>
+          <text x="656" y="296">UC11–12</text><text x="656" y="368">UC13</text><text x="656" y="440">UC14–18</text>
+        </g>
+
+        <use href="#actor2" x="130" y="126"/>
+        <use href="#actor2" x="130" y="358"/>
+        <use href="#actor2" x="840" y="450"/>
+        <rect x="822" y="266" width="122" height="46" rx="3" fill="none" stroke="#A85D28" stroke-width="1.4"/>
+        <text x="883" y="284" font-size="10" text-anchor="middle" fill="#A85D28">«dịch vụ»</text>
+        <text x="883" y="299" font-size="11.5" text-anchor="middle" fill="#A85D28" font-weight="600">Nhận dạng</text>
+
+        <g font-size="12" text-anchor="middle" fill="currentColor" font-weight="500">
+          <text x="130" y="168">Quản trị viên</text>
+          <text x="130" y="400">Giáo viên</text>
+          <text x="840" y="492">Học sinh</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 3.1 — Use-case hệ thống mức tổng quát.</b> Nét liền là quyền thao tác, nét đứt là quyền chỉ xem. Hai nhóm tô đậm là hai nghiệp vụ mà đề cương gọi là phức tạp. Dịch vụ nhận dạng vẽ dạng hộp vì đó là tác nhân phụ không phải người — nó không tự khởi động việc gì, chỉ trả lời khi hệ thống gọi.</figcaption>
+  </figure>
+
+  <h3 class="grp">Chi tiết nhóm cơ bản, nhóm 1 và nhóm 2</h3>
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1060 430" role="img" aria-label="Sơ đồ use-case chi tiết cho nhóm cơ bản, nhóm quản lý danh mục và nhóm quản lý bảng điểm, gồm mười use case" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <g id="actor3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="0" cy="-23" r="8.5"/>
+            <path d="M0 -14.5 V 6 M-13 -4 H 13 M0 6 -10 24 M0 6 10 24"/>
+          </g>
+        </defs>
+
+        <rect x="170" y="26" width="870" height="378" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+
+        <g stroke="currentColor" stroke-width="1.1" opacity=".7">
+          <line x1="98" y1="112" x2="186" y2="96"/>
+          <line x1="98" y1="118" x2="186" y2="212"/>
+          <line x1="98" y1="290" x2="186" y2="106"/>
+          <line x1="98" y1="298" x2="186" y2="330"/>
+        </g>
+        <line x1="98" y1="286" x2="186" y2="222" stroke="currentColor" stroke-width="1.1" stroke-dasharray="4 3" opacity=".6"/>
+        <line x1="98" y1="124" x2="186" y2="322" stroke="currentColor" stroke-width="1.1" stroke-dasharray="4 3" opacity=".6"/>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="5 4">
+          <rect x="186" y="42" width="840" height="112" rx="3"/>
+          <rect x="186" y="166" width="840" height="112" rx="3"/>
+          <rect x="186" y="290" width="840" height="98" rx="3"/>
+        </g>
+        <g font-size="11" fill="currentColor" opacity=".7" font-weight="600" letter-spacing=".04em">
+          <text x="198" y="58">NHÓM CƠ BẢN — chức năng 1</text>
+          <text x="198" y="182">NHÓM 1 — QUẢN LÝ DANH MỤC — chức năng 2, 3, 4, 5</text>
+          <text x="198" y="306">NHÓM 2 — QUẢN LÝ BẢNG ĐIỂM — chức năng 6, 12</text>
+        </g>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <ellipse cx="300" cy="112" rx="94" ry="26"/><ellipse cx="500" cy="112" rx="94" ry="26"/>
+          <ellipse cx="700" cy="112" rx="94" ry="26"/><ellipse cx="900" cy="112" rx="94" ry="26"/>
+          <ellipse cx="300" cy="236" rx="94" ry="26"/><ellipse cx="500" cy="236" rx="94" ry="26"/>
+          <ellipse cx="700" cy="236" rx="94" ry="26"/><ellipse cx="900" cy="236" rx="94" ry="26"/>
+          <ellipse cx="400" cy="348" rx="110" ry="26"/><ellipse cx="720" cy="348" rx="110" ry="26"/>
+        </g>
+
+        <g font-size="12" text-anchor="middle" fill="currentColor">
+          <text x="300" y="110">Đăng nhập</text><text x="300" y="125" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC01</text>
+          <text x="500" y="110">Đăng xuất</text><text x="500" y="125" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC02</text>
+          <text x="700" y="110">Quản lý tài khoản</text><text x="700" y="125" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC03</text>
+          <text x="900" y="110">Phân quyền vai trò</text><text x="900" y="125" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC04</text>
+
+          <text x="300" y="234">Quản lý học sinh</text><text x="300" y="249" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC05</text>
+          <text x="500" y="234">Quản lý lớp học</text><text x="500" y="249" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC06</text>
+          <text x="700" y="228">Quản lý môn học</text><text x="700" y="242">và thành phần điểm</text><text x="700" y="256" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC07</text>
+          <text x="900" y="228">Quản lý giáo viên</text><text x="900" y="242">và phân công</text><text x="900" y="256" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC08</text>
+
+          <text x="400" y="342">Quản lý bảng điểm</text><text x="400" y="356">theo lớp và môn</text><text x="400" y="370" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC09</text>
+          <text x="720" y="342">Quản lý lịch sử</text><text x="720" y="356">thay đổi điểm</text><text x="720" y="370" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC10</text>
+        </g>
+
+        <use href="#actor3" x="80" y="110"/>
+        <use href="#actor3" x="80" y="288"/>
+        <g font-size="12" text-anchor="middle" fill="currentColor" font-weight="500">
+          <text x="80" y="152">Quản trị viên</text>
+          <text x="80" y="330">Giáo viên</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 3.2 — Use-case UC01 đến UC10.</b> Để sơ đồ đọc được, đường nối vẽ tới <b>khung nhóm</b> chứ không tới từng hình elip; quyền chi tiết của từng vai trò trên từng use case nằm ở Bảng 3.2. Nét đứt = chỉ xem.</figcaption>
+  </figure>
+
+  <h3 class="grp">Chi tiết nhóm 3, nhóm 4 và nhóm 5</h3>
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1080 590" role="img" aria-label="Sơ đồ use-case chi tiết cho nhóm nhận diện, nhóm đối chiếu và nhóm tổng kết, gồm tám use case và hai quan hệ include" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <g id="actor4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="0" cy="-23" r="8.5"/>
+            <path d="M0 -14.5 V 6 M-13 -4 H 13 M0 6 -10 24 M0 6 10 24"/>
+          </g>
+          <marker id="inc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          </marker>
+        </defs>
+
+        <rect x="180" y="26" width="720" height="524" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+
+        <g stroke="currentColor" stroke-width="1.1" opacity=".7">
+          <line x1="98" y1="246" x2="196" y2="120"/>
+          <line x1="98" y1="250" x2="196" y2="240"/>
+          <line x1="98" y1="256" x2="196" y2="400"/>
+          <line x1="962" y1="486" x2="660" y2="502"/>
+        </g>
+        <line x1="938" y1="112" x2="808" y2="112" stroke="#A85D28" stroke-width="1.4"/>
+
+        <g fill="none" stroke="#A85D28" stroke-width="1.6" stroke-dasharray="5 4">
+          <rect x="196" y="44" width="688" height="112" rx="3"/>
+          <rect x="196" y="168" width="688" height="104" rx="3"/>
+        </g>
+        <rect x="196" y="284" width="688" height="252" rx="3" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="5 4"/>
+        <g font-size="11" font-weight="600" letter-spacing=".04em">
+          <text x="208" y="60" fill="#A85D28">NHÓM 3 (PHỨC TẠP) — NHẬN DIỆN BẢNG ĐIỂM — chức năng 7, 8</text>
+          <text x="208" y="184" fill="#A85D28">NHÓM 4 (PHỨC TẠP) — ĐỐI CHIẾU VÀ DUYỆT — chức năng 9</text>
+          <text x="208" y="300" fill="currentColor" opacity=".7">NHÓM 5 — TỔNG KẾT, XẾP LOẠI VÀ BÁO CÁO — chức năng 10, 11, 13, 14</text>
+        </g>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <ellipse cx="330" cy="112" rx="118" ry="28"/>
+          <ellipse cx="686" cy="112" rx="118" ry="28"/>
+          <ellipse cx="470" cy="228" rx="150" ry="28"/>
+          <ellipse cx="350" cy="356" rx="118" ry="26"/>
+          <ellipse cx="700" cy="356" rx="118" ry="26"/>
+          <ellipse cx="350" cy="432" rx="118" ry="26"/>
+          <ellipse cx="700" cy="432" rx="118" ry="26"/>
+          <ellipse cx="512" cy="502" rx="140" ry="26"/>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#inc)">
+          <line x1="568" y1="112" x2="452" y2="112"/>
+          <line x1="582" y1="356" x2="470" y2="356"/>
+        </g>
+        <g font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".8">
+          <text x="510" y="104">«include»</text>
+          <text x="526" y="348">«include»</text>
+        </g>
+
+        <g font-size="12" text-anchor="middle" fill="currentColor">
+          <text x="686" y="106">Tải ảnh và nhận diện</text><text x="686" y="120">bảng điểm viết tay</text><text x="686" y="134" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC11</text>
+          <text x="330" y="106">Đánh giá độ tin cậy và</text><text x="330" y="120">đánh dấu điểm khả nghi</text><text x="330" y="134" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC12</text>
+          <text x="470" y="222">Đối chiếu và duyệt kết quả nhận diện</text><text x="470" y="240" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC13</text>
+          <text x="700" y="354">Xếp loại kết quả học tập</text><text x="700" y="368" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC15</text>
+          <text x="350" y="354">Tính điểm tổng kết</text><text x="350" y="368" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC14</text>
+          <text x="350" y="430">Thống kê điểm</text><text x="350" y="444" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC16</text>
+          <text x="700" y="430">Xuất báo cáo Excel</text><text x="700" y="444" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC17</text>
+          <text x="512" y="500">Tra cứu điểm cá nhân</text><text x="512" y="514" font-family="IBM Plex Mono, monospace" font-size="10" opacity=".6">UC18</text>
+        </g>
+
+        <use href="#actor4" x="80" y="244"/>
+        <use href="#actor4" x="980" y="484"/>
+        <rect x="938" y="90" width="126" height="46" rx="3" fill="none" stroke="#A85D28" stroke-width="1.4"/>
+        <text x="1001" y="108" font-size="10" text-anchor="middle" fill="#A85D28">«dịch vụ»</text>
+        <text x="1001" y="123" font-size="11.5" text-anchor="middle" fill="#A85D28" font-weight="600">Nhận dạng</text>
+        <g font-size="12" text-anchor="middle" fill="currentColor" font-weight="500">
+          <text x="80" y="286">Giáo viên</text>
+          <text x="980" y="526">Học sinh</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 3.3 — Use-case UC11 đến UC18.</b> Hai quan hệ <b>«include»</b> là bắt buộc chứ không tuỳ chọn: mỗi lần nhận diện đều phải chấm độ tin cậy, và không thể xếp loại nếu chưa có điểm tổng kết. UC18 là use case đã bổ sung để tác nhân Học sinh không bị treo.</figcaption>
+  </figure>
+
+  <div class="call s">
+    <h4>Ba lỗi vẽ use-case bị trừ điểm nhiều nhất — sơ đồ trên đã tránh cả ba</h4>
+    <ul>
+      <li><strong>Cho mọi use case «include» Đăng nhập.</strong> Sai. Đăng nhập không phải một phần của nghiệp vụ nhập điểm; nó là <em>điều kiện tiên quyết</em> và phải ghi ở dòng “Điều kiện tiên quyết” trong bản đặc tả.</li>
+      <li><strong>Dùng «include» khi thực ra là «extend».</strong> «include» = luôn luôn xảy ra. «extend» = chỉ xảy ra trong một số điều kiện. Trong hồ sơ này chỉ có hai «include» và chúng đều thoả “luôn luôn”.</li>
+      <li><strong>Vẽ use-case nghiệp vụ giống hệt use-case hệ thống, chỉ đổi tên.</strong> So Hình 2.1 với Hình 3.1: khác cả tác nhân lẫn tên ô, vì một cái mô tả người làm việc còn một cái mô tả người bấm nút.</li>
+    </ul>
+  </div>
+
+  <h3 class="grp">Ánh xạ 14 chức năng ↔ 18 use case</h3>
+  <div class="tw"><table>
+    <caption>Bảng 3.1 — Bảng ánh xạ. Cột “chức năng” giữ đúng cách đếm của thang điểm, cột “use case” giữ đúng cách đếm của sơ đồ UML</caption>
+    <thead><tr><th style="width:14%">Nhóm</th><th style="width:6%" class="c">Điểm</th><th style="width:30%">Chức năng theo đề cương</th><th style="width:8%" class="m">Use case</th><th>Tên use case</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="4"><strong>Cơ bản</strong></td><td rowspan="4" class="c m">0,5</td><td rowspan="4">1. Quản lý tài khoản — đăng nhập, đăng xuất, phân quyền ba vai trò</td><td class="m">UC01</td><td>Đăng nhập</td></tr>
+      <tr><td class="m">UC02</td><td>Đăng xuất</td></tr>
+      <tr><td class="m">UC03</td><td>Quản lý tài khoản người dùng</td></tr>
+      <tr><td class="m">UC04</td><td>Phân quyền vai trò</td></tr>
+
+      <tr><td rowspan="4"><strong>Nhóm 1</strong><br>Danh mục</td><td rowspan="4" class="c m">0,5</td><td>2. Quản lý học sinh</td><td class="m">UC05</td><td>Quản lý học sinh</td></tr>
+      <tr><td>3. Quản lý lớp học</td><td class="m">UC06</td><td>Quản lý lớp học và danh sách lớp</td></tr>
+      <tr><td>4. Quản lý môn học và thành phần điểm</td><td class="m">UC07</td><td>Quản lý môn học và thành phần điểm</td></tr>
+      <tr><td>5. Quản lý giáo viên và phân công</td><td class="m">UC08</td><td>Quản lý giáo viên và phân công giảng dạy</td></tr>
+
+      <tr><td rowspan="2"><strong>Nhóm 2</strong><br>Bảng điểm</td><td rowspan="2" class="c m">0,5</td><td>6. Quản lý bảng điểm theo lớp và môn</td><td class="m">UC09</td><td>Quản lý bảng điểm theo lớp và môn</td></tr>
+      <tr><td>12. Lịch sử thay đổi điểm</td><td class="m">UC10</td><td>Quản lý lịch sử thay đổi điểm</td></tr>
+
+      <tr><td rowspan="2"><strong>Nhóm 3</strong><br><span class="chip a">phức tạp</span></td><td rowspan="2" class="c m">0,5</td><td>7. Nhận diện bảng điểm viết tay</td><td class="m">UC11</td><td>Tải ảnh và nhận diện bảng điểm viết tay</td></tr>
+      <tr><td>8. Đánh giá độ tin cậy, đánh dấu điểm khả nghi</td><td class="m">UC12</td><td>Đánh giá độ tin cậy và phân loại kết quả</td></tr>
+
+      <tr><td><strong>Nhóm 4</strong><br><span class="chip a">phức tạp</span></td><td class="c m">0,5</td><td>9. Hiển thị ảnh cùng dữ liệu nhận diện để giáo viên kiểm tra, sửa và xác nhận</td><td class="m">UC13</td><td>Đối chiếu và duyệt kết quả nhận diện</td></tr>
+
+      <tr><td rowspan="5"><strong>Nhóm 5</strong><br>Tổng kết</td><td rowspan="5" class="c m">0,5</td><td>10. Tự động tính điểm tổng kết</td><td class="m">UC14</td><td>Tính điểm tổng kết theo hệ số</td></tr>
+      <tr><td>11. Xếp loại kết quả học tập</td><td class="m">UC15</td><td>Xếp loại kết quả học tập</td></tr>
+      <tr><td>13. Thống kê</td><td class="m">UC16</td><td>Thống kê điểm theo lớp – môn</td></tr>
+      <tr><td>14. Xuất báo cáo Excel</td><td class="m">UC17</td><td>Xuất bảng điểm và báo cáo ra Excel</td></tr>
+      <tr><td><em>bổ sung — giao diện chỉ đọc của chức năng 6, 10, 11</em></td><td class="m">UC18</td><td>Tra cứu điểm cá nhân</td></tr>
+
+      <tr class="tot"><td>6 nhóm</td><td class="c m">3,0</td><td>14 chức năng</td><td class="m">18</td><td>use case hệ thống</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Ma trận phân quyền</h3>
+  <div class="tw"><table>
+    <caption>Bảng 3.2 — Quyền của từng vai trò trên từng use case. ● toàn quyền · ◐ giới hạn trong phạm vi được phân công · ○ chỉ xem · — không có quyền</caption>
+    <thead><tr><th style="width:8%" class="m">Mã</th><th style="width:34%">Use case</th><th class="c" style="width:13%">Quản trị viên</th><th class="c" style="width:13%">Giáo viên</th><th class="c" style="width:13%">Học sinh</th><th>Ghi chú giới hạn</th></tr></thead>
+    <tbody>
+      <tr><td class="m">UC01</td><td>Đăng nhập</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td><td>Khoá tài khoản sau 5 lần sai</td></tr>
+      <tr><td class="m">UC02</td><td>Đăng xuất</td><td class="c yes">●</td><td class="c yes">●</td><td class="c yes">●</td><td>Tự đăng xuất sau 30 phút không thao tác</td></tr>
+      <tr><td class="m">UC03</td><td>Quản lý tài khoản người dùng</td><td class="c yes">●</td><td class="c part">◐</td><td class="c part">◐</td><td>GV và HS chỉ sửa hồ sơ và mật khẩu của chính mình</td></tr>
+      <tr><td class="m">UC04</td><td>Phân quyền vai trò</td><td class="c yes">●</td><td class="c no">—</td><td class="c no">—</td><td>Chỉ QTV; mọi thay đổi vai trò đều ghi nhật ký</td></tr>
+      <tr><td class="m">UC05</td><td>Quản lý học sinh</td><td class="c yes">●</td><td class="c no">○</td><td class="c no">—</td><td>GV chỉ xem danh sách lớp mình dạy</td></tr>
+      <tr><td class="m">UC06</td><td>Quản lý lớp học và danh sách lớp</td><td class="c yes">●</td><td class="c no">○</td><td class="c no">—</td><td>GV chủ nhiệm xem được lớp mình chủ nhiệm</td></tr>
+      <tr><td class="m">UC07</td><td>Quản lý môn học và thành phần điểm</td><td class="c yes">●</td><td class="c no">○</td><td class="c no">—</td><td>Hệ số thành phần chỉ QTV được sửa, vì nó ảnh hưởng mọi điểm tổng kết</td></tr>
+      <tr><td class="m">UC08</td><td>Quản lý giáo viên và phân công giảng dạy</td><td class="c yes">●</td><td class="c no">○</td><td class="c no">—</td><td>Phân công là căn cứ duy nhất để mở quyền sửa điểm</td></tr>
+      <tr><td class="m">UC09</td><td>Quản lý bảng điểm theo lớp và môn</td><td class="c no">○</td><td class="c part">◐</td><td class="c no">—</td><td><strong>QTV không được tự sửa điểm</strong> — tách quyền để chống sửa điểm không có trách nhiệm chuyên môn</td></tr>
+      <tr><td class="m">UC10</td><td>Quản lý lịch sử thay đổi điểm</td><td class="c no">○</td><td class="c no">○</td><td class="c no">—</td><td>Chỉ đọc với mọi vai trò; không ai được xoá nhật ký</td></tr>
+      <tr><td class="m">UC11</td><td>Tải ảnh và nhận diện bảng điểm</td><td class="c no">—</td><td class="c part">◐</td><td class="c no">—</td><td>Chỉ GV được phân công lớp – môn đó</td></tr>
+      <tr><td class="m">UC12</td><td>Đánh giá độ tin cậy và phân loại</td><td class="c no">—</td><td class="c part">◐</td><td class="c no">—</td><td>Hệ thống tự chạy trong UC11; GV chỉ xem kết quả phân loại</td></tr>
+      <tr><td class="m">UC13</td><td>Đối chiếu và duyệt kết quả nhận diện</td><td class="c no">—</td><td class="c part">◐</td><td class="c no">—</td><td><strong>Chỉ GV phụ trách được duyệt.</strong> Đây là chữ ký trách nhiệm trên số điểm</td></tr>
+      <tr><td class="m">UC14</td><td>Tính điểm tổng kết</td><td class="c no">○</td><td class="c part">◐</td><td class="c no">○</td><td>HS xem điểm tổng kết của chính mình</td></tr>
+      <tr><td class="m">UC15</td><td>Xếp loại kết quả học tập</td><td class="c no">○</td><td class="c part">◐</td><td class="c no">○</td><td>Tiêu chí xếp loại do QTV cấu hình, không viết cứng trong mã</td></tr>
+      <tr><td class="m">UC16</td><td>Thống kê điểm theo lớp – môn</td><td class="c yes">●</td><td class="c part">◐</td><td class="c no">—</td><td>GV chỉ thống kê trên lớp – môn mình dạy</td></tr>
+      <tr><td class="m">UC17</td><td>Xuất bảng điểm và báo cáo Excel</td><td class="c yes">●</td><td class="c part">◐</td><td class="c no">—</td><td>Mỗi lần xuất đều ghi nhật ký ai xuất, xuất gì</td></tr>
+      <tr><td class="m">UC18</td><td>Tra cứu điểm cá nhân</td><td class="c no">—</td><td class="c no">—</td><td class="c yes">●</td><td>Chỉ thấy điểm <em>đã duyệt</em> của chính mình, không thấy điểm đang chờ soát</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call">
+    <h4>Hai quyết định phân quyền nên nói rõ khi bảo vệ</h4>
+    <p><strong>Quản trị viên không có quyền sửa điểm.</strong> Nghe ngược đời vì QTV thường là vai to nhất, nhưng đúng nghiệp vụ: người chịu trách nhiệm về con số điểm là giáo viên đã chấm bài, không phải người quản trị hệ thống. Cho QTV sửa điểm là mở một đường sửa điểm không có ai chịu trách nhiệm chuyên môn.</p>
+    <p><strong>Không vai trò nào được xoá nhật ký thay đổi điểm.</strong> Nhật ký chỉ ghi thêm, không sửa, không xoá. Nếu xoá được thì nó không còn là bằng chứng nữa.</p>
+  </div>
+</section>
+<section id="dac-ta">
+  <div class="shead"><span class="idx">04</span><h2>Đặc tả use case</h2></div>
+  <p class="lede">Bảng 4.1 đặc tả gọn cả 18 use case để không use case nào bị bỏ trống. Sau đó là bốn bản đặc tả đầy đủ: hai use case mà đề cương gọi là <strong>phức tạp</strong> (UC11, UC13), cộng use case trung tâm của dữ liệu (UC09) và use case có nhiều quy tắc tính toán nhất (UC14).</p>
+
+  <div class="tw"><table>
+    <caption>Bảng 4.1 — Đặc tả rút gọn 18 use case. Mọi use case đều có điều kiện tiên quyết chung “người dùng đã đăng nhập và phiên chưa hết hạn”, nên cột tiên quyết chỉ ghi điều kiện <em>riêng</em></caption>
+    <thead><tr><th style="width:6%" class="m">Mã</th><th style="width:17%">Use case</th><th style="width:9%">Tác nhân chính</th><th style="width:18%">Tiền điều kiện riêng</th><th style="width:28%">Luồng chính rút gọn</th><th>Hậu điều kiện</th></tr></thead>
+    <tbody>
+      <tr><td class="m">UC01</td><td>Đăng nhập</td><td>Cả ba vai trò</td><td>Tài khoản tồn tại, chưa bị khoá</td><td>Nhập tên đăng nhập và mật khẩu → hệ thống xác thực → tạo phiên → điều hướng về giao diện đúng vai trò</td><td>Phiên làm việc được tạo, gắn đúng vai trò</td></tr>
+      <tr><td class="m">UC02</td><td>Đăng xuất</td><td>Cả ba vai trò</td><td>Đang có phiên</td><td>Chọn Đăng xuất → hệ thống huỷ phiên → về màn hình đăng nhập</td><td>Phiên bị huỷ, mọi thao tác sau đó phải đăng nhập lại</td></tr>
+      <tr><td class="m">UC03</td><td>Quản lý tài khoản người dùng</td><td>QTV (GV, HS: hồ sơ của mình)</td><td>—</td><td>Xem danh sách → thêm / sửa / khoá / mở khoá tài khoản → đặt lại mật khẩu</td><td>Tài khoản được cập nhật; thao tác được ghi nhật ký</td></tr>
+      <tr><td class="m">UC04</td><td>Phân quyền vai trò</td><td>QTV</td><td>Tài khoản đích đã tồn tại</td><td>Chọn tài khoản → gán vai trò → xác nhận</td><td>Vai trò mới có hiệu lực ở lần đăng nhập kế tiếp</td></tr>
+      <tr><td class="m">UC05</td><td>Quản lý học sinh</td><td>QTV</td><td>Đã có lớp để xếp học sinh vào</td><td>Tìm kiếm → thêm / sửa / ngừng theo dõi học sinh → xếp lớp theo năm học</td><td>Danh mục học sinh phản ánh đúng thực tế lớp</td></tr>
+      <tr><td class="m">UC06</td><td>Quản lý lớp học và danh sách lớp</td><td>QTV</td><td>Đã có năm học</td><td>Tạo lớp theo khối và năm học → gán giáo viên chủ nhiệm → thêm / bớt học sinh trong lớp</td><td>Lớp có sĩ số và danh sách chính xác</td></tr>
+      <tr><td class="m">UC07</td><td>Quản lý môn học và thành phần điểm</td><td>QTV</td><td>—</td><td>Tạo môn học → khai báo các thành phần điểm (miệng, 15 phút, 1 tiết, thi học kỳ) kèm hệ số → kiểm tra tổng hệ số</td><td>Mỗi môn có bộ thành phần điểm hợp lệ để tính tổng kết</td></tr>
+      <tr><td class="m">UC08</td><td>Quản lý giáo viên và phân công giảng dạy</td><td>QTV</td><td>Đã có lớp và môn học</td><td>Quản lý hồ sơ giáo viên → phân công giáo viên phụ trách lớp – môn theo học kỳ</td><td>Phân công là căn cứ duy nhất mở quyền nhập và duyệt điểm</td></tr>
+      <tr><td class="m">UC09</td><td>Quản lý bảng điểm theo lớp và môn</td><td>GV</td><td>Có phân công cho lớp – môn – học kỳ đó</td><td>Tạo bảng điểm → nhập hoặc sửa điểm thành phần thủ công → lưu (xem bản đặc tả đầy đủ bên dưới)</td><td>Điểm được lưu; mỗi thay đổi sinh một bản ghi nhật ký</td></tr>
+      <tr><td class="m">UC10</td><td>Quản lý lịch sử thay đổi điểm</td><td>GV, QTV</td><td>Ô điểm đã từng được ghi ít nhất một lần</td><td>Chọn ô điểm hoặc bảng điểm → xem danh sách thay đổi: ai, lúc nào, từ giá trị nào sang giá trị nào, do thao tác gì</td><td>Không thay đổi dữ liệu — use case chỉ đọc</td></tr>
+      <tr><td class="m">UC11</td><td>Tải ảnh và nhận diện bảng điểm viết tay</td><td>GV<br><span class="chip n">+ dịch vụ nhận dạng</span></td><td>Bảng điểm đã tồn tại; GV được phân công</td><td>Tải ảnh → nắn ảnh → cắt ô → đọc hai kênh độc lập → giải mã có ràng buộc (xem bản đặc tả đầy đủ)</td><td>Tạo phiếu nhận diện ở trạng thái chờ đối chiếu; <strong>chưa ghi điểm nào</strong></td></tr>
+      <tr><td class="m">UC12</td><td>Đánh giá độ tin cậy và phân loại kết quả</td><td>Hệ thống<br><span class="chip n">«include» từ UC11</span></td><td>Đã có kết quả đọc của cả hai kênh</td><td>So khớp hai kênh → xét độ tin cậy → phân về ba mức xanh / vàng / đỏ</td><td>Mỗi dòng có đúng một mức phân loại kèm lý do</td></tr>
+      <tr><td class="m">UC13</td><td>Đối chiếu và duyệt kết quả nhận diện</td><td>GV</td><td>Có phiếu ở trạng thái chờ đối chiếu; GV là người được phân công</td><td>Xem ảnh ô cạnh giá trị máy đọc → sửa dòng sai → duyệt (xem bản đặc tả đầy đủ)</td><td>Điểm được ghi vào bảng điểm; phiếu chuyển sang đã duyệt</td></tr>
+      <tr><td class="m">UC14</td><td>Tính điểm tổng kết theo hệ số</td><td>GV</td><td>Đủ điểm thành phần bắt buộc và đã được duyệt</td><td>Chọn lớp – môn – học kỳ → hệ thống tính trung bình có trọng số → hiển thị và lưu (xem bản đặc tả đầy đủ)</td><td>Có điểm tổng kết cho từng học sinh, làm tròn theo quy tắc đã cấu hình</td></tr>
+      <tr><td class="m">UC15</td><td>Xếp loại kết quả học tập</td><td>GV</td><td>Đã có điểm tổng kết (<span class="mono">«include» UC14</span>)</td><td>Hệ thống đối chiếu điểm tổng kết với bảng tiêu chí xếp loại do QTV cấu hình → gán loại cho từng học sinh</td><td>Mỗi học sinh có một xếp loại kèm căn cứ tính</td></tr>
+      <tr><td class="m">UC16</td><td>Thống kê điểm theo lớp – môn</td><td>QTV, GV</td><td>Bảng điểm có ít nhất một điểm đã duyệt</td><td>Chọn phạm vi → hệ thống tính trung bình, cao nhất, thấp nhất, số đạt / không đạt, phổ điểm</td><td>Không thay đổi dữ liệu — use case chỉ đọc</td></tr>
+      <tr><td class="m">UC17</td><td>Xuất bảng điểm và báo cáo Excel</td><td>QTV, GV</td><td>Có dữ liệu trong phạm vi được chọn</td><td>Chọn phạm vi và mẫu → hệ thống sinh tệp .xlsx đúng vị trí cột của biểu mẫu → tải về</td><td>Tệp Excel mở được, đúng mẫu; ghi nhật ký ai xuất, xuất gì, lúc nào</td></tr>
+      <tr><td class="m">UC18</td><td>Tra cứu điểm cá nhân</td><td>HS</td><td>Học sinh có ít nhất một điểm <em>đã duyệt</em></td><td>Đăng nhập → chọn học kỳ → xem điểm thành phần, điểm tổng kết và xếp loại của chính mình</td><td>Không thay đổi dữ liệu; không hiển thị điểm còn đang chờ soát</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Đặc tả đầy đủ — UC09</h3>
+  <div class="uc">
+    <div class="uchead"><span class="ucid">UC09</span><h4>Quản lý bảng điểm theo lớp và môn</h4><span class="chip n">Nhóm 2</span></div>
+    <div class="ucbody"><dl>
+      <dt>Tác nhân chính</dt><dd>Giáo viên được phân công lớp – môn – học kỳ</dd>
+      <dt>Mô tả</dt><dd>Tạo và duy trì bảng điểm của một lớp cho một môn trong một học kỳ; nhập hoặc chỉnh sửa điểm thành phần bằng tay. Đây là đường nhập điểm <em>thủ công</em>, tồn tại song song với đường nhận diện ảnh và dùng chung một kho dữ liệu.</dd>
+      <dt>Điều kiện tiên quyết</dt><dd>Lớp đã có danh sách học sinh (UC06); môn đã khai báo đủ thành phần điểm và hệ số (UC07); tồn tại phân công giáo viên cho đúng lớp – môn – học kỳ (UC08).</dd>
+      <dt>Hậu điều kiện thành công</dt><dd>Bảng điểm tồn tại với đủ dòng theo sĩ số lớp; các ô điểm đã nhập được lưu; mỗi lần sửa một ô đã có giá trị đều sinh một bản ghi <code>LichSuSuaDiem</code>.</dd>
+      <dt>Hậu điều kiện thất bại</dt><dd>Không ô nào được lưu; bảng điểm giữ nguyên trạng thái trước thao tác.</dd>
+      <dt>Luồng sự kiện chính</dt><dd><ol class="flow">
+        <li>Giáo viên chọn năm học, học kỳ, lớp và môn trong phạm vi được phân công.</li>
+        <li>Nếu bảng điểm chưa tồn tại, hệ thống đề nghị tạo mới và sinh sẵn một dòng cho mỗi học sinh trong lớp.</li>
+        <li>Hệ thống hiển thị lưới điểm: hàng là học sinh, cột là các thành phần điểm của môn kèm hệ số.</li>
+        <li>Giáo viên nhập hoặc sửa giá trị ở một hoặc nhiều ô.</li>
+        <li>Hệ thống kiểm tra từng giá trị: nằm trong 0,0–10,0 và đúng bước 0,1.</li>
+        <li>Giáo viên bấm Lưu.</li>
+        <li>Hệ thống lưu các ô thay đổi trong một giao dịch, đồng thời ghi nhật ký cho mọi ô vốn đã có giá trị cũ.</li>
+        <li>Hệ thống hiển thị xác nhận kèm số ô vừa được cập nhật.</li>
+      </ol></dd>
+      <dt>Luồng thay thế và ngoại lệ</dt><dd>
+        <p><strong>A1 — Giáo viên không được phân công lớp – môn đó:</strong> hệ thống không hiển thị bảng điểm trong danh sách chọn; nếu truy cập trực tiếp bằng đường dẫn thì trả về từ chối truy cập và ghi nhật ký lần thử.</p>
+        <p><strong>A2 — Giá trị nhập không hợp lệ:</strong> ô được đánh dấu đỏ ngay khi rời khỏi ô, nêu rõ khoảng hợp lệ; nút Lưu bị chặn cho tới khi sửa xong.</p>
+        <p><strong>A3 — Sĩ số lớp thay đổi sau khi bảng điểm đã tạo:</strong> hệ thống bổ sung dòng cho học sinh mới và đánh dấu — chứ không xoá — dòng của học sinh đã chuyển đi, để không mất điểm đã nhập.</p>
+        <p><strong>A4 — Ô điểm đang thuộc một phiếu nhận diện chờ đối chiếu:</strong> hệ thống cảnh báo trùng đường nhập và hỏi giáo viên chọn giữ giá trị nhập tay hay tiếp tục quy trình đối chiếu.</p>
+      </dd>
+      <dt>Quy tắc nghiệp vụ</dt><dd><ul>
+        <li><strong>BR-09</strong> — Một bảng điểm được xác định duy nhất bởi bộ bốn: lớp, môn, học kỳ, năm học.</li>
+        <li><strong>BR-10</strong> — Điểm hợp lệ nằm trong 0,0–10,0 với bước 0,1; ô để trống nghĩa là <em>chưa có điểm</em>, khác hẳn với điểm 0,0.</li>
+        <li><strong>BR-11</strong> — Không được xoá dòng học sinh đã có điểm; chỉ được đánh dấu ngừng theo dõi.</li>
+      </ul></dd>
+    </dl></div>
+  </div>
+
+  <h3 class="grp">Đặc tả đầy đủ — UC11 <span class="chip a" style="margin-left:8px">nghiệp vụ phức tạp 1</span></h3>
+  <div class="uc">
+    <div class="uchead"><span class="ucid">UC11</span><h4>Tải ảnh và nhận diện bảng điểm viết tay</h4><span class="chip a">Nhóm 3</span></div>
+    <div class="ucbody"><dl>
+      <dt>Tác nhân chính</dt><dd>Giáo viên được phân công lớp – môn – học kỳ</dd>
+      <dt>Tác nhân phụ</dt><dd>Dịch vụ nhận dạng — được gọi qua đúng một giao diện <code>predict(ảnh_ô) → (giá_trị, độ_tin_cậy)</code></dd>
+      <dt>Mô tả</dt><dd>Giáo viên tải ảnh chụp bảng điểm viết tay. Hệ thống nắn ảnh về khổ chuẩn, cắt riêng từng ô điểm, cho <strong>hai bộ đọc độc lập</strong> đọc cột Điểm số và cột Điểm chữ, giải mã về danh sách giá trị hợp lệ, rồi tạo một phiếu nhận diện chứa đề xuất cho từng dòng học sinh.</dd>
+      <dt>Điều kiện tiên quyết</dt><dd>Bảng điểm của lớp – môn – học kỳ đã tồn tại (UC09); giáo viên được phân công đúng lớp – môn đó; đã khai báo số dòng của tờ bảng điểm sắp tải lên.</dd>
+      <dt>Hậu điều kiện thành công</dt><dd>Tồn tại một <code>PhieuNhanDien</code> ở trạng thái <em>chờ đối chiếu</em>; mỗi dòng học sinh có một <code>KetQuaDong</code> lưu ảnh ô cắt, giá trị kênh A, giá trị kênh B, độ tin cậy và mức phân loại. <strong>Bảng điểm chính chưa thay đổi một ô nào.</strong></dd>
+      <dt>Hậu điều kiện thất bại</dt><dd>Phiếu ở trạng thái <em>lỗi</em> kèm lý do cụ thể, ảnh gốc vẫn được giữ để chạy lại; bảng điểm không thay đổi.</dd>
+      <dt>Luồng sự kiện chính</dt><dd><ol class="flow">
+        <li>Giáo viên chọn bảng điểm đích và thành phần điểm sẽ nhập (ví dụ: điểm 1 tiết lần 2).</li>
+        <li>Giáo viên khai báo số dòng của tờ và tải lên một hoặc nhiều ảnh.</li>
+        <li>Hệ thống kiểm tra định dạng, kích thước tệp; lưu ảnh gốc; tạo phiếu ở trạng thái <em>đang xử lý</em>.</li>
+        <li>Hệ thống nắn phối cảnh <strong>hai lần</strong>: lần một theo mép tờ giấy, lần hai theo bốn góc khung kẻ của bảng.</li>
+        <li>Hệ thống tách khung lưới bằng phép toán hình thái và đếm số đường kẻ ngang.</li>
+        <li><strong>Chốt chặn:</strong> số đường kẻ đếm được phải khớp số dòng đã khai báo ở bước 2. Không khớp → nhánh <strong>A2</strong>.</li>
+        <li>Hệ thống cắt riêng từng ô của cột Điểm số và cột Điểm chữ, lưu ảnh cắt của từng ô.</li>
+        <li>Với mỗi ô, hệ thống đo tỷ lệ mực; ô dưới ngưỡng được gắn nhãn <em>ô trống</em> và <strong>không</strong> được đưa vào mô hình.</li>
+        <li>Hệ thống gọi Dịch vụ nhận dạng hai lần độc lập: kênh A đọc ô Điểm số, kênh B đọc ô Điểm chữ. Hai kênh không dùng chung mô hình.</li>
+        <li>Hệ thống giải mã có ràng buộc: nắn chuỗi thô về giá trị hợp lệ gần nhất. Gặp ca hoà giữa hai ứng viên → không chọn bừa, đánh dấu để người soát quyết định.</li>
+        <li><strong>«include» UC12:</strong> đối chiếu chéo hai kênh và phân loại kết quả về ba mức.</li>
+        <li>Hệ thống ghi <code>KetQuaDong</code> cho từng dòng và chuyển phiếu sang <em>chờ đối chiếu</em>.</li>
+        <li>Hệ thống hiển thị tóm tắt: tổng số dòng, số dòng xanh, vàng, đỏ và thời gian xử lý.</li>
+      </ol></dd>
+      <dt>Luồng thay thế và ngoại lệ</dt><dd>
+        <p><strong>A1 — Ảnh không hợp lệ</strong> (sai định dạng, vượt dung lượng, độ phân giải quá thấp): từ chối ngay ở bước 3, nêu rõ lý do và hướng dẫn chụp lại; không tạo phiếu.</p>
+        <p><strong>A2 — Chốt chặn thất bại:</strong> dừng xử lý tờ đó, gắn cờ kèm số đường kẻ đếm được và số dòng khai báo, yêu cầu chụp lại. <strong>Tuyệt đối không tự suy đoán vị trí dòng để chạy tiếp</strong> — đó là con đường sinh ra hàng chục dòng gán sai nhãn mà không có gì báo động.</p>
+        <p><strong>A3 — Dịch vụ nhận dạng không phản hồi hoặc trả lỗi:</strong> phiếu chuyển sang <em>lỗi</em>, giữ nguyên ảnh gốc và ảnh cắt, cho phép chạy lại mà không phải tải ảnh lần nữa.</p>
+        <p><strong>A4 — Số dòng nhận diện được khác sĩ số lớp:</strong> vẫn tạo phiếu nhưng gắn cảnh báo; ở UC13 giáo viên phải ghép thủ công từng dòng với học sinh trước khi được duyệt.</p>
+        <p><strong>A5 — Tải trùng một ảnh đã xử lý:</strong> hệ thống nhận ra qua mã băm tệp, cảnh báo và hỏi có tạo phiếu mới hay mở phiếu cũ.</p>
+      </dd>
+      <dt>Quy tắc nghiệp vụ</dt><dd><ul>
+        <li><strong>BR-12</strong> — Use case này <em>không bao giờ</em> ghi điểm vào bảng điểm chính. Nó chỉ sinh đề xuất; quyền ghi thuộc về UC13.</li>
+        <li><strong>BR-13</strong> — Hai kênh phải chạy trên hai mô hình tách biệt và không được gộp hai ô vào một lần đọc; gộp lại thì hai lỗi trở nên tương quan và toàn bộ lập luận kiểm chứng chéo sụp đổ.</li>
+        <li><strong>BR-14</strong> — Ô trống phải trả về “không đọc được”. Trả về 0,0 là biến “chưa có điểm” thành “không điểm”, và sai lầm này không sửa được ở khâu sau vì 0,0 là một giá trị hợp lệ.</li>
+        <li><strong>BR-15</strong> — Ảnh gốc và ảnh cắt của từng ô bắt buộc phải lưu. Không lưu ảnh thì UC13 mất căn cứ và cơ chế an toàn trở thành hình thức.</li>
+      </ul></dd>
+      <dt>Yêu cầu phi chức năng</dt><dd>Xử lý trọn một tờ 40 dòng trong ≤ 60 giây trên máy cấu hình phổ thông; ảnh gốc lưu tối thiểu tới hết năm học; ảnh nguyên trang không hiển thị cho vai trò Học sinh vì có cột họ tên.</dd>
+    </dl></div>
+  </div>
+
+  <h3 class="grp">Đặc tả đầy đủ — UC13 <span class="chip a" style="margin-left:8px">nghiệp vụ phức tạp 2</span></h3>
+  <div class="uc">
+    <div class="uchead"><span class="ucid">UC13</span><h4>Đối chiếu và duyệt kết quả nhận diện</h4><span class="chip a">Nhóm 4</span></div>
+    <div class="ucbody"><dl>
+      <dt>Tác nhân chính</dt><dd>Giáo viên được phân công — và <strong>chỉ</strong> giáo viên đó</dd>
+      <dt>Mô tả</dt><dd>Giáo viên soát từng dòng kết quả nhận diện đặt cạnh <strong>ảnh ô gốc</strong>, sửa những dòng máy đọc sai, rồi chốt ghi vào bảng điểm. Đây là chỗ con người giữ quyền quyết định cuối và là chữ ký trách nhiệm trên con số điểm.</dd>
+      <dt>Điều kiện tiên quyết</dt><dd>Tồn tại phiếu nhận diện ở trạng thái <em>chờ đối chiếu</em>; giáo viên đăng nhập đúng là người được phân công lớp – môn của phiếu.</dd>
+      <dt>Hậu điều kiện thành công</dt><dd>Các giá trị đã chốt được ghi vào <code>DiemThanhPhan</code>; mỗi ô thay đổi sinh một bản ghi <code>LichSuSuaDiem</code>; từng <code>KetQuaDong</code> được đóng dấu người duyệt và thời điểm duyệt; phiếu chuyển sang <em>đã duyệt</em>.</dd>
+      <dt>Hậu điều kiện thất bại</dt><dd>Không ô nào được ghi, phiếu vẫn ở <em>chờ đối chiếu</em> — thao tác ghi là giao dịch nguyên tử, không có trạng thái ghi được một nửa.</dd>
+      <dt>Luồng sự kiện chính</dt><dd><ol class="flow">
+        <li>Giáo viên mở một phiếu từ danh sách phiếu chờ đối chiếu.</li>
+        <li>Hệ thống hiển thị màn hình soát; mỗi dòng gồm họ tên học sinh, <strong>ảnh ô cắt gốc</strong>, giá trị kênh A, giá trị kênh B, độ tin cậy và màu phân loại.</li>
+        <li>Hệ thống lọc mặc định về các dòng vàng và đỏ, gấp gọn các dòng xanh để giáo viên không phải cuộn qua phần máy đã chắc chắn.</li>
+        <li>Với mỗi dòng vàng hoặc đỏ, giáo viên nhìn ảnh ô rồi nhập hoặc chọn giá trị đúng.</li>
+        <li>Giáo viên có thể mở phần dòng xanh và sửa nếu phát hiện sai.</li>
+        <li>Hệ thống kiểm tra từng giá trị nhập: trong 0,0–10,0 và đúng bước 0,1.</li>
+        <li>Giáo viên bấm Duyệt.</li>
+        <li>Hệ thống kiểm tra không còn dòng nào chưa được quyết định.</li>
+        <li>Hệ thống ghi toàn bộ điểm vào bảng điểm trong một giao dịch, sinh nhật ký cho từng ô có thay đổi, đóng dấu người duyệt và thời điểm duyệt lên từng dòng.</li>
+        <li>Hệ thống chuyển phiếu sang <em>đã duyệt</em> và hiển thị tóm tắt: bao nhiêu dòng máy đọc đúng, bao nhiêu dòng người phải sửa — đây chính là số liệu dùng cho biên bản chạy thử ở tuần 11.</li>
+      </ol></dd>
+      <dt>Luồng thay thế và ngoại lệ</dt><dd>
+        <p><strong>A1 — Còn dòng chưa quyết định:</strong> chặn thao tác duyệt, cuộn tới dòng đầu tiên còn thiếu và nêu rõ còn bao nhiêu dòng.</p>
+        <p><strong>A2 — Giá trị nhập không hợp lệ:</strong> báo lỗi ngay tại ô, không cho lưu dòng đó.</p>
+        <p><strong>A3 — Ảnh ô cắt không tải được:</strong> hiển thị cảnh báo và <strong>chặn duyệt riêng dòng đó</strong>. Không có ảnh thì giáo viên chỉ còn cách tin máy, và toàn bộ cơ chế an toàn mất tác dụng.</p>
+        <p><strong>A4 — Ô điểm đã bị thay đổi bởi người khác trong lúc soát:</strong> hệ thống phát hiện xung đột, hiển thị giá trị hiện tại cạnh giá trị đang chốt và để giáo viên chọn giữ hay ghi đè.</p>
+        <p><strong>A5 — Giáo viên bỏ dở giữa chừng:</strong> các sửa đổi được giữ ở dạng nháp trên phiếu; phiếu vẫn ở <em>chờ đối chiếu</em> và mở lại được sau.</p>
+        <p><strong>A6 — Dòng không ghép được với học sinh nào</strong> (đến từ nhánh A4 của UC11): giáo viên phải chọn thủ công học sinh tương ứng trước khi dòng đó được tính là đã quyết định.</p>
+      </dd>
+      <dt>Quy tắc nghiệp vụ</dt><dd><ul>
+        <li><strong>BR-16</strong> — Không hiển thị được ảnh ô gốc thì không được duyệt dòng đó.</li>
+        <li><strong>BR-17</strong> — Chỉ giáo viên được phân công mới duyệt được; quản trị viên cũng không có quyền này.</li>
+        <li><strong>BR-18</strong> — Mọi thay đổi giá trị đều sinh nhật ký; nhật ký chỉ ghi thêm, không sửa, không xoá.</li>
+        <li><strong>BR-19</strong> — Ghi điểm là giao dịch nguyên tử: lỗi ở giữa thì không ô nào được ghi.</li>
+        <li><strong>BR-20</strong> — Dòng ở mức đỏ không có giá trị mặc định; giáo viên bắt buộc nhập tay, hệ thống không gợi ý sẵn con số nào.</li>
+      </ul></dd>
+      <dt>Yêu cầu phi chức năng</dt><dd>Màn hình soát tải trong ≤ 3 giây với bảng 45 dòng; ảnh ô cắt tải theo nhu cầu cuộn để không kéo cả trăm ảnh cùng lúc.</dd>
+    </dl></div>
+  </div>
+
+  <h3 class="grp">Đặc tả đầy đủ — UC14</h3>
+  <div class="uc">
+    <div class="uchead"><span class="ucid">UC14</span><h4>Tính điểm tổng kết theo hệ số</h4><span class="chip n">Nhóm 5</span></div>
+    <div class="ucbody"><dl>
+      <dt>Tác nhân chính</dt><dd>Giáo viên được phân công</dd>
+      <dt>Mô tả</dt><dd>Tính điểm tổng kết môn của từng học sinh từ các điểm thành phần đã duyệt, theo hệ số do quản trị viên cấu hình cho môn đó.</dd>
+      <dt>Điều kiện tiên quyết</dt><dd>Môn học đã khai báo đủ thành phần điểm kèm hệ số (UC07); các điểm thành phần bắt buộc đã có giá trị và đã ở trạng thái đã duyệt.</dd>
+      <dt>Hậu điều kiện thành công</dt><dd>Mỗi học sinh có một bản ghi <code>KetQuaTongKet</code> chứa điểm tổng kết, thời điểm tính và phiên bản bộ hệ số đã dùng.</dd>
+      <dt>Luồng sự kiện chính</dt><dd><ol class="flow">
+        <li>Giáo viên chọn lớp – môn – học kỳ và bấm Tính tổng kết.</li>
+        <li>Hệ thống kiểm tra tính đầy đủ của dữ liệu: mọi thành phần bắt buộc phải có điểm cho mọi học sinh đang theo học.</li>
+        <li>Hệ thống lấy bộ hệ số hiện hành của môn.</li>
+        <li>Với mỗi học sinh, hệ thống tính trung bình có trọng số của các điểm thành phần.</li>
+        <li>Hệ thống làm tròn theo quy tắc đã cấu hình (mặc định: một chữ số thập phân).</li>
+        <li>Hệ thống lưu kết quả kèm dấu thời gian và phiên bản hệ số đã dùng.</li>
+        <li>Hệ thống hiển thị bảng kết quả và danh sách học sinh bị bỏ qua kèm lý do.</li>
+      </ol></dd>
+      <dt>Luồng thay thế và ngoại lệ</dt><dd>
+        <p><strong>A1 — Thiếu điểm thành phần bắt buộc:</strong> không tính cho học sinh đó, liệt kê rõ thiếu thành phần nào; các học sinh khác vẫn được tính.</p>
+        <p><strong>A2 — Còn điểm đang chờ đối chiếu:</strong> cảnh báo và chặn tính tổng kết, vì tính trên dữ liệu chưa duyệt là tính trên số chưa ai chịu trách nhiệm.</p>
+        <p><strong>A3 — Tổng hệ số không hợp lệ:</strong> dừng và yêu cầu quản trị viên sửa cấu hình môn.</p>
+        <p><strong>A4 — Tính lại sau khi điểm thành phần thay đổi:</strong> ghi đè kết quả cũ nhưng giữ lại bản ghi cũ trong nhật ký để đối chiếu.</p>
+      </dd>
+      <dt>Quy tắc nghiệp vụ</dt><dd><ul>
+        <li><strong>BR-21</strong> — Chỉ tính trên điểm đã ở trạng thái đã duyệt.</li>
+        <li><strong>BR-22</strong> — Hệ số là dữ liệu cấu hình, không viết cứng trong mã nguồn; đổi hệ số không cần sửa chương trình.</li>
+        <li><strong>BR-23</strong> — Mỗi lần tính phải lưu lại phiên bản bộ hệ số đã dùng, để sau này giải thích được vì sao ra con số đó.</li>
+      </ul></dd>
+    </dl></div>
+  </div>
+</section>
+<section id="lop-phan-tich">
+  <div class="shead"><span class="idx">05</span><h2>Sơ đồ lớp phân tích</h2></div>
+  <p class="lede">Ở mức phân tích, lớp chỉ mang <strong>tên và những thuộc tính làm nên bản chất</strong> của khái niệm nghiệp vụ — chưa có kiểu dữ liệu, chưa có khoá, chưa có phương thức. Đó là bản phác của kiến trúc sư: đủ để chủ nhà hiểu, chưa đủ để thợ xây làm. Bản đủ để thi công nằm ở §07.</p>
+
+  <p>Mô hình gồm <strong>17 lớp</strong>, tách làm hai cụm để đọc được: cụm danh mục – bảng điểm (Hình 5.1) và cụm nhận diện (Hình 5.2). Hai cụm nối nhau đúng ở hai chỗ, và chính hai chỗ nối đó là ranh giới giữa phần ứng dụng và phần thuật toán.</p>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1140 680" role="img" aria-label="Sơ đồ lớp phân tích cụm danh mục và bảng điểm, gồm mười bốn lớp với quan hệ kế thừa và các liên kết có bội số" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="currentColor" stroke-width="1.15" opacity=".85" fill="none">
+          <path d="M340 100 V 140 M105 140 H 475 M105 140 V 168 M290 140 V 168 M475 140 V 168"/>
+          <line x1="985" y1="78" x2="985" y2="118"/>
+          <line x1="600" y1="200" x2="552" y2="196"/>
+          <line x1="750" y1="212" x2="800" y2="300"/>
+          <line x1="367" y1="200" x2="798" y2="308"/>
+          <line x1="866" y1="224" x2="866" y2="288"/>
+          <line x1="942" y1="196" x2="1012" y2="262"/>
+          <line x1="614" y1="236" x2="596" y2="398"/>
+          <line x1="812" y1="224" x2="700" y2="398"/>
+          <line x1="900" y1="120" x2="742" y2="410"/>
+          <line x1="650" y1="466" x2="650" y2="528"/>
+          <line x1="470" y1="224" x2="576" y2="528"/>
+          <line x1="1050" y1="326" x2="742" y2="540"/>
+          <line x1="558" y1="568" x2="466" y2="568"/>
+        </g>
+        <line x1="742" y1="570" x2="828" y2="570" stroke="currentColor" stroke-width="1.15" stroke-dasharray="5 4" opacity=".85"/>
+        <text x="785" y="562" font-size="9.5" text-anchor="middle" fill="currentColor" opacity=".7">«derive»</text>
+        <polygon points="340,100 332,116 348,116" fill="var(--surface)" stroke="currentColor" stroke-width="1.15"/>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".72">
+          <text x="576" y="192">1</text><text x="562" y="208">0..*</text>
+          <text x="758" y="228">1</text><text x="790" y="292">0..*</text>
+          <text x="380" y="212">1</text><text x="786" y="318">0..*</text>
+          <text x="872" y="238">1</text><text x="872" y="282">0..*</text>
+          <text x="948" y="212">1</text><text x="1000" y="256">1..*</text>
+          <text x="620" y="252">1</text><text x="600" y="392">0..*</text>
+          <text x="656" y="482">1</text><text x="656" y="522">0..*</text>
+          <text x="484" y="240">1</text><text x="566" y="522">0..*</text>
+          <text x="552" y="562">1</text><text x="474" y="562">0..*</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.35" fill="var(--surface)">
+          <rect x="250" y="24" width="180" height="76" rx="2"/>
+          <rect x="30" y="168" width="150" height="40" rx="2"/>
+          <rect x="215" y="168" width="150" height="56" rx="2"/>
+          <rect x="400" y="168" width="152" height="56" rx="2"/>
+          <rect x="900" y="26" width="170" height="52" rx="2"/>
+          <rect x="900" y="118" width="170" height="52" rx="2"/>
+          <rect x="600" y="168" width="150" height="68" rx="2"/>
+          <rect x="790" y="168" width="152" height="56" rx="2"/>
+          <rect x="1000" y="262" width="132" height="64" rx="2"/>
+          <rect x="798" y="288" width="180" height="52" rx="2"/>
+          <rect x="560" y="398" width="182" height="68" rx="2"/>
+          <rect x="560" y="528" width="182" height="80" rx="2"/>
+          <rect x="828" y="528" width="182" height="68" rx="2"/>
+          <rect x="284" y="528" width="182" height="80" rx="2"/>
+        </g>
+        <g stroke="currentColor" stroke-width="1.1" opacity=".55">
+          <line x1="250" y1="46" x2="430" y2="46"/>
+          <line x1="215" y1="190" x2="365" y2="190"/><line x1="400" y1="190" x2="552" y2="190"/>
+          <line x1="900" y1="48" x2="1070" y2="48"/><line x1="900" y1="140" x2="1070" y2="140"/>
+          <line x1="600" y1="190" x2="750" y2="190"/><line x1="790" y1="190" x2="942" y2="190"/>
+          <line x1="1000" y1="284" x2="1132" y2="284"/><line x1="798" y1="310" x2="978" y2="310"/>
+          <line x1="560" y1="420" x2="742" y2="420"/><line x1="560" y1="550" x2="742" y2="550"/>
+          <line x1="828" y1="550" x2="1010" y2="550"/><line x1="284" y1="550" x2="466" y2="550"/>
+        </g>
+
+        <g font-size="12" font-weight="600" text-anchor="middle" fill="currentColor">
+          <text x="340" y="42">NguoiDung</text>
+          <text x="105" y="192">QuanTriVien</text>
+          <text x="290" y="186">GiaoVien</text>
+          <text x="476" y="186">HocSinh</text>
+          <text x="985" y="44">NamHoc</text>
+          <text x="985" y="136">HocKy</text>
+          <text x="675" y="186">Lop</text>
+          <text x="866" y="186">MonHoc</text>
+          <text x="1066" y="280">ThanhPhanDiem</text>
+          <text x="888" y="306">PhanCongGiangDay</text>
+          <text x="651" y="416">BangDiem</text>
+          <text x="651" y="546">DiemThanhPhan</text>
+          <text x="919" y="546">KetQuaTongKet</text>
+          <text x="375" y="546">LichSuSuaDiem</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".78">
+          <text x="258" y="62">tenDangNhap</text><text x="258" y="76">matKhauMaHoa</text><text x="258" y="90">vaiTro, trangThai</text>
+          <text x="223" y="206">maGiaoVien</text><text x="223" y="219">hoTen, toChuyenMon</text>
+          <text x="408" y="206">maHocSinh</text><text x="408" y="219">hoTen, ngaySinh</text>
+          <text x="908" y="64">tenNamHoc</text>
+          <text x="908" y="156">tenHocKy, thuTu</text>
+          <text x="608" y="206">tenLop, khoi</text><text x="608" y="219">siSo</text>
+          <text x="798" y="206">tenMon</text><text x="798" y="219">soTietTuan</text>
+          <text x="1008" y="300">tenThanhPhan</text><text x="1008" y="313">heSo, batBuoc</text>
+          <text x="806" y="326">hocKy, ngayPhanCong</text>
+          <text x="568" y="436">trangThai</text><text x="568" y="450">ngayTao, ngayChot</text>
+          <text x="568" y="566">giaTri</text><text x="568" y="580">trangThai</text><text x="568" y="594">nguonNhap</text>
+          <text x="836" y="566">diemTongKet</text><text x="836" y="580">xepLoai, ngayTinh</text>
+          <text x="292" y="566">giaTriCu, giaTriMoi</text><text x="292" y="580">thoiDiem, nguoiSua</text><text x="292" y="594">lyDo</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 5.1 — Lớp phân tích: cụm danh mục và bảng điểm.</b> <code>DiemThanhPhan</code> là lớp trung tâm — nó là giao của bốn thứ: học sinh nào, thành phần điểm nào, thuộc bảng điểm nào, và giá trị bao nhiêu. Thuộc tính <code>nguonNhap</code> ghi lại điểm này vào hệ thống bằng đường nào: nhập tay hay đi qua nhận diện.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1000 470" role="img" aria-label="Sơ đồ lớp phân tích cụm nhận diện gồm phiếu nhận diện, kết quả dòng, từ điển điểm chữ và hai điểm nối sang cụm bảng điểm" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="currentColor" stroke-width="1.15" opacity=".85" fill="none">
+          <line x1="290" y1="132" x2="290" y2="196"/>
+          <line x1="380" y1="246" x2="470" y2="246"/>
+          <line x1="200" y1="270" x2="120" y2="270"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.6" fill="none" stroke-dasharray="6 4">
+          <line x1="380" y1="82" x2="700" y2="82"/>
+          <line x1="380" y1="300" x2="700" y2="300"/>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".72">
+          <text x="296" y="152">1</text><text x="296" y="190">1..*</text>
+          <text x="388" y="240">0..*</text><text x="452" y="240">1</text>
+          <text x="190" y="264" text-anchor="end">0..*</text><text x="128" y="264">1</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.35" fill="var(--surface)">
+          <rect x="200" y="60" width="180" height="72" rx="2"/>
+          <rect x="200" y="196" width="180" height="112" rx="2"/>
+          <rect x="20" y="238" width="100" height="64" rx="2"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.6" fill="var(--accent-soft)">
+          <rect x="700" y="54" width="180" height="56" rx="2"/>
+          <rect x="700" y="272" width="180" height="56" rx="2"/>
+        </g>
+        <g stroke="currentColor" stroke-width="1.1" opacity=".55">
+          <line x1="200" y1="82" x2="380" y2="82"/><line x1="200" y1="218" x2="380" y2="218"/><line x1="20" y1="260" x2="120" y2="260"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.1" opacity=".6">
+          <line x1="700" y1="76" x2="880" y2="76"/><line x1="700" y1="294" x2="880" y2="294"/>
+        </g>
+
+        <g font-size="12" font-weight="600" text-anchor="middle" fill="currentColor">
+          <text x="290" y="78">PhieuNhanDien</text>
+          <text x="290" y="214">KetQuaDong</text>
+          <text x="70" y="256">TuDienDiemChu</text>
+        </g>
+        <g font-size="12" font-weight="600" text-anchor="middle" fill="var(--accent-ink)">
+          <text x="790" y="72">BangDiem</text>
+          <text x="790" y="290">DiemThanhPhan</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".78">
+          <text x="208" y="98">anhGoc, anhDaNan</text><text x="208" y="111">trangThai</text><text x="208" y="124">nguoiTai, ngayTai</text>
+          <text x="208" y="234">anhOCat</text><text x="208" y="247">giaTriKenhA, doTinCayA</text><text x="208" y="260">giaTriKenhB, doTinCayB</text>
+          <text x="208" y="273">ketLuanDoiChieu</text><text x="208" y="286">mucPhanLoai</text><text x="208" y="299">giaTriChot, nguoiDuyet</text>
+          <text x="28" y="276">cachDoc</text><text x="28" y="289">giaTri</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9" fill="var(--accent-ink)" opacity=".85">
+          <text x="708" y="92">(xem Hình 5.1)</text>
+          <text x="708" y="310">(xem Hình 5.1)</text>
+        </g>
+        <g font-size="10" fill="var(--accent-ink)" text-anchor="middle">
+          <text x="540" y="74">phiếu thuộc về một bảng điểm</text>
+          <text x="540" y="292">dòng đã duyệt ghi vào ô điểm</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 5.2 — Lớp phân tích: cụm nhận diện.</b> Hai đường nét đứt màu cam là <b>toàn bộ mặt tiếp xúc</b> giữa phần nhận diện và phần quản lý điểm. <code>KetQuaDong</code> giữ song song giá trị của cả hai kênh và cả giá trị người duyệt chốt lại — nhờ vậy tuần 11 nhóm rút được ngay số liệu “máy đúng bao nhiêu dòng, người sửa bao nhiêu dòng” mà không phải đo lại.</figcaption>
+  </figure>
+
+  <h3 class="grp">Bảng mô tả lớp phân tích</h3>
+  <div class="tw"><table>
+    <caption>Bảng 5.1 — 17 lớp phân tích và trách nhiệm của từng lớp</caption>
+    <thead><tr><th style="width:6%" class="c">#</th><th style="width:19%">Lớp</th><th style="width:10%">Cụm</th><th>Trách nhiệm — lớp này trả lời câu hỏi gì</th></tr></thead>
+    <tbody>
+      <tr><td class="c m">1</td><td class="m"><strong>NguoiDung</strong></td><td>Tài khoản</td><td>Ai đang đăng nhập, với vai trò gì, tài khoản còn hiệu lực không</td></tr>
+      <tr><td class="c m">2</td><td class="m"><strong>QuanTriVien</strong></td><td>Tài khoản</td><td>Người quản lý danh mục và tài khoản; không có quyền sửa điểm</td></tr>
+      <tr><td class="c m">3</td><td class="m"><strong>GiaoVien</strong></td><td>Tài khoản</td><td>Người chịu trách nhiệm chuyên môn trên con số điểm; là chủ thể của mọi thao tác duyệt</td></tr>
+      <tr><td class="c m">4</td><td class="m"><strong>HocSinh</strong></td><td>Danh mục</td><td>Đối tượng được chấm điểm; đồng thời là một vai trò đăng nhập chỉ đọc</td></tr>
+      <tr><td class="c m">5</td><td class="m"><strong>NamHoc</strong></td><td>Danh mục</td><td>Khung thời gian lớn nhất; mọi lớp và bảng điểm đều thuộc về một năm học</td></tr>
+      <tr><td class="c m">6</td><td class="m"><strong>HocKy</strong></td><td>Danh mục</td><td>Chia nhỏ năm học; là một trong bốn thành phần định danh một bảng điểm</td></tr>
+      <tr><td class="c m">7</td><td class="m"><strong>Lop</strong></td><td>Danh mục</td><td>Tập hợp học sinh trong một năm học; quyết định số dòng của bảng điểm</td></tr>
+      <tr><td class="c m">8</td><td class="m"><strong>MonHoc</strong></td><td>Danh mục</td><td>Môn được chấm điểm; sở hữu bộ thành phần điểm riêng</td></tr>
+      <tr><td class="c m">9</td><td class="m"><strong>ThanhPhanDiem</strong></td><td>Danh mục</td><td>Một cột điểm của môn (miệng, 15 phút, 1 tiết, thi học kỳ) kèm hệ số — dữ liệu cấu hình, không viết cứng</td></tr>
+      <tr><td class="c m">10</td><td class="m"><strong>PhanCongGiangDay</strong></td><td>Danh mục</td><td><strong>Căn cứ duy nhất để mở quyền</strong> nhập và duyệt điểm: giáo viên nào dạy lớp nào, môn nào, học kỳ nào</td></tr>
+      <tr><td class="c m">11</td><td class="m"><strong>BangDiem</strong></td><td>Bảng điểm</td><td>Vùng chứa điểm của một lớp cho một môn trong một học kỳ; giữ trạng thái đang nhập / đã chốt</td></tr>
+      <tr><td class="c m">12</td><td class="m"><strong>DiemThanhPhan</strong></td><td>Bảng điểm</td><td><strong>Lớp trung tâm.</strong> Một ô điểm cụ thể: học sinh nào, thành phần nào, giá trị bao nhiêu, vào hệ thống bằng đường nào</td></tr>
+      <tr><td class="c m">13</td><td class="m"><strong>LichSuSuaDiem</strong></td><td>Bảng điểm</td><td>Bằng chứng: ai đổi ô điểm nào, lúc nào, từ giá trị nào sang giá trị nào. Chỉ ghi thêm, không sửa, không xoá</td></tr>
+      <tr><td class="c m">14</td><td class="m"><strong>KetQuaTongKet</strong></td><td>Bảng điểm</td><td>Điểm tổng kết môn và xếp loại; lưu kèm phiên bản bộ hệ số đã dùng để giải thích được về sau</td></tr>
+      <tr><td class="c m">15</td><td class="m"><strong>PhieuNhanDien</strong></td><td>Nhận diện</td><td>Một lần tải ảnh: ảnh gốc, ảnh đã nắn, ai tải, khi nào, đang ở bước nào của quy trình</td></tr>
+      <tr><td class="c m">16</td><td class="m"><strong>KetQuaDong</strong></td><td>Nhận diện</td><td>Một dòng học sinh trên tờ: ảnh ô cắt, giá trị hai kênh kèm độ tin cậy, kết luận đối chiếu, mức phân loại, giá trị người duyệt chốt, người duyệt và thời điểm duyệt</td></tr>
+      <tr><td class="c m">17</td><td class="m"><strong>TuDienDiemChu</strong></td><td>Nhận diện</td><td>Danh sách đóng các cách đọc điểm bằng chữ và giá trị số tương ứng; là căn cứ cho bước giải mã có ràng buộc</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Bảng quan hệ và bội số</h3>
+  <div class="tw"><table>
+    <caption>Bảng 5.2 — Toàn bộ quan hệ giữa các lớp, kèm bội số hai đầu và ý nghĩa nghiệp vụ</caption>
+    <thead><tr><th style="width:17%">Lớp A</th><th style="width:9%" class="c">Bội số</th><th style="width:17%">Lớp B</th><th style="width:12%">Loại quan hệ</th><th>Đọc thành câu</th></tr></thead>
+    <tbody>
+      <tr><td class="m">NguoiDung</td><td class="c m">—</td><td class="m">QuanTriVien, GiaoVien, HocSinh</td><td>Kế thừa</td><td>Ba vai trò đều là người dùng, dùng chung cơ chế đăng nhập và phân quyền</td></tr>
+      <tr><td class="m">NamHoc</td><td class="c m">1 — 1..*</td><td class="m">HocKy</td><td>Kết hợp</td><td>Một năm học có nhiều học kỳ</td></tr>
+      <tr><td class="m">Lop</td><td class="c m">1 — 0..*</td><td class="m">HocSinh</td><td>Kết hợp</td><td>Một lớp có nhiều học sinh trong một năm học</td></tr>
+      <tr><td class="m">MonHoc</td><td class="c m">1 — 1..*</td><td class="m">ThanhPhanDiem</td><td>Hợp thành</td><td>Xoá môn thì bộ thành phần điểm của môn cũng mất theo</td></tr>
+      <tr><td class="m">GiaoVien</td><td class="c m">1 — 0..*</td><td class="m">PhanCongGiangDay</td><td>Kết hợp</td><td>Một giáo viên được phân công nhiều lớp – môn</td></tr>
+      <tr><td class="m">Lop</td><td class="c m">1 — 0..*</td><td class="m">PhanCongGiangDay</td><td>Kết hợp</td><td>Một lớp có nhiều phân công, mỗi môn một phân công</td></tr>
+      <tr><td class="m">MonHoc</td><td class="c m">1 — 0..*</td><td class="m">PhanCongGiangDay</td><td>Kết hợp</td><td>Một môn được nhiều giáo viên dạy ở nhiều lớp</td></tr>
+      <tr><td class="m">Lop, MonHoc, HocKy</td><td class="c m">1 — 0..*</td><td class="m">BangDiem</td><td>Kết hợp</td><td><strong>Bộ ba này định danh duy nhất một bảng điểm</strong> trong một năm học</td></tr>
+      <tr><td class="m">BangDiem</td><td class="c m">1 — 0..*</td><td class="m">DiemThanhPhan</td><td>Hợp thành</td><td>Ô điểm không tồn tại độc lập ngoài bảng điểm chứa nó</td></tr>
+      <tr><td class="m">HocSinh</td><td class="c m">1 — 0..*</td><td class="m">DiemThanhPhan</td><td>Kết hợp</td><td>Mỗi ô điểm thuộc về đúng một học sinh</td></tr>
+      <tr><td class="m">ThanhPhanDiem</td><td class="c m">1 — 0..*</td><td class="m">DiemThanhPhan</td><td>Kết hợp</td><td>Mỗi ô điểm thuộc về đúng một cột thành phần</td></tr>
+      <tr><td class="m">DiemThanhPhan</td><td class="c m">1 — 0..*</td><td class="m">LichSuSuaDiem</td><td>Hợp thành</td><td>Mỗi lần sửa một ô sinh thêm một dòng nhật ký, không bao giờ ghi đè dòng cũ</td></tr>
+      <tr><td class="m">DiemThanhPhan</td><td class="c m">—</td><td class="m">KetQuaTongKet</td><td>Dẫn xuất</td><td>Điểm tổng kết là kết quả tính từ các ô điểm, không phải dữ liệu nhập tay</td></tr>
+      <tr><td class="m">BangDiem</td><td class="c m">1 — 0..*</td><td class="m">PhieuNhanDien</td><td>Kết hợp</td><td>Một bảng điểm có thể trải qua nhiều lần tải ảnh nhận diện</td></tr>
+      <tr><td class="m">PhieuNhanDien</td><td class="c m">1 — 1..*</td><td class="m">KetQuaDong</td><td>Hợp thành</td><td>Kết quả dòng không tồn tại ngoài phiếu sinh ra nó</td></tr>
+      <tr><td class="m">KetQuaDong</td><td class="c m">0..* — 1</td><td class="m">HocSinh</td><td>Kết hợp</td><td>Mỗi dòng trên tờ ứng với đúng một học sinh</td></tr>
+      <tr><td class="m">KetQuaDong</td><td class="c m">0..1 — 1</td><td class="m">DiemThanhPhan</td><td>Kết hợp</td><td><strong>Chỉ hình thành khi dòng được duyệt</strong> — đây là lúc đề xuất của máy trở thành điểm chính thức</td></tr>
+      <tr><td class="m">TuDienDiemChu</td><td class="c m">1 — 0..*</td><td class="m">KetQuaDong</td><td>Phụ thuộc</td><td>Kênh đọc điểm chữ tra từ điển để nắn chuỗi thô về giá trị hợp lệ</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call g">
+    <h4>Ba quyết định mô hình hoá nên chuẩn bị sẵn lý do</h4>
+    <ul>
+      <li><strong>Vì sao tách <code>KetQuaDong</code> khỏi <code>DiemThanhPhan</code> thay vì thêm cột vào bảng điểm?</strong> Vì đề xuất của máy và điểm chính thức là hai thứ khác nhau về bản chất trách nhiệm. Trộn chung thì không còn phân biệt được “máy đọc ra 7,5” với “giáo viên xác nhận 7,5”, và mất luôn khả năng đo được máy đúng bao nhiêu phần trăm.</li>
+      <li><strong>Vì sao <code>PhanCongGiangDay</code> là một lớp riêng chứ không phải một khoá ngoại?</strong> Vì nó mang thuộc tính riêng (học kỳ, ngày phân công) và là căn cứ kiểm tra quyền ở UC09, UC11 và UC13. Nhét nó thành thuộc tính của <code>GiaoVien</code> thì không diễn tả được một giáo viên dạy nhiều lớp – môn khác nhau.</li>
+      <li><strong>Vì sao <code>LichSuSuaDiem</code> là hợp thành chứ không phải kết hợp?</strong> Vì nhật ký của một ô điểm không có ý nghĩa nếu tách rời ô đó. Nhưng chú ý: quan hệ hợp thành ở đây <em>không</em> kéo theo quyền xoá — không vai trò nào được xoá nhật ký, kể cả khi ô điểm bị đánh dấu bỏ.</li>
+    </ul>
+  </div>
+</section>
+<section id="tuan-tu">
+  <div class="shead"><span class="idx">06</span><h2>Sơ đồ tuần tự cho hai nghiệp vụ phức tạp</h2></div>
+  <p class="lede">Đề cương yêu cầu sơ đồ tuần tự cho đúng hai nghiệp vụ phức tạp. Hai sơ đồ dưới đây bám sát luồng chính đã đặc tả ở §04, kể cả các khung <code>alt</code> và <code>loop</code> — vì chính những nhánh rẽ đó mới là chỗ thể hiện nhóm hiểu bài toán.</p>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1170 730" role="img" aria-label="Sơ đồ tuần tự use case UC11 tải ảnh và nhận diện bảng điểm, gồm bảy đối tượng, một khung alt cho chốt chặn lưới và một khung loop cho từng ô điểm" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="sq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="sqo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M0 1 L10 5 L0 9" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          </marker>
+        </defs>
+
+        <g stroke="currentColor" stroke-width="1.3" fill="var(--surface)">
+          <rect x="18" y="26" width="124" height="42" rx="2"/>
+          <rect x="168" y="26" width="146" height="42" rx="2"/>
+          <rect x="342" y="26" width="164" height="42" rx="2"/>
+          <rect x="540" y="26" width="140" height="42" rx="2"/>
+          <rect x="714" y="26" width="150" height="42" rx="2"/>
+          <rect x="890" y="26" width="140" height="42" rx="2"/>
+          <rect x="1046" y="26" width="112" height="42" rx="2"/>
+        </g>
+        <g font-size="11.5" text-anchor="middle" fill="currentColor" font-weight="500">
+          <text x="80" y="44">:GiaoVien</text><text x="80" y="59" font-size="9.5" opacity=".65">tác nhân</text>
+          <text x="241" y="44">:ManHinhTaiAnh</text><text x="241" y="59" font-size="9.5" opacity=".65">«boundary»</text>
+          <text x="424" y="44">:DieuKhienNhanDien</text><text x="424" y="59" font-size="9.5" opacity=".65">«control»</text>
+          <text x="610" y="44">:XuLyAnh</text><text x="610" y="59" font-size="9.5" opacity=".65">«control»</text>
+          <text x="789" y="44">:DichVuNhanDang</text><text x="789" y="59" font-size="9.5" opacity=".65">«dịch vụ ngoài»</text>
+          <text x="960" y="44">:PhieuNhanDien</text><text x="960" y="59" font-size="9.5" opacity=".65">«entity»</text>
+          <text x="1102" y="44">:KetQuaDong</text><text x="1102" y="59" font-size="9.5" opacity=".65">«entity»</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1" stroke-dasharray="5 5" opacity=".55">
+          <line x1="80" y1="68" x2="80" y2="706"/><line x1="241" y1="68" x2="241" y2="706"/>
+          <line x1="424" y1="68" x2="424" y2="706"/><line x1="610" y1="68" x2="610" y2="706"/>
+          <line x1="789" y1="68" x2="789" y2="706"/><line x1="960" y1="68" x2="960" y2="706"/>
+          <line x1="1102" y1="68" x2="1102" y2="706"/>
+        </g>
+        <g fill="var(--surface-3)" stroke="currentColor" stroke-width="1">
+          <rect x="236" y="98" width="10" height="590"/>
+          <rect x="419" y="170" width="10" height="486"/>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.25" marker-end="url(#sq)">
+          <line x1="80" y1="106" x2="234" y2="106"/>
+          <line x1="80" y1="140" x2="234" y2="140"/>
+          <line x1="246" y1="174" x2="417" y2="174"/>
+          <line x1="429" y1="208" x2="954" y2="208"/>
+          <line x1="429" y1="242" x2="604" y2="242"/>
+          <line x1="429" y1="330" x2="954" y2="330"/>
+          <line x1="429" y1="416" x2="604" y2="416"/>
+          <line x1="429" y1="450" x2="783" y2="450"/>
+          <line x1="429" y1="484" x2="783" y2="484"/>
+          <line x1="429" y1="596" x2="1096" y2="596"/>
+          <line x1="429" y1="630" x2="954" y2="630"/>
+        </g>
+        <g stroke="currentColor" stroke-width="1.15" stroke-dasharray="6 4" marker-end="url(#sqo)">
+          <line x1="604" y1="276" x2="431" y2="276"/>
+          <line x1="783" y1="518" x2="431" y2="518"/>
+          <line x1="417" y1="664" x2="248" y2="664"/>
+          <line x1="234" y1="694" x2="84" y2="694"/>
+        </g>
+        <path d="M429 546 H 470 V 566 H 431" fill="none" stroke="currentColor" stroke-width="1.25" marker-end="url(#sq)"/>
+
+        <g font-size="11" fill="currentColor">
+          <text x="90" y="101">1: chọn bảng điểm, khai báo số dòng của tờ</text>
+          <text x="90" y="135">2: tải ảnh bảng điểm lên</text>
+          <text x="254" y="169">3: xuLyAnhTaiLen(anh, soDong)</text>
+          <text x="437" y="203">4: tao(trangThai = "đang xử lý")</text>
+          <text x="437" y="237">5: nanPhoiCanh() ×2, tachKhungLuoi(), demDuongKe()</text>
+          <text x="597" y="271" text-anchor="end">6: soDuongKe</text>
+          <text x="437" y="325">7: ganCo("lệch lưới"), dừng — yêu cầu chụp lại</text>
+          <text x="437" y="411">8: catO(), doLuongMuc() → ô trống thì không gọi mô hình</text>
+          <text x="437" y="445">9: predict(ô Điểm số) — kênh A</text>
+          <text x="437" y="479">10: predict(ô Điểm chữ) — kênh B, mô hình khác</text>
+          <text x="776" y="513" text-anchor="end">11: (giaTri, doTinCay) cho từng kênh</text>
+          <text x="478" y="542">12: giaiMaCoRangBuoc(), doiChieuCheo()</text>
+          <text x="478" y="580" font-size="10" opacity=".7">«include» UC12 — ca hoà thì không chọn bừa</text>
+          <text x="437" y="591">13: tao(anhOCat, kênh A, kênh B, doTinCay, mucPhanLoai)</text>
+          <text x="437" y="625">14: capNhatTrangThai("chờ đối chiếu")</text>
+          <text x="410" y="659" text-anchor="end">15: tomTat(tổng dòng, số xanh / vàng / đỏ)</text>
+          <text x="228" y="689" text-anchor="end">16: hiển thị màn hình tóm tắt kết quả</text>
+        </g>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.15" opacity=".85">
+          <rect x="330" y="292" width="700" height="52" rx="2"/>
+          <path d="M330 292 H 400 V 308 H 330"/>
+          <rect x="330" y="378" width="700" height="152" rx="2"/>
+          <path d="M330 378 H 408 V 394 H 330"/>
+        </g>
+        <g font-size="10" font-weight="600" fill="currentColor">
+          <text x="338" y="304">alt</text><text x="410" y="304" font-weight="400" opacity=".8">[soDuongKe ≠ soDong đã khai báo] — chốt chặn</text>
+          <text x="338" y="390">loop</text><text x="418" y="390" font-weight="400" opacity=".8">[với mỗi ô điểm trên tờ]</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 6.1 — Tuần tự UC11: tải ảnh và nhận diện.</b> Hai chi tiết đáng chỉ vào khi bảo vệ: khung <b>alt</b> ở bước 7 là chốt chặn — sai lưới thì dừng hẳn chứ không đoán tiếp; và bước 9 với bước 10 là <b>hai lời gọi tách biệt tới hai mô hình khác nhau</b>, đúng điều kiện sống còn của lập luận kiểm chứng chéo.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1100 740" role="img" aria-label="Sơ đồ tuần tự use case UC13 đối chiếu và duyệt kết quả nhận diện, gồm sáu đối tượng, khung loop cho từng dòng cần soát, khung alt chặn duyệt và khung giao dịch khi ghi điểm" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="currentColor" stroke-width="1.3" fill="var(--surface)">
+          <rect x="18" y="26" width="124" height="42" rx="2"/>
+          <rect x="172" y="26" width="164" height="42" rx="2"/>
+          <rect x="376" y="26" width="170" height="42" rx="2"/>
+          <rect x="586" y="26" width="134" height="42" rx="2"/>
+          <rect x="758" y="26" width="152" height="42" rx="2"/>
+          <rect x="944" y="26" width="142" height="42" rx="2"/>
+        </g>
+        <g font-size="11.5" text-anchor="middle" fill="currentColor" font-weight="500">
+          <text x="80" y="44">:GiaoVien</text><text x="80" y="59" font-size="9.5" opacity=".65">tác nhân</text>
+          <text x="254" y="44">:ManHinhDoiChieu</text><text x="254" y="59" font-size="9.5" opacity=".65">«boundary»</text>
+          <text x="461" y="44">:DieuKhienDoiChieu</text><text x="461" y="59" font-size="9.5" opacity=".65">«control»</text>
+          <text x="653" y="44">:KetQuaDong</text><text x="653" y="59" font-size="9.5" opacity=".65">«entity»</text>
+          <text x="834" y="44">:DiemThanhPhan</text><text x="834" y="59" font-size="9.5" opacity=".65">«entity»</text>
+          <text x="1015" y="44">:LichSuSuaDiem</text><text x="1015" y="59" font-size="9.5" opacity=".65">«entity»</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1" stroke-dasharray="5 5" opacity=".55">
+          <line x1="80" y1="68" x2="80" y2="716"/><line x1="254" y1="68" x2="254" y2="716"/>
+          <line x1="461" y1="68" x2="461" y2="716"/><line x1="653" y1="68" x2="653" y2="716"/>
+          <line x1="834" y1="68" x2="834" y2="716"/><line x1="1015" y1="68" x2="1015" y2="716"/>
+        </g>
+        <g fill="var(--surface-3)" stroke="currentColor" stroke-width="1">
+          <rect x="249" y="94" width="10" height="604"/>
+          <rect x="456" y="128" width="10" height="552"/>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.25" marker-end="url(#sq)">
+          <line x1="80" y1="102" x2="247" y2="102"/>
+          <line x1="259" y1="134" x2="454" y2="134"/>
+          <line x1="466" y1="166" x2="647" y2="166"/>
+          <line x1="259" y1="286" x2="86" y2="286"/>
+          <line x1="80" y1="318" x2="247" y2="318"/>
+          <line x1="80" y1="404" x2="247" y2="404"/>
+          <line x1="259" y1="436" x2="454" y2="436"/>
+          <line x1="466" y1="576" x2="828" y2="576"/>
+          <line x1="466" y1="608" x2="1009" y2="608"/>
+          <line x1="466" y1="640" x2="647" y2="640"/>
+        </g>
+        <g stroke="currentColor" stroke-width="1.15" stroke-dasharray="6 4" marker-end="url(#sqo)">
+          <line x1="647" y1="198" x2="468" y2="198"/>
+          <line x1="454" y1="230" x2="261" y2="230"/>
+          <line x1="454" y1="516" x2="261" y2="516"/>
+          <line x1="454" y1="690" x2="261" y2="690"/>
+        </g>
+        <g fill="none" stroke="currentColor" stroke-width="1.25" marker-end="url(#sq)">
+          <path d="M259 344 H 300 V 364 H 261"/>
+          <path d="M466 462 H 510 V 482 H 468"/>
+        </g>
+
+        <g font-size="11" fill="currentColor">
+          <text x="90" y="97">1: mở một phiếu ở trạng thái chờ đối chiếu</text>
+          <text x="267" y="129">2: layDanhSachDong(maPhieu)</text>
+          <text x="474" y="161">3: truyVan(maPhieu)</text>
+          <text x="640" y="193" text-anchor="end">4: dòng + ảnh ô cắt + hai kênh + độ tin cậy</text>
+          <text x="447" y="225" text-anchor="end">5: dựng bảng soát ba màu, lọc sẵn vàng và đỏ</text>
+          <text x="248" y="281" text-anchor="end">6: hiện ảnh ô gốc cạnh giá trị máy đọc</text>
+          <text x="90" y="313">7: nhập hoặc chọn giá trị đúng</text>
+          <text x="308" y="340">8: kiemTraHopLe(0,0–10,0 · bước 0,1)</text>
+          <text x="90" y="399">9: bấm Duyệt</text>
+          <text x="267" y="431">10: duyet(maPhieu, giaTriChot[])</text>
+          <text x="518" y="458">11: kiemTraConDongChuaQuyetDinh()</text>
+          <text x="447" y="511" text-anchor="end">12: chặn duyệt, cuộn tới dòng còn thiếu</text>
+          <text x="474" y="571">13: ghiGiaTri(giaTriChot)</text>
+          <text x="474" y="603">14: ghiNhatKy(giá trị cũ → mới, người sửa, thời điểm)</text>
+          <text x="474" y="635">15: dongDau(nguoiDuyet, thoiDiemDuyet)</text>
+          <text x="447" y="685" text-anchor="end">16: tóm tắt — máy đúng N dòng, người sửa M dòng</text>
+        </g>
+
+        <g fill="none" stroke="currentColor" stroke-width="1.15" opacity=".85">
+          <rect x="150" y="252" width="500" height="126" rx="2"/>
+          <path d="M150 252 H 232 V 268 H 150"/>
+          <rect x="150" y="490" width="500" height="42" rx="2"/>
+          <path d="M150 490 H 220 V 506 H 150"/>
+        </g>
+        <rect x="380" y="546" width="700" height="118" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+        <path d="M380 546 H 500 V 562 H 380" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+        <g font-size="10" font-weight="600" fill="currentColor">
+          <text x="158" y="264">loop</text><text x="242" y="264" font-weight="400" opacity=".8">[với mỗi dòng vàng hoặc đỏ]</text>
+          <text x="158" y="502">alt</text><text x="230" y="502" font-weight="400" opacity=".8">[còn dòng chưa được quyết định]</text>
+        </g>
+        <text x="388" y="558" font-size="10" font-weight="600" fill="var(--accent)">giao dịch nguyên tử</text>
+      </svg>
+    </div>
+    <figcaption><b>Hình 6.2 — Tuần tự UC13: đối chiếu và duyệt.</b> Khung cam ở cuối gom ba thao tác ghi vào <b>một giao dịch</b>: lỗi giữa chừng thì không ô điểm nào được ghi và không nhật ký nào bị bỏ lại lơ lửng. Bước 6 luôn kèm ảnh ô gốc — bỏ ảnh đi thì giáo viên chỉ còn cách bấm Đồng ý, và toàn bộ cơ chế an toàn thành hình thức.</figcaption>
+  </figure>
+
+  <h3 class="grp">Ba mức phân loại — kết quả của UC12, đầu vào của UC13</h3>
+  <div class="levels">
+    <div class="lv g"><h4><span class="dot"></span>Xanh — tự động chấp nhận</h4><p>Hai kênh cho cùng một giá trị <em>và</em> độ tin cậy trên ngưỡng. Giáo viên chỉ lướt qua để xác nhận theo lô.</p></div>
+    <div class="lv y"><h4><span class="dot"></span>Vàng — cần đối chiếu</h4><p>Hai kênh lệch nhau, hoặc khớp nhưng độ tin cậy thấp, hoặc chỉ một kênh đọc được. Bắt buộc nhìn ảnh gốc rồi mới xác nhận.</p></div>
+    <div class="lv r"><h4><span class="dot"></span>Đỏ — từ chối đọc</h4><p>Ô trống, hoặc cả hai kênh đều không đọc được, hoặc gặp ca hoà chưa phân xử được. Hệ thống <strong>không gợi ý giá trị nào</strong>; giáo viên nhập tay.</p></div>
+  </div>
+  <p>Ba mức này không phải trang trí giao diện — chúng là một thuộc tính có thật của <code>KetQuaDong</code> (<code>mucPhanLoai</code>), được UC12 tính ra và UC13 dùng để quyết định dòng nào bắt buộc con người phải nhìn. Tỷ lệ ba mức chính là con số nhóm báo cáo ở tuần 9: <em>“hệ thống tự động hoá bao nhiêu phần trăm số dòng, còn lại bao nhiêu phần trăm được đánh dấu để giáo viên kiểm tra”.</em></p>
+</section>
+<section id="lop-thiet-ke">
+  <div class="shead"><span class="idx">07</span><h2>Sơ đồ lớp thiết kế</h2></div>
+  <p class="lede">Mức thiết kế thêm đúng ba thứ mà mức phân tích cố tình bỏ trống: <strong>kiểu dữ liệu, tầm nhìn thấy, và phương thức</strong>. Từ bản này viết thẳng ra được script tạo cơ sở dữ liệu ở §08 mà không phải đoán thêm gì.</p>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 980 450" role="img" aria-label="Kiến trúc phân tầng gồm tầng giao diện, tầng điều khiển, tầng thực thể và tầng dịch vụ hạ tầng, với chiều phụ thuộc đi từ trên xuống" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="dep" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+            <path d="M0 1 L10 5 L0 9" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          </marker>
+        </defs>
+
+        <g stroke="currentColor" stroke-width="1.35" fill="var(--surface)">
+          <rect x="40" y="20" width="820" height="82" rx="3"/>
+          <rect x="40" y="132" width="820" height="82" rx="3"/>
+          <rect x="40" y="244" width="820" height="82" rx="3"/>
+        </g>
+        <rect x="40" y="356" width="820" height="72" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+
+        <g font-size="12.5" font-weight="600" fill="currentColor">
+          <text x="56" y="42">Tầng giao diện <tspan font-size="10.5" font-weight="400" opacity=".7">«boundary» — những gì người dùng nhìn thấy và bấm</tspan></text>
+          <text x="56" y="154">Tầng điều khiển <tspan font-size="10.5" font-weight="400" opacity=".7">«control» — điều phối một use case từ đầu đến cuối, giữ quy tắc nghiệp vụ</tspan></text>
+          <text x="56" y="266">Tầng thực thể <tspan font-size="10.5" font-weight="400" opacity=".7">«entity» — 17 lớp ở §05, ánh xạ thẳng xuống bảng dữ liệu</tspan></text>
+        </g>
+        <text x="56" y="378" font-size="12.5" font-weight="600" fill="var(--accent-ink)">Tầng dịch vụ và hạ tầng <tspan font-size="10.5" font-weight="400">— ranh giới với phần thuật toán và với hệ điều hành</tspan></text>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".82">
+          <text x="56" y="64">ManHinhDangNhap · ManHinhDanhMuc · ManHinhBangDiem</text>
+          <text x="56" y="80">ManHinhTaiAnh · ManHinhDoiChieu · ManHinhThongKe · ManHinhTraCuuDiem</text>
+          <text x="56" y="176">DieuKhienTaiKhoan · DieuKhienDanhMuc · DieuKhienBangDiem</text>
+          <text x="56" y="192">DieuKhienNhanDien · DieuKhienDoiChieu · DieuKhienTongKet</text>
+          <text x="56" y="288">NguoiDung · GiaoVien · HocSinh · Lop · MonHoc · ThanhPhanDiem · PhanCongGiangDay</text>
+          <text x="56" y="304">BangDiem · DiemThanhPhan · LichSuSuaDiem · KetQuaTongKet · PhieuNhanDien · KetQuaDong</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--accent-ink)">
+          <text x="56" y="400">DichVuNhanDang <tspan font-family="IBM Plex Sans, sans-serif" opacity=".8">— bọc hàm predict(ảnh_ô) → (giá_trị, độ_tin_cậy)</tspan></text>
+          <text x="56" y="416">KhoAnh <tspan font-family="IBM Plex Sans, sans-serif" opacity=".8">— lưu ảnh gốc và ảnh ô cắt</tspan> · XuatExcel <tspan font-family="IBM Plex Sans, sans-serif" opacity=".8">— sinh tệp .xlsx đúng biểu mẫu</tspan></text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#dep)">
+          <line x1="450" y1="102" x2="450" y2="128"/>
+          <line x1="450" y1="214" x2="450" y2="240"/>
+          <line x1="700" y1="214" x2="700" y2="352"/>
+        </g>
+        <g font-size="10" fill="currentColor" opacity=".72">
+          <text x="458" y="120">«use»</text><text x="458" y="232">«use»</text><text x="708" y="290">«use»</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 7.1 — Kiến trúc phân tầng.</b> Chiều phụ thuộc chỉ đi <b>một chiều từ trên xuống</b>: giao diện biết điều khiển, điều khiển biết thực thể, không có chiều ngược lại. Nhờ vậy tuần 4 nhóm dựng được toàn bộ tầng trên với một <code>DichVuNhanDang</code> giả trả số ngẫu nhiên, rồi tuần 8 thay ruột bằng mô hình thật mà không sửa một dòng nào ở ba tầng trên.</figcaption>
+  </figure>
+
+  <h3 class="grp">Lớp thiết kế — cụm nghiệp vụ điểm và nhận diện</h3>
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1090 700" role="img" aria-label="Sơ đồ lớp thiết kế của năm lớp thực thể cốt lõi với đầy đủ thuộc tính kèm kiểu dữ liệu và phương thức" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="currentColor" stroke-width="1.15" fill="none" opacity=".85">
+          <line x1="160" y1="278" x2="160" y2="326"/>
+          <line x1="290" y1="140" x2="392" y2="112"/>
+          <line x1="290" y1="430" x2="392" y2="382"/>
+          <line x1="530" y1="212" x2="530" y2="266"/>
+          <line x1="530" y1="470" x2="530" y2="522"/>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity=".72">
+          <text x="166" y="296">1</text><text x="166" y="322">1..*</text>
+          <text x="300" y="134">0..*</text><text x="378" y="110">1</text>
+          <text x="300" y="424">0..1</text><text x="378" y="380">1</text>
+          <text x="536" y="230">1</text><text x="536" y="262">0..*</text>
+          <text x="536" y="488">1</text><text x="536" y="518">0..*</text>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.35" fill="var(--surface)">
+          <rect x="30" y="26" width="260" height="252" rx="2"/>
+          <rect x="30" y="326" width="260" height="278" rx="2"/>
+          <rect x="392" y="26" width="276" height="186" rx="2"/>
+          <rect x="392" y="266" width="276" height="204" rx="2"/>
+          <rect x="392" y="522" width="276" height="160" rx="2"/>
+        </g>
+        <g stroke="currentColor" stroke-width="1.1" opacity=".5">
+          <line x1="30" y1="50" x2="290" y2="50"/><line x1="30" y1="216" x2="290" y2="216"/>
+          <line x1="30" y1="350" x2="290" y2="350"/><line x1="30" y1="555" x2="290" y2="555"/>
+          <line x1="392" y1="50" x2="668" y2="50"/><line x1="392" y1="151" x2="668" y2="151"/>
+          <line x1="392" y1="290" x2="668" y2="290"/><line x1="392" y1="407" x2="668" y2="407"/>
+          <line x1="392" y1="546" x2="668" y2="546"/><line x1="392" y1="659" x2="668" y2="659"/>
+        </g>
+
+        <g font-size="12" font-weight="600" text-anchor="middle" fill="currentColor">
+          <text x="160" y="43">PhieuNhanDien</text>
+          <text x="160" y="343">KetQuaDong</text>
+          <text x="530" y="43">BangDiem</text>
+          <text x="530" y="283">DiemThanhPhan</text>
+          <text x="530" y="539">LichSuSuaDiem</text>
+        </g>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor">
+          <text x="38" y="66">- maPhieu: int «PK»</text>
+          <text x="38" y="80">- maBangDiem: int «FK»</text>
+          <text x="38" y="94">- maThanhPhan: int «FK»</text>
+          <text x="38" y="108">- duongDanAnhGoc: varchar(255)</text>
+          <text x="38" y="122">- duongDanAnhDaNan: varchar(255)</text>
+          <text x="38" y="136">- maBamTep: char(64)</text>
+          <text x="38" y="150">- soDongKhaiBao: smallint</text>
+          <text x="38" y="164">- soDongNhanDien: smallint</text>
+          <text x="38" y="178">- trangThai: TrangThaiPhieu</text>
+          <text x="38" y="192">- nguoiTai: int «FK»</text>
+          <text x="38" y="206">- ngayTai: timestamp</text>
+          <text x="38" y="232">+ taoTuAnh(anh, soDong): PhieuNhanDien</text>
+          <text x="38" y="246">+ ganCo(lyDo: text): void</text>
+          <text x="38" y="260">+ chuyenTrangThai(tt): void</text>
+          <text x="38" y="274">+ thongKeBaMuc(): (int, int, int)</text>
+
+          <text x="38" y="366">- maDong: bigint «PK»</text>
+          <text x="38" y="380">- maPhieu: int «FK»</text>
+          <text x="38" y="394">- maHocSinh: int «FK»</text>
+          <text x="38" y="408">- thuTuDong: smallint</text>
+          <text x="38" y="422">- duongDanAnhOSo: varchar(255)</text>
+          <text x="38" y="436">- duongDanAnhOChu: varchar(255)</text>
+          <text x="38" y="450">- giaTriKenhA: varchar(8)</text>
+          <text x="38" y="464">- doTinCayA: real</text>
+          <text x="38" y="478">- giaTriKenhB: varchar(32)</text>
+          <text x="38" y="492">- doTinCayB: real</text>
+          <text x="38" y="506">- ketLuanDoiChieu: KetLuan</text>
+          <text x="38" y="520">- mucPhanLoai: MucPhanLoai</text>
+          <text x="38" y="534">- giaTriChot: numeric(3,1)</text>
+          <text x="38" y="548">- nguoiDuyet: int «FK», thoiDiemDuyet</text>
+          <text x="38" y="571">+ doiChieuHaiKenh(): KetLuan</text>
+          <text x="38" y="585">+ phanLoai(nguong: real): MucPhanLoai</text>
+          <text x="38" y="599">+ chot(giaTri, nguoiDuyet): void</text>
+
+          <text x="400" y="66">- maBangDiem: int «PK»</text>
+          <text x="400" y="80">- maLop: int «FK»</text>
+          <text x="400" y="94">- maMon: int «FK»</text>
+          <text x="400" y="108">- maHocKy: int «FK»</text>
+          <text x="400" y="122">- trangThai: TrangThaiBangDiem</text>
+          <text x="400" y="136">- ngayTao, ngayChot: timestamp</text>
+          <text x="400" y="167">+ taoTuDanhSachLop(): void</text>
+          <text x="400" y="181">+ layLuoiDiem(): DiemThanhPhan[][]</text>
+          <text x="400" y="195">+ kiemTraDayDu(): bool</text>
+          <text x="400" y="209">+ chot(): void</text>
+
+          <text x="400" y="306">- maDiem: bigint «PK»</text>
+          <text x="400" y="320">- maBangDiem: int «FK»</text>
+          <text x="400" y="334">- maHocSinh: int «FK»</text>
+          <text x="400" y="348">- maThanhPhan: int «FK»</text>
+          <text x="400" y="362">- giaTri: numeric(3,1) NULL</text>
+          <text x="400" y="376">- trangThai: TrangThaiDiem</text>
+          <text x="400" y="390">- nguonNhap: NguonNhap</text>
+          <text x="400" y="404">- nguoiCapNhat, thoiDiemCapNhat</text>
+          <text x="400" y="423">+ ganGiaTri(gt, nguon, nguoiSua): void</text>
+          <text x="400" y="437">+ kiemTraHopLe(gt): bool</text>
+          <text x="400" y="451">+ layLichSu(): LichSuSuaDiem[]</text>
+          <text x="400" y="465">+ danhDauChoDoiChieu(): void</text>
+
+          <text x="400" y="562">- maLichSu: bigint «PK»</text>
+          <text x="400" y="576">- maDiem: bigint «FK»</text>
+          <text x="400" y="590">- giaTriCu: numeric(3,1) NULL</text>
+          <text x="400" y="604">- giaTriMoi: numeric(3,1)</text>
+          <text x="400" y="618">- nguoiSua: int «FK»</text>
+          <text x="400" y="632">- thoiDiem: timestamp</text>
+          <text x="400" y="646">- lyDo: varchar(255)</text>
+          <text x="400" y="675">+ ghi(diem, cu, moi, nguoi): void</text>
+        </g>
+
+        <g stroke="var(--accent)" stroke-width="1.4" fill="var(--accent-soft)">
+          <rect x="740" y="26" width="320" height="130" rx="2"/>
+          <rect x="740" y="196" width="320" height="146" rx="2"/>
+          <rect x="740" y="382" width="320" height="118" rx="2"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1" opacity=".6">
+          <line x1="740" y1="50" x2="1060" y2="50"/><line x1="740" y1="220" x2="1060" y2="220"/><line x1="740" y1="406" x2="1060" y2="406"/>
+        </g>
+        <g font-size="11.5" font-weight="600" text-anchor="middle" fill="var(--accent-ink)">
+          <text x="900" y="43">«control» DieuKhienNhanDien</text>
+          <text x="900" y="213">«control» DieuKhienDoiChieu</text>
+          <text x="900" y="399">«control» DieuKhienTongKet</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--accent-ink)">
+          <text x="748" y="68">+ xuLyAnhTaiLen(anh, soDong): Phieu</text>
+          <text x="748" y="82">+ nanVaCatO(anh): AnhO[]</text>
+          <text x="748" y="96">+ chotChanLuoi(dem, khaiBao): bool</text>
+          <text x="748" y="110">+ docHaiKenh(o): (KetQuaA, KetQuaB)</text>
+          <text x="748" y="124">+ giaiMaCoRangBuoc(chuoi): string</text>
+          <text x="748" y="138">+ doiChieuCheo(a, b): MucPhanLoai</text>
+          <text x="748" y="152">+ nhanBietOTrong(anhO): bool</text>
+
+          <text x="748" y="238">+ layDanhSachDong(maPhieu): Dong[]</text>
+          <text x="748" y="252">+ locTheoMuc(muc): Dong[]</text>
+          <text x="748" y="266">+ capNhatGiaTriChot(dong, gt): void</text>
+          <text x="748" y="280">+ kiemTraConDongChuaQuyetDinh(): int</text>
+          <text x="748" y="294">+ duyet(maPhieu, nguoiDuyet): KetQua</text>
+          <text x="748" y="308">&#160;&#160;&#160;« giao dịch nguyên tử »</text>
+          <text x="748" y="322">+ ghiNhatKyHangLoat(thayDoi[]): void</text>
+          <text x="748" y="336">+ thongKeMayDungNguoiSua(): (int,int)</text>
+
+          <text x="748" y="424">+ tinhTongKet(lop, mon, hocKy): void</text>
+          <text x="748" y="438">+ layBoHeSoHienHanh(mon): HeSo[]</text>
+          <text x="748" y="452">+ xepLoai(diemTongKet): string</text>
+          <text x="748" y="466">+ thongKe(phamVi): BaoCaoThongKe</text>
+          <text x="748" y="480">+ xuatExcel(phamVi, mau): File</text>
+          <text x="748" y="494">+ kiemTraDaDuyetHet(): bool</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 7.2 — Lớp thiết kế: năm lớp thực thể cốt lõi và ba lớp điều khiển.</b> Chú ý <code>giaTri: numeric(3,1) <b>NULL</b></code> ở <code>DiemThanhPhan</code> — cho phép NULL là cách duy nhất để phân biệt “chưa có điểm” với “được 0,0 điểm”. Nếu cột này để NOT NULL DEFAULT 0 thì lỗi biến ô trống thành 0 điểm sẽ nằm sẵn trong lược đồ, không cách nào sửa ở tầng ứng dụng.</figcaption>
+  </figure>
+
+  <h3 class="grp">Kiểu liệt kê dùng trong thiết kế</h3>
+  <div class="tw"><table>
+    <caption>Bảng 7.1 — Các kiểu liệt kê. Dùng kiểu liệt kê thay cho chuỗi tự do để trạng thái không bao giờ rơi vào giá trị vô nghĩa</caption>
+    <thead><tr><th style="width:20%">Kiểu</th><th style="width:44%">Các giá trị</th><th>Dùng ở đâu</th></tr></thead>
+    <tbody>
+      <tr><td class="m"><strong>VaiTro</strong></td><td class="m">QUAN_TRI_VIEN · GIAO_VIEN · HOC_SINH</td><td><code>NguoiDung.vaiTro</code> — quyết định giao diện và quyền sau khi đăng nhập</td></tr>
+      <tr><td class="m"><strong>TrangThaiBangDiem</strong></td><td class="m">DANG_NHAP_LIEU · DA_CHOT</td><td><code>BangDiem.trangThai</code> — bảng đã chốt thì khoá sửa</td></tr>
+      <tr><td class="m"><strong>TrangThaiDiem</strong></td><td class="m">CHUA_CO · CHO_DOI_CHIEU · DA_DUYET</td><td><code>DiemThanhPhan.trangThai</code> — chỉ điểm DA_DUYET mới được đưa vào tổng kết</td></tr>
+      <tr><td class="m"><strong>NguonNhap</strong></td><td class="m">NHAP_TAY · NHAN_DIEN</td><td><code>DiemThanhPhan.nguonNhap</code> — nhờ cột này mới đo được tỷ lệ điểm đi qua đường nhận diện</td></tr>
+      <tr><td class="m"><strong>TrangThaiPhieu</strong></td><td class="m">DANG_XU_LY · CHO_DOI_CHIEU · DA_DUYET · LOI</td><td><code>PhieuNhanDien.trangThai</code></td></tr>
+      <tr><td class="m"><strong>KetLuan</strong></td><td class="m">KHOP · LECH · MOT_KENH · KHONG_DOC_DUOC</td><td><code>KetQuaDong.ketLuanDoiChieu</code> — kết quả so hai kênh</td></tr>
+      <tr><td class="m"><strong>MucPhanLoai</strong></td><td class="m">XANH · VANG · DO</td><td><code>KetQuaDong.mucPhanLoai</code> — quyết định dòng nào bắt buộc con người phải nhìn</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Các lớp thực thể còn lại</h3>
+  <div class="tw"><table>
+    <caption>Bảng 7.2 — Thuộc tính và phương thức chính của các lớp danh mục, tài khoản và tổng kết</caption>
+    <thead><tr><th style="width:17%">Lớp</th><th style="width:43%">Thuộc tính chính (kiểu)</th><th>Phương thức chính</th></tr></thead>
+    <tbody>
+      <tr><td class="m"><strong>NguoiDung</strong></td><td class="m">- maNguoiDung: int «PK»<br>- tenDangNhap: varchar(50) «UNIQUE»<br>- matKhauMaHoa: varchar(255)<br>- vaiTro: VaiTro<br>- trangThai: bool<br>- soLanDangNhapSai: smallint</td><td class="m">+ xacThuc(matKhau): bool<br>+ doiMatKhau(cu, moi): void<br>+ khoa() / moKhoa(): void</td></tr>
+      <tr><td class="m"><strong>GiaoVien</strong></td><td class="m">- maGiaoVien: int «PK, FK→NguoiDung»<br>- hoTen: varchar(100)<br>- toChuyenMon: varchar(50)<br>- email, dienThoai: varchar</td><td class="m">+ layPhanCong(hocKy): PhanCong[]<br>+ coQuyenTren(lop, mon, hocKy): bool</td></tr>
+      <tr><td class="m"><strong>HocSinh</strong></td><td class="m">- maHocSinh: int «PK»<br>- maNguoiDung: int «FK» NULL<br>- hoTen: varchar(100)<br>- ngaySinh: date<br>- maLop: int «FK»<br>- dangTheoHoc: bool</td><td class="m">+ layBangDiem(hocKy): DiemThanhPhan[]<br>+ layKetQuaTongKet(hocKy): KetQua[]</td></tr>
+      <tr><td class="m"><strong>Lop</strong></td><td class="m">- maLop: int «PK»<br>- tenLop: varchar(20)<br>- khoi: smallint<br>- maNamHoc: int «FK»<br>- maGVChuNhiem: int «FK»</td><td class="m">+ danhSachHocSinh(): HocSinh[]<br>+ siSo(): int</td></tr>
+      <tr><td class="m"><strong>MonHoc</strong></td><td class="m">- maMon: int «PK»<br>- tenMon: varchar(80)<br>- soTietTuan: smallint</td><td class="m">+ layThanhPhanDiem(): ThanhPhanDiem[]<br>+ kiemTraTongHeSo(): bool</td></tr>
+      <tr><td class="m"><strong>ThanhPhanDiem</strong></td><td class="m">- maThanhPhan: int «PK»<br>- maMon: int «FK»<br>- tenThanhPhan: varchar(50)<br>- heSo: numeric(3,2)<br>- batBuoc: bool<br>- thuTuHienThi: smallint</td><td class="m">+ apDungTu(ngay): void</td></tr>
+      <tr><td class="m"><strong>PhanCongGiangDay</strong></td><td class="m">- maPhanCong: int «PK»<br>- maGiaoVien, maLop, maMon: int «FK»<br>- maHocKy: int «FK»<br>- ngayPhanCong: date</td><td class="m">+ conHieuLuc(): bool</td></tr>
+      <tr><td class="m"><strong>KetQuaTongKet</strong></td><td class="m">- maKetQua: bigint «PK»<br>- maHocSinh, maMon, maHocKy: int «FK»<br>- diemTongKet: numeric(3,1)<br>- xepLoai: varchar(20)<br>- phienBanHeSo: varchar(20)<br>- ngayTinh: timestamp</td><td class="m">+ tinhLai(): void<br>+ giaiThichCachTinh(): string</td></tr>
+      <tr><td class="m"><strong>NamHoc</strong> · <strong>HocKy</strong></td><td class="m">- maNamHoc / maHocKy: int «PK»<br>- ten: varchar(20)<br>- thuTu: smallint<br>- ngayBatDau, ngayKetThuc: date</td><td class="m">+ dangDienRa(): bool</td></tr>
+      <tr><td class="m"><strong>TuDienDiemChu</strong></td><td class="m">- maCachDoc: int «PK»<br>- cachDoc: varchar(32) «UNIQUE»<br>- giaTri: numeric(3,1)</td><td class="m">+ tra(chuoiTho): (giaTri, khoangCach)<br>+ phatHienCaHoa(chuoiTho): bool</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<section id="du-lieu">
+  <div class="shead"><span class="idx">08</span><h2>Mô hình dữ liệu</h2></div>
+  <p class="lede">16 bảng. Mũi tên chỉ chiều khoá ngoại: từ bảng <em>tham chiếu</em> tới bảng <em>được tham chiếu</em>. Hai bảng tô cam là hai bảng mà đề cương nêu đích danh — cấu trúc lưu kết quả nhận diện gồm ảnh gốc, ảnh cắt từng ô, giá trị dự đoán, độ tin cậy, trạng thái duyệt, người duyệt và thời điểm duyệt.</p>
+
+  <figure>
+    <div class="fbody">
+      <svg viewBox="0 0 1120 580" role="img" aria-label="Sơ đồ quan hệ mười sáu bảng dữ liệu với các khoá ngoại, trong đó hai bảng lưu kết quả nhận diện được đánh dấu" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="fk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="fka" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <g stroke="currentColor" stroke-width="1.15" opacity=".8" marker-end="url(#fk)" fill="none">
+          <line x1="105" y1="128" x2="105" y2="94"/>
+          <line x1="105" y1="418" x2="105" y2="384"/>
+          <line x1="255" y1="272" x2="215" y2="272"/>
+          <line x1="330" y1="252" x2="330" y2="128"/>
+          <line x1="330" y1="128" x2="330" y2="94"/>
+          <line x1="290" y1="378" x2="230" y2="330"/>
+          <line x1="380" y1="378" x2="380" y2="298"/>
+          <line x1="420" y1="366" x2="470" y2="300"/>
+          <path d="M545 252 V 200 H 350 V 172"/>
+          <path d="M470 274 H 420 V 300"/>
+          <path d="M560 320 V 296"/>
+          <path d="M545 400 H 200 V 336"/>
+          <path d="M600 400 V 356"/>
+          <path d="M560 468 V 436"/>
+          <path d="M760 400 H 700 V 356"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.4" opacity=".95" marker-end="url(#fka)" fill="none">
+          <path d="M840 252 H 640 V 296"/>
+          <path d="M840 400 V 356"/>
+          <path d="M880 400 H 940 V 380"/>
+        </g>
+
+        <g stroke="currentColor" stroke-width="1.3" fill="var(--surface)">
+          <rect x="30" y="50" width="150" height="44" rx="2"/>
+          <rect x="30" y="128" width="150" height="44" rx="2"/>
+          <rect x="30" y="292" width="150" height="44" rx="2"/>
+          <rect x="30" y="340" width="150" height="44" rx="2"/>
+          <rect x="30" y="418" width="150" height="44" rx="2"/>
+          <rect x="255" y="50" width="150" height="44" rx="2"/>
+          <rect x="255" y="128" width="150" height="44" rx="2"/>
+          <rect x="255" y="250" width="150" height="44" rx="2"/>
+          <rect x="255" y="378" width="150" height="44" rx="2"/>
+          <rect x="470" y="250" width="180" height="46" rx="2"/>
+          <rect x="470" y="310" width="180" height="46" rx="2"/>
+          <rect x="470" y="424" width="180" height="46" rx="2"/>
+          <rect x="700" y="424" width="180" height="46" rx="2"/>
+          <rect x="940" y="336" width="150" height="44" rx="2"/>
+        </g>
+        <g stroke="var(--accent)" stroke-width="1.7" fill="var(--accent-soft)">
+          <rect x="760" y="250" width="180" height="46" rx="2"/>
+          <rect x="760" y="310" width="180" height="46" rx="2"/>
+        </g>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" text-anchor="middle" fill="currentColor">
+          <text x="105" y="70">nguoi_dung</text>
+          <text x="105" y="148">giao_vien</text>
+          <text x="105" y="312">hoc_sinh</text>
+          <text x="105" y="360">nam_hoc</text>
+          <text x="105" y="438">hoc_ky</text>
+          <text x="330" y="70">mon_hoc</text>
+          <text x="330" y="148">thanh_phan_diem</text>
+          <text x="330" y="270">lop</text>
+          <text x="330" y="398">phan_cong_giang_day</text>
+          <text x="560" y="270">bang_diem</text>
+          <text x="560" y="330">diem_thanh_phan</text>
+          <text x="560" y="444">lich_su_sua_diem</text>
+          <text x="790" y="444">ket_qua_tong_ket</text>
+          <text x="1015" y="356">tu_dien_diem_chu</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" text-anchor="middle" fill="var(--accent-ink)">
+          <text x="850" y="270">phieu_nhan_dien</text>
+          <text x="850" y="330">ket_qua_dong</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="8.5" text-anchor="middle" fill="currentColor" opacity=".62">
+          <text x="105" y="84">PK ma_nguoi_dung</text>
+          <text x="105" y="162">PK ma_giao_vien</text>
+          <text x="105" y="326">PK ma_hoc_sinh</text>
+          <text x="105" y="374">PK ma_nam_hoc</text>
+          <text x="105" y="452">PK ma_hoc_ky</text>
+          <text x="330" y="84">PK ma_mon</text>
+          <text x="330" y="162">PK ma_thanh_phan</text>
+          <text x="330" y="284">PK ma_lop</text>
+          <text x="330" y="412">PK ma_phan_cong</text>
+          <text x="560" y="286">PK ma_bang_diem · UQ(lớp,môn,học kỳ)</text>
+          <text x="560" y="346">PK ma_diem · UQ(bảng,học sinh,thành phần)</text>
+          <text x="560" y="458">PK ma_lich_su</text>
+          <text x="790" y="458">PK ma_ket_qua</text>
+          <text x="1015" y="370">PK ma_cach_doc · UQ cach_doc</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="8.5" text-anchor="middle" fill="var(--accent-ink)" opacity=".85">
+          <text x="850" y="286">PK ma_phieu · UQ ma_bam_tep</text>
+          <text x="850" y="346">PK ma_dong · UQ(phiếu, thứ tự dòng)</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Hình 8.1 — Lược đồ quan hệ.</b> Ràng buộc duy nhất <code>UQ</code> quan trọng ngang khoá chính ở đây: <code>UQ(lớp, môn, học kỳ)</code> chặn việc tạo hai bảng điểm trùng nhau, còn <code>UQ(bảng, học sinh, thành phần)</code> chặn một học sinh có hai giá trị cho cùng một cột điểm — lỗi mà nếu để lọt thì điểm tổng kết sẽ ra hai kết quả khác nhau tuỳ thứ tự truy vấn.</figcaption>
+  </figure>
+
+  <h3 class="grp">Đặc tả hai bảng lưu kết quả nhận diện</h3>
+  <p>Đề cương liệt kê đích danh những thứ phải lưu được. Bảng dưới đây đối chiếu từng yêu cầu với cột hiện thực nó, để khi bảo vệ chỉ cần chỉ vào một dòng là xong.</p>
+  <div class="tw"><table>
+    <caption>Bảng 8.1 — Đối chiếu yêu cầu của đề cương với cột trong lược đồ</caption>
+    <thead><tr><th style="width:30%">Đề cương yêu cầu lưu</th><th style="width:22%">Bảng</th><th style="width:26%">Cột hiện thực</th><th>Vì sao phải có</th></tr></thead>
+    <tbody>
+      <tr><td>Ảnh gốc</td><td class="m">phieu_nhan_dien</td><td class="m">duong_dan_anh_goc</td><td>Chứng cứ gốc, không tái tạo được; cần để chạy lại khi đổi mô hình</td></tr>
+      <tr><td>Ảnh cắt từng ô điểm</td><td class="m">ket_qua_dong</td><td class="m">duong_dan_anh_o_so<br>duong_dan_anh_o_chu</td><td><strong>Không có ảnh ô thì màn hình đối chiếu vô nghĩa</strong> — giáo viên chỉ còn cách tin máy</td></tr>
+      <tr><td>Giá trị dự đoán</td><td class="m">ket_qua_dong</td><td class="m">gia_tri_kenh_a<br>gia_tri_kenh_b</td><td>Lưu <em>hai</em> giá trị riêng, không gộp — nếu gộp thì mất luôn khả năng đo từng kênh</td></tr>
+      <tr><td>Độ tin cậy</td><td class="m">ket_qua_dong</td><td class="m">do_tin_cay_a<br>do_tin_cay_b</td><td>Đầu vào để phân ba mức; cũng là dữ liệu vẽ đường cong đánh đổi ở tuần 9</td></tr>
+      <tr><td>Trạng thái duyệt</td><td class="m">ket_qua_dong</td><td class="m">muc_phan_loai<br>gia_tri_chot</td><td><code>gia_tri_chot</code> còn NULL nghĩa là dòng chưa được quyết định</td></tr>
+      <tr><td>Người duyệt</td><td class="m">ket_qua_dong</td><td class="m">nguoi_duyet</td><td>Chữ ký trách nhiệm trên con số điểm</td></tr>
+      <tr><td>Thời điểm duyệt</td><td class="m">ket_qua_dong</td><td class="m">thoi_diem_duyet</td><td>Cùng với nhật ký, đủ để dựng lại toàn bộ lịch sử một ô điểm</td></tr>
+      <tr><td colspan="2"><em>Bổ sung ngoài yêu cầu — nên có</em></td><td class="m">ma_bam_tep</td><td>Phát hiện tải trùng cùng một ảnh (nhánh A5 của UC11)</td></tr>
+      <tr><td colspan="2"></td><td class="m">so_dong_khai_bao<br>so_dong_nhan_dien</td><td>Hai cột này chính là chốt chặn lưới — lệch nhau thì dừng, không đoán tiếp</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Danh sách 16 bảng</h3>
+  <div class="tw"><table>
+    <caption>Bảng 8.2 — Bảng, khoá chính, khoá ngoại và ràng buộc. Cột cuối là điều kiện nghiệp vụ phải kiểm ở tầng ứng dụng vì lược đồ không diễn tả hết được</caption>
+    <thead><tr><th style="width:5%" class="c">#</th><th style="width:17%">Bảng</th><th style="width:15%">Khoá chính</th><th style="width:26%">Khoá ngoại</th><th>Ràng buộc bổ sung</th></tr></thead>
+    <tbody>
+      <tr><td class="c m">1</td><td class="m">nguoi_dung</td><td class="m">ma_nguoi_dung</td><td class="m">—</td><td><code>ten_dang_nhap</code> duy nhất; mật khẩu lưu ở dạng băm có muối</td></tr>
+      <tr><td class="c m">2</td><td class="m">giao_vien</td><td class="m">ma_giao_vien</td><td class="m">→ nguoi_dung</td><td>Khoá chính đồng thời là khoá ngoại — quan hệ một–một với tài khoản</td></tr>
+      <tr><td class="c m">3</td><td class="m">hoc_sinh</td><td class="m">ma_hoc_sinh</td><td class="m">→ lop, → nguoi_dung (NULL)</td><td>Cho phép NULL tài khoản: học sinh có thể chưa được cấp tài khoản</td></tr>
+      <tr><td class="c m">4</td><td class="m">nam_hoc</td><td class="m">ma_nam_hoc</td><td class="m">—</td><td>Chỉ một năm học đang diễn ra tại một thời điểm</td></tr>
+      <tr><td class="c m">5</td><td class="m">hoc_ky</td><td class="m">ma_hoc_ky</td><td class="m">→ nam_hoc</td><td>Duy nhất theo (năm học, thứ tự)</td></tr>
+      <tr><td class="c m">6</td><td class="m">lop</td><td class="m">ma_lop</td><td class="m">→ nam_hoc, → giao_vien</td><td>Duy nhất theo (năm học, tên lớp)</td></tr>
+      <tr><td class="c m">7</td><td class="m">mon_hoc</td><td class="m">ma_mon</td><td class="m">—</td><td>Tên môn duy nhất</td></tr>
+      <tr><td class="c m">8</td><td class="m">thanh_phan_diem</td><td class="m">ma_thanh_phan</td><td class="m">→ mon_hoc</td><td><strong>Tổng hệ số các thành phần của một môn phải hợp lệ</strong> — kiểm ở tầng ứng dụng trước khi cho phép tính tổng kết</td></tr>
+      <tr><td class="c m">9</td><td class="m">phan_cong_giang_day</td><td class="m">ma_phan_cong</td><td class="m">→ giao_vien, lop, mon_hoc, hoc_ky</td><td>Duy nhất theo (lớp, môn, học kỳ) — một lớp – môn chỉ có một giáo viên phụ trách</td></tr>
+      <tr><td class="c m">10</td><td class="m">bang_diem</td><td class="m">ma_bang_diem</td><td class="m">→ lop, mon_hoc, hoc_ky</td><td>Duy nhất theo (lớp, môn, học kỳ); đã chốt thì khoá mọi thao tác ghi</td></tr>
+      <tr><td class="c m">11</td><td class="m">diem_thanh_phan</td><td class="m">ma_diem</td><td class="m">→ bang_diem, hoc_sinh, thanh_phan_diem</td><td>Duy nhất theo (bảng điểm, học sinh, thành phần); <code>gia_tri</code> <strong>cho phép NULL</strong>; nếu khác NULL thì phải trong 0,0–10,0</td></tr>
+      <tr><td class="c m">12</td><td class="m">lich_su_sua_diem</td><td class="m">ma_lich_su</td><td class="m">→ diem_thanh_phan, nguoi_dung</td><td><strong>Chỉ cho INSERT.</strong> Thu hồi quyền UPDATE và DELETE ở cấp cơ sở dữ liệu, đừng chỉ dựa vào tầng ứng dụng</td></tr>
+      <tr><td class="c m">13</td><td class="m">ket_qua_tong_ket</td><td class="m">ma_ket_qua</td><td class="m">→ hoc_sinh, mon_hoc, hoc_ky</td><td>Duy nhất theo (học sinh, môn, học kỳ); lưu kèm phiên bản bộ hệ số đã dùng</td></tr>
+      <tr><td class="c m">14</td><td class="m">phieu_nhan_dien</td><td class="m">ma_phieu</td><td class="m">→ bang_diem, thanh_phan_diem, nguoi_dung</td><td><code>ma_bam_tep</code> duy nhất để phát hiện tải trùng ảnh</td></tr>
+      <tr><td class="c m">15</td><td class="m">ket_qua_dong</td><td class="m">ma_dong</td><td class="m">→ phieu_nhan_dien, hoc_sinh, diem_thanh_phan (NULL)</td><td>Duy nhất theo (phiếu, thứ tự dòng); khoá ngoại tới <code>diem_thanh_phan</code> <strong>chỉ khác NULL sau khi dòng được duyệt</strong></td></tr>
+      <tr><td class="c m">16</td><td class="m">tu_dien_diem_chu</td><td class="m">ma_cach_doc</td><td class="m">—</td><td><code>cach_doc</code> duy nhất; nhiều cách đọc có thể trỏ về cùng một giá trị (“tám rưỡi” và “tám năm” cùng ra 8,5)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call w">
+    <h4>Hai quyết định lược đồ mà nếu làm sai thì không sửa được ở tầng trên</h4>
+    <p><strong>1. <code>diem_thanh_phan.gia_tri</code> phải cho phép NULL.</strong> Nếu khai <code>NOT NULL DEFAULT 0</code> cho tiện thì “chưa có điểm” và “được 0 điểm” trở thành cùng một thứ trong cơ sở dữ liệu. Không tầng ứng dụng nào cứu được, vì 0,0 là một giá trị điểm hoàn toàn hợp lệ. Đây cũng chính là lý do UC11 phải nhận biết ô trống <em>trước khi</em> đưa ảnh vào mô hình.</p>
+    <p><strong>2. <code>ket_qua_dong.ma_diem</code> phải cho phép NULL và chỉ được điền khi duyệt.</strong> Cột này là ranh giới giữa “máy đề xuất” và “điểm chính thức”. Nếu điền ngay lúc nhận diện thì hệ thống đã ghi điểm trước khi có người xác nhận — đúng cái mà toàn bộ thiết kế này sinh ra để ngăn.</p>
+  </div>
+</section>
+<section id="truy-vet">
+  <div class="shead"><span class="idx">09</span><h2>Truy vết và nghiệm thu</h2></div>
+  <p class="lede">Hai bảng cuối trả lời hai câu hỏi khác nhau. Bảng 9.1: hồ sơ này đổi được bao nhiêu điểm và đổi ở dòng nào. Bảng 9.2: mỗi chức năng trong 14 chức năng có thật sự chạy được với mô hình đã thiết kế hay không — nếu một chức năng không truy được xuống tới bảng dữ liệu thì nó chưa được thiết kế xong, chỉ mới được nhắc tên.</p>
+
+  <div class="tw"><table>
+    <caption>Bảng 9.1 — Truy vết tới thang điểm của đề cương</caption>
+    <thead><tr><th style="width:34%">Dòng thang điểm</th><th style="width:8%" class="c">Điểm</th><th style="width:22%">Nằm ở mục nào</th><th style="width:12%" class="c">Trạng thái</th><th>Bằng chứng cụ thể</th></tr></thead>
+    <tbody>
+      <tr><td>Lập sơ đồ Use-Case nghiệp vụ và đặc tả</td><td class="c m">0,25</td><td>§02</td><td class="c"><span class="chip g">Xong</span></td><td>Hình 2.1, Hình 2.2, Bảng 2.1 (6 nghiệp vụ kèm điểm nghẽn)</td></tr>
+      <tr><td>Lập sơ đồ Use-Case hệ thống và đặc tả</td><td class="c m">0,25</td><td>§03, §04</td><td class="c"><span class="chip g">Xong</span></td><td>Hình 3.1–3.3, Bảng 3.1–3.2, Bảng 4.1 và 4 bản đặc tả đầy đủ</td></tr>
+      <tr><td>Sơ đồ lớp phân tích</td><td class="c m">0,25</td><td>§05</td><td class="c"><span class="chip g">Xong</span></td><td>Hình 5.1–5.2, Bảng 5.1 (17 lớp), Bảng 5.2 (18 quan hệ)</td></tr>
+      <tr><td>Sơ đồ tuần tự cho hai nghiệp vụ phức tạp</td><td class="c m">—</td><td>§06</td><td class="c"><span class="chip g">Xong</span></td><td>Hình 6.1 (UC11) và Hình 6.2 (UC13), có khung <code>alt</code>, <code>loop</code> và giao dịch</td></tr>
+      <tr><td>Sơ đồ lớp thiết kế</td><td class="c m">0,25</td><td>§07</td><td class="c"><span class="chip g">Xong</span></td><td>Hình 7.1 (kiến trúc tầng), Hình 7.2, Bảng 7.1–7.2</td></tr>
+      <tr><td>Mô hình dữ liệu</td><td class="c m">0,25</td><td>§08</td><td class="c"><span class="chip g">Xong</span></td><td>Hình 8.1, Bảng 8.1 (đối chiếu yêu cầu đề cương), Bảng 8.2 (16 bảng)</td></tr>
+      <tr><td>Script tạo cơ sở dữ liệu chạy được</td><td class="c m">—</td><td>—</td><td class="c"><span class="chip w">Việc tiếp theo</span></td><td>Sinh trực tiếp từ Bảng 8.2 — không cần quyết định gì thêm</td></tr>
+      <tr><td>Thiết kế giao diện</td><td class="c m">0,5</td><td>—</td><td class="c"><span class="chip w">Việc tiếp theo</span></td><td>7 màn hình chính, vẽ <em>trước</em> khi code (tuần 4)</td></tr>
+      <tr class="tot"><td>Hồ sơ này đang gánh</td><td class="c m">1,25</td><td colspan="3">Còn 0,5 điểm thiết kế giao diện để khép trọn Yêu cầu 3 và 4</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="grp">Ma trận truy vết: chức năng → use case → lớp → bảng</h3>
+  <div class="tw"><table>
+    <caption>Bảng 9.2 — Mỗi chức năng đi hết một hàng nghĩa là nó thiết kế xong, không còn chỗ nào là lời hứa suông</caption>
+    <thead><tr><th style="width:4%" class="c">CN</th><th style="width:22%">Chức năng</th><th style="width:9%" class="m">Use case</th><th style="width:30%">Lớp thực thể tham gia</th><th>Bảng dữ liệu</th></tr></thead>
+    <tbody>
+      <tr><td class="c m">1</td><td>Quản lý tài khoản và phân quyền</td><td class="m">UC01–04</td><td class="m">NguoiDung, GiaoVien, HocSinh</td><td class="m">nguoi_dung, giao_vien, hoc_sinh</td></tr>
+      <tr><td class="c m">2</td><td>Quản lý học sinh</td><td class="m">UC05</td><td class="m">HocSinh, Lop</td><td class="m">hoc_sinh, lop</td></tr>
+      <tr><td class="c m">3</td><td>Quản lý lớp học</td><td class="m">UC06</td><td class="m">Lop, NamHoc, HocSinh, GiaoVien</td><td class="m">lop, nam_hoc, hoc_sinh</td></tr>
+      <tr><td class="c m">4</td><td>Quản lý môn học và thành phần điểm</td><td class="m">UC07</td><td class="m">MonHoc, ThanhPhanDiem</td><td class="m">mon_hoc, thanh_phan_diem</td></tr>
+      <tr><td class="c m">5</td><td>Quản lý giáo viên và phân công</td><td class="m">UC08</td><td class="m">GiaoVien, PhanCongGiangDay, Lop, MonHoc, HocKy</td><td class="m">giao_vien, phan_cong_giang_day</td></tr>
+      <tr><td class="c m">6</td><td>Quản lý bảng điểm theo lớp và môn</td><td class="m">UC09</td><td class="m">BangDiem, DiemThanhPhan, ThanhPhanDiem, PhanCongGiangDay</td><td class="m">bang_diem, diem_thanh_phan</td></tr>
+      <tr><td class="c m">7</td><td>Nhận diện bảng điểm viết tay</td><td class="m">UC11</td><td class="m">PhieuNhanDien, KetQuaDong, TuDienDiemChu, BangDiem</td><td class="m">phieu_nhan_dien, ket_qua_dong, tu_dien_diem_chu</td></tr>
+      <tr><td class="c m">8</td><td>Đánh giá độ tin cậy, đánh dấu điểm khả nghi</td><td class="m">UC12</td><td class="m">KetQuaDong</td><td class="m">ket_qua_dong <span style="opacity:.7">(cột do_tin_cay_a/b, muc_phan_loai)</span></td></tr>
+      <tr><td class="c m">9</td><td>Đối chiếu và duyệt kết quả nhận diện</td><td class="m">UC13</td><td class="m">KetQuaDong, DiemThanhPhan, LichSuSuaDiem, PhieuNhanDien</td><td class="m">ket_qua_dong, diem_thanh_phan, lich_su_sua_diem</td></tr>
+      <tr><td class="c m">10</td><td>Tự động tính điểm tổng kết</td><td class="m">UC14</td><td class="m">KetQuaTongKet, DiemThanhPhan, ThanhPhanDiem</td><td class="m">ket_qua_tong_ket, diem_thanh_phan</td></tr>
+      <tr><td class="c m">11</td><td>Xếp loại kết quả học tập</td><td class="m">UC15</td><td class="m">KetQuaTongKet</td><td class="m">ket_qua_tong_ket <span style="opacity:.7">(cột xep_loai)</span></td></tr>
+      <tr><td class="c m">12</td><td>Lịch sử thay đổi điểm</td><td class="m">UC10</td><td class="m">LichSuSuaDiem, DiemThanhPhan, NguoiDung</td><td class="m">lich_su_sua_diem</td></tr>
+      <tr><td class="c m">13</td><td>Thống kê</td><td class="m">UC16</td><td class="m">DiemThanhPhan, KetQuaTongKet, Lop, MonHoc</td><td class="m"><em>truy vấn tổng hợp — không sinh bảng mới</em></td></tr>
+      <tr><td class="c m">14</td><td>Xuất báo cáo Excel</td><td class="m">UC17</td><td class="m">BangDiem, DiemThanhPhan, KetQuaTongKet + dịch vụ XuatExcel</td><td class="m"><em>chỉ đọc — không sinh bảng mới</em></td></tr>
+      <tr><td class="c m">—</td><td>Tra cứu điểm cá nhân <span class="chip n">bổ sung</span></td><td class="m">UC18</td><td class="m">HocSinh, DiemThanhPhan, KetQuaTongKet</td><td class="m"><em>chỉ đọc, lọc theo học sinh đăng nhập</em></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call g">
+    <h4>Ba chỗ ma trận này tự phát hiện vấn đề — và đã xử lý</h4>
+    <ul>
+      <li><strong>Chức năng 13 và 14 không sinh bảng dữ liệu nào.</strong> Đúng, vì chúng là chức năng đọc. Nêu chủ động điều này trong báo cáo tốt hơn là để hội đồng hỏi “sao thống kê không có bảng”.</li>
+      <li><strong>Chức năng 8 không có lớp riêng.</strong> Cũng đúng: nó là hành vi của <code>KetQuaDong</code> chứ không phải một thực thể mới. Trong sơ đồ lớp thiết kế, nó nằm ở hai phương thức <code>doiChieuHaiKenh()</code> và <code>phanLoai()</code>.</li>
+      <li><strong>UC18 lúc đầu không có trong 14 chức năng.</strong> Chính ma trận này làm lộ ra: tác nhân Học sinh có tài khoản mà không nối vào hàng nào. Đã bổ sung ở §01 mà không phải đụng vào thang điểm.</li>
+    </ul>
+  </div>
+
+  <h3 class="grp">Checklist nghiệm thu hồ sơ phân tích – thiết kế</h3>
+  <div class="tw"><table>
+    <thead><tr><th style="width:52%">Tiêu chí kiểm được bằng mắt</th><th style="width:12%" class="c">Kết quả</th><th>Kiểm ở đâu</th></tr></thead>
+    <tbody>
+      <tr><td>Sơ đồ use-case nghiệp vụ <strong>không</strong> có ô nào tên là “Đăng nhập”</td><td class="c"><span class="chip g">Đạt</span></td><td>Hình 2.1</td></tr>
+      <tr><td>Use-case nghiệp vụ và use-case hệ thống khác nhau cả tác nhân lẫn tên ô</td><td class="c"><span class="chip g">Đạt</span></td><td>Hình 2.1 so với Hình 3.1</td></tr>
+      <tr><td>Không use case nào «include» Đăng nhập</td><td class="c"><span class="chip g">Đạt</span></td><td>Hình 3.2, 3.3 — đăng nhập nằm ở dòng điều kiện tiên quyết</td></tr>
+      <tr><td>Mọi tác nhân đều nối vào ít nhất một use case</td><td class="c"><span class="chip g">Đạt</span></td><td>UC18 khép tác nhân Học sinh</td></tr>
+      <tr><td>Cả 14 chức năng đều truy được xuống tới bảng dữ liệu</td><td class="c"><span class="chip g">Đạt</span></td><td>Bảng 9.2</td></tr>
+      <tr><td>Hai nghiệp vụ phức tạp có đặc tả đầy đủ kèm luồng ngoại lệ</td><td class="c"><span class="chip g">Đạt</span></td><td>§04 — UC11 có 5 nhánh ngoại lệ, UC13 có 6</td></tr>
+      <tr><td>Có đủ hai bảng lưu kết quả nhận diện với 7 nhóm thông tin đề cương yêu cầu</td><td class="c"><span class="chip g">Đạt</span></td><td>Bảng 8.1</td></tr>
+      <tr><td>Lược đồ phân biệt được “chưa có điểm” với “0 điểm”</td><td class="c"><span class="chip g">Đạt</span></td><td><code>diem_thanh_phan.gia_tri</code> cho phép NULL</td></tr>
+      <tr><td>Script tạo cơ sở dữ liệu chạy được</td><td class="c"><span class="chip w">Chưa</span></td><td>Việc tiếp theo — sinh từ Bảng 8.2</td></tr>
+      <tr><td>Bản vẽ 7 màn hình chính, vẽ trước khi code</td><td class="c"><span class="chip w">Chưa</span></td><td>Việc tiếp theo — tuần 4</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="call">
+    <h4>Việc tiếp theo để khép Yêu cầu 4</h4>
+    <ol>
+      <li><strong>Script tạo cơ sở dữ liệu</strong> — dịch thẳng Bảng 8.2 thành DDL, kèm ràng buộc CHECK cho khoảng điểm và thu hồi quyền UPDATE/DELETE trên <code>lich_su_sua_diem</code>.</li>
+      <li><strong>Thiết kế giao diện 7 màn hình chính</strong> — đăng nhập, quản lý danh mục, quản lý bảng điểm, tải ảnh nhận diện, <em>đối chiếu ba màu</em>, thống kê – báo cáo, tra cứu điểm cá nhân. Màn hình đối chiếu là màn hình đáng đầu tư nhất vì đó là thứ demo trước hội đồng.</li>
+      <li><strong>Đưa các hình và bảng của hồ sơ này vào quyển báo cáo</strong> ngay khi giảng viên hướng dẫn duyệt xong, đừng để tới tuần 12.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <p>Hồ sơ phân tích – thiết kế hệ thống quản lý điểm · Khoá luận CNTT-KLCN233 · Định hướng tích hợp · Nhóm 3 sinh viên · GVHD: Trần Như Ý.</p>
+  <p>Phạm vi: Yêu cầu 3 và Yêu cầu 4 của đề cương chi tiết. Phần thuật toán nhận dạng (Yêu cầu 5) được mô hình hoá ở đây như một dịch vụ có đúng một giao diện, chi tiết bên trong thuộc tài liệu riêng.</p>
+</footer>
+
+</div>
+
+</body>
+</html>
