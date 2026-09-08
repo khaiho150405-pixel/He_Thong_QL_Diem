@@ -68,6 +68,19 @@ DB tests yêu cầu TEST_MIGRATION_URL và TEST_RUNTIME_URL cùng trỏ DB có t
 
 Giai đoạn 0 không cấp quyền runtime ghi điểm; validator kiểm bước 0.1 trước numeric coercion. Giai đoạn 2 phải triển khai write port có authorization/audit/transaction trước cấp quyền. Không sử dụng tài khoản migration cho API để vượt giới hạn.
 
+## Smoke lỗi kết nối và Thử lại
+
+Chạy API ở cổng 3000 như hướng dẫn trên. Trong terminal khác, bật proxy chỉ dành kiểm thử:
+
+```powershell
+$env:CONNECTION_SMOKE_TEST='1'
+node scripts/testing/connection-proxy.mjs
+```
+
+Trên Linux/macOS dùng `CONNECTION_SMOKE_TEST=1 node scripts/testing/connection-proxy.mjs`. Proxy loopback cổng 3001 trả 503 một lần rồi chuyển tiếp tới API thật; endpoint `/__ready` không tiêu thụ lỗi này. Khởi động lại proxy trước mỗi lượt test, không mở trang health của proxy trước khi test.
+
+Tại `apps/client_flutter`, chạy `flutter test integration_test/connection_test.dart -d <device-id> --dart-define-from-file=config/smoke-local.json` trên iOS; Android dùng `--flavor development --dart-define-from-file=config/smoke-android.json`. CI tự chạy proxy. Với Web, tại thư mục app chạy `flutter build web --dart-define-from-file=config/smoke-local.json`, sau đó từ root chạy `node scripts/serve-web.mjs`, mở localhost:8080 và xác nhận lỗi rồi bấm Thử lại. Nếu trình duyệt giữ bản build cũ trong cache, nạp lại trang để nhận bản mới. Cấu hình smoke không dùng cho bản phát hành; dừng proxy bằng Ctrl+C sau test.
+
 ## GitHub
 
 Repository đích: https://github.com/khaiho150405-pixel/He_Thong_QL_Diem. Issue/PR templates và CI nằm trong .github. CODEOWNERS đang chờ username reviewer. Branch protection là thiết lập GitHub riêng, không tự bật bằng commit workflow. Không có license đã được chủ dự án chọn và không deploy production tự động.

@@ -1,32 +1,33 @@
 # Trạng thái thực thi Giai đoạn 0
 
-Cập nhật: 2026-09-08. Đây là nền móng, chưa hoàn tất toàn bộ Definition of Done.
+Cập nhật: 2026-09-08. Bản mã `4db57d6` đã có [CI xanh toàn bộ](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34179438066). Giai đoạn 0 vẫn còn điều kiện cộng tác chưa hoàn tất.
 
-| Phần             | Kết quả thực tế                                                                                                                              |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Workspace        | NestJS, Flutter ba target, Melos, ADR, tài liệu và templates đã commit                                                                       |
-| Backend          | Format/lint/typecheck/build pass; HTTP kiểm 200/400/404/500/503, CORS và lỗi nội bộ được che                                                 |
-| PostgreSQL local | Hai migration áp dụng trên cụm test riêng; seed chạy hai lần; constraint, NULL/0, append-only và quyền runtime pass. Cụm test đã dừng        |
-| Quyền migration  | CI phát hiện thiếu CREATE trên database. Đã sửa bootstrap Docker và test độc lập; test xác nhận runtime không có CREATE schema/database pass |
-| OpenAPI/Dart     | Generator 7.17.0, serializers và contracts:check pass                                                                                        |
-| Flutter/Web      | Analyze, 4 tests và web build pass; kiểm 390px/1280px, lỗi/retry; đã mở Web và kết nối API thật                                              |
-| iOS              | Job macOS trong lượt CI đầu đã build simulator và chạy integration test kết nối thành công                                                   |
-| Docker           | Lượt CI đầu đã pull/start PostgreSQL/Redis/MinIO healthy và tạo bucket private; các bước integration sau migration chưa được xác nhận lại    |
-| Android          | Build local lỗi Java loopback. Đã bổ sung CI build APK và chạy integration test trên emulator API 35, Pixel 7 Pro; chờ kết quả               |
-| GitHub           | Đã push nhánh feat/phase-0-foundation. Tạo draft PR qua connector bị 403; chưa xác minh branch protection và chưa có handles CODEOWNERS      |
+| Phần                  | Kết quả thực tế                                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace             | NestJS, Flutter ba target, Melos, ADR, tài liệu và templates đã commit                                                                          |
+| Backend               | Format/lint/typecheck/build và HTTP tests 200/400/404/500/503, CORS pass                                                                        |
+| PostgreSQL            | Migration từ database rỗng, seed, constraints, NULL/0, append-only, quyền runtime pass trên PostgreSQL thật local và CI                         |
+| Docker integration    | PostgreSQL/Redis/MinIO healthy; private bucket và dependency failure tests pass trên CI                                                         |
+| OpenAPI/Dart          | Regeneration không drift, serializers và generated client analyze pass                                                                          |
+| Flutter Web           | Build và 4 widget/serialization tests pass; 390px/1280px không overflow. Đã kiểm Web thật lỗi → bấm Thử lại → kết nối API thật qua proxy test   |
+| Android               | CI build APK development và integration kết nối API pass trên emulator API 35/Pixel 7 Pro. Local vẫn có lỗi Java loopback                       |
+| iOS                   | CI build và integration kết nối API pass trên iPhone simulator; một lượt trước timeout debug connection, workflow đã tách bước và timeout riêng |
+| Smoke phục hồi native | Đã bổ sung proxy test-only và assertion lỗi/Thử lại/thành công; chờ lượt CI cho phần bổ sung này                                                |
+| GitHub                | Nhánh feat/phase-0-foundation đã push; main được xác minh protected=false. Connector tạo PR và rerun trả 403; chưa có reviewer CODEOWNERS       |
 
-## Bằng chứng CI và commit
+## Các sửa lỗi đã kiểm chứng
 
-- [Lượt đầu](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34145742431): iOS success; foundation fail ở migration vì thiếu quyền database.
-- Commit `4fde0f4`: cấp quyền CREATE database riêng cho migration, đồng bộ bootstrap test và bổ sung test âm tính cho runtime. Kiểm thử PostgreSQL thật sau sửa pass.
-- Commit `47c56d3`: thêm Android emulator integration theo [hướng dẫn action](https://github.com/ReactiveCircus/android-emulator-runner).
-- [Lượt CI mới](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34177968115): lần đọc cuối còn đang chạy. Sau đó kết nối GitHub/API/web lỗi; chưa có kết luận trên commit mới nhất.
-- [Mở pull request](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/compare/main...feat/phase-0-foundation?expand=1). Chưa có PR được tạo tự động.
+- `4fde0f4`: cấp quyền CREATE database riêng cho migration; runtime vẫn không được tạo schema/bảng. Kiểm thử PostgreSQL thật pass.
+- `47c56d3`: bổ sung Android emulator integration.
+- `8d2e92e`: cleanup Docker chỉ chạy sau khi tạo env.
+- `4db57d6`: tách bước iOS resolve/build/boot/test và giới hạn timeout. Cả foundation, ios và required-checks đều success ở lượt CI liên kết trên.
 
-## Việc cần tiếp tục
+Proxy `scripts/testing/connection-proxy.mjs` chỉ chạy khi bật CONNECTION_SMOKE_TEST=1, chỉ phục vụ health trên loopback và không được gọi bởi luồng ứng dụng/deployment. Xem README để tái lập. Nó trả 503 một lần; lần tiếp theo chuyển tới API thật, không giả kết quả thành công.
 
-1. Đọc lượt CI mới nhất khi kết nối trở lại; sửa lỗi thực tế và kiểm lại các bước bị chặn, không bỏ gate.
-2. Hoàn tất smoke lỗi/retry trên các nền tảng; hiện lỗi/retry được kiểm bằng widget test, integration native mới kiểm kết nối thành công.
-3. Chốt reviewer thật, mở draft PR, xác minh branch protection/review policy và onboarding trên máy đồng nghiệp.
+## Điều kiện còn thiếu
 
-UC01–18 chưa triển khai. Chưa có use case phân công hoặc UI nhập/duyệt điểm; runtime chưa được cấp quyền ghi điểm. Đây chưa phải bản production.
+1. Kiểm kết quả CI cho smoke lỗi/retry native mới bổ sung.
+2. Cung cấp reviewer thật, [mở draft PR](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/compare/main...feat/phase-0-foundation?expand=1), bật bảo vệ main và xác minh review policy.
+3. Đồng nghiệp clone/setup trên máy riêng và ghi bằng chứng onboarding; chốt license.
+
+Cụm PostgreSQL test tạm đã dừng, không sửa database cá nhân. UC01–18 chưa triển khai; chưa có luồng nhập/duyệt điểm hoặc phân quyền nghiệp vụ. Đây chưa phải bản production.

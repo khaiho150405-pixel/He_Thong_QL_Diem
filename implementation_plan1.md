@@ -1,6 +1,6 @@
 # Implementation Plan — Giai đoạn 0: Nền móng và cộng tác GitHub
 
-Trạng thái: đang triển khai Giai đoạn 0. Kết quả và phần còn bị chặn được ghi tại [docs/development/status.md](docs/development/status.md). Cập nhật: 2026-09-07.
+Trạng thái: Giai đoạn 0 đã có CI xanh toàn bộ trên commit `4db57d6`; đang bổ sung smoke phục hồi kết nối native và hoàn tất điều kiện cộng tác. Kết quả và bằng chứng tại [docs/development/status.md](docs/development/status.md). Cập nhật: 2026-09-08. Chưa triển khai UC01–18.
 
 ## 1. Mục tiêu và nguồn chuẩn
 
@@ -351,9 +351,9 @@ Giai đoạn 3 phải đóng khoảng trống DB commit/enqueue bằng transacti
 - [ ] P0-01–07 có issue/PR, owner và bằng chứng acceptance criteria.
 - [ ] Module ownership/ADR thống nhất AGENTS.md và HTML.
 - [ ] Đồng nghiệp setup từ clone mới; lệnh README đã chạy thực tế.
-- [ ] Schema/constraints/roles/migration/seed được kiểm chứng trên DB thật.
-- [ ] Runtime không dùng DB owner; API/config/logging không lộ secret.
-- [ ] OpenAPI và Dart client tái sinh sạch, không drift.
+- [x] Schema/constraints/roles/migration/seed được kiểm chứng trên DB thật (local và CI `4db57d6`).
+- [x] Runtime không dùng DB owner; API/config/logging không lộ secret (config và HTTP tests).
+- [x] OpenAPI và Dart client tái sinh sạch, không drift (CI `4db57d6`).
 - [ ] Flutter ba nền tảng có bằng chứng kiểm tra; build không thay runtime test.
 - [ ] CI pass thực tế; branch protection/review policy được xác minh, giới hạn được ghi rõ.
 - [ ] Không secret/PII/ảnh thật trong Git, logs, artifacts.
