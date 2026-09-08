@@ -21,7 +21,7 @@ try {
       )
     ).rowCount
   )
-    await pool.query("CREATE DATABASE quan_ly_diem_test OWNER app_migration");
+    await pool.query("CREATE DATABASE quan_ly_diem_test");
 } finally {
   await pool.end();
 }
@@ -30,6 +30,9 @@ testUrl.pathname = "/quan_ly_diem_test";
 const db = new Pool({ connectionString: testUrl.toString() });
 try {
   await db.query("GRANT app_runtime TO app_migration");
+  await db.query(
+    "GRANT CONNECT, CREATE ON DATABASE quan_ly_diem_test TO app_migration",
+  );
   await db.query(
     "REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT USAGE ON SCHEMA public TO app_runtime; GRANT USAGE, CREATE ON SCHEMA public TO app_migration",
   );

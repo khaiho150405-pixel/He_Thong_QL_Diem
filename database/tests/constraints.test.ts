@@ -33,6 +33,12 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     await denied("UPDATE lich_su_sua_diem SET ly_do=ly_do");
     await denied("TRUNCATE lich_su_sua_diem");
     await denied("CREATE TABLE forbidden (id int)");
+    await denied("CREATE SCHEMA forbidden");
+    const privileges = await owner.query(
+      "SELECT has_database_privilege(current_user, current_database(), 'CREATE') AS can_migrate, has_database_privilege('app_runtime', current_database(), 'CREATE') AS runtime_create",
+    );
+    assert.equal(privileges.rows[0].can_migrate, true);
+    assert.equal(privileges.rows[0].runtime_create, false);
     await denied("UPDATE diem_thanh_phan SET gia_tri=8.55");
     for (const value of ["-0.1", "10.1", "8.55", "NaN"])
       await assert.rejects(
