@@ -8,4 +8,4 @@ Migration đã áp dụng ở môi trường chung không được sửa. Nhánh
 
 Commit nhỏ, không format file không liên quan. Không force-push nhánh chung khi chưa phối hợp. Không commit .env, dữ liệu học sinh thật, ảnh hoặc dump DB. Thêm dependency phải giải thích lý do. Thay stack/quy tắc cần ADR và cập nhật truy vết.
 
-Maintainer phải bật PR required, review độc lập, giải quyết conversations, required-checks, chặn force-push/xóa main. CODEOWNERS sẽ dùng handles thực khi nhóm cung cấp. File workflow không tự bật branch protection. Repository đã có tại [khaiho150405-pixel/He_Thong_QL_Diem](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem); license chưa được chủ dự án chọn.
+Maintainer phải bật PR required, review độc lập, giải quyết conversations, required-checks, chặn force-push/xóa main. CODEOWNERS hiện yêu cầu @trongv2310 và @caohaidang157 cho các vùng code chung; GitHub chỉ gửi review request sau khi hai tài khoản đã nhận lời mời collaborator. File workflow không tự bật branch protection. Repository đã có tại [khaiho150405-pixel/He_Thong_QL_Diem](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem); license chưa được chủ dự án chọn.
