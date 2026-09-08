@@ -94,14 +94,28 @@ jobs:
             sleep 1
           done
           exit 1
-      - run: |
-          flutter pub get --enforce-lockfile
-          flutter build ios --simulator --dart-define-from-file=config/development.json
+      - name: Resolve iOS dependencies
+        timeout-minutes: 5
+        run: flutter pub get --enforce-lockfile
+        working-directory: apps/client_flutter
+      - name: Build iOS simulator app
+        timeout-minutes: 10
+        run: flutter build ios --simulator --dart-define-from-file=config/development.json
+        working-directory: apps/client_flutter
+      - name: Boot iPhone simulator
+        id: iphone
+        timeout-minutes: 5
+        run: |
           device=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
-          test -n "$device"
+          test -n "$device" && test "$device" != null
+          echo "device=$device" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$device" || true
           xcrun simctl bootstatus "$device" -b
-          flutter test integration_test/connection_test.dart -d "$device" --dart-define-from-file=config/development.json
+      - name: Test iOS API connection
+        timeout-minutes: 10
+        env:
+          IOS_DEVICE: ${{ steps.iphone.outputs.device }}
+        run: flutter test integration_test/connection_test.dart -d "$IOS_DEVICE" --dart-define-from-file=config/development.json
         working-directory: apps/client_flutter
   required-checks:
     if: always()
