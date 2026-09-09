@@ -1,0 +1,14 @@
+export { IdentityModule } from "./identity/module.js";
+export { AuthorizationModule } from "./authorization/module.js";
+export { AcademicYearsModule } from "./academic-years/module.js";
+export { StudentsModule } from "./students/module.js";
+export { ClassesModule } from "./classes/module.js";
+export { SubjectsModule } from "./subjects/module.js";
+export { TeachersModule } from "./teachers/module.js";
+export { GradebooksModule } from "./gradebooks/module.js";
+export { RecognitionModule } from "./recognition/module.js";
+export { ReviewModule } from "./review/module.js";
+export { FinalResultsModule } from "./final-results/module.js";
+export { ReportsModule } from "./reports/module.js";
+export { AuditModule } from "./audit/module.js";
+export { FilesModule } from "./files/module.js";

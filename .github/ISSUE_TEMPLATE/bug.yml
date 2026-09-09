@@ -1,0 +1,19 @@
+name: Bug report
+description: Lỗi tái hiện được, không đưa dữ liệu thật
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Bước tái hiện với dữ liệu giả
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Kết quả thực tế và mong đợi
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS, phiên bản, request ID (không token)

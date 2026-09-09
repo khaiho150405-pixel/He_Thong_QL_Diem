@@ -1,0 +1,20 @@
+# Review ownership for the Phase 0 foundation. GitHub applies these requests
+# only after the listed users have accepted repository collaboration access.
+
+# Schema, migrations, permissions, seed data and data contracts.
+/database/ @trongv2310 @caohaidang157
+/packages/contracts/ @trongv2310 @caohaidang157
+
+# NestJS API, shared contract generation and security-sensitive configuration.
+/apps/api/ @trongv2310 @caohaidang157
+/scripts/ @trongv2310 @caohaidang157
+
+# Flutter applications and generated Dart API client.
+/apps/client_flutter/ @trongv2310 @caohaidang157
+/packages/api_client_dart/ @trongv2310 @caohaidang157
+
+# CI, collaboration policy and architecture-wide changes require both reviewers.
+/.github/ @trongv2310 @caohaidang157
+/AGENTS.md @trongv2310 @caohaidang157
+/implementation_plan1.md @trongv2310 @caohaidang157
+/docs/adr/ @trongv2310 @caohaidang157

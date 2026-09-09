@@ -1,0 +1,314 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../apps/api/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum VaiTro {
+  QUAN_TRI_VIEN
+  GIAO_VIEN
+  HOC_SINH
+}
+
+enum TrangThaiBangDiem {
+  DANG_NHAP_LIEU
+  DA_CHOT
+}
+
+enum TrangThaiDiem {
+  CHUA_CO
+  CHO_DOI_CHIEU
+  DA_DUYET
+}
+
+enum NguonNhap {
+  NHAP_TAY
+  NHAN_DIEN
+}
+
+enum TrangThaiPhieu {
+  DANG_XU_LY
+  CHO_DOI_CHIEU
+  DA_DUYET
+  LOI
+}
+
+enum KetLuan {
+  KHOP
+  LECH
+  MOT_KENH
+  KHONG_DOC_DUOC
+}
+
+enum MucPhanLoai {
+  XANH
+  VANG
+  DO
+}
+
+model nguoi_dung {
+  ma_nguoi_dung         Int                @id @default(autoincrement())
+  ten_dang_nhap         String             @unique @db.VarChar(50)
+  mat_khau_ma_hoa       String             @db.VarChar(255)
+  vai_tro               VaiTro
+  trang_thai            Boolean            @default(true)
+  so_lan_dang_nhap_sai  Int                @default(0) @db.SmallInt
+  khoa_den              DateTime?          @db.Timestamptz(6)
+  giao_vien_rows        giao_vien?
+  hoc_sinh_rows         hoc_sinh?
+  lich_su_sua_diem_rows lich_su_sua_diem[]
+  phieu_nhan_dien_rows  phieu_nhan_dien[]
+  ket_qua_dong_rows     ket_qua_dong[]
+}
+
+model giao_vien {
+  ma_giao_vien             Int                   @id
+  ho_ten                   String                @db.VarChar(100)
+  to_chuyen_mon            String?               @db.VarChar(50)
+  email                    String?               @db.VarChar(254)
+  dien_thoai               String?               @db.VarChar(20)
+  ma_giao_vien_ref         nguoi_dung            @relation(fields: [ma_giao_vien], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  lop_rows                 lop[]
+  phan_cong_giang_day_rows phan_cong_giang_day[]
+}
+
+model nam_hoc {
+  ma_nam_hoc    Int      @id @default(autoincrement())
+  ten           String   @unique @db.VarChar(20)
+  ngay_bat_dau  DateTime @db.Date
+  ngay_ket_thuc DateTime @db.Date
+  hien_hanh     Boolean  @default(false)
+  hoc_ky_rows   hoc_ky[]
+  lop_rows      lop[]
+}
+
+model hoc_ky {
+  ma_hoc_ky                Int                   @id @default(autoincrement())
+  ma_nam_hoc               Int
+  ten                      String                @db.VarChar(20)
+  thu_tu                   Int                   @db.SmallInt
+  ngay_bat_dau             DateTime              @db.Date
+  ngay_ket_thuc            DateTime              @db.Date
+  ma_nam_hoc_ref           nam_hoc               @relation(fields: [ma_nam_hoc], references: [ma_nam_hoc], onDelete: Restrict, onUpdate: Restrict)
+  phan_cong_giang_day_rows phan_cong_giang_day[]
+  bang_diem_rows           bang_diem[]
+  ket_qua_tong_ket_rows    ket_qua_tong_ket[]
+
+  @@unique([ma_nam_hoc, thu_tu])
+  @@index([ma_nam_hoc])
+}
+
+model lop {
+  ma_lop                   Int                   @id @default(autoincrement())
+  ma_nam_hoc               Int
+  ma_gv_chu_nhiem          Int
+  ten_lop                  String                @db.VarChar(20)
+  khoi                     Int                   @db.SmallInt
+  ma_nam_hoc_ref           nam_hoc               @relation(fields: [ma_nam_hoc], references: [ma_nam_hoc], onDelete: Restrict, onUpdate: Restrict)
+  ma_gv_chu_nhiem_ref      giao_vien             @relation(fields: [ma_gv_chu_nhiem], references: [ma_giao_vien], onDelete: Restrict, onUpdate: Restrict)
+  hoc_sinh_rows            hoc_sinh[]
+  phan_cong_giang_day_rows phan_cong_giang_day[]
+  bang_diem_rows           bang_diem[]
+
+  @@unique([ma_nam_hoc, ten_lop])
+  @@index([ma_nam_hoc])
+  @@index([ma_gv_chu_nhiem])
+}
+
+model hoc_sinh {
+  ma_hoc_sinh           Int                @id @default(autoincrement())
+  ma_nguoi_dung         Int?               @unique
+  ma_lop                Int
+  ho_ten                String             @db.VarChar(100)
+  ngay_sinh             DateTime           @db.Date
+  dang_theo_hoc         Boolean            @default(true)
+  ma_nguoi_dung_ref     nguoi_dung?        @relation(fields: [ma_nguoi_dung], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  ma_lop_ref            lop                @relation(fields: [ma_lop], references: [ma_lop], onDelete: Restrict, onUpdate: Restrict)
+  diem_thanh_phan_rows  diem_thanh_phan[]
+  ket_qua_tong_ket_rows ket_qua_tong_ket[]
+  ket_qua_dong_rows     ket_qua_dong[]
+
+  @@index([ma_lop])
+}
+
+model mon_hoc {
+  ma_mon                   Int                   @id @default(autoincrement())
+  ten_mon                  String                @unique @db.VarChar(80)
+  so_tiet_tuan             Int                   @db.SmallInt
+  thanh_phan_diem_rows     thanh_phan_diem[]
+  phan_cong_giang_day_rows phan_cong_giang_day[]
+  bang_diem_rows           bang_diem[]
+  ket_qua_tong_ket_rows    ket_qua_tong_ket[]
+}
+
+model thanh_phan_diem {
+  ma_thanh_phan        Int               @id @default(autoincrement())
+  ma_mon               Int
+  ten_thanh_phan       String            @db.VarChar(50)
+  he_so                Decimal           @db.Decimal(3, 2)
+  bat_buoc             Boolean           @default(true)
+  thu_tu_hien_thi      Int               @db.SmallInt
+  ma_mon_ref           mon_hoc           @relation(fields: [ma_mon], references: [ma_mon], onDelete: Restrict, onUpdate: Restrict)
+  diem_thanh_phan_rows diem_thanh_phan[]
+  phieu_nhan_dien_rows phieu_nhan_dien[]
+
+  @@unique([ma_mon, ten_thanh_phan])
+  @@index([ma_mon])
+}
+
+model phan_cong_giang_day {
+  ma_phan_cong     Int       @id @default(autoincrement())
+  ma_giao_vien     Int
+  ma_lop           Int
+  ma_mon           Int
+  ma_hoc_ky        Int
+  ngay_phan_cong   DateTime  @db.Date
+  ma_giao_vien_ref giao_vien @relation(fields: [ma_giao_vien], references: [ma_giao_vien], onDelete: Restrict, onUpdate: Restrict)
+  ma_lop_ref       lop       @relation(fields: [ma_lop], references: [ma_lop], onDelete: Restrict, onUpdate: Restrict)
+  ma_mon_ref       mon_hoc   @relation(fields: [ma_mon], references: [ma_mon], onDelete: Restrict, onUpdate: Restrict)
+  ma_hoc_ky_ref    hoc_ky    @relation(fields: [ma_hoc_ky], references: [ma_hoc_ky], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([ma_lop, ma_mon, ma_hoc_ky])
+  @@index([ma_giao_vien])
+  @@index([ma_lop])
+  @@index([ma_mon])
+  @@index([ma_hoc_ky])
+}
+
+model bang_diem {
+  ma_bang_diem         Int               @id @default(autoincrement())
+  ma_lop               Int
+  ma_mon               Int
+  ma_hoc_ky            Int
+  trang_thai           TrangThaiBangDiem @default(DANG_NHAP_LIEU)
+  version              Int               @default(0)
+  ma_lop_ref           lop               @relation(fields: [ma_lop], references: [ma_lop], onDelete: Restrict, onUpdate: Restrict)
+  ma_mon_ref           mon_hoc           @relation(fields: [ma_mon], references: [ma_mon], onDelete: Restrict, onUpdate: Restrict)
+  ma_hoc_ky_ref        hoc_ky            @relation(fields: [ma_hoc_ky], references: [ma_hoc_ky], onDelete: Restrict, onUpdate: Restrict)
+  diem_thanh_phan_rows diem_thanh_phan[]
+  phieu_nhan_dien_rows phieu_nhan_dien[]
+
+  @@unique([ma_lop, ma_mon, ma_hoc_ky])
+  @@index([ma_lop])
+  @@index([ma_mon])
+  @@index([ma_hoc_ky])
+}
+
+model diem_thanh_phan {
+  ma_diem               BigInt             @id @default(autoincrement())
+  ma_bang_diem          Int
+  ma_hoc_sinh           Int
+  ma_thanh_phan         Int
+  gia_tri               Decimal?           @db.Decimal(3, 1)
+  trang_thai            TrangThaiDiem      @default(CHUA_CO)
+  nguon_nhap            NguonNhap          @default(NHAP_TAY)
+  ma_bang_diem_ref      bang_diem          @relation(fields: [ma_bang_diem], references: [ma_bang_diem], onDelete: Restrict, onUpdate: Restrict)
+  ma_hoc_sinh_ref       hoc_sinh           @relation(fields: [ma_hoc_sinh], references: [ma_hoc_sinh], onDelete: Restrict, onUpdate: Restrict)
+  ma_thanh_phan_ref     thanh_phan_diem    @relation(fields: [ma_thanh_phan], references: [ma_thanh_phan], onDelete: Restrict, onUpdate: Restrict)
+  lich_su_sua_diem_rows lich_su_sua_diem[]
+  ket_qua_dong_rows     ket_qua_dong[]
+
+  @@unique([ma_bang_diem, ma_hoc_sinh, ma_thanh_phan])
+  @@index([ma_bang_diem])
+  @@index([ma_hoc_sinh])
+  @@index([ma_thanh_phan])
+}
+
+model lich_su_sua_diem {
+  ma_lich_su    BigInt          @id @default(autoincrement())
+  ma_diem       BigInt
+  nguoi_sua     Int
+  gia_tri_cu    Decimal?        @db.Decimal(3, 1)
+  gia_tri_moi   Decimal?        @db.Decimal(3, 1)
+  ly_do         String          @db.VarChar(500)
+  thoi_diem     DateTime        @default(now()) @db.Timestamptz(6)
+  ma_diem_ref   diem_thanh_phan @relation(fields: [ma_diem], references: [ma_diem], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_sua_ref nguoi_dung      @relation(fields: [nguoi_sua], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([ma_diem])
+  @@index([nguoi_sua])
+}
+
+model ket_qua_tong_ket {
+  ma_ket_qua      BigInt   @id @default(autoincrement())
+  ma_hoc_sinh     Int
+  ma_mon          Int
+  ma_hoc_ky       Int
+  diem_tong_ket   Decimal  @db.Decimal(3, 1)
+  xep_loai        String?  @db.VarChar(20)
+  phien_ban_he_so String   @db.VarChar(20)
+  bo_he_so        Json
+  ngay_tinh       DateTime @default(now()) @db.Timestamptz(6)
+  ma_hoc_sinh_ref hoc_sinh @relation(fields: [ma_hoc_sinh], references: [ma_hoc_sinh], onDelete: Restrict, onUpdate: Restrict)
+  ma_mon_ref      mon_hoc  @relation(fields: [ma_mon], references: [ma_mon], onDelete: Restrict, onUpdate: Restrict)
+  ma_hoc_ky_ref   hoc_ky   @relation(fields: [ma_hoc_ky], references: [ma_hoc_ky], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([ma_hoc_sinh, ma_mon, ma_hoc_ky])
+  @@index([ma_hoc_sinh])
+  @@index([ma_mon])
+  @@index([ma_hoc_ky])
+}
+
+model phieu_nhan_dien {
+  ma_phieu          BigInt          @id @default(autoincrement())
+  ma_bang_diem      Int
+  ma_thanh_phan     Int
+  nguoi_tai         Int
+  ma_bam_tep        String          @unique @db.VarChar(64)
+  duong_dan_anh_goc String          @db.VarChar(512)
+  so_dong_khai_bao  Int
+  so_dong_nhan_dien Int?
+  trang_thai        TrangThaiPhieu  @default(DANG_XU_LY)
+  ma_loi            String?         @db.VarChar(80)
+  phien_ban_mo_hinh String?         @db.VarChar(80)
+  version           Int             @default(0)
+  ngay_tao          DateTime        @default(now()) @db.Timestamptz(6)
+  ma_bang_diem_ref  bang_diem       @relation(fields: [ma_bang_diem], references: [ma_bang_diem], onDelete: Restrict, onUpdate: Restrict)
+  ma_thanh_phan_ref thanh_phan_diem @relation(fields: [ma_thanh_phan], references: [ma_thanh_phan], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_tai_ref     nguoi_dung      @relation(fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  ket_qua_dong_rows ket_qua_dong[]
+
+  @@index([ma_bang_diem])
+  @@index([ma_thanh_phan])
+  @@index([nguoi_tai])
+}
+
+model ket_qua_dong {
+  ma_dong             BigInt           @id @default(autoincrement())
+  ma_phieu            BigInt
+  ma_hoc_sinh         Int
+  ma_diem             BigInt?
+  thu_tu_dong         Int
+  duong_dan_anh_o_so  String?          @db.VarChar(512)
+  duong_dan_anh_o_chu String?          @db.VarChar(512)
+  raw_kenh_a          String?
+  raw_kenh_b          String?
+  gia_tri_kenh_a      Decimal?         @db.Decimal(3, 1)
+  gia_tri_kenh_b      Decimal?         @db.Decimal(3, 1)
+  do_tin_cay_a        Decimal?         @db.Decimal(5, 4)
+  do_tin_cay_b        Decimal?         @db.Decimal(5, 4)
+  ket_luan_doi_chieu  KetLuan
+  muc_phan_loai       MucPhanLoai
+  gia_tri_chot        Decimal?         @db.Decimal(3, 1)
+  nguoi_duyet         Int?
+  thoi_diem_duyet     DateTime?        @db.Timestamptz(6)
+  ma_phieu_ref        phieu_nhan_dien  @relation(fields: [ma_phieu], references: [ma_phieu], onDelete: Restrict, onUpdate: Restrict)
+  ma_hoc_sinh_ref     hoc_sinh         @relation(fields: [ma_hoc_sinh], references: [ma_hoc_sinh], onDelete: Restrict, onUpdate: Restrict)
+  ma_diem_ref         diem_thanh_phan? @relation(fields: [ma_diem], references: [ma_diem], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_duyet_ref     nguoi_dung?      @relation(fields: [nguoi_duyet], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([ma_phieu, thu_tu_dong])
+  @@index([ma_phieu])
+  @@index([ma_hoc_sinh])
+  @@index([ma_diem])
+  @@index([nguoi_duyet])
+}
+
+model tu_dien_diem_chu {
+  ma_cach_doc Int     @id @default(autoincrement())
+  cach_doc    String  @unique @db.VarChar(32)
+  gia_tri     Decimal @db.Decimal(3, 1)
+}
