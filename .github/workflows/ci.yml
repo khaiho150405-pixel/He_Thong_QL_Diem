@@ -1,7 +1,7 @@
 name: Foundation CI
 on:
   push:
-    branches: [main, "feat/**", "fix/**", "chore/**"]
+    branches: [main, "feat/**", "fix/**", "chore/**", "codex/**"]
   pull_request:
 permissions:
   contents: read
@@ -93,6 +93,7 @@ jobs:
         with:
           flutter-version: "3.35.7"
       - run: npm install --global pnpm@11.19.0 && pnpm install --frozen-lockfile
+      - run: pnpm db:generate
       - run: |
           pnpm setup:local
           mkdir -p .local

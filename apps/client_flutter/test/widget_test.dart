@@ -15,7 +15,7 @@ void main() {
             if (calls == 1) throw Exception('offline');
           }),
         ],
-        child: const GradebookApp(),
+        child: const GradebookApp(initialLocation: '/connection'),
       ),
     );
     await tester.pumpAndSettle();
@@ -34,7 +34,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [connectionProvider.overrideWith((ref) async {})],
-          child: const GradebookApp(),
+          child: const GradebookApp(initialLocation: '/connection'),
         ),
       );
       await tester.pumpAndSettle();

@@ -62,6 +62,32 @@ model nguoi_dung {
   lich_su_sua_diem_rows lich_su_sua_diem[]
   phieu_nhan_dien_rows  phieu_nhan_dien[]
   ket_qua_dong_rows     ket_qua_dong[]
+  phien_rows           phien_lam_viec[]
+}
+
+// Technical tables, not part of the sixteen business tables.
+model phien_lam_viec {
+  ma_bam       String @id @db.Char(64)
+  ma_nguoi_dung Int
+  csrf         String @db.Char(64)
+  het_han      DateTime @db.Timestamptz(6)
+  hoat_dong_cuoi DateTime @db.Timestamptz(6)
+  nguoi_dung_ref nguoi_dung @relation(fields: [ma_nguoi_dung], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  @@index([ma_nguoi_dung])
+}
+
+model nhat_ky_bao_mat {
+  ma_su_kien BigInt @id @default(autoincrement())
+  ma_tac_nhan Int?
+  hanh_dong String @db.VarChar(64)
+  doi_tuong String @db.VarChar(100)
+  thoi_diem DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model gioi_han_dang_nhap {
+  ma_bam String @id @db.Char(64)
+  so_lan Int
+  het_han DateTime @db.Timestamptz(6)
 }
 
 model giao_vien {

@@ -1,9 +1,12 @@
 import 'package:client_flutter/main.dart' as app;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import '../test/phase1_test.dart' as phase1;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  // Native UI exercises a test HTTP adapter; real DB policies are tested in API CI.
+  phase1.registerPhaseOneTests(resize: false);
   testWidgets('connects to a running API', (tester) async {
     app.main();
     await tester.pumpAndSettle(const Duration(seconds: 1));

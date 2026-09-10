@@ -1,5 +1,7 @@
 # Implementation Plan — Giai đoạn 0: Nền móng và cộng tác GitHub
 
+Lưu để báo cáo lịch sử Phase 0. PR #1 đã merge vào main `02ec66d` ngày 2026-09-09. Kế hoạch thực thi tiếp theo: [Giai đoạn 1 — UC01–08](docs/development/phase-1.md); các mô tả “chưa triển khai” bên dưới phản ánh phạm vi của Phase 0.
+
 Trạng thái: Giai đoạn 0 đã có CI xanh toàn bộ trên commit `307e7f1`, gồm smoke lỗi/Thử lại trên Android và iOS, cùng kiểm tra Web thực tế. Còn điều kiện cộng tác chưa nghiệm thu. Kết quả và bằng chứng tại [docs/development/status.md](docs/development/status.md). Cập nhật: 2026-09-08. Chưa triển khai UC01–18.
 
 ## 1. Mục tiêu và nguồn chuẩn

@@ -54,6 +54,7 @@ export class ErrorFilter implements ExceptionFilter {
       403: "FORBIDDEN",
       404: "NOT_FOUND",
       409: "CONFLICT",
+      429: "RATE_LIMITED",
       503: "DEPENDENCY_UNAVAILABLE",
     };
     response.status(status).json({
