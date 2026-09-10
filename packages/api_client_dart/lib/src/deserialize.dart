@@ -1,5 +1,37 @@
+import 'package:api_client_dart/src/model/account_dto.dart';
+import 'package:api_client_dart/src/model/account_input.dart';
+import 'package:api_client_dart/src/model/account_update.dart';
+import 'package:api_client_dart/src/model/accounts_dto.dart';
+import 'package:api_client_dart/src/model/assignments_dto.dart';
+import 'package:api_client_dart/src/model/assignments_input.dart';
+import 'package:api_client_dart/src/model/assignments_page.dart';
+import 'package:api_client_dart/src/model/classes_dto.dart';
+import 'package:api_client_dart/src/model/classes_input.dart';
+import 'package:api_client_dart/src/model/classes_page.dart';
+import 'package:api_client_dart/src/model/components_dto.dart';
+import 'package:api_client_dart/src/model/components_input.dart';
+import 'package:api_client_dart/src/model/components_page.dart';
 import 'package:api_client_dart/src/model/error_dto.dart';
 import 'package:api_client_dart/src/model/health_dto.dart';
+import 'package:api_client_dart/src/model/login_input.dart';
+import 'package:api_client_dart/src/model/password_input.dart';
+import 'package:api_client_dart/src/model/profile_dto.dart';
+import 'package:api_client_dart/src/model/semesters_dto.dart';
+import 'package:api_client_dart/src/model/semesters_input.dart';
+import 'package:api_client_dart/src/model/semesters_page.dart';
+import 'package:api_client_dart/src/model/session_dto.dart';
+import 'package:api_client_dart/src/model/students_dto.dart';
+import 'package:api_client_dart/src/model/students_input.dart';
+import 'package:api_client_dart/src/model/students_page.dart';
+import 'package:api_client_dart/src/model/subjects_dto.dart';
+import 'package:api_client_dart/src/model/subjects_input.dart';
+import 'package:api_client_dart/src/model/subjects_page.dart';
+import 'package:api_client_dart/src/model/teachers_dto.dart';
+import 'package:api_client_dart/src/model/teachers_input.dart';
+import 'package:api_client_dart/src/model/teachers_page.dart';
+import 'package:api_client_dart/src/model/years_dto.dart';
+import 'package:api_client_dart/src/model/years_input.dart';
+import 'package:api_client_dart/src/model/years_page.dart';
 
 final _regList = RegExp(r'^List<(.*)>$');
 final _regSet = RegExp(r'^Set<(.*)>$');
@@ -23,10 +55,87 @@ ReturnType deserialize<ReturnType, BaseType>(
       return (valueString == 'true' || valueString == '1') as ReturnType;
     case 'double':
       return (value is double ? value : double.parse('$value')) as ReturnType;
+    case 'AccountDto':
+      return AccountDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AccountInput':
+      return AccountInput.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AccountUpdate':
+      return AccountUpdate.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AccountsDto':
+      return AccountsDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AssignmentsDto':
+      return AssignmentsDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AssignmentsInput':
+      return AssignmentsInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AssignmentsPage':
+      return AssignmentsPage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ClassesDto':
+      return ClassesDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'ClassesInput':
+      return ClassesInput.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'ClassesPage':
+      return ClassesPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'ComponentsDto':
+      return ComponentsDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ComponentsInput':
+      return ComponentsInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ComponentsPage':
+      return ComponentsPage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'ErrorDto':
       return ErrorDto.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'HealthDto':
       return HealthDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LoginInput':
+      return LoginInput.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'PasswordInput':
+      return PasswordInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ProfileDto':
+      return ProfileDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'SemestersDto':
+      return SemestersDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'SemestersInput':
+      return SemestersInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SemestersPage':
+      return SemestersPage.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SessionDto':
+      return SessionDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'StudentsDto':
+      return StudentsDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'StudentsInput':
+      return StudentsInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'StudentsPage':
+      return StudentsPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'SubjectsDto':
+      return SubjectsDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'SubjectsInput':
+      return SubjectsInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SubjectsPage':
+      return SubjectsPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TeachersDto':
+      return TeachersDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TeachersInput':
+      return TeachersInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'TeachersPage':
+      return TeachersPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'YearsDto':
+      return YearsDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'YearsInput':
+      return YearsInput.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'YearsPage':
+      return YearsPage.fromJson(value as Map<String, dynamic>) as ReturnType;
     default:
       RegExpMatch? match;
 

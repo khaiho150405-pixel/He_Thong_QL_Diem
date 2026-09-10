@@ -1,6 +1,6 @@
 # Hệ thống Quản lý Điểm
 
-Nền móng Giai đoạn 0 theo [Implementation Plan](implementation_plan1.md) và [AGENTS.md](AGENTS.md). API hiện chỉ có health; chưa có đăng nhập, nhập điểm, OCR hoặc tổng kết. Xem [trạng thái kiểm chứng](docs/development/status.md) để phân biệt phần đã chạy và phần còn cần môi trường.
+Giai đoạn 1 triển khai tài khoản và danh mục UC01–08 theo [kế hoạch hiện tại](docs/development/phase-1.md) và [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa triển khai nhập điểm, OCR hoặc tổng kết. Bằng chứng kiểm chứng và giới hạn được ghi trong kế hoạch từng giai đoạn.
 
 ## Cấu trúc
 
@@ -83,4 +83,4 @@ Tại `apps/client_flutter`, chạy `flutter test integration_test/connection_te
 
 ## GitHub
 
-Repository đích: https://github.com/khaiho150405-pixel/He_Thong_QL_Diem. Issue/PR templates và CI nằm trong .github. CODEOWNERS đang chờ username reviewer. Branch protection là thiết lập GitHub riêng, không tự bật bằng commit workflow. Không có license đã được chủ dự án chọn và không deploy production tự động.
+Repository đích: https://github.com/khaiho150405-pixel/He_Thong_QL_Diem. Issue/PR templates và CI nằm trong .github. CODEOWNERS khai báo @trongv2310 và @caohaidang157; yêu cầu số lượt Approve phải cấu hình riêng trong branch protection. Phase 0 đã merge qua PR #1. Không có license đã được chủ dự án chọn và không deploy production tự động.

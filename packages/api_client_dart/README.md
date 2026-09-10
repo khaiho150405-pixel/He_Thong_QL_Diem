@@ -48,13 +48,14 @@ Please follow the [installation procedure](#installation--usage) and then run th
 import 'package:api_client_dart/api_client_dart.dart';
 
 
-final api = ApiClientDart().getHealthApi();
+final api = ApiClientDart().getAssignmentsApi();
+final AssignmentsInput assignmentsInput = ; // AssignmentsInput |
 
 try {
-    final response = await api.healthLive();
+    final response = await api.assignmentsCreate(assignmentsInput);
     print(response);
 } catch on DioException (e) {
-    print("Exception when calling HealthApi->healthLive: $e\n");
+    print("Exception when calling AssignmentsApi->assignmentsCreate: $e\n");
 }
 
 ```
@@ -65,19 +66,102 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*AssignmentsApi*](doc/AssignmentsApi.md) | [**assignmentsCreate**](doc/AssignmentsApi.md#assignmentscreate) | **POST** /api/v1/catalog/assignments |
+[*AssignmentsApi*](doc/AssignmentsApi.md) | [**assignmentsList**](doc/AssignmentsApi.md#assignmentslist) | **GET** /api/v1/catalog/assignments |
+[*AssignmentsApi*](doc/AssignmentsApi.md) | [**assignmentsRemove**](doc/AssignmentsApi.md#assignmentsremove) | **DELETE** /api/v1/catalog/assignments/{id} |
+[*AssignmentsApi*](doc/AssignmentsApi.md) | [**assignmentsUpdate**](doc/AssignmentsApi.md#assignmentsupdate) | **PUT** /api/v1/catalog/assignments/{id} |
+[*ClassesApi*](doc/ClassesApi.md) | [**classesCreate**](doc/ClassesApi.md#classescreate) | **POST** /api/v1/catalog/classes |
+[*ClassesApi*](doc/ClassesApi.md) | [**classesList**](doc/ClassesApi.md#classeslist) | **GET** /api/v1/catalog/classes |
+[*ClassesApi*](doc/ClassesApi.md) | [**classesRemove**](doc/ClassesApi.md#classesremove) | **DELETE** /api/v1/catalog/classes/{id} |
+[*ClassesApi*](doc/ClassesApi.md) | [**classesUpdate**](doc/ClassesApi.md#classesupdate) | **PUT** /api/v1/catalog/classes/{id} |
+[*ComponentsApi*](doc/ComponentsApi.md) | [**componentsCreate**](doc/ComponentsApi.md#componentscreate) | **POST** /api/v1/catalog/components |
+[*ComponentsApi*](doc/ComponentsApi.md) | [**componentsList**](doc/ComponentsApi.md#componentslist) | **GET** /api/v1/catalog/components |
+[*ComponentsApi*](doc/ComponentsApi.md) | [**componentsRemove**](doc/ComponentsApi.md#componentsremove) | **DELETE** /api/v1/catalog/components/{id} |
+[*ComponentsApi*](doc/ComponentsApi.md) | [**componentsUpdate**](doc/ComponentsApi.md#componentsupdate) | **PUT** /api/v1/catalog/components/{id} |
 [*HealthApi*](doc/HealthApi.md) | [**healthLive**](doc/HealthApi.md#healthlive) | **GET** /api/v1/health/live |
 [*HealthApi*](doc/HealthApi.md) | [**healthReady**](doc/HealthApi.md#healthready) | **GET** /api/v1/health/ready |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityAccounts**](doc/IdentityApi.md#identityaccounts) | **GET** /api/v1/identity/accounts |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityCreateAccount**](doc/IdentityApi.md#identitycreateaccount) | **POST** /api/v1/identity/accounts |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityLogin**](doc/IdentityApi.md#identitylogin) | **POST** /api/v1/identity/login |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityLogout**](doc/IdentityApi.md#identitylogout) | **POST** /api/v1/identity/logout |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityMe**](doc/IdentityApi.md#identityme) | **GET** /api/v1/identity/me |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityPassword**](doc/IdentityApi.md#identitypassword) | **POST** /api/v1/identity/password |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityProfile**](doc/IdentityApi.md#identityprofile) | **GET** /api/v1/identity/profile |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateAccount**](doc/IdentityApi.md#identityupdateaccount) | **PUT** /api/v1/identity/accounts/{id} |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateProfile**](doc/IdentityApi.md#identityupdateprofile) | **PUT** /api/v1/identity/profile |
+[*SemestersApi*](doc/SemestersApi.md) | [**semestersCreate**](doc/SemestersApi.md#semesterscreate) | **POST** /api/v1/catalog/semesters |
+[*SemestersApi*](doc/SemestersApi.md) | [**semestersList**](doc/SemestersApi.md#semesterslist) | **GET** /api/v1/catalog/semesters |
+[*SemestersApi*](doc/SemestersApi.md) | [**semestersRemove**](doc/SemestersApi.md#semestersremove) | **DELETE** /api/v1/catalog/semesters/{id} |
+[*SemestersApi*](doc/SemestersApi.md) | [**semestersUpdate**](doc/SemestersApi.md#semestersupdate) | **PUT** /api/v1/catalog/semesters/{id} |
+[*StudentsApi*](doc/StudentsApi.md) | [**studentsCreate**](doc/StudentsApi.md#studentscreate) | **POST** /api/v1/catalog/students |
+[*StudentsApi*](doc/StudentsApi.md) | [**studentsList**](doc/StudentsApi.md#studentslist) | **GET** /api/v1/catalog/students |
+[*StudentsApi*](doc/StudentsApi.md) | [**studentsRemove**](doc/StudentsApi.md#studentsremove) | **DELETE** /api/v1/catalog/students/{id} |
+[*StudentsApi*](doc/StudentsApi.md) | [**studentsUpdate**](doc/StudentsApi.md#studentsupdate) | **PUT** /api/v1/catalog/students/{id} |
+[*SubjectsApi*](doc/SubjectsApi.md) | [**subjectsCreate**](doc/SubjectsApi.md#subjectscreate) | **POST** /api/v1/catalog/subjects |
+[*SubjectsApi*](doc/SubjectsApi.md) | [**subjectsList**](doc/SubjectsApi.md#subjectslist) | **GET** /api/v1/catalog/subjects |
+[*SubjectsApi*](doc/SubjectsApi.md) | [**subjectsRemove**](doc/SubjectsApi.md#subjectsremove) | **DELETE** /api/v1/catalog/subjects/{id} |
+[*SubjectsApi*](doc/SubjectsApi.md) | [**subjectsUpdate**](doc/SubjectsApi.md#subjectsupdate) | **PUT** /api/v1/catalog/subjects/{id} |
+[*TeachersApi*](doc/TeachersApi.md) | [**teachersCreate**](doc/TeachersApi.md#teacherscreate) | **POST** /api/v1/catalog/teachers |
+[*TeachersApi*](doc/TeachersApi.md) | [**teachersList**](doc/TeachersApi.md#teacherslist) | **GET** /api/v1/catalog/teachers |
+[*TeachersApi*](doc/TeachersApi.md) | [**teachersRemove**](doc/TeachersApi.md#teachersremove) | **DELETE** /api/v1/catalog/teachers/{id} |
+[*TeachersApi*](doc/TeachersApi.md) | [**teachersUpdate**](doc/TeachersApi.md#teachersupdate) | **PUT** /api/v1/catalog/teachers/{id} |
+[*YearsApi*](doc/YearsApi.md) | [**yearsCreate**](doc/YearsApi.md#yearscreate) | **POST** /api/v1/catalog/years |
+[*YearsApi*](doc/YearsApi.md) | [**yearsList**](doc/YearsApi.md#yearslist) | **GET** /api/v1/catalog/years |
+[*YearsApi*](doc/YearsApi.md) | [**yearsRemove**](doc/YearsApi.md#yearsremove) | **DELETE** /api/v1/catalog/years/{id} |
+[*YearsApi*](doc/YearsApi.md) | [**yearsUpdate**](doc/YearsApi.md#yearsupdate) | **PUT** /api/v1/catalog/years/{id} |
 
 
 ## Documentation For Models
 
+ - [AccountDto](doc/AccountDto.md)
+ - [AccountInput](doc/AccountInput.md)
+ - [AccountUpdate](doc/AccountUpdate.md)
+ - [AccountsDto](doc/AccountsDto.md)
+ - [AssignmentsDto](doc/AssignmentsDto.md)
+ - [AssignmentsInput](doc/AssignmentsInput.md)
+ - [AssignmentsPage](doc/AssignmentsPage.md)
+ - [ClassesDto](doc/ClassesDto.md)
+ - [ClassesInput](doc/ClassesInput.md)
+ - [ClassesPage](doc/ClassesPage.md)
+ - [ComponentsDto](doc/ComponentsDto.md)
+ - [ComponentsInput](doc/ComponentsInput.md)
+ - [ComponentsPage](doc/ComponentsPage.md)
  - [ErrorDto](doc/ErrorDto.md)
  - [HealthDto](doc/HealthDto.md)
+ - [LoginInput](doc/LoginInput.md)
+ - [PasswordInput](doc/PasswordInput.md)
+ - [ProfileDto](doc/ProfileDto.md)
+ - [SemestersDto](doc/SemestersDto.md)
+ - [SemestersInput](doc/SemestersInput.md)
+ - [SemestersPage](doc/SemestersPage.md)
+ - [SessionDto](doc/SessionDto.md)
+ - [StudentsDto](doc/StudentsDto.md)
+ - [StudentsInput](doc/StudentsInput.md)
+ - [StudentsPage](doc/StudentsPage.md)
+ - [SubjectsDto](doc/SubjectsDto.md)
+ - [SubjectsInput](doc/SubjectsInput.md)
+ - [SubjectsPage](doc/SubjectsPage.md)
+ - [TeachersDto](doc/TeachersDto.md)
+ - [TeachersInput](doc/TeachersInput.md)
+ - [TeachersPage](doc/TeachersPage.md)
+ - [YearsDto](doc/YearsDto.md)
+ - [YearsInput](doc/YearsInput.md)
+ - [YearsPage](doc/YearsPage.md)
 
 
 ## Documentation For Authorization
 
-Endpoints do not require authorization.
+
+Authentication schemes defined for the API:
+### bearer
+
+- **Type**: HTTP Bearer Token authentication (JWT)
+
+### cookie
+
+- **Type**: API key
+- **API key parameter name**: qld_session
+- **Location**:
 
 
 ## Author

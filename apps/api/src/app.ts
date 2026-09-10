@@ -19,12 +19,14 @@ import {
   PROBE,
   type DependencyProbe,
 } from "./common/health.js";
-import { ErrorFilter, requestContext } from "./common/http.js";
+import { ErrorDto, ErrorFilter, requestContext } from "./common/http.js";
 import type { AppConfig } from "./common/config.js";
 import * as domainModules from "./modules/index.js";
+import { DatabaseModule } from "./common/database.js";
 
 export async function createApp(
-  config: Pick<AppConfig, "origins" | "environment">,
+  config: Pick<AppConfig, "origins" | "environment"> &
+    Partial<Pick<AppConfig, "databaseUrl">>,
   probe: DependencyProbe,
 ): Promise<INestApplication> {
   @ApiExcludeController()
@@ -35,9 +37,19 @@ export async function createApp(
       throw new NotFoundException();
     }
   }
+  @Module({ controllers: [NotFoundController] })
+  class NotFoundModule {}
   @Module({
-    imports: Object.values(domainModules),
-    controllers: [HealthController, NotFoundController],
+    imports: [
+      DatabaseModule.configure(
+        config.databaseUrl ??
+          "postgresql://app_runtime@127.0.0.1:5432/unconfigured",
+        config,
+      ),
+      ...Object.values(domainModules),
+      NotFoundModule,
+    ],
+    controllers: [HealthController],
     providers: [HealthService, { provide: PROBE, useValue: probe }],
   })
   class AppModule {}
@@ -62,15 +74,36 @@ export async function createApp(
   return app;
 }
 export function makeOpenApi(app: INestApplication) {
-  return SwaggerModule.createDocument(
+  const document = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
       .setTitle("Quản lý điểm API")
       .setVersion("1.0.0")
+      .addBearerAuth({ type: "http", scheme: "bearer" })
+      .addCookieAuth("qld_session")
       .build(),
     {
-      operationIdFactory: (_controller, method) =>
-        `health${method[0]?.toUpperCase()}${method.slice(1)}`,
+      extraModels: [ErrorDto],
+      operationIdFactory: (controller, method) =>
+        `${controller.replace(/Controller$/, "").replace(/^./, (c) => c.toLowerCase())}${method[0]?.toUpperCase()}${method.slice(1)}`,
     },
   );
+  for (const [path, item] of Object.entries(document.paths)) {
+    for (const method of ["get", "post", "put", "delete"] as const) {
+      const operation = item?.[method];
+      if (!operation || path.includes("/health/")) continue;
+      if (!path.endsWith("/login"))
+        operation.security = [{ bearer: [] }, { cookie: [] }];
+      for (const status of [400, 401, 403, 409, 429, 500])
+        operation.responses[status] = {
+          description: "Error envelope",
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ErrorDto" },
+            },
+          },
+        };
+    }
+  }
+  return document;
 }
