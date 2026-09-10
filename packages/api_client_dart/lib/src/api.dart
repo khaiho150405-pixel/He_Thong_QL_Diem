@@ -10,6 +10,7 @@ import 'package:api_client_dart/src/auth/oauth.dart';
 import 'package:api_client_dart/src/api/assignments_api.dart';
 import 'package:api_client_dart/src/api/classes_api.dart';
 import 'package:api_client_dart/src/api/components_api.dart';
+import 'package:api_client_dart/src/api/gradebooks_api.dart';
 import 'package:api_client_dart/src/api/health_api.dart';
 import 'package:api_client_dart/src/api/identity_api.dart';
 import 'package:api_client_dart/src/api/semesters_api.dart';
@@ -103,6 +104,12 @@ class ApiClientDart {
   /// by doing that all interceptors will not be executed
   ComponentsApi getComponentsApi() {
     return ComponentsApi(dio);
+  }
+
+  /// Get GradebooksApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  GradebooksApi getGradebooksApi() {
+    return GradebooksApi(dio);
   }
 
   /// Get HealthApi instance, base route and serializer can be overridden by a given but be careful,

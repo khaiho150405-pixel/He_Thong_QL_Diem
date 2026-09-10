@@ -98,7 +98,7 @@ export function makeOpenApi(app: INestApplication) {
           { bearer: [] },
           method === "get" ? { cookie: [] } : { cookie: [], csrf: [] },
         ];
-      for (const status of [400, 401, 403, 409, 429, 500])
+      for (const status of [400, 401, 403, 404, 409, 429, 500])
         operation.responses[status] = {
           description: "Error envelope",
           content: {

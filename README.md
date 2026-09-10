@@ -1,6 +1,6 @@
 # Hệ thống Quản lý Điểm
 
-Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2 phần 1](docs/development/phase-2.md) bổ sung backend nội bộ tạo/đọc lưới điểm; API nhập điểm và giao diện bảng điểm ở các phần tiếp theo. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa triển khai OCR hoặc tổng kết.
+Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2 phần 2](docs/development/phase-2.md) có API tạo/đọc lưới, nhập/chốt điểm, đồng bộ sĩ số và lịch sử; giao diện bảng điểm ở phần 3. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa triển khai OCR hoặc tổng kết.
 
 ## Cấu trúc
 
@@ -66,7 +66,7 @@ dart run melos run check
 
 DB tests yêu cầu TEST_MIGRATION_URL và TEST_RUNTIME_URL cùng trỏ DB có tên kết thúc \_test, đã migrate và seed. Không dùng DB development đang nhập liệu. `pnpm test:db` kiểm NULL/0, miền điểm, unique/FK, lưới, quyền runtime, audit append-only và rollback fixture. `pnpm test:integration` cần đầy đủ stack thật và cấu hình .env.
 
-Runtime không được DML trực tiếp bảng/ô điểm. Phase 2 phần 1 chỉ cấp quyền gọi hàm tạo lưới NULL có kiểm phiên/phân công, transaction và audit. Phần nhập/sửa điểm phải dùng write port gọi validator bước 0.1 trước numeric coercion; không sử dụng tài khoản migration cho API để vượt giới hạn.
+Runtime không được DML trực tiếp bảng/ô điểm. Tạo/nhập/chốt/đồng bộ đi qua hàm DB có kiểm phiên/phân công, version, transaction và audit. API nhập tay nhận điểm dạng chuỗi `0.0`–`10.0` hoặc `null`, lý do và expectedVersion; mutation nhập/chốt/sync cần `x-idempotency-key`. Xem [hướng dẫn API phần 2](docs/development/phase-2-api.md). Không sử dụng tài khoản migration cho API để vượt giới hạn.
 
 ## Smoke lỗi kết nối và Thử lại
 

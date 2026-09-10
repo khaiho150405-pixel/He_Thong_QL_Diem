@@ -1,6 +1,6 @@
 # Giai đoạn 2 — Bảng điểm UC09–10
 
-Theo yêu cầu chủ dự án, triển khai và dừng sau **phần 1**, lưu bàn giao ở [CONTINUE.md](CONTINUE.md). Nền là Phase 1 commit `2b124de`; CI Phase 1 đã xanh ở [run 34476245620](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34476245620). Nhánh riêng: `codex/phase-2-part-1-gradebooks`.
+Yêu cầu mới nhất: hoàn tất **phần 2**, lưu bàn giao ở [CONTINUE.md](CONTINUE.md), chưa merge main khi Phase 2 còn thiếu giao diện. Nền là Phase 1 commit `2b124de`; phần 1 commit `0ae7fbc` có [CI xanh](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34483146888). Giữ nhánh `codex/phase-2-part-1-gradebooks` để tiếp tục toàn Phase 2.
 
 ## Phần 1 — Migration và application backend khởi tạo bảng
 
@@ -40,4 +40,6 @@ Phần 1 hoàn tất local ngày 2026-09-10:
 - `pnpm api:export` và kiểm diff xác nhận OpenAPI/client không đổi. `node scripts/check-repository.mjs` và `git diff --check` đạt.
 - Không đổi Flutter nên không chạy lại native local. Test dependency Redis/MinIO toàn stack và CI của nhánh Phase 2 chưa được dùng làm bằng chứng hoàn tất local; kiểm trạng thái GitHub trước review/merge.
 
-Điểm tiếp tục là phần 2. Chưa coi toàn bộ UC09–10/Phase 2 đã hoàn tất vì hiện chỉ có backend nội bộ tạo/đọc lưới.
+Phần 2 đã có toàn bộ API trong [hướng dẫn review](phase-2-api.md), chính sách tại [ADR-0007](../adr/0007-gradebook-write.md). Kiểm chứng ngày 2026-09-11: nâng cấp database phần 1 và cài mới năm migration trên `qld_phase2_write_fresh_test`; constraint test và ba integration suite (identity/catalog, grid, write HTTP) đạt. Đã kiểm rollback thực khi trigger audit phát lỗi, version và idempotency khi gửi đồng thời, sai bảng/ô, CSRF, hết phiên, đồng bộ sĩ số và chốt thiếu điểm/chờ review. Backend check đạt 6 tests/build; Flutter analyze và 9 tests đạt, gồm contract bigint/NULL/0.0. OpenAPI/client được sinh lại; `pnpm contracts:check` đạt, không có drift.
+
+Điểm tiếp tục sau kiểm chứng là phần 3 Flutter. CI của commit phần 2 cần kiểm riêng trên GitHub, không suy từ CI phần 1. Toàn Phase 2 chỉ nghiệm thu sau giao diện và kiểm web/Android/iOS, chưa merge main.

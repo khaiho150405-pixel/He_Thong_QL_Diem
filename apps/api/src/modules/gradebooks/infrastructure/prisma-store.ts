@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  NotFoundException,
 } from "@nestjs/common";
 import type { PrismaClient } from "../../../generated/prisma/client.js";
 import { unit } from "../../../common/store.js";
@@ -12,6 +13,8 @@ import type {
   GradebookStore,
   GradebookUnit,
   GradeCell,
+  GradeHistoryEntry,
+  BatchResult,
 } from "../application/port.js";
 
 interface BookRow {
@@ -74,6 +77,70 @@ export class PrismaGradebookStore implements GradebookStore {
           JOIN public.thanh_phan_diem tp USING (ma_thanh_phan)
           WHERE d.ma_bang_diem = ${bookId}::integer AND d.ma_diem > ${after}::bigint
           ORDER BY d.ma_diem LIMIT 51`,
+          updateGrades: async (sessionHash, bookId, version, changes) => {
+            const rows = await tx.$queryRaw<Array<{ result: BatchResult }>>`
+              SELECT public.cap_nhat_diem(${sessionHash}::text, ${bookId}::integer,
+                ${version}::integer, ${JSON.stringify(changes)}::jsonb) AS result`;
+            return rows[0]!.result;
+          },
+          syncRoster: async (sessionHash, bookId, version) => {
+            const rows = await tx.$queryRaw<BookRow[]>`
+              SELECT * FROM public.dong_bo_si_so(${sessionHash}::text,${bookId}::integer,${version}::integer)`;
+            return book(rows[0]!);
+          },
+          lockGradebook: async (sessionHash, bookId, expectedVersion) => {
+            const rows = await tx.$queryRaw<BookRow[]>`
+            SELECT * FROM public.chot_bang_diem(
+              ${sessionHash}::text, ${bookId}::integer, ${expectedVersion}::integer)`;
+            if (rows.length === 0) throw new NotFoundException();
+            return book(rows[0]!);
+          },
+          gradeHistory: (bookId, cellId, after) => tx.$queryRaw<
+            GradeHistoryEntry[]
+          >`
+          SELECT h.ma_lich_su::text AS id, h.ma_diem::text AS "cellId",
+            h.nguoi_sua AS editor,
+            h.gia_tri_cu::text AS "oldValue", h.gia_tri_moi::text AS "newValue",
+            h.ly_do AS reason, to_char(h.thoi_diem AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS timestamp
+          FROM public.lich_su_sua_diem h JOIN public.diem_thanh_phan d USING(ma_diem)
+          WHERE d.ma_bang_diem = ${bookId}::integer AND h.ma_diem = ${BigInt(cellId)}::bigint AND h.ma_lich_su > ${BigInt(after)}::bigint
+          ORDER BY h.ma_lich_su LIMIT 51`,
+          findIdempotencyKey: async (key, userId, operation) => {
+            const row = await tx.khoa_idempotency.findUnique({
+              where: {
+                ma_nguoi_dung_thao_tac_khoa: {
+                  khoa: key,
+                  ma_nguoi_dung: userId,
+                  thao_tac: operation,
+                },
+              },
+            });
+            if (!row) return null; // Retain replay protection until a reviewed retention job exists.
+            return {
+              key: row.khoa,
+              userId: row.ma_nguoi_dung,
+              operation: row.thao_tac,
+              requestHash: row.ma_bam_yeu_cau,
+              result: row.ket_qua,
+            };
+          },
+          saveIdempotencyKey: async (
+            key,
+            userId,
+            operation,
+            reqHash,
+            result,
+          ) => {
+            await tx.khoa_idempotency.create({
+              data: {
+                khoa: key,
+                ma_nguoi_dung: userId,
+                thao_tac: operation,
+                ma_bam_yeu_cau: reqHash,
+                ket_qua: result as object,
+              },
+            });
+          },
         }),
       );
     } catch (error) {
@@ -82,6 +149,8 @@ export class PrismaGradebookStore implements GradebookStore {
       const sqlState = sqlStateOf(error);
       if (e.code === "P2010" && sqlState === "42501")
         throw new ForbiddenException();
+      if (e.code === "P2010" && ["02000", "P0002"].includes(sqlState ?? ""))
+        throw new NotFoundException();
       if (
         e.code === "P2010" &&
         ["23514", "23505", "40001"].includes(sqlState ?? "")

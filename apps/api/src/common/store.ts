@@ -17,7 +17,8 @@ export type Table =
   | "giao_vien"
   | "phan_cong_giang_day"
   | "bang_diem"
-  | "diem_thanh_phan";
+  | "diem_thanh_phan"
+  | "khoa_idempotency";
 export interface Unit {
   find(table: Table, where: Row): Promise<Row | null>;
   list(table: Table, where: Row, order: string, limit?: number): Promise<Row[]>;
