@@ -318,6 +318,8 @@ Không mock database trong integration test nghiệp vụ quan trọng. Dùng co
 
 ## 11. Quy trình làm việc dành cho AI agent
 
+Khi chủ dự án nhắn `continue` hoặc yêu cầu tiếp tục công việc bị dừng, đọc `docs/development/CONTINUE.md` trước để khôi phục phạm vi, nhánh, kết quả kiểm thử và bước tiếp theo. Đối chiếu note với trạng thái git thực tế; không làm lại phần đã hoàn tất, không tự nhảy sang giai đoạn khác hoặc merge `main`. Cập nhật note này khi kết thúc mỗi phần triển khai. `continue` là tin nhắn trong Codex, không phải lệnh PowerShell.
+
 Trước khi sửa mã:
 
 1. Đọc toàn bộ `AGENTS.md`, `README.md`, các `AGENTS.md` gần thư mục đích và ADR liên quan.

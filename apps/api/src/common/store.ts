@@ -38,7 +38,7 @@ interface Delegate {
   update(args: Row): Promise<Row>;
   deleteMany(args: Row): Promise<unknown>;
 }
-function unit(tx: Prisma.TransactionClient): Unit {
+export function unit(tx: Prisma.TransactionClient): Unit {
   const delegate = (table: Table) => tx[table] as unknown as Delegate;
   return {
     find: (table, where) => delegate(table).findFirst({ where }),
