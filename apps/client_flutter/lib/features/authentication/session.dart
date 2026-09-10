@@ -74,6 +74,7 @@ class SessionController extends StateNotifier<SessionDto?> {
 
   Future<void> login(String username, String password) async {
     final response = await api.getIdentityApi().identityLogin(
+      xClientPlatform: kIsWeb ? 'web' : 'native',
       loginInput: LoginInput(username: username.trim(), password: password),
     );
     final session = response.data!;

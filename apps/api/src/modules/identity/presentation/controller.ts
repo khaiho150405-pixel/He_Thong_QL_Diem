@@ -14,6 +14,7 @@ import {
 } from "@nestjs/common";
 import {
   ApiBody,
+  ApiHeader,
   ApiOkResponse,
   ApiParam,
   ApiProperty,
@@ -93,6 +94,11 @@ export class IdentityController {
     @Inject(SETTINGS) private readonly settings: Settings,
   ) {}
   @Post("login")
+  @ApiHeader({
+    name: "x-client-platform",
+    required: true,
+    enum: ["web", "native"],
+  })
   @HttpCode(200)
   @ApiBody({ type: LoginInput })
   @ApiOkResponse({ type: SessionDto })

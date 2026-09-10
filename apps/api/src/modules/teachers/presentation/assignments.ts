@@ -28,7 +28,7 @@ export class AssignmentsInput {
   @ApiProperty({ type: Number }) ma_lop!: number;
   @ApiProperty({ type: Number }) ma_mon!: number;
   @ApiProperty({ type: Number }) ma_hoc_ky!: number;
-  @ApiProperty({ type: String, pattern: "^\\\\d{4}-\\\\d{2}-\\\\d{2}$" })
+  @ApiProperty({ type: String, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" })
   ngay_phan_cong!: string;
 }
 export class AssignmentsDto extends AssignmentsInput {

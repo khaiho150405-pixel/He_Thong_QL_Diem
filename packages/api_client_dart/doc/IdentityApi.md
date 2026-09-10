@@ -79,6 +79,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getIdentityApi();
 final AccountInput accountInput = ; // AccountInput |
@@ -103,7 +107,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 
@@ -113,7 +117,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **identityLogin**
-> SessionDto identityLogin(loginInput)
+> SessionDto identityLogin(xClientPlatform, loginInput)
 
 
 
@@ -122,10 +126,11 @@ Name | Type | Description  | Notes
 import 'package:api_client_dart/api.dart';
 
 final api = ApiClientDart().getIdentityApi();
+final String xClientPlatform = xClientPlatform_example; // String |
 final LoginInput loginInput = ; // LoginInput |
 
 try {
-    final response = api.identityLogin(loginInput);
+    final response = api.identityLogin(xClientPlatform, loginInput);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling IdentityApi->identityLogin: $e\n');
@@ -136,6 +141,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **xClientPlatform** | **String**|  |
  **loginInput** | [**LoginInput**](LoginInput.md)|  |
 
 ### Return type
@@ -165,6 +171,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getIdentityApi();
 
@@ -184,7 +194,7 @@ void (empty response body)
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 
@@ -246,6 +256,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getIdentityApi();
 final PasswordInput passwordInput = ; // PasswordInput |
@@ -269,7 +283,7 @@ void (empty response body)
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 
@@ -331,6 +345,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getIdentityApi();
 final num id = 8.14; // num |
@@ -357,7 +375,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 
@@ -378,6 +396,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getIdentityApi();
 final ProfileDto profileDto = ; // ProfileDto |
@@ -402,7 +424,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 

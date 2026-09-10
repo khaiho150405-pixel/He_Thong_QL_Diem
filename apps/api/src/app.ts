@@ -81,6 +81,7 @@ export function makeOpenApi(app: INestApplication) {
       .setVersion("1.0.0")
       .addBearerAuth({ type: "http", scheme: "bearer" })
       .addCookieAuth("qld_session")
+      .addApiKey({ type: "apiKey", in: "header", name: "x-csrf-token" }, "csrf")
       .build(),
     {
       extraModels: [ErrorDto],
@@ -93,7 +94,10 @@ export function makeOpenApi(app: INestApplication) {
       const operation = item?.[method];
       if (!operation || path.includes("/health/")) continue;
       if (!path.endsWith("/login"))
-        operation.security = [{ bearer: [] }, { cookie: [] }];
+        operation.security = [
+          { bearer: [] },
+          method === "get" ? { cookie: [] } : { cookie: [], csrf: [] },
+        ];
       for (const status of [400, 401, 403, 409, 429, 500])
         operation.responses[status] = {
           description: "Error envelope",

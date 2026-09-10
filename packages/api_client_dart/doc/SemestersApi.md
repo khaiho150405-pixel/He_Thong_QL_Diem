@@ -27,6 +27,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getSemestersApi();
 final SemestersInput semestersInput = ; // SemestersInput |
@@ -51,7 +55,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 
@@ -119,6 +123,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getSemestersApi();
 final num id = 8.14; // num |
@@ -142,7 +150,7 @@ void (empty response body)
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 
@@ -163,6 +171,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
 // uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getSemestersApi();
 final num id = 8.14; // num |
@@ -189,7 +201,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
 
 ### HTTP request headers
 

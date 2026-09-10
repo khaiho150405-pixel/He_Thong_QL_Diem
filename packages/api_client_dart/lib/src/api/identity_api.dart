@@ -151,6 +151,12 @@ class IdentityApi {
             'where': '',
           },
           {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+          {
+            'type': 'apiKey',
+            'name': 'csrf',
+            'keyName': 'x-csrf-token',
+            'where': 'header',
+          },
         ],
         ...?extra,
       },
@@ -217,6 +223,7 @@ class IdentityApi {
   ///
   ///
   /// Parameters:
+  /// * [xClientPlatform]
   /// * [loginInput]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -228,6 +235,7 @@ class IdentityApi {
   /// Returns a [Future] containing a [Response] with a [SessionDto] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<SessionDto>> identityLogin({
+    required String xClientPlatform,
     required LoginInput loginInput,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -239,7 +247,10 @@ class IdentityApi {
     final _path = r'/api/v1/identity/login';
     final _options = Options(
       method: r'POST',
-      headers: <String, dynamic>{...?headers},
+      headers: <String, dynamic>{
+        r'x-client-platform': xClientPlatform,
+        ...?headers,
+      },
       extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       contentType: 'application/json',
       validateStatus: validateStatus,
@@ -334,6 +345,12 @@ class IdentityApi {
             'where': '',
           },
           {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+          {
+            'type': 'apiKey',
+            'name': 'csrf',
+            'keyName': 'x-csrf-token',
+            'where': 'header',
+          },
         ],
         ...?extra,
       },
@@ -468,6 +485,12 @@ class IdentityApi {
             'where': '',
           },
           {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+          {
+            'type': 'apiKey',
+            'name': 'csrf',
+            'keyName': 'x-csrf-token',
+            'where': 'header',
+          },
         ],
         ...?extra,
       },
@@ -624,6 +647,12 @@ class IdentityApi {
             'where': '',
           },
           {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+          {
+            'type': 'apiKey',
+            'name': 'csrf',
+            'keyName': 'x-csrf-token',
+            'where': 'header',
+          },
         ],
         ...?extra,
       },
@@ -722,6 +751,12 @@ class IdentityApi {
             'where': '',
           },
           {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+          {
+            'type': 'apiKey',
+            'name': 'csrf',
+            'keyName': 'x-csrf-token',
+            'where': 'header',
+          },
         ],
         ...?extra,
       },

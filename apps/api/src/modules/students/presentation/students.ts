@@ -27,7 +27,7 @@ export class StudentsInput {
   @ApiProperty({ type: Number, nullable: true }) ma_nguoi_dung!: number | null;
   @ApiProperty({ type: Number }) ma_lop!: number;
   @ApiProperty({ type: String }) ho_ten!: string;
-  @ApiProperty({ type: String, pattern: "^\\\\d{4}-\\\\d{2}-\\\\d{2}$" })
+  @ApiProperty({ type: String, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" })
   ngay_sinh!: string;
   @ApiProperty({ type: Boolean }) dang_theo_hoc!: boolean;
 }

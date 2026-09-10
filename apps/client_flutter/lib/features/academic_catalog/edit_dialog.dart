@@ -162,6 +162,15 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             ),
           )
           .toList();
+      if (f.optional) {
+        items.insert(
+          0,
+          const DropdownMenuItem<num>(
+            value: null,
+            child: Text('Không liên kết'),
+          ),
+        );
+      }
       if (selected != null && !rows.any((r) => r[target.id] == selected)) {
         items.add(
           DropdownMenuItem(
@@ -249,7 +258,14 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                           ),
                         ),
                       ),
-                    for (final f in fields)
+                    if (!editable && widget.row != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(rowLabel(widget.row!)),
+                      ),
+                    for (final f in fields.where(
+                      (f) => editable || f.reference == null,
+                    ))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: field(f),

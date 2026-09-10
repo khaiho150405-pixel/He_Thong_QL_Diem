@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createApp } from "../src/app.js";
+import { createApp, makeOpenApi } from "../src/app.js";
 import { readConfig } from "../src/common/config.js";
 
 test("health, failure envelope, correlation ID and CORS use real HTTP", async () => {
@@ -19,6 +19,12 @@ test("health, failure envelope, correlation ID and CORS use real HTTP", async ()
   );
   await app.listen(0, "127.0.0.1");
   try {
+    const schema = makeOpenApi(app).components!.schemas!.YearsInput as {
+      properties: Record<string, { pattern: string }>;
+    };
+    const datePattern = new RegExp(schema.properties.ngay_bat_dau!.pattern);
+    assert.equal(datePattern.test("2026-09-01"), true);
+    assert.equal(datePattern.test("01/09/2026"), false);
     const url = await app.getUrl();
     const live = await fetch(`${url}/api/v1/health/live`, {
       headers: {

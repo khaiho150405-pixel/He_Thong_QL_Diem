@@ -163,5 +163,11 @@ Authentication schemes defined for the API:
 - **API key parameter name**: qld_session
 - **Location**:
 
+### csrf
+
+- **Type**: API key
+- **API key parameter name**: x-csrf-token
+- **Location**: HTTP header
+
 
 ## Author

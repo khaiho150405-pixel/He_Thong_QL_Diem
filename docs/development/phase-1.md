@@ -1,6 +1,6 @@
 # Giai đoạn 1 — Tài khoản và danh mục
 
-Nhánh thực hiện từ main `02ec66d` (PR #1 đã merge). Nguồn: AGENTS.md và HTML §3–4, UC01–08. Trạng thái: đang triển khai, chưa nghiệm thu.
+Nhánh thực hiện từ main `02ec66d` (PR #1 đã merge). Nguồn: AGENTS.md và HTML §3–4, UC01–08. Trạng thái: đã triển khai, chờ review và nghiệm thu.
 
 ## Acceptance criteria
 
@@ -21,4 +21,6 @@ Web thực tế: đăng nhập bằng tài khoản giả trên DB test riêng, t
 
 [Onboarding và kịch bản review](phase-1-onboarding.md). Migration đã chạy nâng cấp trên DB test có Phase 0 và chạy từ rỗng trên DB test riêng. PostgreSQL integration đã kiểm chứng đăng nhập, CSRF, khóa/mở, phân quyền dữ liệu, thu hồi và hết phiên. API connection bắt buộc timezone UTC; test idle expiry phát hiện lỗi timezone trên PostgreSQL Windows và đã được sửa.
 
-Đã chạy thành công: `pnpm check`, `pnpm contracts:check`, `pnpm test:db`, test API `identity-catalog.test.ts`, Flutter analyze, 7 unit/widget tests và `flutter build web`. Test giao diện kiểm tra hai kích thước 390/1280 px, lỗi đăng nhập/thử lại, tạo năm học, logout và menu học sinh. CI native được bổ sung cùng luồng UI qua HTTP adapter test; kiểm tra kết nối native vẫn dùng API thật. Chưa coi CI Phase 1 hoặc nghiệm thu Android/iOS là hoàn tất dựa vào CI Phase 0.
+Đã chạy thành công: `pnpm check`, `pnpm contracts:check`, `pnpm test:db`, test API `identity-catalog.test.ts`, Flutter analyze, 8 unit/widget tests và `flutter build web`. Test giao diện kiểm tra hai kích thước 390/1280 px, lỗi đăng nhập/thử lại, tạo năm học, logout và menu học sinh; test cấu hình bảo đảm endpoint được kiểm tra trước khi mở màn hình đăng nhập. CI native được bổ sung cùng luồng UI qua HTTP adapter test; kiểm tra kết nối native vẫn dùng API thật.
+
+CI của commit `bce8191` đã thành công ở cả `foundation` (gồm Android), `ios` và `required-checks`: [run 34448600207](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34448600207). Các sửa đổi cuối về OpenAPI (định dạng ngày, header nền tảng và CSRF), cấu hình khởi động và form liên kết đã được kiểm tra local; khi review phải kiểm tra CI của commit mới nhất trên nhánh. CI tự động không thay thế nghiệm thu nghiệp vụ của nhóm.

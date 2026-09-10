@@ -27,9 +27,9 @@ export class SemestersInput {
   @ApiProperty({ type: Number }) ma_nam_hoc!: number;
   @ApiProperty({ type: String }) ten!: string;
   @ApiProperty({ type: Number }) thu_tu!: number;
-  @ApiProperty({ type: String, pattern: "^\\\\d{4}-\\\\d{2}-\\\\d{2}$" })
+  @ApiProperty({ type: String, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" })
   ngay_bat_dau!: string;
-  @ApiProperty({ type: String, pattern: "^\\\\d{4}-\\\\d{2}-\\\\d{2}$" })
+  @ApiProperty({ type: String, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" })
   ngay_ket_thuc!: string;
 }
 export class SemestersDto extends SemestersInput {
