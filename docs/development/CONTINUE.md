@@ -4,17 +4,18 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: tiếp tục theo file hướng dẫn. Phase 2 phần 3 Flutter và CI đa nền tảng đã hoàn tất; bước kế tiếp là bàn giao review/PR, không tự merge.
-- Nhánh: `codex/phase-2-part-1-gradebooks`, nền Phase 1 `2b124de`. Không tự merge main; kiểm tra trạng thái remote trước khi chọn base PR.
+- Yêu cầu mới nhất: sửa CI đỏ sau khi Phase 2 đã merge, cung cấp demo Web và tiếp tục sang nền Phase 3 mà chưa cần file trọng số OCR.
+- Nhánh: `codex/phase-2-ci-demo`, nền `origin/main` merge commit Phase 2 `24008b5`. Không sửa trực tiếp hoặc tự merge main.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
-- Phase 2 phần 1 commit `0ae7fbc` và phần 2 commit `3ad0865` đều CI xanh. Phần 3 có Flutter danh sách/lưới, batch edit, lịch sử, sync sĩ số, chốt và xử lý conflict; xem [phase-2.md](phase-2.md), [ADR-0007](../adr/0007-gradebook-write.md), [hướng dẫn API](phase-2-api.md).
+- Phase 2 phần 1 commit `0ae7fbc`, phần 2 `3ad0865`, phần 3 `23df8fe`; PR #3 đã merge. Hotfix hiện tại chạy integration files tuần tự vì chúng dùng chung PostgreSQL `SERIALIZABLE`; chạy song song đã tái hiện 2 đạt/1 lỗi, chạy tuần tự đạt 3/3.
+- Demo local đã được kiểm tra với Flutter Web, API thật và PostgreSQL test cô lập: giáo viên tạo bảng #25, nhập `8.5`, lưu lịch sử và tăng version. Mật khẩu demo chỉ được đặt trong database test local, không commit.
 
 ## Khi nhận continue
 
 1. Đọc AGENTS.md, README.md, phase-2.md, ADR-0002/0004/0006/0007 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
-2. Đối chiếu HEAD với checkpoint này. Commit `887155c` có [CI xanh toàn bộ](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34565168338): foundation, Web, APK, Android emulator, iOS simulator và required-checks. Nếu HEAD mới hơn thì kiểm CI mới; nếu không, Phase 2 sẵn sàng bàn giao hai đồng nghiệp review và tạo PR theo quy trình GitHub.
+2. Chỉ chốt hotfix khi GitHub `foundation`, `ios` và `required-checks` đều xanh. Local đã đạt `pnpm test:db` và ba suite nghiệp vụ tuần tự; máy thiếu Docker nên GitHub phải xác nhận probe Redis/MinIO, APK/emulator và iOS.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
-4. Không tự merge Phase 2. Sau CI xanh, bàn giao review; không nhảy sang OCR/Phase 3 khi chưa có yêu cầu của chủ dự án.
+4. Sau CI xanh, bắt đầu Phase 3 bằng contract, upload/storage, outbox/queue và fake adapter chỉ bật ở development/test. Chưa nối model thật khi chưa có weights; worker không được ghi điểm chính thức.
 
 ## Công cụ và dữ liệu test trên máy hiện tại
 
