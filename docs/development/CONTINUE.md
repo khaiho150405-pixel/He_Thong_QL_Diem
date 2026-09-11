@@ -1,0 +1,43 @@
+# Điểm tiếp tục dự án
+
+Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
+
+## Trạng thái bàn giao
+
+- Yêu cầu mới nhất: tiếp tục theo file hướng dẫn. Phase 2 phần 3 Flutter và CI đa nền tảng đã hoàn tất; bước kế tiếp là bàn giao review/PR, không tự merge.
+- Nhánh: `codex/phase-2-part-1-gradebooks`, nền Phase 1 `2b124de`. Không tự merge main; kiểm tra trạng thái remote trước khi chọn base PR.
+- Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
+- Phase 2 phần 1 commit `0ae7fbc` và phần 2 commit `3ad0865` đều CI xanh. Phần 3 có Flutter danh sách/lưới, batch edit, lịch sử, sync sĩ số, chốt và xử lý conflict; xem [phase-2.md](phase-2.md), [ADR-0007](../adr/0007-gradebook-write.md), [hướng dẫn API](phase-2-api.md).
+
+## Khi nhận continue
+
+1. Đọc AGENTS.md, README.md, phase-2.md, ADR-0002/0004/0006/0007 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
+2. Đối chiếu HEAD với checkpoint này. Commit `887155c` có [CI xanh toàn bộ](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34565168338): foundation, Web, APK, Android emulator, iOS simulator và required-checks. Nếu HEAD mới hơn thì kiểm CI mới; nếu không, Phase 2 sẵn sàng bàn giao hai đồng nghiệp review và tạo PR theo quy trình GitHub.
+3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
+4. Không tự merge Phase 2. Sau CI xanh, bàn giao review; không nhảy sang OCR/Phase 3 khi chưa có yêu cầu của chủ dự án.
+
+## Công cụ và dữ liệu test trên máy hiện tại
+
+- PowerShell; Node 24.19.0/pnpm 11.19.0, Flutter 3.35.7 ở `C:\src\flutter\bin`; giữ phiên bản lockfile.
+- Nếu PATH của agent thiếu Node: thêm cả `C:\Users\Ho Si Khai\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin` và `C:\Users\Ho Si Khai\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback` vào PATH cho tiến trình hiện tại. Java cho generator: Android Studio `jbr\bin`.
+- PostgreSQL test riêng: `.local/pg-test`, loopback `127.0.0.1:55432`, PostgreSQL 18; không dùng DB cá nhân cổng 5432 hoặc DB development có dữ liệu nhập thật.
+- Database nâng cấp phần 2: `qld_phase2_fresh_test`; database cài từ rỗng phần 2: `qld_phase2_write_fresh_test`. Dùng role `app_migration` cho migration, `app_runtime` cho service/test quyền. Cụm test loopback này dùng trust; không suy rộng cấu hình này sang production.
+- URL test: `postgresql://app_migration@127.0.0.1:55432/qld_phase2_fresh_test` và tương ứng `app_runtime`. Đặt TEST_MIGRATION_URL/TEST_RUNTIME_URL; migration dùng MIGRATION_DATABASE_URL. Không in/commit `.env` hoặc lấy mật khẩu PG làm mật khẩu ứng dụng.
+- Lệnh kiểm: `pnpm check`, `pnpm test:db`, `pnpm exec tsx --test apps/api/test/integration/gradebooks.test.ts apps/api/test/integration/gradebook-write.test.ts apps/api/test/integration/identity-catalog.test.ts`. Test dependency toàn stack cần Redis/MinIO; Docker trên máy này chưa có theo lần kiểm gần nhất.
+- AGENTS.md yêu cầu schema thay đổi kiểm cả nâng cấp và DB rỗng. Không drop database test để chạy lại: fixture dùng tên ngẫu nhiên; database mới chỉ tạo khi cần kiểm từ rỗng.
+- Git elevated có thể cần `git -c safe.directory='C:/Users/Ho Si Khai/Downloads/Ki_1_nam_4/KLCN/system' ...`; không chỉnh global safe.directory.
+- Connector GitHub từng trả 403 khi tạo PR. Nếu quyền chưa đổi, bàn giao link compare; không tự tìm credential hoặc merge.
+
+## Kết quả cuối và công việc dở
+
+Phần 2: migration 202609100003_gradebook_write; service/controller/DTO tạo/đọc bảng, batchUpdate, lock, syncRoster và history. Body mutation có expectedVersion bắt buộc; batch có changes tối đa 100 ô với cellId chuỗi, value NULL hoặc chuỗi chuẩn 0.0–10.0 và reason. Header x-idempotency-key theo người dùng/thao tác. Replay vẫn kiểm quyền; cùng key khác body trả 409. PostgreSQL khóa bảng và tăng version đúng một lần, ghi điểm/lịch sử/audit/idempotency nguyên tử; runtime không có DML điểm trực tiếp.
+
+Không chốt khi thiếu điểm bắt buộc/thiếu ô sĩ số hoặc còn chờ review. Đây là mặc định development bảo thủ, cần xác nhận trước production (ADR-0007), không tự quy thiếu điểm thành 0. Có API sync-roster riêng; GET không ghi dữ liệu. Giữ ô ngừng học, active=false. Nhập tay gặp phiếu pending bị chặn 409; luồng lựa chọn tiếp tục/ghi đè nhận dạng thuộc Phase 3–4. Record idempotency hiện được giữ kể cả quá mốc 24 giờ; không có cleanup tự động.
+
+Đã đạt local: migration upgrade từ phần 1 và cài mới năm migration; pnpm test:db; cả ba integration suite PostgreSQL/HTTP (identity/catalog, grid, write), gồm trigger gây lỗi audit và race edit/edit, edit/lock, cùng key. pnpm check đạt 6 tests + build; Flutter analyze và 9 tests đạt gồm serialization bigint/decimal/NULL. OpenAPI/Dart client đã sinh lại. Kiểm drift và trạng thái CI ghi trong phase-2.md; không coi CI phần 1 là bằng chứng phần 2.
+
+UI phần 3 nằm ở `apps/client_flutter/lib/features/gradebooks/`: danh sách/tạo bảng, lưới responsive, nhập hàng loạt có lý do, lịch sử, sync và chốt. Repository chỉ dùng generated client, tải hết trang ô/lịch sử và không tự retry conflict bằng version mới. Test ở `apps/client_flutter/test/phase2_gradebooks_test.dart` bao phủ 390px/1280px, NULL/0.0, request version/idempotency, banner conflict, lịch sử và trạng thái chốt.
+
+Local đã đạt `dart run melos run check` (13 tests) và Flutter Web build. Android local vẫn gặp lỗi môi trường `Unable to establish loopback connection` trước biên dịch; CI commit `23df8fe` đã xác nhận foundation/APK/emulator xanh. iOS build simulator xanh nhưng smoke test chạm timeout 10 phút; workflow tăng giới hạn riêng lên 15 phút. Lượt follow-up commit `887155c` đã xác nhận iOS và required-checks xanh. Bước còn lại là review/PR theo quyết định của chủ dự án; không merge hoặc bắt đầu Phase 3 tự động.
+
+Cụm PostgreSQL test được dừng sau bàn giao; kiểm pg_ctl status trước khi khởi động. Giữ fixture giả ở DB test, không xóa DB; trigger gây lỗi chỉ dùng test và đã gỡ trong finally. Mã phần 2 giữ cùng nhánh để mô hình khác có thể tiếp tục bằng continue.

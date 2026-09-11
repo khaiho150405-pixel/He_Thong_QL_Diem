@@ -93,6 +93,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -158,6 +166,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -246,6 +262,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -303,6 +327,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -389,6 +421,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -454,6 +494,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -542,6 +590,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -599,6 +655,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -685,6 +749,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -750,6 +822,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -838,6 +918,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -902,6 +990,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -929,6 +1025,634 @@
         },
         "tags": ["classes"],
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks": {
+      "get": {
+        "operationId": "gradebooksList",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookListDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      },
+      "post": {
+        "operationId": "gradebooksCreate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateGradebookInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/cells": {
+      "get": {
+        "operationId": "gradebooksCells",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CellsResponseDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/grades": {
+      "put": {
+        "operationId": "gradebooksBatchUpdate",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BatchUpdateInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchUpdateResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/lock": {
+      "post": {
+        "operationId": "gradebooksLock",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LockInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/sync-roster": {
+      "post": {
+        "operationId": "gradebooksSyncRoster",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LockInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/cells/{cellId}/history": {
+      "get": {
+        "operationId": "gradebooksHistory",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "cellId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradeHistoryDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
     "/api/v1/identity/profile": {
@@ -961,6 +1685,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -1033,6 +1765,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -1121,6 +1861,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -1186,6 +1934,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -1238,6 +1994,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -1305,6 +2069,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -1391,6 +2163,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -1456,6 +2236,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -1544,6 +2332,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -1623,6 +2419,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -1688,6 +2492,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -1776,6 +2588,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -1833,6 +2653,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -1919,6 +2747,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -1984,6 +2820,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -2072,6 +2916,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -2129,6 +2981,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -2215,6 +3075,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -2280,6 +3148,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -2368,6 +3244,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -2425,6 +3309,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -2511,6 +3403,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -2576,6 +3476,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -2664,6 +3572,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -2721,6 +3637,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -2807,6 +3731,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -2872,6 +3804,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -2960,6 +3900,14 @@
               }
             }
           },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
           "409": {
             "description": "Error envelope",
             "content": {
@@ -3017,6 +3965,14 @@
             }
           },
           "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
             "description": "Error envelope",
             "content": {
               "application/json": {
@@ -3238,6 +4194,180 @@
           "khoi": { "type": "number" }
         },
         "required": ["ma_nam_hoc", "ma_gv_chu_nhiem", "ten_lop", "khoi"]
+      },
+      "GradebookDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "classId": { "type": "number" },
+          "subjectId": { "type": "number" },
+          "termId": { "type": "number" },
+          "status": { "type": "string", "enum": ["DANG_NHAP_LIEU", "DA_CHOT"] },
+          "version": { "type": "number" }
+        },
+        "required": [
+          "id",
+          "classId",
+          "subjectId",
+          "termId",
+          "status",
+          "version"
+        ]
+      },
+      "GradebookListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradebookDto" }
+          },
+          "nextCursor": { "type": "number", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "CreateGradebookInput": {
+        "type": "object",
+        "properties": {
+          "classId": { "type": "number" },
+          "subjectId": { "type": "number" },
+          "termId": { "type": "number" }
+        },
+        "required": ["classId", "subjectId", "termId"]
+      },
+      "GradeCellDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" },
+          "active": { "type": "boolean" },
+          "componentId": { "type": "number" },
+          "componentName": { "type": "string" },
+          "coefficient": { "type": "string" },
+          "required": { "type": "boolean" },
+          "displayOrder": { "type": "number" },
+          "value": { "type": "string", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET"]
+          },
+          "source": { "type": "string", "enum": ["NHAP_TAY", "NHAN_DIEN"] }
+        },
+        "required": [
+          "id",
+          "studentId",
+          "studentName",
+          "active",
+          "componentId",
+          "componentName",
+          "coefficient",
+          "required",
+          "displayOrder",
+          "value",
+          "status",
+          "source"
+        ]
+      },
+      "CellsResponseDto": {
+        "type": "object",
+        "properties": {
+          "book": { "$ref": "#/components/schemas/GradebookDto" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradeCellDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["book", "items", "nextCursor"]
+      },
+      "GradeChangeInput": {
+        "type": "object",
+        "properties": {
+          "cellId": { "type": "string", "description": "bigint cell ID" },
+          "value": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^(10[.]0|[0-9][.][0-9])$",
+            "description": "0.0–10.0 step 0.1, or null to clear"
+          },
+          "reason": { "type": "string", "maxLength": 500 }
+        },
+        "required": ["cellId", "value", "reason"]
+      },
+      "BatchUpdateInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 0 },
+          "changes": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradeChangeInput" }
+          }
+        },
+        "required": ["expectedVersion", "changes"]
+      },
+      "UpdatedCellDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "value": { "type": "string", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET"]
+          },
+          "source": { "type": "string", "enum": ["NHAP_TAY", "NHAN_DIEN"] }
+        },
+        "required": ["id", "value", "status", "source"]
+      },
+      "BatchUpdateResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UpdatedCellDto" }
+          },
+          "bookId": { "type": "number" },
+          "version": { "type": "number" }
+        },
+        "required": ["items", "bookId", "version"]
+      },
+      "LockInput": {
+        "type": "object",
+        "properties": { "expectedVersion": { "type": "number" } },
+        "required": ["expectedVersion"]
+      },
+      "GradeHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "cellId": { "type": "string" },
+          "editor": { "type": "number" },
+          "oldValue": { "type": "string", "nullable": true },
+          "newValue": { "type": "string", "nullable": true },
+          "reason": { "type": "string" },
+          "timestamp": { "type": "string" }
+        },
+        "required": [
+          "id",
+          "cellId",
+          "editor",
+          "oldValue",
+          "newValue",
+          "reason",
+          "timestamp"
+        ]
+      },
+      "GradeHistoryDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradeHistoryEntryDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
       },
       "ProfileDto": {
         "type": "object",

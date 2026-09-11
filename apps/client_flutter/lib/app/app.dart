@@ -7,6 +7,8 @@ import '../features/authentication/login_screen.dart';
 import '../features/authentication/home_screen.dart';
 import '../features/academic_catalog/catalog_screen.dart';
 import '../features/academic_catalog/fields.dart';
+import '../features/gradebooks/gradebook_screen.dart';
+import '../features/gradebooks/gradebooks_screen.dart';
 
 final routerProvider = Provider.family<GoRouter, String>((
   ref,
@@ -26,12 +28,29 @@ final routerProvider = Provider.family<GoRouter, String>((
         builder: (_, state) =>
             CatalogScreen(resource: state.pathParameters['resource']!),
       ),
+      GoRoute(
+        path: '/gradebooks',
+        builder: (_, state) => const GradebooksScreen(),
+      ),
+      GoRoute(
+        path: '/gradebooks/:id',
+        builder: (_, state) {
+          final id = num.tryParse(state.pathParameters['id'] ?? '');
+          return id == null
+              ? const GradebooksScreen()
+              : GradebookScreen(bookId: id);
+        },
+      ),
     ],
     redirect: (context, state) {
       if (state.uri.path == '/connection') return null;
       final user = ref.read(sessionProvider);
       if (user == null) return state.uri.path == '/login' ? null : '/login';
       if (state.uri.path == '/login') return '/';
+      if (state.uri.path.startsWith('/gradebooks') &&
+          user.role.value == 'HOC_SINH') {
+        return '/';
+      }
       final resource = state.pathParameters['resource'];
       if (resource != null &&
           (!resources.any((r) => r.key == resource) ||

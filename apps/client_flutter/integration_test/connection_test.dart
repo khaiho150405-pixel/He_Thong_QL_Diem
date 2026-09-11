@@ -9,12 +9,20 @@ void main() {
   phase1.registerPhaseOneTests(resize: false);
   testWidgets('connects to a running API', (tester) async {
     app.main();
-    await tester.pumpAndSettle(const Duration(seconds: 1));
     if (const bool.fromEnvironment('EXPECT_TRANSIENT_FAILURE')) {
+      await _pumpUntilVisible(tester, find.text('Không thể kết nối'));
       expect(find.text('Không thể kết nối'), findsOneWidget);
       await tester.tap(find.text('Thử lại'));
-      await tester.pumpAndSettle(const Duration(seconds: 1));
     }
+    await _pumpUntilVisible(tester, find.text('Kết nối thành công'));
     expect(find.text('Kết nối thành công'), findsOneWidget);
   });
+}
+
+Future<void> _pumpUntilVisible(WidgetTester tester, Finder finder) async {
+  for (var attempt = 0; attempt < 40; attempt++) {
+    await tester.pump(const Duration(milliseconds: 250));
+    if (finder.evaluate().isNotEmpty) return;
+  }
+  expect(finder, findsOneWidget);
 }

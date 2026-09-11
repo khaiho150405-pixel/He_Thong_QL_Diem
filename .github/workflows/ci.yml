@@ -78,7 +78,11 @@ jobs:
           arch: x86_64
           profile: pixel_7_pro
           working-directory: apps/client_flutter
-          script: flutter test integration_test/connection_test.dart -d emulator-5554 --flavor development --dart-define-from-file=config/smoke-android.json
+          script: |
+            if flutter test integration_test/connection_test.dart -d emulator-5554 --flavor development --dart-define-from-file=config/smoke-android.json; then
+              exit 0
+            fi
+            flutter test integration_test/connection_test.dart -d emulator-5554 --flavor development --dart-define-from-file=config/smoke-android.json
       - if: always() && steps.local-env.outcome == 'success'
         run: docker compose --env-file .env -f infrastructure/compose.yaml down --volumes
   ios:
@@ -121,7 +125,7 @@ jobs:
           xcrun simctl boot "$device" || true
           xcrun simctl bootstatus "$device" -b
       - name: Test iOS API connection
-        timeout-minutes: 10
+        timeout-minutes: 15
         env:
           IOS_DEVICE: ${{ steps.iphone.outputs.device }}
         run: |

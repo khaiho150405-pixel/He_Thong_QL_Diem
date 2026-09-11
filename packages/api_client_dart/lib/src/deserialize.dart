@@ -5,14 +5,25 @@ import 'package:api_client_dart/src/model/accounts_dto.dart';
 import 'package:api_client_dart/src/model/assignments_dto.dart';
 import 'package:api_client_dart/src/model/assignments_input.dart';
 import 'package:api_client_dart/src/model/assignments_page.dart';
+import 'package:api_client_dart/src/model/batch_update_input.dart';
+import 'package:api_client_dart/src/model/batch_update_result_dto.dart';
+import 'package:api_client_dart/src/model/cells_response_dto.dart';
 import 'package:api_client_dart/src/model/classes_dto.dart';
 import 'package:api_client_dart/src/model/classes_input.dart';
 import 'package:api_client_dart/src/model/classes_page.dart';
 import 'package:api_client_dart/src/model/components_dto.dart';
 import 'package:api_client_dart/src/model/components_input.dart';
 import 'package:api_client_dart/src/model/components_page.dart';
+import 'package:api_client_dart/src/model/create_gradebook_input.dart';
 import 'package:api_client_dart/src/model/error_dto.dart';
+import 'package:api_client_dart/src/model/grade_cell_dto.dart';
+import 'package:api_client_dart/src/model/grade_change_input.dart';
+import 'package:api_client_dart/src/model/grade_history_dto.dart';
+import 'package:api_client_dart/src/model/grade_history_entry_dto.dart';
+import 'package:api_client_dart/src/model/gradebook_dto.dart';
+import 'package:api_client_dart/src/model/gradebook_list_dto.dart';
 import 'package:api_client_dart/src/model/health_dto.dart';
+import 'package:api_client_dart/src/model/lock_input.dart';
 import 'package:api_client_dart/src/model/login_input.dart';
 import 'package:api_client_dart/src/model/password_input.dart';
 import 'package:api_client_dart/src/model/profile_dto.dart';
@@ -29,6 +40,7 @@ import 'package:api_client_dart/src/model/subjects_page.dart';
 import 'package:api_client_dart/src/model/teachers_dto.dart';
 import 'package:api_client_dart/src/model/teachers_input.dart';
 import 'package:api_client_dart/src/model/teachers_page.dart';
+import 'package:api_client_dart/src/model/updated_cell_dto.dart';
 import 'package:api_client_dart/src/model/years_dto.dart';
 import 'package:api_client_dart/src/model/years_input.dart';
 import 'package:api_client_dart/src/model/years_page.dart';
@@ -73,6 +85,15 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'AssignmentsPage':
       return AssignmentsPage.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'BatchUpdateInput':
+      return BatchUpdateInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'BatchUpdateResultDto':
+      return BatchUpdateResultDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'CellsResponseDto':
+      return CellsResponseDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'ClassesDto':
       return ClassesDto.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'ClassesInput':
@@ -88,10 +109,31 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'ComponentsPage':
       return ComponentsPage.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'CreateGradebookInput':
+      return CreateGradebookInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'ErrorDto':
       return ErrorDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'GradeCellDto':
+      return GradeCellDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'GradeChangeInput':
+      return GradeChangeInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'GradeHistoryDto':
+      return GradeHistoryDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'GradeHistoryEntryDto':
+      return GradeHistoryEntryDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'GradebookDto':
+      return GradebookDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'GradebookListDto':
+      return GradebookListDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'HealthDto':
       return HealthDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'LockInput':
+      return LockInput.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'LoginInput':
       return LoginInput.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'PasswordInput':
@@ -130,6 +172,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'TeachersPage':
       return TeachersPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'UpdatedCellDto':
+      return UpdatedCellDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'YearsDto':
       return YearsDto.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'YearsInput':

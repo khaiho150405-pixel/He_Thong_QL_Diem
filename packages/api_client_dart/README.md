@@ -78,6 +78,13 @@ Class | Method | HTTP request | Description
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsList**](doc/ComponentsApi.md#componentslist) | **GET** /api/v1/catalog/components |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsRemove**](doc/ComponentsApi.md#componentsremove) | **DELETE** /api/v1/catalog/components/{id} |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsUpdate**](doc/ComponentsApi.md#componentsupdate) | **PUT** /api/v1/catalog/components/{id} |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksBatchUpdate**](doc/GradebooksApi.md#gradebooksbatchupdate) | **PUT** /api/v1/gradebooks/{id}/grades |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCells**](doc/GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCreate**](doc/GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksHistory**](doc/GradebooksApi.md#gradebookshistory) | **GET** /api/v1/gradebooks/{id}/cells/{cellId}/history |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksList**](doc/GradebooksApi.md#gradebookslist) | **GET** /api/v1/gradebooks |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksLock**](doc/GradebooksApi.md#gradebookslock) | **POST** /api/v1/gradebooks/{id}/lock |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksSyncRoster**](doc/GradebooksApi.md#gradebookssyncroster) | **POST** /api/v1/gradebooks/{id}/sync-roster |
 [*HealthApi*](doc/HealthApi.md) | [**healthLive**](doc/HealthApi.md#healthlive) | **GET** /api/v1/health/live |
 [*HealthApi*](doc/HealthApi.md) | [**healthReady**](doc/HealthApi.md#healthready) | **GET** /api/v1/health/ready |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityAccounts**](doc/IdentityApi.md#identityaccounts) | **GET** /api/v1/identity/accounts |
@@ -120,14 +127,25 @@ Class | Method | HTTP request | Description
  - [AssignmentsDto](doc/AssignmentsDto.md)
  - [AssignmentsInput](doc/AssignmentsInput.md)
  - [AssignmentsPage](doc/AssignmentsPage.md)
+ - [BatchUpdateInput](doc/BatchUpdateInput.md)
+ - [BatchUpdateResultDto](doc/BatchUpdateResultDto.md)
+ - [CellsResponseDto](doc/CellsResponseDto.md)
  - [ClassesDto](doc/ClassesDto.md)
  - [ClassesInput](doc/ClassesInput.md)
  - [ClassesPage](doc/ClassesPage.md)
  - [ComponentsDto](doc/ComponentsDto.md)
  - [ComponentsInput](doc/ComponentsInput.md)
  - [ComponentsPage](doc/ComponentsPage.md)
+ - [CreateGradebookInput](doc/CreateGradebookInput.md)
  - [ErrorDto](doc/ErrorDto.md)
+ - [GradeCellDto](doc/GradeCellDto.md)
+ - [GradeChangeInput](doc/GradeChangeInput.md)
+ - [GradeHistoryDto](doc/GradeHistoryDto.md)
+ - [GradeHistoryEntryDto](doc/GradeHistoryEntryDto.md)
+ - [GradebookDto](doc/GradebookDto.md)
+ - [GradebookListDto](doc/GradebookListDto.md)
  - [HealthDto](doc/HealthDto.md)
+ - [LockInput](doc/LockInput.md)
  - [LoginInput](doc/LoginInput.md)
  - [PasswordInput](doc/PasswordInput.md)
  - [ProfileDto](doc/ProfileDto.md)
@@ -144,6 +162,7 @@ Class | Method | HTTP request | Description
  - [TeachersDto](doc/TeachersDto.md)
  - [TeachersInput](doc/TeachersInput.md)
  - [TeachersPage](doc/TeachersPage.md)
+ - [UpdatedCellDto](doc/UpdatedCellDto.md)
  - [YearsDto](doc/YearsDto.md)
  - [YearsInput](doc/YearsInput.md)
  - [YearsPage](doc/YearsPage.md)

@@ -63,6 +63,7 @@ model nguoi_dung {
   phieu_nhan_dien_rows  phieu_nhan_dien[]
   ket_qua_dong_rows     ket_qua_dong[]
   phien_rows           phien_lam_viec[]
+  idempotency_rows     khoa_idempotency[]
 }
 
 // Technical tables, not part of the sixteen business tables.
@@ -337,4 +338,18 @@ model tu_dien_diem_chu {
   ma_cach_doc Int     @id @default(autoincrement())
   cach_doc    String  @unique @db.VarChar(32)
   gia_tri     Decimal @db.Decimal(3, 1)
+}
+
+// Technical table, not part of the sixteen business tables.
+model khoa_idempotency {
+  khoa            String   @db.VarChar(64)
+  ma_nguoi_dung   Int
+  nguoi_dung_ref nguoi_dung @relation(fields: [ma_nguoi_dung], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: NoAction)
+  thao_tac        String   @db.VarChar(32)
+  ma_bam_yeu_cau  String   @db.Char(64)
+  ket_qua         Json
+  het_han         DateTime @default(dbgenerated("now() + interval '24 hours'")) @db.Timestamptz(6)
+
+  @@id([ma_nguoi_dung, thao_tac, khoa])
+  @@index([het_han])
 }

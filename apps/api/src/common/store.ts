@@ -17,7 +17,8 @@ export type Table =
   | "giao_vien"
   | "phan_cong_giang_day"
   | "bang_diem"
-  | "diem_thanh_phan";
+  | "diem_thanh_phan"
+  | "khoa_idempotency";
 export interface Unit {
   find(table: Table, where: Row): Promise<Row | null>;
   list(table: Table, where: Row, order: string, limit?: number): Promise<Row[]>;
@@ -38,7 +39,7 @@ interface Delegate {
   update(args: Row): Promise<Row>;
   deleteMany(args: Row): Promise<unknown>;
 }
-function unit(tx: Prisma.TransactionClient): Unit {
+export function unit(tx: Prisma.TransactionClient): Unit {
   const delegate = (table: Table) => tx[table] as unknown as Delegate;
   return {
     find: (table, where) => delegate(table).findFirst({ where }),
