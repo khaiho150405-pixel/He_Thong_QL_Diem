@@ -24,7 +24,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test apps/api/test/*.test.ts",
     "test:db": "tsx --test database/tests/*.test.ts",
-    "test:integration": "tsx --test apps/api/test/integration/*.test.ts",
+    "test:integration": "tsx --test --test-concurrency=1 apps/api/test/integration/*.test.ts",
     "build": "pnpm --filter @qld/api build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

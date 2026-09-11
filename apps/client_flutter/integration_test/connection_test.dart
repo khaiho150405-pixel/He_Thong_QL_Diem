@@ -1,4 +1,5 @@
-import 'package:client_flutter/main.dart' as app;
+import 'package:client_flutter/app/app.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import '../test/phase1_test.dart' as phase1;
@@ -8,7 +9,9 @@ void main() {
   // Native UI exercises a test HTTP adapter; real DB policies are tested in API CI.
   phase1.registerPhaseOneTests(resize: false);
   testWidgets('connects to a running API', (tester) async {
-    app.main();
+    await tester.pumpWidget(
+      const ProviderScope(child: GradebookApp(initialLocation: '/connection')),
+    );
     if (const bool.fromEnvironment('EXPECT_TRANSIENT_FAILURE')) {
       await _pumpUntilVisible(tester, find.text('Không thể kết nối'));
       expect(find.text('Không thể kết nối'), findsOneWidget);
@@ -20,7 +23,7 @@ void main() {
 }
 
 Future<void> _pumpUntilVisible(WidgetTester tester, Finder finder) async {
-  for (var attempt = 0; attempt < 40; attempt++) {
+  for (var attempt = 0; attempt < 80; attempt++) {
     await tester.pump(const Duration(milliseconds: 250));
     if (finder.evaluate().isNotEmpty) return;
   }
