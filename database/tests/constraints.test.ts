@@ -20,7 +20,7 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','khoa_idempotency')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','khoa_idempotency','recognition_outbox')",
     );
     assert.equal(tables.rows[0].n, 16);
     const denied = async (sql: string) => {
@@ -40,6 +40,12 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     assert.equal(privileges.rows[0].can_migrate, true);
     assert.equal(privileges.rows[0].runtime_create, false);
     await denied("UPDATE diem_thanh_phan SET gia_tri=8.55");
+    await denied(
+      "INSERT INTO recognition_outbox(loai_su_kien,ma_phieu,du_lieu) VALUES('RECOGNITION_REQUESTED',1,'{}')",
+    );
+    await denied(
+      "INSERT INTO phieu_nhan_dien(ma_bang_diem,ma_thanh_phan,nguoi_tai,ma_bam_tep,duong_dan_anh_goc,so_dong_khai_bao) VALUES(1,1,1,repeat('a',64),'forbidden',1)",
+    );
     for (const value of ["-0.1", "10.1", "8.55", "NaN"])
       await assert.rejects(
         runtime.query("SELECT kiem_tra_gia_tri_diem($1::numeric)", [value]),

@@ -15,6 +15,7 @@
     "db:migrate:create": "prisma migrate dev --create-only",
     "db:seed": "tsx database/seeds/seed.ts",
     "dev:api": "tsx watch apps/api/src/main.ts",
+    "dev:recognition-dispatcher": "tsx watch apps/api/src/modules/recognition/dispatch.ts",
     "api:export": "tsx apps/api/src/export-openapi.ts",
     "client:generate": "node scripts/generate-client.mjs",
     "contracts:check": "node scripts/check-contracts.mjs",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "2.41.0",
     "@types/express": "5.0.5",
+    "@types/multer": "2.0.0",
     "@types/node": "24.10.1",
     "@types/pg": "8.15.6",
     "eslint": "10.10.0",

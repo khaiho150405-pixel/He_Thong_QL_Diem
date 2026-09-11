@@ -27,6 +27,7 @@ import 'package:api_client_dart/src/model/lock_input.dart';
 import 'package:api_client_dart/src/model/login_input.dart';
 import 'package:api_client_dart/src/model/password_input.dart';
 import 'package:api_client_dart/src/model/profile_dto.dart';
+import 'package:api_client_dart/src/model/recognition_receipt_dto.dart';
 import 'package:api_client_dart/src/model/semesters_dto.dart';
 import 'package:api_client_dart/src/model/semesters_input.dart';
 import 'package:api_client_dart/src/model/semesters_page.dart';
@@ -141,6 +142,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'ProfileDto':
       return ProfileDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'RecognitionReceiptDto':
+      return RecognitionReceiptDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'SemestersDto':
       return SemestersDto.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'SemestersInput':

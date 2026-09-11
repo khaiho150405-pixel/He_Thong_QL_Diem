@@ -8,6 +8,11 @@ export const SETTINGS = Symbol("SETTINGS");
 export interface Settings {
   environment: string;
   origins: string[];
+  redisUrl?: string;
+  s3Endpoint?: string;
+  s3AccessKey?: string;
+  s3SecretKey?: string;
+  s3Bucket?: string;
 }
 @Global()
 @Module({})

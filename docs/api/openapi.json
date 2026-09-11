@@ -2369,6 +2369,112 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks/{gradebookId}/recognition-tickets": {
+      "post": {
+        "operationId": "recognitionUpload",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image", "componentId", "declaredRows"],
+                "properties": {
+                  "image": { "type": "string", "format": "binary" },
+                  "componentId": { "type": "integer", "minimum": 1 },
+                  "declaredRows": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecognitionReceiptDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "413": { "description": "Image exceeds upload limit" },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["recognition"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/students": {
       "get": {
         "operationId": "studentsList",
@@ -4461,6 +4567,18 @@
           "password": { "type": "string", "format": "password" }
         },
         "required": ["role", "active"]
+      },
+      "RecognitionReceiptDto": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string",
+            "description": "bigint recognition ticket ID"
+          },
+          "jobId": { "type": "string" },
+          "status": { "type": "string", "enum": ["DANG_XU_LY"] }
+        },
+        "required": ["ticketId", "jobId", "status"]
       },
       "StudentsDto": {
         "type": "object",

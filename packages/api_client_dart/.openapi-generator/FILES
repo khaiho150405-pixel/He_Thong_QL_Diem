@@ -37,6 +37,8 @@ doc/LockInput.md
 doc/LoginInput.md
 doc/PasswordInput.md
 doc/ProfileDto.md
+doc/RecognitionApi.md
+doc/RecognitionReceiptDto.md
 doc/SemestersApi.md
 doc/SemestersDto.md
 doc/SemestersInput.md
@@ -67,6 +69,7 @@ lib/src/api/components_api.dart
 lib/src/api/gradebooks_api.dart
 lib/src/api/health_api.dart
 lib/src/api/identity_api.dart
+lib/src/api/recognition_api.dart
 lib/src/api/semesters_api.dart
 lib/src/api/students_api.dart
 lib/src/api/subjects_api.dart
@@ -107,6 +110,7 @@ lib/src/model/lock_input.dart
 lib/src/model/login_input.dart
 lib/src/model/password_input.dart
 lib/src/model/profile_dto.dart
+lib/src/model/recognition_receipt_dto.dart
 lib/src/model/semesters_dto.dart
 lib/src/model/semesters_input.dart
 lib/src/model/semesters_page.dart
