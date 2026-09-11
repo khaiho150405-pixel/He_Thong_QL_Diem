@@ -152,6 +152,23 @@ class HomeScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
+              if (user.role.value != 'HOC_SINH') ...[
+                Card(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(20),
+                    leading: const Icon(Icons.table_chart_outlined),
+                    title: const Text('Bảng điểm'),
+                    subtitle: Text(
+                      user.role.value == 'GIAO_VIEN'
+                          ? 'Nhập điểm, xem lịch sử và chốt bảng'
+                          : 'Theo dõi các bảng điểm trong hệ thống',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.go('/gradebooks'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               LayoutBuilder(
                 builder: (context, box) => Wrap(
                   spacing: 16,

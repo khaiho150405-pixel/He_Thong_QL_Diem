@@ -4,17 +4,17 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: dùng lượt reset được chủ dự án cho phép để hoàn tất Phase 2 phần 2. Lượt reset đã sử dụng thành công; không còn tự động dùng reset khác.
+- Yêu cầu mới nhất: tiếp tục theo file hướng dẫn. Phase 2 phần 3 Flutter đã triển khai local; bước kế tiếp là kiểm CI của commit phần 3 và sửa nếu có lỗi.
 - Nhánh: `codex/phase-2-part-1-gradebooks`, nền Phase 1 `2b124de`. Không tự merge main; kiểm tra trạng thái remote trước khi chọn base PR.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
-- Phase 2 phần 1: commit `0ae7fbc`, CI xanh. Phần 2 có mã API/ghi/chốt/sync/history và đã kiểm PostgreSQL/HTTP; xem [phase-2.md](phase-2.md), [ADR-0007](../adr/0007-gradebook-write.md), [hướng dẫn API](phase-2-api.md). Điểm tiếp tục: phần 3 Flutter sau khi kiểm CI phần 2.
+- Phase 2 phần 1 commit `0ae7fbc` và phần 2 commit `3ad0865` đều CI xanh. Phần 3 có Flutter danh sách/lưới, batch edit, lịch sử, sync sĩ số, chốt và xử lý conflict; xem [phase-2.md](phase-2.md), [ADR-0007](../adr/0007-gradebook-write.md), [hướng dẫn API](phase-2-api.md).
 
 ## Khi nhận continue
 
 1. Đọc AGENTS.md, README.md, phase-2.md, ADR-0002/0004/0006/0007 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
-2. Kiểm GitHub CI của HEAD phần 2; nếu lỗi liên quan thay đổi phần 2 thì xử lý trước. Sau khi đạt, bắt đầu **Phase 2 phần 3**: Flutter danh sách/lưới điểm, batch edit, lịch sử, sync sĩ số, chốt và kiểm responsive web/Android/iOS. Dùng generated GradebooksApi; không viết tay DTO hoặc tự tính quyền trong widget.
+2. Kiểm GitHub CI của HEAD phần 3. Nếu lỗi liên quan thay đổi Flutter thì sửa và chạy lại check thích hợp. Nếu foundation, Android và iOS đều xanh, Phase 2 sẵn sàng bàn giao hai đồng nghiệp review và tạo PR theo quy trình GitHub.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
-4. Không tự merge Phase 2 khi chưa xong phần 3; chủ dự án đã nhắc rõ. Kết thúc phần 3 cập nhật note/test/CI, bàn giao review; không nhảy sang OCR/Phase 3 khi chưa có yêu cầu.
+4. Không tự merge Phase 2. Sau CI xanh, bàn giao review; không nhảy sang OCR/Phase 3 khi chưa có yêu cầu của chủ dự án.
 
 ## Công cụ và dữ liệu test trên máy hiện tại
 
@@ -36,6 +36,8 @@ Không chốt khi thiếu điểm bắt buộc/thiếu ô sĩ số hoặc còn c
 
 Đã đạt local: migration upgrade từ phần 1 và cài mới năm migration; pnpm test:db; cả ba integration suite PostgreSQL/HTTP (identity/catalog, grid, write), gồm trigger gây lỗi audit và race edit/edit, edit/lock, cùng key. pnpm check đạt 6 tests + build; Flutter analyze và 9 tests đạt gồm serialization bigint/decimal/NULL. OpenAPI/Dart client đã sinh lại. Kiểm drift và trạng thái CI ghi trong phase-2.md; không coi CI phần 1 là bằng chứng phần 2.
 
-Không có UI bảng điểm trong phần 2. Tiếp theo làm Flutter phần 3; giữ nguyên giao diện Phase 1, tái sử dụng repository/provider và generated client, xử lý loading/empty/error/retry và conflict cần người dùng đối chiếu. Endpoint/cách review ở phase-2-api.md. Không build lại backend đã xong trừ khi phát hiện lỗi liên quan khi nối UI.
+UI phần 3 nằm ở `apps/client_flutter/lib/features/gradebooks/`: danh sách/tạo bảng, lưới responsive, nhập hàng loạt có lý do, lịch sử, sync và chốt. Repository chỉ dùng generated client, tải hết trang ô/lịch sử và không tự retry conflict bằng version mới. Test ở `apps/client_flutter/test/phase2_gradebooks_test.dart` bao phủ 390px/1280px, NULL/0.0, request version/idempotency, banner conflict, lịch sử và trạng thái chốt.
+
+Local đã đạt `dart run melos run check` (13 tests) và Flutter Web build. Android local vẫn gặp lỗi môi trường `Unable to establish loopback connection` trước biên dịch; dùng CI Linux làm bằng chứng APK/emulator. iOS phải kiểm trên CI macOS vì máy này là Windows. Khi CI phần 3 xanh, cập nhật trạng thái bàn giao review; không merge hoặc bắt đầu Phase 3 tự động.
 
 Cụm PostgreSQL test được dừng sau bàn giao; kiểm pg_ctl status trước khi khởi động. Giữ fixture giả ở DB test, không xóa DB; trigger gây lỗi chỉ dùng test và đã gỡ trong finally. Mã phần 2 giữ cùng nhánh để mô hình khác có thể tiếp tục bằng continue.
