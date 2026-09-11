@@ -4,7 +4,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: tiếp tục theo file hướng dẫn. Phase 2 phần 3 Flutter đã triển khai local; bước kế tiếp là kiểm CI của commit phần 3 và sửa nếu có lỗi.
+- Yêu cầu mới nhất: tiếp tục theo file hướng dẫn. Phase 2 phần 3 Flutter và CI đa nền tảng đã hoàn tất; bước kế tiếp là bàn giao review/PR, không tự merge.
 - Nhánh: `codex/phase-2-part-1-gradebooks`, nền Phase 1 `2b124de`. Không tự merge main; kiểm tra trạng thái remote trước khi chọn base PR.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
 - Phase 2 phần 1 commit `0ae7fbc` và phần 2 commit `3ad0865` đều CI xanh. Phần 3 có Flutter danh sách/lưới, batch edit, lịch sử, sync sĩ số, chốt và xử lý conflict; xem [phase-2.md](phase-2.md), [ADR-0007](../adr/0007-gradebook-write.md), [hướng dẫn API](phase-2-api.md).
@@ -12,7 +12,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 ## Khi nhận continue
 
 1. Đọc AGENTS.md, README.md, phase-2.md, ADR-0002/0004/0006/0007 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
-2. Kiểm GitHub CI của HEAD phần 3. Nếu lỗi liên quan thay đổi Flutter thì sửa và chạy lại check thích hợp. Nếu foundation, Android và iOS đều xanh, Phase 2 sẵn sàng bàn giao hai đồng nghiệp review và tạo PR theo quy trình GitHub.
+2. Đối chiếu HEAD với checkpoint này. Commit `887155c` có [CI xanh toàn bộ](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34565168338): foundation, Web, APK, Android emulator, iOS simulator và required-checks. Nếu HEAD mới hơn thì kiểm CI mới; nếu không, Phase 2 sẵn sàng bàn giao hai đồng nghiệp review và tạo PR theo quy trình GitHub.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
 4. Không tự merge Phase 2. Sau CI xanh, bàn giao review; không nhảy sang OCR/Phase 3 khi chưa có yêu cầu của chủ dự án.
 
@@ -38,6 +38,6 @@ Không chốt khi thiếu điểm bắt buộc/thiếu ô sĩ số hoặc còn c
 
 UI phần 3 nằm ở `apps/client_flutter/lib/features/gradebooks/`: danh sách/tạo bảng, lưới responsive, nhập hàng loạt có lý do, lịch sử, sync và chốt. Repository chỉ dùng generated client, tải hết trang ô/lịch sử và không tự retry conflict bằng version mới. Test ở `apps/client_flutter/test/phase2_gradebooks_test.dart` bao phủ 390px/1280px, NULL/0.0, request version/idempotency, banner conflict, lịch sử và trạng thái chốt.
 
-Local đã đạt `dart run melos run check` (13 tests) và Flutter Web build. Android local vẫn gặp lỗi môi trường `Unable to establish loopback connection` trước biên dịch; CI commit `23df8fe` đã xác nhận foundation/APK/emulator xanh. iOS build simulator xanh nhưng smoke test chạm timeout 10 phút; lượt trước chạy 77 giây nên workflow tăng giới hạn riêng lên 15 phút. Kiểm lượt CI follow-up; nếu iOS và required-checks xanh thì bàn giao review, nếu vẫn lỗi thì lấy log/annotation và xử lý, không merge hoặc bắt đầu Phase 3 tự động.
+Local đã đạt `dart run melos run check` (13 tests) và Flutter Web build. Android local vẫn gặp lỗi môi trường `Unable to establish loopback connection` trước biên dịch; CI commit `23df8fe` đã xác nhận foundation/APK/emulator xanh. iOS build simulator xanh nhưng smoke test chạm timeout 10 phút; workflow tăng giới hạn riêng lên 15 phút. Lượt follow-up commit `887155c` đã xác nhận iOS và required-checks xanh. Bước còn lại là review/PR theo quyết định của chủ dự án; không merge hoặc bắt đầu Phase 3 tự động.
 
 Cụm PostgreSQL test được dừng sau bàn giao; kiểm pg_ctl status trước khi khởi động. Giữ fixture giả ở DB test, không xóa DB; trigger gây lỗi chỉ dùng test và đã gỡ trong finally. Mã phần 2 giữ cùng nhánh để mô hình khác có thể tiếp tục bằng continue.
