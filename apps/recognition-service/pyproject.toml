@@ -1,0 +1,8 @@
+[project]
+name = "gradebook-recognition-service"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"

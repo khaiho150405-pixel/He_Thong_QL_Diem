@@ -14,7 +14,7 @@
 | UC05–08 | students/classes/subjects/teachers/academic-years | API + generated client + form Flutter, phân trang/tìm kiếm; kiểm scope/quan hệ trên PostgreSQL thật                            |
 | UC09    | gradebooks/bang_diem, diem_thanh_phan             | API tạo/lưới/nhập/chốt/sync có version/idempotency/quyền và rollback; Flutter responsive dùng generated client, xử lý conflict |
 | UC10    | audit/lich_su_sua_diem                            | Lịch sử cùng transaction, API cursor đúng scope, append-only; Flutter hiển thị NULL/0.0 và người/lý do/thời điểm sửa           |
-| UC11–12 | recognition/files                                 | Schema hai kênh/lưới; chưa có queue/FastAPI/upload                                                                             |
+| UC11–12 | recognition/files                                 | Schema hai kênh/lưới và policy phân loại thuần đã có; chưa có queue/FastAPI/upload                                             |
 | UC13    | review                                            | ADR UnitOfWork; chưa có duyệt hoặc UI ảnh ô                                                                                    |
 | UC14–18 | final-results/reports/students                    | Schema snapshot; chưa có tính/xếp loại/export/tra cứu                                                                          |
 

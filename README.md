@@ -1,6 +1,6 @@
 # Hệ thống Quản lý Điểm
 
-Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã được merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. Bản sửa CI sau merge chạy các integration suite dùng chung PostgreSQL theo thứ tự để tránh xung đột giả giữa các giao dịch `SERIALIZABLE`. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa nối mô hình OCR hoặc triển khai tổng kết.
+Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã được merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. Bản sửa CI sau merge chạy các integration suite dùng chung PostgreSQL theo thứ tự để tránh xung đột giả giữa các giao dịch `SERIALIZABLE`. [Phase 3](docs/development/phase-3.md) đã bắt đầu bằng contract hai kênh và policy phân loại không phụ thuộc file trọng số. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa nối mô hình OCR hoặc triển khai tổng kết.
 
 ## Cấu trúc
 
@@ -62,6 +62,7 @@ Máy chưa có Docker vẫn có thể chạy unit/build/client và dùng Postgre
 pnpm check
 pnpm contracts:check
 dart run melos run check
+python -m unittest discover -s apps/recognition-service/tests
 ```
 
 DB tests yêu cầu TEST_MIGRATION_URL và TEST_RUNTIME_URL cùng trỏ DB có tên kết thúc \_test, đã migrate và seed. Không dùng DB development đang nhập liệu. `pnpm test:db` kiểm NULL/0, miền điểm, unique/FK, lưới, quyền runtime, audit append-only và rollback fixture. `pnpm test:integration` cần đầy đủ stack thật và cấu hình .env.
