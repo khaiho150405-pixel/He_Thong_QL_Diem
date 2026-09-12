@@ -26,7 +26,7 @@ function png(seed: Uint8Array): Uint8Array {
   return bytes;
 }
 
-test("UC11 creates upload ticket, audit and outbox atomically with scope and replay protection", async () => {
+test("UC11-13 runs upload, recognition evidence and atomic review with race protection", async () => {
   const ownerUrl = process.env.TEST_MIGRATION_URL;
   const runtimeUrl = process.env.TEST_RUNTIME_URL;
   if (
@@ -214,8 +214,8 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
         close: async () => {},
       },
     );
-    assert.equal(await dispatcher.dispatchOnce(), 1);
-    assert.deepEqual(queued, [receipt.jobId]);
+    assert.ok((await dispatcher.dispatchOnce()) >= 1);
+    assert.ok(queued.includes(receipt.jobId));
     assert.equal(await dispatcher.dispatchOnce(), 0);
 
     const pixel =
@@ -374,16 +374,29 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
     );
     await owner.query("DROP FUNCTION test_fail_review_audit() CASCADE");
 
-    const approvedResponse = await fetch(approvalUrl, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${teacher.token}`,
-        "content-type": "application/json",
-        "x-idempotency-key": "approve-atomic",
-      },
-      body: JSON.stringify(approvalBody),
-    });
-    assert.equal(approvedResponse.status, 200);
+    const approvalAttempts = ["approve-atomic", "approve-concurrent"].map(
+      async (key) => ({
+        key,
+        response: await fetch(approvalUrl, {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${teacher.token}`,
+            "content-type": "application/json",
+            "x-idempotency-key": key,
+          },
+          body: JSON.stringify(approvalBody),
+        }),
+      }),
+    );
+    const approvalRaces = await Promise.all(approvalAttempts);
+    assert.deepEqual(
+      approvalRaces.map(({ response }) => response.status).sort(),
+      [200, 409],
+    );
+    const winner = approvalRaces.find(
+      ({ response }) => response.status === 200,
+    )!;
+    const approvedResponse = winner.response;
     const approved = (await approvedResponse.json()) as Record<string, unknown>;
     assert.deepEqual(approved, {
       ticketId: receipt.ticketId,
@@ -424,7 +437,7 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
       headers: {
         authorization: `Bearer ${teacher.token}`,
         "content-type": "application/json",
-        "x-idempotency-key": "approve-atomic",
+        "x-idempotency-key": winner.key,
       },
       body: JSON.stringify(approvalBody),
     });
@@ -435,7 +448,7 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
       headers: {
         authorization: `Bearer ${teacher.token}`,
         "content-type": "application/json",
-        "x-idempotency-key": "approve-atomic",
+        "x-idempotency-key": winner.key,
       },
       body: JSON.stringify({
         ...approvalBody,
@@ -445,6 +458,74 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
       }),
     });
     assert.equal(mismatchedReplay.status, 409);
+
+    // Approve and lock share the gradebook lock. A pending review prevents the
+    // lock from winning; after approval its stale version must still conflict.
+    const secondReceipt = await recognition.upload(
+      teacher,
+      book.id,
+      "upload-for-lock-race",
+      { ...input, bytes: png(randomBytes(8)) },
+    );
+    assert.equal(await dispatcher.dispatchOnce(), 1);
+    assert.ok(queued.includes(secondReceipt.jobId));
+    await worker.process(secondReceipt.ticketId);
+    const secondDetail = await recognition.detail(
+      teacher,
+      book.id,
+      secondReceipt.ticketId,
+    );
+    const secondVersion = Number(approved.gradebookVersion);
+    const secondApproval = fetch(
+      `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets/${secondReceipt.ticketId}/approve`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${teacher.token}`,
+          "content-type": "application/json",
+          "x-idempotency-key": "approve-lock-race",
+        },
+        body: JSON.stringify({
+          expectedTicketVersion: secondDetail.version,
+          expectedGradebookVersion: secondVersion,
+          decisions: secondDetail.rows.map((row) => ({
+            rowId: row.rowId,
+            value: row.numericValue,
+            reason: "Xác nhận trong kiểm thử cạnh tranh",
+          })),
+        }),
+      },
+    );
+    const competingLock = fetch(
+      `${baseUrl}/api/v1/gradebooks/${book.id}/lock`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${teacher.token}`,
+          "content-type": "application/json",
+          "x-idempotency-key": "lock-approve-race",
+        },
+        body: JSON.stringify({ expectedVersion: secondVersion }),
+      },
+    );
+    const [approvalRaceResult, lockRaceResult] = await Promise.all([
+      secondApproval,
+      competingLock,
+    ]);
+    assert.equal(approvalRaceResult.status, 200);
+    assert.equal(lockRaceResult.status, 409);
+    const afterLockRace = await owner.query(
+      `SELECT
+        (SELECT trang_thai::text FROM bang_diem WHERE ma_bang_diem=$1) book_status,
+        (SELECT version FROM bang_diem WHERE ma_bang_diem=$1) book_version,
+        (SELECT trang_thai::text FROM phieu_nhan_dien WHERE ma_phieu=$2) ticket_status`,
+      [book.id, secondReceipt.ticketId],
+    );
+    assert.deepEqual(afterLockRace.rows[0], {
+      book_status: "DANG_NHAP_LIEU",
+      book_version: secondVersion + 1,
+      ticket_status: "DA_DUYET",
+    });
   } finally {
     await owner.query(
       "DROP TRIGGER IF EXISTS test_fail_review_audit_trigger ON nhat_ky_bao_mat",

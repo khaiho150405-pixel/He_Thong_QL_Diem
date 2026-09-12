@@ -45,6 +45,7 @@ class FakeRecognitionPicker implements RecognitionImagePicker {
 
 class RecognitionFakeServer implements HttpClientAdapter {
   bool uploaded = false;
+  int detailCalls = 0;
   FormData? uploadedForm;
   Map<String, dynamic>? approvalBody;
 
@@ -108,9 +109,10 @@ class RecognitionFakeServer implements HttpClientAdapter {
         'status': 'DA_DUYET',
       };
     } else if (options.path.endsWith('/recognition-tickets/42')) {
+      detailCalls++;
       body = {
         ..._ticket(),
-        'sourceImageUrl': 'https://storage.test/source.png',
+        'sourceImageUrl': 'https://storage.test/source-$detailCalls.png',
         'imageUrlExpiresInSeconds': 300,
         'rows': [
           {
@@ -227,6 +229,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('An · XANH'), findsOneWidget);
     expect(find.textContaining('Giá trị: 0.0'), findsNWidgets(2));
+    await tester.enterText(
+      find.byKey(const ValueKey('review-value-51')),
+      '0.1',
+    );
+    await tester.tap(find.byKey(const ValueKey('review-refresh-source')));
+    await tester.pumpAndSettle();
+    expect(server.detailCalls, 2);
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const ValueKey('review-value-51')))
+          .controller
+          ?.text,
+      '0.1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('review-value-51')),
+      '0.0',
+    );
     await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('review-approve')));

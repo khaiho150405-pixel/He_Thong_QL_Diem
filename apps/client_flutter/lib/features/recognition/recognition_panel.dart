@@ -302,20 +302,32 @@ class _RecognitionDetailDialogState
   @override
   void initState() {
     super.initState();
-    detail = ref
+    detail = _loadDetail();
+  }
+
+  Future<RecognitionTicketDetailDto> _loadDetail() async {
+    final data = await ref
         .read(recognitionRepositoryProvider)
-        .detail(gradebookId: widget.gradebookId, ticketId: widget.ticketId)
-        .then((data) {
-          loaded = data;
-          for (final row in data.rows) {
-            final suggested = _suggested(row);
-            values[row.rowId] = TextEditingController(text: suggested ?? '');
-            reasons[row.rowId] = TextEditingController(
-              text: suggested == null ? '' : 'Đã đối chiếu ảnh nhận dạng',
-            );
-          }
-          return data;
-        });
+        .detail(gradebookId: widget.gradebookId, ticketId: widget.ticketId);
+    loaded = data;
+    for (final row in data.rows) {
+      if (!values.containsKey(row.rowId)) {
+        final suggested = _suggested(row);
+        values[row.rowId] = TextEditingController(text: suggested ?? '');
+        reasons[row.rowId] = TextEditingController(
+          text: suggested == null ? '' : 'Đã đối chiếu ảnh nhận dạng',
+        );
+      }
+    }
+    return data;
+  }
+
+  void refreshEvidence() {
+    if (busy) return;
+    final next = _loadDetail();
+    setState(() {
+      detail = next;
+    });
   }
 
   String? _suggested(RecognitionEvidenceRowDto row) {
@@ -385,7 +397,21 @@ class _RecognitionDetailDialogState
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text(errorMessage(snapshot.error!)));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(errorMessage(snapshot.error!)),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    key: const ValueKey('review-retry-detail'),
+                    onPressed: refreshEvidence,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Tải lại phiếu'),
+                  ),
+                ],
+              ),
+            );
           }
           final data = snapshot.data!;
           final canApprove = data.status.value == 'CHO_DOI_CHIEU';
@@ -410,8 +436,9 @@ class _RecognitionDetailDialogState
                   child: Image.network(
                     data.sourceImageUrl,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => const Text(
-                      'Không tải được ảnh gốc. URL có thể đã hết hạn.',
+                    errorBuilder: (_, _, _) => _expiredImage(
+                      key: const ValueKey('review-refresh-source'),
+                      label: 'Không tải được ảnh gốc. URL có thể đã hết hạn.',
                     ),
                   ),
                 ),
@@ -444,6 +471,7 @@ class _RecognitionDetailDialogState
                                 row.numericRaw,
                                 row.numericValue,
                                 row.numericConfidence,
+                                refreshEvidence,
                               ),
                               _channel(
                                 'Điểm chữ',
@@ -451,6 +479,7 @@ class _RecognitionDetailDialogState
                                 row.writtenRaw,
                                 row.writtenValue,
                                 row.writtenConfidence,
+                                refreshEvidence,
                               ),
                             ],
                           ),
@@ -541,6 +570,7 @@ class _RecognitionDetailDialogState
     String? raw,
     String? value,
     String? confidence,
+    VoidCallback onRefresh,
   ) => SizedBox(
     width: 320,
     child: Row(
@@ -554,7 +584,11 @@ class _RecognitionDetailDialogState
               : Image.network(
                   url,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
+                  errorBuilder: (_, _, _) => IconButton(
+                    tooltip: 'Ảnh hết hạn hoặc không tải được. Lấy URL mới.',
+                    onPressed: onRefresh,
+                    icon: const Icon(Icons.refresh),
+                  ),
                 ),
         ),
         const SizedBox(width: 8),
@@ -566,5 +600,19 @@ class _RecognitionDetailDialogState
         ),
       ],
     ),
+  );
+
+  Widget _expiredImage({required Key key, required String label}) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(label, textAlign: TextAlign.center),
+      const SizedBox(height: 8),
+      OutlinedButton.icon(
+        key: key,
+        onPressed: refreshEvidence,
+        icon: const Icon(Icons.refresh),
+        label: const Text('Lấy URL ảnh mới'),
+      ),
+    ],
   );
 }

@@ -4,7 +4,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: tiếp tục build dự án; Phase 4 phần 1 đã có transaction và UI đối chiếu, bước kế tiếp là hardening E2E UC13 mà chưa cần file trọng số OCR.
+- Yêu cầu mới nhất: tiếp tục build dự án; Phase 4 đã có transaction, UI đối chiếu và hardening UC13 mà chưa cần file trọng số OCR. Chỉ chuyển Phase 5 sau khi CI commit hardening xanh và Phase 4 được review/merge.
 - Nhánh: `codex/phase-4-review`, tạo từ `origin/main` commit `1f0d7f9` sau khi Phase 3 merge qua PR #5. Không làm tiếp trên nhánh Phase 3 đã bị xóa ở remote.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
 - Phase 2 phần 1 commit `0ae7fbc`, phần 2 `3ad0865`, phần 3 `23df8fe`; PR #3 đã merge. Hotfix hiện tại chạy integration files tuần tự vì chúng dùng chung PostgreSQL `SERIALIZABLE`; chạy song song đã tái hiện 2 đạt/1 lỗi, chạy tuần tự đạt 3/3.
@@ -19,7 +19,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 1. Đọc AGENTS.md, README.md, phase-2.md, ADR-0002/0004/0006/0007 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
 2. Chỉ chốt hotfix khi GitHub `foundation`, `ios` và `required-checks` đều xanh. Local đã đạt `pnpm test:db` và ba suite nghiệp vụ tuần tự; máy thiếu Docker nên GitHub phải xác nhận probe Redis/MinIO, APK/emulator và iOS.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
-4. Tiếp tục Phase 4 hardening: E2E full stack, signed URL retry và race approve/approve + approve/lock. Chưa nối model thật khi chưa có weights; chưa bắt đầu Phase 5 trước khi Phase 4 xanh.
+4. Kiểm CI commit Phase 4 hardening. Nếu xanh, mở PR review Phase 4; không merge hoặc bắt đầu Phase 5 tự động. Chưa nối model thật khi chưa có weights.
 
 ## Công cụ và dữ liệu test trên máy hiện tại
 
@@ -56,3 +56,5 @@ Phase 3 phần 3 thêm migration `202609120001_recognition_results`; đã nâng 
 Phase 3 phần 4 hoàn tất local: API danh sách/chi tiết phiếu, ký URL GET tối đa 300 giây, Flutter picker/upload/polling/dialog bằng chứng và sửa generator multipart có kiểm soát. `pnpm contracts:check`, `pnpm check` (13/13), bốn integration suite PostgreSQL, `dart run melos run check` (14/14), Python (9/9) và Flutter Web build đều đạt. Khối nhận dạng mặc định thu gọn để không làm tràn màn hình mobile; test hồi quy Phase 2 đã xác nhận. Cần xem GitHub CI của commit mới trước khi review/merge Phase 3.
 
 Phase 3 commit `5ccd861` đã xanh `foundation`, `ios`, `required-checks` tại run 34697920229 và merge vào `main` qua PR #5. Phase 4 phần 1 ở commit `ccfc452` thêm migration `202609120002_review_approval`, module/API review và UI xác nhận mọi dòng. Nâng cấp DB Phase 3 và cài mới tám migration trên `qld_phase4_review_fresh_test` đều đạt; constraint test và bốn integration suite Phase 1–4 tuần tự đạt, gồm rollback khi audit lỗi, IDOR, version và idempotency. `pnpm check` đạt 15/15 test + build, `pnpm contracts:check` không drift, Flutter workspace đạt 14/14 test, Python đạt 9/9 và Flutter Web development build thành công. GitHub run [34700935789](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34700935789) đã xanh `foundation`, `ios`, `required-checks`. Xem [phase-4.md](phase-4.md); bước kế tiếp là mở PR review Phase 4, rồi hardening UC13 trên chính nhánh này trước khi merge.
+
+Phase 4 phần 2 hardening bổ sung làm mới signed URL mà không mất quyết định đang nhập; integration upload → worker → review; tải signed object thật từ MinIO; race approve/approve và approve/lock. Test PostgreSQL riêng cho race đã đạt trên `qld_phase4_review_fresh_test`. Cần chạy toàn bộ check và xác nhận CI commit hardening; khi CI xanh thì Phase 4 đủ điều kiện mở review/merge, chưa tự merge `main`.

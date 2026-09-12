@@ -26,6 +26,11 @@ Migration có rollback tiến tiếp: thu hồi quyền `EXECUTE` bằng migrati
 - Integration test xác nhận quyền âm tính, `NULL`/`0.0`, sửa kết quả máy, replay idempotent và payload trùng key bị 409.
 - Widget test xác nhận giáo viên phải đánh dấu đã xem tất cả dòng trước khi gửi quyết định qua generated client.
 
-## Phần tiếp theo
+## Phần 2 — Hardening UC13
 
-Hoàn thiện E2E trên full stack Redis/MinIO, trạng thái retry khi signed URL hết hạn và kiểm thử đồng thời approve/approve, approve/lock trong CI. Sau khi Phase 4 xanh mới chuyển sang Phase 5 tổng kết và ứng dụng học sinh.
+- Luồng integration chạy xuyên suốt upload HTTP → outbox → worker → bằng chứng → duyệt, đồng thời CI kiểm Redis/BullMQ và MinIO thật. Signed URL được tải thật từ bucket private trong test hạ tầng.
+- Khi ảnh gốc hoặc ảnh ô hết hạn/không tải được, dialog cho phép xin bộ signed URL mới từ API. Điểm và lý do giáo viên đang nhập được giữ nguyên qua lần tải lại.
+- Hai yêu cầu duyệt đồng thời với cùng version chỉ có một giao dịch thành công; giao dịch còn lại nhận `409` và không tạo lịch sử/audit trùng.
+- Khi duyệt cạnh tranh với chốt bảng, phiếu đang chờ ngăn thao tác chốt. Duyệt hoàn tất nguyên tử, còn thao tác chốt dùng version cũ nhận `409`; bảng không rơi vào trạng thái vừa chốt vừa còn phiếu chưa duyệt.
+
+Phase 4 hoàn tất khi full CI của commit hardening xanh `foundation`, `ios` và `required-checks`. Sau đó có thể mở review/merge Phase 4 trước khi tạo nhánh Phase 5 tổng kết và ứng dụng học sinh.
