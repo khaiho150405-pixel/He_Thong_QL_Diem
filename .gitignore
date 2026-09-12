@@ -1,4 +1,6 @@
 node_modules/
+*.egg-info/
+.pnpm-store/
 .env
 .env.*
 !.env.example

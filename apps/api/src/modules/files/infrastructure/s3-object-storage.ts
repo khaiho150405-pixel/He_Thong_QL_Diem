@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -49,6 +50,19 @@ export class S3ObjectStorage implements ObjectStorage {
           Metadata: { sha256: object.checksum },
         }),
       );
+    } catch {
+      throw new ServiceUnavailableException();
+    }
+  }
+
+  async get(key: string): Promise<Uint8Array> {
+    if (!this.client || !this.bucket) throw new ServiceUnavailableException();
+    try {
+      const result = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      if (!result.Body) throw new Error("Object body missing");
+      return await result.Body.transformToByteArray();
     } catch {
       throw new ServiceUnavailableException();
     }

@@ -37,6 +37,7 @@ test("recognition infrastructure stores a private object and deduplicates BullMQ
       new HeadObjectCommand({ Bucket: config.s3Bucket, Key: key }),
     );
     assert.equal(stored.Metadata?.sha256, checksum);
+    assert.deepEqual(await storage.get(key), bytes);
     const event = { id: "1", ticketId: "999", jobId, attempts: 1 };
     await queue.enqueue(event);
     await queue.enqueue(event);

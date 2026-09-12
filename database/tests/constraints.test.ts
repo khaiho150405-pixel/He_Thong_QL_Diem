@@ -46,6 +46,9 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     await denied(
       "INSERT INTO phieu_nhan_dien(ma_bang_diem,ma_thanh_phan,nguoi_tai,ma_bam_tep,duong_dan_anh_goc,so_dong_khai_bao) VALUES(1,1,1,repeat('a',64),'forbidden',1)",
     );
+    await denied(
+      "INSERT INTO ket_qua_dong(ma_phieu,ma_hoc_sinh,thu_tu_dong,ket_luan_doi_chieu,muc_phan_loai) VALUES(1,1,1,'KHONG_DOC_DUOC','DO')",
+    );
     for (const value of ["-0.1", "10.1", "8.55", "NaN"])
       await assert.rejects(
         runtime.query("SELECT kiem_tra_gia_tri_diem($1::numeric)", [value]),

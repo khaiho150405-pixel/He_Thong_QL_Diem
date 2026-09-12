@@ -1,6 +1,6 @@
 # Hệ thống Quản lý Điểm
 
-Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã được merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. Bản sửa CI sau merge chạy các integration suite dùng chung PostgreSQL theo thứ tự để tránh xung đột giả giữa các giao dịch `SERIALIZABLE`. [Phase 3](docs/development/phase-3.md) đã có contract hai kênh, policy ba màu, upload ảnh private, phiếu/outbox nguyên tử và BullMQ dispatcher mà chưa phụ thuộc file trọng số. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa nối mô hình OCR hoặc triển khai tổng kết.
+Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã được merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. Bản sửa CI sau merge chạy các integration suite dùng chung PostgreSQL theo thứ tự để tránh xung đột giả giữa các giao dịch `SERIALIZABLE`. [Phase 3](docs/development/phase-3.md) đã có upload private, outbox/worker BullMQ, contract FastAPI hai kênh, chặn lệch lưới và lưu bằng chứng chờ con người đối chiếu mà chưa phụ thuộc file trọng số. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa nối mô hình OCR thật hoặc triển khai tổng kết.
 
 ## Cấu trúc
 
@@ -27,8 +27,11 @@ pnpm infra:up
 pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
+python -m pip install -e apps/recognition-service
 pnpm dev:api
 ```
+
+Để chạy pipeline nhận dạng development, mở thêm ba terminal tại root và chạy `pnpm dev:recognition-service`, `pnpm dev:recognition-dispatcher`, `pnpm dev:recognition-worker`. Fake adapter chỉ được bật trong development/test; production thiếu weights trả `MODEL_UNAVAILABLE`.
 
 setup:local tạo .env với mật khẩu ngẫu nhiên, không in secret, không ghi đè file có sẵn. Bạn có thể chỉnh mật khẩu local trước khi khởi tạo volume PostgreSQL. Port DB mặc định 5433 để tránh PostgreSQL cài sẵn tại 5432. infra:down giữ volume; không tự chạy down -v.
 

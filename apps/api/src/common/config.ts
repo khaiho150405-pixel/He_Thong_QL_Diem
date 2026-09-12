@@ -8,6 +8,7 @@ export interface AppConfig {
   s3AccessKey: string;
   s3SecretKey: string;
   s3Bucket: string;
+  recognitionServiceUrl: string;
 }
 
 export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
@@ -66,5 +67,6 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
     s3AccessKey: required("S3_ACCESS_KEY"),
     s3SecretKey: required("S3_SECRET_KEY"),
     s3Bucket: required("S3_BUCKET"),
+    recognitionServiceUrl: url("RECOGNITION_SERVICE_URL", ["http:", "https:"]),
   };
 }

@@ -22,6 +22,14 @@ Migration `202609110001_recognition_upload_outbox` tạo bảng kỹ thuật `re
 
 Chi tiết đánh đổi và rollback tại [ADR-0008](../adr/0008-recognition-upload-outbox.md).
 
+## Phần 3 — Worker và contract dịch vụ nhận dạng
+
+Worker BullMQ tải ảnh gốc private, gọi `POST /v1/recognize` của FastAPI với timeout và kiểm schema response. Chỉ khi `detectedRows`, số phần tử và thứ tự dòng khớp sĩ số khai báo, worker mới lưu ảnh ô cắt cùng raw/value/confidence riêng cho Điểm số và Điểm chữ. Hàm PostgreSQL chạy `SERIALIZABLE`, khóa phiếu, ghi toàn bộ dòng + audit rồi chuyển phiếu sang `CHO_DOI_CHIEU`. Job chạy lại không tạo dòng hoặc audit trùng.
+
+Sai số dòng chuyển ngay sang `LOI/GRID_ROW_COUNT_MISMATCH`. Timeout/payload sai được BullMQ retry tối đa ba lần rồi chuyển `LOI`; model unavailable chuyển lỗi ngay. Adapter `fake-dev-v1` chỉ được chọn khi `RECOGNITION_MODEL_MODE=fake` và `APP_ENV` là development/test. Production thiếu weights trả HTTP 503. Kết quả worker luôn để `ma_diem`, `gia_tri_chot`, người và thời điểm duyệt là `NULL`; không sửa `diem_thanh_phan`.
+
+Migration `202609120001_recognition_results` đã được kiểm cả nâng cấp và cài bảy migration từ database rỗng. Unit/contract test bao phủ hai kênh, 0.0, lệch lưới, malformed response, timeout và model unavailable. Integration PostgreSQL kiểm lưu nguyên tử, idempotency và không có điểm chính thức.
+
 ## Phần tiếp theo
 
-Thực hiện Phase 3 phần 3: BullMQ worker idempotent → FastAPI contract → kiểm lưới/số dòng → lưu riêng kết quả hai kênh và ảnh ô cắt → chuyển phiếu sang `CHO_DOI_CHIEU`. Fake adapter chỉ bật rõ ràng ở development/test. Production khi thiếu weights phải trả model unavailable và chuyển phiếu sang `LOI`; worker không bao giờ ghi điểm chính thức.
+Phase 3 phần 4 bổ sung API trạng thái/chi tiết phiếu và signed URL ảnh ô, polling từ Flutter, trạng thái loading/error/retry và màn hình upload cơ bản. Việc duyệt/chốt giá trị vẫn thuộc Phase 4 (UC13).

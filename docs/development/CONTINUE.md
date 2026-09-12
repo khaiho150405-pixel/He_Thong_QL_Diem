@@ -11,13 +11,14 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 - Demo local đã được kiểm tra với Flutter Web, API thật và PostgreSQL test cô lập: giáo viên tạo bảng #25, nhập `8.5`, lưu lịch sử và tăng version. Mật khẩu demo chỉ được đặt trong database test local, không commit.
 - Phase 3 phần 1 đã có domain contract Python cho hai kênh và policy Xanh/Vàng/Đỏ ở `apps/recognition-service`; ngưỡng confidence được truyền vào và chưa chốt production. Sáu unit test bao phủ khớp, lệch, confidence thấp, một kênh, ô trống, NULL/0.0 và input sai.
 - Phase 3 phần 2 đã có upload multipart PNG/JPEG, kiểm nội dung/kích thước/độ phân giải, S3 object private, phiếu + audit + idempotency + outbox cùng transaction và BullMQ dispatcher có lease/retry hữu hạn. Endpoint trả `202` với ticket/job ID, không lộ object key. OpenAPI và Dart client đã sinh lại.
+- Phase 3 phần 3 đã có BullMQ worker, FastAPI multipart contract, fake adapter bị khóa theo môi trường, chặn lệch lưới, lưu ảnh ô và hai kênh nguyên tử rồi chuyển `CHO_DOI_CHIEU`. Production thiếu weights trả `MODEL_UNAVAILABLE`; worker không ghi điểm chính thức.
 
 ## Khi nhận continue
 
 1. Đọc AGENTS.md, README.md, phase-2.md, ADR-0002/0004/0006/0007 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
 2. Chỉ chốt hotfix khi GitHub `foundation`, `ios` và `required-checks` đều xanh. Local đã đạt `pnpm test:db` và ba suite nghiệp vụ tuần tự; máy thiếu Docker nên GitHub phải xác nhận probe Redis/MinIO, APK/emulator và iOS.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
-4. Tiếp tục Phase 3 phần 3 bằng BullMQ worker, FastAPI contract, kiểm lưới/số dòng, fake adapter development/test và lưu riêng hai kênh/ảnh ô cắt. Chưa nối model thật khi chưa có weights; production thiếu weights phải trả model unavailable và worker không được ghi điểm chính thức.
+4. Tiếp tục Phase 3 phần 4: API trạng thái/chi tiết phiếu, signed URL ảnh ô và Flutter upload/polling/loading/error cơ bản. Chưa làm transaction duyệt của Phase 4 và chưa nối model thật khi chưa có weights.
 
 ## Công cụ và dữ liệu test trên máy hiện tại
 
@@ -47,3 +48,5 @@ Local đã đạt `dart run melos run check` (13 tests) và Flutter Web build. A
 Cụm PostgreSQL test đang nghe ở `127.0.0.1:55433`; kiểm cổng/process trước khi khởi động thêm. Giữ fixture giả ở DB test, không xóa DB; trigger gây lỗi chỉ dùng test và đã gỡ trong finally.
 
 Phase 3 phần 2 đã hoàn tất kiểm tra local trên `codex/phase-3-recognition-foundation`: `pnpm check` đạt 9 unit/HTTP tests + build, `pnpm test:db` đạt, bốn integration suite PostgreSQL Phase 1–3 chạy tuần tự đạt, HTTP upload trả `202`, `pnpm contracts:check` không drift, Dart client analyze đạt và Python domain đạt 6/6. Integration Redis/MinIO thật đã được thêm vào CI nhưng chưa chạy local vì máy thiếu Docker; xem kết quả GitHub mới nhất trước khi review. Không mở hoặc merge PR Phase 3 trước khi hotfix Phase 2 đã vào `main`.
+
+Phase 3 phần 3 thêm migration `202609120001_recognition_results`; đã nâng cấp DB Phase 3 và cài đủ bảy migration từ DB rỗng. `pnpm check` đạt 12/12 unit/contract + build, Python đạt 9/9, `pnpm test:db` đạt và bốn integration suite PostgreSQL tuần tự đạt; luồng upload → worker → `CHO_DOI_CHIEU` giữ replay không trùng và `diem_thanh_phan` vẫn không có giá trị. `pnpm contracts:check` đạt sau khi ổn định thứ tự snapshot. GitHub CI toàn stack vẫn phải đạt sau commit/push trước khi mở PR.

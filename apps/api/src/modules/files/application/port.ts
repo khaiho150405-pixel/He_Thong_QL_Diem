@@ -7,6 +7,7 @@ export interface StoredObject {
 
 export interface ObjectStorage {
   put(object: StoredObject): Promise<void>;
+  get(key: string): Promise<Uint8Array>;
   remove(key: string): Promise<void>;
 }
 

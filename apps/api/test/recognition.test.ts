@@ -63,6 +63,7 @@ test("upload keeps one object on replay and never exposes the object key", async
   const objects = new Map<string, StoredObject>();
   const storage: ObjectStorage = {
     put: async (object) => void objects.set(object.key, object),
+    get: async (key) => objects.get(key)!.bytes,
     remove: async (key) => void objects.delete(key),
   };
   let stored: CreateRecognitionTicket | undefined;

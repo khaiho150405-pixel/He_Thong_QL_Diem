@@ -12,6 +12,8 @@ import { GradebooksService } from "../../src/modules/gradebooks/application/serv
 import { RecognitionService } from "../../src/modules/recognition/application/service.js";
 import { RecognitionDispatcher } from "../../src/modules/recognition/application/outbox.js";
 import { PrismaRecognitionOutbox } from "../../src/modules/recognition/infrastructure/prisma-outbox.js";
+import { PrismaRecognitionWorkerStore } from "../../src/modules/recognition/infrastructure/prisma-worker-store.js";
+import { RecognitionJobProcessor } from "../../src/modules/recognition/application/worker.js";
 import type { PrismaClient } from "../../src/generated/prisma/client.js";
 
 function png(seed: Uint8Array): Uint8Array {
@@ -38,6 +40,7 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
   const objects = new Map<string, StoredObject>();
   const storage: ObjectStorage = {
     put: async (object) => void objects.set(object.key, object),
+    get: async (key) => objects.get(key)!.bytes,
     remove: async (key) => void objects.delete(key),
   };
   const app = await createApp(
@@ -213,6 +216,56 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
     assert.equal(await dispatcher.dispatchOnce(), 1);
     assert.deepEqual(queued, [receipt.jobId]);
     assert.equal(await dispatcher.dispatchOnce(), 0);
+
+    const pixel =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+    const worker = new RecognitionJobProcessor(
+      new PrismaRecognitionWorkerStore(database),
+      storage,
+      {
+        recognize: async () => ({
+          detectedRows: 2,
+          modelVersion: "fake-dev-v1",
+          rows: [1, 2].map((order) => ({
+            order,
+            numeric: {
+              rawOutput: order === 1 ? "0.0" : "8.0",
+              value: order === 1 ? "0.0" : "8.0",
+              confidence: "0.95",
+              isBlank: false,
+            },
+            written: {
+              rawOutput: order === 1 ? "không" : "tám",
+              value: order === 1 ? "0.0" : "8.0",
+              confidence: "0.93",
+              isBlank: false,
+            },
+            numericCropBase64: pixel,
+            writtenCropBase64: pixel,
+            comparison: "KHOP" as const,
+            reviewLevel: "XANH" as const,
+          })),
+        }),
+      },
+    );
+    await worker.process(receipt.ticketId);
+    await worker.process(receipt.ticketId);
+    const evidence = await owner.query(
+      `SELECT
+        (SELECT trang_thai::text FROM phieu_nhan_dien WHERE ma_phieu=$1) status,
+        (SELECT count(*) FROM ket_qua_dong WHERE ma_phieu=$1) rows,
+        (SELECT count(*) FROM ket_qua_dong WHERE ma_phieu=$1 AND ma_diem IS NULL AND gia_tri_chot IS NULL) unapproved,
+        (SELECT count(*) FROM diem_thanh_phan WHERE ma_bang_diem=$2 AND gia_tri IS NOT NULL) official,
+        (SELECT count(*) FROM nhat_ky_bao_mat WHERE hanh_dong='RECOGNITION_COMPLETED' AND doi_tuong=$3) audits`,
+      [receipt.ticketId, book.id, "phieu_nhan_dien:" + receipt.ticketId],
+    );
+    assert.deepEqual(evidence.rows[0], {
+      status: "CHO_DOI_CHIEU",
+      rows: "2",
+      unapproved: "2",
+      official: "0",
+      audits: "1",
+    });
   } finally {
     await app.close();
     await owner.end();

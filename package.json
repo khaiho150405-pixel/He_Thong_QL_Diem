@@ -16,6 +16,8 @@
     "db:seed": "tsx database/seeds/seed.ts",
     "dev:api": "tsx watch apps/api/src/main.ts",
     "dev:recognition-dispatcher": "tsx watch apps/api/src/modules/recognition/dispatch.ts",
+    "dev:recognition-worker": "tsx watch apps/api/src/modules/recognition/run-worker.ts",
+    "dev:recognition-service": "uvicorn src.api.main:app --app-dir apps/recognition-service --port 8000",
     "api:export": "tsx apps/api/src/export-openapi.ts",
     "client:generate": "node scripts/generate-client.mjs",
     "contracts:check": "node scripts/check-contracts.mjs",
