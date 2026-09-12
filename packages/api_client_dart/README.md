@@ -96,6 +96,9 @@ Class | Method | HTTP request | Description
 [*IdentityApi*](doc/IdentityApi.md) | [**identityProfile**](doc/IdentityApi.md#identityprofile) | **GET** /api/v1/identity/profile |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateAccount**](doc/IdentityApi.md#identityupdateaccount) | **PUT** /api/v1/identity/accounts/{id} |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateProfile**](doc/IdentityApi.md#identityupdateprofile) | **PUT** /api/v1/identity/profile |
+[*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionDetail**](doc/RecognitionApi.md#recognitiondetail) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId} |
+[*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionList**](doc/RecognitionApi.md#recognitionlist) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
+[*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionUpload**](doc/RecognitionApi.md#recognitionupload) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersCreate**](doc/SemestersApi.md#semesterscreate) | **POST** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersList**](doc/SemestersApi.md#semesterslist) | **GET** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersRemove**](doc/SemestersApi.md#semestersremove) | **DELETE** /api/v1/catalog/semesters/{id} |
@@ -149,6 +152,10 @@ Class | Method | HTTP request | Description
  - [LoginInput](doc/LoginInput.md)
  - [PasswordInput](doc/PasswordInput.md)
  - [ProfileDto](doc/ProfileDto.md)
+ - [RecognitionEvidenceRowDto](doc/RecognitionEvidenceRowDto.md)
+ - [RecognitionReceiptDto](doc/RecognitionReceiptDto.md)
+ - [RecognitionTicketDetailDto](doc/RecognitionTicketDetailDto.md)
+ - [RecognitionTicketDto](doc/RecognitionTicketDto.md)
  - [SemestersDto](doc/SemestersDto.md)
  - [SemestersInput](doc/SemestersInput.md)
  - [SemestersPage](doc/SemestersPage.md)

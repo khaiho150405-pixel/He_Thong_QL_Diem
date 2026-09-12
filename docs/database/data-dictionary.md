@@ -240,4 +240,4 @@ Migration 202609070002_constraints là nguồn SQL cho miền điểm, hệ số
 
 Ngày sinh/ngày lịch là date; thời điểm là timestamptz UTC. Lớp của học sinh, môn của thành phần và năm học/học kỳ tương ứng cần kiểm trong transaction của use case khi triển khai ghi; FK đơn không chứng minh những quan hệ đó. Snapshot bo_he_so giữ bộ hệ số bất biến theo kết quả, format nghiệp vụ chốt ở Giai đoạn 5. Không lưu ảnh binary/signed URL trong DB. Đường dẫn ảnh là private object key.
 
-Có 16 bảng nghiệp vụ, chưa thêm bảng kỹ thuật ngoài \_prisma_migrations. Quyền và rollback tại ADR-0002. Không hard-delete dữ liệu điểm đã dùng. Seed chỉ dùng dữ liệu giả.
+Có đúng 16 bảng nghiệp vụ. Các bảng kỹ thuật hiện có gồm `_prisma_migrations`, `phien_lam_viec`, `nhat_ky_bao_mat`, `gioi_han_dang_nhap`, `khoa_idempotency` và `recognition_outbox`. Outbox giữ `ma_phieu`, payload tối thiểu, số lần thử, lease, thời điểm sẵn sàng/gửi và mã lỗi cuối; không chứa binary ảnh hoặc điểm chính thức. Quyền và rollback xem ADR-0002, ADR-0004 và ADR-0008. Không hard-delete dữ liệu điểm đã dùng. Seed chỉ dùng dữ liệu giả.

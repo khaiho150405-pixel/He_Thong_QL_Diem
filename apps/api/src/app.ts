@@ -23,11 +23,14 @@ import { ErrorDto, ErrorFilter, requestContext } from "./common/http.js";
 import type { AppConfig } from "./common/config.js";
 import * as domainModules from "./modules/index.js";
 import { DatabaseModule } from "./common/database.js";
+import { FilesModule } from "./modules/files/module.js";
+import type { ObjectStorage } from "./modules/files/application/port.js";
 
 export async function createApp(
   config: Pick<AppConfig, "origins" | "environment"> &
     Partial<Pick<AppConfig, "databaseUrl">>,
   probe: DependencyProbe,
+  overrides: { objectStorage?: ObjectStorage } = {},
 ): Promise<INestApplication> {
   @ApiExcludeController()
   @Controller()
@@ -46,7 +49,10 @@ export async function createApp(
           "postgresql://app_runtime@127.0.0.1:5432/unconfigured",
         config,
       ),
-      ...Object.values(domainModules),
+      FilesModule.configure(overrides.objectStorage),
+      ...Object.values(domainModules).filter(
+        (module) => module !== domainModules.FilesModule,
+      ),
       NotFoundModule,
     ],
     controllers: [HealthController],

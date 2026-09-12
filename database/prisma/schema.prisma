@@ -297,10 +297,28 @@ model phieu_nhan_dien {
   ma_thanh_phan_ref thanh_phan_diem @relation(fields: [ma_thanh_phan], references: [ma_thanh_phan], onDelete: Restrict, onUpdate: Restrict)
   nguoi_tai_ref     nguoi_dung      @relation(fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
   ket_qua_dong_rows ket_qua_dong[]
+  outbox_row         recognition_outbox?
 
   @@index([ma_bang_diem])
   @@index([ma_thanh_phan])
   @@index([nguoi_tai])
+}
+
+// Technical table, not part of the sixteen business tables.
+model recognition_outbox {
+  ma_su_kien    BigInt           @id @default(autoincrement())
+  loai_su_kien  String           @db.VarChar(64)
+  ma_phieu      BigInt           @unique
+  du_lieu       Json
+  so_lan_thu    Int              @default(0)
+  san_sang_luc  DateTime         @default(now()) @db.Timestamptz(6)
+  khoa_den      DateTime?        @db.Timestamptz(6)
+  da_gui_luc    DateTime?        @db.Timestamptz(6)
+  loi_cuoi      String?          @db.VarChar(200)
+  ngay_tao      DateTime         @default(now()) @db.Timestamptz(6)
+  ma_phieu_ref  phieu_nhan_dien @relation(fields: [ma_phieu], references: [ma_phieu], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([da_gui_luc, san_sang_luc])
 }
 
 model ket_qua_dong {
