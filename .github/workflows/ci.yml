@@ -32,7 +32,15 @@ jobs:
       - run: python -m pip install -e apps/recognition-service
       - id: local-env
         run: node scripts/setup-local.mjs --test
-      - run: pnpm infra:up
+      - name: Start test infrastructure
+        run: |
+          for attempt in 1 2; do
+            if pnpm infra:up; then exit 0; fi
+            docker compose --env-file .env -f infrastructure/compose.yaml ps
+            docker compose --env-file .env -f infrastructure/compose.yaml logs --no-color --tail=100 postgres redis minio
+            docker compose --env-file .env -f infrastructure/compose.yaml down --volumes || true
+          done
+          exit 1
       - run: pnpm db:generate && pnpm db:migrate && pnpm db:seed
       - run: |
           set -a
