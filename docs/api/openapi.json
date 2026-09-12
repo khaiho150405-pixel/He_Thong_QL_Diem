@@ -2648,6 +2648,109 @@
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
+    "/api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve": {
+      "post": {
+        "operationId": "reviewApprove",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "ticketId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReviewApprovalInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewApprovalResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["review"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/students": {
       "get": {
         "operationId": "studentsList",
@@ -4867,6 +4970,65 @@
           "status": { "type": "string", "enum": ["DANG_XU_LY"] }
         },
         "required": ["ticketId", "jobId", "status"]
+      },
+      "ReviewDecisionInput": {
+        "type": "object",
+        "properties": {
+          "rowId": {
+            "type": "string",
+            "description": "bigint recognition row ID"
+          },
+          "value": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^(10[.]0|[0-9][.][0-9])$"
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["rowId", "value", "reason"]
+      },
+      "ReviewApprovalInput": {
+        "type": "object",
+        "properties": {
+          "expectedTicketVersion": { "type": "number", "minimum": 0 },
+          "expectedGradebookVersion": { "type": "number", "minimum": 0 },
+          "decisions": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReviewDecisionInput" }
+          }
+        },
+        "required": [
+          "expectedTicketVersion",
+          "expectedGradebookVersion",
+          "decisions"
+        ]
+      },
+      "ReviewApprovalResultDto": {
+        "type": "object",
+        "properties": {
+          "ticketId": { "type": "string" },
+          "ticketVersion": { "type": "number" },
+          "gradebookId": { "type": "number" },
+          "gradebookVersion": { "type": "number" },
+          "reviewedRows": { "type": "number" },
+          "machineMatchedRows": { "type": "number" },
+          "humanCorrectedRows": { "type": "number" },
+          "errorRows": { "type": "number" },
+          "status": { "type": "string", "enum": ["DA_DUYET"] }
+        },
+        "required": [
+          "ticketId",
+          "ticketVersion",
+          "gradebookId",
+          "gradebookVersion",
+          "reviewedRows",
+          "machineMatchedRows",
+          "humanCorrectedRows",
+          "errorRows",
+          "status"
+        ]
       },
       "StudentsDto": {
         "type": "object",

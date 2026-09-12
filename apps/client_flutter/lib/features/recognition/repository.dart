@@ -16,6 +16,8 @@ class RecognitionRepository {
   static int _keySequence = 0;
   String? _pendingSignature;
   String? _pendingKey;
+  String? _pendingApprovalSignature;
+  String? _pendingApprovalKey;
 
   Future<List<RecognitionTicketDto>> list(num gradebookId) async =>
       (await api.getRecognitionApi().recognitionList(
@@ -60,6 +62,41 @@ class RecognitionRepository {
     )).data!;
     _pendingSignature = null;
     _pendingKey = null;
+    return result;
+  }
+
+  Future<ReviewApprovalResultDto> approve({
+    required num gradebookId,
+    required String ticketId,
+    required num expectedTicketVersion,
+    required num expectedGradebookVersion,
+    required List<ReviewDecisionInput> decisions,
+  }) async {
+    final signature = [
+      gradebookId,
+      ticketId,
+      expectedTicketVersion,
+      expectedGradebookVersion,
+      for (final item in decisions)
+        '${item.rowId}:${item.value}:${item.reason}',
+    ].join('|');
+    if (_pendingApprovalSignature != signature) {
+      _pendingApprovalSignature = signature;
+      _pendingApprovalKey =
+          'flutter-review-${DateTime.now().microsecondsSinceEpoch}-${_keySequence++}';
+    }
+    final result = (await api.getReviewApi().reviewApprove(
+      xIdempotencyKey: _pendingApprovalKey!,
+      ticketId: ticketId,
+      gradebookId: gradebookId,
+      reviewApprovalInput: ReviewApprovalInput(
+        expectedTicketVersion: expectedTicketVersion,
+        expectedGradebookVersion: expectedGradebookVersion,
+        decisions: decisions,
+      ),
+    )).data!;
+    _pendingApprovalSignature = null;
+    _pendingApprovalKey = null;
     return result;
   }
 }

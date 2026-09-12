@@ -99,6 +99,7 @@ Class | Method | HTTP request | Description
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionDetail**](doc/RecognitionApi.md#recognitiondetail) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId} |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionList**](doc/RecognitionApi.md#recognitionlist) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionUpload**](doc/RecognitionApi.md#recognitionupload) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
+[*ReviewApi*](doc/ReviewApi.md) | [**reviewApprove**](doc/ReviewApi.md#reviewapprove) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersCreate**](doc/SemestersApi.md#semesterscreate) | **POST** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersList**](doc/SemestersApi.md#semesterslist) | **GET** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersRemove**](doc/SemestersApi.md#semestersremove) | **DELETE** /api/v1/catalog/semesters/{id} |
@@ -156,6 +157,9 @@ Class | Method | HTTP request | Description
  - [RecognitionReceiptDto](doc/RecognitionReceiptDto.md)
  - [RecognitionTicketDetailDto](doc/RecognitionTicketDetailDto.md)
  - [RecognitionTicketDto](doc/RecognitionTicketDto.md)
+ - [ReviewApprovalInput](doc/ReviewApprovalInput.md)
+ - [ReviewApprovalResultDto](doc/ReviewApprovalResultDto.md)
+ - [ReviewDecisionInput](doc/ReviewDecisionInput.md)
  - [SemestersDto](doc/SemestersDto.md)
  - [SemestersInput](doc/SemestersInput.md)
  - [SemestersPage](doc/SemestersPage.md)

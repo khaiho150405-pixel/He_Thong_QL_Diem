@@ -11,7 +11,7 @@ import {
   redisConnection,
 } from "../../src/modules/recognition/infrastructure/bull-queue.js";
 
-test("recognition infrastructure stores a private object and deduplicates BullMQ job IDs", async () => {
+test("recognition infrastructure serves only signed evidence and deduplicates BullMQ job IDs", async () => {
   const config = readConfig(process.env);
   const storage = new S3ObjectStorage(config);
   const key = `recognition/original/${randomUUID()}.png`;
@@ -38,6 +38,10 @@ test("recognition infrastructure stores a private object and deduplicates BullMQ
     );
     assert.equal(stored.Metadata?.sha256, checksum);
     assert.deepEqual(await storage.get(key), bytes);
+    const signedUrl = await storage.signedGetUrl(key, 60);
+    const signedResponse = await fetch(signedUrl);
+    assert.equal(signedResponse.status, 200);
+    assert.deepEqual(new Uint8Array(await signedResponse.arrayBuffer()), bytes);
     const event = { id: "1", ticketId: "999", jobId, attempts: 1 };
     await queue.enqueue(event);
     await queue.enqueue(event);

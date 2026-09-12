@@ -45,7 +45,9 @@ class FakeRecognitionPicker implements RecognitionImagePicker {
 
 class RecognitionFakeServer implements HttpClientAdapter {
   bool uploaded = false;
+  int detailCalls = 0;
   FormData? uploadedForm;
+  Map<String, dynamic>? approvalBody;
 
   @override
   void close({bool force = false}) {}
@@ -93,10 +95,24 @@ class RecognitionFakeServer implements HttpClientAdapter {
     } else if (options.path.endsWith('/recognition-tickets') &&
         options.method == 'GET') {
       body = uploaded ? [_ticket()] : <Object>[];
+    } else if (options.path.endsWith('/recognition-tickets/42/approve')) {
+      approvalBody = jsonDecode(options.data as String) as Map<String, dynamic>;
+      body = {
+        'ticketId': '42',
+        'ticketVersion': 2,
+        'gradebookId': 7,
+        'gradebookVersion': 2,
+        'reviewedRows': 1,
+        'machineMatchedRows': 1,
+        'humanCorrectedRows': 0,
+        'errorRows': 0,
+        'status': 'DA_DUYET',
+      };
     } else if (options.path.endsWith('/recognition-tickets/42')) {
+      detailCalls++;
       body = {
         ..._ticket(),
-        'sourceImageUrl': 'https://storage.test/source.png',
+        'sourceImageUrl': 'https://storage.test/source-$detailCalls.png',
         'imageUrlExpiresInSeconds': 300,
         'rows': [
           {
@@ -213,6 +229,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('An · XANH'), findsOneWidget);
     expect(find.textContaining('Giá trị: 0.0'), findsNWidgets(2));
-    expect(find.text('Đóng'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const ValueKey('review-value-51')),
+      '0.1',
+    );
+    await tester.tap(find.byKey(const ValueKey('review-refresh-source')));
+    await tester.pumpAndSettle();
+    expect(server.detailCalls, 2);
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const ValueKey('review-value-51')))
+          .controller
+          ?.text,
+      '0.1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('review-value-51')),
+      '0.0',
+    );
+    await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('review-approve')));
+    await tester.pumpAndSettle();
+    expect(server.approvalBody?['expectedTicketVersion'], 1);
+    expect(server.approvalBody?['expectedGradebookVersion'], 1);
+    final decisions = server.approvalBody?['decisions'] as List<dynamic>;
+    expect(decisions.single['rowId'], '51');
+    expect(decisions.single['value'], '0.0');
+    expect(find.text('Phiếu nhận dạng #42'), findsNothing);
   });
 }
