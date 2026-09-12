@@ -31,6 +31,9 @@ import 'package:api_client_dart/src/model/recognition_evidence_row_dto.dart';
 import 'package:api_client_dart/src/model/recognition_receipt_dto.dart';
 import 'package:api_client_dart/src/model/recognition_ticket_detail_dto.dart';
 import 'package:api_client_dart/src/model/recognition_ticket_dto.dart';
+import 'package:api_client_dart/src/model/review_approval_input.dart';
+import 'package:api_client_dart/src/model/review_approval_result_dto.dart';
+import 'package:api_client_dart/src/model/review_decision_input.dart';
 import 'package:api_client_dart/src/model/semesters_dto.dart';
 import 'package:api_client_dart/src/model/semesters_input.dart';
 import 'package:api_client_dart/src/model/semesters_page.dart';
@@ -156,6 +159,15 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'RecognitionTicketDto':
       return RecognitionTicketDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ReviewApprovalInput':
+      return ReviewApprovalInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ReviewApprovalResultDto':
+      return ReviewApprovalResultDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ReviewDecisionInput':
+      return ReviewDecisionInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'SemestersDto':
       return SemestersDto.fromJson(value as Map<String, dynamic>) as ReturnType;

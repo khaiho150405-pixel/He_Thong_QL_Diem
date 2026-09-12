@@ -15,7 +15,7 @@
 | UC09    | gradebooks/bang_diem, diem_thanh_phan             | API tạo/lưới/nhập/chốt/sync có version/idempotency/quyền và rollback; Flutter responsive dùng generated client, xử lý conflict               |
 | UC10    | audit/lich_su_sua_diem                            | Lịch sử cùng transaction, API cursor đúng scope, append-only; Flutter hiển thị NULL/0.0 và người/lý do/thời điểm sửa                         |
 | UC11–12 | recognition/files                                 | Upload/outbox + worker BullMQ + FastAPI contract; chặn lệch lưới, lưu hai kênh/ảnh ô riêng và chuyển `CHO_DOI_CHIEU`; model thật chờ weights |
-| UC13    | review                                            | ADR UnitOfWork; chưa có duyệt hoặc UI ảnh ô                                                                                                  |
+| UC13    | review                                            | API/UI đối chiếu, migration duyệt nguyên tử, version/idempotency, audit và rollback test; full-stack E2E còn lại                             |
 | UC14–18 | final-results/reports/students                    | Schema snapshot; chưa có tính/xếp loại/export/tra cứu                                                                                        |
 
 HTML §09 là truy vết thiết kế; không coi là kết quả nghiệm thu phần mềm. Tests phase 0 không chứng minh authorization nghiệp vụ chưa được viết.

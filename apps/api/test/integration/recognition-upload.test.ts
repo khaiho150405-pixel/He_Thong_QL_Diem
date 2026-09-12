@@ -309,7 +309,149 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
       { headers: { authorization: `Bearer ${intruder.token}` } },
     );
     assert.equal(denied.status, 403);
+
+    const decisions = detail.rows.map((row, index) => ({
+      rowId: String(row.rowId),
+      value: index === 0 ? "0.0" : "7.5",
+      reason: index === 0 ? "Xác nhận máy đọc đúng" : "Sửa sau đối chiếu ảnh",
+    }));
+    const approvalBody = {
+      expectedTicketVersion: detail.version,
+      expectedGradebookVersion: book.version,
+      decisions,
+    };
+    const approvalUrl = `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets/${receipt.ticketId}/approve`;
+    const intruderApproval = await fetch(approvalUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${intruder.token}`,
+        "content-type": "application/json",
+        "x-idempotency-key": "intruder-approve",
+      },
+      body: JSON.stringify(approvalBody),
+    });
+    assert.equal(intruderApproval.status, 403);
+
+    await owner.query(
+      `CREATE OR REPLACE FUNCTION test_fail_review_audit() RETURNS trigger LANGUAGE plpgsql AS $$
+       BEGIN
+         IF NEW.hanh_dong='RECOGNITION_APPROVED' THEN RAISE EXCEPTION 'forced review audit failure'; END IF;
+         RETURN NEW;
+       END $$`,
+    );
+    await owner.query(
+      "DROP TRIGGER IF EXISTS test_fail_review_audit_trigger ON nhat_ky_bao_mat",
+    );
+    await owner.query(
+      "CREATE TRIGGER test_fail_review_audit_trigger BEFORE INSERT ON nhat_ky_bao_mat FOR EACH ROW EXECUTE FUNCTION test_fail_review_audit()",
+    );
+    const failedApproval = await fetch(approvalUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${teacher.token}`,
+        "content-type": "application/json",
+        "x-idempotency-key": "approve-atomic",
+      },
+      body: JSON.stringify(approvalBody),
+    });
+    assert.equal(failedApproval.status, 500);
+    const rolledBack = await owner.query(
+      `SELECT
+        (SELECT trang_thai::text FROM phieu_nhan_dien WHERE ma_phieu=$1) status,
+        (SELECT count(*) FROM ket_qua_dong WHERE ma_phieu=$1 AND nguoi_duyet IS NULL AND ma_diem IS NULL) unapproved,
+        (SELECT count(*) FROM diem_thanh_phan WHERE ma_bang_diem=$2 AND gia_tri IS NOT NULL) official,
+        (SELECT count(*) FROM lich_su_sua_diem h JOIN diem_thanh_phan d USING(ma_diem) WHERE d.ma_bang_diem=$2) history`,
+      [receipt.ticketId, book.id],
+    );
+    assert.deepEqual(rolledBack.rows[0], {
+      status: "CHO_DOI_CHIEU",
+      unapproved: "2",
+      official: "0",
+      history: "0",
+    });
+    await owner.query(
+      "DROP TRIGGER test_fail_review_audit_trigger ON nhat_ky_bao_mat",
+    );
+    await owner.query("DROP FUNCTION test_fail_review_audit() CASCADE");
+
+    const approvedResponse = await fetch(approvalUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${teacher.token}`,
+        "content-type": "application/json",
+        "x-idempotency-key": "approve-atomic",
+      },
+      body: JSON.stringify(approvalBody),
+    });
+    assert.equal(approvedResponse.status, 200);
+    const approved = (await approvedResponse.json()) as Record<string, unknown>;
+    assert.deepEqual(approved, {
+      ticketId: receipt.ticketId,
+      ticketVersion: Number(detail.version) + 1,
+      gradebookId: book.id,
+      gradebookVersion: book.version + 1,
+      reviewedRows: 2,
+      machineMatchedRows: 1,
+      humanCorrectedRows: 1,
+      errorRows: 0,
+      status: "DA_DUYET",
+    });
+    const committed = await owner.query(
+      `SELECT
+        (SELECT trang_thai::text FROM phieu_nhan_dien WHERE ma_phieu=$1) status,
+        (SELECT count(*) FROM ket_qua_dong WHERE ma_phieu=$1 AND nguoi_duyet=$3 AND ma_diem IS NOT NULL) approved_rows,
+        (SELECT string_agg(gia_tri::text,',' ORDER BY ma_hoc_sinh) FROM diem_thanh_phan WHERE ma_bang_diem=$2) grades,
+        (SELECT count(*) FROM diem_thanh_phan WHERE ma_bang_diem=$2 AND trang_thai='DA_DUYET' AND nguon_nhap='NHAN_DIEN') official,
+        (SELECT count(*) FROM lich_su_sua_diem h JOIN diem_thanh_phan d USING(ma_diem) WHERE d.ma_bang_diem=$2) history,
+        (SELECT count(*) FROM nhat_ky_bao_mat WHERE hanh_dong='RECOGNITION_APPROVED' AND doi_tuong=$4) audits`,
+      [
+        receipt.ticketId,
+        book.id,
+        teacher.id,
+        "phieu_nhan_dien:" + receipt.ticketId,
+      ],
+    );
+    assert.deepEqual(committed.rows[0], {
+      status: "DA_DUYET",
+      approved_rows: "2",
+      grades: "0.0,7.5",
+      official: "2",
+      history: "2",
+      audits: "1",
+    });
+    const replay = await fetch(approvalUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${teacher.token}`,
+        "content-type": "application/json",
+        "x-idempotency-key": "approve-atomic",
+      },
+      body: JSON.stringify(approvalBody),
+    });
+    assert.equal(replay.status, 200);
+    assert.deepEqual(await replay.json(), approved);
+    const mismatchedReplay = await fetch(approvalUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${teacher.token}`,
+        "content-type": "application/json",
+        "x-idempotency-key": "approve-atomic",
+      },
+      body: JSON.stringify({
+        ...approvalBody,
+        decisions: decisions.map((item, index) =>
+          index === 1 ? { ...item, value: "7.6" } : item,
+        ),
+      }),
+    });
+    assert.equal(mismatchedReplay.status, 409);
   } finally {
+    await owner.query(
+      "DROP TRIGGER IF EXISTS test_fail_review_audit_trigger ON nhat_ky_bao_mat",
+    );
+    await owner.query(
+      "DROP FUNCTION IF EXISTS test_fail_review_audit() CASCADE",
+    );
     await app.close();
     await owner.end();
   }

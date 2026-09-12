@@ -20,13 +20,17 @@ class RecognitionPanel extends ConsumerStatefulWidget {
     required this.gradebookId,
     required this.components,
     required this.declaredRows,
+    required this.gradebookVersion,
     required this.enabled,
+    required this.onApproved,
   });
 
   final num gradebookId;
   final List<RecognitionComponentOption> components;
   final int declaredRows;
+  final num gradebookVersion;
   final bool enabled;
+  final VoidCallback onApproved;
 
   @override
   ConsumerState<RecognitionPanel> createState() => _RecognitionPanelState();
@@ -124,14 +128,20 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   ).showSnackBar(SnackBar(content: Text(message)));
 
   Future<void> showDetail(String ticketId) async {
-    await showDialog<void>(
+    final approved = await showDialog<bool>(
       context: context,
       builder: (_) => RecognitionDetailDialog(
         gradebookId: widget.gradebookId,
         ticketId: ticketId,
+        gradebookVersion: widget.gradebookVersion,
       ),
     );
-    if (mounted) setState(reload);
+    if (!mounted) return;
+    if (approved == true) {
+      showMessage('Đã duyệt phiếu và cập nhật điểm chính thức.');
+      widget.onApproved();
+    }
+    setState(reload);
   }
 
   @override
@@ -262,26 +272,114 @@ IconData _statusIcon(String status) => switch (status) {
   _ => Icons.hourglass_empty,
 };
 
-class RecognitionDetailDialog extends ConsumerWidget {
+class RecognitionDetailDialog extends ConsumerStatefulWidget {
   const RecognitionDetailDialog({
     super.key,
     required this.gradebookId,
     required this.ticketId,
+    required this.gradebookVersion,
   });
 
   final num gradebookId;
   final String ticketId;
+  final num gradebookVersion;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => AlertDialog(
-    title: Text('Phiếu nhận dạng #$ticketId'),
+  ConsumerState<RecognitionDetailDialog> createState() =>
+      _RecognitionDetailDialogState();
+}
+
+class _RecognitionDetailDialogState
+    extends ConsumerState<RecognitionDetailDialog> {
+  final formKey = GlobalKey<FormState>();
+  final values = <String, TextEditingController>{};
+  final reasons = <String, TextEditingController>{};
+  late Future<RecognitionTicketDetailDto> detail;
+  RecognitionTicketDetailDto? loaded;
+  bool confirmed = false;
+  bool busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    detail = ref
+        .read(recognitionRepositoryProvider)
+        .detail(gradebookId: widget.gradebookId, ticketId: widget.ticketId)
+        .then((data) {
+          loaded = data;
+          for (final row in data.rows) {
+            final suggested = _suggested(row);
+            values[row.rowId] = TextEditingController(text: suggested ?? '');
+            reasons[row.rowId] = TextEditingController(
+              text: suggested == null ? '' : 'Đã đối chiếu ảnh nhận dạng',
+            );
+          }
+          return data;
+        });
+  }
+
+  String? _suggested(RecognitionEvidenceRowDto row) {
+    if (row.comparison.value == 'KHOP') return row.numericValue;
+    if (row.comparison.value == 'MOT_KENH') {
+      return row.numericValue ?? row.writtenValue;
+    }
+    return null;
+  }
+
+  @override
+  void dispose() {
+    for (final controller in [...values.values, ...reasons.values]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> approve() async {
+    final data = loaded;
+    if (data == null ||
+        !confirmed ||
+        !(formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    setState(() => busy = true);
+    try {
+      await ref
+          .read(recognitionRepositoryProvider)
+          .approve(
+            gradebookId: widget.gradebookId,
+            ticketId: widget.ticketId,
+            expectedTicketVersion: data.version,
+            expectedGradebookVersion: widget.gradebookVersion,
+            decisions: [
+              for (final row in data.rows)
+                ReviewDecisionInput(
+                  rowId: row.rowId,
+                  value: values[row.rowId]!.text.trim().isEmpty
+                      ? null
+                      : values[row.rowId]!.text.trim(),
+                  reason: reasons[row.rowId]!.text.trim(),
+                ),
+            ],
+          );
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => busy = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage(error))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text('Phiếu nhận dạng #${widget.ticketId}'),
     content: SizedBox(
       width: 760,
       height: 620,
       child: FutureBuilder<RecognitionTicketDetailDto>(
-        future: ref
-            .read(recognitionRepositoryProvider)
-            .detail(gradebookId: gradebookId, ticketId: ticketId),
+        future: detail,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
@@ -290,64 +388,141 @@ class RecognitionDetailDialog extends ConsumerWidget {
             return Center(child: Text(errorMessage(snapshot.error!)));
           }
           final data = snapshot.data!;
-          return ListView(
-            children: [
-              Text('Trạng thái: ${data.status.value} · ${data.componentName}'),
-              const SizedBox(height: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 220),
-                child: Image.network(
-                  data.sourceImageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Text(
-                    'Không tải được ảnh gốc. URL có thể đã hết hạn.',
-                  ),
-                ),
-              ),
-              const Divider(),
-              if (data.rows.isEmpty)
+          final canApprove = data.status.value == 'CHO_DOI_CHIEU';
+          final orderedRows = [...data.rows]
+            ..sort((left, right) {
+              const priority = {'DO': 0, 'VANG': 1, 'XANH': 2};
+              final level = (priority[left.reviewLevel.value] ?? 3).compareTo(
+                priority[right.reviewLevel.value] ?? 3,
+              );
+              return level != 0 ? level : left.order.compareTo(right.order);
+            });
+          return Form(
+            key: formKey,
+            child: ListView(
+              children: [
                 Text(
-                  data.status.value == 'LOI'
-                      ? 'Nhận dạng thất bại: ${data.errorCode ?? 'không xác định'}.'
-                      : 'Kết quả từng dòng chưa sẵn sàng.',
+                  'Trạng thái: ${data.status.value} · ${data.componentName}',
                 ),
-              for (final row in data.rows)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${row.order}. ${row.studentName} · ${row.reviewLevel.value}',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 12,
-                          children: [
-                            _channel(
-                              'Điểm số',
-                              row.numericCropUrl,
-                              row.numericRaw,
-                              row.numericValue,
-                              row.numericConfidence,
-                            ),
-                            _channel(
-                              'Điểm chữ',
-                              row.writtenCropUrl,
-                              row.writtenRaw,
-                              row.writtenValue,
-                              row.writtenConfidence,
-                            ),
-                          ],
-                        ),
-                      ],
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 220),
+                  child: Image.network(
+                    data.sourceImageUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => const Text(
+                      'Không tải được ảnh gốc. URL có thể đã hết hạn.',
                     ),
                   ),
                 ),
-            ],
+                const Divider(),
+                if (data.rows.isEmpty)
+                  Text(
+                    data.status.value == 'LOI'
+                        ? 'Nhận dạng thất bại: ${data.errorCode ?? 'không xác định'}.'
+                        : 'Kết quả từng dòng chưa sẵn sàng.',
+                  ),
+                for (final row in orderedRows)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${row.order}. ${row.studentName} · ${row.reviewLevel.value}',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 16,
+                            runSpacing: 12,
+                            children: [
+                              _channel(
+                                'Điểm số',
+                                row.numericCropUrl,
+                                row.numericRaw,
+                                row.numericValue,
+                                row.numericConfidence,
+                              ),
+                              _channel(
+                                'Điểm chữ',
+                                row.writtenCropUrl,
+                                row.writtenRaw,
+                                row.writtenValue,
+                                row.writtenConfidence,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            key: ValueKey('review-value-${row.rowId}'),
+                            controller: values[row.rowId],
+                            enabled: canApprove && !busy,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText:
+                                  'Điểm cuối (để trống nếu chưa có điểm)',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              final text = value?.trim() ?? '';
+                              if (text.isEmpty) return null;
+                              return RegExp(
+                                    r'^(10[.]0|[0-9][.][0-9])$',
+                                  ).hasMatch(text)
+                                  ? null
+                                  : 'Nhập 0.0–10.0 với một chữ số thập phân.';
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            key: ValueKey('review-reason-${row.rowId}'),
+                            controller: reasons[row.rowId],
+                            enabled: canApprove && !busy,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'Lý do/xác nhận',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              final text = value?.trim() ?? '';
+                              if (text.isEmpty) {
+                                return 'Cần ghi lý do xác nhận.';
+                              }
+                              if (text.length > 500) return 'Tối đa 500 ký tự.';
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (canApprove) ...[
+                  CheckboxListTile(
+                    key: const ValueKey('review-confirm-all'),
+                    value: confirmed,
+                    onChanged: busy
+                        ? null
+                        : (value) => setState(() => confirmed = value ?? false),
+                    title: const Text(
+                      'Tôi đã xem ảnh và xác nhận tất cả các dòng.',
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                  FilledButton.icon(
+                    key: const ValueKey('review-approve'),
+                    onPressed: confirmed && !busy ? approve : null,
+                    icon: const Icon(Icons.fact_check_outlined),
+                    label: const Text('Duyệt và ghi điểm chính thức'),
+                  ),
+                  if (busy) const LinearProgressIndicator(),
+                ],
+              ],
+            ),
           );
         },
       ),

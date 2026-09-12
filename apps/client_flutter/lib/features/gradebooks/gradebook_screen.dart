@@ -372,7 +372,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               declaredRows: students.values
                   .where((row) => row.first.active)
                   .length,
+              gradebookVersion: widget.data.book.version,
               enabled: !locked && !busy && !conflict,
+              onApproved: widget.onReload,
             ),
           ],
           const SizedBox(height: 8),
