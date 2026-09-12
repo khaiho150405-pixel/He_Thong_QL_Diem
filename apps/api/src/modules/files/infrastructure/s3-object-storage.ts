@@ -9,6 +9,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { SETTINGS, type Settings } from "../../../common/database.js";
 import type { ObjectStorage, StoredObject } from "../application/port.js";
 
@@ -63,6 +64,25 @@ export class S3ObjectStorage implements ObjectStorage {
       );
       if (!result.Body) throw new Error("Object body missing");
       return await result.Body.transformToByteArray();
+    } catch {
+      throw new ServiceUnavailableException();
+    }
+  }
+
+  async signedGetUrl(key: string, expiresInSeconds: number): Promise<string> {
+    if (!this.client || !this.bucket) throw new ServiceUnavailableException();
+    if (
+      !Number.isInteger(expiresInSeconds) ||
+      expiresInSeconds < 1 ||
+      expiresInSeconds > 300
+    )
+      throw new ServiceUnavailableException();
+    try {
+      return await getSignedUrl(
+        this.client,
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+        { expiresIn: expiresInSeconds },
+      );
     } catch {
       throw new ServiceUnavailableException();
     }

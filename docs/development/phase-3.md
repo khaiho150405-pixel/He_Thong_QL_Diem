@@ -30,6 +30,16 @@ Sai số dòng chuyển ngay sang `LOI/GRID_ROW_COUNT_MISMATCH`. Timeout/payload
 
 Migration `202609120001_recognition_results` đã được kiểm cả nâng cấp và cài bảy migration từ database rỗng. Unit/contract test bao phủ hai kênh, 0.0, lệch lưới, malformed response, timeout và model unavailable. Integration PostgreSQL kiểm lưu nguyên tử, idempotency và không có điểm chính thức.
 
+## Phần 4 — Theo dõi phiếu và giao diện upload
+
+API có danh sách 20 phiếu gần nhất và chi tiết từng phiếu trong phạm vi bảng điểm. Mỗi lần đọc đều xác thực phiên và phân công tại backend. Chi tiết trả ảnh gốc và ảnh ô của hai kênh qua signed URL có hạn 300 giây; object key private không xuất hiện trong response. Giá trị và confidence tiếp tục dùng chuỗi để giữ chính xác, gồm trường hợp `0.0`.
+
+Giao diện Flutter tích hợp trong màn hình bảng điểm của giáo viên. Người dùng chọn thành phần, chọn PNG/JPEG qua abstraction theo nền tảng, gửi số dòng đang hoạt động và theo dõi phiếu mỗi 3 giây khi còn `DANG_XU_LY`. Màn hình có loading, lỗi/thử lại, trạng thái `CHO_DOI_CHIEU`/`LOI`, ảnh gốc và hai ảnh ô cạnh raw/value/confidence. Khối nhận dạng mặc định thu gọn để giữ không gian nhập điểm trên mobile; chỉ hiển thị ba phiếu gần nhất trong bảng và API vẫn giữ tối đa 20.
+
+OpenAPI và Dart client đã sinh lại. Script sinh client sửa có kiểm soát lỗi của generator đối với multipart: chỉ chấp nhận đúng một body upload rỗng rồi chèn ba trường `image`, `componentId`, `declaredRows`; contract check sẽ thất bại nếu mẫu generator thay đổi.
+
+Đã kiểm 13 test backend, 4 integration suite PostgreSQL/HTTP, 14 test Flutter, 9 test Python, contract regeneration và Flutter Web build. Test âm tính xác nhận giáo viên ngoài phân công nhận 403, response không lộ object key và worker vẫn không ghi điểm chính thức.
+
 ## Phần tiếp theo
 
-Phase 3 phần 4 bổ sung API trạng thái/chi tiết phiếu và signed URL ảnh ô, polling từ Flutter, trạng thái loading/error/retry và màn hình upload cơ bản. Việc duyệt/chốt giá trị vẫn thuộc Phase 4 (UC13).
+Phase 4 triển khai UC13: quyết định giá trị cuối cho mọi dòng bắt buộc xem, optimistic concurrency và một transaction duy nhất ghi điểm + lịch sử + người/thời điểm duyệt + trạng thái phiếu. Chưa nối model thật cho đến khi có weights và ngưỡng confidence được chốt.

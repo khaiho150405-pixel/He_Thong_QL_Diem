@@ -8,6 +8,7 @@ export interface StoredObject {
 export interface ObjectStorage {
   put(object: StoredObject): Promise<void>;
   get(key: string): Promise<Uint8Array>;
+  signedGetUrl(key: string, expiresInSeconds: number): Promise<string>;
   remove(key: string): Promise<void>;
 }
 

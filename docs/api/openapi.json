@@ -2370,6 +2370,90 @@
       }
     },
     "/api/v1/gradebooks/{gradebookId}/recognition-tickets": {
+      "get": {
+        "operationId": "recognitionList",
+        "parameters": [
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecognitionTicketDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["recognition"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      },
       "post": {
         "operationId": "recognitionUpload",
         "parameters": [
@@ -2473,6 +2557,95 @@
         },
         "tags": ["recognition"],
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}": {
+      "get": {
+        "operationId": "recognitionDetail",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecognitionTicketDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["recognition"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
     "/api/v1/catalog/students": {
@@ -4567,6 +4740,121 @@
           "password": { "type": "string", "format": "password" }
         },
         "required": ["role", "active"]
+      },
+      "RecognitionTicketDto": {
+        "type": "object",
+        "properties": {
+          "ticketId": { "type": "string" },
+          "gradebookId": { "type": "number" },
+          "componentId": { "type": "number" },
+          "componentName": { "type": "string" },
+          "declaredRows": { "type": "number" },
+          "detectedRows": { "type": "number", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["DANG_XU_LY", "CHO_DOI_CHIEU", "DA_DUYET", "LOI"]
+          },
+          "errorCode": { "type": "string", "nullable": true },
+          "modelVersion": { "type": "string", "nullable": true },
+          "version": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "ticketId",
+          "gradebookId",
+          "componentId",
+          "componentName",
+          "declaredRows",
+          "detectedRows",
+          "status",
+          "errorCode",
+          "modelVersion",
+          "version",
+          "createdAt"
+        ]
+      },
+      "RecognitionEvidenceRowDto": {
+        "type": "object",
+        "properties": {
+          "rowId": { "type": "string" },
+          "order": { "type": "number" },
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" },
+          "numericRaw": { "type": "string", "nullable": true },
+          "numericValue": { "type": "string", "nullable": true },
+          "numericConfidence": { "type": "string", "nullable": true },
+          "writtenRaw": { "type": "string", "nullable": true },
+          "writtenValue": { "type": "string", "nullable": true },
+          "writtenConfidence": { "type": "string", "nullable": true },
+          "comparison": {
+            "type": "string",
+            "enum": ["KHOP", "LECH", "MOT_KENH", "KHONG_DOC_DUOC"]
+          },
+          "reviewLevel": { "type": "string", "enum": ["XANH", "VANG", "DO"] },
+          "finalValue": { "type": "string", "nullable": true },
+          "numericCropUrl": { "type": "string", "nullable": true },
+          "writtenCropUrl": { "type": "string", "nullable": true }
+        },
+        "required": [
+          "rowId",
+          "order",
+          "studentId",
+          "studentName",
+          "numericRaw",
+          "numericValue",
+          "numericConfidence",
+          "writtenRaw",
+          "writtenValue",
+          "writtenConfidence",
+          "comparison",
+          "reviewLevel",
+          "finalValue",
+          "numericCropUrl",
+          "writtenCropUrl"
+        ]
+      },
+      "RecognitionTicketDetailDto": {
+        "type": "object",
+        "properties": {
+          "ticketId": { "type": "string" },
+          "gradebookId": { "type": "number" },
+          "componentId": { "type": "number" },
+          "componentName": { "type": "string" },
+          "declaredRows": { "type": "number" },
+          "detectedRows": { "type": "number", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["DANG_XU_LY", "CHO_DOI_CHIEU", "DA_DUYET", "LOI"]
+          },
+          "errorCode": { "type": "string", "nullable": true },
+          "modelVersion": { "type": "string", "nullable": true },
+          "version": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "sourceImageUrl": { "type": "string" },
+          "imageUrlExpiresInSeconds": { "type": "number", "example": 300 },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecognitionEvidenceRowDto"
+            }
+          }
+        },
+        "required": [
+          "ticketId",
+          "gradebookId",
+          "componentId",
+          "componentName",
+          "declaredRows",
+          "detectedRows",
+          "status",
+          "errorCode",
+          "modelVersion",
+          "version",
+          "createdAt",
+          "sourceImageUrl",
+          "imageUrlExpiresInSeconds",
+          "rows"
+        ]
       },
       "RecognitionReceiptDto": {
         "type": "object",

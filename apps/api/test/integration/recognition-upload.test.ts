@@ -41,6 +41,7 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
   const storage: ObjectStorage = {
     put: async (object) => void objects.set(object.key, object),
     get: async (key) => objects.get(key)!.bytes,
+    signedGetUrl: async (key) => `https://storage.test/${key}`,
     remove: async (key) => void objects.delete(key),
   };
   const app = await createApp(
@@ -266,6 +267,48 @@ test("UC11 creates upload ticket, audit and outbox atomically with scope and rep
       official: "0",
       audits: "1",
     });
+
+    const ticketsResponse = await fetch(
+      `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets`,
+      { headers: { authorization: `Bearer ${teacher.token}` } },
+    );
+    assert.equal(ticketsResponse.status, 200);
+    const tickets = (await ticketsResponse.json()) as Array<{
+      ticketId: string;
+      status: string;
+    }>;
+    assert.equal(tickets[0]?.ticketId, receipt.ticketId);
+    assert.equal(tickets[0]?.status, "CHO_DOI_CHIEU");
+
+    const detailResponse = await fetch(
+      `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets/${receipt.ticketId}`,
+      { headers: { authorization: `Bearer ${teacher.token}` } },
+    );
+    assert.equal(detailResponse.status, 200);
+    const detail = (await detailResponse.json()) as Record<string, unknown> & {
+      rows: Array<Record<string, unknown>>;
+    };
+    assert.equal(detail.status, "CHO_DOI_CHIEU");
+    assert.equal(
+      detail.sourceImageUrl,
+      [...objects.keys()].find((key) => key.includes("original"))
+        ? `https://storage.test/${[...objects.keys()].find((key) => key.includes("original"))}`
+        : null,
+    );
+    assert.equal(detail.rows.length, 2);
+    assert.equal(detail.rows[0]?.numericValue, "0.0");
+    assert.equal(
+      detail.rows[0]?.numericCropUrl,
+      `https://storage.test/recognition/crops/${receipt.ticketId}/1-numeric.png`,
+    );
+    assert.equal("sourceObjectKey" in detail, false);
+    assert.equal("numericCropKey" in detail.rows[0]!, false);
+
+    const denied = await fetch(
+      `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets/${receipt.ticketId}`,
+      { headers: { authorization: `Bearer ${intruder.token}` } },
+    );
+    assert.equal(denied.status, 403);
   } finally {
     await app.close();
     await owner.end();

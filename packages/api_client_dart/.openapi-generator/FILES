@@ -38,7 +38,10 @@ doc/LoginInput.md
 doc/PasswordInput.md
 doc/ProfileDto.md
 doc/RecognitionApi.md
+doc/RecognitionEvidenceRowDto.md
 doc/RecognitionReceiptDto.md
+doc/RecognitionTicketDetailDto.md
+doc/RecognitionTicketDto.md
 doc/SemestersApi.md
 doc/SemestersDto.md
 doc/SemestersInput.md
@@ -110,7 +113,10 @@ lib/src/model/lock_input.dart
 lib/src/model/login_input.dart
 lib/src/model/password_input.dart
 lib/src/model/profile_dto.dart
+lib/src/model/recognition_evidence_row_dto.dart
 lib/src/model/recognition_receipt_dto.dart
+lib/src/model/recognition_ticket_detail_dto.dart
+lib/src/model/recognition_ticket_dto.dart
 lib/src/model/semesters_dto.dart
 lib/src/model/semesters_input.dart
 lib/src/model/semesters_page.dart

@@ -64,11 +64,14 @@ test("upload keeps one object on replay and never exposes the object key", async
   const storage: ObjectStorage = {
     put: async (object) => void objects.set(object.key, object),
     get: async (key) => objects.get(key)!.bytes,
+    signedGetUrl: async (key) => `https://storage.test/${key}`,
     remove: async (key) => void objects.delete(key),
   };
   let stored: CreateRecognitionTicket | undefined;
   const store: RecognitionStore = {
     authorizeUpload: async () => {},
+    list: async () => [],
+    detail: async () => null,
     createTicket: async (input) => {
       if (!stored) stored = input;
       return {
@@ -95,6 +98,72 @@ test("upload keeps one object on replay and never exposes the object key", async
     status: "DANG_XU_LY",
   });
   assert.equal(objects.size, 1);
+});
+
+test("detail signs private images and keeps storage keys internal", async () => {
+  const signed: string[] = [];
+  const storage: ObjectStorage = {
+    put: async () => {},
+    get: async () => new Uint8Array(),
+    signedGetUrl: async (key, expires) => {
+      signed.push(`${key}:${expires}`);
+      return `https://storage.test/${key}?expires=${expires}`;
+    },
+    remove: async () => {},
+  };
+  const store: RecognitionStore = {
+    authorizeUpload: async () => {},
+    createTicket: async () => assert.fail("not used"),
+    list: async () => [],
+    detail: async () => ({
+      ticketId: "42",
+      gradebookId: 1,
+      componentId: 2,
+      componentName: "Giữa kỳ",
+      declaredRows: 1,
+      detectedRows: 1,
+      status: "CHO_DOI_CHIEU",
+      errorCode: null,
+      modelVersion: "fake-dev-v1",
+      version: 1,
+      createdAt: "2026-09-12T00:00:00.000Z",
+      sourceObjectKey: "recognition/original/private.png",
+      rows: [
+        {
+          rowId: "9",
+          order: 1,
+          studentId: 3,
+          studentName: "Học sinh giả",
+          numericRaw: "0.0",
+          numericValue: "0.0",
+          numericConfidence: "0.9500",
+          writtenRaw: "không",
+          writtenValue: "0.0",
+          writtenConfidence: "0.9300",
+          comparison: "KHOP",
+          reviewLevel: "XANH",
+          finalValue: null,
+          numericCropKey: "recognition/crops/42/1-numeric.png",
+          writtenCropKey: "recognition/crops/42/1-written.png",
+        },
+      ],
+    }),
+  };
+  const result = await new RecognitionService(store, storage).detail(
+    actor,
+    1,
+    "42",
+  );
+  assert.equal(result.sourceImageUrl.includes("private.png"), true);
+  assert.equal(result.rows[0]!.numericValue, "0.0");
+  assert.equal(result.rows[0]!.numericCropUrl?.includes("numeric.png"), true);
+  assert.equal("sourceObjectKey" in result, false);
+  assert.equal("numericCropKey" in result.rows[0]!, false);
+  assert.deepEqual(signed, [
+    "recognition/original/private.png:300",
+    "recognition/crops/42/1-numeric.png:300",
+    "recognition/crops/42/1-written.png:300",
+  ]);
 });
 
 test("dispatcher publishes a claimed outbox event and acknowledges it", async () => {

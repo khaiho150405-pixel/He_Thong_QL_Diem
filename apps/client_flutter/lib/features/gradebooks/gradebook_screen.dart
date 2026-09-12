@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../authentication/session.dart';
+import '../recognition/recognition_panel.dart';
 import 'repository.dart';
 
 class GradebookScreen extends ConsumerStatefulWidget {
@@ -357,6 +358,23 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 ),
               ],
             ),
+          if (teacher) ...[
+            const SizedBox(height: 8),
+            RecognitionPanel(
+              gradebookId: widget.data.book.id,
+              components: [
+                for (final item in orderedComponents)
+                  RecognitionComponentOption(
+                    item.componentId,
+                    item.componentName,
+                  ),
+              ],
+              declaredRows: students.values
+                  .where((row) => row.first.active)
+                  .length,
+              enabled: !locked && !busy && !conflict,
+            ),
+          ],
           const SizedBox(height: 8),
           Expanded(
             child: widget.data.items.isEmpty

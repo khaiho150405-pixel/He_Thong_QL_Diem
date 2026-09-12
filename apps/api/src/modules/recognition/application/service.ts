@@ -1,5 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type { ObjectStorage } from "../../files/application/port.js";
 import { OBJECT_STORAGE } from "../../files/application/port.js";
 import type { Actor } from "../../authorization/application/policy.js";
@@ -8,6 +13,7 @@ import {
   RECOGNITION_STORE,
   type RecognitionReceipt,
   type RecognitionStore,
+  type RecognitionTicket,
 } from "./port.js";
 
 export interface RecognitionUpload {
@@ -33,6 +39,75 @@ export class RecognitionService {
     @Inject(RECOGNITION_STORE) private readonly store: RecognitionStore,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
+
+  list(actor: Actor, gradebookIdInput: unknown): Promise<RecognitionTicket[]> {
+    return this.store.list(actor, positiveInt(gradebookIdInput));
+  }
+
+  async detail(
+    actor: Actor,
+    gradebookIdInput: unknown,
+    ticketIdInput: unknown,
+  ) {
+    const gradebookId = positiveInt(gradebookIdInput);
+    if (
+      typeof ticketIdInput !== "string" ||
+      !/^[1-9][0-9]{0,18}$/.test(ticketIdInput) ||
+      BigInt(ticketIdInput) > 9_223_372_036_854_775_807n
+    )
+      throw new BadRequestException();
+    const ticket = await this.store.detail(actor, gradebookId, ticketIdInput);
+    if (!ticket) throw new NotFoundException();
+    const expiresInSeconds = 300;
+    const [sourceImageUrl, rows] = await Promise.all([
+      this.storage.signedGetUrl(ticket.sourceObjectKey, expiresInSeconds),
+      Promise.all(
+        ticket.rows.map(async (row) => {
+          const [numericCropUrl, writtenCropUrl] = await Promise.all([
+            row.numericCropKey
+              ? this.storage.signedGetUrl(row.numericCropKey, expiresInSeconds)
+              : Promise.resolve(null),
+            row.writtenCropKey
+              ? this.storage.signedGetUrl(row.writtenCropKey, expiresInSeconds)
+              : Promise.resolve(null),
+          ]);
+          return {
+            rowId: row.rowId,
+            order: row.order,
+            studentId: row.studentId,
+            studentName: row.studentName,
+            numericRaw: row.numericRaw,
+            numericValue: row.numericValue,
+            numericConfidence: row.numericConfidence,
+            writtenRaw: row.writtenRaw,
+            writtenValue: row.writtenValue,
+            writtenConfidence: row.writtenConfidence,
+            comparison: row.comparison,
+            reviewLevel: row.reviewLevel,
+            finalValue: row.finalValue,
+            numericCropUrl,
+            writtenCropUrl,
+          };
+        }),
+      ),
+    ]);
+    return {
+      ticketId: ticket.ticketId,
+      gradebookId: ticket.gradebookId,
+      componentId: ticket.componentId,
+      componentName: ticket.componentName,
+      declaredRows: ticket.declaredRows,
+      detectedRows: ticket.detectedRows,
+      status: ticket.status,
+      errorCode: ticket.errorCode,
+      modelVersion: ticket.modelVersion,
+      version: ticket.version,
+      createdAt: ticket.createdAt,
+      sourceImageUrl,
+      imageUrlExpiresInSeconds: expiresInSeconds,
+      rows,
+    };
+  }
 
   async upload(
     actor: Actor,

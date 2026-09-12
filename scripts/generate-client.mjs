@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { readdir, readFile, writeFile } from "node:fs/promises";
+import { repairRecognitionMultipart } from "./repair-generated-client.mjs";
 const result = spawnSync(
   process.platform === "win32" ? "pnpm.cmd" : "pnpm",
   [
@@ -20,6 +21,7 @@ const result = spawnSync(
   { stdio: "inherit", shell: process.platform === "win32" },
 );
 process.exitCode = result.status ?? 1;
+if (process.exitCode === 0) await repairRecognitionMultipart();
 if (process.exitCode === 0) {
   for (const args of [
     ["pub", "get"],
@@ -59,4 +61,6 @@ async function normalize(dir) {
     }
   }
 }
-if (process.exitCode === 0) await normalize("packages/api_client_dart");
+if (process.exitCode === 0) {
+  await normalize("packages/api_client_dart");
+}

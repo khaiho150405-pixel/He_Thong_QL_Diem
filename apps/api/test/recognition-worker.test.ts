@@ -40,6 +40,7 @@ test("worker preserves two channels and never writes an official grade", async (
   const storage: ObjectStorage = {
     put: async (value) => void objects.set(value.key, value),
     get: async (key) => objects.get(key)!.bytes,
+    signedGetUrl: async (key) => `https://storage.test/${key}`,
     remove: async (key) => void objects.delete(key),
   };
   let completed: unknown[] | undefined;
@@ -89,6 +90,7 @@ test("grid mismatch fails before persisting rows", async () => {
     {
       put: async () => {},
       get: async () => new Uint8Array([1]),
+      signedGetUrl: async (key) => `https://storage.test/${key}`,
       remove: async () => {},
     },
     {
