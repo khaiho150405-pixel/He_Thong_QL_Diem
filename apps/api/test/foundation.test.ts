@@ -116,6 +116,16 @@ test("configuration fails without secrets and rejects owner database roles", () 
     RECOGNITION_SERVICE_URL: "https://recognition.example.edu",
   };
   assert.equal(readConfig(secure).environment, "production");
+  assert.equal(readConfig(secure).uploadRateLimitPerMinute, 10);
+  assert.equal(
+    readConfig({ ...secure, UPLOAD_RATE_LIMIT_PER_MINUTE: "25" })
+      .uploadRateLimitPerMinute,
+    25,
+  );
+  assert.throws(
+    () => readConfig({ ...secure, UPLOAD_RATE_LIMIT_PER_MINUTE: "0" }),
+    /UPLOAD_RATE_LIMIT_PER_MINUTE/,
+  );
   for (const insecure of [
     {
       ...secure,

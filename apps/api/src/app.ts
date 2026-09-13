@@ -33,7 +33,7 @@ import type { ObjectStorage } from "./modules/files/application/port.js";
 
 export async function createApp(
   config: Pick<AppConfig, "origins" | "environment"> &
-    Partial<Pick<AppConfig, "databaseUrl">>,
+    Partial<Pick<AppConfig, "databaseUrl" | "uploadRateLimitPerMinute">>,
   probe: DependencyProbe,
   overrides: { objectStorage?: ObjectStorage } = {},
 ): Promise<INestApplication> {

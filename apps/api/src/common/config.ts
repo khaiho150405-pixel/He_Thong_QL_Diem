@@ -9,6 +9,7 @@ export interface AppConfig {
   s3SecretKey: string;
   s3Bucket: string;
   recognitionServiceUrl: string;
+  uploadRateLimitPerMinute: number;
 }
 
 export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
@@ -24,6 +25,15 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
   const port = Number(required("API_PORT"));
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error("Invalid API_PORT");
+  const uploadRateLimitPerMinute = Number(
+    env.UPLOAD_RATE_LIMIT_PER_MINUTE ?? "10",
+  );
+  if (
+    !Number.isInteger(uploadRateLimitPerMinute) ||
+    uploadRateLimitPerMinute < 1 ||
+    uploadRateLimitPerMinute > 1000
+  )
+    throw new Error("Invalid UPLOAD_RATE_LIMIT_PER_MINUTE");
   const url = (key: string, protocols: string[]) => {
     const value = required(key);
     let parsed: URL;
@@ -85,5 +95,6 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
     s3SecretKey: required("S3_SECRET_KEY"),
     s3Bucket: required("S3_BUCKET"),
     recognitionServiceUrl,
+    uploadRateLimitPerMinute,
   };
 }

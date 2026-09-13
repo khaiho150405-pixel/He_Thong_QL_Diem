@@ -8,6 +8,8 @@ Phase 6 không thay đổi nghiệp vụ UC01–UC18. Mục tiêu là chứng mi
 - Staging/production thêm CSP cho API và HSTS; TLS phải được terminate trước API.
 - Cấu hình ngoài development chỉ chấp nhận PostgreSQL có `sslmode=require|verify-ca|verify-full`, Redis `rediss://`, S3 HTTPS và recognition service HTTPS.
 - Development local vẫn dùng loopback HTTP theo Compose; không dùng cấu hình development làm mẫu production.
+- Upload ảnh nhận dạng có hạn mức dùng chung giữa các API instance, mặc định `10` lượt/phút/tài khoản và cấu hình bằng `UPLOAD_RATE_LIMIT_PER_MINUTE`. Chỉ request đã qua kiểm tra session, vai trò, phân công, trạng thái bảng điểm và thành phần mới tiêu thụ hạn mức.
+- Bộ đếm nằm trong PostgreSQL và được cập nhật nguyên tử qua hàm `SECURITY DEFINER`; role runtime không có DML trực tiếp trên bảng kỹ thuật `gioi_han_tac_vu`. API trả error envelope `429 RATE_LIMITED` trước khi ghi object khi vượt ngưỡng.
 
 ## Phần 2 — Khôi phục và tải
 

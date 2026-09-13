@@ -1,11 +1,14 @@
 import {
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import type { PrismaClient, Prisma } from "../../../generated/prisma/client.js";
+import { SETTINGS, type Settings } from "../../../common/database.js";
 import { unit } from "../../../common/store.js";
 import { sqlStateOf, transaction } from "../../../common/transaction.js";
 import { gradebookAccess } from "../../authorization/application/gradebook-policy.js";
@@ -19,7 +22,10 @@ import type {
 
 @Injectable()
 export class PrismaRecognitionStore implements RecognitionStore {
-  constructor(@Inject("DATABASE") private readonly db: PrismaClient) {}
+  constructor(
+    @Inject("DATABASE") private readonly db: PrismaClient,
+    @Inject(SETTINGS) private readonly settings: Settings,
+  ) {}
 
   private async authorizeRead(
     tx: Prisma.TransactionClient,
@@ -148,6 +154,19 @@ export class PrismaRecognitionStore implements RecognitionStore {
         select: { ma_thanh_phan: true },
       });
       if (!component) throw new NotFoundException();
+      const rateLimit = this.settings.uploadRateLimitPerMinute ?? 10;
+      const result = await tx.$queryRaw<Array<{ allowed: boolean }>>`
+        SELECT public.tieu_thu_han_muc_tac_vu(
+          ${actor.sessionHash}::text,
+          'RECOGNITION_UPLOAD'::text,
+          ${rateLimit}::integer,
+          60::integer
+        ) AS allowed`;
+      if (!result[0]?.allowed)
+        throw new HttpException(
+          "Upload rate limit exceeded",
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
     });
   }
 
