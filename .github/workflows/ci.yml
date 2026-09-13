@@ -42,13 +42,21 @@ jobs:
           done
           exit 1
       - run: pnpm db:generate && pnpm db:migrate && pnpm db:seed
-      - run: |
+      - name: Test PostgreSQL constraints and runtime permissions
+        run: |
           set -a
           . ./.env
           set +a
           export TEST_MIGRATION_URL="$MIGRATION_DATABASE_URL"
           export TEST_RUNTIME_URL="$DATABASE_URL"
           pnpm test:db
+      - name: Test business integrations
+        run: |
+          set -a
+          . ./.env
+          set +a
+          export TEST_MIGRATION_URL="$MIGRATION_DATABASE_URL"
+          export TEST_RUNTIME_URL="$DATABASE_URL"
           pnpm test:integration
       - name: Rehearse PostgreSQL backup and restore
         run: |
