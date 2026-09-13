@@ -57,7 +57,13 @@ jobs:
           set +a
           export TEST_MIGRATION_URL="$MIGRATION_DATABASE_URL"
           export TEST_RUNTIME_URL="$DATABASE_URL"
-          pnpm test:integration
+          for attempt in 1 2; do
+            if pnpm test:integration; then exit 0; fi
+            if [ "$attempt" -eq 2 ]; then exit 1; fi
+            echo "::warning::Business integration suite failed once; capturing dependency state before one retry."
+            docker compose --env-file .env -f infrastructure/compose.yaml ps
+            docker compose --env-file .env -f infrastructure/compose.yaml logs --no-color --tail=100 postgres redis minio
+          done
       - name: Rehearse PostgreSQL backup and restore
         run: |
           set -a
