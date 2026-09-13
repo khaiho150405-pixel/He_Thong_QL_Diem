@@ -31,6 +31,9 @@
     "ops:backup": "tsx scripts/ops/postgres-backup.ts backup",
     "ops:verify-backup": "tsx scripts/ops/postgres-backup.ts verify",
     "ops:restore-rehearsal": "tsx scripts/ops/postgres-backup.ts restore",
+    "ops:storage-backup": "pnpm --filter @qld/api exec tsx src/ops/object-storage-backup.ts backup",
+    "ops:storage-verify": "pnpm --filter @qld/api exec tsx src/ops/object-storage-backup.ts verify",
+    "ops:storage-restore-rehearsal": "pnpm --filter @qld/api exec tsx src/ops/object-storage-backup.ts restore",
     "build": "pnpm --filter @qld/api build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },

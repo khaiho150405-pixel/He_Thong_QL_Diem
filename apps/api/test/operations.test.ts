@@ -4,6 +4,11 @@ import {
   cliArguments,
   parsePostgresUrl,
 } from "../../../scripts/ops/postgres-backup.js";
+import {
+  backupFileName,
+  cliArguments as storageCliArguments,
+  readStorageSettings,
+} from "../src/ops/object-storage-backup.js";
 
 test("backup connection parsing keeps credentials out of command arguments", () => {
   const parsed = parsePostgresUrl(
@@ -37,4 +42,38 @@ test("pnpm argument separator cannot become a backup directory", () => {
     "backup",
     ".local/backups",
   ]);
+});
+
+test("storage restore only accepts an isolated S3-compatible bucket", () => {
+  const env = {
+    S3_ENDPOINT: "https://objects.example.edu",
+    S3_ACCESS_KEY: "backup-access",
+    S3_SECRET_KEY: "hidden-secret",
+    S3_BUCKET: "gradebook-images",
+  };
+  for (const bucket of ["gradebook-images", "gradebook-images_restore_test"])
+    assert.throws(
+      () => readStorageSettings({ ...env, RESTORE_S3_BUCKET: bucket }, true),
+      /valid S3 bucket|-restore-test|differ/,
+    );
+  assert.equal(
+    readStorageSettings(
+      { ...env, RESTORE_S3_BUCKET: "gradebook-images-restore-test" },
+      true,
+    ).restoreBucket,
+    "gradebook-images-restore-test",
+  );
+  assert.throws(
+    () => readStorageSettings({ ...env, S3_BUCKET: "../images" }),
+    /valid S3 bucket/,
+  );
+});
+
+test("storage backup maps hostile object keys to fixed local filenames", () => {
+  const file = backupFileName("../../student/private image.png");
+  assert.match(file, /^[a-f0-9]{64}\.object$/);
+  assert.deepEqual(
+    storageCliArguments(["backup", "--", ".local/storage-backups"]),
+    ["backup", ".local/storage-backups"],
+  );
 });

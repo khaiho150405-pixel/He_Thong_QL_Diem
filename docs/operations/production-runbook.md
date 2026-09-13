@@ -21,7 +21,9 @@
 - Đặt `BACKUP_DATABASE_URL` bằng role chỉ đọc rồi chạy `pnpm ops:backup -- <thư-mục-đã-mã-hóa>`. Kiểm lại bằng `pnpm ops:verify-backup -- <file.dump>`; manifest không chứa URL hoặc mật khẩu.
 - `pg_dump`/`pg_restore` phải cùng major với PostgreSQL server. CI đặt `PG_CLIENT_IMAGE=postgres:18.0-bookworm` để dùng client cô lập đúng phiên bản; production phải ghim image/client theo phiên bản server thực tế.
 - Tạo sẵn database cô lập có hậu tố `_restore_test`, đặt `RESTORE_DATABASE_URL`, rồi chạy `pnpm ops:restore-rehearsal -- <file.dump>`. Script từ chối mọi tên database không đúng hậu tố và không tự tạo/drop database.
-- Restore rehearsal dùng database và bucket có hậu tố `_restore_test`; không dùng production làm mục tiêu thử.
+- Đặt cấu hình S3 nguồn rồi chạy `pnpm ops:storage-backup -- <thư-mục-đã-mã-hóa>` và `pnpm ops:storage-verify -- <manifest.json>`. Công cụ lưu object bằng tên file băm để object key không thể thoát khỏi thư mục backup.
+- Tạo sẵn bucket rỗng có hậu tố `-restore-test`, đặt `RESTORE_S3_BUCKET`, rồi chạy `pnpm ops:storage-restore-rehearsal -- <manifest.json>`. S3 không cho dấu gạch dưới trong tên bucket; script từ chối bucket đích trùng nguồn, không đúng hậu tố hoặc đã chứa dữ liệu.
+- Restore rehearsal không dùng database hoặc bucket production làm mục tiêu thử.
 - Sau restore, chạy migration ở chế độ deploy rồi kiểm các constraint, quyền runtime, audit/history append-only, số bản ghi trọng yếu và checksum object.
 - Không coi backup thành công cho đến khi một restore rehearsal hoàn tất trong RTO đã chốt.
 

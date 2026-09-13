@@ -13,7 +13,9 @@ Phase 6 không thay đổi nghiệp vụ UC01–UC18. Mục tiêu là chứng mi
 
 - Công cụ PostgreSQL tạo custom dump nguyên tử, manifest SHA-256 không chứa credential, xác minh catalog trước restore và giữ ACL/quyền runtime.
 - Restore rehearsal bị khóa cứng vào database có hậu tố `_restore_test`; CI tạo database cô lập rồi chạy lại constraint và quyền runtime trên dữ liệu khôi phục.
-- Diễn tập runbook PostgreSQL + object storage theo cặp nhất quán. Backup production phải mã hóa, có checksum, retention và quyền đọc riêng.
+- Object storage backup ghi từng object vào tên file SHA-256 an toàn cùng manifest chứa key, kích thước, content type và checksum; không chứa endpoint hoặc credential.
+- Object restore bị khóa vào bucket có hậu tố `-restore-test`, yêu cầu bucket tồn tại và rỗng, rồi kiểm inventory, checksum từng object và signed URL. CI chạy diễn tập này với MinIO thật.
+- Diễn tập runbook PostgreSQL + object storage theo cùng mốc vận hành. Backup production phải mã hóa, có checksum, retention và quyền đọc riêng.
 - Restore chỉ được thử trên database/bucket cô lập; xác nhận migration version, row counts, audit append-only, object checksum và signed URL trước khi ghi nhận đạt.
 - Chốt RPO/RTO, tải dự kiến và SLA với nhà trường trước khi đặt ngưỡng load test. Không tuyên bố khả năng chịu tải chỉ từ health endpoint.
 

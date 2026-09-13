@@ -78,6 +78,24 @@ jobs:
           export TEST_MIGRATION_URL="$RESTORE_DATABASE_URL"
           export TEST_RUNTIME_URL=$(node -e 'const u=new URL(process.env.DATABASE_URL);u.pathname="/quan_ly_diem_restore_test";console.log(u.href)')
           pnpm test:db
+      - name: Rehearse object storage backup and restore
+        run: |
+          set -a
+          . ./.env
+          set +a
+          docker compose --env-file .env -f infrastructure/compose.yaml run --rm --entrypoint /bin/sh storage-init -ec '
+            mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null
+            mc mb --ignore-existing "local/${S3_BUCKET}-restore-test"
+            mc anonymous set none "local/${S3_BUCKET}-restore-test"
+            printf "phase-6-storage-rehearsal" | mc pipe "local/${S3_BUCKET}/rehearsal/ci-fixture.bin" >/dev/null
+          '
+          mkdir -p .local/storage-backups
+          pnpm ops:storage-backup -- .local/storage-backups
+          manifest=$(find .local/storage-backups -name manifest.json -type f | head -n 1)
+          test -n "$manifest"
+          pnpm ops:storage-verify -- "$manifest"
+          export RESTORE_S3_BUCKET="${S3_BUCKET}-restore-test"
+          pnpm ops:storage-restore-rehearsal -- "$manifest"
       - run: pnpm check
       - run: python -m unittest discover -s tests
         working-directory: apps/recognition-service
