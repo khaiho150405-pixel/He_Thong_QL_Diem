@@ -168,6 +168,35 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (user.role.value == 'QUAN_TRI_VIEN') ...[
+                  Card(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(20),
+                      leading: const Icon(Icons.rule_outlined),
+                      title: const Text('Chính sách xếp loại'),
+                      subtitle: const Text(
+                        'Tạo phiên bản ngưỡng và chọn chính sách đang áp dụng',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/classification-policy'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ] else ...[
+                Card(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(20),
+                    leading: const Icon(Icons.fact_check_outlined),
+                    title: const Text('Điểm của tôi'),
+                    subtitle: const Text(
+                      'Xem điểm đã duyệt, điểm tổng kết và xếp loại',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.go('/my-results'),
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
               LayoutBuilder(
                 builder: (context, box) => Wrap(

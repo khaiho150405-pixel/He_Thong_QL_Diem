@@ -20,7 +20,7 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','khoa_idempotency','recognition_outbox')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket')",
     );
     assert.equal(tables.rows[0].n, 16);
     const denied = async (sql: string) => {
@@ -32,6 +32,13 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     await denied("DELETE FROM lich_su_sua_diem");
     await denied("UPDATE lich_su_sua_diem SET ly_do=ly_do");
     await denied("TRUNCATE lich_su_sua_diem");
+    await denied("DELETE FROM lich_su_tong_ket");
+    await denied("UPDATE lich_su_tong_ket SET ly_do=ly_do");
+    await denied("TRUNCATE lich_su_tong_ket");
+    await denied("UPDATE chinh_sach_xep_loai SET dang_ap_dung=false");
+    await denied(
+      "INSERT INTO tieu_chi_xep_loai(ma_chinh_sach,ma_xep_loai,diem_toi_thieu,thu_tu) VALUES(1,'FORBIDDEN',0.0,99)",
+    );
     await denied("CREATE TABLE forbidden (id int)");
     await denied("CREATE SCHEMA forbidden");
     const privileges = await owner.query(

@@ -1,5 +1,23 @@
 import { Module } from "@nestjs/common";
+import { FinalResultsService } from "./application/service.js";
+import { FINAL_RESULT_STORE } from "./application/port.js";
+import { PrismaFinalResultStore } from "./infrastructure/prisma-store.js";
+import {
+  ClassificationPoliciesController,
+  FinalResultsController,
+  StudentResultsController,
+} from "./presentation/controller.js";
 
-// Ownership is reserved here; business endpoints are introduced with their UC tests.
-@Module({})
+@Module({
+  controllers: [
+    FinalResultsController,
+    ClassificationPoliciesController,
+    StudentResultsController,
+  ],
+  providers: [
+    FinalResultsService,
+    { provide: FINAL_RESULT_STORE, useClass: PrismaFinalResultStore },
+  ],
+  exports: [FinalResultsService],
+})
 export class FinalResultsModule {}

@@ -9,13 +9,17 @@ import 'package:api_client_dart/src/auth/bearer_auth.dart';
 import 'package:api_client_dart/src/auth/oauth.dart';
 import 'package:api_client_dart/src/api/assignments_api.dart';
 import 'package:api_client_dart/src/api/classes_api.dart';
+import 'package:api_client_dart/src/api/classification_policies_api.dart';
 import 'package:api_client_dart/src/api/components_api.dart';
+import 'package:api_client_dart/src/api/final_results_api.dart';
 import 'package:api_client_dart/src/api/gradebooks_api.dart';
 import 'package:api_client_dart/src/api/health_api.dart';
 import 'package:api_client_dart/src/api/identity_api.dart';
 import 'package:api_client_dart/src/api/recognition_api.dart';
+import 'package:api_client_dart/src/api/reports_api.dart';
 import 'package:api_client_dart/src/api/review_api.dart';
 import 'package:api_client_dart/src/api/semesters_api.dart';
+import 'package:api_client_dart/src/api/student_results_api.dart';
 import 'package:api_client_dart/src/api/students_api.dart';
 import 'package:api_client_dart/src/api/subjects_api.dart';
 import 'package:api_client_dart/src/api/teachers_api.dart';
@@ -102,10 +106,22 @@ class ApiClientDart {
     return ClassesApi(dio);
   }
 
+  /// Get ClassificationPoliciesApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  ClassificationPoliciesApi getClassificationPoliciesApi() {
+    return ClassificationPoliciesApi(dio);
+  }
+
   /// Get ComponentsApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
   ComponentsApi getComponentsApi() {
     return ComponentsApi(dio);
+  }
+
+  /// Get FinalResultsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  FinalResultsApi getFinalResultsApi() {
+    return FinalResultsApi(dio);
   }
 
   /// Get GradebooksApi instance, base route and serializer can be overridden by a given but be careful,
@@ -132,6 +148,12 @@ class ApiClientDart {
     return RecognitionApi(dio);
   }
 
+  /// Get ReportsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  ReportsApi getReportsApi() {
+    return ReportsApi(dio);
+  }
+
   /// Get ReviewApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
   ReviewApi getReviewApi() {
@@ -142,6 +164,12 @@ class ApiClientDart {
   /// by doing that all interceptors will not be executed
   SemestersApi getSemestersApi() {
     return SemestersApi(dio);
+  }
+
+  /// Get StudentResultsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  StudentResultsApi getStudentResultsApi() {
+    return StudentResultsApi(dio);
   }
 
   /// Get StudentsApi instance, base route and serializer can be overridden by a given but be careful,

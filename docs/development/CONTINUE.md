@@ -4,8 +4,8 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: tiếp tục build dự án; Phase 4 đã có transaction, UI đối chiếu và hardening UC13 mà chưa cần file trọng số OCR. Chỉ chuyển Phase 5 sau khi CI commit hardening xanh và Phase 4 được review/merge.
-- Nhánh: `codex/phase-4-review`, tạo từ `origin/main` commit `1f0d7f9` sau khi Phase 3 merge qua PR #5. Không làm tiếp trên nhánh Phase 3 đã bị xóa ở remote.
+- Yêu cầu mới nhất: Phase 4 đã hoàn tất; tiếp tục build Phase 5 theo AGENTS.md. UC14–UC18 đã được triển khai và full regression local đã xanh; bước tiếp theo là commit/push, chờ GitHub CI rồi mở PR Phase 5 để review. Chưa tự merge `main`.
+- Nhánh: `codex/phase-5-final-results`, tạo từ `origin/main` commit `7ac0328` sau khi Phase 4 merge qua PR #6. Không làm tiếp trên nhánh Phase 4 đã bị xóa ở remote.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
 - Phase 2 phần 1 commit `0ae7fbc`, phần 2 `3ad0865`, phần 3 `23df8fe`; PR #3 đã merge. Hotfix hiện tại chạy integration files tuần tự vì chúng dùng chung PostgreSQL `SERIALIZABLE`; chạy song song đã tái hiện 2 đạt/1 lỗi, chạy tuần tự đạt 3/3.
 - Demo local đã được kiểm tra với Flutter Web, API thật và PostgreSQL test cô lập: giáo viên tạo bảng #25, nhập `8.5`, lưu lịch sử và tăng version. Mật khẩu demo chỉ được đặt trong database test local, không commit.
@@ -16,10 +16,10 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Khi nhận continue
 
-1. Đọc AGENTS.md, README.md, phase-2.md, ADR-0002/0004/0006/0007 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
-2. Chỉ chốt hotfix khi GitHub `foundation`, `ios` và `required-checks` đều xanh. Local đã đạt `pnpm test:db` và ba suite nghiệp vụ tuần tự; máy thiếu Docker nên GitHub phải xác nhận probe Redis/MinIO, APK/emulator và iOS.
+1. Đọc AGENTS.md, README.md, phase-5.md, ADR-0010 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
+2. Chạy full regression Phase 1–5 tuần tự trên PostgreSQL test, Flutter workspace, Python và contract drift. Sau khi commit/push, chỉ coi Phase 5 sẵn sàng review khi GitHub `foundation`, `ios` và `required-checks` đều xanh.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
-4. Phase 4 đã xanh; bước tiếp theo là mở PR review Phase 4. Chỉ tạo nhánh Phase 5 từ `main` sau khi PR được duyệt và merge. Chưa nối model thật khi chưa có weights.
+4. Không nối model thật khi chưa có weights. Không merge Phase 5 hoặc tạo Phase 6 tự động; mở PR riêng sau khi local/full CI xanh.
 
 ## Công cụ và dữ liệu test trên máy hiện tại
 
@@ -58,3 +58,7 @@ Phase 3 phần 4 hoàn tất local: API danh sách/chi tiết phiếu, ký URL G
 Phase 3 commit `5ccd861` đã xanh `foundation`, `ios`, `required-checks` tại run 34697920229 và merge vào `main` qua PR #5. Phase 4 phần 1 ở commit `ccfc452` thêm migration `202609120002_review_approval`, module/API review và UI xác nhận mọi dòng. Nâng cấp DB Phase 3 và cài mới tám migration trên `qld_phase4_review_fresh_test` đều đạt; constraint test và bốn integration suite Phase 1–4 tuần tự đạt, gồm rollback khi audit lỗi, IDOR, version và idempotency. `pnpm check` đạt 15/15 test + build, `pnpm contracts:check` không drift, Flutter workspace đạt 14/14 test, Python đạt 9/9 và Flutter Web development build thành công. GitHub run [34700935789](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34700935789) đã xanh `foundation`, `ios`, `required-checks`. Xem [phase-4.md](phase-4.md); bước kế tiếp là mở PR review Phase 4, rồi hardening UC13 trên chính nhánh này trước khi merge.
 
 Phase 4 phần 2 hardening ở commit `01de006` bổ sung làm mới signed URL mà không mất quyết định đang nhập; integration upload → worker → review; tải signed object thật từ MinIO; race approve/approve và approve/lock. Local đạt `pnpm check` 15/15, Flutter 14/14, constraint và bốn integration suite PostgreSQL; Flutter Web build thành công. GitHub run [34703082534](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34703082534) đã qua MinIO/Redis, Web, APK/emulator và iOS; workflow badge `passing`. Phase 4 đủ điều kiện mở review/merge, chưa tự merge `main`.
+
+Phase 4 đã merge vào `main` qua PR #6 ở commit `7ac0328`. Phase 5 đang ở nhánh `codex/phase-5-final-results`. Hai migration mới tạo policy/tiêu chí xếp loại có phiên bản, history tổng kết append-only và các hàm `SECURITY DEFINER` cho tính kết quả/kích hoạt policy. UC14–UC18 đã có API, generated Dart client và UI cho QTV/GV/HS; ExcelJS là dependency mới cần thiết để tạo workbook `.xlsx` thật. Mặc định `DEV-2026-01`, lớp hiện tại và mẫu Excel chung chỉ dùng development, phải được nhà trường chốt trước production theo ADR-0010.
+
+Database `qld_phase5_final_fresh_test` tại `127.0.0.1:55435` đã cài đủ 10 migration từ rỗng và seed giả; constraint/quyền runtime đạt. Năm integration suite nghiệp vụ Phase 1–5 chạy tuần tự đạt 5/5, gồm tính trọng số/làm tròn, policy version, history/snapshot, idempotency, IDOR, thống kê, XLSX/audit và học sinh chỉ thấy điểm `DA_DUYET`. `pnpm check` đạt 18/18 unit/HTTP tests + build; `pnpm contracts:check` không drift; Flutter workspace đạt 17/17 test, analyze sạch và Web development build thành công; Python đạt 9/9. Lỗi tràn mobile khi bảng đã chốt hiển thị Tổng kết/Báo cáo đã được sửa và test hồi quy Phase 2 xác nhận. Ba dependency integration cần Redis/MinIO/FastAPI thật vẫn chờ GitHub CI vì máy local không có Docker. Cập nhật dòng này bằng commit/run GitHub thực tế sau khi push; không coi kết quả local là bằng chứng CI.

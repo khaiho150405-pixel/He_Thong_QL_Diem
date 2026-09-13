@@ -9,6 +9,8 @@ import '../features/academic_catalog/catalog_screen.dart';
 import '../features/academic_catalog/fields.dart';
 import '../features/gradebooks/gradebook_screen.dart';
 import '../features/gradebooks/gradebooks_screen.dart';
+import '../features/final_results/student_results_screen.dart';
+import '../features/final_results/classification_policy_screen.dart';
 
 final routerProvider = Provider.family<GoRouter, String>((
   ref,
@@ -22,6 +24,14 @@ final routerProvider = Provider.family<GoRouter, String>((
       GoRoute(
         path: '/connection',
         builder: (_, state) => const ConnectionScreen(),
+      ),
+      GoRoute(
+        path: '/my-results',
+        builder: (_, state) => const StudentResultsScreen(),
+      ),
+      GoRoute(
+        path: '/classification-policy',
+        builder: (_, state) => const ClassificationPolicyScreen(),
       ),
       GoRoute(
         path: '/catalog/:resource',
@@ -49,6 +59,13 @@ final routerProvider = Provider.family<GoRouter, String>((
       if (state.uri.path == '/login') return '/';
       if (state.uri.path.startsWith('/gradebooks') &&
           user.role.value == 'HOC_SINH') {
+        return '/';
+      }
+      if (state.uri.path == '/my-results' && user.role.value != 'HOC_SINH') {
+        return '/';
+      }
+      if (state.uri.path == '/classification-policy' &&
+          user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }
       final resource = state.pathParameters['resource'];
