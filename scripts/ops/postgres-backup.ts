@@ -42,13 +42,35 @@ export function cliArguments(values: string[]) {
 }
 
 function run(binary: string, args: string[], pgEnv: Record<string, string>) {
-  const result = spawnSync(binary, args, {
+  const image = process.env.PG_CLIENT_IMAGE;
+  const workingDirectory = process.cwd();
+  const command = image ? process.env.DOCKER_BIN || "docker" : binary;
+  const commandArgs = image
+    ? [
+        "run",
+        "--rm",
+        "--network",
+        "host",
+        "--volume",
+        `${workingDirectory}:${workingDirectory}`,
+        "--workdir",
+        workingDirectory,
+        ...Object.keys(pgEnv).flatMap((key) => ["--env", key]),
+        image,
+        basename(binary),
+        ...args,
+      ]
+    : args;
+  const result = spawnSync(command, commandArgs, {
     env: { ...process.env, ...pgEnv },
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-  if (result.status !== 0)
-    throw new Error(`${basename(binary)} failed: ${result.stderr.trim()}`);
+  if (result.status !== 0) {
+    const detail =
+      result.error?.message ?? result.stderr?.trim() ?? "unknown error";
+    throw new Error(`${basename(binary)} failed: ${detail}`);
+  }
 }
 
 export function backup(databaseUrl: string, outputDirectory: string) {

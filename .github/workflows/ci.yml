@@ -64,6 +64,7 @@ jobs:
           . ./.env
           set +a
           mkdir -p .local/backups
+          export PG_CLIENT_IMAGE=postgres:18.0-bookworm
           export BACKUP_DATABASE_URL="$MIGRATION_DATABASE_URL"
           pnpm ops:backup -- .local/backups
           dump=$(find .local/backups -name '*.dump' -type f | head -n 1)
