@@ -1027,6 +1027,537 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks/{gradebookId}/final-results": {
+      "get": {
+        "operationId": "finalResultsList",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FinalResultListDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["final-results"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{gradebookId}/final-results/calculate": {
+      "post": {
+        "operationId": "finalResultsCalculate",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculateFinalResultsInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculateFinalResultsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["final-results"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{gradebookId}/final-results/{resultId}/history": {
+      "get": {
+        "operationId": "finalResultsHistory",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "resultId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculationHistoryListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["final-results"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/classification-policies/active": {
+      "get": {
+        "operationId": "classificationPoliciesActive",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationPolicyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["classification-policies"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/classification-policies/activate": {
+      "post": {
+        "operationId": "classificationPoliciesActivate",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateClassificationPolicyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationPolicyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["classification-policies"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/students/me/results": {
+      "get": {
+        "operationId": "studentResultsList",
+        "parameters": [
+          {
+            "name": "termId",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StudentResultsDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["student-results"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
     "/api/v1/gradebooks": {
       "get": {
         "operationId": "gradebooksList",
@@ -2645,6 +3176,168 @@
           }
         },
         "tags": ["recognition"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/reports/gradebooks/{gradebookId}/summary": {
+      "get": {
+        "operationId": "reportsSummary",
+        "parameters": [
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookSummaryDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["reports"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/reports/gradebooks/{gradebookId}/export.xlsx": {
+      "get": {
+        "operationId": "reportsExport",
+        "parameters": [
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Excel workbook",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["reports"],
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
@@ -4577,6 +5270,230 @@
         },
         "required": ["ma_nam_hoc", "ma_gv_chu_nhiem", "ten_lop", "khoi"]
       },
+      "FinalResultDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" },
+          "finalScore": { "type": "string", "example": "8.5" },
+          "classification": { "type": "string", "example": "GIOI" },
+          "weightVersion": { "type": "string" },
+          "policyVersion": { "type": "string" },
+          "calculatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "id",
+          "studentId",
+          "studentName",
+          "finalScore",
+          "classification",
+          "weightVersion",
+          "policyVersion",
+          "calculatedAt"
+        ]
+      },
+      "FinalResultListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FinalResultDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "CalculateFinalResultsInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 0 },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["expectedVersion", "reason"]
+      },
+      "MissingComponentDto": {
+        "type": "object",
+        "properties": {
+          "componentId": { "type": "number" },
+          "name": { "type": "string" }
+        },
+        "required": ["componentId", "name"]
+      },
+      "SkippedStudentDto": {
+        "type": "object",
+        "properties": {
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" },
+          "missingComponents": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MissingComponentDto" }
+          }
+        },
+        "required": ["studentId", "studentName", "missingComponents"]
+      },
+      "CalculateFinalResultsDto": {
+        "type": "object",
+        "properties": {
+          "gradebookId": { "type": "number" },
+          "gradebookVersion": { "type": "number" },
+          "weightVersion": { "type": "string" },
+          "policyVersion": { "type": "string" },
+          "calculatedStudents": { "type": "number" },
+          "skippedStudents": { "type": "number" },
+          "results": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FinalResultDto" }
+          },
+          "skipped": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SkippedStudentDto" }
+          }
+        },
+        "required": [
+          "gradebookId",
+          "gradebookVersion",
+          "weightVersion",
+          "policyVersion",
+          "calculatedStudents",
+          "skippedStudents",
+          "results",
+          "skipped"
+        ]
+      },
+      "CalculationHistoryDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "resultId": { "type": "string" },
+          "calculatorId": { "type": "number" },
+          "oldScore": { "type": "string", "nullable": true },
+          "oldClassification": { "type": "string", "nullable": true },
+          "newScore": { "type": "string" },
+          "newClassification": { "type": "string" },
+          "reason": { "type": "string" },
+          "calculatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "id",
+          "resultId",
+          "calculatorId",
+          "oldScore",
+          "oldClassification",
+          "newScore",
+          "newClassification",
+          "reason",
+          "calculatedAt"
+        ]
+      },
+      "CalculationHistoryListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CalculationHistoryDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "ClassificationCriterionDto": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "GIOI" },
+          "minimum": { "type": "string", "example": "8.0" },
+          "passing": { "type": "boolean" },
+          "order": { "type": "number" }
+        },
+        "required": ["code", "minimum", "passing", "order"]
+      },
+      "ClassificationPolicyDto": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string" },
+          "name": { "type": "string" },
+          "roundingDigits": { "type": "number", "minimum": 0, "maximum": 1 },
+          "active": { "type": "boolean" },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassificationCriterionDto"
+            }
+          }
+        },
+        "required": ["version", "name", "roundingDigits", "active", "criteria"]
+      },
+      "ActivateClassificationPolicyInput": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,20}$" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "roundingDigits": { "type": "number", "minimum": 0, "maximum": 1 },
+          "criteria": {
+            "minItems": 2,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassificationCriterionDto"
+            }
+          }
+        },
+        "required": ["version", "name", "roundingDigits", "criteria"]
+      },
+      "StudentApprovedComponentDto": {
+        "type": "object",
+        "properties": {
+          "componentId": { "type": "number" },
+          "componentName": { "type": "string" },
+          "coefficient": { "type": "string" },
+          "value": { "type": "string" }
+        },
+        "required": ["componentId", "componentName", "coefficient", "value"]
+      },
+      "StudentSubjectResultDto": {
+        "type": "object",
+        "properties": {
+          "gradebookId": { "type": "number" },
+          "subjectId": { "type": "number" },
+          "subjectName": { "type": "string" },
+          "termId": { "type": "number" },
+          "termName": { "type": "string" },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentApprovedComponentDto"
+            }
+          },
+          "finalScore": { "type": "string", "nullable": true },
+          "classification": { "type": "string", "nullable": true },
+          "calculatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "gradebookId",
+          "subjectId",
+          "subjectName",
+          "termId",
+          "termName",
+          "components",
+          "finalScore",
+          "classification",
+          "calculatedAt"
+        ]
+      },
+      "StudentResultsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StudentSubjectResultDto" }
+          }
+        },
+        "required": ["items"]
+      },
       "GradebookDto": {
         "type": "object",
         "properties": {
@@ -4970,6 +5887,40 @@
           "status": { "type": "string", "enum": ["DANG_XU_LY"] }
         },
         "required": ["ticketId", "jobId", "status"]
+      },
+      "DistributionItemDto": {
+        "type": "object",
+        "properties": {
+          "classification": { "type": "string" },
+          "students": { "type": "number" }
+        },
+        "required": ["classification", "students"]
+      },
+      "GradebookSummaryDto": {
+        "type": "object",
+        "properties": {
+          "gradebookId": { "type": "number" },
+          "students": { "type": "number" },
+          "average": { "type": "string", "nullable": true },
+          "highest": { "type": "string", "nullable": true },
+          "lowest": { "type": "string", "nullable": true },
+          "passed": { "type": "number" },
+          "failed": { "type": "number" },
+          "distribution": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DistributionItemDto" }
+          }
+        },
+        "required": [
+          "gradebookId",
+          "students",
+          "average",
+          "highest",
+          "lowest",
+          "passed",
+          "failed",
+          "distribution"
+        ]
       },
       "ReviewDecisionInput": {
         "type": "object",

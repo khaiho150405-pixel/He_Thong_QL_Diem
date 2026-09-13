@@ -16,6 +16,8 @@
 | UC10    | audit/lich_su_sua_diem                            | Lịch sử cùng transaction, API cursor đúng scope, append-only; Flutter hiển thị NULL/0.0 và người/lý do/thời điểm sửa                         |
 | UC11–12 | recognition/files                                 | Upload/outbox + worker BullMQ + FastAPI contract; chặn lệch lưới, lưu hai kênh/ảnh ô riêng và chuyển `CHO_DOI_CHIEU`; model thật chờ weights |
 | UC13    | review                                            | API/UI đối chiếu, migration duyệt nguyên tử, version/idempotency, audit và rollback test; full-stack E2E còn lại                             |
-| UC14–18 | final-results/reports/students                    | Schema snapshot; chưa có tính/xếp loại/export/tra cứu                                                                                        |
+| UC14–15 | final-results/ket_qua_tong_ket                    | Tính/xếp loại có policy và snapshot hệ số phiên bản; history append-only, transaction, idempotency và UI bảng đã chốt                        |
+| UC16–17 | reports                                           | Thống kê chỉ đọc, phân bố đạt/chưa đạt, xuất workbook `.xlsx`, chống formula injection, rate limit và audit                                  |
+| UC18    | final-results/students                            | API `students/me` không nhận student ID, chỉ trả điểm `DA_DUYET`; màn hình học sinh responsive                                               |
 
 HTML §09 là truy vết thiết kế; không coi là kết quả nghiệm thu phần mềm. Tests phase 0 không chứng minh authorization nghiệp vụ chưa được viết.

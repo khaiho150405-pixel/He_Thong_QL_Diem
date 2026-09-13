@@ -64,6 +64,7 @@ model nguoi_dung {
   ket_qua_dong_rows     ket_qua_dong[]
   phien_rows           phien_lam_viec[]
   idempotency_rows     khoa_idempotency[]
+  lich_su_tong_ket_rows lich_su_tong_ket[]
 }
 
 // Technical tables, not part of the sixteen business tables.
@@ -272,11 +273,57 @@ model ket_qua_tong_ket {
   ma_hoc_sinh_ref hoc_sinh @relation(fields: [ma_hoc_sinh], references: [ma_hoc_sinh], onDelete: Restrict, onUpdate: Restrict)
   ma_mon_ref      mon_hoc  @relation(fields: [ma_mon], references: [ma_mon], onDelete: Restrict, onUpdate: Restrict)
   ma_hoc_ky_ref   hoc_ky   @relation(fields: [ma_hoc_ky], references: [ma_hoc_ky], onDelete: Restrict, onUpdate: Restrict)
+  lich_su_rows    lich_su_tong_ket[]
 
   @@unique([ma_hoc_sinh, ma_mon, ma_hoc_ky])
   @@index([ma_hoc_sinh])
   @@index([ma_mon])
   @@index([ma_hoc_ky])
+}
+
+// Versioned school policy. The seeded DEV policy is not a final production decision.
+model chinh_sach_xep_loai {
+  ma_chinh_sach       Int                  @id @default(autoincrement())
+  phien_ban           String               @unique @db.VarChar(20)
+  ten                 String               @db.VarChar(100)
+  so_chu_so_lam_tron  Int                  @default(1) @db.SmallInt
+  dang_ap_dung        Boolean              @default(false)
+  ngay_tao            DateTime             @default(now()) @db.Timestamptz(6)
+  tieu_chi_rows       tieu_chi_xep_loai[]
+}
+
+model tieu_chi_xep_loai {
+  ma_tieu_chi        Int                  @id @default(autoincrement())
+  ma_chinh_sach      Int
+  ma_xep_loai        String               @db.VarChar(20)
+  diem_toi_thieu     Decimal              @db.Decimal(3, 1)
+  thu_tu             Int                  @db.SmallInt
+  dat                Boolean              @default(false)
+  ma_chinh_sach_ref  chinh_sach_xep_loai @relation(fields: [ma_chinh_sach], references: [ma_chinh_sach], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([ma_chinh_sach, ma_xep_loai])
+  @@unique([ma_chinh_sach, diem_toi_thieu])
+  @@unique([ma_chinh_sach, thu_tu])
+}
+
+// Technical append-only evidence for every initial calculation and recalculation.
+model lich_su_tong_ket {
+  ma_lich_su       BigInt            @id @default(autoincrement())
+  ma_ket_qua       BigInt
+  nguoi_tinh       Int
+  diem_cu          Decimal?          @db.Decimal(3, 1)
+  xep_loai_cu      String?           @db.VarChar(20)
+  bo_he_so_cu      Json?
+  diem_moi         Decimal           @db.Decimal(3, 1)
+  xep_loai_moi     String            @db.VarChar(20)
+  bo_he_so_moi     Json
+  ly_do            String            @db.VarChar(500)
+  thoi_diem        DateTime          @default(now()) @db.Timestamptz(6)
+  ma_ket_qua_ref   ket_qua_tong_ket @relation(fields: [ma_ket_qua], references: [ma_ket_qua], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_tinh_ref   nguoi_dung       @relation(fields: [nguoi_tinh], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([ma_ket_qua, ma_lich_su])
+  @@index([nguoi_tinh])
 }
 
 model phieu_nhan_dien {

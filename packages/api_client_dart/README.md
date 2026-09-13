@@ -74,10 +74,15 @@ Class | Method | HTTP request | Description
 [*ClassesApi*](doc/ClassesApi.md) | [**classesList**](doc/ClassesApi.md#classeslist) | **GET** /api/v1/catalog/classes |
 [*ClassesApi*](doc/ClassesApi.md) | [**classesRemove**](doc/ClassesApi.md#classesremove) | **DELETE** /api/v1/catalog/classes/{id} |
 [*ClassesApi*](doc/ClassesApi.md) | [**classesUpdate**](doc/ClassesApi.md#classesupdate) | **PUT** /api/v1/catalog/classes/{id} |
+[*ClassificationPoliciesApi*](doc/ClassificationPoliciesApi.md) | [**classificationPoliciesActivate**](doc/ClassificationPoliciesApi.md#classificationpoliciesactivate) | **POST** /api/v1/classification-policies/activate |
+[*ClassificationPoliciesApi*](doc/ClassificationPoliciesApi.md) | [**classificationPoliciesActive**](doc/ClassificationPoliciesApi.md#classificationpoliciesactive) | **GET** /api/v1/classification-policies/active |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsCreate**](doc/ComponentsApi.md#componentscreate) | **POST** /api/v1/catalog/components |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsList**](doc/ComponentsApi.md#componentslist) | **GET** /api/v1/catalog/components |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsRemove**](doc/ComponentsApi.md#componentsremove) | **DELETE** /api/v1/catalog/components/{id} |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsUpdate**](doc/ComponentsApi.md#componentsupdate) | **PUT** /api/v1/catalog/components/{id} |
+[*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsCalculate**](doc/FinalResultsApi.md#finalresultscalculate) | **POST** /api/v1/gradebooks/{gradebookId}/final-results/calculate |
+[*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsHistory**](doc/FinalResultsApi.md#finalresultshistory) | **GET** /api/v1/gradebooks/{gradebookId}/final-results/{resultId}/history |
+[*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsList**](doc/FinalResultsApi.md#finalresultslist) | **GET** /api/v1/gradebooks/{gradebookId}/final-results |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksBatchUpdate**](doc/GradebooksApi.md#gradebooksbatchupdate) | **PUT** /api/v1/gradebooks/{id}/grades |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCells**](doc/GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCreate**](doc/GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
@@ -99,11 +104,14 @@ Class | Method | HTTP request | Description
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionDetail**](doc/RecognitionApi.md#recognitiondetail) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId} |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionList**](doc/RecognitionApi.md#recognitionlist) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionUpload**](doc/RecognitionApi.md#recognitionupload) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
+[*ReportsApi*](doc/ReportsApi.md) | [**reportsExport**](doc/ReportsApi.md#reportsexport) | **GET** /api/v1/reports/gradebooks/{gradebookId}/export.xlsx |
+[*ReportsApi*](doc/ReportsApi.md) | [**reportsSummary**](doc/ReportsApi.md#reportssummary) | **GET** /api/v1/reports/gradebooks/{gradebookId}/summary |
 [*ReviewApi*](doc/ReviewApi.md) | [**reviewApprove**](doc/ReviewApi.md#reviewapprove) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersCreate**](doc/SemestersApi.md#semesterscreate) | **POST** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersList**](doc/SemestersApi.md#semesterslist) | **GET** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersRemove**](doc/SemestersApi.md#semestersremove) | **DELETE** /api/v1/catalog/semesters/{id} |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersUpdate**](doc/SemestersApi.md#semestersupdate) | **PUT** /api/v1/catalog/semesters/{id} |
+[*StudentResultsApi*](doc/StudentResultsApi.md) | [**studentResultsList**](doc/StudentResultsApi.md#studentresultslist) | **GET** /api/v1/students/me/results |
 [*StudentsApi*](doc/StudentsApi.md) | [**studentsCreate**](doc/StudentsApi.md#studentscreate) | **POST** /api/v1/catalog/students |
 [*StudentsApi*](doc/StudentsApi.md) | [**studentsList**](doc/StudentsApi.md#studentslist) | **GET** /api/v1/catalog/students |
 [*StudentsApi*](doc/StudentsApi.md) | [**studentsRemove**](doc/StudentsApi.md#studentsremove) | **DELETE** /api/v1/catalog/students/{id} |
@@ -128,29 +136,41 @@ Class | Method | HTTP request | Description
  - [AccountInput](doc/AccountInput.md)
  - [AccountUpdate](doc/AccountUpdate.md)
  - [AccountsDto](doc/AccountsDto.md)
+ - [ActivateClassificationPolicyInput](doc/ActivateClassificationPolicyInput.md)
  - [AssignmentsDto](doc/AssignmentsDto.md)
  - [AssignmentsInput](doc/AssignmentsInput.md)
  - [AssignmentsPage](doc/AssignmentsPage.md)
  - [BatchUpdateInput](doc/BatchUpdateInput.md)
  - [BatchUpdateResultDto](doc/BatchUpdateResultDto.md)
+ - [CalculateFinalResultsDto](doc/CalculateFinalResultsDto.md)
+ - [CalculateFinalResultsInput](doc/CalculateFinalResultsInput.md)
+ - [CalculationHistoryDto](doc/CalculationHistoryDto.md)
+ - [CalculationHistoryListDto](doc/CalculationHistoryListDto.md)
  - [CellsResponseDto](doc/CellsResponseDto.md)
  - [ClassesDto](doc/ClassesDto.md)
  - [ClassesInput](doc/ClassesInput.md)
  - [ClassesPage](doc/ClassesPage.md)
+ - [ClassificationCriterionDto](doc/ClassificationCriterionDto.md)
+ - [ClassificationPolicyDto](doc/ClassificationPolicyDto.md)
  - [ComponentsDto](doc/ComponentsDto.md)
  - [ComponentsInput](doc/ComponentsInput.md)
  - [ComponentsPage](doc/ComponentsPage.md)
  - [CreateGradebookInput](doc/CreateGradebookInput.md)
+ - [DistributionItemDto](doc/DistributionItemDto.md)
  - [ErrorDto](doc/ErrorDto.md)
+ - [FinalResultDto](doc/FinalResultDto.md)
+ - [FinalResultListDto](doc/FinalResultListDto.md)
  - [GradeCellDto](doc/GradeCellDto.md)
  - [GradeChangeInput](doc/GradeChangeInput.md)
  - [GradeHistoryDto](doc/GradeHistoryDto.md)
  - [GradeHistoryEntryDto](doc/GradeHistoryEntryDto.md)
  - [GradebookDto](doc/GradebookDto.md)
  - [GradebookListDto](doc/GradebookListDto.md)
+ - [GradebookSummaryDto](doc/GradebookSummaryDto.md)
  - [HealthDto](doc/HealthDto.md)
  - [LockInput](doc/LockInput.md)
  - [LoginInput](doc/LoginInput.md)
+ - [MissingComponentDto](doc/MissingComponentDto.md)
  - [PasswordInput](doc/PasswordInput.md)
  - [ProfileDto](doc/ProfileDto.md)
  - [RecognitionEvidenceRowDto](doc/RecognitionEvidenceRowDto.md)
@@ -164,6 +184,10 @@ Class | Method | HTTP request | Description
  - [SemestersInput](doc/SemestersInput.md)
  - [SemestersPage](doc/SemestersPage.md)
  - [SessionDto](doc/SessionDto.md)
+ - [SkippedStudentDto](doc/SkippedStudentDto.md)
+ - [StudentApprovedComponentDto](doc/StudentApprovedComponentDto.md)
+ - [StudentResultsDto](doc/StudentResultsDto.md)
+ - [StudentSubjectResultDto](doc/StudentSubjectResultDto.md)
  - [StudentsDto](doc/StudentsDto.md)
  - [StudentsInput](doc/StudentsInput.md)
  - [StudentsPage](doc/StudentsPage.md)

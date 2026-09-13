@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../authentication/session.dart';
+import '../final_results/final_results_panel.dart';
 import '../recognition/recognition_panel.dart';
+import '../reports/reports_panel.dart';
 import 'repository.dart';
 
 class GradebookScreen extends ConsumerStatefulWidget {
@@ -86,6 +88,7 @@ class GradebookEditor extends ConsumerStatefulWidget {
 class _GradebookEditorState extends ConsumerState<GradebookEditor> {
   final formKey = GlobalKey<FormState>();
   final controllers = <String, TextEditingController>{};
+  final horizontalGridController = ScrollController();
   bool busy = false;
   bool conflict = false;
 
@@ -106,6 +109,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     for (final controller in controllers.values) {
       controller.dispose();
     }
+    horizontalGridController.dispose();
     super.dispose();
   }
 
@@ -303,95 +307,107 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    'Lớp #${widget.data.book.classId} · '
-                    'Môn #${widget.data.book.subjectId} · '
-                    'Học kỳ #${widget.data.book.termId}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Chip(
-                    avatar: Icon(locked ? Icons.lock : Icons.edit, size: 18),
-                    label: Text(locked ? 'Đã chốt' : 'Đang nhập liệu'),
-                  ),
-                  Text('Phiên bản ${widget.data.book.version}'),
-                  if (editable) ...[
-                    OutlinedButton.icon(
-                      onPressed: busy ? null : syncRoster,
-                      icon: const Icon(Icons.group_add_outlined),
-                      label: const Text('Đồng bộ sĩ số'),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Lớp #${widget.data.book.classId} · '
+                      'Môn #${widget.data.book.subjectId} · '
+                      'Học kỳ #${widget.data.book.termId}',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    FilledButton.tonalIcon(
-                      onPressed: busy ? null : save,
-                      icon: const Icon(Icons.save_outlined),
-                      label: const Text('Lưu thay đổi'),
+                    Chip(
+                      avatar: Icon(locked ? Icons.lock : Icons.edit, size: 18),
+                      label: Text(locked ? 'Đã chốt' : 'Đang nhập liệu'),
                     ),
-                    FilledButton.icon(
-                      onPressed: busy ? null : lock,
-                      icon: const Icon(Icons.lock_outline),
-                      label: const Text('Chốt bảng'),
-                    ),
+                    Text('Phiên bản ${widget.data.book.version}'),
+                    if (editable) ...[
+                      OutlinedButton.icon(
+                        onPressed: busy ? null : syncRoster,
+                        icon: const Icon(Icons.group_add_outlined),
+                        label: const Text('Đồng bộ sĩ số'),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: busy ? null : save,
+                        icon: const Icon(Icons.save_outlined),
+                        label: const Text('Lưu thay đổi'),
+                      ),
+                      FilledButton.icon(
+                        onPressed: busy ? null : lock,
+                        icon: const Icon(Icons.lock_outline),
+                        label: const Text('Chốt bảng'),
+                      ),
+                    ],
                   ],
+                ),
+              ),
+            ),
+            if (conflict)
+              MaterialBanner(
+                content: const Text(
+                  'Bảng điểm đã thay đổi ở nơi khác. Tải lại để đối chiếu trước khi nhập lại.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: widget.onReload,
+                    child: const Text('Tải lại'),
+                  ),
                 ],
               ),
-            ),
-          ),
-          if (conflict)
-            MaterialBanner(
-              content: const Text(
-                'Bảng điểm đã thay đổi ở nơi khác. Tải lại để đối chiếu trước khi nhập lại.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: widget.onReload,
-                  child: const Text('Tải lại'),
-                ),
-              ],
-            ),
-          if (teacher) ...[
-            const SizedBox(height: 8),
-            RecognitionPanel(
-              gradebookId: widget.data.book.id,
-              components: [
-                for (final item in orderedComponents)
-                  RecognitionComponentOption(
-                    item.componentId,
-                    item.componentName,
-                  ),
-              ],
-              declaredRows: students.values
-                  .where((row) => row.first.active)
-                  .length,
-              gradebookVersion: widget.data.book.version,
-              enabled: !locked && !busy && !conflict,
-              onApproved: widget.onReload,
-            ),
-          ],
-          const SizedBox(height: 8),
-          Expanded(
-            child: widget.data.items.isEmpty
-                ? const Center(child: Text('Bảng điểm chưa có ô dữ liệu.'))
-                : Form(
-                    key: formKey,
-                    child: LayoutBuilder(
-                      builder: (context, box) => box.maxWidth >= 800
-                          ? _wideGrid(students, orderedComponents)
-                          : _mobileGrid(students),
+            if (teacher) ...[
+              const SizedBox(height: 8),
+              RecognitionPanel(
+                gradebookId: widget.data.book.id,
+                components: [
+                  for (final item in orderedComponents)
+                    RecognitionComponentOption(
+                      item.componentId,
+                      item.componentName,
                     ),
-                  ),
-          ),
-          if (busy) const LinearProgressIndicator(),
-        ],
+                ],
+                declaredRows: students.values
+                    .where((row) => row.first.active)
+                    .length,
+                gradebookVersion: widget.data.book.version,
+                enabled: !locked && !busy && !conflict,
+                onApproved: widget.onReload,
+              ),
+            ],
+            if (locked) ...[
+              const SizedBox(height: 8),
+              FinalResultsPanel(
+                gradebookId: widget.data.book.id,
+                gradebookVersion: widget.data.book.version,
+              ),
+              const SizedBox(height: 8),
+              ReportsPanel(gradebookId: widget.data.book.id),
+            ],
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 520,
+              child: widget.data.items.isEmpty
+                  ? const Center(child: Text('Bảng điểm chưa có ô dữ liệu.'))
+                  : Form(
+                      key: formKey,
+                      child: LayoutBuilder(
+                        builder: (context, box) => box.maxWidth >= 800
+                            ? _wideGrid(students, orderedComponents)
+                            : _mobileGrid(students),
+                      ),
+                    ),
+            ),
+            if (busy) const LinearProgressIndicator(),
+          ],
+        ),
       ),
     );
   }
@@ -400,8 +416,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     Map<num, List<GradeCellDto>> students,
     List<GradeCellDto> components,
   ) => Scrollbar(
+    controller: horizontalGridController,
     thumbVisibility: true,
     child: SingleChildScrollView(
+      controller: horizontalGridController,
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(

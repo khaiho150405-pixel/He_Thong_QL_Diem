@@ -1,6 +1,6 @@
 # Hệ thống Quản lý Điểm
 
-Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã được merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. [Phase 3](docs/development/phase-3.md) đã merge qua PR #5, gồm upload private, outbox/worker BullMQ, contract FastAPI hai kênh, chặn lệch lưới, signed URL và giao diện theo dõi phiếu. [Phase 4](docs/development/phase-4.md) đang triển khai đối chiếu và duyệt nguyên tử có con người quyết định. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Chưa nối mô hình OCR thật hoặc triển khai tổng kết.
+Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. [Phase 3](docs/development/phase-3.md) đã merge qua PR #5, gồm upload private, outbox/worker BullMQ, contract FastAPI hai kênh, chặn lệch lưới, signed URL và giao diện theo dõi phiếu. [Phase 4](docs/development/phase-4.md) đã merge qua PR #6 với đối chiếu và duyệt nguyên tử có con người quyết định. [Phase 5](docs/development/phase-5.md) đang triển khai UC14–UC18: policy xếp loại có phiên bản, tổng kết, thống kê, Excel và tra cứu cá nhân. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Mô hình OCR thật vẫn chờ file trọng số.
 
 ## Cấu trúc
 
@@ -33,7 +33,7 @@ pnpm dev:api
 
 Để chạy pipeline nhận dạng development, mở thêm ba terminal tại root và chạy `pnpm dev:recognition-service`, `pnpm dev:recognition-dispatcher`, `pnpm dev:recognition-worker`. Fake adapter chỉ được bật trong development/test; production thiếu weights trả `MODEL_UNAVAILABLE`.
 
-Giáo viên mở một bảng điểm đang nhập liệu và bung mục **Nhận dạng bảng điểm từ ảnh** để chọn thành phần, chọn ảnh PNG/JPEG và gửi job. Client tự kiểm tra trạng thái mỗi 3 giây khi phiếu còn xử lý. Chi tiết chỉ dùng signed URL 5 phút cho ảnh gốc/ảnh ô và vẫn là dữ liệu đề xuất; việc sửa, duyệt nguyên tử và ghi điểm chính thức thuộc Phase 4.
+Giáo viên mở một bảng điểm đang nhập liệu và bung mục **Nhận dạng bảng điểm từ ảnh** để chọn thành phần, chọn ảnh PNG/JPEG và gửi job. Client tự kiểm tra trạng thái mỗi 3 giây khi phiếu còn xử lý. Chi tiết chỉ dùng signed URL 5 phút cho ảnh gốc/ảnh ô và vẫn là dữ liệu đề xuất; giáo viên phải đối chiếu, duyệt rồi chốt bảng. Bảng đã chốt có khối tổng kết, thống kê và xuất Excel. Học sinh dùng **Điểm của tôi** để chỉ xem điểm đã duyệt của chính tài khoản.
 
 setup:local tạo .env với mật khẩu ngẫu nhiên, không in secret, không ghi đè file có sẵn. Bạn có thể chỉnh mật khẩu local trước khi khởi tạo volume PostgreSQL. Port DB mặc định 5433 để tránh PostgreSQL cài sẵn tại 5432. infra:down giữ volume; không tự chạy down -v.
 
