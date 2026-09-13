@@ -18,6 +18,8 @@ Phase 6 không thay đổi nghiệp vụ UC01–UC18. Mục tiêu là chứng mi
 - Diễn tập runbook PostgreSQL + object storage theo cùng mốc vận hành. Backup production phải mã hóa, có checksum, retention và quyền đọc riêng.
 - Restore chỉ được thử trên database/bucket cô lập; xác nhận migration version, row counts, audit append-only, object checksum và signed URL trước khi ghi nhận đạt.
 - Chốt RPO/RTO, tải dự kiến và SLA với nhà trường trước khi đặt ngưỡng load test. Không tuyên bố khả năng chịu tải chỉ từ health endpoint.
+- Load harness chỉ chạy GET trên endpoint nghiệp vụ `/api/v1` có Bearer token, có giới hạn duration/concurrency/timeout và không in token. Nó từ chối health endpoint và từ chối host từ xa nếu chưa bật chủ động `LOAD_ALLOW_REMOTE=1`.
+- CI chạy smoke profile ngắn trên danh sách bảng điểm bằng giáo viên seed để phát hiện lỗi kết nối/auth hoặc response chậm bất thường. Kết quả này xác nhận harness, không thay thế load test staging theo tải đã chốt.
 
 ## Phần 3 — Phát hành
 

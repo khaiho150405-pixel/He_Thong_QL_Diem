@@ -27,6 +27,13 @@
 - Sau restore, chạy migration ở chế độ deploy rồi kiểm các constraint, quyền runtime, audit/history append-only, số bản ghi trọng yếu và checksum object.
 - Không coi backup thành công cho đến khi một restore rehearsal hoàn tất trong RTO đã chốt.
 
+## Kiểm thử tải
+
+- Dùng tài khoản giả có đúng phân công trên staging và lấy access token qua luồng đăng nhập; truyền token bằng `LOAD_AUTHORIZATION`, không ghi token vào script, file kết quả hoặc log.
+- Đặt `LOAD_BASE_URL`, `LOAD_PATH`, `LOAD_DURATION_SECONDS`, `LOAD_CONCURRENCY`, `LOAD_REQUEST_TIMEOUT_MS`, `LOAD_MAX_P95_MS` và `LOAD_MAX_ERROR_RATE`, rồi chạy `pnpm test:load-smoke`. Host từ xa cần HTTPS và `LOAD_ALLOW_REMOTE=1`.
+- Chạy ít nhất một endpoint đọc nghiệp vụ đại diện như danh sách hoặc lưới bảng điểm. Công cụ chủ động từ chối health endpoint vì health check không chứng minh tải nghiệp vụ.
+- Lưu JSON kết quả cùng commit, cấu hình staging và thời điểm chạy nhưng loại bỏ token/PII. Chỉ ghi nhận đạt khi p95 và error rate thỏa SLA đã được nhà trường chốt.
+
 ## Sự cố và rollback
 
 - Nếu readiness lỗi, ngừng nhận traffic mới và giữ liveness để chẩn đoán; tra dependency theo `requestId`.

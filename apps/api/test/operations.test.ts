@@ -9,6 +9,7 @@ import {
   cliArguments as storageCliArguments,
   readStorageSettings,
 } from "../src/ops/object-storage-backup.js";
+import { readLoadProfile } from "../../../scripts/testing/business-load.js";
 
 test("backup connection parsing keeps credentials out of command arguments", () => {
   const parsed = parsePostgresUrl(
@@ -75,5 +76,37 @@ test("storage backup maps hostile object keys to fixed local filenames", () => {
   assert.deepEqual(
     storageCliArguments(["backup", "--", ".local/storage-backups"]),
     ["backup", ".local/storage-backups"],
+  );
+});
+
+test("load profile requires an authenticated business endpoint and explicit limits", () => {
+  const env = {
+    LOAD_BASE_URL: "http://127.0.0.1:3000",
+    LOAD_PATH: "/api/v1/gradebooks?cursor=0",
+    LOAD_AUTHORIZATION: "Bearer test-only-token",
+    LOAD_DURATION_SECONDS: "5",
+    LOAD_CONCURRENCY: "2",
+    LOAD_REQUEST_TIMEOUT_MS: "2000",
+    LOAD_MAX_P95_MS: "1000",
+    LOAD_MAX_ERROR_RATE: "0.01",
+  };
+  const profile = readLoadProfile(env);
+  assert.equal(profile.path, "/api/v1/gradebooks?cursor=0");
+  assert.equal(profile.concurrency, 2);
+  assert.throws(
+    () => readLoadProfile({ ...env, LOAD_PATH: "/api/v1/health/ready" }),
+    /business \/api\/v1/,
+  );
+  assert.throws(
+    () => readLoadProfile({ ...env, LOAD_PATH: "/api/v1/identity/login" }),
+    /business \/api\/v1/,
+  );
+  assert.throws(
+    () =>
+      readLoadProfile({
+        ...env,
+        LOAD_BASE_URL: "https://staging.example.edu",
+      }),
+    /LOAD_ALLOW_REMOTE/,
   );
 });

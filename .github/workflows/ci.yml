@@ -119,6 +119,21 @@ jobs:
             sleep 1
           done
           exit 1
+      - name: Smoke authenticated business load harness
+        run: |
+          set -a
+          . ./.env
+          set +a
+          token=$(node -e 'fetch("http://127.0.0.1:3000/api/v1/identity/login",{method:"POST",headers:{"content-type":"application/json","x-client-platform":"native"},body:JSON.stringify({username:"demo_teacher_a",password:process.env.SEED_PASSWORD})}).then(async r=>{if(!r.ok)throw new Error(`login ${r.status}`);return r.json()}).then(v=>process.stdout.write(v.token))')
+          export LOAD_BASE_URL=http://127.0.0.1:3000
+          export LOAD_PATH=/api/v1/gradebooks
+          export LOAD_AUTHORIZATION="Bearer $token"
+          export LOAD_DURATION_SECONDS=5
+          export LOAD_CONCURRENCY=2
+          export LOAD_REQUEST_TIMEOUT_MS=2000
+          export LOAD_MAX_P95_MS=1500
+          export LOAD_MAX_ERROR_RATE=0.01
+          pnpm test:load-smoke
       - name: Enable KVM for Android emulator
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
