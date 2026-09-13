@@ -4,7 +4,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: Phase 5 đã merge qua PR #7 tại `7cebf3c`; tiếp tục Phase 6 theo AGENTS.md. Phần 1 đang hardening cấu hình/header production và tạo runbook; chưa deploy production hoặc phát hành store.
+- Yêu cầu mới nhất: Phase 5 đã merge qua PR #7 tại `7cebf3c`; tiếp tục Phase 6 theo AGENTS.md. Phần 1 hardening đã xanh ở commit `bc73f6c`; phần 2 đang thêm backup/verify/restore rehearsal và CI. Chưa deploy production hoặc phát hành store.
 - Nhánh: `codex/phase-6-hardening-release`, tạo từ `origin/main` commit `7cebf3c`. Không làm tiếp trên nhánh Phase 5 đã bị xóa ở remote.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
 - Phase 2 phần 1 commit `0ae7fbc`, phần 2 `3ad0865`, phần 3 `23df8fe`; PR #3 đã merge. Hotfix hiện tại chạy integration files tuần tự vì chúng dùng chung PostgreSQL `SERIALIZABLE`; chạy song song đã tái hiện 2 đạt/1 lỗi, chạy tuần tự đạt 3/3.

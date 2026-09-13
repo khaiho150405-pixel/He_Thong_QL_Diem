@@ -17,7 +17,9 @@
 
 ## Backup và restore
 
-- PostgreSQL backup ở định dạng custom bằng `pg_dump`; object storage được snapshot/version theo cùng mốc. Mã hóa cả hai và giữ checksum ngoài nơi chứa backup.
+- PostgreSQL backup ở định dạng custom bằng `pg_dump`, bỏ ownership nhưng giữ ACL để phục hồi đúng quyền runtime; object storage được snapshot/version theo cùng mốc. Mã hóa cả hai và giữ checksum ngoài nơi chứa backup.
+- Đặt `BACKUP_DATABASE_URL` bằng role chỉ đọc rồi chạy `pnpm ops:backup -- <thư-mục-đã-mã-hóa>`. Kiểm lại bằng `pnpm ops:verify-backup -- <file.dump>`; manifest không chứa URL hoặc mật khẩu.
+- Tạo sẵn database cô lập có hậu tố `_restore_test`, đặt `RESTORE_DATABASE_URL`, rồi chạy `pnpm ops:restore-rehearsal -- <file.dump>`. Script từ chối mọi tên database không đúng hậu tố và không tự tạo/drop database.
 - Restore rehearsal dùng database và bucket có hậu tố `_restore_test`; không dùng production làm mục tiêu thử.
 - Sau restore, chạy migration ở chế độ deploy rồi kiểm các constraint, quyền runtime, audit/history append-only, số bản ghi trọng yếu và checksum object.
 - Không coi backup thành công cho đến khi một restore rehearsal hoàn tất trong RTO đã chốt.

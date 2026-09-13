@@ -50,6 +50,25 @@ jobs:
           export TEST_RUNTIME_URL="$DATABASE_URL"
           pnpm test:db
           pnpm test:integration
+      - name: Rehearse PostgreSQL backup and restore
+        run: |
+          set -a
+          . ./.env
+          set +a
+          mkdir -p .local/backups
+          export BACKUP_DATABASE_URL="$MIGRATION_DATABASE_URL"
+          pnpm ops:backup -- .local/backups
+          dump=$(find .local/backups -name '*.dump' -type f | head -n 1)
+          test -n "$dump"
+          pnpm ops:verify-backup -- "$dump"
+          export PGPASSWORD="$POSTGRES_PASSWORD"
+          createdb --host localhost --port "$POSTGRES_PORT" --username "$POSTGRES_USER" --owner app_migration quan_ly_diem_restore_test
+          unset PGPASSWORD
+          export RESTORE_DATABASE_URL=$(node -e 'const u=new URL(process.env.MIGRATION_DATABASE_URL);u.pathname="/quan_ly_diem_restore_test";console.log(u.href)')
+          pnpm ops:restore-rehearsal -- "$dump"
+          export TEST_MIGRATION_URL="$RESTORE_DATABASE_URL"
+          export TEST_RUNTIME_URL=$(node -e 'const u=new URL(process.env.DATABASE_URL);u.pathname="/quan_ly_diem_restore_test";console.log(u.href)')
+          pnpm test:db
       - run: pnpm check
       - run: python -m unittest discover -s tests
         working-directory: apps/recognition-service
