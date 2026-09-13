@@ -19,7 +19,12 @@ import {
   PROBE,
   type DependencyProbe,
 } from "./common/health.js";
-import { ErrorDto, ErrorFilter, requestContext } from "./common/http.js";
+import {
+  ErrorDto,
+  ErrorFilter,
+  requestContext,
+  securityHeaders,
+} from "./common/http.js";
 import type { AppConfig } from "./common/config.js";
 import * as domainModules from "./modules/index.js";
 import { DatabaseModule } from "./common/database.js";
@@ -60,6 +65,7 @@ export async function createApp(
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: false });
+  app.use(securityHeaders(config.environment));
   app.use(requestContext);
   app.enableCors({
     origin: config.origins,

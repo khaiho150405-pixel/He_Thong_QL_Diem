@@ -35,6 +35,18 @@ test("health, failure envelope, correlation ID and CORS use real HTTP", async ()
     assert.equal(live.status, 200);
     assert.deepEqual(await live.json(), { status: "ok" });
     assert.equal(live.headers.get("x-request-id"), "test-request");
+    assert.equal(live.headers.get("x-content-type-options"), "nosniff");
+    assert.equal(live.headers.get("x-frame-options"), "DENY");
+    assert.equal(live.headers.get("referrer-policy"), "no-referrer");
+    assert.equal(live.headers.get("cache-control"), "no-store");
+    assert.equal(
+      live.headers.get("strict-transport-security"),
+      "max-age=31536000; includeSubDomains",
+    );
+    assert.match(
+      live.headers.get("content-security-policy") ?? "",
+      /default-src/,
+    );
     assert.equal(
       live.headers.get("access-control-allow-origin"),
       "http://localhost:8080",
@@ -90,4 +102,28 @@ test("configuration fails without secrets and rejects owner database roles", () 
       }),
     /runtime role/,
   );
+  const secure = {
+    APP_ENV: "production",
+    API_PORT: "3000",
+    ALLOWED_ORIGINS: "https://grades.example.edu",
+    DATABASE_URL:
+      "postgresql://app_runtime:hidden@db.example.edu/grades?sslmode=verify-full",
+    REDIS_URL: "rediss://cache.example.edu",
+    S3_ENDPOINT: "https://objects.example.edu",
+    S3_ACCESS_KEY: "runtime-access",
+    S3_SECRET_KEY: "hidden-secret",
+    S3_BUCKET: "gradebook-images",
+    RECOGNITION_SERVICE_URL: "https://recognition.example.edu",
+  };
+  assert.equal(readConfig(secure).environment, "production");
+  for (const insecure of [
+    {
+      ...secure,
+      DATABASE_URL: "postgresql://app_runtime:hidden@db.example.edu/grades",
+    },
+    { ...secure, REDIS_URL: "redis://cache.example.edu" },
+    { ...secure, S3_ENDPOINT: "http://objects.example.edu" },
+    { ...secure, RECOGNITION_SERVICE_URL: "http://recognition.example.edu" },
+  ])
+    assert.throws(() => readConfig(insecure), /TLS required/);
 });

@@ -4,8 +4,8 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: Phase 5 UC14–UC18 đã được triển khai, full regression local và GitHub CI của commit `32de9ee` đều xanh. Bước tiếp theo là mở PR `codex/phase-5-final-results` → `main` để đồng nghiệp review; chưa tự merge `main` hoặc bắt đầu Phase 6.
-- Nhánh: `codex/phase-5-final-results`, tạo từ `origin/main` commit `7ac0328` sau khi Phase 4 merge qua PR #6. Không làm tiếp trên nhánh Phase 4 đã bị xóa ở remote.
+- Yêu cầu mới nhất: Phase 5 đã merge qua PR #7 tại `7cebf3c`; tiếp tục Phase 6 theo AGENTS.md. Phần 1 đang hardening cấu hình/header production và tạo runbook; chưa deploy production hoặc phát hành store.
+- Nhánh: `codex/phase-6-hardening-release`, tạo từ `origin/main` commit `7cebf3c`. Không làm tiếp trên nhánh Phase 5 đã bị xóa ở remote.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
 - Phase 2 phần 1 commit `0ae7fbc`, phần 2 `3ad0865`, phần 3 `23df8fe`; PR #3 đã merge. Hotfix hiện tại chạy integration files tuần tự vì chúng dùng chung PostgreSQL `SERIALIZABLE`; chạy song song đã tái hiện 2 đạt/1 lỗi, chạy tuần tự đạt 3/3.
 - Demo local đã được kiểm tra với Flutter Web, API thật và PostgreSQL test cô lập: giáo viên tạo bảng #25, nhập `8.5`, lưu lịch sử và tăng version. Mật khẩu demo chỉ được đặt trong database test local, không commit.
@@ -16,10 +16,10 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Khi nhận continue
 
-1. Đọc AGENTS.md, README.md, phase-5.md, ADR-0010 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
-2. Chạy full regression Phase 1–5 tuần tự trên PostgreSQL test, Flutter workspace, Python và contract drift. Sau khi commit/push, chỉ coi Phase 5 sẵn sàng review khi GitHub `foundation`, `ios` và `required-checks` đều xanh.
+1. Đọc AGENTS.md, README.md, phase-6.md, runbook và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
+2. Hoàn tất Phase 6 theo từng phần kiểm thử được: security baseline → backup/restore rehearsal → load test theo quy mô đã chốt → staging/store. Không tuyên bố production-ready khi thiếu hạ tầng hoặc signing.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
-4. Không nối model thật khi chưa có weights. Không merge Phase 5 hoặc tạo Phase 6 tự động; mở PR riêng sau khi local/full CI xanh.
+4. Không nối model thật khi chưa có weights. Không deploy production, phát hành store hoặc merge Phase 6 tự động.
 
 ## Công cụ và dữ liệu test trên máy hiện tại
 
