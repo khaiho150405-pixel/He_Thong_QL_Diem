@@ -26,6 +26,8 @@ Phase 6 không thay đổi nghiệp vụ UC01–UC18. Mục tiêu là chứng mi
 ## Phần 3 — Phát hành
 
 - Build Flutter Web production với HTTPS API thật và kiểm fallback `index.html` cho client-side routing.
+- Lệnh `pnpm release:web:build` chỉ nhận HTTPS origin thật qua `WEB_API_BASE_URL`; artifact không dùng file `production.json` placeholder. Cấu hình Nginx mẫu đặt cache ngắn, security headers, chặn dotfile và fallback mọi client-side route về `index.html`.
+- CI khởi động Nginx thật với artifact Web, so sánh response của đường dẫn client-side trực tiếp với `index.html`, kiểm `X-Frame-Options` và xác nhận dotfile bị từ chối.
 - Android phát hành qua internal testing trước; khóa signing nằm trong secret store của CI, không commit.
 - iOS cần macOS/Xcode, App Store Connect và signing hợp lệ; đưa lên TestFlight trước App Store.
 - Deployment production cần môi trường/hosting, DNS, TLS, secret manager, bucket private, database backup và chính sách dữ liệu đã được chủ dự án xác nhận.

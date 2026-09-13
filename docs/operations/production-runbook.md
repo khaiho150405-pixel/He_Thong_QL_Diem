@@ -15,6 +15,13 @@
 4. Smoke test bằng dữ liệu giả: đăng nhập, phân quyền âm tính, bảng điểm, upload, đối chiếu, tổng kết, Excel và học sinh xem chính mình.
 5. Theo dõi log JSON theo `requestId`; không ghi token, cookie, ảnh hoặc dữ liệu điểm đầy đủ.
 
+## Flutter Web
+
+- Đặt `WEB_API_BASE_URL` bằng HTTPS origin thật của API rồi chạy `pnpm release:web:build`. Script từ chối HTTP, loopback, domain `.invalid`, credential, query và path để tránh phát hành artifact trỏ nhầm môi trường hoặc nhúng secret.
+- Artifact nằm ở `apps/client_flutter/build/web`. Cấu hình mẫu `infrastructure/web/nginx.conf` phục vụ thư mục này tại `/usr/share/nginx/html`, chặn dotfile, thêm security headers và dùng `try_files ... /index.html` cho client-side routing.
+- `index.html`, bootstrap và service worker không cache dài; asset tĩnh cache một giờ để bản phát hành mới không bị giữ quá lâu. CDN/hosting phải giữ cùng nguyên tắc khi chuyển cấu hình khỏi Nginx.
+- Trước khi chuyển traffic, truy cập trực tiếp một URL client-side không tồn tại trên filesystem và xác nhận trả nội dung `index.html`; sau đó đăng nhập bằng tài khoản giả và kiểm API request đi đúng production/staging origin.
+
 ## Backup và restore
 
 - PostgreSQL backup ở định dạng custom bằng `pg_dump`, bỏ ownership nhưng giữ ACL để phục hồi đúng quyền runtime; object storage được snapshot/version theo cùng mốc. Mã hóa cả hai và giữ checksum ngoài nơi chứa backup.

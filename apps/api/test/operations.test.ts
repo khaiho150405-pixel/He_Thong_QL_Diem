@@ -10,6 +10,10 @@ import {
   readStorageSettings,
 } from "../src/ops/object-storage-backup.js";
 import { readLoadProfile } from "../../../scripts/testing/business-load.js";
+import {
+  flutterWebReleaseArguments,
+  readWebReleaseSettings,
+} from "../../../scripts/ops/web-release.js";
 
 test("backup connection parsing keeps credentials out of command arguments", () => {
   const parsed = parsePostgresUrl(
@@ -109,4 +113,29 @@ test("load profile requires an authenticated business endpoint and explicit limi
       }),
     /LOAD_ALLOW_REMOTE/,
   );
+});
+
+test("web release requires a real HTTPS API origin", () => {
+  const settings = readWebReleaseSettings({
+    WEB_API_BASE_URL: "https://api.diemtruong.vn",
+  });
+  assert.deepEqual(flutterWebReleaseArguments(settings), [
+    "build",
+    "web",
+    "--release",
+    "--dart-define=APP_ENV=production",
+    "--dart-define=API_BASE_URL=https://api.diemtruong.vn",
+  ]);
+  for (const value of [
+    "http://api.grades.example.edu",
+    "https://production.example.invalid",
+    "https://localhost",
+    "https://user:secret@api.grades.example.edu",
+    "https://api.grades.example.edu/api",
+    "https://api.grades.example.edu?token=secret",
+  ])
+    assert.throws(
+      () => readWebReleaseSettings({ WEB_API_BASE_URL: value }),
+      /production HTTPS origin/,
+    );
 });
