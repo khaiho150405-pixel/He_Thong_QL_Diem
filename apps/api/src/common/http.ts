@@ -17,6 +17,29 @@ export class ErrorDto {
   > | null;
   @ApiProperty({ type: String }) requestId!: string;
 }
+export function securityHeaders(environment: string) {
+  return (_req: Request, res: Response, next: NextFunction): void => {
+    res.setHeader("x-content-type-options", "nosniff");
+    res.setHeader("x-frame-options", "DENY");
+    res.setHeader("referrer-policy", "no-referrer");
+    res.setHeader(
+      "permissions-policy",
+      "camera=(), geolocation=(), microphone=()",
+    );
+    res.setHeader("cache-control", "no-store");
+    if (environment !== "development") {
+      res.setHeader(
+        "content-security-policy",
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+      );
+      res.setHeader(
+        "strict-transport-security",
+        "max-age=31536000; includeSubDomains",
+      );
+    }
+    next();
+  };
+}
 export function requestContext(
   req: Request,
   res: Response,

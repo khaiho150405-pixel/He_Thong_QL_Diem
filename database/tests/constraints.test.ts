@@ -20,7 +20,7 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket')",
     );
     assert.equal(tables.rows[0].n, 16);
     const denied = async (sql: string) => {
@@ -41,6 +41,11 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     );
     await denied("CREATE TABLE forbidden (id int)");
     await denied("CREATE SCHEMA forbidden");
+    await denied(
+      "INSERT INTO gioi_han_tac_vu(ma_nguoi_dung,thao_tac,bat_dau_cua_so,so_lan) VALUES(1,'RECOGNITION_UPLOAD',now(),1)",
+    );
+    await denied("UPDATE gioi_han_tac_vu SET so_lan=0");
+    await denied("DELETE FROM gioi_han_tac_vu");
     const privileges = await owner.query(
       "SELECT has_database_privilege(current_user, current_database(), 'CREATE') AS can_migrate, has_database_privilege('app_runtime', current_database(), 'CREATE') AS runtime_create",
     );

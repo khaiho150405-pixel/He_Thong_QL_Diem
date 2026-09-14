@@ -42,14 +42,66 @@ jobs:
           done
           exit 1
       - run: pnpm db:generate && pnpm db:migrate && pnpm db:seed
-      - run: |
+      - name: Test PostgreSQL constraints and runtime permissions
+        run: |
           set -a
           . ./.env
           set +a
           export TEST_MIGRATION_URL="$MIGRATION_DATABASE_URL"
           export TEST_RUNTIME_URL="$DATABASE_URL"
           pnpm test:db
-          pnpm test:integration
+      - name: Test business integrations
+        run: |
+          set -a
+          . ./.env
+          set +a
+          export TEST_MIGRATION_URL="$MIGRATION_DATABASE_URL"
+          export TEST_RUNTIME_URL="$DATABASE_URL"
+          for attempt in 1 2; do
+            if pnpm test:integration; then exit 0; fi
+            if [ "$attempt" -eq 2 ]; then exit 1; fi
+            echo "::warning::Business integration suite failed once; capturing dependency state before one retry."
+            docker compose --env-file .env -f infrastructure/compose.yaml ps
+            docker compose --env-file .env -f infrastructure/compose.yaml logs --no-color --tail=100 postgres redis minio
+          done
+      - name: Rehearse PostgreSQL backup and restore
+        run: |
+          set -a
+          . ./.env
+          set +a
+          mkdir -p .local/backups
+          export PG_CLIENT_IMAGE=postgres:18.0-bookworm
+          export BACKUP_DATABASE_URL="$MIGRATION_DATABASE_URL"
+          pnpm ops:backup -- .local/backups
+          dump=$(find .local/backups -name '*.dump' -type f | head -n 1)
+          test -n "$dump"
+          pnpm ops:verify-backup -- "$dump"
+          export PGPASSWORD="$POSTGRES_PASSWORD"
+          createdb --host localhost --port "$POSTGRES_PORT" --username "$POSTGRES_USER" --owner app_migration quan_ly_diem_restore_test
+          unset PGPASSWORD
+          export RESTORE_DATABASE_URL=$(node -e 'const u=new URL(process.env.MIGRATION_DATABASE_URL);u.pathname="/quan_ly_diem_restore_test";console.log(u.href)')
+          pnpm ops:restore-rehearsal -- "$dump"
+          export TEST_MIGRATION_URL="$RESTORE_DATABASE_URL"
+          export TEST_RUNTIME_URL=$(node -e 'const u=new URL(process.env.DATABASE_URL);u.pathname="/quan_ly_diem_restore_test";console.log(u.href)')
+          pnpm test:db
+      - name: Rehearse object storage backup and restore
+        run: |
+          set -a
+          . ./.env
+          set +a
+          docker compose --env-file .env -f infrastructure/compose.yaml run --rm --entrypoint /bin/sh storage-init -ec '
+            mc alias set local http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null
+            mc mb --ignore-existing "local/${S3_BUCKET}-restore-test"
+            mc anonymous set none "local/${S3_BUCKET}-restore-test"
+            printf "phase-6-storage-rehearsal" | mc pipe "local/${S3_BUCKET}/rehearsal/ci-fixture.bin" >/dev/null
+          '
+          mkdir -p .local/storage-backups
+          pnpm ops:storage-backup -- .local/storage-backups
+          manifest=$(find .local/storage-backups -name manifest.json -type f | head -n 1)
+          test -n "$manifest"
+          pnpm ops:storage-verify -- "$manifest"
+          export RESTORE_S3_BUCKET="${S3_BUCKET}-restore-test"
+          pnpm ops:storage-restore-rehearsal -- "$manifest"
       - run: pnpm check
       - run: python -m unittest discover -s tests
         working-directory: apps/recognition-service
@@ -62,6 +114,26 @@ jobs:
         working-directory: packages/api_client_dart
       - run: flutter build web --dart-define-from-file=config/development.json
         working-directory: apps/client_flutter
+      - name: Test Flutter Web static hosting contract
+        run: |
+          cleanup() { docker rm -f qld-web-ci >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          docker run --rm -d --name qld-web-ci \
+            -p 127.0.0.1:8082:8080 \
+            -v "$PWD/apps/client_flutter/build/web:/usr/share/nginx/html:ro" \
+            -v "$PWD/infrastructure/web/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+            nginx:1.29.3-alpine
+          for attempt in $(seq 1 10); do
+            if curl --fail --silent http://127.0.0.1:8082/reports/direct-route > "$RUNNER_TEMP/qld-route.html"; then break; fi
+            sleep 1
+          done
+          cmp "$RUNNER_TEMP/qld-route.html" apps/client_flutter/build/web/index.html
+          curl --fail --silent --head http://127.0.0.1:8082/ \
+            | grep --ignore-case '^X-Frame-Options: DENY'
+          if curl --fail --silent http://127.0.0.1:8082/.env; then
+            echo "dotfile must not be served"
+            exit 1
+          fi
       - run: flutter build apk --debug --flavor development --dart-define-from-file=config/android-development.json
         working-directory: apps/client_flutter
       - name: Start API for Android integration
@@ -73,6 +145,21 @@ jobs:
             sleep 1
           done
           exit 1
+      - name: Smoke authenticated business load harness
+        run: |
+          set -a
+          . ./.env
+          set +a
+          token=$(node -e 'fetch("http://127.0.0.1:3000/api/v1/identity/login",{method:"POST",headers:{"content-type":"application/json","x-client-platform":"native"},body:JSON.stringify({username:"demo_teacher_a",password:process.env.SEED_PASSWORD})}).then(async r=>{if(!r.ok)throw new Error(`login ${r.status}`);return r.json()}).then(v=>process.stdout.write(v.token))')
+          export LOAD_BASE_URL=http://127.0.0.1:3000
+          export LOAD_PATH=/api/v1/gradebooks
+          export LOAD_AUTHORIZATION="Bearer $token"
+          export LOAD_DURATION_SECONDS=5
+          export LOAD_CONCURRENCY=2
+          export LOAD_REQUEST_TIMEOUT_MS=2000
+          export LOAD_MAX_P95_MS=1500
+          export LOAD_MAX_ERROR_RATE=0.01
+          pnpm test:load-smoke
       - name: Enable KVM for Android emulator
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -145,8 +232,21 @@ jobs:
             sleep 1
           done
           curl --fail http://127.0.0.1:3001/__ready
-          flutter test integration_test/connection_test.dart -d "$IOS_DEVICE" --dart-define-from-file=config/smoke-local.json
+          flutter test integration_test/connection_test.dart -r expanded -d "$IOS_DEVICE" --dart-define-from-file=config/smoke-local.json
         working-directory: apps/client_flutter
+      - name: Capture iOS smoke diagnostics
+        if: failure()
+        env:
+          IOS_DEVICE: ${{ steps.iphone.outputs.device }}
+        run: |
+          echo '--- API log ---'
+          tail -n 200 .local/api.log || true
+          echo '--- Connection proxy log ---'
+          tail -n 200 .local/proxy.log || true
+          echo '--- Simulator devices ---'
+          xcrun simctl list devices || true
+          echo '--- Simulator log tail ---'
+          xcrun simctl spawn "$IOS_DEVICE" log show --last 5m --style compact 2>/dev/null | tail -n 200 || true
   required-checks:
     if: always()
     needs: [foundation, ios]

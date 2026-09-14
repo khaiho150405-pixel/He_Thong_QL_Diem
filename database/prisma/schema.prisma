@@ -65,6 +65,7 @@ model nguoi_dung {
   phien_rows           phien_lam_viec[]
   idempotency_rows     khoa_idempotency[]
   lich_su_tong_ket_rows lich_su_tong_ket[]
+  gioi_han_tac_vu_rows  gioi_han_tac_vu[]
 }
 
 // Technical tables, not part of the sixteen business tables.
@@ -90,6 +91,18 @@ model gioi_han_dang_nhap {
   ma_bam String @id @db.Char(64)
   so_lan Int
   het_han DateTime @db.Timestamptz(6)
+}
+
+// Shared technical rate limit state. Runtime access is only through a
+// SECURITY DEFINER function so every API instance observes the same counter.
+model gioi_han_tac_vu {
+  ma_nguoi_dung   Int
+  thao_tac        String      @db.VarChar(32)
+  bat_dau_cua_so  DateTime    @db.Timestamptz(6)
+  so_lan          Int
+  nguoi_dung_ref  nguoi_dung @relation(fields: [ma_nguoi_dung], references: [ma_nguoi_dung], onDelete: Cascade, onUpdate: Restrict)
+
+  @@id([ma_nguoi_dung, thao_tac])
 }
 
 model giao_vien {

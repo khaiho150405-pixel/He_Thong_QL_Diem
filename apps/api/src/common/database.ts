@@ -13,6 +13,7 @@ export interface Settings {
   s3AccessKey?: string;
   s3SecretKey?: string;
   s3Bucket?: string;
+  uploadRateLimitPerMinute?: number;
 }
 @Global()
 @Module({})

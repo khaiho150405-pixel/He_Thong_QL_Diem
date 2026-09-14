@@ -4,8 +4,8 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Trạng thái bàn giao
 
-- Yêu cầu mới nhất: Phase 5 UC14–UC18 đã được triển khai, full regression local và GitHub CI của commit `32de9ee` đều xanh. Bước tiếp theo là mở PR `codex/phase-5-final-results` → `main` để đồng nghiệp review; chưa tự merge `main` hoặc bắt đầu Phase 6.
-- Nhánh: `codex/phase-5-final-results`, tạo từ `origin/main` commit `7ac0328` sau khi Phase 4 merge qua PR #6. Không làm tiếp trên nhánh Phase 4 đã bị xóa ở remote.
+- Yêu cầu mới nhất: Phase 5 đã merge qua PR #7 tại `7cebf3c`; tiếp tục Phase 6 theo AGENTS.md. Phần 1 hardening, backup/restore, load harness và rate limit upload đã xanh. Flutter Web release/Nginx đã xanh ở commit `46fd73d`, run `34765154536`. Profile production vẫn chờ trường chốt tải/SLA. Chưa deploy production hoặc phát hành store.
+- Nhánh: `codex/phase-6-hardening-release`, tạo từ `origin/main` commit `7cebf3c`. Không làm tiếp trên nhánh Phase 5 đã bị xóa ở remote.
 - Phase 1: tài khoản/danh mục đã có mã và CI xanh. Không xây lại Phase 0/1.
 - Phase 2 phần 1 commit `0ae7fbc`, phần 2 `3ad0865`, phần 3 `23df8fe`; PR #3 đã merge. Hotfix hiện tại chạy integration files tuần tự vì chúng dùng chung PostgreSQL `SERIALIZABLE`; chạy song song đã tái hiện 2 đạt/1 lỗi, chạy tuần tự đạt 3/3.
 - Demo local đã được kiểm tra với Flutter Web, API thật và PostgreSQL test cô lập: giáo viên tạo bảng #25, nhập `8.5`, lưu lịch sử và tăng version. Mật khẩu demo chỉ được đặt trong database test local, không commit.
@@ -16,10 +16,10 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 ## Khi nhận continue
 
-1. Đọc AGENTS.md, README.md, phase-5.md, ADR-0010 và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
-2. Chạy full regression Phase 1–5 tuần tự trên PostgreSQL test, Flutter workspace, Python và contract drift. Sau khi commit/push, chỉ coi Phase 5 sẵn sàng review khi GitHub `foundation`, `ios` và `required-checks` đều xanh.
+1. Đọc AGENTS.md, README.md, phase-6.md, runbook và trạng thái git. Giữ mọi thay đổi chưa commit; không reset hoặc sửa migration đã chạy.
+2. Hoàn tất Phase 6 theo từng phần kiểm thử được: security baseline → backup/restore rehearsal → load test theo quy mô đã chốt → staging/store. Không tuyên bố production-ready khi thiếu hạ tầng hoặc signing.
 3. Duy trì NULL khác 0.0, quyền phân công ở service, session còn hiệu lực, ghi điểm + audit cùng transaction, version/idempotency, khóa bảng đã chốt, bigint/decimal chuỗi. Không cấp runtime DML điểm trực tiếp để vượt kiểm tra bước 0.1.
-4. Không nối model thật khi chưa có weights. Không merge Phase 5 hoặc tạo Phase 6 tự động; mở PR riêng sau khi local/full CI xanh.
+4. Không nối model thật khi chưa có weights. Không deploy production, phát hành store hoặc merge Phase 6 tự động.
 
 ## Công cụ và dữ liệu test trên máy hiện tại
 
@@ -30,6 +30,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 - URL test dùng `127.0.0.1:55433` với role `app_migration`/`app_runtime`. Đặt TEST_MIGRATION_URL/TEST_RUNTIME_URL; migration dùng MIGRATION_DATABASE_URL. Không in/commit `.env` hoặc lấy mật khẩu PG làm mật khẩu ứng dụng.
 - Lệnh kiểm: `pnpm check`, `pnpm test:db`, `pnpm exec tsx --test apps/api/test/integration/gradebooks.test.ts apps/api/test/integration/gradebook-write.test.ts apps/api/test/integration/identity-catalog.test.ts`. Test dependency toàn stack cần Redis/MinIO; Docker trên máy này chưa có theo lần kiểm gần nhất.
 - Database Phase 3 mới: `qld_phase3_upload_fresh_test` tại cổng local thực tế `55433`; cả sáu migration từ rỗng và seed giả đã đạt. Database `qld_phase2_write_fresh_test` đã kiểm nâng cấp migration Phase 3. Integration upload HTTP/PostgreSQL đạt; MinIO/Redis thật vẫn để GitHub CI xác nhận vì máy không có Docker.
+- Database Phase 6 rate limit: `qld_phase6_rate_limit_fresh_test` tại `127.0.0.1:55436` trong `.local/demo-pg`; đủ 11 migration từ rỗng và seed giả đã đạt. Database `qld_phase5_final_fresh_test` đã nâng cấp thành công migration `202609130003_operation_rate_limit`. Không dùng PostgreSQL cá nhân ở cổng 5432.
 - Kiểm Phase 3 phần 4 dùng database mới `qld_phase3_part4_test` tại `127.0.0.1:55434`: đủ bảy migration từ rỗng, seed giả và bốn integration suite tuần tự đều đạt. Cụm ở `.local/demo-pg`; kiểm tiến trình/cổng trước khi khởi động lại.
 - AGENTS.md yêu cầu schema thay đổi kiểm cả nâng cấp và DB rỗng. Không drop database test để chạy lại: fixture dùng tên ngẫu nhiên; database mới chỉ tạo khi cần kiểm từ rỗng.
 - Git elevated có thể cần `git -c safe.directory='C:/Users/Ho Si Khai/Downloads/Ki_1_nam_4/KLCN/system' ...`; không chỉnh global safe.directory.
@@ -62,3 +63,5 @@ Phase 4 phần 2 hardening ở commit `01de006` bổ sung làm mới signed URL 
 Phase 4 đã merge vào `main` qua PR #6 ở commit `7ac0328`. Phase 5 đang ở nhánh `codex/phase-5-final-results`. Hai migration mới tạo policy/tiêu chí xếp loại có phiên bản, history tổng kết append-only và các hàm `SECURITY DEFINER` cho tính kết quả/kích hoạt policy. UC14–UC18 đã có API, generated Dart client và UI cho QTV/GV/HS; ExcelJS là dependency mới cần thiết để tạo workbook `.xlsx` thật. Mặc định `DEV-2026-01`, lớp hiện tại và mẫu Excel chung chỉ dùng development, phải được nhà trường chốt trước production theo ADR-0010.
 
 Database `qld_phase5_final_fresh_test` tại `127.0.0.1:55435` đã cài đủ 10 migration từ rỗng và seed giả; constraint/quyền runtime đạt. Năm integration suite nghiệp vụ Phase 1–5 chạy tuần tự đạt 5/5, gồm tính trọng số/làm tròn, policy version, history/snapshot, idempotency, IDOR, thống kê, XLSX/audit và học sinh chỉ thấy điểm `DA_DUYET`. `pnpm check` đạt 18/18 unit/HTTP tests + build; `pnpm contracts:check` không drift; Flutter workspace đạt 17/17 test, analyze sạch và Web development build thành công; Python đạt 9/9. Lỗi tràn mobile khi bảng đã chốt hiển thị Tổng kết/Báo cáo đã được sửa và test hồi quy Phase 2 xác nhận. GitHub run [34746319239](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34746319239) của commit `32de9ee` đã chạy cả Redis/MinIO/FastAPI thật, Web, APK/emulator và iOS; `foundation`, `ios`, `required-checks` đều xanh. Phase 5 đủ điều kiện mở PR review, chưa merge `main`.
+
+Phase 6 hiện có security headers/TLS validation, PostgreSQL và object-storage backup/restore rehearsal, load harness nghiệp vụ có xác thực, rate limit upload nguyên tử, cùng quy trình Web release bắt buộc HTTPS origin thật. Local đạt migration từ rỗng/nâng cấp, constraint, 25/25 unit test, build và 5/5 integration nghiệp vụ. GitHub run [34765154536](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34765154536) đã xanh stack container, Nginx SPA fallback/security, Web, APK/emulator và iOS. Run `34796987106` từng đỏ riêng ở smoke iOS sau build/boot simulator; workflow nay in expanded output và API/proxy/simulator diagnostics nếu lỗi lặp lại. Rerun commit `434ff85` đã xanh `foundation`, `ios`, `required-checks` tại [GitHub Actions run 34843936839](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/actions/runs/34843936839). Audit release xác nhận Android thiếu production signing, iOS thiếu Apple team, metadata/version còn tạm và endpoint staging/production chưa được cấp. Các đầu vào, người phụ trách và bằng chứng cần có nằm ở `docs/operations/release-readiness.md`. Bước kế tiếp: mở PR Phase 6 → main để review/merge, đồng thời chốt metadata/hạ tầng staging/signing. Không merge/deploy tự động.

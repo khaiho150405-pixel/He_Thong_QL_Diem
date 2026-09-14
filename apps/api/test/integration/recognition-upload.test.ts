@@ -37,6 +37,7 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
   )
     throw new Error("Explicit isolated test URLs required");
   const owner = new Pool({ connectionString: ownerUrl });
+  const runtime = new Pool({ connectionString: runtimeUrl });
   const objects = new Map<string, StoredObject>();
   const storage: ObjectStorage = {
     put: async (object) => void objects.set(object.key, object),
@@ -49,6 +50,7 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       environment: "development",
       origins: ["http://localhost:8080"],
       databaseUrl: runtimeUrl,
+      uploadRateLimitPerMinute: 6,
     },
     { check: async () => true, close: async () => {} },
     { objectStorage: storage },
@@ -467,6 +469,13 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       "upload-for-lock-race",
       { ...input, bytes: png(randomBytes(8)) },
     );
+    await assert.rejects(
+      recognition.upload(teacher, book.id, "rate-limited", {
+        ...input,
+        bytes: png(randomBytes(8)),
+      }),
+      (error: { getStatus?: () => number }) => error.getStatus?.() === 429,
+    );
     assert.equal(await dispatcher.dispatchOnce(), 1);
     assert.ok(queued.includes(secondReceipt.jobId));
     await worker.process(secondReceipt.ticketId);
@@ -526,6 +535,29 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       book_version: secondVersion + 1,
       ticket_status: "DA_DUYET",
     });
+
+    const concurrentActor = await makeActor();
+    const rateAttempts = await Promise.all(
+      Array.from({ length: 20 }, () =>
+        runtime.query<{ allowed: boolean }>(
+          "SELECT public.tieu_thu_han_muc_tac_vu($1,'RECOGNITION_UPLOAD',10,60) AS allowed",
+          [concurrentActor.sessionHash],
+        ),
+      ),
+    );
+    assert.equal(
+      rateAttempts.filter(({ rows }) => rows[0]?.allowed).length,
+      10,
+    );
+    assert.equal(
+      (
+        await owner.query(
+          "SELECT so_lan FROM gioi_han_tac_vu WHERE ma_nguoi_dung=$1 AND thao_tac='RECOGNITION_UPLOAD'",
+          [concurrentActor.id],
+        )
+      ).rows[0].so_lan,
+      11,
+    );
   } finally {
     await owner.query(
       "DROP TRIGGER IF EXISTS test_fail_review_audit_trigger ON nhat_ky_bao_mat",
@@ -534,6 +566,7 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       "DROP FUNCTION IF EXISTS test_fail_review_audit() CASCADE",
     );
     await app.close();
+    await runtime.end();
     await owner.end();
   }
 });
