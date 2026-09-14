@@ -34,6 +34,8 @@ Phase 6 không thay đổi nghiệp vụ UC01–UC18. Mục tiêu là chứng mi
 
 ## Điều kiện hoàn tất
 
+Theo dõi người chịu trách nhiệm, giá trị cần chốt và bằng chứng của từng môi trường trong `docs/operations/release-readiness.md`.
+
 - Security/IDOR/upload regression, dependency readiness và full CI đều xanh.
 - Có bằng chứng backup/restore trên môi trường cô lập và kết quả load test theo tải đã chốt.
 - Có runbook sự cố, rollback bằng forward migration và người chịu trách nhiệm vận hành.

@@ -1,5 +1,7 @@
 # Runbook production
 
+Trước khi triển khai, hoàn tất [checklist sẵn sàng phát hành](release-readiness.md) và gắn bằng chứng cho đúng commit artifact.
+
 ## Điều kiện trước triển khai
 
 1. Dùng secret manager để cấp `DATABASE_URL`, `REDIS_URL`, S3 credentials và endpoint recognition. Không sao chép `.env` development lên server.
