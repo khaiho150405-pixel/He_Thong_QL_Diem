@@ -232,8 +232,21 @@ jobs:
             sleep 1
           done
           curl --fail http://127.0.0.1:3001/__ready
-          flutter test integration_test/connection_test.dart -d "$IOS_DEVICE" --dart-define-from-file=config/smoke-local.json
+          flutter test integration_test/connection_test.dart -r expanded -d "$IOS_DEVICE" --dart-define-from-file=config/smoke-local.json
         working-directory: apps/client_flutter
+      - name: Capture iOS smoke diagnostics
+        if: failure()
+        env:
+          IOS_DEVICE: ${{ steps.iphone.outputs.device }}
+        run: |
+          echo '--- API log ---'
+          tail -n 200 .local/api.log || true
+          echo '--- Connection proxy log ---'
+          tail -n 200 .local/proxy.log || true
+          echo '--- Simulator devices ---'
+          xcrun simctl list devices || true
+          echo '--- Simulator log tail ---'
+          xcrun simctl spawn "$IOS_DEVICE" log show --last 5m --style compact 2>/dev/null | tail -n 200 || true
   required-checks:
     if: always()
     needs: [foundation, ios]
