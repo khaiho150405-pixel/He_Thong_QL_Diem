@@ -128,3 +128,7 @@ Kết quả sau sửa: 10/10 lượt gradebook-write liên tiếp đạt trên P
 Theo yêu cầu chủ dự án, tạo nhánh `codex/ui-workflows-stability` từ `origin/main` để đưa toàn bộ thay đổi sản phẩm đã kiểm tra lên PR riêng. Bao gồm UI responsive/control/scrollbar, STT học sinh, thời khóa biểu, nhập file, API/contracts/migrations liên quan và sửa retry giao dịch đồng thời. Không đưa thư mục công cụ AI, UI prototype, script thao tác DB thủ công, .env hoặc .local vào commit. Giữ nguyên những file này trên máy. Đã xác minh khóa .git/index.lock cũ từ 21/9 không có process Git sử dụng và gỡ để tiếp tục.
 
 Kiểm chứng trước push: xem kết quả DB/backend/UI ở mục trên; quét repository không phát hiện khóa/token theo bộ kiểm tra hiện có. Không khẳng định CI mới xanh trước khi GitHub chạy đúng commit. PR cần review SQL, quyền, thay đổi seed và hành vi UI; không tự merge main.
+
+### PR #9 — sửa CI registry MinIO (2026-09-28)
+
+CI run 36397260354 tại eba6fed: ios success; foundation lỗi ngay Start test infrastructure do Quay MinIO unauthorized, required-checks fail theo dependency. Đổi Compose build MinIO/mc từ source chính thức khóa commit cùng phiên bản (ADR-0011), không thay volume/bucket/quyền hay bỏ test. Tăng giới hạn foundation từ 30 lên 40 phút cho build source lần đầu. Config Compose và diff check đạt; kết quả chạy thực tế được cập nhật sau build.
