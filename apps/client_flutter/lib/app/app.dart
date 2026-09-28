@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'theme.dart';
 import '../features/connection/connection.dart';
 import '../features/authentication/session.dart';
 import '../features/authentication/login_screen.dart';
@@ -11,6 +12,7 @@ import '../features/gradebooks/gradebook_screen.dart';
 import '../features/gradebooks/gradebooks_screen.dart';
 import '../features/final_results/student_results_screen.dart';
 import '../features/final_results/classification_policy_screen.dart';
+import '../features/timetable/timetable_screen.dart';
 
 final routerProvider = Provider.family<GoRouter, String>((
   ref,
@@ -28,6 +30,10 @@ final routerProvider = Provider.family<GoRouter, String>((
       GoRoute(
         path: '/my-results',
         builder: (_, state) => const StudentResultsScreen(),
+      ),
+      GoRoute(
+        path: '/timetable',
+        builder: (_, state) => const TimetableScreen(),
       ),
       GoRoute(
         path: '/classification-policy',
@@ -96,10 +102,7 @@ class GradebookApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(
     title: 'Quản lý điểm',
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      useMaterial3: true,
-      colorSchemeSeed: const Color(0xFF176B59),
-    ),
+    theme: AppTheme.light(),
     routerConfig: ref.watch(routerProvider(initialLocation)),
   );
 }

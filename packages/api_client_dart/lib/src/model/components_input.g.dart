@@ -17,6 +17,8 @@ abstract class _$ComponentsInputCWProxy {
 
   ComponentsInput thuTuHienThi(num thuTuHienThi);
 
+  ComponentsInput choPhepNhap(bool? choPhepNhap);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `ComponentsInput(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -29,6 +31,7 @@ abstract class _$ComponentsInputCWProxy {
     String heSo,
     bool batBuoc,
     num thuTuHienThi,
+    bool? choPhepNhap,
   });
 }
 
@@ -56,6 +59,10 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
       this(thuTuHienThi: thuTuHienThi);
 
   @override
+  ComponentsInput choPhepNhap(bool? choPhepNhap) =>
+      this(choPhepNhap: choPhepNhap);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `ComponentsInput(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -68,6 +75,7 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
     Object? heSo = const $CopyWithPlaceholder(),
     Object? batBuoc = const $CopyWithPlaceholder(),
     Object? thuTuHienThi = const $CopyWithPlaceholder(),
+    Object? choPhepNhap = const $CopyWithPlaceholder(),
   }) {
     return ComponentsInput(
       maMon: maMon == const $CopyWithPlaceholder()
@@ -90,6 +98,10 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
           ? _value.thuTuHienThi
           // ignore: cast_nullable_to_non_nullable
           : thuTuHienThi as num,
+      choPhepNhap: choPhepNhap == const $CopyWithPlaceholder()
+          ? _value.choPhepNhap
+          // ignore: cast_nullable_to_non_nullable
+          : choPhepNhap as bool?,
     );
   }
 }
@@ -125,6 +137,7 @@ ComponentsInput _$ComponentsInputFromJson(Map<String, dynamic> json) =>
           heSo: $checkedConvert('he_so', (v) => v as String),
           batBuoc: $checkedConvert('bat_buoc', (v) => v as bool),
           thuTuHienThi: $checkedConvert('thu_tu_hien_thi', (v) => v as num),
+          choPhepNhap: $checkedConvert('cho_phep_nhap', (v) => v as bool?),
         );
         return val;
       },
@@ -134,6 +147,7 @@ ComponentsInput _$ComponentsInputFromJson(Map<String, dynamic> json) =>
         'heSo': 'he_so',
         'batBuoc': 'bat_buoc',
         'thuTuHienThi': 'thu_tu_hien_thi',
+        'choPhepNhap': 'cho_phep_nhap',
       },
     );
 
@@ -144,4 +158,5 @@ Map<String, dynamic> _$ComponentsInputToJson(ComponentsInput instance) =>
       'he_so': instance.heSo,
       'bat_buoc': instance.batBuoc,
       'thu_tu_hien_thi': instance.thuTuHienThi,
+      'cho_phep_nhap': ?instance.choPhepNhap,
     };

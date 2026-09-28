@@ -114,6 +114,7 @@ model giao_vien {
   ma_giao_vien_ref         nguoi_dung            @relation(fields: [ma_giao_vien], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
   lop_rows                 lop[]
   phan_cong_giang_day_rows phan_cong_giang_day[]
+  thoi_khoa_bieu_rows      thoi_khoa_bieu[]
 }
 
 model nam_hoc {
@@ -137,6 +138,7 @@ model hoc_ky {
   phan_cong_giang_day_rows phan_cong_giang_day[]
   bang_diem_rows           bang_diem[]
   ket_qua_tong_ket_rows    ket_qua_tong_ket[]
+  thoi_khoa_bieu_rows      thoi_khoa_bieu[]
 
   @@unique([ma_nam_hoc, thu_tu])
   @@index([ma_nam_hoc])
@@ -153,6 +155,7 @@ model lop {
   hoc_sinh_rows            hoc_sinh[]
   phan_cong_giang_day_rows phan_cong_giang_day[]
   bang_diem_rows           bang_diem[]
+  thoi_khoa_bieu_rows      thoi_khoa_bieu[]
 
   @@unique([ma_nam_hoc, ten_lop])
   @@index([ma_nam_hoc])
@@ -183,6 +186,7 @@ model mon_hoc {
   phan_cong_giang_day_rows phan_cong_giang_day[]
   bang_diem_rows           bang_diem[]
   ket_qua_tong_ket_rows    ket_qua_tong_ket[]
+  thoi_khoa_bieu_rows      thoi_khoa_bieu[]
 }
 
 model thanh_phan_diem {
@@ -192,6 +196,7 @@ model thanh_phan_diem {
   he_so                Decimal           @db.Decimal(3, 2)
   bat_buoc             Boolean           @default(true)
   thu_tu_hien_thi      Int               @db.SmallInt
+  cho_phep_nhap        Boolean           @default(true)
   ma_mon_ref           mon_hoc           @relation(fields: [ma_mon], references: [ma_mon], onDelete: Restrict, onUpdate: Restrict)
   diem_thanh_phan_rows diem_thanh_phan[]
   phieu_nhan_dien_rows phieu_nhan_dien[]
@@ -430,4 +435,25 @@ model khoa_idempotency {
 
   @@id([ma_nguoi_dung, thao_tac, khoa])
   @@index([het_han])
+}
+
+model thoi_khoa_bieu {
+  ma_tiet_hoc      Int       @id @default(autoincrement())
+  ma_lop           Int
+  ma_mon           Int
+  ma_giao_vien     Int
+  ma_hoc_ky        Int
+  thu              Int       @db.SmallInt
+  tiet             Int       @db.SmallInt
+  phong_hoc        String?   @db.VarChar(30)
+  ghi_chu          String?   @db.VarChar(200)
+  ma_lop_ref       lop       @relation(fields: [ma_lop], references: [ma_lop], onDelete: Restrict, onUpdate: Restrict)
+  ma_mon_ref       mon_hoc   @relation(fields: [ma_mon], references: [ma_mon], onDelete: Restrict, onUpdate: Restrict)
+  ma_giao_vien_ref giao_vien @relation(fields: [ma_giao_vien], references: [ma_giao_vien], onDelete: Restrict, onUpdate: Restrict)
+  ma_hoc_ky_ref    hoc_ky    @relation(fields: [ma_hoc_ky], references: [ma_hoc_ky], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([ma_lop, ma_hoc_ky, thu, tiet], map: "uq_lop_tiet_hoc")
+  @@unique([ma_giao_vien, ma_hoc_ky, thu, tiet], map: "uq_gv_tiet_hoc")
+  @@index([ma_lop, ma_hoc_ky], map: "idx_thoi_khoa_bieu_lop")
+  @@index([ma_giao_vien, ma_hoc_ky], map: "idx_thoi_khoa_bieu_gv")
 }

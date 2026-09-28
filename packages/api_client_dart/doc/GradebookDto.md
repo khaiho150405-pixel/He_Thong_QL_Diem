@@ -12,6 +12,9 @@ Name | Type | Description | Notes
 **classId** | **num** |  |
 **subjectId** | **num** |  |
 **termId** | **num** |  |
+**className** | **String** |  |
+**subjectName** | **String** |  |
+**termName** | **String** |  |
 **status** | **String** |  |
 **version** | **num** |  |
 

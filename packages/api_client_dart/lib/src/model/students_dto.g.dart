@@ -21,6 +21,10 @@ abstract class _$StudentsDtoCWProxy {
 
   StudentsDto maHocSinh(num maHocSinh);
 
+  StudentsDto sttToanTruong(num? sttToanTruong);
+
+  StudentsDto sttLop(num? sttLop);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -35,6 +39,8 @@ abstract class _$StudentsDtoCWProxy {
     bool dangTheoHoc,
     String label,
     num maHocSinh,
+    num? sttToanTruong,
+    num? sttLop,
   });
 }
 
@@ -66,6 +72,13 @@ class _$StudentsDtoCWProxyImpl implements _$StudentsDtoCWProxy {
   StudentsDto maHocSinh(num maHocSinh) => this(maHocSinh: maHocSinh);
 
   @override
+  StudentsDto sttToanTruong(num? sttToanTruong) =>
+      this(sttToanTruong: sttToanTruong);
+
+  @override
+  StudentsDto sttLop(num? sttLop) => this(sttLop: sttLop);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -80,6 +93,8 @@ class _$StudentsDtoCWProxyImpl implements _$StudentsDtoCWProxy {
     Object? dangTheoHoc = const $CopyWithPlaceholder(),
     Object? label = const $CopyWithPlaceholder(),
     Object? maHocSinh = const $CopyWithPlaceholder(),
+    Object? sttToanTruong = const $CopyWithPlaceholder(),
+    Object? sttLop = const $CopyWithPlaceholder(),
   }) {
     return StudentsDto(
       maNguoiDung: maNguoiDung == const $CopyWithPlaceholder()
@@ -110,6 +125,14 @@ class _$StudentsDtoCWProxyImpl implements _$StudentsDtoCWProxy {
           ? _value.maHocSinh
           // ignore: cast_nullable_to_non_nullable
           : maHocSinh as num,
+      sttToanTruong: sttToanTruong == const $CopyWithPlaceholder()
+          ? _value.sttToanTruong
+          // ignore: cast_nullable_to_non_nullable
+          : sttToanTruong as num?,
+      sttLop: sttLop == const $CopyWithPlaceholder()
+          ? _value.sttLop
+          // ignore: cast_nullable_to_non_nullable
+          : sttLop as num?,
     );
   }
 }
@@ -138,6 +161,8 @@ StudentsDto _$StudentsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
         'dang_theo_hoc',
         'label',
         'ma_hoc_sinh',
+        'stt_toan_truong',
+        'stt_lop',
       ],
     );
     final val = StudentsDto(
@@ -148,6 +173,8 @@ StudentsDto _$StudentsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
       dangTheoHoc: $checkedConvert('dang_theo_hoc', (v) => v as bool),
       label: $checkedConvert('label', (v) => v as String),
       maHocSinh: $checkedConvert('ma_hoc_sinh', (v) => v as num),
+      sttToanTruong: $checkedConvert('stt_toan_truong', (v) => v as num?),
+      sttLop: $checkedConvert('stt_lop', (v) => v as num?),
     );
     return val;
   },
@@ -158,6 +185,8 @@ StudentsDto _$StudentsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
     'ngaySinh': 'ngay_sinh',
     'dangTheoHoc': 'dang_theo_hoc',
     'maHocSinh': 'ma_hoc_sinh',
+    'sttToanTruong': 'stt_toan_truong',
+    'sttLop': 'stt_lop',
   },
 );
 
@@ -170,4 +199,6 @@ Map<String, dynamic> _$StudentsDtoToJson(StudentsDto instance) =>
       'dang_theo_hoc': instance.dangTheoHoc,
       'label': instance.label,
       'ma_hoc_sinh': instance.maHocSinh,
+      'stt_toan_truong': instance.sttToanTruong,
+      'stt_lop': instance.sttLop,
     };

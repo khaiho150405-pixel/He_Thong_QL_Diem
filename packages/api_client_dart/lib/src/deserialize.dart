@@ -2,7 +2,15 @@ import 'package:api_client_dart/src/model/account_dto.dart';
 import 'package:api_client_dart/src/model/account_input.dart';
 import 'package:api_client_dart/src/model/account_update.dart';
 import 'package:api_client_dart/src/model/accounts_dto.dart';
+import 'package:api_client_dart/src/model/accounts_import_input.dart';
+import 'package:api_client_dart/src/model/accounts_import_result.dart';
 import 'package:api_client_dart/src/model/activate_classification_policy_input.dart';
+import 'package:api_client_dart/src/model/admin_grade_distribution_dto.dart';
+import 'package:api_client_dart/src/model/admin_grade_level_progress_dto.dart';
+import 'package:api_client_dart/src/model/admin_kpi_dto.dart';
+import 'package:api_client_dart/src/model/admin_ocr_accuracy_dto.dart';
+import 'package:api_client_dart/src/model/admin_overview_dto.dart';
+import 'package:api_client_dart/src/model/admin_recent_activity_dto.dart';
 import 'package:api_client_dart/src/model/assignments_dto.dart';
 import 'package:api_client_dart/src/model/assignments_input.dart';
 import 'package:api_client_dart/src/model/assignments_page.dart';
@@ -22,6 +30,7 @@ import 'package:api_client_dart/src/model/components_dto.dart';
 import 'package:api_client_dart/src/model/components_input.dart';
 import 'package:api_client_dart/src/model/components_page.dart';
 import 'package:api_client_dart/src/model/create_gradebook_input.dart';
+import 'package:api_client_dart/src/model/create_timetable_item_input.dart';
 import 'package:api_client_dart/src/model/distribution_item_dto.dart';
 import 'package:api_client_dart/src/model/error_dto.dart';
 import 'package:api_client_dart/src/model/final_result_dto.dart';
@@ -31,6 +40,8 @@ import 'package:api_client_dart/src/model/grade_change_input.dart';
 import 'package:api_client_dart/src/model/grade_history_dto.dart';
 import 'package:api_client_dart/src/model/grade_history_entry_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_dto.dart';
+import 'package:api_client_dart/src/model/gradebook_history_dto.dart';
+import 'package:api_client_dart/src/model/gradebook_history_entry_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_list_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_summary_dto.dart';
 import 'package:api_client_dart/src/model/health_dto.dart';
@@ -52,17 +63,24 @@ import 'package:api_client_dart/src/model/semesters_page.dart';
 import 'package:api_client_dart/src/model/session_dto.dart';
 import 'package:api_client_dart/src/model/skipped_student_dto.dart';
 import 'package:api_client_dart/src/model/student_approved_component_dto.dart';
+import 'package:api_client_dart/src/model/student_result_summary_dto.dart';
 import 'package:api_client_dart/src/model/student_results_dto.dart';
 import 'package:api_client_dart/src/model/student_subject_result_dto.dart';
 import 'package:api_client_dart/src/model/students_dto.dart';
+import 'package:api_client_dart/src/model/students_import_input.dart';
+import 'package:api_client_dart/src/model/students_import_result.dart';
 import 'package:api_client_dart/src/model/students_input.dart';
 import 'package:api_client_dart/src/model/students_page.dart';
 import 'package:api_client_dart/src/model/subjects_dto.dart';
 import 'package:api_client_dart/src/model/subjects_input.dart';
 import 'package:api_client_dart/src/model/subjects_page.dart';
 import 'package:api_client_dart/src/model/teachers_dto.dart';
+import 'package:api_client_dart/src/model/teachers_import_input.dart';
+import 'package:api_client_dart/src/model/teachers_import_result.dart';
 import 'package:api_client_dart/src/model/teachers_input.dart';
 import 'package:api_client_dart/src/model/teachers_page.dart';
+import 'package:api_client_dart/src/model/timetable_item_dto.dart';
+import 'package:api_client_dart/src/model/timetable_list_dto.dart';
 import 'package:api_client_dart/src/model/updated_cell_dto.dart';
 import 'package:api_client_dart/src/model/years_dto.dart';
 import 'package:api_client_dart/src/model/years_input.dart';
@@ -99,10 +117,33 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'AccountsDto':
       return AccountsDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AccountsImportInput':
+      return AccountsImportInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AccountsImportResult':
+      return AccountsImportResult.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'ActivateClassificationPolicyInput':
       return ActivateClassificationPolicyInput.fromJson(
             value as Map<String, dynamic>,
           )
+          as ReturnType;
+    case 'AdminGradeDistributionDto':
+      return AdminGradeDistributionDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminGradeLevelProgressDto':
+      return AdminGradeLevelProgressDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminKpiDto':
+      return AdminKpiDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'AdminOcrAccuracyDto':
+      return AdminOcrAccuracyDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminOverviewDto':
+      return AdminOverviewDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdminRecentActivityDto':
+      return AdminRecentActivityDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'AssignmentsDto':
       return AssignmentsDto.fromJson(value as Map<String, dynamic>)
@@ -158,6 +199,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'CreateGradebookInput':
       return CreateGradebookInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'CreateTimetableItemInput':
+      return CreateTimetableItemInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'DistributionItemDto':
       return DistributionItemDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -182,6 +226,12 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'GradebookDto':
       return GradebookDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'GradebookHistoryDto':
+      return GradebookHistoryDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'GradebookHistoryEntryDto':
+      return GradebookHistoryEntryDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'GradebookListDto':
       return GradebookListDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -239,6 +289,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'StudentApprovedComponentDto':
       return StudentApprovedComponentDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'StudentResultSummaryDto':
+      return StudentResultSummaryDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'StudentResultsDto':
       return StudentResultsDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -247,6 +300,12 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'StudentsDto':
       return StudentsDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'StudentsImportInput':
+      return StudentsImportInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'StudentsImportResult':
+      return StudentsImportResult.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'StudentsInput':
       return StudentsInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -261,11 +320,23 @@ ReturnType deserialize<ReturnType, BaseType>(
       return SubjectsPage.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TeachersDto':
       return TeachersDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TeachersImportInput':
+      return TeachersImportInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'TeachersImportResult':
+      return TeachersImportResult.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'TeachersInput':
       return TeachersInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'TeachersPage':
       return TeachersPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TimetableItemDto':
+      return TimetableItemDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'TimetableListDto':
+      return TimetableListDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'UpdatedCellDto':
       return UpdatedCellDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;

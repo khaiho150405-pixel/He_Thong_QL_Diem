@@ -231,4 +231,21 @@ export class FinalResultsService {
       return tx.studentResults(actor.id, termId ?? null);
     });
   }
+
+  myOverview(actor: Actor, termId?: number) {
+    if (actor.role !== "HOC_SINH") throw new ForbiddenException();
+    if (
+      termId !== undefined &&
+      (!Number.isSafeInteger(termId) || termId < 1 || termId > 2147483647)
+    )
+      throw new BadRequestException();
+    return this.store.run(async (tx) => {
+      await currentActor(tx.authorization, actor);
+      const [items, summary] = await Promise.all([
+        tx.studentResults(actor.id, termId ?? null),
+        tx.studentSummary(actor.id, termId ?? null),
+      ]);
+      return { items, summary };
+    });
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/widgets/role_badge.dart';
 import '../authentication/session.dart';
 import 'repository.dart';
 import 'fields.dart';
@@ -28,6 +29,10 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                     (widget.row == null && f.key == 'active'))),
       )
       .toList();
+
+  final Set<num> _existingTeacherIds = {};
+  final List<Json> _existingAssignments = [];
+
   @override
   void initState() {
     super.initState();
@@ -66,11 +71,140 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           } while (cursor != null);
           choices[reference] = rows;
         }
+
+        // Preload teachers to prevent duplicate teacher creation
+        if (widget.spec.key == 'teachers') {
+          final tRows = <Json>[];
+          String? cursor;
+          do {
+            final page = await ref
+                .read(catalogRepositoryProvider)
+                .list('teachers', cursor: cursor);
+            tRows.addAll(page.items);
+            cursor = page.nextCursor;
+          } while (cursor != null);
+          _existingTeacherIds.clear();
+          for (final t in tRows) {
+            final id = t['ma_giao_vien'];
+            if (id is num) _existingTeacherIds.add(id);
+          }
+        }
+
+        // Preload assignments to prevent duplicate assignment creation
+        if (widget.spec.key == 'assignments') {
+          final aRows = <Json>[];
+          String? cursor;
+          do {
+            final page = await ref
+                .read(catalogRepositoryProvider)
+                .list('assignments', cursor: cursor);
+            aRows.addAll(page.items);
+            cursor = page.nextCursor;
+          } while (cursor != null);
+          _existingAssignments.clear();
+          _existingAssignments.addAll(aRows);
+        }
       }
     } catch (e) {
       error = errorMessage(e);
     }
     if (mounted) setState(() => loading = false);
+  }
+
+  Future<void> _createTeacherAccount() async {
+    final username = TextEditingController();
+    final password = TextEditingController();
+    final accountForm = GlobalKey<FormState>();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Tạo tài khoản giáo viên'),
+        content: Form(
+          key: accountForm,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: username,
+                decoration: const InputDecoration(labelText: 'Tên đăng nhập'),
+                validator: (value) =>
+                    value == null ||
+                        !RegExp(r'^[a-zA-Z0-9_.-]{3,50}$').hasMatch(value)
+                    ? 'Dùng 3–50 ký tự chữ, số, _, . hoặc -'
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: password,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Mật khẩu ban đầu',
+                  helperText: 'Ít nhất 12 ký tự',
+                ),
+                validator: (value) => value == null || value.length < 12
+                    ? 'Mật khẩu cần ít nhất 12 ký tự'
+                    : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (accountForm.currentState!.validate()) {
+                Navigator.pop(dialogContext, true);
+              }
+            },
+            child: const Text('Tạo và liên kết'),
+          ),
+        ],
+      ),
+    );
+    if (submitted != true || !mounted) {
+      username.dispose();
+      password.dispose();
+      return;
+    }
+    final selectedUsername = username.text.trim();
+    final selectedPassword = password.text;
+    username.dispose();
+    password.dispose();
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      await ref.read(catalogRepositoryProvider).save('accounts', {
+        'username': selectedUsername,
+        'password': selectedPassword,
+        'role': 'GIAO_VIEN',
+      });
+      final accounts = <Json>[];
+      String? cursor;
+      do {
+        final page = await ref
+            .read(catalogRepositoryProvider)
+            .list('accounts', cursor: cursor);
+        accounts.addAll(page.items);
+        cursor = page.nextCursor;
+      } while (cursor != null);
+      final created = accounts.firstWhere(
+        (row) => row['username'] == selectedUsername,
+      );
+      if (!mounted) return;
+      setState(() {
+        choices['accounts'] = accounts;
+        values['ma_giao_vien'] = created['id'];
+      });
+    } catch (e) {
+      if (mounted) setState(() => error = errorMessage(e));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
   }
 
   @override
@@ -97,6 +231,25 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           ? int.parse(text)
           : text;
     }
+
+    // Duplicate check for assignments (ma_lop, ma_mon, ma_hoc_ky)
+    if (widget.spec.key == 'assignments') {
+      final currentId = widget.row?['ma_phan_cong'];
+      final isDup = _existingAssignments.any((a) {
+        if (currentId != null && a['ma_phan_cong'] == currentId) return false;
+        return a['ma_lop'] == input['ma_lop'] &&
+            a['ma_mon'] == input['ma_mon'] &&
+            a['ma_hoc_ky'] == input['ma_hoc_ky'];
+      });
+      if (isDup) {
+        setState(() {
+          error =
+              'Lớp học, môn học và học kỳ này đã được phân công giáo viên. Vui lòng chọn sửa phân công có sẵn thay vì tạo trùng lặp.';
+        });
+        return;
+      }
+    }
+
     setState(() {
       busy = true;
       error = null;
@@ -125,18 +278,47 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             widget.row != null &&
             f.key == 'ma_giao_vien');
     if (f.kind == 'boolean') {
-      return SwitchListTile(
-        title: Text(f.label),
-        value: values[f.key] as bool? ?? false,
-        onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
+      return Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant.withAlpha(80),
+          ),
+        ),
+        child: SwitchListTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Text(
+            f.label,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          value: values[f.key] as bool? ?? false,
+          onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
+        ),
       );
     }
     if (f.kind == 'role') {
       return DropdownButtonFormField<String>(
         initialValue: values[f.key] as String?,
-        decoration: InputDecoration(labelText: f.label),
+        decoration: InputDecoration(
+          labelText: f.label,
+          prefixIcon: const Icon(Icons.security_rounded, size: 20),
+        ),
         items: ['QUAN_TRI_VIEN', 'GIAO_VIEN', 'HOC_SINH']
-            .map((r) => DropdownMenuItem(value: r, child: Text(roleLabel(r))))
+            .map(
+              (r) => DropdownMenuItem(
+                value: r,
+                child: Row(
+                  children: [
+                    RoleBadge(role: r, compact: true),
+                    const SizedBox(width: 8),
+                    Text(roleLabel(r)),
+                  ],
+                ),
+              ),
+            )
             .toList(),
         onChanged: locked ? null : (v) => values[f.key] = v,
       );
@@ -152,6 +334,13 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                   (widget.spec.key == 'teachers' ? 'GIAO_VIEN' : 'HOC_SINH'),
             )
             .toList();
+
+        // Exclude accounts that already have a teacher profile when creating a new teacher
+        if (widget.spec.key == 'teachers' && widget.row == null) {
+          rows = rows
+              .where((r) => !_existingTeacherIds.contains(r['id']))
+              .toList();
+        }
       }
       final selected = values[f.key];
       final items = rows
@@ -179,16 +368,49 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           ),
         );
       }
-      return DropdownButtonFormField<num>(
+      final dropdown = DropdownButtonFormField<num>(
+        key: ValueKey(selected),
         initialValue: selected as num?,
         isExpanded: true,
         decoration: InputDecoration(
           labelText: '${f.label}${f.optional ? ' (không bắt buộc)' : ''}',
+          helperText: widget.spec.key == 'teachers' && widget.row != null
+              ? 'Liên kết tài khoản không thể đổi sau khi tạo hồ sơ.'
+              : null,
+          prefixIcon: const Icon(Icons.link_rounded, size: 20),
         ),
         items: items,
-        onChanged: locked ? null : (v) => values[f.key] = v,
+        onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
         validator: (v) =>
             v == null && !f.optional ? 'Chọn ${f.label.toLowerCase()}' : null,
+      );
+      if (widget.spec.key != 'teachers' ||
+          f.key != 'ma_giao_vien' ||
+          widget.row != null) {
+        return dropdown;
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          dropdown,
+          const SizedBox(height: 6),
+          if (rows.isEmpty)
+            Text(
+              'Không còn tài khoản giáo viên chưa liên kết.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: busy ? null : _createTeacherAccount,
+              icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+              label: const Text('Tạo tài khoản giáo viên mới'),
+            ),
+          ),
+        ],
       );
     }
     return TextFormField(
@@ -199,13 +421,13 @@ class _EditDialogState extends ConsumerState<EditDialog> {
       decoration: InputDecoration(
         labelText: f.label,
         helperText: f.kind == 'date'
-            ? 'YYYY-MM-DD'
+            ? 'Định dạng: YYYY-MM-DD'
             : f.kind == 'decimal'
             ? 'Ví dụ: 1.00'
             : f.optional
             ? 'Không bắt buộc'
             : f.kind == 'password' && widget.row != null
-            ? 'Để trống để giữ mật khẩu hiện tại'
+            ? 'Để trống nếu muốn giữ nguyên mật khẩu cũ'
             : null,
       ),
       validator: (value) {
@@ -227,69 +449,141 @@ class _EditDialogState extends ConsumerState<EditDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(
-      '${widget.row == null
-          ? 'Thêm'
-          : editable
-          ? 'Sửa'
-          : 'Xem'} ${widget.spec.label.toLowerCase()}',
-    ),
-    content: SizedBox(
-      width: 520,
-      child: loading
-          ? const SizedBox(
-              height: 80,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : SingleChildScrollView(
-              child: Form(
-                key: form,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (error != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          error!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isNew = widget.row == null;
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withAlpha(25),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              isNew
+                  ? Icons.add_circle_outline_rounded
+                  : editable
+                  ? Icons.edit_note_rounded
+                  : Icons.visibility_outlined,
+              color: colorScheme.primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${isNew
+                      ? 'Thêm mới'
+                      : editable
+                      ? 'Chỉnh sửa'
+                      : 'Thông tin'} ${widget.spec.label.toLowerCase()}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (!isNew && widget.row != null)
+                  Text(
+                    rowLabel(widget.row!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: loading
+            ? const SizedBox(
+                height: 120,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 12),
+                      Text('Đang tải danh mục liên kết…'),
+                    ],
+                  ),
+                ),
+              )
+            : SingleChildScrollView(
+                child: Form(
+                  key: form,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (error != null)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: colorScheme.errorContainer.withAlpha(120),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorScheme.error.withAlpha(80),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                size: 18,
+                                color: colorScheme.error,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  error!,
+                                  style: TextStyle(
+                                    color: colorScheme.error,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    if (!editable && widget.row != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(rowLabel(widget.row!)),
-                      ),
-                    for (final f in fields.where(
-                      (f) => editable || f.reference == null,
-                    ))
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: field(f),
-                      ),
-                  ],
+                      for (final f in fields.where(
+                        (f) => editable || f.reference == null,
+                      ))
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: field(f),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: busy ? null : () => Navigator.pop(context),
-        child: const Text('Đóng'),
       ),
-      if (error != null)
+      actions: [
         TextButton(
-          onPressed: busy ? null : loadChoices,
-          child: const Text('Tải lại'),
+          onPressed: busy ? null : () => Navigator.pop(context),
+          child: const Text('Đóng'),
         ),
-      if (editable)
-        FilledButton(
-          onPressed: busy || loading ? null : save,
-          child: Text(busy ? 'Đang lưu…' : 'Lưu'),
-        ),
-    ],
-  );
+        if (error != null)
+          TextButton(
+            onPressed: busy ? null : loadChoices,
+            child: const Text('Tải lại'),
+          ),
+        if (editable)
+          FilledButton(
+            onPressed: busy || loading ? null : save,
+            child: Text(busy ? 'Đang lưu…' : 'Lưu'),
+          ),
+      ],
+    );
+  }
 }

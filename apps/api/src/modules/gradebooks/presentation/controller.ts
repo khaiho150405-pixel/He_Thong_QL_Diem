@@ -32,6 +32,9 @@ export class GradebookDto {
   @ApiProperty({ type: Number }) classId!: number;
   @ApiProperty({ type: Number }) subjectId!: number;
   @ApiProperty({ type: Number }) termId!: number;
+  @ApiProperty({ type: String }) className!: string;
+  @ApiProperty({ type: String }) subjectName!: string;
+  @ApiProperty({ type: String }) termName!: string;
   @ApiProperty({ type: String, enum: ["DANG_NHAP_LIEU", "DA_CHOT"] })
   status!: string;
   @ApiProperty({ type: Number }) version!: number;
@@ -52,6 +55,7 @@ export class GradeCellDto {
   @ApiProperty({ type: String }) coefficient!: string;
   @ApiProperty({ type: Boolean }) required!: boolean;
   @ApiProperty({ type: Number }) displayOrder!: number;
+  @ApiProperty({ type: Boolean, required: false }) openForInput?: boolean;
   @ApiProperty({ type: String, nullable: true }) value!: string | null;
   @ApiProperty({
     type: String,
@@ -122,6 +126,15 @@ export class GradeHistoryEntryDto {
 
 export class GradeHistoryDto {
   @ApiProperty({ type: [GradeHistoryEntryDto] }) items!: GradeHistoryEntryDto[];
+  @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
+}
+export class GradebookHistoryEntryDto extends GradeHistoryEntryDto {
+  @ApiProperty({ type: String }) studentName!: string;
+  @ApiProperty({ type: String }) componentName!: string;
+}
+export class GradebookHistoryDto {
+  @ApiProperty({ type: [GradebookHistoryEntryDto] })
+  items!: GradebookHistoryEntryDto[];
   @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
 }
 
@@ -206,6 +219,18 @@ export class GradebooksController {
     @Body() body: unknown,
   ) {
     return this.service.syncRoster(req.actor, id, key, body);
+  }
+
+  @Get(":id/history")
+  @ApiOkResponse({ type: GradebookHistoryDto })
+  @ApiParam({ name: "id", type: Number })
+  @ApiQuery({ name: "cursor", type: String, required: false })
+  historyAll(
+    @Req() req: Request & { actor: Actor },
+    @Param("id", ParseIntPipe) id: number,
+    @Query("cursor") cursor?: string,
+  ) {
+    return this.service.historyAll(req.actor, id, cursor ?? "0");
   }
 
   @Get(":id/cells/:cellId/history")

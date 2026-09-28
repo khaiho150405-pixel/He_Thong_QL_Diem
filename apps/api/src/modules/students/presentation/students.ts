@@ -34,10 +34,22 @@ export class StudentsInput {
 export class StudentsDto extends StudentsInput {
   @ApiProperty({ type: String }) label!: string;
   @ApiProperty({ type: Number }) ma_hoc_sinh!: number;
+  @ApiProperty({ type: Number, nullable: true }) stt_toan_truong!:
+    | number
+    | null;
+  @ApiProperty({ type: Number, nullable: true }) stt_lop!: number | null;
 }
 export class StudentsPage {
   @ApiProperty({ type: [StudentsDto] }) items!: StudentsDto[];
   @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
+}
+export class StudentsImportInput {
+  @ApiProperty({ type: [StudentsInput], maxItems: 500 })
+  items!: StudentsInput[];
+}
+export class StudentsImportResult {
+  @ApiProperty({ type: Number }) imported!: number;
+  @ApiProperty({ type: [StudentsDto] }) items!: StudentsDto[];
 }
 @ApiTags("students")
 @Controller("catalog/students")
@@ -62,6 +74,16 @@ export class StudentsController {
   @ApiOkResponse({ type: StudentsDto })
   create(@Req() req: Request & { actor: Actor }, @Body() input: unknown) {
     return this.service.save(req.actor, input);
+  }
+  @Post("import")
+  @HttpCode(200)
+  @ApiBody({ type: StudentsImportInput })
+  @ApiOkResponse({ type: StudentsImportResult })
+  importMany(
+    @Req() req: Request & { actor: Actor },
+    @Body() input: StudentsImportInput,
+  ) {
+    return this.service.saveMany(req.actor, input?.items ?? []);
   }
   @Put(":id")
   @ApiBody({ type: StudentsInput })

@@ -75,6 +75,13 @@ export class AccountsDto {
   @ApiProperty({ type: [AccountDto] }) items!: AccountDto[];
   @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
 }
+export class AccountsImportInput {
+  @ApiProperty({ type: [AccountInput], maxItems: 500 }) items!: AccountInput[];
+}
+export class AccountsImportResult {
+  @ApiProperty({ type: Number }) imported!: number;
+  @ApiProperty({ type: [AccountDto] }) items!: AccountDto[];
+}
 @ApiTags("identity")
 @Controller("identity")
 export class IdentityController {
@@ -180,6 +187,16 @@ export class IdentityController {
   @ApiOkResponse({ type: AccountDto })
   createAccount(@Req() req: SessionRequest, @Body() body: unknown) {
     return this.service.createAccount(req.actor, body as AccountInput);
+  }
+  @Post("accounts/import")
+  @HttpCode(200)
+  @ApiBody({ type: AccountsImportInput })
+  @ApiOkResponse({ type: AccountsImportResult })
+  importAccounts(
+    @Req() req: SessionRequest,
+    @Body() body: AccountsImportInput,
+  ) {
+    return this.service.importAccounts(req.actor, body?.items ?? []);
   }
   @Put("accounts/:id")
   @ApiBody({ type: AccountUpdate })

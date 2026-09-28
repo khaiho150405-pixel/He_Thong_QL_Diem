@@ -27,7 +27,10 @@ services:
       timeout: 3s
       retries: 20
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    build:
+      context: ./docker
+      dockerfile: minio.Dockerfile
+      target: server
     command: server /data --console-address ':9001'
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?required}
@@ -40,7 +43,10 @@ services:
       timeout: 3s
       retries: 20
   storage-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    build:
+      context: ./docker
+      dockerfile: minio.Dockerfile
+      target: client
     depends_on:
       minio: { condition: service_healthy }
     environment:

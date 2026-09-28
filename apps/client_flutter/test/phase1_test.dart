@@ -116,6 +116,11 @@ void registerPhaseOneTests({bool resize = true}) {
       await tester.tap(find.widgetWithText(FilledButton, 'Đăng nhập'));
       await tester.pumpAndSettle();
       expect(find.text('Xin chào, fake_user'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Năm học'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(find.text('Năm học'));
       await tester.pumpAndSettle();
       expect(find.text('Chưa có dữ liệu phù hợp.'), findsOneWidget);

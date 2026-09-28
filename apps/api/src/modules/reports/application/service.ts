@@ -21,6 +21,26 @@ function numericCell(value: string | null | undefined) {
   return value == null ? null : Number(value);
 }
 
+const viCollator = new Intl.Collator("vi", {
+  sensitivity: "accent",
+  numeric: true,
+});
+
+export function compareVietnameseNames(
+  fullNameA: string,
+  fullNameB: string,
+): number {
+  const partsA = fullNameA.trim().split(/\s+/);
+  const partsB = fullNameB.trim().split(/\s+/);
+  const givenA = partsA[partsA.length - 1] || "";
+  const givenB = partsB[partsB.length - 1] || "";
+  const cmp = viCollator.compare(givenA, givenB);
+  if (cmp !== 0) return cmp;
+  const restA = partsA.slice(0, -1).join(" ");
+  const restB = partsB.slice(0, -1).join(" ");
+  return viCollator.compare(restA, restB);
+}
+
 @Injectable()
 export class ReportsService {
   constructor(@Inject(REPORT_STORE) private readonly store: ReportStore) {}
@@ -36,6 +56,13 @@ export class ReportsService {
     });
   }
 
+  adminOverview(actor: Actor) {
+    return this.store.run(async (tx) => {
+      await gradebookActor(tx.authorization, actor);
+      return tx.adminOverview();
+    });
+  }
+
   export(actor: Actor, gradebookId: number) {
     id(gradebookId);
     return this.store.run(async (tx) => {
@@ -43,8 +70,13 @@ export class ReportsService {
       const book = await tx.findBook(gradebookId);
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book);
-      const rows = await tx.exportRows(gradebookId);
-      if (!rows.length) throw new NotFoundException();
+      const rawRows = await tx.exportRows(gradebookId);
+      if (!rawRows.length) throw new NotFoundException();
+
+      // Sort students according to standard Vietnamese alphabet (given name first)
+      const rows = [...rawRows].sort((a, b) =>
+        compareVietnameseNames(a.studentName, b.studentName),
+      );
 
       const componentNames = [
         ...new Set(
@@ -58,6 +90,7 @@ export class ReportsService {
         views: [{ state: "frozen", ySplit: 1 }],
       });
       sheet.columns = [
+        { header: "STT", key: "stt", width: 8 },
         { header: "Mã học sinh", key: "studentId", width: 15 },
         { header: "Họ tên", key: "studentName", width: 28 },
         ...componentNames.map((name, index) => ({
@@ -68,11 +101,14 @@ export class ReportsService {
         { header: "Điểm tổng kết", key: "finalScore", width: 16 },
         { header: "Xếp loại", key: "classification", width: 18 },
       ];
-      for (const row of rows) {
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row) continue;
         const components = new Map(
           row.components.map((item) => [item.name, item.value]),
         );
         sheet.addRow({
+          stt: i + 1,
           studentId: row.studentId,
           studentName: safeCell(row.studentName),
           ...Object.fromEntries(

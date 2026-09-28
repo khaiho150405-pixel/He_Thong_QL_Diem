@@ -10,3 +10,7 @@ implementation_plan1.md
 .local/
 apps/api/src/generated/
 dist/
+.agents/
+.claude/
+.windsurf/
+UI/

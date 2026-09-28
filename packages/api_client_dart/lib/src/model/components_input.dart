@@ -27,6 +27,8 @@ class ComponentsInput {
     required this.batBuoc,
 
     required this.thuTuHienThi,
+
+    this.choPhepNhap,
   });
 
   @JsonKey(name: r'ma_mon', required: true, includeIfNull: false)
@@ -44,6 +46,9 @@ class ComponentsInput {
   @JsonKey(name: r'thu_tu_hien_thi', required: true, includeIfNull: false)
   final num thuTuHienThi;
 
+  @JsonKey(name: r'cho_phep_nhap', required: false, includeIfNull: false)
+  final bool? choPhepNhap;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -52,7 +57,8 @@ class ComponentsInput {
           other.tenThanhPhan == tenThanhPhan &&
           other.heSo == heSo &&
           other.batBuoc == batBuoc &&
-          other.thuTuHienThi == thuTuHienThi;
+          other.thuTuHienThi == thuTuHienThi &&
+          other.choPhepNhap == choPhepNhap;
 
   @override
   int get hashCode =>
@@ -60,7 +66,8 @@ class ComponentsInput {
       tenThanhPhan.hashCode +
       heSo.hashCode +
       batBuoc.hashCode +
-      thuTuHienThi.hashCode;
+      thuTuHienThi.hashCode +
+      choPhepNhap.hashCode;
 
   factory ComponentsInput.fromJson(Map<String, dynamic> json) =>
       _$ComponentsInputFromJson(json);

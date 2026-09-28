@@ -11,10 +11,12 @@ class FinalResultsPanel extends ConsumerStatefulWidget {
     super.key,
     required this.gradebookId,
     required this.gradebookVersion,
+    this.showResults = true,
   });
 
   final num gradebookId;
   final num gradebookVersion;
+  final bool showResults;
 
   @override
   ConsumerState<FinalResultsPanel> createState() => _FinalResultsPanelState();
@@ -149,8 +151,8 @@ class _FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
     child: ExpansionTile(
       initiallyExpanded: true,
       leading: const Icon(Icons.calculate_outlined),
-      title: const Text('Kết quả tổng kết'),
-      subtitle: const Text('UC14–UC15 · điểm đã duyệt và policy có phiên bản'),
+      title: const Text('Kết quả tổng kết và xếp loại'),
+      subtitle: const Text('Hiển thị dưới bảng điểm · UC14–UC15'),
       trailing: teacher
           ? FilledButton.icon(
               key: const ValueKey('calculate-final-results'),
@@ -161,63 +163,78 @@ class _FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
           : null,
       children: [
         if (busy) const LinearProgressIndicator(),
-        SizedBox(
-          height: 260,
-          child: FutureBuilder<List<FinalResultDto>>(
-            future: results,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_message(snapshot.error!)),
-                      TextButton(
-                        onPressed: reload,
-                        child: const Text('Thử lại'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              final items = snapshot.data!;
-              if (items.isEmpty) {
-                return const Center(
-                  child: Text('Chưa tính kết quả cho bảng điểm này.'),
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return ListTile(
-                    title: Text(item.studentName),
-                    subtitle: Text(
-                      'Hệ số ${item.weightVersion} · Policy ${item.policyVersion}',
-                    ),
-                    leading: CircleAvatar(child: Text(item.finalScore)),
-                    trailing: Row(
+        if (!widget.showResults)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              'Điểm tổng kết và xếp loại được hiển thị trực tiếp trong từng hàng của bảng điểm.',
+            ),
+          ),
+        if (widget.showResults)
+          SizedBox(
+            height: 260,
+            child: FutureBuilder<List<FinalResultDto>>(
+              future: results,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Chip(label: Text(item.classification)),
-                        IconButton(
-                          tooltip: 'Lịch sử tính',
-                          onPressed: () => showHistory(item),
-                          icon: const Icon(Icons.history),
+                        Text(_message(snapshot.error!)),
+                        TextButton(
+                          onPressed: reload,
+                          child: const Text('Thử lại'),
                         ),
                       ],
                     ),
                   );
-                },
-              );
-            },
+                }
+                final items = snapshot.data!;
+                if (items.isEmpty) {
+                  return const Center(
+                    child: Text('Chưa tính kết quả cho bảng điểm này.'),
+                  );
+                }
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('STT')),
+                      DataColumn(label: Text('Học sinh')),
+                      DataColumn(label: Text('Điểm tổng kết')),
+                      DataColumn(label: Text('Xếp loại')),
+                      DataColumn(label: Text('Chi tiết')),
+                    ],
+                    rows: [
+                      for (final entry in items.asMap().entries)
+                        DataRow(
+                          cells: [
+                            DataCell(Text('${entry.key + 1}')),
+                            DataCell(Text(entry.value.studentName)),
+                            DataCell(Text(entry.value.finalScore)),
+                            DataCell(
+                              Chip(label: Text(entry.value.classification)),
+                            ),
+                            DataCell(
+                              IconButton(
+                                tooltip: 'Lịch sử tính',
+                                onPressed: () => showHistory(entry.value),
+                                icon: const Icon(Icons.history),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
-        ),
       ],
     ),
   );

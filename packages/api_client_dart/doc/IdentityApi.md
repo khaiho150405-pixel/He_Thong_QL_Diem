@@ -11,6 +11,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**identityAccounts**](IdentityApi.md#identityaccounts) | **GET** /api/v1/identity/accounts |
 [**identityCreateAccount**](IdentityApi.md#identitycreateaccount) | **POST** /api/v1/identity/accounts |
+[**identityImportAccounts**](IdentityApi.md#identityimportaccounts) | **POST** /api/v1/identity/accounts/import |
 [**identityLogin**](IdentityApi.md#identitylogin) | **POST** /api/v1/identity/login |
 [**identityLogout**](IdentityApi.md#identitylogout) | **POST** /api/v1/identity/logout |
 [**identityMe**](IdentityApi.md#identityme) | **GET** /api/v1/identity/me |
@@ -104,6 +105,55 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**AccountDto**](AccountDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **identityImportAccounts**
+> AccountsImportResult identityImportAccounts(accountsImportInput)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getIdentityApi();
+final AccountsImportInput accountsImportInput = ; // AccountsImportInput |
+
+try {
+    final response = api.identityImportAccounts(accountsImportInput);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling IdentityApi->identityImportAccounts: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **accountsImportInput** | [**AccountsImportInput**](AccountsImportInput.md)|  |
+
+### Return type
+
+[**AccountsImportResult**](AccountsImportResult.md)
 
 ### Authorization
 

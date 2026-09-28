@@ -36,6 +36,8 @@ class GradeCellDto {
 
     required this.displayOrder,
 
+    this.openForInput,
+
     required this.value,
 
     required this.status,
@@ -70,6 +72,9 @@ class GradeCellDto {
   @JsonKey(name: r'displayOrder', required: true, includeIfNull: false)
   final num displayOrder;
 
+  @JsonKey(name: r'openForInput', required: false, includeIfNull: false)
+  final bool? openForInput;
+
   @JsonKey(name: r'value', required: true, includeIfNull: true)
   final String? value;
 
@@ -92,6 +97,7 @@ class GradeCellDto {
           other.coefficient == coefficient &&
           other.required_ == required_ &&
           other.displayOrder == displayOrder &&
+          other.openForInput == openForInput &&
           other.value == value &&
           other.status == status &&
           other.source_ == source_;
@@ -107,6 +113,7 @@ class GradeCellDto {
       coefficient.hashCode +
       required_.hashCode +
       displayOrder.hashCode +
+      openForInput.hashCode +
       (value == null ? 0 : value.hashCode) +
       status.hashCode +
       source_.hashCode;

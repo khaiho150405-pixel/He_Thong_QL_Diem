@@ -17,6 +17,8 @@ abstract class _$ComponentsDtoCWProxy {
 
   ComponentsDto thuTuHienThi(num thuTuHienThi);
 
+  ComponentsDto choPhepNhap(bool? choPhepNhap);
+
   ComponentsDto label(String label);
 
   ComponentsDto maThanhPhan(num maThanhPhan);
@@ -33,6 +35,7 @@ abstract class _$ComponentsDtoCWProxy {
     String heSo,
     bool batBuoc,
     num thuTuHienThi,
+    bool? choPhepNhap,
     String label,
     num maThanhPhan,
   });
@@ -62,6 +65,10 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
       this(thuTuHienThi: thuTuHienThi);
 
   @override
+  ComponentsDto choPhepNhap(bool? choPhepNhap) =>
+      this(choPhepNhap: choPhepNhap);
+
+  @override
   ComponentsDto label(String label) => this(label: label);
 
   @override
@@ -80,6 +87,7 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
     Object? heSo = const $CopyWithPlaceholder(),
     Object? batBuoc = const $CopyWithPlaceholder(),
     Object? thuTuHienThi = const $CopyWithPlaceholder(),
+    Object? choPhepNhap = const $CopyWithPlaceholder(),
     Object? label = const $CopyWithPlaceholder(),
     Object? maThanhPhan = const $CopyWithPlaceholder(),
   }) {
@@ -104,6 +112,10 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
           ? _value.thuTuHienThi
           // ignore: cast_nullable_to_non_nullable
           : thuTuHienThi as num,
+      choPhepNhap: choPhepNhap == const $CopyWithPlaceholder()
+          ? _value.choPhepNhap
+          // ignore: cast_nullable_to_non_nullable
+          : choPhepNhap as bool?,
       label: label == const $CopyWithPlaceholder()
           ? _value.label
           // ignore: cast_nullable_to_non_nullable
@@ -149,6 +161,7 @@ ComponentsDto _$ComponentsDtoFromJson(Map<String, dynamic> json) =>
           heSo: $checkedConvert('he_so', (v) => v as String),
           batBuoc: $checkedConvert('bat_buoc', (v) => v as bool),
           thuTuHienThi: $checkedConvert('thu_tu_hien_thi', (v) => v as num),
+          choPhepNhap: $checkedConvert('cho_phep_nhap', (v) => v as bool?),
           label: $checkedConvert('label', (v) => v as String),
           maThanhPhan: $checkedConvert('ma_thanh_phan', (v) => v as num),
         );
@@ -160,6 +173,7 @@ ComponentsDto _$ComponentsDtoFromJson(Map<String, dynamic> json) =>
         'heSo': 'he_so',
         'batBuoc': 'bat_buoc',
         'thuTuHienThi': 'thu_tu_hien_thi',
+        'choPhepNhap': 'cho_phep_nhap',
         'maThanhPhan': 'ma_thanh_phan',
       },
     );
@@ -171,6 +185,7 @@ Map<String, dynamic> _$ComponentsDtoToJson(ComponentsDto instance) =>
       'he_so': instance.heSo,
       'bat_buoc': instance.batBuoc,
       'thu_tu_hien_thi': instance.thuTuHienThi,
+      'cho_phep_nhap': ?instance.choPhepNhap,
       'label': instance.label,
       'ma_thanh_phan': instance.maThanhPhan,
     };

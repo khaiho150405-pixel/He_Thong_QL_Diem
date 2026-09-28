@@ -90,11 +90,17 @@ const resources = <ResourceSpec>[
     FormFieldSpec('he_so', 'Hệ số', 'decimal', optional: false),
     FormFieldSpec('bat_buoc', 'Bắt buộc', 'boolean', optional: false),
     FormFieldSpec('thu_tu_hien_thi', 'Thứ tự hiển thị', 'int', optional: false),
+    FormFieldSpec(
+      'cho_phep_nhap',
+      'Mở cổng nhập điểm (GV được nhập)',
+      'boolean',
+      optional: false,
+    ),
   ]),
   ResourceSpec('teachers', 'Giáo viên', 'ma_giao_vien', [
     FormFieldSpec(
       'ma_giao_vien',
-      'Giáo viên',
+      'Tài khoản giáo viên',
       'int',
       optional: false,
       reference: 'accounts',

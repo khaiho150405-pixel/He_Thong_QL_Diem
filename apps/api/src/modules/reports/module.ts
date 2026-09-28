@@ -2,10 +2,13 @@ import { Module } from "@nestjs/common";
 import { ReportsService } from "./application/service.js";
 import { REPORT_STORE } from "./application/port.js";
 import { PrismaReportStore } from "./infrastructure/prisma-store.js";
-import { ReportsController } from "./presentation/controller.js";
+import {
+  ReportsController,
+  AdminReportsController,
+} from "./presentation/controller.js";
 
 @Module({
-  controllers: [ReportsController],
+  controllers: [ReportsController, AdminReportsController],
   providers: [
     ReportsService,
     { provide: REPORT_STORE, useClass: PrismaReportStore },

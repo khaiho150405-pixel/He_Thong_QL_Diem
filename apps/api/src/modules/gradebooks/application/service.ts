@@ -246,4 +246,15 @@ export class GradebooksService {
       return page(await tx.gradeHistory(bookId, cellId, after));
     });
   }
+  historyAll(actor: Actor, bookId: number, after = "0") {
+    id(bookId);
+    bigintCursor(after);
+    return this.run(actor, async (tx) => {
+      await gradebookActor(tx.authorization, actor);
+      const book = await tx.find(bookId);
+      if (!book) throw new NotFoundException();
+      await gradebookAccess(tx.authorization, actor, book);
+      return page(await tx.gradebookHistory(bookId, after));
+    });
+  }
 }

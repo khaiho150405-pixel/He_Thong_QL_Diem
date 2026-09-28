@@ -101,13 +101,19 @@ class SessionController extends StateNotifier<SessionDto?> {
 
 String errorMessage(Object error) {
   if (error is DioException) {
+    final responseData = error.response?.data;
+    final serverMessage = responseData is Map<String, dynamic>
+        ? responseData['message']?.toString()
+        : null;
     return switch (error.response?.statusCode) {
       400 => 'Thông tin chưa hợp lệ. Kiểm tra các trường và khoảng ngày.',
       401 =>
         'Thông tin đăng nhập không đúng, tài khoản tạm khóa hoặc phiên đã hết hạn.',
       403 => 'Bạn không có quyền thực hiện thao tác này.',
       409 =>
-        'Dữ liệu trùng, đã được sử dụng hoặc vừa thay đổi. Tải lại và kiểm tra.',
+        serverMessage?.isNotEmpty == true
+            ? serverMessage!
+            : 'Dữ liệu trùng, đã được sử dụng hoặc vừa thay đổi. Tải lại và kiểm tra.',
       429 => 'Bạn thử quá nhiều lần. Vui lòng chờ một phút.',
       _ => 'Không thể kết nối dịch vụ. Vui lòng thử lại.',
     };

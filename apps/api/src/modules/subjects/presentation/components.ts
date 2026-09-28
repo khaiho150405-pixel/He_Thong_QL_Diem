@@ -29,6 +29,7 @@ export class ComponentsInput {
   @ApiProperty({ type: String }) he_so!: string;
   @ApiProperty({ type: Boolean }) bat_buoc!: boolean;
   @ApiProperty({ type: Number }) thu_tu_hien_thi!: number;
+  @ApiProperty({ type: Boolean, required: false }) cho_phep_nhap?: boolean;
 }
 export class ComponentsDto extends ComponentsInput {
   @ApiProperty({ type: String }) label!: string;
