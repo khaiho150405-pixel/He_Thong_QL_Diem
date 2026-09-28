@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **heSo** | **String** |  |
 **batBuoc** | **bool** |  |
 **thuTuHienThi** | **num** |  |
+**choPhepNhap** | **bool** |  | [optional]
 **label** | **String** |  |
 **maThanhPhan** | **num** |  |
 

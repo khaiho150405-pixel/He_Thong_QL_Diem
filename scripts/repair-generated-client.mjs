@@ -1,5 +1,23 @@
 import { readFile, writeFile } from "node:fs/promises";
 
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function writeWithWindowsRetry(file, content) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await writeFile(file, content);
+      return;
+    } catch (error) {
+      if (
+        process.platform !== "win32" ||
+        attempt >= 10 ||
+        !["UNKNOWN", "EBUSY", "EPERM", "EACCES"].includes(error?.code)
+      )
+        throw error;
+      await pause(attempt * 100);
+    }
+  }
+}
+
 export async function repairRecognitionMultipart() {
   const file = "packages/api_client_dart/lib/src/api/recognition_api.dart";
   const content = await readFile(file, "utf8");
@@ -28,7 +46,7 @@ export async function repairRecognitionMultipart() {
       ));
       _bodyData = _formData;
     } catch (error, stackTrace) {`;
-  await writeFile(file, content.replace(empty, form));
+  await writeWithWindowsRetry(file, content.replace(empty, form));
 }
 
 if (process.argv[1]?.endsWith("repair-generated-client.mjs"))

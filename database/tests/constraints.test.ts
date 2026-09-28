@@ -20,9 +20,13 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu')",
     );
     assert.equal(tables.rows[0].n, 16);
+    const timetable = await owner.query(
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name='thoi_khoa_bieu'",
+    );
+    assert.equal(timetable.rows[0].n, 1);
     const denied = async (sql: string) => {
       await assert.rejects(
         runtime.query(sql),
@@ -86,9 +90,17 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
       );
       await owner.query("ROLLBACK TO SAVEPOINT negative");
     };
+    const testTerm = (
+      await owner.query(
+        "INSERT INTO hoc_ky(ma_nam_hoc,ten,thu_tu,ngay_bat_dau,ngay_ket_thuc) SELECT ma_nam_hoc,'Constraint test',99,'2099-01-01','2099-06-01' FROM nam_hoc ORDER BY ma_nam_hoc LIMIT 1 RETURNING ma_hoc_ky",
+      )
+    ).rows[0].ma_hoc_ky;
     const fixture = (
-      await owner.query(`SELECT hs.ma_hoc_sinh, hs.ma_lop, pc.ma_mon, pc.ma_hoc_ky, pc.ma_giao_vien, tp.ma_thanh_phan
-      FROM hoc_sinh hs JOIN phan_cong_giang_day pc ON pc.ma_lop=hs.ma_lop JOIN thanh_phan_diem tp ON tp.ma_mon=pc.ma_mon LIMIT 1`)
+      await owner.query(
+        `SELECT hs.ma_hoc_sinh, hs.ma_lop, pc.ma_mon, $1::int AS ma_hoc_ky, pc.ma_giao_vien, tp.ma_thanh_phan
+        FROM hoc_sinh hs JOIN phan_cong_giang_day pc ON pc.ma_lop=hs.ma_lop JOIN thanh_phan_diem tp ON tp.ma_mon=pc.ma_mon LIMIT 1`,
+        [testTerm],
+      )
     ).rows[0];
     assert.ok(fixture, "Run synthetic seed first");
     const {

@@ -31,6 +31,10 @@ class StudentsDto {
     required this.label,
 
     required this.maHocSinh,
+
+    required this.sttToanTruong,
+
+    required this.sttLop,
   });
 
   @JsonKey(name: r'ma_nguoi_dung', required: true, includeIfNull: true)
@@ -54,6 +58,12 @@ class StudentsDto {
   @JsonKey(name: r'ma_hoc_sinh', required: true, includeIfNull: false)
   final num maHocSinh;
 
+  @JsonKey(name: r'stt_toan_truong', required: true, includeIfNull: true)
+  final num? sttToanTruong;
+
+  @JsonKey(name: r'stt_lop', required: true, includeIfNull: true)
+  final num? sttLop;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -64,7 +74,9 @@ class StudentsDto {
           other.ngaySinh == ngaySinh &&
           other.dangTheoHoc == dangTheoHoc &&
           other.label == label &&
-          other.maHocSinh == maHocSinh;
+          other.maHocSinh == maHocSinh &&
+          other.sttToanTruong == sttToanTruong &&
+          other.sttLop == sttLop;
 
   @override
   int get hashCode =>
@@ -74,7 +86,9 @@ class StudentsDto {
       ngaySinh.hashCode +
       dangTheoHoc.hashCode +
       label.hashCode +
-      maHocSinh.hashCode;
+      maHocSinh.hashCode +
+      (sttToanTruong == null ? 0 : sttToanTruong.hashCode) +
+      (sttLop == null ? 0 : sttLop.hashCode);
 
   factory StudentsDto.fromJson(Map<String, dynamic> json) =>
       _$StudentsDtoFromJson(json);

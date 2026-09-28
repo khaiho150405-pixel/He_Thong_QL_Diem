@@ -18,6 +18,10 @@ export type Table =
   | "phan_cong_giang_day"
   | "bang_diem"
   | "diem_thanh_phan"
+  | "ket_qua_tong_ket"
+  | "phieu_nhan_dien"
+  | "ket_qua_dong"
+  | "thoi_khoa_bieu"
   | "khoa_idempotency";
 export interface Unit {
   find(table: Table, where: Row): Promise<Row | null>;

@@ -43,6 +43,9 @@ class Phase5FakeServer implements HttpClientAdapter {
           'classId': 10,
           'subjectId': 20,
           'termId': 30,
+          'className': '10A1',
+          'subjectName': 'Toán',
+          'termName': 'Học kỳ I',
           'status': 'DA_CHOT',
           'version': 4,
         },
@@ -121,6 +124,16 @@ class Phase5FakeServer implements HttpClientAdapter {
             'calculatedAt': '2026-09-13T01:00:00.000Z',
           },
         ],
+        'summary': {
+          'termId': 30,
+          'termName': 'Học kỳ I',
+          'className': '10A1',
+          'averageScore': '6.50',
+          'publishedSubjects': 1,
+          'totalSubjects': 1,
+          'classRank': 3,
+          'classSize': 38,
+        },
       };
     } else if (options.path.endsWith('/classification-policies/active')) {
       body = {
@@ -195,10 +208,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    expect(find.text('Kết quả tổng kết'), findsOneWidget);
-    expect(find.text('Thống kê và báo cáo'), findsOneWidget);
+    expect(find.text('Kết quả tổng kết và xếp loại'), findsNothing);
+    expect(find.textContaining('Thống kê ·'), findsOneWidget);
     expect(find.text('0.0'), findsWidgets);
     expect(find.text('Xuất Excel'), findsOneWidget);
+    await tester.tap(find.text('Tính tổng kết'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('calculate-final-results')));
     await tester.pumpAndSettle();
     await tester.enterText(

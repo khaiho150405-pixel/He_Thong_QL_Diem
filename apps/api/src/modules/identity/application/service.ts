@@ -284,6 +284,42 @@ export class IdentityService {
       return publicUser(row);
     });
   }
+  async importAccounts(
+    actor: Actor,
+    inputs: Array<{ username: string; password: string; role: Role }>,
+  ) {
+    administrator(actor);
+    if (!Array.isArray(inputs) || inputs.length < 1 || inputs.length > 500)
+      throw new BadRequestException("Tệp nhập phải có từ 1 đến 500 dòng.");
+    const prepared = await Promise.all(
+      inputs.map(async (input) => {
+        if (
+          !input ||
+          Object.keys(input).some(
+            (key) => !["username", "password", "role"].includes(key),
+          ) ||
+          !/^[a-zA-Z0-9_.-]{3,50}$/.test(input.username) ||
+          !roles.includes(input.role)
+        )
+          throw new BadRequestException("Dữ liệu tài khoản nhập không hợp lệ.");
+        return { ...input, hashed: await passwordHash(input.password) };
+      }),
+    );
+    return this.store.run(async (tx) => {
+      await currentActor(tx, actor);
+      const created: Row[] = [];
+      for (const input of prepared) {
+        const row = await tx.create("nguoi_dung", {
+          ten_dang_nhap: input.username,
+          mat_khau_ma_hoa: input.hashed,
+          vai_tro: input.role,
+        });
+        await audit(tx, actor.id, "ACCOUNT_IMPORT", String(row.ma_nguoi_dung));
+        created.push(row);
+      }
+      return { imported: created.length, items: created.map(publicUser) };
+    });
+  }
   async updateAccount(
     actor: Actor,
     id: number,

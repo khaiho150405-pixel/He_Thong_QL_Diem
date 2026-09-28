@@ -27,6 +27,9 @@ class GradebookFakeServer implements HttpClientAdapter {
     'classId': 10,
     'subjectId': 20,
     'termId': 30,
+    'className': '10A1',
+    'subjectName': 'Toán',
+    'termName': 'Học kỳ I',
     'status': locked ? 'DA_CHOT' : 'DANG_NHAP_LIEU',
     'version': version,
   };
@@ -112,7 +115,7 @@ class GradebookFakeServer implements HttpClientAdapter {
       locked = true;
       version++;
       body = book;
-    } else if (options.path.endsWith('/cells/9001/history')) {
+    } else if (options.path.endsWith('/gradebooks/7/history')) {
       body = {
         'items': [
           {
@@ -123,10 +126,14 @@ class GradebookFakeServer implements HttpClientAdapter {
             'newValue': '0.0',
             'reason': 'Nhập điểm kiểm tra',
             'timestamp': '2026-09-11T01:02:03.000Z',
+            'studentName': 'An',
+            'componentName': 'Miệng',
           },
         ],
         'nextCursor': null,
       };
+    } else if (options.path.endsWith('/gradebooks/7/final-results')) {
+      body = {'items': [], 'nextCursor': null};
     } else {
       status = 404;
       body = {};
@@ -200,7 +207,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     expect(find.textContaining('Đang nhập liệu'), findsOneWidget);
-    await tester.tap(find.textContaining('Lớp #10'));
+    await tester.tap(find.textContaining('10A1'));
     await tester.pumpAndSettle();
 
     final nullField = find.byKey(const ValueKey('grade-9001'));
@@ -238,8 +245,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.tap(find.textContaining('Lớp #10'));
+    await tester.tap(find.textContaining('10A1'));
     await tester.pumpAndSettle();
+    expect(find.text('STT'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
     await tester.enterText(find.byKey(const ValueKey('grade-9001')), '8.5');
     await tester.tap(find.text('Lưu thay đổi'));
     await tester.pumpAndSettle();
@@ -264,7 +273,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.tap(find.textContaining('Lớp #10'));
+    await tester.tap(find.textContaining('10A1'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const ValueKey('grade-9001')), '7.5');
 
@@ -294,11 +303,13 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.tap(find.textContaining('Lớp #10'));
+    await tester.tap(find.textContaining('10A1'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Lịch sử').first);
+    await tester.tap(find.text('Lịch sử cập nhật'));
     await tester.pumpAndSettle();
-    expect(find.text('NULL → 0.0'), findsOneWidget);
+    expect(find.text('Lịch sử cập nhật điểm'), findsOneWidget);
+    expect(find.text('An · Miệng'), findsOneWidget);
+    expect(find.textContaining('NULL → 0.0'), findsOneWidget);
     expect(find.textContaining('Nhập điểm kiểm tra'), findsOneWidget);
     await tester.tap(find.text('Đóng'));
     await tester.pumpAndSettle();

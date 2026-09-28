@@ -115,6 +115,16 @@ test("calculation hashes the normalized request and forwards the authenticated s
           throw new Error("unused");
         },
         studentResults: async () => [],
+        studentSummary: async () => ({
+          termId: null,
+          termName: null,
+          className: "10A1",
+          averageScore: null,
+          publishedSubjects: 0,
+          totalSubjects: 0,
+          classRank: null,
+          classSize: 1,
+        }),
       }),
   };
   const result = await new FinalResultsService(store).calculate(

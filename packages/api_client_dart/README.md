@@ -87,6 +87,7 @@ Class | Method | HTTP request | Description
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCells**](doc/GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCreate**](doc/GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksHistory**](doc/GradebooksApi.md#gradebookshistory) | **GET** /api/v1/gradebooks/{id}/cells/{cellId}/history |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksHistoryAll**](doc/GradebooksApi.md#gradebookshistoryall) | **GET** /api/v1/gradebooks/{id}/history |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksList**](doc/GradebooksApi.md#gradebookslist) | **GET** /api/v1/gradebooks |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksLock**](doc/GradebooksApi.md#gradebookslock) | **POST** /api/v1/gradebooks/{id}/lock |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksSyncRoster**](doc/GradebooksApi.md#gradebookssyncroster) | **POST** /api/v1/gradebooks/{id}/sync-roster |
@@ -94,6 +95,7 @@ Class | Method | HTTP request | Description
 [*HealthApi*](doc/HealthApi.md) | [**healthReady**](doc/HealthApi.md#healthready) | **GET** /api/v1/health/ready |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityAccounts**](doc/IdentityApi.md#identityaccounts) | **GET** /api/v1/identity/accounts |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityCreateAccount**](doc/IdentityApi.md#identitycreateaccount) | **POST** /api/v1/identity/accounts |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityImportAccounts**](doc/IdentityApi.md#identityimportaccounts) | **POST** /api/v1/identity/accounts/import |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityLogin**](doc/IdentityApi.md#identitylogin) | **POST** /api/v1/identity/login |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityLogout**](doc/IdentityApi.md#identitylogout) | **POST** /api/v1/identity/logout |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityMe**](doc/IdentityApi.md#identityme) | **GET** /api/v1/identity/me |
@@ -104,6 +106,7 @@ Class | Method | HTTP request | Description
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionDetail**](doc/RecognitionApi.md#recognitiondetail) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId} |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionList**](doc/RecognitionApi.md#recognitionlist) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionUpload**](doc/RecognitionApi.md#recognitionupload) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
+[*ReportsApi*](doc/ReportsApi.md) | [**adminReportsOverview**](doc/ReportsApi.md#adminreportsoverview) | **GET** /api/v1/reports/admin/overview |
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsExport**](doc/ReportsApi.md#reportsexport) | **GET** /api/v1/reports/gradebooks/{gradebookId}/export.xlsx |
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsSummary**](doc/ReportsApi.md#reportssummary) | **GET** /api/v1/reports/gradebooks/{gradebookId}/summary |
 [*ReviewApi*](doc/ReviewApi.md) | [**reviewApprove**](doc/ReviewApi.md#reviewapprove) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve |
@@ -113,6 +116,7 @@ Class | Method | HTTP request | Description
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersUpdate**](doc/SemestersApi.md#semestersupdate) | **PUT** /api/v1/catalog/semesters/{id} |
 [*StudentResultsApi*](doc/StudentResultsApi.md) | [**studentResultsList**](doc/StudentResultsApi.md#studentresultslist) | **GET** /api/v1/students/me/results |
 [*StudentsApi*](doc/StudentsApi.md) | [**studentsCreate**](doc/StudentsApi.md#studentscreate) | **POST** /api/v1/catalog/students |
+[*StudentsApi*](doc/StudentsApi.md) | [**studentsImportMany**](doc/StudentsApi.md#studentsimportmany) | **POST** /api/v1/catalog/students/import |
 [*StudentsApi*](doc/StudentsApi.md) | [**studentsList**](doc/StudentsApi.md#studentslist) | **GET** /api/v1/catalog/students |
 [*StudentsApi*](doc/StudentsApi.md) | [**studentsRemove**](doc/StudentsApi.md#studentsremove) | **DELETE** /api/v1/catalog/students/{id} |
 [*StudentsApi*](doc/StudentsApi.md) | [**studentsUpdate**](doc/StudentsApi.md#studentsupdate) | **PUT** /api/v1/catalog/students/{id} |
@@ -121,9 +125,14 @@ Class | Method | HTTP request | Description
 [*SubjectsApi*](doc/SubjectsApi.md) | [**subjectsRemove**](doc/SubjectsApi.md#subjectsremove) | **DELETE** /api/v1/catalog/subjects/{id} |
 [*SubjectsApi*](doc/SubjectsApi.md) | [**subjectsUpdate**](doc/SubjectsApi.md#subjectsupdate) | **PUT** /api/v1/catalog/subjects/{id} |
 [*TeachersApi*](doc/TeachersApi.md) | [**teachersCreate**](doc/TeachersApi.md#teacherscreate) | **POST** /api/v1/catalog/teachers |
+[*TeachersApi*](doc/TeachersApi.md) | [**teachersImportMany**](doc/TeachersApi.md#teachersimportmany) | **POST** /api/v1/catalog/teachers/import |
 [*TeachersApi*](doc/TeachersApi.md) | [**teachersList**](doc/TeachersApi.md#teacherslist) | **GET** /api/v1/catalog/teachers |
 [*TeachersApi*](doc/TeachersApi.md) | [**teachersRemove**](doc/TeachersApi.md#teachersremove) | **DELETE** /api/v1/catalog/teachers/{id} |
 [*TeachersApi*](doc/TeachersApi.md) | [**teachersUpdate**](doc/TeachersApi.md#teachersupdate) | **PUT** /api/v1/catalog/teachers/{id} |
+[*TimetableApi*](doc/TimetableApi.md) | [**timetableCreate**](doc/TimetableApi.md#timetablecreate) | **POST** /api/v1/timetable |
+[*TimetableApi*](doc/TimetableApi.md) | [**timetableList**](doc/TimetableApi.md#timetablelist) | **GET** /api/v1/timetable |
+[*TimetableApi*](doc/TimetableApi.md) | [**timetableRemove**](doc/TimetableApi.md#timetableremove) | **DELETE** /api/v1/timetable/{id} |
+[*TimetableApi*](doc/TimetableApi.md) | [**timetableUpdate**](doc/TimetableApi.md#timetableupdate) | **PUT** /api/v1/timetable/{id} |
 [*YearsApi*](doc/YearsApi.md) | [**yearsCreate**](doc/YearsApi.md#yearscreate) | **POST** /api/v1/catalog/years |
 [*YearsApi*](doc/YearsApi.md) | [**yearsList**](doc/YearsApi.md#yearslist) | **GET** /api/v1/catalog/years |
 [*YearsApi*](doc/YearsApi.md) | [**yearsRemove**](doc/YearsApi.md#yearsremove) | **DELETE** /api/v1/catalog/years/{id} |
@@ -136,7 +145,15 @@ Class | Method | HTTP request | Description
  - [AccountInput](doc/AccountInput.md)
  - [AccountUpdate](doc/AccountUpdate.md)
  - [AccountsDto](doc/AccountsDto.md)
+ - [AccountsImportInput](doc/AccountsImportInput.md)
+ - [AccountsImportResult](doc/AccountsImportResult.md)
  - [ActivateClassificationPolicyInput](doc/ActivateClassificationPolicyInput.md)
+ - [AdminGradeDistributionDto](doc/AdminGradeDistributionDto.md)
+ - [AdminGradeLevelProgressDto](doc/AdminGradeLevelProgressDto.md)
+ - [AdminKpiDto](doc/AdminKpiDto.md)
+ - [AdminOcrAccuracyDto](doc/AdminOcrAccuracyDto.md)
+ - [AdminOverviewDto](doc/AdminOverviewDto.md)
+ - [AdminRecentActivityDto](doc/AdminRecentActivityDto.md)
  - [AssignmentsDto](doc/AssignmentsDto.md)
  - [AssignmentsInput](doc/AssignmentsInput.md)
  - [AssignmentsPage](doc/AssignmentsPage.md)
@@ -156,6 +173,7 @@ Class | Method | HTTP request | Description
  - [ComponentsInput](doc/ComponentsInput.md)
  - [ComponentsPage](doc/ComponentsPage.md)
  - [CreateGradebookInput](doc/CreateGradebookInput.md)
+ - [CreateTimetableItemInput](doc/CreateTimetableItemInput.md)
  - [DistributionItemDto](doc/DistributionItemDto.md)
  - [ErrorDto](doc/ErrorDto.md)
  - [FinalResultDto](doc/FinalResultDto.md)
@@ -165,6 +183,8 @@ Class | Method | HTTP request | Description
  - [GradeHistoryDto](doc/GradeHistoryDto.md)
  - [GradeHistoryEntryDto](doc/GradeHistoryEntryDto.md)
  - [GradebookDto](doc/GradebookDto.md)
+ - [GradebookHistoryDto](doc/GradebookHistoryDto.md)
+ - [GradebookHistoryEntryDto](doc/GradebookHistoryEntryDto.md)
  - [GradebookListDto](doc/GradebookListDto.md)
  - [GradebookSummaryDto](doc/GradebookSummaryDto.md)
  - [HealthDto](doc/HealthDto.md)
@@ -186,17 +206,24 @@ Class | Method | HTTP request | Description
  - [SessionDto](doc/SessionDto.md)
  - [SkippedStudentDto](doc/SkippedStudentDto.md)
  - [StudentApprovedComponentDto](doc/StudentApprovedComponentDto.md)
+ - [StudentResultSummaryDto](doc/StudentResultSummaryDto.md)
  - [StudentResultsDto](doc/StudentResultsDto.md)
  - [StudentSubjectResultDto](doc/StudentSubjectResultDto.md)
  - [StudentsDto](doc/StudentsDto.md)
+ - [StudentsImportInput](doc/StudentsImportInput.md)
+ - [StudentsImportResult](doc/StudentsImportResult.md)
  - [StudentsInput](doc/StudentsInput.md)
  - [StudentsPage](doc/StudentsPage.md)
  - [SubjectsDto](doc/SubjectsDto.md)
  - [SubjectsInput](doc/SubjectsInput.md)
  - [SubjectsPage](doc/SubjectsPage.md)
  - [TeachersDto](doc/TeachersDto.md)
+ - [TeachersImportInput](doc/TeachersImportInput.md)
+ - [TeachersImportResult](doc/TeachersImportResult.md)
  - [TeachersInput](doc/TeachersInput.md)
  - [TeachersPage](doc/TeachersPage.md)
+ - [TimetableItemDto](doc/TimetableItemDto.md)
+ - [TimetableListDto](doc/TimetableListDto.md)
  - [UpdatedCellDto](doc/UpdatedCellDto.md)
  - [YearsDto](doc/YearsDto.md)
  - [YearsInput](doc/YearsInput.md)

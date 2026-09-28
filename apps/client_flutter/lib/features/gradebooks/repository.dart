@@ -140,4 +140,24 @@ class GradebooksRepository {
     } while (cursor != null);
     return items;
   }
+
+  Future<List<GradebookHistoryEntryDto>> historyAll({
+    required num bookId,
+  }) async {
+    String? cursor;
+    final items = <GradebookHistoryEntryDto>[];
+    final seen = <String>{};
+    do {
+      final page = (await api.getGradebooksApi().gradebooksHistoryAll(
+        id: bookId,
+        cursor: cursor,
+      )).data!;
+      items.addAll(page.items);
+      cursor = page.nextCursor;
+      if (cursor != null && !seen.add(cursor)) {
+        throw StateError('Cursor lịch sử bảng điểm bị lặp.');
+      }
+    } while (cursor != null);
+    return items;
+  }
 }

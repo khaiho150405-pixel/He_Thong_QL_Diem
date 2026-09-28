@@ -17,6 +17,7 @@ import type {
   FinalResultStore,
   FinalResultUnit,
   StudentSubjectResult,
+  StudentResultSummary,
 } from "../application/port.js";
 
 interface BookRow {
@@ -134,10 +135,55 @@ export class PrismaFinalResultStore implements FinalResultStore {
               LEFT JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
                 AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
               WHERE hs.ma_nguoi_dung=${userId}::integer
+                AND b.trang_thai='DA_CHOT'
                 AND (${termId}::integer IS NULL OR b.ma_hoc_ky=${termId}::integer)
               GROUP BY b.ma_bang_diem,m.ma_mon,m.ten_mon,h.ma_hoc_ky,h.ten,
                 k.diem_tong_ket,k.xep_loai,k.ngay_tinh
               ORDER BY h.ma_hoc_ky DESC,m.ten_mon`,
+          studentSummary: async (userId, termId) => {
+            const rows = await tx.$queryRaw<StudentResultSummary[]>`
+              WITH me AS (
+                SELECT hs.ma_hoc_sinh,hs.ma_lop,l.ten_lop
+                FROM public.hoc_sinh hs JOIN public.lop l USING(ma_lop)
+                WHERE hs.ma_nguoi_dung=${userId}::integer AND hs.dang_theo_hoc
+              ), selected_term AS (
+                SELECT COALESCE(${termId}::integer,(
+                  SELECT max(b.ma_hoc_ky) FROM public.bang_diem b JOIN me ON me.ma_lop=b.ma_lop
+                  WHERE b.trang_thai='DA_CHOT'
+                )) AS term_id
+              ), averages AS (
+                SELECT hs.ma_hoc_sinh,avg(k.diem_tong_ket)::numeric(4,2) AS average_score
+                FROM public.hoc_sinh hs JOIN me ON me.ma_lop=hs.ma_lop
+                JOIN selected_term st ON true
+                JOIN public.bang_diem b ON b.ma_lop=hs.ma_lop AND b.ma_hoc_ky=st.term_id
+                  AND b.trang_thai='DA_CHOT'
+                JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
+                  AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
+                WHERE hs.dang_theo_hoc
+                GROUP BY hs.ma_hoc_sinh
+              ), ranked AS (
+                SELECT ma_hoc_sinh,average_score,
+                  rank() OVER (ORDER BY average_score DESC)::integer AS class_rank
+                FROM averages
+              )
+              SELECT st.term_id AS "termId",h.ten AS "termName",me.ten_lop AS "className",
+                r.average_score::text AS "averageScore",
+                (SELECT count(DISTINCT k.ma_mon)::integer
+                 FROM public.ket_qua_tong_ket k JOIN public.bang_diem b
+                   ON b.ma_lop=me.ma_lop AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+                 WHERE k.ma_hoc_sinh=me.ma_hoc_sinh AND k.ma_hoc_ky=st.term_id
+                   AND b.trang_thai='DA_CHOT') AS "publishedSubjects",
+                (SELECT count(DISTINCT b.ma_mon)::integer FROM public.bang_diem b
+                 WHERE b.ma_lop=me.ma_lop AND b.ma_hoc_ky=st.term_id
+                   AND b.trang_thai='DA_CHOT') AS "totalSubjects",
+                r.class_rank AS "classRank",
+                (SELECT count(*)::integer FROM public.hoc_sinh hs
+                 WHERE hs.ma_lop=me.ma_lop AND hs.dang_theo_hoc) AS "classSize"
+              FROM me CROSS JOIN selected_term st
+              LEFT JOIN public.hoc_ky h ON h.ma_hoc_ky=st.term_id
+              LEFT JOIN ranked r ON r.ma_hoc_sinh=me.ma_hoc_sinh`;
+            return rows[0]!;
+          },
         }),
       );
     } catch (error) {

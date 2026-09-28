@@ -23,6 +23,7 @@ import 'package:api_client_dart/src/api/student_results_api.dart';
 import 'package:api_client_dart/src/api/students_api.dart';
 import 'package:api_client_dart/src/api/subjects_api.dart';
 import 'package:api_client_dart/src/api/teachers_api.dart';
+import 'package:api_client_dart/src/api/timetable_api.dart';
 import 'package:api_client_dart/src/api/years_api.dart';
 
 class ApiClientDart {
@@ -188,6 +189,12 @@ class ApiClientDart {
   /// by doing that all interceptors will not be executed
   TeachersApi getTeachersApi() {
     return TeachersApi(dio);
+  }
+
+  /// Get TimetableApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  TimetableApi getTimetableApi() {
+    return TimetableApi(dio);
   }
 
   /// Get YearsApi instance, base route and serializer can be overridden by a given but be careful,

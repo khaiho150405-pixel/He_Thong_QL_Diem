@@ -17,6 +17,7 @@ Name | Type | Description | Notes
 **coefficient** | **String** |  |
 **required_** | **bool** |  |
 **displayOrder** | **num** |  |
+**openForInput** | **bool** |  | [optional]
 **value** | **String** |  |
 **status** | **String** |  |
 **source_** | **String** |  |

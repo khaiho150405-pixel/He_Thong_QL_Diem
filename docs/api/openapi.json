@@ -2093,6 +2093,93 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks/{id}/history": {
+      "get": {
+        "operationId": "gradebooksHistoryAll",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookHistoryDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
     "/api/v1/gradebooks/{id}/cells/{cellId}/history": {
       "get": {
         "operationId": "gradebooksHistory",
@@ -2811,6 +2898,90 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/identity/accounts/import": {
+      "post": {
+        "operationId": "identityImportAccounts",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AccountsImportInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountsImportResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["identity"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/identity/accounts/{id}": {
       "put": {
         "operationId": "identityUpdateAccount",
@@ -3341,6 +3512,80 @@
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
+    "/api/v1/reports/admin/overview": {
+      "get": {
+        "operationId": "adminReportsOverview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdminOverviewDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["reports"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
     "/api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve": {
       "post": {
         "operationId": "reviewApprove",
@@ -3547,6 +3792,90 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/StudentsDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["students"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/students/import": {
+      "post": {
+        "operationId": "studentsImportMany",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/StudentsImportInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentsImportResult"
+                }
               }
             }
           },
@@ -4595,6 +4924,90 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/catalog/teachers/import": {
+      "post": {
+        "operationId": "teachersImportMany",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TeachersImportInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeachersImportResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["teachers"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/teachers/{id}": {
       "put": {
         "operationId": "teachersUpdate",
@@ -5083,6 +5496,350 @@
         "tags": ["assignments"],
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
+    },
+    "/api/v1/timetable": {
+      "get": {
+        "operationId": "timetableList",
+        "parameters": [
+          {
+            "name": "dayOfWeek",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "semesterId",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "teacherId",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "classId",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TimetableListDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["timetable"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      },
+      "post": {
+        "operationId": "timetableCreate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTimetableItemInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TimetableItemDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["timetable"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/timetable/{id}": {
+      "put": {
+        "operationId": "timetableUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTimetableItemInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TimetableItemDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["timetable"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      },
+      "delete": {
+        "operationId": "timetableRemove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "" },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["timetable"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
     }
   },
   "info": {
@@ -5484,15 +6241,39 @@
           "calculatedAt"
         ]
       },
+      "StudentResultSummaryDto": {
+        "type": "object",
+        "properties": {
+          "termId": { "type": "number", "nullable": true },
+          "termName": { "type": "string", "nullable": true },
+          "className": { "type": "string" },
+          "averageScore": { "type": "string", "nullable": true },
+          "publishedSubjects": { "type": "number" },
+          "totalSubjects": { "type": "number" },
+          "classRank": { "type": "number", "nullable": true },
+          "classSize": { "type": "number" }
+        },
+        "required": [
+          "termId",
+          "termName",
+          "className",
+          "averageScore",
+          "publishedSubjects",
+          "totalSubjects",
+          "classRank",
+          "classSize"
+        ]
+      },
       "StudentResultsDto": {
         "type": "object",
         "properties": {
           "items": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/StudentSubjectResultDto" }
-          }
+          },
+          "summary": { "$ref": "#/components/schemas/StudentResultSummaryDto" }
         },
-        "required": ["items"]
+        "required": ["items", "summary"]
       },
       "GradebookDto": {
         "type": "object",
@@ -5501,6 +6282,9 @@
           "classId": { "type": "number" },
           "subjectId": { "type": "number" },
           "termId": { "type": "number" },
+          "className": { "type": "string" },
+          "subjectName": { "type": "string" },
+          "termName": { "type": "string" },
           "status": { "type": "string", "enum": ["DANG_NHAP_LIEU", "DA_CHOT"] },
           "version": { "type": "number" }
         },
@@ -5509,6 +6293,9 @@
           "classId",
           "subjectId",
           "termId",
+          "className",
+          "subjectName",
+          "termName",
           "status",
           "version"
         ]
@@ -5545,6 +6332,7 @@
           "coefficient": { "type": "string" },
           "required": { "type": "boolean" },
           "displayOrder": { "type": "number" },
+          "openForInput": { "type": "boolean" },
           "value": { "type": "string", "nullable": true },
           "status": {
             "type": "string",
@@ -5635,6 +6423,42 @@
         "type": "object",
         "properties": { "expectedVersion": { "type": "number" } },
         "required": ["expectedVersion"]
+      },
+      "GradebookHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "cellId": { "type": "string" },
+          "editor": { "type": "number" },
+          "oldValue": { "type": "string", "nullable": true },
+          "newValue": { "type": "string", "nullable": true },
+          "reason": { "type": "string" },
+          "timestamp": { "type": "string" },
+          "studentName": { "type": "string" },
+          "componentName": { "type": "string" }
+        },
+        "required": [
+          "id",
+          "cellId",
+          "editor",
+          "oldValue",
+          "newValue",
+          "reason",
+          "timestamp",
+          "studentName",
+          "componentName"
+        ]
+      },
+      "GradebookHistoryDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradebookHistoryEntryDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
       },
       "GradeHistoryEntryDto": {
         "type": "object",
@@ -5748,6 +6572,28 @@
           }
         },
         "required": ["username", "password", "role"]
+      },
+      "AccountsImportInput": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 500,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AccountInput" }
+          }
+        },
+        "required": ["items"]
+      },
+      "AccountsImportResult": {
+        "type": "object",
+        "properties": {
+          "imported": { "type": "number" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AccountDto" }
+          }
+        },
+        "required": ["imported", "items"]
       },
       "AccountUpdate": {
         "type": "object",
@@ -5922,6 +6768,119 @@
           "distribution"
         ]
       },
+      "AdminKpiDto": {
+        "type": "object",
+        "properties": {
+          "totalStudents": { "type": "number" },
+          "totalClasses": { "type": "number" },
+          "totalTeachers": { "type": "number" },
+          "lockedGradebooks": { "type": "number" },
+          "totalGradebooks": { "type": "number" },
+          "completionRate": { "type": "number" },
+          "pendingOcrTickets": { "type": "number" }
+        },
+        "required": [
+          "totalStudents",
+          "totalClasses",
+          "totalTeachers",
+          "lockedGradebooks",
+          "totalGradebooks",
+          "completionRate",
+          "pendingOcrTickets"
+        ]
+      },
+      "AdminGradeDistributionDto": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "code": { "type": "string" },
+          "count": { "type": "number" },
+          "percentage": { "type": "number" },
+          "color": { "type": "string" }
+        },
+        "required": ["label", "code", "count", "percentage", "color"]
+      },
+      "AdminGradeLevelProgressDto": {
+        "type": "object",
+        "properties": {
+          "grade": { "type": "number" },
+          "title": { "type": "string" },
+          "lockedClasses": { "type": "number" },
+          "totalClasses": { "type": "number" },
+          "percentage": { "type": "number" }
+        },
+        "required": [
+          "grade",
+          "title",
+          "lockedClasses",
+          "totalClasses",
+          "percentage"
+        ]
+      },
+      "AdminOcrAccuracyDto": {
+        "type": "object",
+        "properties": {
+          "totalCells": { "type": "number" },
+          "greenCount": { "type": "number" },
+          "yellowCount": { "type": "number" },
+          "redCount": { "type": "number" },
+          "accuracyRate": { "type": "number" }
+        },
+        "required": [
+          "totalCells",
+          "greenCount",
+          "yellowCount",
+          "redCount",
+          "accuracyRate"
+        ]
+      },
+      "AdminRecentActivityDto": {
+        "type": "object",
+        "properties": {
+          "className": { "type": "string" },
+          "subjectName": { "type": "string" },
+          "teacherName": { "type": "string" },
+          "status": { "type": "string" },
+          "updatedAt": { "type": "string" }
+        },
+        "required": [
+          "className",
+          "subjectName",
+          "teacherName",
+          "status",
+          "updatedAt"
+        ]
+      },
+      "AdminOverviewDto": {
+        "type": "object",
+        "properties": {
+          "kpi": { "$ref": "#/components/schemas/AdminKpiDto" },
+          "gradeDistribution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminGradeDistributionDto"
+            }
+          },
+          "gradeLevelProgress": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminGradeLevelProgressDto"
+            }
+          },
+          "ocrAccuracy": { "$ref": "#/components/schemas/AdminOcrAccuracyDto" },
+          "recentActivities": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdminRecentActivityDto" }
+          }
+        },
+        "required": [
+          "kpi",
+          "gradeDistribution",
+          "gradeLevelProgress",
+          "ocrAccuracy",
+          "recentActivities"
+        ]
+      },
       "ReviewDecisionInput": {
         "type": "object",
         "properties": {
@@ -5993,7 +6952,9 @@
           },
           "dang_theo_hoc": { "type": "boolean" },
           "label": { "type": "string" },
-          "ma_hoc_sinh": { "type": "number" }
+          "ma_hoc_sinh": { "type": "number" },
+          "stt_toan_truong": { "type": "number", "nullable": true },
+          "stt_lop": { "type": "number", "nullable": true }
         },
         "required": [
           "ma_nguoi_dung",
@@ -6002,7 +6963,9 @@
           "ngay_sinh",
           "dang_theo_hoc",
           "label",
-          "ma_hoc_sinh"
+          "ma_hoc_sinh",
+          "stt_toan_truong",
+          "stt_lop"
         ]
       },
       "StudentsPage": {
@@ -6035,6 +6998,28 @@
           "ngay_sinh",
           "dang_theo_hoc"
         ]
+      },
+      "StudentsImportInput": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 500,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StudentsInput" }
+          }
+        },
+        "required": ["items"]
+      },
+      "StudentsImportResult": {
+        "type": "object",
+        "properties": {
+          "imported": { "type": "number" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StudentsDto" }
+          }
+        },
+        "required": ["imported", "items"]
       },
       "SubjectsDto": {
         "type": "object",
@@ -6073,6 +7058,7 @@
           "he_so": { "type": "string" },
           "bat_buoc": { "type": "boolean" },
           "thu_tu_hien_thi": { "type": "number" },
+          "cho_phep_nhap": { "type": "boolean" },
           "label": { "type": "string" },
           "ma_thanh_phan": { "type": "number" }
         },
@@ -6104,7 +7090,8 @@
           "ten_thanh_phan": { "type": "string" },
           "he_so": { "type": "string" },
           "bat_buoc": { "type": "boolean" },
-          "thu_tu_hien_thi": { "type": "number" }
+          "thu_tu_hien_thi": { "type": "number" },
+          "cho_phep_nhap": { "type": "boolean" }
         },
         "required": [
           "ma_mon",
@@ -6161,6 +7148,28 @@
           "dien_thoai"
         ]
       },
+      "TeachersImportInput": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "maxItems": 500,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TeachersInput" }
+          }
+        },
+        "required": ["items"]
+      },
+      "TeachersImportResult": {
+        "type": "object",
+        "properties": {
+          "imported": { "type": "number" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TeachersDto" }
+          }
+        },
+        "required": ["imported", "items"]
+      },
       "AssignmentsDto": {
         "type": "object",
         "properties": {
@@ -6214,6 +7223,74 @@
           "ma_mon",
           "ma_hoc_ky",
           "ngay_phan_cong"
+        ]
+      },
+      "TimetableItemDto": {
+        "type": "object",
+        "properties": {
+          "ma_tiet_hoc": { "type": "number" },
+          "ma_lop": { "type": "number" },
+          "ten_lop": { "type": "string" },
+          "ma_mon": { "type": "number" },
+          "ten_mon": { "type": "string" },
+          "ma_giao_vien": { "type": "number" },
+          "ten_giao_vien": { "type": "string" },
+          "ma_hoc_ky": { "type": "number" },
+          "ten_hoc_ky": { "type": "string" },
+          "thu": {
+            "type": "number",
+            "description": "Ngày trong tuần (2 - 8, gồm Chủ nhật)"
+          },
+          "tiet": { "type": "number", "description": "Tiết học (1 - 10)" },
+          "phong_hoc": { "type": "string", "nullable": true },
+          "ghi_chu": { "type": "string", "nullable": true }
+        },
+        "required": [
+          "ma_tiet_hoc",
+          "ma_lop",
+          "ten_lop",
+          "ma_mon",
+          "ten_mon",
+          "ma_giao_vien",
+          "ten_giao_vien",
+          "ma_hoc_ky",
+          "ten_hoc_ky",
+          "thu",
+          "tiet",
+          "phong_hoc",
+          "ghi_chu"
+        ]
+      },
+      "TimetableListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TimetableItemDto" }
+          },
+          "total": { "type": "number" }
+        },
+        "required": ["items", "total"]
+      },
+      "CreateTimetableItemInput": {
+        "type": "object",
+        "properties": {
+          "ma_lop": { "type": "number" },
+          "ma_mon": { "type": "number" },
+          "ma_giao_vien": { "type": "number" },
+          "ma_hoc_ky": { "type": "number" },
+          "thu": { "type": "number" },
+          "tiet": { "type": "number" },
+          "phong_hoc": { "type": "string", "nullable": true },
+          "ghi_chu": { "type": "string", "nullable": true }
+        },
+        "required": [
+          "ma_lop",
+          "ma_mon",
+          "ma_giao_vien",
+          "ma_hoc_ky",
+          "thu",
+          "tiet"
         ]
       }
     }

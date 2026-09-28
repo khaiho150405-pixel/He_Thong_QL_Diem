@@ -72,3 +72,70 @@ export class ReportsController {
     });
   }
 }
+
+export class AdminKpiDto {
+  @ApiProperty({ type: Number }) totalStudents!: number;
+  @ApiProperty({ type: Number }) totalClasses!: number;
+  @ApiProperty({ type: Number }) totalTeachers!: number;
+  @ApiProperty({ type: Number }) lockedGradebooks!: number;
+  @ApiProperty({ type: Number }) totalGradebooks!: number;
+  @ApiProperty({ type: Number }) completionRate!: number;
+  @ApiProperty({ type: Number }) pendingOcrTickets!: number;
+}
+
+export class AdminGradeDistributionDto {
+  @ApiProperty({ type: String }) label!: string;
+  @ApiProperty({ type: String }) code!: string;
+  @ApiProperty({ type: Number }) count!: number;
+  @ApiProperty({ type: Number }) percentage!: number;
+  @ApiProperty({ type: String }) color!: string;
+}
+
+export class AdminGradeLevelProgressDto {
+  @ApiProperty({ type: Number }) grade!: number;
+  @ApiProperty({ type: String }) title!: string;
+  @ApiProperty({ type: Number }) lockedClasses!: number;
+  @ApiProperty({ type: Number }) totalClasses!: number;
+  @ApiProperty({ type: Number }) percentage!: number;
+}
+
+export class AdminOcrAccuracyDto {
+  @ApiProperty({ type: Number }) totalCells!: number;
+  @ApiProperty({ type: Number }) greenCount!: number;
+  @ApiProperty({ type: Number }) yellowCount!: number;
+  @ApiProperty({ type: Number }) redCount!: number;
+  @ApiProperty({ type: Number }) accuracyRate!: number;
+}
+
+export class AdminRecentActivityDto {
+  @ApiProperty({ type: String }) className!: string;
+  @ApiProperty({ type: String }) subjectName!: string;
+  @ApiProperty({ type: String }) teacherName!: string;
+  @ApiProperty({ type: String }) status!: string;
+  @ApiProperty({ type: String }) updatedAt!: string;
+}
+
+export class AdminOverviewDto {
+  @ApiProperty({ type: AdminKpiDto }) kpi!: AdminKpiDto;
+  @ApiProperty({ type: [AdminGradeDistributionDto] })
+  gradeDistribution!: AdminGradeDistributionDto[];
+  @ApiProperty({ type: [AdminGradeLevelProgressDto] })
+  gradeLevelProgress!: AdminGradeLevelProgressDto[];
+  @ApiProperty({ type: AdminOcrAccuracyDto }) ocrAccuracy!: AdminOcrAccuracyDto;
+  @ApiProperty({ type: [AdminRecentActivityDto] })
+  recentActivities!: AdminRecentActivityDto[];
+}
+
+@ApiTags("reports")
+@Controller("reports/admin")
+export class AdminReportsController {
+  constructor(
+    @Inject(ReportsService) private readonly service: ReportsService,
+  ) {}
+
+  @Get("overview")
+  @ApiOkResponse({ type: AdminOverviewDto })
+  overview(@Req() req: Request & { actor: Actor }) {
+    return this.service.adminOverview(req.actor);
+  }
+}

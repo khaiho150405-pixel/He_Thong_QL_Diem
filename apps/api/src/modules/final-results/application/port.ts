@@ -107,6 +107,17 @@ export interface StudentSubjectResult {
   calculatedAt: string | null;
 }
 
+export interface StudentResultSummary {
+  termId: number | null;
+  termName: string | null;
+  className: string;
+  averageScore: string | null;
+  publishedSubjects: number;
+  totalSubjects: number;
+  classRank: number | null;
+  classSize: number;
+}
+
 export interface FinalResultUnit {
   authorization: Unit;
   findBook(id: number): Promise<FinalResultBook | null>;
@@ -123,6 +134,10 @@ export interface FinalResultUnit {
     userId: number,
     termId: number | null,
   ): Promise<StudentSubjectResult[]>;
+  studentSummary(
+    userId: number,
+    termId: number | null,
+  ): Promise<StudentResultSummary>;
 }
 
 export interface FinalResultStore {

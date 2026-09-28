@@ -7,6 +7,9 @@ export interface GradebookScope {
 }
 export interface Gradebook extends GradebookScope {
   id: number;
+  className: string;
+  subjectName: string;
+  termName: string;
   status: "DANG_NHAP_LIEU" | "DA_CHOT";
   version: number;
 }
@@ -20,6 +23,7 @@ export interface GradeCell {
   coefficient: string;
   required: boolean;
   displayOrder: number;
+  openForInput?: boolean;
   value: string | null;
   status: "CHUA_CO" | "CHO_DOI_CHIEU" | "DA_DUYET";
   source: "NHAP_TAY" | "NHAN_DIEN";
@@ -32,6 +36,10 @@ export interface GradeHistoryEntry {
   newValue: string | null;
   reason: string;
   timestamp: string;
+}
+export interface GradebookHistoryEntry extends GradeHistoryEntry {
+  studentName: string;
+  componentName: string;
 }
 export interface IdempotencyRecord {
   key: string;
@@ -75,6 +83,10 @@ export interface GradebookUnit {
     cellId: string,
     after: string,
   ): Promise<GradeHistoryEntry[]>;
+  gradebookHistory(
+    bookId: number,
+    after: string,
+  ): Promise<GradebookHistoryEntry[]>;
   findIdempotencyKey(
     key: string,
     userId: number,

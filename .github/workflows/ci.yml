@@ -150,7 +150,7 @@ jobs:
           set -a
           . ./.env
           set +a
-          token=$(node -e 'fetch("http://127.0.0.1:3000/api/v1/identity/login",{method:"POST",headers:{"content-type":"application/json","x-client-platform":"native"},body:JSON.stringify({username:"demo_teacher_a",password:process.env.SEED_PASSWORD})}).then(async r=>{if(!r.ok)throw new Error(`login ${r.status}`);return r.json()}).then(v=>process.stdout.write(v.token))')
+          token=$(node -e 'fetch("http://127.0.0.1:3000/api/v1/identity/login",{method:"POST",headers:{"content-type":"application/json","x-client-platform":"native"},body:JSON.stringify({username:"giaovien_toan",password:process.env.SEED_PASSWORD})}).then(async r=>{if(!r.ok)throw new Error(`login ${r.status}`);return r.json()}).then(v=>process.stdout.write(v.token))')
           export LOAD_BASE_URL=http://127.0.0.1:3000
           export LOAD_PATH=/api/v1/gradebooks
           export LOAD_AUTHORIZATION="Bearer $token"

@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 
 import '../authentication/session.dart';
 import '../final_results/final_results_panel.dart';
+import '../final_results/repository.dart';
 import '../recognition/recognition_panel.dart';
 import '../reports/reports_panel.dart';
+import '../../core/vietnamese_sort.dart';
+import 'excel_import_dialog.dart';
 import 'repository.dart';
 
 class GradebookScreen extends ConsumerStatefulWidget {
@@ -91,8 +94,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
   final horizontalGridController = ScrollController();
   bool busy = false;
   bool conflict = false;
+  late Future<List<FinalResultDto>> finalResults;
 
   bool get teacher => ref.read(sessionProvider)?.role.value == 'GIAO_VIEN';
+  bool get admin => ref.read(sessionProvider)?.role.value == 'QUAN_TRI_VIEN';
   bool get locked => widget.data.book.status.value == 'DA_CHOT';
   bool get editable => teacher && !locked && !conflict;
 
@@ -102,6 +107,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     for (final cell in widget.data.items) {
       controllers[cell.id] = TextEditingController(text: cell.value ?? '');
     }
+    finalResults = locked
+        ? ref.read(finalResultsRepositoryProvider).list(widget.data.book.id)
+        : Future.value(const []);
   }
 
   @override
@@ -123,6 +131,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
   }
 
   List<GradeCellDto> changedCells() => widget.data.items.where((cell) {
+    if (cell.openForInput == false) return false;
     final text = controllers[cell.id]!.text.trim();
     return (text.isEmpty ? null : text) != cell.value;
   }).toList();
@@ -252,6 +261,57 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     }, success: 'Bảng điểm đã được chốt.');
   }
 
+  Future<void> openExcelImport(
+    Map<num, List<GradeCellDto>> students,
+    List<GradeCellDto> components,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => ExcelImportDialog(
+        bookId: widget.data.book.id,
+        students: students,
+        components: components,
+        onApply: (updatedValues, reason) async {
+          for (final entry in updatedValues.entries) {
+            if (controllers.containsKey(entry.key)) {
+              controllers[entry.key]!.text = entry.value;
+            }
+          }
+          final changed = changedCells();
+          if (changed.isEmpty) {
+            showMessage(
+              'Các điểm trong file trùng khớp với điểm hiện tại trên hệ thống.',
+            );
+            return;
+          }
+          await mutate(
+            () async {
+              await ref
+                  .read(gradebooksRepositoryProvider)
+                  .update(
+                    bookId: widget.data.book.id,
+                    expectedVersion: widget.data.book.version,
+                    changes: changed
+                        .map(
+                          (cell) => GradeChangeInput(
+                            cellId: cell.id,
+                            value: controllers[cell.id]!.text.trim().isEmpty
+                                ? null
+                                : controllers[cell.id]!.text.trim(),
+                            reason: reason,
+                          ),
+                        )
+                        .toList(),
+                  );
+            },
+            success:
+                'Đã nạp thành công ${changed.length} con điểm từ file Excel.',
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> mutate(
     Future<void> Function() action, {
     required String success,
@@ -284,20 +344,77 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> showHistory(GradeCellDto cell) async {
+  Future<void> showAllHistory() async {
     await showDialog<void>(
       context: context,
-      builder: (_) =>
-          GradeHistoryDialog(bookId: widget.data.book.id, cell: cell),
+      builder: (_) => GradebookHistoryDialog(bookId: widget.data.book.id),
+    );
+  }
+
+  Future<void> showFinalResults() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: FinalResultsPanel(
+            gradebookId: widget.data.book.id,
+            gradebookVersion: widget.data.book.version,
+            showResults: true,
+          ),
+        ),
+      ),
+    );
+    if (mounted && locked) {
+      setState(() {
+        finalResults = ref
+            .read(finalResultsRepositoryProvider)
+            .list(widget.data.book.id);
+      });
+    }
+  }
+
+  void showIdentifiers() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mã tham chiếu bảng điểm'),
+        content: Text(
+          'Mã bảng điểm: ${widget.data.book.id}\n'
+          'Mã lớp: ${widget.data.book.classId}\n'
+          'Mã môn: ${widget.data.book.subjectId}\n'
+          'Mã học kỳ: ${widget.data.book.termId}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final students = <num, List<GradeCellDto>>{};
+    final rawStudents = <num, List<GradeCellDto>>{};
     for (final cell in widget.data.items) {
-      students.putIfAbsent(cell.studentId, () => []).add(cell);
+      rawStudents.putIfAbsent(cell.studentId, () => []).add(cell);
     }
+    // Sắp xếp danh sách học sinh theo bảng chữ cái tiếng Việt chuẩn (A-Z)
+    final sortedStudentRows = rawStudents.values.toList()
+      ..sort((a, b) {
+        final nameA = a.isNotEmpty ? a.first.studentName : '';
+        final nameB = b.isNotEmpty ? b.first.studentName : '';
+        final byName = VietnameseCollation.compareStudentNames(nameA, nameB);
+        if (byName != 0) return byName;
+        final idA = a.isNotEmpty ? a.first.studentId : 0;
+        final idB = b.isNotEmpty ? b.first.studentId : 0;
+        return idA.compareTo(idB);
+      });
+    final students = {
+      for (final row in sortedStudentRows) row.first.studentId: row,
+    };
     final components = <num, GradeCellDto>{};
     for (final cell in widget.data.items) {
       components.putIfAbsent(cell.componentId, () => cell);
@@ -305,13 +422,14 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final orderedComponents = components.values.toList()
       ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
+    return Column(
+      children: [
+        Material(
+          elevation: 2,
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Wrap(
@@ -320,21 +438,46 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'Lớp #${widget.data.book.classId} · '
-                      'Môn #${widget.data.book.subjectId} · '
-                      'Học kỳ #${widget.data.book.termId}',
+                      '${widget.data.book.className} · '
+                      '${widget.data.book.subjectName} · '
+                      '${widget.data.book.termName}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
+                    if (admin)
+                      IconButton(
+                        tooltip: 'Xem mã tham chiếu',
+                        onPressed: showIdentifiers,
+                        icon: const Icon(Icons.info_outline),
+                      ),
                     Chip(
                       avatar: Icon(locked ? Icons.lock : Icons.edit, size: 18),
                       label: Text(locked ? 'Đã chốt' : 'Đang nhập liệu'),
                     ),
                     Text('Phiên bản ${widget.data.book.version}'),
+                    OutlinedButton.icon(
+                      onPressed: showAllHistory,
+                      icon: const Icon(Icons.history_outlined),
+                      label: const Text('Lịch sử cập nhật'),
+                    ),
+                    if (locked && teacher)
+                      OutlinedButton.icon(
+                        onPressed: showFinalResults,
+                        icon: const Icon(Icons.functions),
+                        label: const Text('Tính tổng kết'),
+                      ),
                     if (editable) ...[
                       OutlinedButton.icon(
                         onPressed: busy ? null : syncRoster,
                         icon: const Icon(Icons.group_add_outlined),
                         label: const Text('Đồng bộ sĩ số'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () =>
+                                  openExcelImport(students, orderedComponents),
+                        icon: const Icon(Icons.table_chart_outlined),
+                        label: const Text('Nhập từ Excel'),
                       ),
                       FilledButton.tonalIcon(
                         onPressed: busy ? null : save,
@@ -347,74 +490,93 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         label: const Text('Chốt bảng'),
                       ),
                     ],
+                    ReportsPanel(
+                      gradebookId: widget.data.book.id,
+                      compact: true,
+                    ),
                   ],
                 ),
               ),
             ),
-            if (conflict)
-              MaterialBanner(
-                content: const Text(
-                  'Bảng điểm đã thay đổi ở nơi khác. Tải lại để đối chiếu trước khi nhập lại.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: widget.onReload,
-                    child: const Text('Tải lại'),
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (conflict)
+                  MaterialBanner(
+                    content: const Text(
+                      'Bảng điểm đã thay đổi ở nơi khác. Tải lại để đối chiếu trước khi nhập lại.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: widget.onReload,
+                        child: const Text('Tải lại'),
+                      ),
+                    ],
+                  ),
+                if (teacher) ...[
+                  const SizedBox(height: 8),
+                  RecognitionPanel(
+                    gradebookId: widget.data.book.id,
+                    components: [
+                      for (final item in orderedComponents)
+                        RecognitionComponentOption(
+                          item.componentId,
+                          item.componentName,
+                        ),
+                    ],
+                    declaredRows: students.values
+                        .where((row) => row.first.active)
+                        .length,
+                    gradebookVersion: widget.data.book.version,
+                    enabled: !locked && !busy && !conflict,
+                    onApproved: widget.onReload,
                   ),
                 ],
-              ),
-            if (teacher) ...[
-              const SizedBox(height: 8),
-              RecognitionPanel(
-                gradebookId: widget.data.book.id,
-                components: [
-                  for (final item in orderedComponents)
-                    RecognitionComponentOption(
-                      item.componentId,
-                      item.componentName,
-                    ),
-                ],
-                declaredRows: students.values
-                    .where((row) => row.first.active)
-                    .length,
-                gradebookVersion: widget.data.book.version,
-                enabled: !locked && !busy && !conflict,
-                onApproved: widget.onReload,
-              ),
-            ],
-            if (locked) ...[
-              const SizedBox(height: 8),
-              FinalResultsPanel(
-                gradebookId: widget.data.book.id,
-                gradebookVersion: widget.data.book.version,
-              ),
-              const SizedBox(height: 8),
-              ReportsPanel(gradebookId: widget.data.book.id),
-            ],
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 520,
-              child: widget.data.items.isEmpty
-                  ? const Center(child: Text('Bảng điểm chưa có ô dữ liệu.'))
-                  : Form(
-                      key: formKey,
-                      child: LayoutBuilder(
-                        builder: (context, box) => box.maxWidth >= 800
-                            ? _wideGrid(students, orderedComponents)
-                            : _mobileGrid(students),
-                      ),
-                    ),
+                const SizedBox(height: 8),
+                FutureBuilder<List<FinalResultDto>>(
+                  future: finalResults,
+                  builder: (context, snapshot) =>
+                      _gradeGrid(students, orderedComponents, {
+                        for (final result in snapshot.data ?? const [])
+                          result.studentId: result,
+                      }),
+                ),
+                if (busy) const LinearProgressIndicator(),
+              ],
             ),
-            if (busy) const LinearProgressIndicator(),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
+
+  Widget _gradeGrid(
+    Map<num, List<GradeCellDto>> students,
+    List<GradeCellDto> components,
+    Map<num, FinalResultDto> results,
+  ) => SizedBox(
+    height: 520,
+    child: widget.data.items.isEmpty
+        ? const Center(child: Text('Bảng điểm chưa có ô dữ liệu.'))
+        : Form(
+            key: formKey,
+            child: LayoutBuilder(
+              builder: (context, box) => box.maxWidth >= 800
+                  ? _wideGrid(students, components, results)
+                  : _mobileGrid(students, results),
+            ),
+          ),
+  );
 
   Widget _wideGrid(
     Map<num, List<GradeCellDto>> students,
     List<GradeCellDto> components,
+    Map<num, FinalResultDto> results,
   ) => Scrollbar(
     controller: horizontalGridController,
     thumbVisibility: true,
@@ -424,37 +586,84 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       child: SingleChildScrollView(
         child: DataTable(
           columns: [
+            const DataColumn(label: Text('STT')),
             const DataColumn(label: Text('Học sinh')),
             for (final component in components)
               DataColumn(
-                label: Text(
-                  '${component.componentName}\nHệ số ${component.coefficient}'
-                  '${component.required_ ? ' · bắt buộc' : ''}',
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${component.componentName}\nHệ số ${component.coefficient}'
+                      '${component.required_ ? ' · bắt buộc' : ''}',
+                    ),
+                    if (component.openForInput == false) ...[
+                      const SizedBox(width: 4),
+                      const Tooltip(
+                        message: 'Admin chưa mở cổng nhập cột này',
+                        child: Icon(
+                          Icons.lock_outline_rounded,
+                          size: 14,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
+            if (locked) ...[
+              const DataColumn(label: Text('Điểm tổng kết')),
+              const DataColumn(label: Text('Xếp loại')),
+            ],
           ],
           rows: [
-            for (final row in students.values)
+            for (final entry in students.values.toList().asMap().entries)
               DataRow(
                 cells: [
+                  DataCell(Text('${entry.key + 1}')),
                   DataCell(
                     SizedBox(
                       width: 190,
                       child: Text(
-                        row.first.active
-                            ? row.first.studentName
-                            : '${row.first.studentName}\nNgừng theo học',
+                        entry.value.first.active
+                            ? entry.value.first.studentName
+                            : '${entry.value.first.studentName}\nNgừng theo học',
                       ),
                     ),
                   ),
                   for (final component in components)
                     DataCell(
-                      _gradeField(
-                        row.firstWhere(
-                          (cell) => cell.componentId == component.componentId,
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final cell = entry.value
+                              .cast<GradeCellDto?>()
+                              .firstWhere(
+                                (c) => c?.componentId == component.componentId,
+                                orElse: () => null,
+                              );
+                          return cell != null
+                              ? _gradeField(cell)
+                              : const Text('—');
+                        },
                       ),
                     ),
+                  if (locked) ...[
+                    DataCell(
+                      Text(
+                        results[entry.value.first.studentId]?.finalScore ?? '—',
+                      ),
+                    ),
+                    DataCell(
+                      results[entry.value.first.studentId] == null
+                          ? const Text('—')
+                          : Chip(
+                              label: Text(
+                                results[entry.value.first.studentId]!
+                                    .classification,
+                              ),
+                            ),
+                    ),
+                  ],
                 ],
               ),
           ],
@@ -463,9 +672,12 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     ),
   );
 
-  Widget _mobileGrid(Map<num, List<GradeCellDto>> students) => ListView(
+  Widget _mobileGrid(
+    Map<num, List<GradeCellDto>> students,
+    Map<num, FinalResultDto> results,
+  ) => ListView(
     children: [
-      for (final row in students.values)
+      for (final entry in students.values.toList().asMap().entries)
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -473,12 +685,21 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  row.first.studentName,
+                  'STT ${entry.key + 1} · ${entry.value.first.studentName}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                if (!row.first.active) const Text('Ngừng theo học'),
+                if (!entry.value.first.active) const Text('Ngừng theo học'),
+                if (locked) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Điểm tổng kết: '
+                    '${results[entry.value.first.studentId]?.finalScore ?? '—'} · '
+                    'Xếp loại: ${results[entry.value.first.studentId]?.classification ?? '—'}',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ],
                 const SizedBox(height: 12),
-                for (final cell in row) ...[
+                for (final cell in entry.value) ...[
                   Text(
                     '${cell.componentName} · Hệ số ${cell.coefficient}'
                     '${cell.required_ ? ' · bắt buộc' : ''}',
@@ -503,12 +724,27 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             key: ValueKey('grade-${cell.id}'),
             controller: controllers[cell.id],
             enabled:
-                editable && cell.active && cell.status.value != 'CHO_DOI_CHIEU',
+                editable &&
+                cell.active &&
+                cell.openForInput != false &&
+                cell.status.value != 'CHO_DOI_CHIEU',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: '—',
-              helperText: cell.status.value == 'CHO_DOI_CHIEU'
+              prefixIcon: cell.openForInput == false
+                  ? const Tooltip(
+                      message: 'Cột này chưa được Admin mở cổng nhập',
+                      child: Icon(
+                        Icons.lock_rounded,
+                        size: 14,
+                        color: Colors.orange,
+                      ),
+                    )
+                  : null,
+              helperText: cell.openForInput == false
+                  ? 'Chưa mở nhập'
+                  : cell.status.value == 'CHO_DOI_CHIEU'
                   ? 'Chờ đối chiếu'
                   : cell.value == null
                   ? 'Chưa có điểm'
@@ -521,36 +757,26 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             validator: validateGrade,
           ),
         ),
-        IconButton(
-          tooltip: 'Lịch sử',
-          onPressed: () => showHistory(cell),
-          icon: const Icon(Icons.history),
-        ),
       ],
     ),
   );
 }
 
-class GradeHistoryDialog extends ConsumerWidget {
-  const GradeHistoryDialog({
-    super.key,
-    required this.bookId,
-    required this.cell,
-  });
+class GradebookHistoryDialog extends ConsumerWidget {
+  const GradebookHistoryDialog({super.key, required this.bookId});
 
   final num bookId;
-  final GradeCellDto cell;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => AlertDialog(
-    title: Text('Lịch sử · ${cell.studentName} · ${cell.componentName}'),
+    title: const Text('Lịch sử cập nhật điểm'),
     content: SizedBox(
       width: 620,
       height: 420,
-      child: FutureBuilder<List<GradeHistoryEntryDto>>(
+      child: FutureBuilder<List<GradebookHistoryEntryDto>>(
         future: ref
             .read(gradebooksRepositoryProvider)
-            .history(bookId: bookId, cellId: cell.id),
+            .historyAll(bookId: bookId),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
@@ -561,7 +787,7 @@ class GradeHistoryDialog extends ConsumerWidget {
           final items = snapshot.data!;
           if (items.isEmpty) {
             return const Center(
-              child: Text('Ô điểm chưa có lịch sử thay đổi.'),
+              child: Text('Bảng điểm chưa có lịch sử thay đổi.'),
             );
           }
           return ListView.separated(
@@ -571,11 +797,10 @@ class GradeHistoryDialog extends ConsumerWidget {
               final item = items[index];
               final timestamp = DateTime.tryParse(item.timestamp)?.toLocal();
               return ListTile(
-                title: Text(
-                  '${item.oldValue ?? 'NULL'} → ${item.newValue ?? 'NULL'}',
-                ),
+                title: Text('${item.studentName} · ${item.componentName}'),
                 subtitle: Text(
-                  '${item.reason}\nNgười sửa #${item.editor}'
+                  '${item.oldValue ?? 'NULL'} → ${item.newValue ?? 'NULL'}'
+                  '\n${item.reason}\nNgười sửa #${item.editor}'
                   '${timestamp == null ? '' : ' · $timestamp'}',
                 ),
               );

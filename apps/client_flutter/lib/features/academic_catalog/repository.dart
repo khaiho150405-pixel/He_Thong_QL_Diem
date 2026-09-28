@@ -212,6 +212,28 @@ class CatalogRepository {
     }
   }
 
+  Future<int> importMany(String resource, List<Json> rows) async {
+    switch (resource) {
+      case 'accounts':
+        final result = await api.getIdentityApi().identityImportAccounts(
+          accountsImportInput: AccountsImportInput.fromJson({'items': rows}),
+        );
+        return result.data!.imported.toInt();
+      case 'teachers':
+        final result = await api.getTeachersApi().teachersImportMany(
+          teachersImportInput: TeachersImportInput.fromJson({'items': rows}),
+        );
+        return result.data!.imported.toInt();
+      case 'students':
+        final result = await api.getStudentsApi().studentsImportMany(
+          studentsImportInput: StudentsImportInput.fromJson({'items': rows}),
+        );
+        return result.data!.imported.toInt();
+      default:
+        throw ArgumentError('Danh mục này không hỗ trợ nhập file.');
+    }
+  }
+
   Future<void> remove(String resource, num id) async {
     switch (resource) {
       case 'years':

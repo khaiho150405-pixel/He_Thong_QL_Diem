@@ -1,6 +1,23 @@
 import { spawnSync } from "node:child_process";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { repairRecognitionMultipart } from "./repair-generated-client.mjs";
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function writeWithWindowsRetry(file, content) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await writeFile(file, content);
+      return;
+    } catch (error) {
+      if (
+        process.platform !== "win32" ||
+        attempt >= 10 ||
+        !["UNKNOWN", "EBUSY", "EPERM", "EACCES"].includes(error?.code)
+      )
+        throw error;
+      await pause(attempt * 100);
+    }
+  }
+}
 const result = spawnSync(
   process.platform === "win32" ? "pnpm.cmd" : "pnpm",
   [
@@ -51,7 +68,7 @@ async function normalize(dir) {
     if (entry.isDirectory()) await normalize(file);
     else if (/\.(dart|md|yaml)$/.test(file)) {
       const content = await readFile(file, "utf8");
-      await writeFile(
+      await writeWithWindowsRetry(
         file,
         content
           .replaceAll("\r\n", "\n")

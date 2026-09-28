@@ -28,6 +28,8 @@ class ComponentsDto {
 
     required this.thuTuHienThi,
 
+    this.choPhepNhap,
+
     required this.label,
 
     required this.maThanhPhan,
@@ -48,6 +50,9 @@ class ComponentsDto {
   @JsonKey(name: r'thu_tu_hien_thi', required: true, includeIfNull: false)
   final num thuTuHienThi;
 
+  @JsonKey(name: r'cho_phep_nhap', required: false, includeIfNull: false)
+  final bool? choPhepNhap;
+
   @JsonKey(name: r'label', required: true, includeIfNull: false)
   final String label;
 
@@ -63,6 +68,7 @@ class ComponentsDto {
           other.heSo == heSo &&
           other.batBuoc == batBuoc &&
           other.thuTuHienThi == thuTuHienThi &&
+          other.choPhepNhap == choPhepNhap &&
           other.label == label &&
           other.maThanhPhan == maThanhPhan;
 
@@ -73,6 +79,7 @@ class ComponentsDto {
       heSo.hashCode +
       batBuoc.hashCode +
       thuTuHienThi.hashCode +
+      choPhepNhap.hashCode +
       label.hashCode +
       maThanhPhan.hashCode;
 

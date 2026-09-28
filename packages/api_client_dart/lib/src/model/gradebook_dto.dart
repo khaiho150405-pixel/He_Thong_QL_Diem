@@ -26,6 +26,12 @@ class GradebookDto {
 
     required this.termId,
 
+    required this.className,
+
+    required this.subjectName,
+
+    required this.termName,
+
     required this.status,
 
     required this.version,
@@ -43,6 +49,15 @@ class GradebookDto {
   @JsonKey(name: r'termId', required: true, includeIfNull: false)
   final num termId;
 
+  @JsonKey(name: r'className', required: true, includeIfNull: false)
+  final String className;
+
+  @JsonKey(name: r'subjectName', required: true, includeIfNull: false)
+  final String subjectName;
+
+  @JsonKey(name: r'termName', required: true, includeIfNull: false)
+  final String termName;
+
   @JsonKey(name: r'status', required: true, includeIfNull: false)
   final GradebookDtoStatusEnum status;
 
@@ -57,6 +72,9 @@ class GradebookDto {
           other.classId == classId &&
           other.subjectId == subjectId &&
           other.termId == termId &&
+          other.className == className &&
+          other.subjectName == subjectName &&
+          other.termName == termName &&
           other.status == status &&
           other.version == version;
 
@@ -66,6 +84,9 @@ class GradebookDto {
       classId.hashCode +
       subjectId.hashCode +
       termId.hashCode +
+      className.hashCode +
+      subjectName.hashCode +
+      termName.hashCode +
       status.hashCode +
       version.hashCode;
 

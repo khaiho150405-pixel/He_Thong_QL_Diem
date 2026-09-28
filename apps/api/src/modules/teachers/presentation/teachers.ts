@@ -37,6 +37,14 @@ export class TeachersPage {
   @ApiProperty({ type: [TeachersDto] }) items!: TeachersDto[];
   @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
 }
+export class TeachersImportInput {
+  @ApiProperty({ type: [TeachersInput], maxItems: 500 })
+  items!: TeachersInput[];
+}
+export class TeachersImportResult {
+  @ApiProperty({ type: Number }) imported!: number;
+  @ApiProperty({ type: [TeachersDto] }) items!: TeachersDto[];
+}
 @ApiTags("teachers")
 @Controller("catalog/teachers")
 export class TeachersController {
@@ -60,6 +68,16 @@ export class TeachersController {
   @ApiOkResponse({ type: TeachersDto })
   create(@Req() req: Request & { actor: Actor }, @Body() input: unknown) {
     return this.service.save(req.actor, input);
+  }
+  @Post("import")
+  @HttpCode(200)
+  @ApiBody({ type: TeachersImportInput })
+  @ApiOkResponse({ type: TeachersImportResult })
+  importMany(
+    @Req() req: Request & { actor: Actor },
+    @Body() input: TeachersImportInput,
+  ) {
+    return this.service.saveMany(req.actor, input?.items ?? []);
   }
   @Put(":id")
   @ApiBody({ type: TeachersInput })

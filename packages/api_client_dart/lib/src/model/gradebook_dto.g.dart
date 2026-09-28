@@ -15,6 +15,12 @@ abstract class _$GradebookDtoCWProxy {
 
   GradebookDto termId(num termId);
 
+  GradebookDto className(String className);
+
+  GradebookDto subjectName(String subjectName);
+
+  GradebookDto termName(String termName);
+
   GradebookDto status(GradebookDtoStatusEnum status);
 
   GradebookDto version(num version);
@@ -30,6 +36,9 @@ abstract class _$GradebookDtoCWProxy {
     num classId,
     num subjectId,
     num termId,
+    String className,
+    String subjectName,
+    String termName,
     GradebookDtoStatusEnum status,
     num version,
   });
@@ -54,6 +63,16 @@ class _$GradebookDtoCWProxyImpl implements _$GradebookDtoCWProxy {
   GradebookDto termId(num termId) => this(termId: termId);
 
   @override
+  GradebookDto className(String className) => this(className: className);
+
+  @override
+  GradebookDto subjectName(String subjectName) =>
+      this(subjectName: subjectName);
+
+  @override
+  GradebookDto termName(String termName) => this(termName: termName);
+
+  @override
   GradebookDto status(GradebookDtoStatusEnum status) => this(status: status);
 
   @override
@@ -71,6 +90,9 @@ class _$GradebookDtoCWProxyImpl implements _$GradebookDtoCWProxy {
     Object? classId = const $CopyWithPlaceholder(),
     Object? subjectId = const $CopyWithPlaceholder(),
     Object? termId = const $CopyWithPlaceholder(),
+    Object? className = const $CopyWithPlaceholder(),
+    Object? subjectName = const $CopyWithPlaceholder(),
+    Object? termName = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? version = const $CopyWithPlaceholder(),
   }) {
@@ -91,6 +113,18 @@ class _$GradebookDtoCWProxyImpl implements _$GradebookDtoCWProxy {
           ? _value.termId
           // ignore: cast_nullable_to_non_nullable
           : termId as num,
+      className: className == const $CopyWithPlaceholder()
+          ? _value.className
+          // ignore: cast_nullable_to_non_nullable
+          : className as String,
+      subjectName: subjectName == const $CopyWithPlaceholder()
+          ? _value.subjectName
+          // ignore: cast_nullable_to_non_nullable
+          : subjectName as String,
+      termName: termName == const $CopyWithPlaceholder()
+          ? _value.termName
+          // ignore: cast_nullable_to_non_nullable
+          : termName as String,
       status: status == const $CopyWithPlaceholder()
           ? _value.status
           // ignore: cast_nullable_to_non_nullable
@@ -122,6 +156,9 @@ GradebookDto _$GradebookDtoFromJson(Map<String, dynamic> json) =>
           'classId',
           'subjectId',
           'termId',
+          'className',
+          'subjectName',
+          'termName',
           'status',
           'version',
         ],
@@ -131,6 +168,9 @@ GradebookDto _$GradebookDtoFromJson(Map<String, dynamic> json) =>
         classId: $checkedConvert('classId', (v) => v as num),
         subjectId: $checkedConvert('subjectId', (v) => v as num),
         termId: $checkedConvert('termId', (v) => v as num),
+        className: $checkedConvert('className', (v) => v as String),
+        subjectName: $checkedConvert('subjectName', (v) => v as String),
+        termName: $checkedConvert('termName', (v) => v as String),
         status: $checkedConvert(
           'status',
           (v) => $enumDecode(_$GradebookDtoStatusEnumEnumMap, v),
@@ -146,6 +186,9 @@ Map<String, dynamic> _$GradebookDtoToJson(GradebookDto instance) =>
       'classId': instance.classId,
       'subjectId': instance.subjectId,
       'termId': instance.termId,
+      'className': instance.className,
+      'subjectName': instance.subjectName,
+      'termName': instance.termName,
       'status': _$GradebookDtoStatusEnumEnumMap[instance.status]!,
       'version': instance.version,
     };

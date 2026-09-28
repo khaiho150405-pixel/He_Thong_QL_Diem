@@ -140,9 +140,22 @@ export class StudentSubjectResultDto {
   calculatedAt!: string | null;
 }
 
+export class StudentResultSummaryDto {
+  @ApiProperty({ type: Number, nullable: true }) termId!: number | null;
+  @ApiProperty({ type: String, nullable: true }) termName!: string | null;
+  @ApiProperty({ type: String }) className!: string;
+  @ApiProperty({ type: String, nullable: true }) averageScore!: string | null;
+  @ApiProperty({ type: Number }) publishedSubjects!: number;
+  @ApiProperty({ type: Number }) totalSubjects!: number;
+  @ApiProperty({ type: Number, nullable: true }) classRank!: number | null;
+  @ApiProperty({ type: Number }) classSize!: number;
+}
+
 export class StudentResultsDto {
   @ApiProperty({ type: [StudentSubjectResultDto] })
   items!: StudentSubjectResultDto[];
+  @ApiProperty({ type: StudentResultSummaryDto })
+  summary!: StudentResultSummaryDto;
 }
 
 @ApiTags("final-results")
@@ -240,11 +253,9 @@ export class StudentResultsController {
     @Req() req: Request & { actor: Actor },
     @Query("termId") termId?: string,
   ) {
-    return {
-      items: await this.service.myResults(
-        req.actor,
-        termId === undefined ? undefined : Number(termId),
-      ),
-    };
+    return this.service.myOverview(
+      req.actor,
+      termId === undefined ? undefined : Number(termId),
+    );
   }
 }

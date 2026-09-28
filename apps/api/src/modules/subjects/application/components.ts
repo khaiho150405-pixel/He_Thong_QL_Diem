@@ -14,6 +14,7 @@ export class ComponentsService extends CatalogService {
         he_so: { kind: "decimal" },
         bat_buoc: { kind: "boolean" },
         thu_tu_hien_thi: { kind: "int", max: 100 },
+        cho_phep_nhap: { kind: "boolean", optional: true },
       },
       validate: validateComponent,
     });

@@ -1,6 +1,7 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/widgets/role_badge.dart';
 import 'session.dart';
 
 class ProfileDialog extends ConsumerStatefulWidget {
@@ -16,6 +17,7 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
   bool loading = true, busy = false;
   String? error;
   bool get teacher => ref.read(sessionProvider)?.role.value == 'GIAO_VIEN';
+
   @override
   void initState() {
     super.initState();
@@ -74,51 +76,149 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Hồ sơ cá nhân'),
-    content: SizedBox(
-      width: 440,
-      child: loading
-          ? const SizedBox(
-              height: 80,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (error != null) Text(error!),
-                  TextField(
-                    controller: name,
-                    decoration: const InputDecoration(labelText: 'Họ và tên'),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final user = ref.watch(sessionProvider);
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: colorScheme.primary.withAlpha(25),
+            child: Icon(
+              Icons.badge_rounded,
+              color: colorScheme.primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Hồ sơ cá nhân',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+                if (user != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: RoleBadge(role: user.role.value, compact: true),
                   ),
-                  if (teacher)
+              ],
+            ),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 440,
+        child: loading
+            ? const SizedBox(
+                height: 100,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 10),
+                      Text('Đang tải thông tin hồ sơ…'),
+                    ],
+                  ),
+                ),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (error != null) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: colorScheme.errorContainer.withAlpha(120),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: colorScheme.error.withAlpha(80),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              size: 18,
+                              color: colorScheme.error,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                error!,
+                                style: TextStyle(
+                                  color: colorScheme.error,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     TextField(
-                      controller: email,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                    ),
-                  if (teacher)
-                    TextField(
-                      controller: phone,
+                      controller: name,
                       decoration: const InputDecoration(
-                        labelText: 'Điện thoại',
+                        labelText: 'Họ và tên',
+                        prefixIcon: Icon(
+                          Icons.person_outline_rounded,
+                          size: 20,
+                        ),
                       ),
                     ),
-                ],
+                    if (teacher) ...[
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: email,
+                        decoration: const InputDecoration(
+                          labelText: 'Email liên hệ',
+                          prefixIcon: Icon(Icons.email_outlined, size: 20),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Số điện thoại',
+                          prefixIcon: Icon(Icons.phone_outlined, size: 20),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: busy ? null : () => Navigator.pop(context),
-        child: const Text('Đóng'),
       ),
-      if (error != null)
-        TextButton(onPressed: load, child: const Text('Thử lại')),
-      FilledButton(
-        onPressed: loading || busy ? null : save,
-        child: const Text('Lưu'),
-      ),
-    ],
-  );
+      actions: [
+        TextButton(
+          onPressed: busy ? null : () => Navigator.pop(context),
+          child: const Text('Đóng'),
+        ),
+        if (error != null)
+          TextButton(onPressed: load, child: const Text('Thử lại')),
+        FilledButton.icon(
+          onPressed: loading || busy ? null : save,
+          icon: busy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.check_rounded, size: 18),
+          label: Text(busy ? 'Đang lưu…' : 'Lưu thay đổi'),
+        ),
+      ],
+    );
+  }
 }

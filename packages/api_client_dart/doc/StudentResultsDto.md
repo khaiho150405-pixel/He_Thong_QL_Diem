@@ -9,5 +9,6 @@ import 'package:api_client_dart/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **items** | [**List&lt;StudentSubjectResultDto&gt;**](StudentSubjectResultDto.md) |  |
+**summary** | [**StudentResultSummaryDto**](StudentResultSummaryDto.md) |  |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

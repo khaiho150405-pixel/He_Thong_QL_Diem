@@ -25,6 +25,8 @@ abstract class _$GradeCellDtoCWProxy {
 
   GradeCellDto displayOrder(num displayOrder);
 
+  GradeCellDto openForInput(bool? openForInput);
+
   GradeCellDto value(String? value);
 
   GradeCellDto status(GradeCellDtoStatusEnum status);
@@ -47,6 +49,7 @@ abstract class _$GradeCellDtoCWProxy {
     String coefficient,
     bool required_,
     num displayOrder,
+    bool? openForInput,
     String? value,
     GradeCellDtoStatusEnum status,
     GradeCellDtoSource_Enum source_,
@@ -91,6 +94,10 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
       this(displayOrder: displayOrder);
 
   @override
+  GradeCellDto openForInput(bool? openForInput) =>
+      this(openForInput: openForInput);
+
+  @override
   GradeCellDto value(String? value) => this(value: value);
 
   @override
@@ -117,6 +124,7 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
     Object? coefficient = const $CopyWithPlaceholder(),
     Object? required_ = const $CopyWithPlaceholder(),
     Object? displayOrder = const $CopyWithPlaceholder(),
+    Object? openForInput = const $CopyWithPlaceholder(),
     Object? value = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? source_ = const $CopyWithPlaceholder(),
@@ -158,6 +166,10 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
           ? _value.displayOrder
           // ignore: cast_nullable_to_non_nullable
           : displayOrder as num,
+      openForInput: openForInput == const $CopyWithPlaceholder()
+          ? _value.openForInput
+          // ignore: cast_nullable_to_non_nullable
+          : openForInput as bool?,
       value: value == const $CopyWithPlaceholder()
           ? _value.value
           // ignore: cast_nullable_to_non_nullable
@@ -216,6 +228,7 @@ GradeCellDto _$GradeCellDtoFromJson(Map<String, dynamic> json) =>
           coefficient: $checkedConvert('coefficient', (v) => v as String),
           required_: $checkedConvert('required', (v) => v as bool),
           displayOrder: $checkedConvert('displayOrder', (v) => v as num),
+          openForInput: $checkedConvert('openForInput', (v) => v as bool?),
           value: $checkedConvert('value', (v) => v as String?),
           status: $checkedConvert(
             'status',
@@ -242,6 +255,7 @@ Map<String, dynamic> _$GradeCellDtoToJson(GradeCellDto instance) =>
       'coefficient': instance.coefficient,
       'required': instance.required_,
       'displayOrder': instance.displayOrder,
+      'openForInput': ?instance.openForInput,
       'value': instance.value,
       'status': _$GradeCellDtoStatusEnumEnumMap[instance.status]!,
       'source': _$GradeCellDtoSource_EnumEnumMap[instance.source_]!,

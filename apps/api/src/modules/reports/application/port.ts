@@ -42,12 +42,53 @@ export interface ExportRow {
   classification: string | null;
 }
 
+export interface AdminOverview {
+  kpi: {
+    totalStudents: number;
+    totalClasses: number;
+    totalTeachers: number;
+    lockedGradebooks: number;
+    totalGradebooks: number;
+    completionRate: number;
+    pendingOcrTickets: number;
+  };
+  gradeDistribution: {
+    label: string;
+    code: string;
+    count: number;
+    percentage: number;
+    color: string;
+  }[];
+  gradeLevelProgress: {
+    grade: number;
+    title: string;
+    lockedClasses: number;
+    totalClasses: number;
+    percentage: number;
+  }[];
+  ocrAccuracy: {
+    totalCells: number;
+    greenCount: number;
+    yellowCount: number;
+    redCount: number;
+    accuracyRate: number;
+  };
+  recentActivities: {
+    className: string;
+    subjectName: string;
+    teacherName: string;
+    status: string;
+    updatedAt: string;
+  }[];
+}
+
 export interface ReportUnit {
   authorization: Unit;
   findBook(id: number): Promise<ReportBook | null>;
   summary(gradebookId: number): Promise<GradebookSummary>;
   exportRows(gradebookId: number): Promise<ExportRow[]>;
   recordExport(actorId: number, gradebookId: number): Promise<void>;
+  adminOverview(): Promise<AdminOverview>;
 }
 
 export interface ReportStore {
