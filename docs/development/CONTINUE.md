@@ -9,6 +9,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 - Test mới `timetable_filter_test.dart`: chọn/tìm/đóng/bỏ lọc, màn 320/390/1440 với chữ 150%. Toàn bộ Flutter 64 tests đạt và analyze sạch; Web build development đạt, local `http://localhost:8080/?build=timetable-filters` HTTP 200. `pnpm check`: 35 unit/HTTP, format/lint/typecheck/build đạt. DB constraints 1 và integration 11 đạt trên DB test riêng; Python 13 đạt. `contracts:check` đạt bằng Java JBR Android Studio, Dart format và repository scan đạt. Log `.local/filter-*`.
 - Chỉ stage sản phẩm/tài liệu/migration/client/test đúng phạm vi. Giữ local `.agents`, `.claude`, `.windsurf`, `UI`, `skills-lock.json`, scripts DB thủ công, env/logs/weights. Không sửa migration đã chạy, không reset DB development. OCR thật vẫn chờ cấu hình; mobile native cần CI/thiết bị thật.
 - Sau push cần xem CI của PR đúng commit, hai đồng nghiệp review/Approve rồi chủ dự án merge. Không kết luận merge được từ kết quả local khi CI chưa xong.
+- Đã push nhánh và mở [PR #10](https://github.com/khaiho150405-pixel/He_Thong_QL_Diem/pull/10), commit sản phẩm `3f6832d`. Foundation/iOS đang chạy khi bàn giao; push và pull_request đều kích hoạt workflow nên có hai lượt. Chưa merge. Khi continue, kiểm CI ở HEAD mới nhất của PR trước khi sửa hoặc kết luận merge; xem lại docs note commit nếu khác commit sản phẩm.
 
 ## 2026-10-04 — Tối giản bảng điểm và thao tác lưới thời khóa biểu
 
