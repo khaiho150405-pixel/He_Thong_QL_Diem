@@ -267,6 +267,15 @@ Các enum nền tảng:
 11. Mỗi lần thay đổi điểm tạo một bản ghi lịch sử chứa giá trị cũ, mới, người sửa, thời điểm và lý do; không ghi đè lịch sử.
 12. Kết quả tổng kết lưu phiên bản bộ hệ số dùng để có thể giải thích lại kết quả cũ.
 
+Quyết định mới của chủ dự án (ADR-0013): hệ số TX/GK/CK dùng chung cho mọi môn trong một học kỳ của một năm học; mặc định 1/2/3. Chỉ QTV thay đổi, khóa ngay khi học kỳ có cột điểm chốt. Không gộp HK1/HK2 thành điểm cả năm. ADR-0013 thay thế phạm vi cấu hình cũ của ADR-0012.
+
+13. ADR-0014 thay thế quyền chốt thủ công: QTV đặt thời điểm mở/đóng từng cột của bảng điểm; giáo viên không chốt cột/bảng. Đến hạn, hệ thống ghi 0 cho ô thiếu/chưa duyệt của học sinh đang học (có nhật ký lý do), giữ điểm đã duyệt, khóa cột; tất cả cột khóa thì bảng DA_CHOT. Trước hạn NULL vẫn khác 0. Phiếu OCR chưa duyệt khi hết hạn chuyển LOI, không ghi đề xuất máy. Chạy lặp/restart không tạo nhật ký trùng.
+14. Xếp loại chỉ hiển thị sau khi QTV công bố học kỳ; chốt một môn chưa đồng nghĩa công bố. Học kỳ phải có các bảng hoàn tất và kết quả đủ học sinh trước khi công bố.
+15. Môn Đạt/Không đạt chỉ nhập Đạt hoặc Không đạt, không tính vào ĐTB. Đạt khi tổng hệ số cột Đạt / tổng hệ số các cột có điểm ≥ 50%; thiếu cột bắt buộc thì chưa tổng kết. Lưu kiểu đánh giá và hệ số trong snapshot.
+16. Tài khoản giáo viên/học sinh mới dùng số điện thoại 10 chữ số bắt đầu 0 làm username. Không tự đổi username tài khoản cũ. Hai vai trò không đổi tên; học sinh không đổi mật khẩu; danh mục quản trị chỉ QTV truy cập giao diện.
+
+Thời khóa biểu là phần mở rộng được chủ dự án yêu cầu sau baseline: chỉ QTV CRUD, giáo viên/học sinh đọc trong phạm vi được phép. Học sinh không thấy phòng học; QTV chọn nhóm theo lớp/phòng.
+
 ## 8. Luồng nhận dạng và đối chiếu
 
 ### UC11–UC12: tải ảnh và nhận dạng

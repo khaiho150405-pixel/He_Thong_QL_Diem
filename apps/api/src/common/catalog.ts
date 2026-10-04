@@ -150,12 +150,22 @@ export class CatalogService {
       ]),
     );
     const name = String(
-      row.ho_ten ??
+      (row.loai_he_so
+        ? (
+            { TX: "Thường xuyên", GK: "Giữa kỳ", CK: "Cuối kỳ" } as Record<
+              string,
+              string
+            >
+          )[String(row.loai_he_so)]
+        : undefined) ??
+        row.ho_ten ??
         row.ten_lop ??
         row.ten_mon ??
         row.ten_thanh_phan ??
         row.ten ??
-        "Phân công",
+        (this.spec.table === "he_so_hoc_ky_chung"
+          ? "Hệ số học kỳ"
+          : "Phân công"),
     );
     const parts: string[] = [];
     for (const [key, table, id, label] of [
@@ -163,11 +173,28 @@ export class CatalogService {
       ["ma_lop", "lop", "ma_lop", "ten_lop"],
       ["ma_mon", "mon_hoc", "ma_mon", "ten_mon"],
       ["ma_hoc_ky", "hoc_ky", "ma_hoc_ky", "ten"],
+      ["ma_thanh_phan", "thanh_phan_diem", "ma_thanh_phan", "ten_thanh_phan"],
       ["ma_gv_chu_nhiem", "giao_vien", "ma_giao_vien", "ho_ten"],
     ] as const) {
       if (row[key] && key !== this.spec.id) {
         const related = await tx.find(table, { [id]: row[key] });
-        if (related) parts.push(String(related[label]));
+        if (related) {
+          parts.push(String(related[label]));
+          if (this.spec.table === "he_so_hoc_ky_chung") {
+            if (table === "hoc_ky") {
+              const year = await tx.find("nam_hoc", {
+                ma_nam_hoc: related.ma_nam_hoc,
+              });
+              if (year) parts.push(String(year.ten));
+            }
+            if (table === "thanh_phan_diem") {
+              const subject = await tx.find("mon_hoc", {
+                ma_mon: related.ma_mon,
+              });
+              if (subject) parts.push(String(subject.ten_mon));
+            }
+          }
+        }
       }
     }
     return {
@@ -214,11 +241,30 @@ export class CatalogService {
             ...(q
               ? [
                   {
-                    OR: Object.entries(this.spec.fields)
-                      .filter(([, f]) => f.kind === "text")
-                      .map(([key]) => ({
-                        [key]: { contains: q, mode: "insensitive" },
-                      })),
+                    OR:
+                      this.spec.table === "he_so_hoc_ky_chung"
+                        ? [
+                            {
+                              loai_he_so: { contains: q, mode: "insensitive" },
+                            },
+                            {
+                              ma_hoc_ky_ref: {
+                                ten: { contains: q, mode: "insensitive" },
+                              },
+                            },
+                            {
+                              ma_hoc_ky_ref: {
+                                ma_nam_hoc_ref: {
+                                  ten: { contains: q, mode: "insensitive" },
+                                },
+                              },
+                            },
+                          ]
+                        : Object.entries(this.spec.fields)
+                            .filter(([, f]) => f.kind === "text")
+                            .map(([key]) => ({
+                              [key]: { contains: q, mode: "insensitive" },
+                            })),
                   },
                 ]
               : []),
@@ -292,19 +338,38 @@ export class CatalogService {
       const used = await this.isUsed(tx, row!);
       if (used)
         throw new ConflictException(
-          "Không thể xóa vì dữ liệu này đang được sử dụng ở nơi khác.",
+          `Không thể xóa: dữ liệu đang được sử dụng trong ${used}. Hãy xử lý liên kết trước.`,
         );
       await tx.remove(this.spec.table, { [this.spec.id]: id });
       await audit(tx, actor.id, "CATALOG_DELETE", `${this.spec.table}:${id}`);
     });
   }
 
-  private async isUsed(tx: Unit, row: Row): Promise<boolean> {
+  private async isUsed(tx: Unit, row: Row): Promise<string | null> {
     const any = async (checks: Array<[Table, Record<string, unknown>]>) => {
       for (const [table, where] of checks) {
-        if (await tx.count(table, where)) return true;
+        if (await tx.count(table, where))
+          return (
+            (
+              {
+                hoc_ky: "học kỳ",
+                lop: "lớp học",
+                he_so_hoc_ky: "hệ số học kỳ cũ",
+                he_so_hoc_ky_chung: "hệ số học kỳ",
+                phan_cong_giang_day: "phân công giảng dạy",
+                bang_diem: "bảng điểm",
+                ket_qua_tong_ket: "kết quả tổng kết",
+                thoi_khoa_bieu: "thời khóa biểu",
+                hoc_sinh: "hồ sơ học sinh",
+                thanh_phan_diem: "thành phần điểm",
+                diem_thanh_phan: "điểm học sinh",
+                phieu_nhan_dien: "phiếu nhận diện",
+                ket_qua_dong: "kết quả nhận diện",
+              } as Record<string, string>
+            )[table] ?? table
+          );
       }
-      return false;
+      return null;
     };
     switch (this.spec.table) {
       case "nam_hoc":
@@ -314,6 +379,8 @@ export class CatalogService {
         ]);
       case "hoc_ky":
         return any([
+          ["he_so_hoc_ky", { ma_hoc_ky: row.ma_hoc_ky }],
+          ["he_so_hoc_ky_chung", { ma_hoc_ky: row.ma_hoc_ky }],
           ["phan_cong_giang_day", { ma_hoc_ky: row.ma_hoc_ky }],
           ["bang_diem", { ma_hoc_ky: row.ma_hoc_ky }],
           ["ket_qua_tong_ket", { ma_hoc_ky: row.ma_hoc_ky }],
@@ -348,6 +415,7 @@ export class CatalogService {
         ]);
       case "thanh_phan_diem":
         return any([
+          ["he_so_hoc_ky", { ma_thanh_phan: row.ma_thanh_phan }],
           ["diem_thanh_phan", { ma_thanh_phan: row.ma_thanh_phan }],
           ["phieu_nhan_dien", { ma_thanh_phan: row.ma_thanh_phan }],
         ]);
@@ -371,7 +439,7 @@ export class CatalogService {
           ],
         ]);
       default:
-        return false;
+        return null;
     }
   }
 }

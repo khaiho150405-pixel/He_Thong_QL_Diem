@@ -20,7 +20,7 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu','he_so_hoc_ky','he_so_hoc_ky_chung','chot_cot_diem','lich_nhap_diem')",
     );
     assert.equal(tables.rows[0].n, 16);
     const timetable = await owner.query(
@@ -36,6 +36,10 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     await denied("DELETE FROM lich_su_sua_diem");
     await denied("UPDATE lich_su_sua_diem SET ly_do=ly_do");
     await denied("TRUNCATE lich_su_sua_diem");
+    await denied("UPDATE lich_nhap_diem SET dong_luc=now()");
+    await denied("DELETE FROM lich_nhap_diem");
+    await denied("SELECT * FROM public.chot_cot('invalid',1,1,0)");
+    await denied("SELECT * FROM public.chot_bang_diem('invalid',1,0)");
     await denied("DELETE FROM lich_su_tong_ket");
     await denied("UPDATE lich_su_tong_ket SET ly_do=ly_do");
     await denied("TRUNCATE lich_su_tong_ket");

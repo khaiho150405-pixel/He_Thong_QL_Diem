@@ -154,6 +154,19 @@ export class PrismaRecognitionStore implements RecognitionStore {
         select: { ma_thanh_phan: true },
       });
       if (!component) throw new NotFoundException();
+      if (
+        await tx.chot_cot_diem.count({
+          where: { ma_bang_diem: gradebookId, ma_thanh_phan: componentId },
+        })
+      )
+        throw new ConflictException("Cột điểm đã chốt; không nhận diện thêm.");
+      if (
+        (await tx.mon_hoc.findUnique({ where: { ma_mon: row.ma_mon } }))
+          ?.danh_gia_dat
+      )
+        throw new ConflictException(
+          "Môn Đạt/Không đạt nhập bằng lựa chọn đánh giá; không dùng OCR điểm số.",
+        );
       const rateLimit = this.settings.uploadRateLimitPerMinute ?? 10;
       const result = await tx.$queryRaw<Array<{ allowed: boolean }>>`
         SELECT public.tieu_thu_han_muc_tac_vu(

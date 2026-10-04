@@ -59,6 +59,34 @@ if (process.exitCode === 0) {
       break;
     }
   }
+  // On Windows, Dart may exit 0 even when a mapped file prevented a write.
+  // Verify the actual files and retry formatting instead of publishing drift.
+  if (process.exitCode === 0) {
+    for (let attempt = 0; ; attempt += 1) {
+      const options = {
+        cwd: "packages/api_client_dart",
+        stdio: "inherit",
+        shell: process.platform === "win32",
+      };
+      const dart = process.platform === "win32" ? "dart.bat" : "dart";
+      const check = spawnSync(
+        dart,
+        ["format", "--output=none", "--set-exit-if-changed", "lib"],
+        options,
+      );
+      if (check.status === 0) break;
+      if (attempt >= 4 || check.status !== 1) {
+        process.exitCode = check.status ?? 1;
+        break;
+      }
+      await pause(500 * (attempt + 1));
+      const retry = spawnSync(dart, ["format", "lib"], options);
+      if (retry.status !== 0) {
+        process.exitCode = retry.status ?? 1;
+        break;
+      }
+    }
+  }
 }
 async function normalize(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {

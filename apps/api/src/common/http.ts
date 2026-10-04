@@ -81,12 +81,28 @@ export class ErrorFilter implements ExceptionFilter {
       429: "RATE_LIMITED",
       503: "DEPENDENCY_UNAVAILABLE",
     };
+    const detail = error instanceof HttpException ? error.getResponse() : null;
+    const message =
+      typeof detail === "string"
+        ? detail
+        : (detail as { message?: unknown } | null)?.message;
+    const safeMessage =
+      typeof message === "string" &&
+      ![
+        "Bad Request",
+        "Forbidden",
+        "Conflict",
+        "Not Found",
+        "Unauthorized",
+      ].includes(message)
+        ? message
+        : null;
     response.status(status).json({
       code: codes[status] ?? "INTERNAL_ERROR",
       message:
         status >= 500
           ? "Dịch vụ tạm thời không sẵn sàng."
-          : "Yêu cầu không hợp lệ.",
+          : (safeMessage ?? "Yêu cầu không hợp lệ."),
       details: null,
       requestId: response.getHeader("x-request-id"),
     });

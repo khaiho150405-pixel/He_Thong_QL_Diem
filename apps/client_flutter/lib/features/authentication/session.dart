@@ -106,10 +106,12 @@ String errorMessage(Object error) {
         ? responseData['message']?.toString()
         : null;
     return switch (error.response?.statusCode) {
-      400 => 'Thông tin chưa hợp lệ. Kiểm tra các trường và khoảng ngày.',
+      400 =>
+        serverMessage ??
+            'Thông tin chưa hợp lệ. Kiểm tra các trường và khoảng ngày.',
       401 =>
         'Thông tin đăng nhập không đúng, tài khoản tạm khóa hoặc phiên đã hết hạn.',
-      403 => 'Bạn không có quyền thực hiện thao tác này.',
+      403 => serverMessage ?? 'Bạn không có quyền thực hiện thao tác này.',
       409 =>
         serverMessage?.isNotEmpty == true
             ? serverMessage!

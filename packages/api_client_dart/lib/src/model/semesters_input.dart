@@ -18,6 +18,8 @@ part 'semesters_input.g.dart';
 class SemestersInput {
   /// Returns a new [SemestersInput] instance.
   SemestersInput({
+    this.daCongBo,
+
     required this.maNamHoc,
 
     required this.ten,
@@ -28,6 +30,9 @@ class SemestersInput {
 
     required this.ngayKetThuc,
   });
+
+  @JsonKey(name: r'da_cong_bo', required: false, includeIfNull: false)
+  final bool? daCongBo;
 
   @JsonKey(name: r'ma_nam_hoc', required: true, includeIfNull: false)
   final num maNamHoc;
@@ -48,6 +53,7 @@ class SemestersInput {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SemestersInput &&
+          other.daCongBo == daCongBo &&
           other.maNamHoc == maNamHoc &&
           other.ten == ten &&
           other.thuTu == thuTu &&
@@ -56,6 +62,7 @@ class SemestersInput {
 
   @override
   int get hashCode =>
+      daCongBo.hashCode +
       maNamHoc.hashCode +
       ten.hashCode +
       thuTu.hashCode +

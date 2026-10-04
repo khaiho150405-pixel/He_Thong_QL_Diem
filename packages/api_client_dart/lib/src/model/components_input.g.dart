@@ -7,11 +7,13 @@ part of 'components_input.dart';
 // **************************************************************************
 
 abstract class _$ComponentsInputCWProxy {
+  ComponentsInput loaiHeSo(String? loaiHeSo);
+
   ComponentsInput maMon(num maMon);
 
   ComponentsInput tenThanhPhan(String tenThanhPhan);
 
-  ComponentsInput heSo(String heSo);
+  ComponentsInput heSo(String? heSo);
 
   ComponentsInput batBuoc(bool batBuoc);
 
@@ -26,9 +28,10 @@ abstract class _$ComponentsInputCWProxy {
   /// ComponentsInput(...).copyWith(id: 12, name: "My name")
   /// ````
   ComponentsInput call({
+    String? loaiHeSo,
     num maMon,
     String tenThanhPhan,
-    String heSo,
+    String? heSo,
     bool batBuoc,
     num thuTuHienThi,
     bool? choPhepNhap,
@@ -42,6 +45,9 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
   final ComponentsInput _value;
 
   @override
+  ComponentsInput loaiHeSo(String? loaiHeSo) => this(loaiHeSo: loaiHeSo);
+
+  @override
   ComponentsInput maMon(num maMon) => this(maMon: maMon);
 
   @override
@@ -49,7 +55,7 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
       this(tenThanhPhan: tenThanhPhan);
 
   @override
-  ComponentsInput heSo(String heSo) => this(heSo: heSo);
+  ComponentsInput heSo(String? heSo) => this(heSo: heSo);
 
   @override
   ComponentsInput batBuoc(bool batBuoc) => this(batBuoc: batBuoc);
@@ -70,6 +76,7 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
   /// ComponentsInput(...).copyWith(id: 12, name: "My name")
   /// ````
   ComponentsInput call({
+    Object? loaiHeSo = const $CopyWithPlaceholder(),
     Object? maMon = const $CopyWithPlaceholder(),
     Object? tenThanhPhan = const $CopyWithPlaceholder(),
     Object? heSo = const $CopyWithPlaceholder(),
@@ -78,6 +85,10 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
     Object? choPhepNhap = const $CopyWithPlaceholder(),
   }) {
     return ComponentsInput(
+      loaiHeSo: loaiHeSo == const $CopyWithPlaceholder()
+          ? _value.loaiHeSo
+          // ignore: cast_nullable_to_non_nullable
+          : loaiHeSo as String?,
       maMon: maMon == const $CopyWithPlaceholder()
           ? _value.maMon
           // ignore: cast_nullable_to_non_nullable
@@ -89,7 +100,7 @@ class _$ComponentsInputCWProxyImpl implements _$ComponentsInputCWProxy {
       heSo: heSo == const $CopyWithPlaceholder()
           ? _value.heSo
           // ignore: cast_nullable_to_non_nullable
-          : heSo as String,
+          : heSo as String?,
       batBuoc: batBuoc == const $CopyWithPlaceholder()
           ? _value.batBuoc
           // ignore: cast_nullable_to_non_nullable
@@ -126,15 +137,15 @@ ComponentsInput _$ComponentsInputFromJson(Map<String, dynamic> json) =>
           requiredKeys: const [
             'ma_mon',
             'ten_thanh_phan',
-            'he_so',
             'bat_buoc',
             'thu_tu_hien_thi',
           ],
         );
         final val = ComponentsInput(
+          loaiHeSo: $checkedConvert('loai_he_so', (v) => v as String?),
           maMon: $checkedConvert('ma_mon', (v) => v as num),
           tenThanhPhan: $checkedConvert('ten_thanh_phan', (v) => v as String),
-          heSo: $checkedConvert('he_so', (v) => v as String),
+          heSo: $checkedConvert('he_so', (v) => v as String?),
           batBuoc: $checkedConvert('bat_buoc', (v) => v as bool),
           thuTuHienThi: $checkedConvert('thu_tu_hien_thi', (v) => v as num),
           choPhepNhap: $checkedConvert('cho_phep_nhap', (v) => v as bool?),
@@ -142,6 +153,7 @@ ComponentsInput _$ComponentsInputFromJson(Map<String, dynamic> json) =>
         return val;
       },
       fieldKeyMap: const {
+        'loaiHeSo': 'loai_he_so',
         'maMon': 'ma_mon',
         'tenThanhPhan': 'ten_thanh_phan',
         'heSo': 'he_so',
@@ -153,9 +165,10 @@ ComponentsInput _$ComponentsInputFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$ComponentsInputToJson(ComponentsInput instance) =>
     <String, dynamic>{
+      'loai_he_so': ?instance.loaiHeSo,
       'ma_mon': instance.maMon,
       'ten_thanh_phan': instance.tenThanhPhan,
-      'he_so': instance.heSo,
+      'he_so': ?instance.heSo,
       'bat_buoc': instance.batBuoc,
       'thu_tu_hien_thi': instance.thuTuHienThi,
       'cho_phep_nhap': ?instance.choPhepNhap,

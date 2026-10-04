@@ -104,6 +104,26 @@ class GradebooksRepository {
     return result;
   }
 
+  Future<GradebookDto> lockColumn({
+    required num bookId,
+    required num componentId,
+    required num expectedVersion,
+  }) async {
+    final input = LockInput(expectedVersion: expectedVersion);
+    final key = _key(
+      'column-lock',
+      '$bookId:$componentId:${jsonEncode(input)}',
+    );
+    final result = (await api.getGradebooksApi().gradebooksLockColumn(
+      id: bookId,
+      componentId: componentId,
+      xIdempotencyKey: key,
+      lockInput: input,
+    )).data!;
+    _complete('column-lock', key);
+    return result;
+  }
+
   Future<GradebookDto> lock({
     required num bookId,
     required num expectedVersion,

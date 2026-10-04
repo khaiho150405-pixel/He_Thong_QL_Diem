@@ -8,6 +8,7 @@ import 'package:api_client_dart/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**daCongBo** | **bool** |  | [optional]
 **maNamHoc** | **num** |  |
 **ten** | **String** |  |
 **thuTu** | **num** |  |

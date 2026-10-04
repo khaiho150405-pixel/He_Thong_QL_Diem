@@ -37,3 +37,7 @@ trong từng feature.
   `150%`.
 - Khi thêm control mới, ưu tiên `AppFilterDropdown`, `AppActionButton` và
   `AppControlMetrics.decoration` trước khi tạo style riêng.
+
+## Bộ lọc nhiều tên trong thời khóa biểu
+
+`TimetableFilter` dùng cùng kích thước, bo góc, icon và decoration với control chuẩn. Lớp/giáo viên mở sheet có tìm kiếm trực tiếp và danh sách tên đầy đủ, xuống dòng thay vì thu nhỏ chữ. Ô đóng giữ một dòng, tên dài có tooltip và xem đủ khi mở. Danh sách có lựa chọn Tất cả, dấu chọn và nút Đóng; đóng/hủy không thay bộ lọc. Sheet cuộn riêng, tính chiều cao theo bàn phím và vùng an toàn. Kiểm thử tại 320/390/1440 px với chữ 150%.

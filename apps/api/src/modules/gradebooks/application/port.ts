@@ -24,6 +24,11 @@ export interface GradeCell {
   required: boolean;
   displayOrder: number;
   openForInput?: boolean;
+  columnLocked?: boolean;
+  passFail?: boolean;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  deadlineVersion?: number;
   value: string | null;
   status: "CHUA_CO" | "CHO_DOI_CHIEU" | "DA_DUYET";
   source: "NHAP_TAY" | "NHAN_DIEN";
@@ -55,6 +60,15 @@ export interface BatchResult {
 }
 export interface GradebookUnit {
   authorization: Unit;
+  processDue(): Promise<number>;
+  setDeadline(
+    sessionHash: string,
+    bookId: number,
+    componentId: number,
+    opensAt: string,
+    closesAt: string,
+    version: number,
+  ): Promise<void>;
   createBlankGrid(
     sessionHash: string,
     scope: GradebookScope,
@@ -72,6 +86,12 @@ export interface GradebookUnit {
     sessionHash: string,
     bookId: number,
     version: number,
+  ): Promise<Gradebook>;
+  lockColumn(
+    sessionHash: string,
+    bookId: number,
+    componentId: number,
+    expectedVersion: number,
   ): Promise<Gradebook>;
   lockGradebook(
     sessionHash: string,

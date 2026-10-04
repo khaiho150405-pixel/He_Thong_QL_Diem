@@ -40,7 +40,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
       values[f.key] =
           widget.row?[f.key] ??
           (f.kind == 'boolean'
-              ? true
+              ? !['da_cong_bo', 'danh_gia_dat'].contains(f.key)
+              : f.kind == 'coefficient'
+              ? 'TX'
               : f.kind == 'role'
               ? 'HOC_SINH'
               : null);
@@ -126,11 +128,12 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             children: [
               TextFormField(
                 controller: username,
-                decoration: const InputDecoration(labelText: 'Tên đăng nhập'),
+                decoration: const InputDecoration(
+                  labelText: 'Số điện thoại đăng nhập',
+                ),
                 validator: (value) =>
-                    value == null ||
-                        !RegExp(r'^[a-zA-Z0-9_.-]{3,50}$').hasMatch(value)
-                    ? 'Dùng 3–50 ký tự chữ, số, _, . hoặc -'
+                    value == null || !RegExp(r'^0[0-9]{9}$').hasMatch(value)
+                    ? 'Dùng số điện thoại 10 chữ số, bắt đầu bằng 0'
                     : null,
               ),
               const SizedBox(height: 12),
@@ -219,7 +222,8 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     if (!form.currentState!.validate()) return;
     final input = <String, dynamic>{};
     for (final f in fields) {
-      if (f.reference != null || ['boolean', 'role'].contains(f.kind)) {
+      if (f.reference != null ||
+          ['boolean', 'role', 'coefficient'].contains(f.kind)) {
         input[f.key] = values[f.key];
         continue;
       }
@@ -297,6 +301,19 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           value: values[f.key] as bool? ?? false,
           onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
         ),
+      );
+    }
+    if (f.kind == 'coefficient') {
+      return DropdownButtonFormField<String>(
+        initialValue: values[f.key]?.toString() ?? 'TX',
+        isExpanded: true,
+        decoration: InputDecoration(labelText: f.label),
+        items: const [
+          DropdownMenuItem(value: 'TX', child: Text('Thường xuyên')),
+          DropdownMenuItem(value: 'GK', child: Text('Giữa kỳ')),
+          DropdownMenuItem(value: 'CK', child: Text('Cuối kỳ')),
+        ],
+        onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
       );
     }
     if (f.kind == 'role') {
@@ -525,6 +542,16 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (widget.spec.key == 'semester-weights')
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 16),
+                          child: Text(
+                            'Hệ số này thay thế hệ số mặc định của thành phần '
+                            'trong học kỳ đã chọn. Nhập từ 0.01 đến 9.99 '
+                            '(ví dụ 2.00). Khi môn học đã có bảng điểm chốt '
+                            'trong học kỳ, hệ số không thể sửa hoặc xóa.',
+                          ),
+                        ),
                       if (error != null)
                         Container(
                           margin: const EdgeInsets.only(bottom: 16),

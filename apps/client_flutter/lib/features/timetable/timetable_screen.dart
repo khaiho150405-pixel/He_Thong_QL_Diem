@@ -1,3 +1,4 @@
+import '../../app/widgets/app_edge_scrollbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import '../../app/widgets/shimmer_loading.dart';
 import '../academic_catalog/repository.dart';
 import '../authentication/session.dart';
 import 'timetable_model.dart';
+import 'timetable_filter.dart';
 import 'timetable_edit_dialog.dart';
 import 'timetable_repository.dart';
 
@@ -20,6 +22,7 @@ class TimetableScreen extends ConsumerStatefulWidget {
 
 class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   bool _isWeeklyView = true;
+  bool _groupByRoom = false;
   int _selectedDay = 2; // Thứ 2 default, or current weekday
   num? _selectedClassId;
   num? _selectedTeacherId;
@@ -29,6 +32,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   List<Json> _semesters = [];
   List<Json> _assignments = [];
   bool _loadingMeta = true;
+  String? _metadataError;
 
   late Future<List<TimetableItem>> _timetableFuture;
 
@@ -43,37 +47,57 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   }
 
   Future<void> _loadMetadata() async {
+    if (mounted) {
+      setState(() {
+        _loadingMeta = true;
+        _metadataError = null;
+      });
+    }
     final role = ref.read(sessionProvider)?.role.value;
     if (role == 'QUAN_TRI_VIEN') {
       try {
-        final classesRes = await ref
-            .read(catalogRepositoryProvider)
-            .list('classes');
-        final teachersRes = await ref
-            .read(catalogRepositoryProvider)
-            .list('teachers');
-        final semestersRes = await ref
-            .read(catalogRepositoryProvider)
-            .list('semesters');
-        final assignmentsRes = await ref
-            .read(catalogRepositoryProvider)
-            .list('assignments');
+        final classesRes = await _allMetadata('classes');
+        final teachersRes = await _allMetadata('teachers');
+        final semestersRes = await _allMetadata('semesters');
+        final assignmentsRes = await _allMetadata('assignments');
         if (mounted) {
           setState(() {
-            _classes = classesRes.items;
-            _teachers = teachersRes.items;
-            _semesters = semestersRes.items;
-            _assignments = assignmentsRes.items;
+            _classes = classesRes;
+            _teachers = teachersRes;
+            _semesters = semestersRes;
+            _assignments = assignmentsRes;
             _loadingMeta = false;
           });
           _loadTimetable();
         }
-      } catch (_) {
-        if (mounted) setState(() => _loadingMeta = false);
+      } catch (error) {
+        if (mounted) {
+          setState(() {
+            _loadingMeta = false;
+            _metadataError = errorMessage(error);
+          });
+        }
       }
     } else {
       if (mounted) setState(() => _loadingMeta = false);
     }
+  }
+
+  Future<List<Json>> _allMetadata(String resource) async {
+    final items = <Json>[];
+    String? cursor;
+    final seen = <String>{};
+    do {
+      final page = await ref
+          .read(catalogRepositoryProvider)
+          .list(resource, cursor: cursor);
+      items.addAll(page.items);
+      cursor = page.nextCursor;
+      if (cursor != null && !seen.add(cursor)) {
+        throw StateError('Không tải được đầy đủ danh mục.');
+      }
+    } while (cursor != null);
+    return items;
   }
 
   void _loadTimetable() {
@@ -88,16 +112,117 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     });
   }
 
-  Future<void> _showEditor([TimetableItem? item]) async {
+  Future<void> _showEditor({
+    TimetableItem? item,
+    int? day,
+    int? period,
+    num? classId,
+    bool moving = false,
+  }) async {
+    final targetClass = item?.maLop ?? classId ?? _selectedClassId;
+    final targetTerm = item?.maHocKy ?? _selectedSemesterId;
+    final assignments = _assignments
+        .where(
+          (row) =>
+              (targetClass == null || row['ma_lop'] == targetClass) &&
+              (targetTerm == null || row['ma_hoc_ky'] == targetTerm),
+        )
+        .toList();
     final saved = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (_) => TimetableEditDialog(
-        assignments: _assignments,
+        assignments: assignments,
         item: item,
         repository: ref.read(timetableRepositoryProvider),
+        initialDay: day ?? _selectedDay,
+        initialPeriod: period,
+        moving: moving,
       ),
     );
-    if (saved == true) _loadTimetable();
+    if (saved == true && mounted) _loadTimetable();
+  }
+
+  Future<void> _showSlotActions(List<TimetableItem> items) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height * .65,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Sắp xếp tiết học',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              for (final item in items)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.tenMon,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        Text(
+                          '${item.tenLop} · ${item.tenGiaoVien}\n${item.thuLabel} · Tiết ${item.tiet}${item.phongHoc == null ? '' : ' · ${item.phongHoc}'}',
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _assignments.isEmpty
+                                  ? null
+                                  : () {
+                                      Navigator.pop(sheetContext);
+                                      _showEditor(item: item);
+                                    },
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Sửa môn / giáo viên'),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: _assignments.isEmpty
+                                  ? null
+                                  : () {
+                                      Navigator.pop(sheetContext);
+                                      _showEditor(item: item, moving: true);
+                                    },
+                              icon: const Icon(Icons.swap_horiz),
+                              label: const Text('Chuyển ngày / tiết'),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                Navigator.pop(sheetContext);
+                                _deleteItem(item);
+                              },
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Xóa khỏi lịch'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(sheetContext),
+                child: const Text('Đóng'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteItem(TimetableItem item) async {
@@ -199,304 +324,353 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
           onPressed: () => context.go('/'),
         ),
         actions: [
-          if (role == 'QUAN_TRI_VIEN')
-            IconButton(
-              tooltip: 'Thêm tiết học',
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: _assignments.isEmpty ? null : () => _showEditor(),
-            ),
           IconButton(
             tooltip: 'Tải lại',
             icon: const Icon(Icons.refresh),
-            onPressed: _loadTimetable,
+            onPressed: () {
+              _loadMetadata();
+              _loadTimetable();
+            },
           ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1180),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header Banner
-                Card(
-                  elevation: 0.5,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(
-                      color: colorScheme.outlineVariant.withAlpha(80),
+      body: AppEdgeScrollbar(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1180),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header Banner
+                  Card(
+                    elevation: 0.5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(
+                        color: colorScheme.outlineVariant.withAlpha(80),
+                      ),
                     ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                Icons.calendar_today_rounded,
-                                color: colorScheme.onPrimaryContainer,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        title,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: RoleBadge(
-                                          role: role,
-                                          compact: true,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    subtitle,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // Filters & Controls Row
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Wrap(
-                            spacing: 12,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              // Admin Class/Teacher Filter
-                              if (role == 'QUAN_TRI_VIEN') ...[
-                                if (_loadingMeta)
-                                  const SizedBox(
-                                    width: 120,
-                                    child: LinearProgressIndicator(),
-                                  )
-                                else ...[
-                                  AppFilterDropdown<num>(
-                                    label: 'Lớp học',
-                                    icon: Icons.meeting_room_outlined,
-                                    value: _selectedClassId,
-                                    items: [
-                                      const DropdownMenuItem(
-                                        value: null,
-                                        child: Text('Tất cả lớp'),
-                                      ),
-                                      for (final c in _classes)
-                                        DropdownMenuItem(
-                                          value: c['ma_lop'] as num?,
-                                          child: Text(
-                                            c['ten_lop']?.toString() ?? 'Lớp',
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.calendar_today_rounded,
+                                  color: colorScheme.onPrimaryContainer,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: RoleBadge(
+                                            role: role,
+                                            compact: true,
                                           ),
                                         ),
-                                    ],
-                                    onChanged: (v) {
-                                      setState(() {
-                                        _selectedClassId = v;
-                                      });
-                                      _loadTimetable();
-                                    },
-                                  ),
-                                  AppFilterDropdown<num>(
-                                    label: 'Giáo viên',
-                                    icon: Icons.badge_outlined,
-                                    value: _selectedTeacherId,
-                                    items: [
-                                      const DropdownMenuItem(
-                                        value: null,
-                                        child: Text('Tất cả giáo viên'),
-                                      ),
-                                      for (final t in _teachers)
-                                        DropdownMenuItem(
-                                          value: t['ma_giao_vien'] as num?,
-                                          child: Text(
-                                            t['ho_ten']?.toString() ?? 'GV',
-                                          ),
-                                        ),
-                                    ],
-                                    onChanged: (v) {
-                                      setState(() {
-                                        _selectedTeacherId = v;
-                                      });
-                                      _loadTimetable();
-                                    },
-                                  ),
-                                  AppFilterDropdown<num>(
-                                    label: 'Học kỳ',
-                                    icon: Icons.calendar_month_outlined,
-                                    value: _selectedSemesterId,
-                                    items: [
-                                      const DropdownMenuItem(
-                                        value: null,
-                                        child: Text('Học kỳ hiện hành'),
-                                      ),
-                                      for (final semester in _semesters)
-                                        DropdownMenuItem(
-                                          value: semester['ma_hoc_ky'] as num?,
-                                          child: Text(
-                                            semester['ten']?.toString() ??
-                                                'Học kỳ',
-                                          ),
-                                        ),
-                                    ],
-                                    onChanged: (value) {
-                                      setState(
-                                        () => _selectedSemesterId = value,
-                                      );
-                                      _loadTimetable();
-                                    },
-                                  ),
-                                ],
-                              ],
-
-                              // View Mode Toggle (Grid vs Day List)
-                              SizedBox(
-                                height: AppControlMetrics.height,
-                                child: SegmentedButton<bool>(
-                                  segments: const [
-                                    ButtonSegment(
-                                      value: true,
-                                      icon: Icon(
-                                        Icons.grid_view_rounded,
-                                        size: 16,
-                                      ),
-                                      label: Text('Lưới tuần'),
+                                      ],
                                     ),
-                                    ButtonSegment(
-                                      value: false,
-                                      icon: Icon(
-                                        Icons.view_agenda_rounded,
-                                        size: 16,
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      subtitle,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
-                                      label: Text('Theo ngày'),
                                     ),
                                   ],
-                                  selected: {_isWeeklyView},
-                                  onSelectionChanged: (set) {
-                                    setState(() => _isWeeklyView = set.first);
-                                  },
-                                  style: const ButtonStyle(
-                                    visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          // Filters & Controls Row
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Wrap(
+                              spacing: 12,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                // Admin Class/Teacher Filter
+                                if (role == 'QUAN_TRI_VIEN') ...[
+                                  if (_loadingMeta)
+                                    const SizedBox(
+                                      width: 120,
+                                      child: LinearProgressIndicator(),
+                                    )
+                                  else ...[
+                                    TimetableFilter(
+                                      label: 'Lớp học',
+                                      icon: Icons.meeting_room_outlined,
+                                      value: _selectedClassId,
+                                      options: [
+                                        (value: null, label: 'Tất cả lớp'),
+                                        for (final c in _classes)
+                                          (
+                                            value: c['ma_lop'] as num?,
+                                            label:
+                                                c['ten_lop']?.toString() ??
+                                                'Lớp',
+                                          ),
+                                      ],
+                                      onChanged: (value) {
+                                        setState(
+                                          () => _selectedClassId = value,
+                                        );
+                                        _loadTimetable();
+                                      },
+                                    ),
+                                    TimetableFilter(
+                                      label: 'Giáo viên',
+                                      icon: Icons.badge_outlined,
+                                      value: _selectedTeacherId,
+                                      options: [
+                                        (
+                                          value: null,
+                                          label: 'Tất cả giáo viên',
+                                        ),
+                                        for (final t in _teachers)
+                                          (
+                                            value: t['ma_giao_vien'] as num?,
+                                            label:
+                                                t['ho_ten']?.toString() ?? 'GV',
+                                          ),
+                                      ],
+                                      onChanged: (value) {
+                                        setState(
+                                          () => _selectedTeacherId = value,
+                                        );
+                                        _loadTimetable();
+                                      },
+                                    ),
+                                    AppFilterDropdown<num>(
+                                      label: 'Học kỳ',
+                                      icon: Icons.calendar_month_outlined,
+                                      value: _selectedSemesterId,
+                                      items: [
+                                        const DropdownMenuItem(
+                                          value: null,
+                                          child: Text('Học kỳ hiện hành'),
+                                        ),
+                                        for (final semester in _semesters)
+                                          DropdownMenuItem(
+                                            value:
+                                                semester['ma_hoc_ky'] as num?,
+                                            child: Text(
+                                              semester['ten']?.toString() ??
+                                                  'Học kỳ',
+                                            ),
+                                          ),
+                                      ],
+                                      onChanged: (value) {
+                                        setState(
+                                          () => _selectedSemesterId = value,
+                                        );
+                                        _loadTimetable();
+                                      },
+                                    ),
+                                  ],
+                                ],
+
+                                if (role == 'QUAN_TRI_VIEN')
+                                  SizedBox(
+                                    width: 200,
+                                    child: DropdownButtonFormField<bool>(
+                                      initialValue: _groupByRoom,
+                                      isExpanded: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Hiển thị lịch theo',
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem(
+                                          value: false,
+                                          child: Text('Lớp học'),
+                                        ),
+                                        DropdownMenuItem(
+                                          value: true,
+                                          child: Text('Phòng học'),
+                                        ),
+                                      ],
+                                      onChanged: (v) => setState(
+                                        () => _groupByRoom = v ?? false,
+                                      ),
+                                    ),
+                                  ),
+                                if (role == 'QUAN_TRI_VIEN') ...[
+                                  FilledButton.icon(
+                                    onPressed:
+                                        _loadingMeta || _assignments.isEmpty
+                                        ? null
+                                        : () => _showEditor(),
+                                    icon: const Icon(Icons.add),
+                                    label: const Text('Thêm môn vào lịch'),
+                                  ),
+                                  if (_metadataError != null)
+                                    Text(
+                                      'Không tải được phân công: $_metadataError',
+                                    ),
+                                  if (!_loadingMeta &&
+                                      _metadataError == null &&
+                                      _assignments.isEmpty)
+                                    const Text(
+                                      'Tạo phân công giảng dạy trước khi xếp lịch.',
+                                    ),
+                                  const Text(
+                                    'Ô trống: thêm môn · Ô có môn: sửa, chuyển hoặc xóa',
+                                  ),
+                                ],
+                                // View Mode Toggle (Grid vs Day List)
+                                SizedBox(
+                                  width: 280,
+                                  child: SegmentedButton<bool>(
+                                    showSelectedIcon: false,
+                                    segments: const [
+                                      ButtonSegment(
+                                        value: true,
+                                        icon: Icon(
+                                          Icons.grid_view_rounded,
+                                          size: 16,
+                                        ),
+                                        label: Text('Lưới tuần'),
+                                      ),
+                                      ButtonSegment(
+                                        value: false,
+                                        icon: Icon(
+                                          Icons.view_agenda_rounded,
+                                          size: 16,
+                                        ),
+                                        label: Text('Theo ngày'),
+                                      ),
+                                    ],
+                                    selected: {_isWeeklyView},
+                                    onSelectionChanged: (set) {
+                                      setState(() => _isWeeklyView = set.first);
+                                    },
+                                    style: SegmentedButton.styleFrom(
+                                      minimumSize: const Size(120, 48),
+                                      visualDensity: VisualDensity.standard,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 14),
+                  const SizedBox(height: 14),
 
-                // Main Content
-                Expanded(
-                  child: FutureBuilder<List<TimetableItem>>(
-                    future: _timetableFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState != ConnectionState.done) {
-                        return const ShimmerLoading(
-                          itemCount: 6,
-                          itemHeight: 80,
-                        );
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                size: 40,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(height: 10),
-                              Text('Lỗi: ${snapshot.error}'),
-                              const SizedBox(height: 10),
-                              FilledButton.tonal(
-                                onPressed: _loadTimetable,
-                                child: const Text('Thử lại'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      final items = snapshot.data ?? [];
-                      if (items.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.event_busy_outlined,
-                                size: 48,
-                                color: colorScheme.outline,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Chưa có dữ liệu thời khóa biểu',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
+                  // Main Content
+                  Expanded(
+                    child: FutureBuilder<List<TimetableItem>>(
+                      future: _timetableFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const ShimmerLoading(
+                            itemCount: 6,
+                            itemHeight: 80,
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  size: 40,
+                                  color: Colors.red,
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Thời khóa biểu cho phạm vi này hiện chưa được xếp lịch.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: colorScheme.onSurfaceVariant,
+                                const SizedBox(height: 10),
+                                Text('Lỗi: ${snapshot.error}'),
+                                const SizedBox(height: 10),
+                                FilledButton.tonal(
+                                  onPressed: _loadTimetable,
+                                  child: const Text('Thử lại'),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+                              ],
+                            ),
+                          );
+                        }
 
-                      return _isWeeklyView
-                          ? _buildWeeklyGrid(items, role, colorScheme, theme)
-                          : _buildDayAgenda(items, role, colorScheme, theme);
-                    },
+                        final items = snapshot.data ?? [];
+                        if (items.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.event_busy_outlined,
+                                  size: 48,
+                                  color: colorScheme.outline,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Chưa có dữ liệu thời khóa biểu',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Thời khóa biểu cho phạm vi này hiện chưa được xếp lịch.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return _isWeeklyView
+                            ? _buildWeeklyGrid(items, role, colorScheme, theme)
+                            : _buildDayAgenda(items, role, colorScheme, theme);
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -516,12 +690,17 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         _selectedClassId == null &&
         _selectedTeacherId == null;
     if (isWholeSchool) {
-      final byClass = <int, List<TimetableItem>>{};
+      final byClass = <String, List<TimetableItem>>{};
       for (final item in items) {
-        byClass.putIfAbsent(item.maLop, () => []).add(item);
+        final groupKey = _groupByRoom
+            ? (item.phongHoc?.trim().isNotEmpty == true
+                  ? item.phongHoc!
+                  : 'Chưa có phòng')
+            : item.tenLop;
+        byClass.putIfAbsent(groupKey, () => []).add(item);
       }
       final groups = byClass.entries.toList()
-        ..sort((a, b) => a.value.first.tenLop.compareTo(b.value.first.tenLop));
+        ..sort((a, b) => a.key.compareTo(b.key));
       return ListView.separated(
         padding: const EdgeInsets.only(bottom: 16),
         itemCount: groups.length,
@@ -543,7 +722,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Lớp ${group.value.first.tenLop}',
+                        '${_groupByRoom ? 'Phòng' : 'Lớp'} ${group.key}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -580,6 +759,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     String role,
     ColorScheme colorScheme,
   ) {
+    final slotClassId =
+        _selectedClassId ??
+        (!_groupByRoom && items.isNotEmpty ? items.first.maLop : null);
     // Map items by [thu][tiet]
     final matrix = <int, Map<int, List<TimetableItem>>>{};
     for (var thu = 2; thu <= 8; thu++) {
@@ -698,6 +880,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                           matrix[d]?[tiet] ?? [],
                           role,
                           colorScheme,
+                          day: d,
+                          period: tiet,
+                          classId: slotClassId,
                         ),
                       ),
                   ],
@@ -712,9 +897,25 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   Widget _buildGridCell(
     List<TimetableItem> cellItems,
     String role,
-    ColorScheme colorScheme,
-  ) {
+    ColorScheme colorScheme, {
+    required int day,
+    required int period,
+    num? classId,
+  }) {
     if (cellItems.isEmpty) {
+      if (role == 'QUAN_TRI_VIEN') {
+        return SizedBox(
+          width: 140,
+          child: OutlinedButton.icon(
+            key: ValueKey('add-slot-$classId-$day-$period'),
+            onPressed: _loadingMeta || _assignments.isEmpty
+                ? null
+                : () => _showEditor(day: day, period: period, classId: classId),
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Thêm môn'),
+          ),
+        );
+      }
       return const SizedBox(
         width: 140,
         child: Text('—', style: TextStyle(color: Colors.grey)),
@@ -725,66 +926,82 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     final subColor = _getSubjectColor(item.tenMon);
     final subBg = _getSubjectBgColor(item.tenMon);
 
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: subBg,
+    return Tooltip(
+      message: cellItems
+          .map((i) => '${i.tenMon} · ${i.tenLop} · ${i.tenGiaoVien}')
+          .join('\n'),
+      child: InkWell(
+        onTap: role == 'QUAN_TRI_VIEN'
+            ? () => _showSlotActions(cellItems)
+            : null,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: subColor.withAlpha(90)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            item.tenMon,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-              color: subColor,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        child: Container(
+          width: 140,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: subBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: subColor.withAlpha(90)),
           ),
-          const SizedBox(height: 2),
-          Text(
-            role == 'HOC_SINH' ? item.tenGiaoVien : item.tenLop,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (item.phongHoc != null && item.phongHoc!.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                item.phongHoc!,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                item.tenMon,
                 style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
                   color: subColor,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
-          if (cellItems.length > 1) ...[
-            const SizedBox(height: 2),
-            Text(
-              '+ ${cellItems.length - 1} lớp khác',
-              style: TextStyle(fontSize: 9.5, color: subColor),
-            ),
-          ],
-        ],
+              const SizedBox(height: 2),
+              Text(
+                role == 'HOC_SINH' ? item.tenGiaoVien : item.tenLop,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (role != 'HOC_SINH' &&
+                  item.phongHoc != null &&
+                  item.phongHoc!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    item.phongHoc!,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: subColor,
+                    ),
+                  ),
+                ),
+              ],
+              if (cellItems.length > 1) ...[
+                const SizedBox(height: 2),
+                Text(
+                  '+ ${cellItems.length - 1} lớp khác',
+                  style: TextStyle(fontSize: 9.5, color: subColor),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -968,7 +1185,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                                 ],
                               ),
                             ),
-                            if (item.phongHoc != null &&
+                            if (role != 'HOC_SINH' &&
+                                item.phongHoc != null &&
                                 item.phongHoc!.isNotEmpty)
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -1004,7 +1222,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                               IconButton(
                                 tooltip: 'Sửa tiết học',
                                 icon: const Icon(Icons.edit_outlined, size: 20),
-                                onPressed: () => _showEditor(item),
+                                onPressed: () => _showEditor(item: item),
                               ),
                               IconButton(
                                 tooltip: 'Xóa tiết học',

@@ -56,7 +56,7 @@ class _CatalogImportDialogState extends State<CatalogImportDialog> {
 
   String get _hint => switch (widget.resource) {
     'accounts' =>
-      'role: QUAN_TRI_VIEN, GIAO_VIEN hoặc HOC_SINH. Mật khẩu từ 12 ký tự.',
+      'Giáo viên/học sinh: username là số điện thoại 10 chữ số bắt đầu bằng 0, định dạng ô Excel là Văn bản để giữ số 0. role: QUAN_TRI_VIEN, GIAO_VIEN hoặc HOC_SINH. Mật khẩu từ 12 ký tự.',
     'teachers' =>
       'ma_giao_vien là mã của tài khoản GIAO_VIEN chưa liên kết hồ sơ.',
     'students' =>
@@ -70,11 +70,22 @@ class _CatalogImportDialogState extends State<CatalogImportDialog> {
     workbook['DuLieu'].appendRow(
       _headers.map<CellValue>((value) => TextCellValue(value)).toList(),
     );
+    if (widget.resource == 'accounts') {
+      for (var row = 1; row <= 500; row++) {
+        workbook['DuLieu']
+            .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+            .cellStyle = CellStyle(
+          numberFormat: NumFormat.standard_49,
+        );
+      }
+    }
     final bytes = workbook.save();
     if (bytes == null) return;
     await FilePicker.saveFile(
       dialogTitle: 'Lưu file mẫu',
-      fileName: 'mau_${widget.resource}.xlsx',
+      fileName: widget.resource == 'accounts'
+          ? 'mau_tai_khoan_so_dien_thoai.xlsx'
+          : 'mau_${widget.resource}.xlsx',
       type: FileType.custom,
       allowedExtensions: const ['xlsx'],
       bytes: Uint8List.fromList(bytes),

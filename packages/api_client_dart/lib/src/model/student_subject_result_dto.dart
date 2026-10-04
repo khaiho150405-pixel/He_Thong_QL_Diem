@@ -19,6 +19,8 @@ part 'student_subject_result_dto.g.dart';
 class StudentSubjectResultDto {
   /// Returns a new [StudentSubjectResultDto] instance.
   StudentSubjectResultDto({
+    this.passFail,
+
     required this.gradebookId,
 
     required this.subjectId,
@@ -37,6 +39,9 @@ class StudentSubjectResultDto {
 
     required this.calculatedAt,
   });
+
+  @JsonKey(name: r'passFail', required: false, includeIfNull: false)
+  final bool? passFail;
 
   @JsonKey(name: r'gradebookId', required: true, includeIfNull: false)
   final num gradebookId;
@@ -69,6 +74,7 @@ class StudentSubjectResultDto {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is StudentSubjectResultDto &&
+          other.passFail == passFail &&
           other.gradebookId == gradebookId &&
           other.subjectId == subjectId &&
           other.subjectName == subjectName &&
@@ -81,6 +87,7 @@ class StudentSubjectResultDto {
 
   @override
   int get hashCode =>
+      passFail.hashCode +
       gradebookId.hashCode +
       subjectId.hashCode +
       subjectName.hashCode +

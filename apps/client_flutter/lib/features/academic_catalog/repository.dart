@@ -77,6 +77,15 @@ class CatalogRepository {
           result.items.map((row) => row.toJson()).toList(),
           result.nextCursor,
         );
+      case 'semester-weights':
+        final result = (await api.getSemesterWeightsApi().semesterWeightsList(
+          q: q,
+          cursor: cursor,
+        )).data!;
+        return CatalogPageData(
+          result.items.map((row) => row.toJson()).toList(),
+          result.nextCursor,
+        );
       case 'teachers':
         final result = (await api.getTeachersApi().teachersList(
           q: q,
@@ -171,6 +180,19 @@ class CatalogRepository {
           );
         }
         return;
+      case 'semester-weights':
+        final body = SemesterWeightsInput.fromJson(input);
+        if (id == null) {
+          await api.getSemesterWeightsApi().semesterWeightsCreate(
+            semesterWeightsInput: body,
+          );
+        } else {
+          await api.getSemesterWeightsApi().semesterWeightsUpdate(
+            id: id,
+            semesterWeightsInput: body,
+          );
+        }
+        return;
       case 'teachers':
         final body = TeachersInput.fromJson(input);
         if (id == null) {
@@ -253,6 +275,9 @@ class CatalogRepository {
         return;
       case 'components':
         await api.getComponentsApi().componentsRemove(id: id);
+        return;
+      case 'semester-weights':
+        await api.getSemesterWeightsApi().semesterWeightsRemove(id: id);
         return;
       case 'teachers':
         await api.getTeachersApi().teachersRemove(id: id);

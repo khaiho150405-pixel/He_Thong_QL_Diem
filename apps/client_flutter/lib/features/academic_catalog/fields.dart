@@ -34,6 +34,11 @@ const resources = <ResourceSpec>[
     ),
     FormFieldSpec('ten', 'Tên', 'text', optional: false),
     FormFieldSpec('thu_tu', 'Thứ tự', 'int', optional: false),
+    FormFieldSpec(
+      'da_cong_bo',
+      'Công bố xếp loại học kỳ (sau khi đủ tổng kết)',
+      'boolean',
+    ),
     FormFieldSpec('ngay_bat_dau', 'Ngày bắt đầu', 'date', optional: false),
     FormFieldSpec('ngay_ket_thuc', 'Ngày kết thúc', 'date', optional: false),
   ]),
@@ -77,6 +82,11 @@ const resources = <ResourceSpec>[
   ResourceSpec('subjects', 'Môn học', 'ma_mon', [
     FormFieldSpec('ten_mon', 'Tên môn', 'text', optional: false),
     FormFieldSpec('so_tiet_tuan', 'Số tiết mỗi tuần', 'int', optional: false),
+    FormFieldSpec(
+      'danh_gia_dat',
+      'Đánh giá Đạt/Không đạt (tắt: dùng điểm số)',
+      'boolean',
+    ),
   ]),
   ResourceSpec('components', 'Thành phần điểm', 'ma_thanh_phan', [
     FormFieldSpec(
@@ -87,7 +97,7 @@ const resources = <ResourceSpec>[
       reference: 'subjects',
     ),
     FormFieldSpec('ten_thanh_phan', 'Tên thành phần', 'text', optional: false),
-    FormFieldSpec('he_so', 'Hệ số', 'decimal', optional: false),
+    FormFieldSpec('loai_he_so', 'Nhóm hệ số', 'coefficient'),
     FormFieldSpec('bat_buoc', 'Bắt buộc', 'boolean', optional: false),
     FormFieldSpec('thu_tu_hien_thi', 'Thứ tự hiển thị', 'int', optional: false),
     FormFieldSpec(
@@ -96,6 +106,20 @@ const resources = <ResourceSpec>[
       'boolean',
       optional: false,
     ),
+  ]),
+  ResourceSpec('semester-weights', 'Hệ số học kỳ', 'ma_he_so', [
+    FormFieldSpec(
+      'loai_he_so',
+      'Nhóm điểm · Áp dụng tất cả môn',
+      'coefficient',
+    ),
+    FormFieldSpec(
+      'ma_hoc_ky',
+      'Học kỳ · Năm học',
+      'int',
+      reference: 'semesters',
+    ),
+    FormFieldSpec('he_so', 'Hệ số riêng cho học kỳ', 'decimal'),
   ]),
   ResourceSpec('teachers', 'Giáo viên', 'ma_giao_vien', [
     FormFieldSpec(
@@ -142,7 +166,7 @@ const resources = <ResourceSpec>[
     FormFieldSpec('ngay_phan_cong', 'Ngày phân công', 'date', optional: false),
   ]),
   ResourceSpec('accounts', 'Tài khoản', 'id', [
-    FormFieldSpec('username', 'Tên đăng nhập', 'text'),
+    FormFieldSpec('username', 'Tên đăng nhập (GV/HS: số điện thoại)', 'text'),
     FormFieldSpec('password', 'Mật khẩu mới (ít nhất 12 ký tự)', 'password'),
     FormFieldSpec('role', 'Vai trò', 'role'),
     FormFieldSpec('active', 'Cho phép đăng nhập', 'boolean'),

@@ -1,3 +1,5 @@
+import 'grade_deadlines_panel.dart';
+import '../../app/widgets/app_edge_scrollbar.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -51,25 +53,27 @@ class _GradebookScreenState extends ConsumerState<GradebookScreen> {
         ),
       ],
     ),
-    body: FutureBuilder<CellsResponseDto>(
-      future: data,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return _GradebookLoadError(
-            error: snapshot.error!,
-            retry: () => setState(reload),
+    body: AppEdgeScrollbar(
+      child: FutureBuilder<CellsResponseDto>(
+        future: data,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return _GradebookLoadError(
+              error: snapshot.error!,
+              retry: () => setState(reload),
+            );
+          }
+          final value = snapshot.data!;
+          return GradebookEditor(
+            key: ValueKey('${value.book.id}-${value.book.version}'),
+            data: value,
+            onReload: () => setState(reload),
           );
-        }
-        final value = snapshot.data!;
-        return GradebookEditor(
-          key: ValueKey('${value.book.id}-${value.book.version}'),
-          data: value,
-          onReload: () => setState(reload),
-        );
-      },
+        },
+      ),
     ),
   );
 }
@@ -98,6 +102,18 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
 
   bool get teacher => ref.read(sessionProvider)?.role.value == 'GIAO_VIEN';
   bool get admin => ref.read(sessionProvider)?.role.value == 'QUAN_TRI_VIEN';
+  String resultScore(String? value) => value == null
+      ? '—'
+      : widget.data.items.firstOrNull?.passFail == true
+      ? (value == '10.0' ? 'Đạt' : 'Không đạt')
+      : value;
+  String classificationLabel(String value) => value == 'CHUA_CONG_BO'
+      ? 'Chưa công bố'
+      : value == 'DAT'
+      ? 'Đạt'
+      : value == 'CHUA_DAT'
+      ? 'Không đạt'
+      : value;
   bool get locked => widget.data.book.status.value == 'DA_CHOT';
   bool get editable => teacher && !locked && !conflict;
 
@@ -131,7 +147,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
   }
 
   List<GradeCellDto> changedCells() => widget.data.items.where((cell) {
-    if (cell.openForInput == false) return false;
+    if (cell.openForInput == false || cell.columnLocked == true) return false;
     final text = controllers[cell.id]!.text.trim();
     return (text.isEmpty ? null : text) != cell.value;
   }).toList();
@@ -227,38 +243,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             expectedVersion: widget.data.book.version,
           );
     }, success: 'Đã đồng bộ sĩ số.');
-  }
-
-  Future<void> lock() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Chốt bảng điểm?'),
-        content: const Text(
-          'Sau khi chốt, bảng điểm không thể sửa bằng luồng thông thường. '
-          'Hệ thống sẽ từ chối nếu còn thiếu điểm bắt buộc hoặc đang chờ đối chiếu.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Chốt bảng'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    await mutate(() async {
-      await ref
-          .read(gradebooksRepositoryProvider)
-          .lock(
-            bookId: widget.data.book.id,
-            expectedVersion: widget.data.book.version,
-          );
-    }, success: 'Bảng điểm đã được chốt.');
   }
 
   Future<void> openExcelImport(
@@ -484,11 +468,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         icon: const Icon(Icons.save_outlined),
                         label: const Text('Lưu thay đổi'),
                       ),
-                      FilledButton.icon(
-                        onPressed: busy ? null : lock,
-                        icon: const Icon(Icons.lock_outline),
-                        label: const Text('Chốt bảng'),
-                      ),
                     ],
                     ReportsPanel(
                       gradebookId: widget.data.book.id,
@@ -523,7 +502,12 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   RecognitionPanel(
                     gradebookId: widget.data.book.id,
                     components: [
-                      for (final item in orderedComponents)
+                      for (final item in orderedComponents.where(
+                        (c) =>
+                            c.columnLocked != true &&
+                            c.passFail != true &&
+                            c.openForInput != false,
+                      ))
                         RecognitionComponentOption(
                           item.componentId,
                           item.componentName,
@@ -537,6 +521,13 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                     onApproved: widget.onReload,
                   ),
                 ],
+                GradeDeadlinesPanel(
+                  bookId: widget.data.book.id,
+                  components: orderedComponents,
+                  isAdmin: !teacher,
+                  locked: locked,
+                  onReload: widget.onReload,
+                ),
                 const SizedBox(height: 8),
                 FutureBuilder<List<FinalResultDto>>(
                   future: finalResults,
@@ -600,7 +591,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                     if (component.openForInput == false) ...[
                       const SizedBox(width: 4),
                       const Tooltip(
-                        message: 'Admin chưa mở cổng nhập cột này',
+                        message:
+                            'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
                         child: Icon(
                           Icons.lock_outline_rounded,
                           size: 14,
@@ -650,7 +642,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   if (locked) ...[
                     DataCell(
                       Text(
-                        results[entry.value.first.studentId]?.finalScore ?? '—',
+                        resultScore(
+                          results[entry.value.first.studentId]?.finalScore,
+                        ),
                       ),
                     ),
                     DataCell(
@@ -658,8 +652,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                           ? const Text('—')
                           : Chip(
                               label: Text(
-                                results[entry.value.first.studentId]!
-                                    .classification,
+                                classificationLabel(
+                                  results[entry.value.first.studentId]!
+                                      .classification,
+                                ),
                               ),
                             ),
                     ),
@@ -693,8 +689,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   const SizedBox(height: 6),
                   Text(
                     'Điểm tổng kết: '
-                    '${results[entry.value.first.studentId]?.finalScore ?? '—'} · '
-                    'Xếp loại: ${results[entry.value.first.studentId]?.classification ?? '—'}',
+                    '${resultScore(results[entry.value.first.studentId]?.finalScore)} · '
+                    'Xếp loại: ${results[entry.value.first.studentId]?.classification == 'CHUA_CONG_BO' ? 'Chưa công bố' : results[entry.value.first.studentId]?.classification ?? '—'}',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                 ],
@@ -720,42 +716,76 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     child: Row(
       children: [
         Expanded(
-          child: TextFormField(
-            key: ValueKey('grade-${cell.id}'),
-            controller: controllers[cell.id],
-            enabled:
-                editable &&
-                cell.active &&
-                cell.openForInput != false &&
-                cell.status.value != 'CHO_DOI_CHIEU',
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              hintText: '—',
-              prefixIcon: cell.openForInput == false
-                  ? const Tooltip(
-                      message: 'Cột này chưa được Admin mở cổng nhập',
-                      child: Icon(
-                        Icons.lock_rounded,
-                        size: 14,
-                        color: Colors.orange,
-                      ),
-                    )
-                  : null,
-              helperText: cell.openForInput == false
-                  ? 'Chưa mở nhập'
-                  : cell.status.value == 'CHO_DOI_CHIEU'
-                  ? 'Chờ đối chiếu'
-                  : cell.value == null
-                  ? 'Chưa có điểm'
-                  : cell.source_.value == 'NHAN_DIEN'
-                  ? 'Nhận dạng'
-                  : null,
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
-            validator: validateGrade,
-          ),
+          child: cell.passFail == true
+              ? DropdownButtonFormField<String>(
+                  initialValue: controllers[cell.id]!.text.isEmpty
+                      ? 'EMPTY'
+                      : controllers[cell.id]!.text,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Đánh giá'),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'EMPTY',
+                      child: Text('Chưa đánh giá'),
+                    ),
+                    DropdownMenuItem(value: '10.0', child: Text('Đạt')),
+                    DropdownMenuItem(value: '0.0', child: Text('Không đạt')),
+                  ],
+                  onChanged:
+                      editable &&
+                          cell.active &&
+                          cell.openForInput != false &&
+                          cell.columnLocked != true &&
+                          cell.status.value != 'CHO_DOI_CHIEU'
+                      ? (v) => setState(
+                          () => controllers[cell.id]!.text = v == 'EMPTY'
+                              ? ''
+                              : v ?? '',
+                        )
+                      : null,
+                )
+              : TextFormField(
+                  key: ValueKey('grade-${cell.id}'),
+                  controller: controllers[cell.id],
+                  enabled:
+                      editable &&
+                      cell.active &&
+                      cell.openForInput != false &&
+                      cell.columnLocked != true &&
+                      cell.status.value != 'CHO_DOI_CHIEU',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    hintText: '—',
+                    prefixIcon: cell.openForInput == false
+                        ? const Tooltip(
+                            message:
+                                'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
+                            child: Icon(
+                              Icons.lock_rounded,
+                              size: 14,
+                              color: Colors.orange,
+                            ),
+                          )
+                        : null,
+                    helperText: cell.columnLocked == true
+                        ? 'Cột đã chốt'
+                        : cell.openForInput == false
+                        ? 'Ngoài lịch nhập / đang khóa'
+                        : cell.status.value == 'CHO_DOI_CHIEU'
+                        ? 'Chờ đối chiếu'
+                        : cell.value == null
+                        ? 'Chưa có điểm'
+                        : cell.source_.value == 'NHAN_DIEN'
+                        ? 'Nhận dạng'
+                        : null,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  validator: validateGrade,
+                ),
         ),
       ],
     ),

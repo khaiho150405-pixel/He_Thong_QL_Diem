@@ -1,3 +1,4 @@
+import '../../app/widgets/app_edge_scrollbar.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -288,14 +289,7 @@ class HomeScreen extends ConsumerWidget {
 
     final role = user.role.value;
 
-    final visible = resources
-        .where(
-          (r) =>
-              role == 'QUAN_TRI_VIEN' ||
-              (role == 'GIAO_VIEN' && r.key != 'accounts') ||
-              (role == 'HOC_SINH' && r.key == 'students'),
-        )
-        .toList();
+    final visible = role == 'QUAN_TRI_VIEN' ? resources : <ResourceSpec>[];
 
     String roleEyebrow;
     String roleDesc;
@@ -328,11 +322,12 @@ class HomeScreen extends ConsumerWidget {
               ),
               icon: const Icon(Icons.person_outline),
             ),
-          IconButton(
-            tooltip: 'Đổi mật khẩu',
-            onPressed: () => changePassword(context, ref),
-            icon: const Icon(Icons.password),
-          ),
+          if (role != 'HOC_SINH')
+            IconButton(
+              tooltip: 'Đổi mật khẩu',
+              onPressed: () => changePassword(context, ref),
+              icon: const Icon(Icons.password),
+            ),
           IconButton(
             tooltip: 'Đăng xuất',
             onPressed: () async {
@@ -350,992 +345,932 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1140),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            children: [
-              // Hero Banner matching UI/src/App.tsx PageHeader
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardBg,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                roleEyebrow,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.2,
-                                  color: AppTheme.goldAccent,
+      body: AppEdgeScrollbar(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1140),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              children: [
+                // Hero Banner matching UI/src/App.tsx PageHeader
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.borderSubtle),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  roleEyebrow,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2,
+                                    color: AppTheme.goldAccent,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                'Xin chào, ${user.username}',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'serif',
-                                  letterSpacing: -0.5,
-                                  color: AppTheme.primaryDark,
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Xin chào, ${user.username}',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'serif',
+                                    letterSpacing: -0.5,
+                                    color: AppTheme.primaryDark,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        RoleBadge(role: role),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      roleDesc,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textMuted,
-                        height: 1.3,
+                          RoleBadge(role: role),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        roleDesc,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textMuted,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // ── ROLE-SPECIFIC STAT CARDS ──────────────────────────────────
-              if (role == 'QUAN_TRI_VIEN')
-                Builder(
-                  builder: (context) {
-                    final overview = ref.watch(adminOverviewProvider);
-                    final kpi = overview.asData?.value.kpi;
-                    final unavailableSubtitle = overview.isLoading
-                        ? 'Đang tải dữ liệu'
-                        : 'Chưa tải được dữ liệu';
-                    final bookVal = kpi != null
-                        ? '${kpi.lockedGradebooks} / ${kpi.totalGradebooks}'
-                        : '—';
-                    final bookSub = kpi != null
-                        ? '${kpi.totalClasses} lớp · 3 khối'
-                        : unavailableSubtitle;
-                    final rateVal = kpi != null
-                        ? '${kpi.completionRate}%'
-                        : '—';
-                    final ocrVal = kpi != null
-                        ? kpi.pendingOcrTickets.toString().padLeft(2, '0')
-                        : '—';
-                    final stuVal = kpi != null ? '${kpi.totalStudents}' : '—';
-                    final stuSub = kpi != null && kpi.totalClasses > 0
-                        ? '${(kpi.totalStudents / kpi.totalClasses).round()} HS / lớp'
-                        : unavailableSubtitle;
+                // ── ROLE-SPECIFIC STAT CARDS ──────────────────────────────────
+                if (role == 'QUAN_TRI_VIEN')
+                  Builder(
+                    builder: (context) {
+                      final overview = ref.watch(adminOverviewProvider);
+                      final kpi = overview.asData?.value.kpi;
+                      final unavailableSubtitle = overview.isLoading
+                          ? 'Đang tải dữ liệu'
+                          : 'Chưa tải được dữ liệu';
+                      final bookVal = kpi != null
+                          ? '${kpi.lockedGradebooks} / ${kpi.totalGradebooks}'
+                          : '—';
+                      final bookSub = kpi != null
+                          ? '${kpi.totalClasses} lớp · 3 khối'
+                          : unavailableSubtitle;
+                      final rateVal = kpi != null
+                          ? '${kpi.completionRate}%'
+                          : '—';
+                      final ocrVal = kpi != null
+                          ? kpi.pendingOcrTickets.toString().padLeft(2, '0')
+                          : '—';
+                      final stuVal = kpi != null ? '${kpi.totalStudents}' : '—';
+                      final stuSub = kpi != null && kpi.totalClasses > 0
+                          ? '${(kpi.totalStudents / kpi.totalClasses).round()} HS / lớp'
+                          : unavailableSubtitle;
 
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth >= 720) {
-                          const cols = 4;
-                          final w =
-                              (constraints.maxWidth - (cols - 1) * 10) / cols;
-                          return Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              SizedBox(
-                                width: w,
-                                height: 96,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'Bảng điểm',
-                                  value: bookVal,
-                                  subtitle: bookSub,
-                                  icon: Icons.table_chart_outlined,
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth >= 720) {
+                            const cols = 4;
+                            final w =
+                                (constraints.maxWidth - (cols - 1) * 10) / cols;
+                            return Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                SizedBox(
+                                  width: w,
+                                  height: 96,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'Bảng điểm',
+                                    value: bookVal,
+                                    subtitle: bookSub,
+                                    icon: Icons.table_chart_outlined,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: w,
-                                height: 96,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'Tỷ lệ hoàn thành',
-                                  value: rateVal,
-                                  subtitle: 'Đã chốt sổ điểm',
-                                  accentColor: const Color(0xFF276E68),
-                                  icon: Icons.trending_up_rounded,
+                                SizedBox(
+                                  width: w,
+                                  height: 96,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'Tỷ lệ hoàn thành',
+                                    value: rateVal,
+                                    subtitle: 'Đã chốt sổ điểm',
+                                    accentColor: const Color(0xFF276E68),
+                                    icon: Icons.trending_up_rounded,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: w,
-                                height: 96,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'Đối chiếu OCR',
-                                  value: ocrVal,
-                                  subtitle: 'Bảng chờ GV duyệt',
-                                  accentColor: AppTheme.goldAccent,
-                                  icon: Icons.document_scanner_outlined,
+                                SizedBox(
+                                  width: w,
+                                  height: 96,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'Đối chiếu OCR',
+                                    value: ocrVal,
+                                    subtitle: 'Bảng chờ GV duyệt',
+                                    accentColor: AppTheme.goldAccent,
+                                    icon: Icons.document_scanner_outlined,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: w,
-                                height: 96,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'Học sinh',
-                                  value: stuVal,
-                                  subtitle: stuSub,
-                                  icon: Icons.school_outlined,
+                                SizedBox(
+                                  width: w,
+                                  height: 96,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'Học sinh',
+                                    value: stuVal,
+                                    subtitle: stuSub,
+                                    icon: Icons.school_outlined,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            );
+                          }
+                          return SizedBox(
+                            height: 105,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                SizedBox(
+                                  width: 140,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'Bảng điểm',
+                                    value: bookVal,
+                                    subtitle: bookSub,
+                                    icon: Icons.table_chart_outlined,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 140,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'Tỷ lệ',
+                                    value: rateVal,
+                                    subtitle: 'Đã chốt sổ',
+                                    accentColor: const Color(0xFF276E68),
+                                    icon: Icons.trending_up_rounded,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 140,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'OCR',
+                                    value: ocrVal,
+                                    subtitle: 'Chờ GV duyệt',
+                                    accentColor: AppTheme.goldAccent,
+                                    icon: Icons.document_scanner_outlined,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  width: 140,
+                                  child: _buildStatCard(
+                                    context: context,
+                                    label: 'Học sinh',
+                                    value: stuVal,
+                                    subtitle: stuSub,
+                                    icon: Icons.school_outlined,
+                                  ),
+                                ),
+                              ],
+                            ),
                           );
-                        }
-                        return SizedBox(
-                          height: 105,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              SizedBox(
-                                width: 140,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'Bảng điểm',
-                                  value: bookVal,
-                                  subtitle: bookSub,
-                                  icon: Icons.table_chart_outlined,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              SizedBox(
-                                width: 140,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'Tỷ lệ',
-                                  value: rateVal,
-                                  subtitle: 'Đã chốt sổ',
-                                  accentColor: const Color(0xFF276E68),
-                                  icon: Icons.trending_up_rounded,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              SizedBox(
-                                width: 140,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'OCR',
-                                  value: ocrVal,
-                                  subtitle: 'Chờ GV duyệt',
-                                  accentColor: AppTheme.goldAccent,
-                                  icon: Icons.document_scanner_outlined,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              SizedBox(
-                                width: 140,
-                                child: _buildStatCard(
-                                  context: context,
-                                  label: 'Học sinh',
-                                  value: stuVal,
-                                  subtitle: stuSub,
-                                  icon: Icons.school_outlined,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                        },
+                      );
+                    },
+                  ),
 
-              if (role == 'GIAO_VIEN')
+                if (role == 'GIAO_VIEN')
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth >= 720) {
+                        const cols = 3;
+                        final w =
+                            (constraints.maxWidth - (cols - 1) * 10) / cols;
+                        return Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            SizedBox(
+                              width: w,
+                              child: _buildStatCard(
+                                context: context,
+                                label: 'Phụ trách',
+                                value: '4 lớp',
+                                subtitle: '10A1, 10A2, 11A1, 12A1',
+                                icon: Icons.assignment_outlined,
+                              ),
+                            ),
+                            SizedBox(
+                              width: w,
+                              child: _buildStatCard(
+                                context: context,
+                                label: 'Tiến độ nhập',
+                                value: '85%',
+                                subtitle: 'Hạn chốt 30/11/2024',
+                                accentColor: const Color(0xFF276E68),
+                                icon: Icons.check_circle_outline,
+                              ),
+                            ),
+                            SizedBox(
+                              width: w,
+                              child: _buildStatCard(
+                                context: context,
+                                label: 'OCR chờ duyệt',
+                                value: '02 phiếu',
+                                subtitle: 'Cần xác nhận kết quả',
+                                accentColor: AppTheme.goldAccent,
+                                icon: Icons.document_scanner_outlined,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return SizedBox(
+                        height: 105,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            SizedBox(
+                              width: 150,
+                              child: _buildStatCard(
+                                context: context,
+                                label: 'Phụ trách',
+                                value: '4 lớp',
+                                subtitle: 'Bộ môn',
+                                icon: Icons.assignment_outlined,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 150,
+                              child: _buildStatCard(
+                                context: context,
+                                label: 'Tiến độ nhập',
+                                value: '85%',
+                                subtitle: 'Hạn 30/11/2024',
+                                accentColor: const Color(0xFF276E68),
+                                icon: Icons.check_circle_outline,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 150,
+                              child: _buildStatCard(
+                                context: context,
+                                label: 'OCR chờ duyệt',
+                                value: '02 phiếu',
+                                subtitle: 'Cần xác nhận',
+                                accentColor: AppTheme.goldAccent,
+                                icon: Icons.document_scanner_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                if (role == 'HOC_SINH')
+                  FutureBuilder<StudentResultsDto>(
+                    future: ref
+                        .read(apiProvider)
+                        .getStudentResultsApi()
+                        .studentResultsList()
+                        .then((response) => response.data!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        return const LinearProgressIndicator();
+                      }
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Không tải được thống kê: ${errorMessage(snapshot.error!)}',
+                        );
+                      }
+                      return _buildStudentStatistics(
+                        context,
+                        snapshot.data!.summary,
+                      );
+                    },
+                  ),
+
+                const SizedBox(height: 14),
+
+                // Priority Functional Actions Section
+                Text(
+                  role == 'HOC_SINH'
+                      ? 'SỔ ĐIỂM CÁ NHÂN'
+                      : 'NGHIỆP VỤ BẢNG ĐIỂM',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                    color: AppTheme.textSubtle,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    if (constraints.maxWidth >= 720) {
-                      const cols = 3;
-                      final w = (constraints.maxWidth - (cols - 1) * 10) / cols;
-                      return Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          SizedBox(
-                            width: w,
-                            child: _buildStatCard(
-                              context: context,
-                              label: 'Phụ trách',
-                              value: '4 lớp',
-                              subtitle: '10A1, 10A2, 11A1, 12A1',
-                              icon: Icons.assignment_outlined,
-                            ),
-                          ),
-                          SizedBox(
-                            width: w,
-                            child: _buildStatCard(
-                              context: context,
-                              label: 'Tiến độ nhập',
-                              value: '85%',
-                              subtitle: 'Hạn chốt 30/11/2024',
-                              accentColor: const Color(0xFF276E68),
-                              icon: Icons.check_circle_outline,
-                            ),
-                          ),
-                          SizedBox(
-                            width: w,
-                            child: _buildStatCard(
-                              context: context,
-                              label: 'OCR chờ duyệt',
-                              value: '02 phiếu',
-                              subtitle: 'Cần xác nhận kết quả',
-                              accentColor: AppTheme.goldAccent,
-                              icon: Icons.document_scanner_outlined,
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                    return SizedBox(
-                      height: 105,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          SizedBox(
-                            width: 150,
-                            child: _buildStatCard(
-                              context: context,
-                              label: 'Phụ trách',
-                              value: '4 lớp',
-                              subtitle: 'Bộ môn',
-                              icon: Icons.assignment_outlined,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 150,
-                            child: _buildStatCard(
-                              context: context,
-                              label: 'Tiến độ nhập',
-                              value: '85%',
-                              subtitle: 'Hạn 30/11/2024',
-                              accentColor: const Color(0xFF276E68),
-                              icon: Icons.check_circle_outline,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 150,
-                            child: _buildStatCard(
-                              context: context,
-                              label: 'OCR chờ duyệt',
-                              value: '02 phiếu',
-                              subtitle: 'Cần xác nhận',
-                              accentColor: AppTheme.goldAccent,
-                              icon: Icons.document_scanner_outlined,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                    final isWide = constraints.maxWidth >= 720;
+                    final cardWidth = isWide
+                        ? (constraints.maxWidth - 10) / 2
+                        : constraints.maxWidth;
 
-              if (role == 'HOC_SINH')
-                FutureBuilder<StudentResultsDto>(
-                  future: ref
-                      .read(apiProvider)
-                      .getStudentResultsApi()
-                      .studentResultsList()
-                      .then((response) => response.data!),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const LinearProgressIndicator();
-                    }
-                    if (snapshot.hasError) {
-                      return Text(
-                        'Không tải được thống kê: ${errorMessage(snapshot.error!)}',
-                      );
-                    }
-                    return _buildStudentStatistics(
-                      context,
-                      snapshot.data!.summary,
-                    );
-                  },
-                ),
-
-              const SizedBox(height: 14),
-
-              // Priority Functional Actions Section
-              Text(
-                role == 'HOC_SINH' ? 'SỔ ĐIỂM CÁ NHÂN' : 'NGHIỆP VỤ BẢNG ĐIỂM',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                  color: AppTheme.textSubtle,
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 720;
-                  final cardWidth = isWide
-                      ? (constraints.maxWidth - 10) / 2
-                      : constraints.maxWidth;
-
-                  return Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      if (role == 'GIAO_VIEN') ...[
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/gradebooks'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.navActiveBg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.table_chart_rounded,
-                                        size: 20,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Bảng điểm bộ môn',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
+                    return Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        if (role == 'GIAO_VIEN') ...[
+                          SizedBox(
+                            width: cardWidth,
+                            child: Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => context.go('/gradebooks'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.navActiveBg,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
                                           ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Quản lý bảng điểm các lớp phụ trách, nhập điểm tay',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.table_chart_rounded,
+                                          size: 20,
+                                          color: AppTheme.primarySeed,
+                                        ),
                                       ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Bảng điểm',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Quản lý bảng điểm các lớp phụ trách, nhập điểm tay',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Color(0xFF9A9590),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/gradebooks'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
+
+                          SizedBox(
+                            width: cardWidth,
+                            child: Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => context.go('/timetable'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.navActiveBg,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.schedule_rounded,
+                                          size: 20,
+                                          color: AppTheme.primarySeed,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Lịch dạy của tôi',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Xem lịch các tiết giảng dạy trong tuần theo lớp, phòng học',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Color(0xFF9A9590),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFD5EDE5),
-                                        borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ] else if (role == 'QUAN_TRI_VIEN') ...[
+                          SizedBox(
+                            width: cardWidth,
+                            child: Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => context.go('/gradebooks'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.navActiveBg,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.table_chart_rounded,
+                                          size: 20,
+                                          color: AppTheme.primarySeed,
+                                        ),
                                       ),
-                                      child: const Icon(
-                                        Icons.document_scanner_rounded,
-                                        size: 20,
-                                        color: Color(0xFF256848),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Bảng điểm toàn trường',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Theo dõi toàn bộ bảng điểm trong trường',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Color(0xFF9A9590),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: cardWidth,
+                            child: Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () =>
+                                    context.go('/classification-policy'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.navActiveBg,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.rule_rounded,
+                                          size: 20,
+                                          color: AppTheme.primarySeed,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Chính sách xếp loại',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Cấu hình ngưỡng điểm Giỏi, Khá, TB, Yếu',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Color(0xFF9A9590),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: cardWidth,
+                            child: Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => context.go('/timetable'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.navActiveBg,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.calendar_month_rounded,
+                                          size: 20,
+                                          color: AppTheme.primarySeed,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Thời khóa biểu toàn trường',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Tra cứu lịch học các lớp và tiết dạy giáo viên toàn trường',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Color(0xFF9A9590),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          SizedBox(
+                            width: cardWidth,
+                            child: Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => context.go('/my-results'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.navActiveBg,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.fact_check_rounded,
+                                          size: 20,
+                                          color: AppTheme.primarySeed,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Điểm của tôi',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Xem điểm thành phần, tổng kết và xếp loại',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Color(0xFF9A9590),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: cardWidth,
+                            child: Card(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => context.go('/timetable'),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.navActiveBg,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.calendar_today_rounded,
+                                          size: 20,
+                                          color: AppTheme.primarySeed,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Thời khóa biểu của tôi',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.primaryDark,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Xem lịch học các môn trong tuần của lớp mình',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 13,
+                                        color: Color(0xFF9A9590),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                if (role == 'QUAN_TRI_VIEN') ...[
+                  // Academic Catalog Section
+                  Text(
+                    role == 'HOC_SINH'
+                        ? 'DANH MỤC TRA CỨU'
+                        : 'HỒ SƠ & DANH MỤC HỌC VỤ',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                      color: AppTheme.textSubtle,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    role == 'HOC_SINH'
+                        ? 'Danh mục thông tin phục vụ tra cứu học tập'
+                        : 'Quản lý hồ sơ học sinh, giáo viên, lớp học và phân công giảng dạy',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      int columns = 1;
+                      if (constraints.maxWidth >= 900) {
+                        columns = 3;
+                      } else if (constraints.maxWidth >= 600) {
+                        columns = 2;
+                      }
+                      final spacing = 10.0;
+                      final width =
+                          (constraints.maxWidth - (columns - 1) * spacing) /
+                          columns;
+
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
+                        children: [
+                          for (final r in visible)
+                            SizedBox(
+                              width: width,
+                              child: Card(
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => context.go('/catalog/${r.key}'),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.widgetBg,
+                                            borderRadius: BorderRadius.circular(
+                                              9,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            _iconForResource(r.key),
+                                            size: 19,
+                                            color: AppTheme.primarySeed,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              const Text(
-                                                'Nhận dạng & Duyệt OCR',
-                                                style: TextStyle(
-                                                  fontSize: 14,
+                                              Text(
+                                                r.label,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
                                                   fontWeight: FontWeight.w700,
                                                   color: AppTheme.primaryDark,
                                                 ),
                                               ),
-                                              const SizedBox(width: 6),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 5,
-                                                      vertical: 1.5,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(
-                                                    0xFFD5EDE5,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
+                                              const SizedBox(height: 1),
+                                              Text(
+                                                _subtitleForResource(r.key),
+                                                style: const TextStyle(
+                                                  fontSize: 10.5,
+                                                  color: AppTheme.textMuted,
                                                 ),
-                                                child: const Text(
-                                                  'Quyền GV',
-                                                  style: TextStyle(
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Color(0xFF256848),
-                                                  ),
-                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 2),
-                                          const Text(
-                                            'Upload ảnh phiếu điểm, đối chiếu 2 kênh và duyệt chính thức',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                        const Icon(
+                                          Icons.chevron_right_rounded,
+                                          size: 18,
+                                          color: Color(0xFFB7B0A2),
+                                        ),
+                                      ],
                                     ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/timetable'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.navActiveBg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.schedule_rounded,
-                                        size: 20,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Lịch dạy của tôi',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Xem lịch các tiết giảng dạy trong tuần theo lớp, phòng học',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ] else if (role == 'QUAN_TRI_VIEN') ...[
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/gradebooks'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.navActiveBg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.table_chart_rounded,
-                                        size: 20,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Bảng điểm toàn trường',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Theo dõi toàn bộ bảng điểm trong trường',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/classification-policy'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.navActiveBg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.rule_rounded,
-                                        size: 20,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Chính sách xếp loại',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Cấu hình ngưỡng điểm Giỏi, Khá, TB, Yếu',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/timetable'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.navActiveBg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.calendar_month_rounded,
-                                        size: 20,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Thời khóa biểu toàn trường',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Tra cứu lịch học các lớp và tiết dạy giáo viên toàn trường',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/my-results'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.navActiveBg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.fact_check_rounded,
-                                        size: 20,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Điểm của tôi',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Xem điểm thành phần, tổng kết và xếp loại',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: cardWidth,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/timetable'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(9),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.navActiveBg,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.calendar_today_rounded,
-                                        size: 20,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Thời khóa biểu của tôi',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Xem lịch học các môn trong tuần của lớp mình',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 13,
-                                      color: Color(0xFF9A9590),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
+                        ],
+                      );
+                    },
+                  ),
 
-              const SizedBox(height: 16),
-
-              // Academic Catalog Section
-              Text(
-                role == 'HOC_SINH'
-                    ? 'DANH MỤC TRA CỨU'
-                    : 'HỒ SƠ & DANH MỤC HỌC VỤ',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                  color: AppTheme.textSubtle,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                role == 'HOC_SINH'
-                    ? 'Danh mục thông tin phục vụ tra cứu học tập'
-                    : 'Quản lý hồ sơ học sinh, giáo viên, lớp học và phân công giảng dạy',
-                style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
-              ),
-              const SizedBox(height: 8),
-
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  int columns = 1;
-                  if (constraints.maxWidth >= 900) {
-                    columns = 3;
-                  } else if (constraints.maxWidth >= 600) {
-                    columns = 2;
-                  }
-                  final spacing = 10.0;
-                  final width =
-                      (constraints.maxWidth - (columns - 1) * spacing) /
-                      columns;
-
-                  return Wrap(
-                    spacing: spacing,
-                    runSpacing: spacing,
-                    children: [
-                      for (final r in visible)
-                        SizedBox(
-                          width: width,
-                          child: Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () => context.go('/catalog/${r.key}'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.widgetBg,
-                                        borderRadius: BorderRadius.circular(9),
-                                      ),
-                                      child: Icon(
-                                        _iconForResource(r.key),
-                                        size: 19,
-                                        color: AppTheme.primarySeed,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            r.label,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.primaryDark,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 1),
-                                          Text(
-                                            _subtitleForResource(r.key),
-                                            style: const TextStyle(
-                                              fontSize: 10.5,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.chevron_right_rounded,
-                                      size: 18,
-                                      color: Color(0xFFB7B0A2),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-
-              // Admin Statistical Charts
-              if (role == 'QUAN_TRI_VIEN') ...[
-                const SizedBox(height: 20),
-                const AdminChartsSection(),
+                  // Admin Statistical Charts
+                  if (role == 'QUAN_TRI_VIEN') ...[
+                    const SizedBox(height: 20),
+                    const AdminChartsSection(),
+                  ],
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

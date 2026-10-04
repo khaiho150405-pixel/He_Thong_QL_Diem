@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import ExcelJS from "exceljs";
 import type { Actor } from "../../authorization/application/policy.js";
 import {
@@ -52,11 +57,18 @@ export class ReportsService {
       const book = await tx.findBook(gradebookId);
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book);
-      return tx.summary(gradebookId);
+      const summary = await tx.summary(gradebookId);
+      const term = await tx.authorization.find("hoc_ky", {
+        ma_hoc_ky: book.termId,
+      });
+      return term?.da_cong_bo
+        ? summary
+        : { ...summary, passed: 0, failed: 0, distribution: [] };
     });
   }
 
   adminOverview(actor: Actor) {
+    if (actor.role !== "QUAN_TRI_VIEN") throw new ForbiddenException();
     return this.store.run(async (tx) => {
       await gradebookActor(tx.authorization, actor);
       return tx.adminOverview();
@@ -70,7 +82,13 @@ export class ReportsService {
       const book = await tx.findBook(gradebookId);
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book);
-      const rawRows = await tx.exportRows(gradebookId);
+      const term = await tx.authorization.find("hoc_ky", {
+        ma_hoc_ky: book.termId,
+      });
+      const rawRows = (await tx.exportRows(gradebookId)).map((r) => ({
+        ...r,
+        classification: term?.da_cong_bo ? r.classification : "CHUA_CONG_BO",
+      }));
       if (!rawRows.length) throw new NotFoundException();
 
       // Sort students according to standard Vietnamese alphabet (given name first)
@@ -83,6 +101,17 @@ export class ReportsService {
           rows.flatMap((row) => row.components.map((item) => item.name)),
         ),
       ];
+      const passFail =
+        (await tx.authorization.find("mon_hoc", { ma_mon: book.subjectId }))
+          ?.danh_gia_dat === true;
+      const gradeCell = (value: string | null | undefined) =>
+        passFail
+          ? value == null
+            ? null
+            : value === "10.0"
+              ? "Đạt"
+              : "Không đạt"
+          : numericCell(value);
       const workbook = new ExcelJS.Workbook();
       workbook.creator = "Hệ thống Quản lý Điểm";
       workbook.created = new Date();
@@ -114,10 +143,10 @@ export class ReportsService {
           ...Object.fromEntries(
             componentNames.map((name, index) => [
               `component${index}`,
-              numericCell(components.get(name)),
+              gradeCell(components.get(name)),
             ]),
           ),
-          finalScore: numericCell(row.finalScore),
+          finalScore: gradeCell(row.finalScore),
           classification: row.classification,
         });
       }

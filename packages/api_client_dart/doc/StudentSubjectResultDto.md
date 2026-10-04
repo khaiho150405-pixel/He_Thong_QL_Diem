@@ -8,6 +8,7 @@ import 'package:api_client_dart/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**passFail** | **bool** |  | [optional]
 **gradebookId** | **num** |  |
 **subjectId** | **num** |  |
 **subjectName** | **String** |  |

@@ -24,6 +24,7 @@ import type { Request } from "express";
 import type { Actor } from "../../authorization/application/policy.js";
 import { SubjectsService } from "../application/subjects.js";
 export class SubjectsInput {
+  @ApiProperty({ type: Boolean, required: false }) danh_gia_dat?: boolean;
   @ApiProperty({ type: String }) ten_mon!: string;
   @ApiProperty({ type: Number }) so_tiet_tuan!: number;
 }

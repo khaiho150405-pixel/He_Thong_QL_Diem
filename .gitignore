@@ -28,3 +28,6 @@ apps/api/src/generated/
 **/flutter_export_environment.sh
 **/pubspec_overrides.yaml
 .melos_tool/
+
+# Local model checkpoints; never publish training artifacts.
+/weights/

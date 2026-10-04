@@ -18,6 +18,8 @@ part 'subjects_dto.g.dart';
 class SubjectsDto {
   /// Returns a new [SubjectsDto] instance.
   SubjectsDto({
+    this.danhGiaDat,
+
     required this.tenMon,
 
     required this.soTietTuan,
@@ -26,6 +28,9 @@ class SubjectsDto {
 
     required this.maMon,
   });
+
+  @JsonKey(name: r'danh_gia_dat', required: false, includeIfNull: false)
+  final bool? danhGiaDat;
 
   @JsonKey(name: r'ten_mon', required: true, includeIfNull: false)
   final String tenMon;
@@ -43,6 +48,7 @@ class SubjectsDto {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SubjectsDto &&
+          other.danhGiaDat == danhGiaDat &&
           other.tenMon == tenMon &&
           other.soTietTuan == soTietTuan &&
           other.label == label &&
@@ -50,7 +56,11 @@ class SubjectsDto {
 
   @override
   int get hashCode =>
-      tenMon.hashCode + soTietTuan.hashCode + label.hashCode + maMon.hashCode;
+      danhGiaDat.hashCode +
+      tenMon.hashCode +
+      soTietTuan.hashCode +
+      label.hashCode +
+      maMon.hashCode;
 
   factory SubjectsDto.fromJson(Map<String, dynamic> json) =>
       _$SubjectsDtoFromJson(json);

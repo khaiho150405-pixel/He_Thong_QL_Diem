@@ -167,8 +167,11 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
                     ],
                     TextField(
                       controller: name,
+                      readOnly: true,
                       decoration: const InputDecoration(
                         labelText: 'Họ và tên',
+                        helperText:
+                            'Nhà trường quản lý họ tên. Liên hệ quản trị viên để sửa.',
                         prefixIcon: Icon(
                           Icons.person_outline_rounded,
                           size: 20,
@@ -204,20 +207,21 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
         ),
         if (error != null)
           TextButton(onPressed: load, child: const Text('Thử lại')),
-        FilledButton.icon(
-          onPressed: loading || busy ? null : save,
-          icon: busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.check_rounded, size: 18),
-          label: Text(busy ? 'Đang lưu…' : 'Lưu thay đổi'),
-        ),
+        if (teacher)
+          FilledButton.icon(
+            onPressed: loading || busy ? null : save,
+            icon: busy
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.check_rounded, size: 18),
+            label: Text(busy ? 'Đang lưu…' : 'Lưu thay đổi'),
+          ),
       ],
     );
   }

@@ -36,6 +36,8 @@ export async function catalogScope(
     case "hoc_ky":
     case "mon_hoc":
     case "thanh_phan_diem":
+    case "he_so_hoc_ky":
+    case "he_so_hoc_ky_chung":
       return {};
     default:
       throw new ForbiddenException();

@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import { validateInput } from "../../../common/catalog.js";
 import {
+  administrator,
   currentActor,
   type Actor,
 } from "../../authorization/application/policy.js";
@@ -19,6 +20,7 @@ import {
 import { audit } from "../../audit/application/write.js";
 import {
   GRADEBOOK_STORE,
+  type Gradebook,
   type GradebookStore,
   type GradebookScope,
   type GradebookUnit,
@@ -203,16 +205,69 @@ export class GradebooksService {
       (tx, v) => tx.updateGrades(actor.sessionHash, bookId, v, changes),
     );
   }
-  lock(actor: Actor, bookId: number, key: unknown, input: unknown) {
-    const body = objectInput(input, ["expectedVersion"]);
-    return this.mutate(
-      actor,
-      bookId,
-      key,
-      body.expectedVersion,
-      "LOCK",
-      null,
-      (tx, v) => tx.lockGradebook(actor.sessionHash, bookId, v),
+  processDue() {
+    return this.store.run((tx) => tx.processDue());
+  }
+  setDeadline(
+    actor: Actor,
+    bookId: number,
+    componentId: number,
+    input: unknown,
+  ) {
+    id(bookId);
+    id(componentId);
+    const body = objectInput(input, ["opensAt", "closesAt", "expectedVersion"]);
+    for (const value of [body.opensAt, body.closesAt]) {
+      if (
+        typeof value !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value) ||
+        !Number.isFinite(Date.parse(value))
+      )
+        throw new BadRequestException("Thời gian phải hợp lệ và có múi giờ.");
+    }
+    if (typeof body.expectedVersion !== "number")
+      throw new BadRequestException();
+    id(body.expectedVersion, true);
+    if (
+      Date.parse(body.closesAt as string) <=
+        Date.parse(body.opensAt as string) ||
+      Date.parse(body.closesAt as string) <= Date.now()
+    )
+      throw new BadRequestException(
+        "Hạn nhập phải sau thời điểm mở và nằm trong tương lai.",
+      );
+    return this.run(actor, async (tx) => {
+      await currentActor(tx.authorization, actor);
+      administrator(actor);
+      const book = await tx.find(bookId);
+      if (!book) throw new NotFoundException();
+      await tx.setDeadline(
+        actor.sessionHash,
+        bookId,
+        componentId,
+        body.opensAt as string,
+        body.closesAt as string,
+        body.expectedVersion as number,
+      );
+    });
+  }
+  lockColumn(
+    actor: Actor,
+    bookId: number,
+    componentId: number,
+    key: unknown,
+    input: unknown,
+  ): Promise<Gradebook> {
+    void [actor, bookId, componentId, key, input];
+    throw new ForbiddenException(
+      "Nhà trường đặt hạn nhập; hệ thống tự khóa cột khi đến hạn. Giáo viên không chốt thủ công.",
+    );
+  }
+
+  lock(_actor: Actor, _bookId: number, _key: unknown, _input: unknown): never {
+    void [_actor, _bookId, _key, _input];
+    throw new ForbiddenException(
+      "Bảng điểm tự khóa theo hạn nhập do nhà trường đặt.",
     );
   }
   syncRoster(actor: Actor, bookId: number, key: unknown, input: unknown) {
