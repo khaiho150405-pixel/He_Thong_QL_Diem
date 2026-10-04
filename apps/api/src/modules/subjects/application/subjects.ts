@@ -9,6 +9,7 @@ export class SubjectsService extends CatalogService {
       table: "mon_hoc",
       id: "ma_mon",
       fields: {
+        danh_gia_dat: { kind: "boolean", optional: true },
         ten_mon: { kind: "text", max: 80 },
         so_tiet_tuan: { kind: "int", max: 50 },
       },

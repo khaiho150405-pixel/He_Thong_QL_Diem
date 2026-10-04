@@ -9,6 +9,7 @@ export class SemestersService extends CatalogService {
       table: "hoc_ky",
       id: "ma_hoc_ky",
       fields: {
+        da_cong_bo: { kind: "boolean", optional: true },
         ma_nam_hoc: { kind: "int" },
         ten: { kind: "text", max: 20 },
         thu_tu: { kind: "int", max: 3 },

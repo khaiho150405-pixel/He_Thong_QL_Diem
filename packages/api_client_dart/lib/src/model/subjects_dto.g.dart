@@ -7,6 +7,8 @@ part of 'subjects_dto.dart';
 // **************************************************************************
 
 abstract class _$SubjectsDtoCWProxy {
+  SubjectsDto danhGiaDat(bool? danhGiaDat);
+
   SubjectsDto tenMon(String tenMon);
 
   SubjectsDto soTietTuan(num soTietTuan);
@@ -21,7 +23,13 @@ abstract class _$SubjectsDtoCWProxy {
   /// ```dart
   /// SubjectsDto(...).copyWith(id: 12, name: "My name")
   /// ````
-  SubjectsDto call({String tenMon, num soTietTuan, String label, num maMon});
+  SubjectsDto call({
+    bool? danhGiaDat,
+    String tenMon,
+    num soTietTuan,
+    String label,
+    num maMon,
+  });
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfSubjectsDto.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfSubjectsDto.copyWith.fieldName(...)`
@@ -29,6 +37,9 @@ class _$SubjectsDtoCWProxyImpl implements _$SubjectsDtoCWProxy {
   const _$SubjectsDtoCWProxyImpl(this._value);
 
   final SubjectsDto _value;
+
+  @override
+  SubjectsDto danhGiaDat(bool? danhGiaDat) => this(danhGiaDat: danhGiaDat);
 
   @override
   SubjectsDto tenMon(String tenMon) => this(tenMon: tenMon);
@@ -50,12 +61,17 @@ class _$SubjectsDtoCWProxyImpl implements _$SubjectsDtoCWProxy {
   /// SubjectsDto(...).copyWith(id: 12, name: "My name")
   /// ````
   SubjectsDto call({
+    Object? danhGiaDat = const $CopyWithPlaceholder(),
     Object? tenMon = const $CopyWithPlaceholder(),
     Object? soTietTuan = const $CopyWithPlaceholder(),
     Object? label = const $CopyWithPlaceholder(),
     Object? maMon = const $CopyWithPlaceholder(),
   }) {
     return SubjectsDto(
+      danhGiaDat: danhGiaDat == const $CopyWithPlaceholder()
+          ? _value.danhGiaDat
+          // ignore: cast_nullable_to_non_nullable
+          : danhGiaDat as bool?,
       tenMon: tenMon == const $CopyWithPlaceholder()
           ? _value.tenMon
           // ignore: cast_nullable_to_non_nullable
@@ -95,6 +111,7 @@ SubjectsDto _$SubjectsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
       requiredKeys: const ['ten_mon', 'so_tiet_tuan', 'label', 'ma_mon'],
     );
     final val = SubjectsDto(
+      danhGiaDat: $checkedConvert('danh_gia_dat', (v) => v as bool?),
       tenMon: $checkedConvert('ten_mon', (v) => v as String),
       soTietTuan: $checkedConvert('so_tiet_tuan', (v) => v as num),
       label: $checkedConvert('label', (v) => v as String),
@@ -103,6 +120,7 @@ SubjectsDto _$SubjectsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
     return val;
   },
   fieldKeyMap: const {
+    'danhGiaDat': 'danh_gia_dat',
     'tenMon': 'ten_mon',
     'soTietTuan': 'so_tiet_tuan',
     'maMon': 'ma_mon',
@@ -111,6 +129,7 @@ SubjectsDto _$SubjectsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
 
 Map<String, dynamic> _$SubjectsDtoToJson(SubjectsDto instance) =>
     <String, dynamic>{
+      'danh_gia_dat': ?instance.danhGiaDat,
       'ten_mon': instance.tenMon,
       'so_tiet_tuan': instance.soTietTuan,
       'label': instance.label,

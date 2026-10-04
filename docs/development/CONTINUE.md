@@ -2,6 +2,84 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## 2026-10-04 — Bộ lọc thời khóa biểu và bàn giao GitHub (mới nhất)
+
+- Chủ dự án đã yêu cầu sửa UI bộ lọc lớp/giáo viên và push để tự merge. Nhánh `codex/semester-weights-recognition`, base `82dc9f9`, chứa các thay đổi sản phẩm từ hệ số/checkpoint/camera đến quy trình nhà trường/lịch nhập/UI. Không tự merge/deploy.
+- `TimetableFilter`: control 48 px dùng token chung; danh sách có tìm khi gõ, tên đầy đủ xuống dòng, Tất cả để bỏ lọc, đóng không đổi lựa chọn. Ô đóng tên dài có tooltip; bộ lọc được đưa trước các thao tác và hướng dẫn trong thanh cuộn ngang. Sheet có vùng an toàn/bàn phím và cuộn riêng.
+- Test mới `timetable_filter_test.dart`: chọn/tìm/đóng/bỏ lọc, màn 320/390/1440 với chữ 150%. Toàn bộ Flutter 64 tests đạt và analyze sạch; Web build development đạt, local `http://localhost:8080/?build=timetable-filters` HTTP 200. `pnpm check`: 35 unit/HTTP, format/lint/typecheck/build đạt. DB constraints 1 và integration 11 đạt trên DB test riêng; Python 13 đạt. `contracts:check` đạt bằng Java JBR Android Studio, Dart format và repository scan đạt. Log `.local/filter-*`.
+- Chỉ stage sản phẩm/tài liệu/migration/client/test đúng phạm vi. Giữ local `.agents`, `.claude`, `.windsurf`, `UI`, `skills-lock.json`, scripts DB thủ công, env/logs/weights. Không sửa migration đã chạy, không reset DB development. OCR thật vẫn chờ cấu hình; mobile native cần CI/thiết bị thật.
+- Sau push cần xem CI của PR đúng commit, hai đồng nghiệp review/Approve rồi chủ dự án merge. Không kết luận merge được từ kết quả local khi CI chưa xong.
+
+## 2026-10-04 — Tối giản bảng điểm và thao tác lưới thời khóa biểu
+
+- Nhánh `codex/semester-weights-recognition`; giữ toàn bộ thay đổi trước đó, chưa commit/push/merge. Yêu cầu mới chỉ đổi Flutter UI, không đổi API/schema/migration hay quyền GV/HS.
+- Bỏ hai mục **Chọn & sắp xếp môn** / **Quản lý môn học** trong bảng điểm toàn trường, bỏ sheet chọn môn và test cũ tương ứng. Giữ tải đủ trang và lọc hiện có.
+- Lịch nhập điểm của nhà trường là một hàng thẻ cuộn ngang, tên cột và thời gian hiển thị đầy đủ. QTV đặt/sửa lịch như trước, GV chỉ xem; quy tắc tự khóa/zero-fill ADR-0014 giữ nguyên.
+- Admin thời khóa biểu: ô trống thêm môn với lớp/ngày/tiết chọn sẵn; ô có môn mở thao tác sửa phân công, chuyển ngày/tiết (giữ phân công), xóa có xác nhận. Ô trùng lịch nhóm phòng mở toàn bộ tiết, không chỉ tiết đầu. Form lọc phân công theo lớp/học kỳ; tự chọn khi chỉ có một phân công. Tải đủ trang danh mục và nút tải lại phục hồi metadata khi lỗi. Dropdown dài được xuống dòng, phần chọn buổi dọc khi màn nhỏ.
+- Kiểm chứng: toàn bộ 60 Flutter tests đạt, `flutter analyze` sạch, Dart format 8 file không đổi, `pnpm.cmd format:check` và `git diff --check` đạt. Web development build thành công; API readiness ok và web HTTP 200. Log `.local/timetable-ux-*`. Widget kiểm thao tác từ ô lưới, lịch cuộn ngang, preset Chủ nhật/buổi chiều và chuyển giữ môn/GV tại 320/390/1440 với chữ 130%; profile không thay thiết bị mobile thật. API/DB không thay đổi trong phần này.
+- Tiếp tục: QTV thử local `http://localhost:8080/?build=timetable-admin-ux`; danh mục môn ở mục riêng. Chờ phản hồi trước phần mới; không tự commit/push/merge/deploy hoặc bật OCR thật khi thiếu config. Giữ API chạy để tác vụ lịch điểm hoạt động.
+
+## 2026-10-04 — Lịch nhập điểm tự khóa và UI môn học (lịch sử, UI được thay thế ở mục trên)
+
+- Tiếp tục nhánh `codex/semester-weights-recognition`; chưa commit/push/PR/merge. Giữ thay đổi trước và file người dùng ngoài phạm vi.
+- ADR-0014 thay quyền GV chốt thủ công: QTV đặt giờ mở/hạn cho từng bảng–cột trong **Lịch nhập điểm của nhà trường**. API/DB chặn nhập/duyệt/upload ngoài cửa sổ. Khi đến hạn, tác vụ nền đồng bộ sĩ số mới, giữ điểm đã duyệt khác NULL (kể cả 0), ghi 0 có audit cho ô thiếu/chưa duyệt, chuyển phiếu OCR chưa duyệt sang LOI và khóa cột. Chốt mọi cột thì bảng DA_CHOT; vẫn cần tổng kết và QTV công bố riêng.
+- Tác vụ main API compiled chạy khi khởi động và mỗi 30 giây, khóa advisory/transaction chống chạy trùng. Khi API tắt qua hạn, khởi động xử lý các lịch quá hạn. Runtime không DML lịch, không chốt thủ công qua hàm DB cũ. Lịch chưa đến hạn được QTV sửa theo version; hết hạn/đã khóa không mở lại. Không tự đặt lịch cho dữ liệu development cũ; cần đặt lịch tất cả cột để khóa toàn bảng. Chưa có lịch giữ cổng nhập hiện có.
+- Bỏ hệ số mặc định cũ khỏi form/badge; chỉ chọn nhóm TX/GK/CK và hệ số chung học kỳ. DB giữ field lịch sử, default kỹ thuật 1 để tạo component không cần gửi field; contract deprecated optional. `grade-deadlines.test.ts` xác minh tạo bằng ComponentsService không gửi he_so.
+- UI bảng điểm toàn trường: chọn/ẩn/sắp xếp môn bằng sheet có tìm kiếm, kéo/mũi tên, chọn tất cả/khôi phục; giữ trong màn đang mở, tải lại giữ, vào lại reset. Không xóa danh mục/điểm. Có nút đi thẳng Quản lý môn học để CRUD thật với ràng buộc hiện hữu. Admin tải đầy đủ các trang bảng trước khi lọc/sắp xếp.
+- Migration mới `202610040003_grade_deadlines` đã kiểm từ DB rỗng `qld_deadlines_20261004_test`, upgrade `qld_school_release_20261004_test`, áp dụng development không reset/seed. Không sửa migration đã chạy. Quyết định cập nhật AGENTS, README, ADR-0014, traceability.
+- Kiểm chứng: 35 unit/HTTP, 11 integration PostgreSQL/Redis/MinIO thật, 1 DB constraints; test mới kiểm trước/sau hạn, quyền, version lịch, zero-fill và giữ điểm, bổ sung sĩ số, rollback audit, chạy đồng thời/idempotency. Legacy closed fixtures dùng role migration trong test, không phục hồi quyền runtime/API. Toàn bộ Flutter 57 tests đạt, analyze sạch; 7 test mới chọn môn/lịch UTC trên 320/390/1280, GV không chỉnh/chốt. Lint/typecheck/API build, contract drift và format sạch; migration upgrade và test DB đạt. Web development build và local runtime cập nhật theo ADR-0014.
+- Logs `.local/deadline-*`; không commit env/logs/weights. Native Android/iOS chưa kiểm thiết bị thật như note trước; OCR thật tiếp tục chờ config/mã inference.
+
+### Tiếp tục
+
+1. QTV thử local **Bảng điểm toàn trường → bảng → Lịch nhập điểm** đặt lịch từng cột bằng date/time picker. GV nhập trong khoảng, đợi qua hạn/tải lại để thấy zero-fill và khóa; không đặt hạn giả vào dữ liệu thật để test tùy tiện. Nếu làm demo zero-fill, dùng học sinh/dữ liệu thử đã xác nhận.
+2. Giám sát `grade_deadline_failed`; khi lỗi DB/audit, guard vẫn chặn quá hạn, tick sau retry sau khi sửa. Giữ API chạy để thực hiện tự khóa. Không seed/reset hoặc dùng owner API bypass.
+3. Tiếp tục nhận phản hồi UI/sửa theo ADR-0014. Chỉ đưa GitHub khi chủ dự án yêu cầu, chọn file đúng phạm vi, CI/review trước merge. Không tự deploy hoặc nối OCR thật khi chưa có cấu hình.
+
+## 2026-10-04 — Quy trình nhà trường và phân quyền (mới nhất)
+
+- Nhánh `codex/semester-weights-recognition`; giữ toàn bộ thay đổi hệ số/checkpoint/camera trước đó và các file người dùng ngoài phạm vi. Chưa commit/push/PR/merge cho phần mới này; CI GitHub chưa chạy.
+- Đã hoàn thành yêu cầu: danh mục quản trị chỉ QTV thấy/mở; GV/HS không đổi tên, HS không đổi mật khẩu; username điện thoại cho tài khoản mới và mẫu Excel dạng text; giáo viên một mục Bảng điểm, chốt từng cột; OCR vẫn nằm trong bảng và không nhận cột khóa/môn định tính; lỗi xóa liên kết nêu lý do.
+- Hệ số TX/GK/CK chung mọi môn trong học kỳ thuộc năm, mặc định 1/2/3, khóa khi có cột chốt. Môn Đạt/Không đạt chỉ nhập chữ (DB 10/0), Đạt khi tỷ lệ hệ số ≥50%, thiếu điểm bắt buộc chưa tổng kết, không cộng ĐTB. Test có đúng 50% và TX không đạt nhưng GK/CK đạt. Xếp loại ẩn cho đến QTV công bố trong danh mục Học kỳ; chặn công bố chưa đủ kết quả và tạo bảng/tính lại sau công bố.
+- Timetable: chuẩn nút lưới tuần/theo ngày; HS không thấy phòng, QTV nhóm theo lớp/phòng. Các màn chính dùng AppEdgeScrollbar ngoài giới hạn nội dung, cuộn con độc lập; test mép màn trên width 320/1280.
+- Hai migration `202610040001_school_workflow`, `202610040002_workflow_guards` đã áp dụng development không reset/seed, test DB dựng rỗng `qld_school_release_20261004_test` và nâng cấp `qld_semester_20261003_test`. Không sửa migration đã áp dụng. Bảng cấu hình/chốt cột ngoài baseline 16 bảng, runtime không sửa/xóa bằng chứng.
+- Kiểm chứng đạt: lint, typecheck, 35 unit/HTTP, 10 integration với PostgreSQL/Redis/MinIO thật, 1 DB constraints; toàn bộ 50 Flutter tests và analyze sạch; test quyền/scroll 6 cases và workflow SQL chạy lại sau bổ sung ngưỡng 50%/thống kê môn định tính đều đạt. API build, Flutter Web development build, OpenAPI/generated Dart client và contracts:check đạt. Generator từng gặp Windows file mapped lock khi ghi README; chạy lại với Java Android Studio JBR thành công, không sửa tay client.
+- Local API chạy bản compiled `apps/api/dist/main.js`, web `scripts/serve-web.mjs`, URL `http://localhost:8080/?build=school-workflow`; login native seed qua env, GET hệ số 200, logout 204, web HTTP200. Sau sửa backend phải build/restart, sau sửa Flutter phải build web. Logs trong `.local/school-*`, không commit.
+- ADR-0013 thay thế phạm vi ADR-0012; AGENTS/README/traceability cập nhật. OCR thật vẫn chờ mã/config inference chủ dự án nói cập nhật sau; không bật fake thành thật. Android native build còn vướng Gradle như note trước, iOS cần macOS; widget profiles không phải kiểm chứng thiết bị thật.
+
+### Bước tiếp theo của phần mới
+
+1. Người dùng thử local bằng ba role: lưu/chốt cột, môn Đạt/Không đạt, QTV công bố, lịch lớp/phòng và import tài khoản điện thoại. Không tự công bố hay sửa điểm hiện có để demo.
+2. Nếu có lỗi, sửa theo ADR-0013 và chạy suite tương ứng; không lặp lại phase đã hoàn tất. Hoàn tất native Android/iOS trên môi trường/device phù hợp.
+3. Khi người dùng yêu cầu đưa lên GitHub, chọn đúng file sản phẩm/tài liệu/test cùng các thay đổi trước còn local, loại `.env`, `.local`, `weights`, thư mục AI/prototype/scripts DB thủ công; tạo PR, chờ CI/review, không tự merge.
+
+## 2026-10-03 — Sửa UI chụp/upload nhận dạng (mới nhất)
+
+- Giữ nhánh `codex/semester-weights-recognition` và toàn bộ thay đổi hệ số/checkpoint bên dưới; chưa commit/push/PR hoặc merge. Không thêm các file người dùng ngoài phạm vi vào commit.
+- UC11–UC13: thêm image_picker 1.2.0 cho camera mobile và khôi phục Android lost data, quyền iOS; giữ file picker PNG/JPEG. Client kiểm MIME theo nội dung, dung lượng/dimensions và decode, xem trước/phóng to, hủy/thay ảnh, trạng thái chọn ảnh/upload và tiến độ. Bố cục responsive, tên dropdown xuống dòng, lỗi model/queue hướng dẫn đúng. Chi tiết đối chiếu có zoom ảnh ô/gốc, confidence rõ, cảnh báo fake, không gợi ý dòng đỏ và kiểm tất cả dòng kể cả khi đang lọc trước khi duyệt. Không đổi backend/schema/generated client trong lượt UI này.
+- Tài liệu: `docs/ux/recognition-capture.md`, README và traceability. Tests mới `recognition_upload_ux_test.dart`; fixture ảnh phase3 chuyển sang PNG hợp lệ và cuộn tới footer duyệt trong test.
+- Kiểm chứng: Flutter analyze sạch; **44 Flutter tests đạt**, gồm profile Android 320, iOS 390 với chữ 1,3×, Windows 1280. Web development build đạt; API readiness ok và web 8080 trả 200. Không coi widget profile là kiểm camera/device/simulator thật. Build Android thử hai lần bị lỗi môi trường Gradle loopback (`Address already in use` / `Unable to establish loopback connection`), chưa có APK đạt. Không có thiết bị Android/iOS; iOS cần macOS/Xcode.
+- Local đã khởi động API compiled, FastAPI 8000 ở mode weights, dispatcher và worker compiled bằng process ẩn; log trong `.local/recognition-*`. Web phục vụ build mới tại `http://localhost:8080/?build=recognition-ui`. Model thật vẫn unavailable do chủ dự án hẹn cập nhật mã/config inference; không bật fake để giả nhận dạng thật, không ghi điểm khi model lỗi.
+- Tiếp theo: người dùng thử bằng điện thoại (quyền camera, xoay màn, mạng lỗi, Android lost data); sửa môi trường Gradle rồi build/test native, kiểm iOS trên macOS. Khi nhận mã/config huấn luyện thì xác minh pipeline thật theo note checkpoint. Nếu đưa GitHub, chỉ chọn file sản phẩm/test/docs đúng phạm vi và chạy CI/review, không tự merge.
+
+## 2026-10-03 — Hệ số học kỳ và kiểm kê checkpoint
+
+- Nhánh hiện tại: `codex/semester-weights-recognition`, tạo từ `origin/main` tại `82dc9f9` sau khi PR #9 đã merge. Các mục PR #9 phía dưới là lịch sử. Thay đổi mới còn local, chưa commit/push/PR, chưa có CI GitHub cho phần này; không tự merge.
+- Chủ dự án chốt: cấu hình hệ số thường xuyên/giữa kỳ/cuối kỳ theo từng học kỳ, không phải trọng số gộp cả năm. Đã thêm danh mục **Hệ số học kỳ** cho QTV, API/Prisma/migration, OpenAPI/generated Dart client, cập nhật hệ số trong lưới/điểm cá nhân/export/tổng kết. Chưa có override thì dùng mặc định. Môn–học kỳ có bảng điểm chốt thì cấm tạo/sửa/xóa hệ số ở service và trigger DB. ADR-0012 ghi acceptance và cơ chế khóa.
+- Migration `202610030001_semester_weights` đã áp dụng vào DB development, DB test nâng cấp `qld_audit_20260927_test`, và DB test tạo rỗng `qld_semester_20261003_test`. Không reset hoặc seed lại development. Không sửa migration này sau khi bàn giao.
+- Kiểm chứng đạt: lint, typecheck, build API; 35 unit/HTTP tests; 1 DB constraints test; 9 integration tests toàn bộ trên PostgreSQL/Redis/MinIO thật; test semester riêng trên DB dựng từ rỗng; Python 13 tests; Flutter 39 tests. Test UI hệ số riêng đạt trên profile Android 360, iOS 390, desktop 1366 (widget, không phải thiết bị/simulator thật). Sau thêm hướng dẫn biểu mẫu, chạy lại 3 test hệ số đạt. Flutter analyze sạch sau bỏ import thừa; Web development build đạt.
+- `contracts:check` đạt sau sửa generator: Windows có thể khóa file khiến Dart format báo 0 dù chưa ghi; generator nay kiểm format thực tế và retry có giới hạn, không bỏ qua drift. Không sửa generated client bằng tay.
+- Local API health/ready trả ok; đăng nhập native bằng tài khoản seed rồi GET semester-weights trả 200, logout 204. Web đã build và mở `http://localhost:8080/?build=semester-weights`; đã thấy màn login. UI sửa hệ số được kiểm bằng widget/generated client, chưa thao tác thay đổi hệ số trên dữ liệu development qua trình duyệt.
+- Đã đọc thư mục `weights` bằng PyTorch `weights_only=True`, viết công cụ offline `src.adapters.checkpoints`, báo cáo `.local/recognition-weights-report.json`. CRNN dot4/best báo accuracy 99.4872%, cao hơn dot5 99.1453%; đây là metric trong checkpoint, chưa đánh giá độc lập. Chưa bật adapter thật. Chủ dự án trả lời **cập nhật sau** cho mã/config huấn luyện/inference. Chi tiết và lệnh kiểm kê ở `docs/development/recognition-checkpoints.md`; `/weights/` được ignore, không commit binaries.
+
+Sau gián đoạn, đã khởi động lại local bằng process ẩn: `node apps/api/dist/main.js` và `node scripts/serve-web.mjs`. API dùng bản build đã kiểm tra (không watch); khi sửa backend cần build/restart hoặc chạy lại `pnpm.cmd dev:api`. Readiness trả ok và web trả HTTP 200. `format:check`, `git diff --check` đều đạt.
+
+### Bước tiếp theo
+
+1. Người dùng thử danh mục **Hệ số học kỳ** bằng QTV; giáo viên chỉ xem. Nếu cần đưa lên GitHub, chỉ chọn file sản phẩm/tài liệu/test của phần này, không thêm thư mục AI, UI prototype, scripts DB thủ công, `.env`, `.local`, `weights`; tạo PR riêng và chờ CI/review.
+2. Khi có mã huấn luyện/config, xác minh architecture, preprocessing, charset/decoder, tách lưới, hash và cùng bộ validation trước khi nối mô hình thật. Không đoán thông số từ shape checkpoint, không tự bật fake để giả thành mô hình thật.
+3. Chưa deploy production hoặc kiểm thiết bị mobile thật trong lượt này; iOS cần macOS/Xcode cho bước build/simulator thực.
+
 ## 2026-09-21 — Hoàn thiện quyền và CRUD thời khóa biểu
 
 - `QUAN_TRI_VIEN` có thể tạo, sửa và xóa tiết học từ màn hình thời khóa biểu. Biểu mẫu dùng phân công giảng dạy hợp lệ; API kiểm tra lớp, môn, giáo viên, học kỳ, xung đột lớp và xung đột giáo viên.
@@ -132,3 +210,5 @@ Kiểm chứng trước push: xem kết quả DB/backend/UI ở mục trên; qu�
 ### PR #9 — sửa CI registry MinIO (2026-09-28)
 
 CI run 36397260354 tại eba6fed: ios success; foundation lỗi ngay Start test infrastructure do Quay MinIO unauthorized, required-checks fail theo dependency. Đổi Compose build MinIO/mc từ source chính thức khóa commit cùng phiên bản (ADR-0011), không thay volume/bucket/quyền hay bỏ test. Tăng giới hạn foundation từ 30 lên 40 phút cho build source lần đầu. Config Compose và diff check đạt; kết quả chạy thực tế được cập nhật sau build.
+
+Kết quả xác nhận sau push 59d9582: Docker source build local thành công, infra:up healthy và 3/3 test storage/readiness/queue đạt. GitHub PR #9 run 36427962180 đạt foundation, ios và required-checks trên đúng commit 59d9582e600189ddbb276415afe492590d1a2d51. PR mergeable, không xung đột; danh sách review hiện rỗng, còn chờ Approve. Không merge hoặc bật auto-merge. Note kết quả này được giữ local để không tạo commit mới làm chạy lại CI chỉ vì cập nhật trạng thái.

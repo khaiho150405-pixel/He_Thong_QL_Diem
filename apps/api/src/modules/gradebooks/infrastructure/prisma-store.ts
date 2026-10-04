@@ -51,6 +51,22 @@ export class PrismaGradebookStore implements GradebookStore {
       return await transaction(this.db, (tx) =>
         work({
           authorization: unit(tx),
+          processDue: async () => {
+            const rows = await tx.$queryRaw<
+              Array<{ count: number }>
+            >`SELECT public.xu_ly_han_nhap_diem() AS count`;
+            return rows[0]!.count;
+          },
+          setDeadline: async (
+            sessionHash,
+            bookId,
+            componentId,
+            opensAt,
+            closesAt,
+            version,
+          ) => {
+            await tx.$queryRaw`SELECT public.dat_lich_nhap_diem(${sessionHash}::text,${bookId}::integer,${componentId}::integer,${opensAt}::timestamptz,${closesAt}::timestamptz,${version}::integer)::text`;
+          },
           createBlankGrid: async (sessionHash, scope) => {
             const rows = await tx.$queryRaw<BookRow[]>`
             SELECT created.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
@@ -90,12 +106,18 @@ export class PrismaGradebookStore implements GradebookStore {
           SELECT d.ma_diem::text AS id, hs.ma_hoc_sinh AS "studentId", hs.ho_ten AS "studentName",
             (hs.dang_theo_hoc AND hs.ma_lop = b.ma_lop) AS active,
             tp.ma_thanh_phan AS "componentId", tp.ten_thanh_phan AS "componentName",
-            tp.he_so::text AS coefficient, tp.bat_buoc AS required, tp.thu_tu_hien_thi AS "displayOrder",
-            tp.cho_phep_nhap AS "openForInput",
+            public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text AS coefficient, tp.bat_buoc AS required, tp.thu_tu_hien_thi AS "displayOrder",
+            (tp.cho_phep_nhap AND (w.ma_bang_diem IS NULL OR (clock_timestamp()>=w.mo_luc AND clock_timestamp()<w.dong_luc))) AS "openForInput",
+            to_char(w.mo_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "opensAt",
+            to_char(w.dong_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "closesAt",
+            coalesce(w.version,0) AS "deadlineVersion",
+            EXISTS(SELECT 1 FROM public.chot_cot_diem c WHERE c.ma_bang_diem=b.ma_bang_diem AND c.ma_thanh_phan=tp.ma_thanh_phan) AS "columnLocked",
+            (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=b.ma_mon) AS "passFail",
             d.gia_tri::text AS value, d.trang_thai AS status, d.nguon_nhap AS source
           FROM public.diem_thanh_phan d JOIN public.bang_diem b USING (ma_bang_diem)
           JOIN public.hoc_sinh hs USING (ma_hoc_sinh)
           JOIN public.thanh_phan_diem tp USING (ma_thanh_phan)
+          LEFT JOIN public.lich_nhap_diem w ON w.ma_bang_diem=b.ma_bang_diem AND w.ma_thanh_phan=tp.ma_thanh_phan
           WHERE d.ma_bang_diem = ${bookId}::integer AND d.ma_diem > ${after}::bigint
           ORDER BY d.ma_diem LIMIT 51`,
           updateGrades: async (sessionHash, bookId, version, changes) => {
@@ -111,6 +133,14 @@ export class PrismaGradebookStore implements GradebookStore {
               JOIN public.lop l ON l.ma_lop = updated.ma_lop
               JOIN public.mon_hoc m ON m.ma_mon = updated.ma_mon
               JOIN public.hoc_ky h ON h.ma_hoc_ky = updated.ma_hoc_ky`;
+            return book(rows[0]!);
+          },
+          lockColumn: async (sessionHash, bookId, componentId, version) => {
+            const rows = await tx.$queryRaw<
+              BookRow[]
+            >`SELECT c.*,l.ten_lop,m.ten_mon,h.ten AS ten_hoc_ky
+            FROM public.chot_cot(${sessionHash}::text,${bookId}::integer,${componentId}::integer,${version}::integer) c
+            JOIN public.lop l ON l.ma_lop=c.ma_lop JOIN public.mon_hoc m ON m.ma_mon=c.ma_mon JOIN public.hoc_ky h ON h.ma_hoc_ky=c.ma_hoc_ky`;
             return book(rows[0]!);
           },
           lockGradebook: async (sessionHash, bookId, expectedVersion) => {

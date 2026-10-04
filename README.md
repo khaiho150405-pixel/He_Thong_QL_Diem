@@ -33,7 +33,7 @@ pnpm dev:api
 
 Để chạy pipeline nhận dạng development, mở thêm ba terminal tại root và chạy `pnpm dev:recognition-service`, `pnpm dev:recognition-dispatcher`, `pnpm dev:recognition-worker`. Fake adapter chỉ được bật trong development/test; production thiếu weights trả `MODEL_UNAVAILABLE`.
 
-Giáo viên mở một bảng điểm đang nhập liệu và bung mục **Nhận dạng bảng điểm từ ảnh** để chọn thành phần, chọn ảnh PNG/JPEG và gửi job. Client tự kiểm tra trạng thái mỗi 3 giây khi phiếu còn xử lý. Chi tiết chỉ dùng signed URL 5 phút cho ảnh gốc/ảnh ô và vẫn là dữ liệu đề xuất; giáo viên phải đối chiếu, duyệt rồi chốt bảng. Bảng đã chốt có khối tổng kết, thống kê và xuất Excel. Học sinh dùng **Điểm của tôi** để chỉ xem điểm đã duyệt của chính tài khoản.
+Giáo viên mở một bảng điểm đang nhập liệu và bung mục **Nhận dạng bảng điểm từ ảnh** để chọn thành phần, chụp trên điện thoại hoặc chọn ảnh PNG/JPEG, xem trước/phóng to rồi gửi job. Client kiểm ảnh trước khi gửi, hiển thị tiến độ và tự kiểm tra trạng thái mỗi 3 giây khi phiếu còn xử lý. Chi tiết chỉ dùng signed URL 5 phút cho ảnh gốc/ảnh ô và vẫn là dữ liệu đề xuất; giáo viên phải đối chiếu, duyệt rồi chốt bảng. Xem [hướng dẫn chụp và kiểm thử mobile](docs/ux/recognition-capture.md). Mô hình thật còn chờ mã/config huấn luyện/inference. Bảng đã chốt có khối tổng kết, thống kê và xuất Excel. Học sinh dùng **Điểm của tôi** để chỉ xem điểm đã duyệt của chính tài khoản.
 
 setup:local tạo .env với mật khẩu ngẫu nhiên, không in secret, không ghi đè file có sẵn. Bạn có thể chỉnh mật khẩu local trước khi khởi tạo volume PostgreSQL. Port DB mặc định 5433 để tránh PostgreSQL cài sẵn tại 5432. infra:down giữ volume; không tự chạy down -v.
 
@@ -87,6 +87,26 @@ Trên Linux/macOS dùng `CONNECTION_SMOKE_TEST=1 node scripts/testing/connection
 
 Tại `apps/client_flutter`, chạy `flutter test integration_test/connection_test.dart -d <device-id> --dart-define-from-file=config/smoke-local.json` trên iOS; Android dùng `--flavor development --dart-define-from-file=config/smoke-android.json`. CI tự chạy proxy. Với Web, tại thư mục app chạy `flutter build web --dart-define-from-file=config/smoke-local.json`, sau đó từ root chạy `node scripts/serve-web.mjs`, mở localhost:8080 và xác nhận lỗi rồi bấm Thử lại. Nếu trình duyệt giữ bản build cũ trong cache, nạp lại trang để nhận bản mới. Cấu hình smoke không dùng cho bản phát hành; dừng proxy bằng Ctrl+C sau test.
 
-## GitHub
+## Hệ số, lịch nhập và công bố học kỳ
+
+QTV mở **Hệ số học kỳ**, chọn TX/GK/CK, học kỳ kèm năm và hệ số. Cấu hình áp dụng cho tất cả môn của học kỳ, mặc định TX=1, GK=2, CK=3. Chỉ sửa trước khi có cột chốt. Chọn loại hệ số của từng thành phần trong **Thành phần điểm**. Cấu hình cũ theo môn được giữ để truy vết nhưng không còn dùng cho lần tính mới.
+
+Trong **Môn học**, bật **Đánh giá Đạt/Không đạt** trước khi tạo bảng điểm. Môn này nhập Đạt/Không đạt; tỷ lệ hệ số Đạt ≥50% thì tổng kết Đạt, thiếu cột bắt buộc thì chưa tổng kết; không cộng vào ĐTB. Excel hiển thị chữ.
+
+QTV mở **Bảng điểm toàn trường** → một bảng → **Lịch nhập điểm của nhà trường**, đặt thời điểm mở và hạn nhập cho từng cột. Giờ trên biểu mẫu theo thiết bị, API lưu UTC. Giáo viên nhập/lưu trong thời gian được phép, không chốt thủ công. Đến hạn, ô thiếu/chưa duyệt được ghi 0 có nhật ký; điểm đã duyệt giữ nguyên, phiếu OCR chưa duyệt chuyển lỗi. Cột khóa, tất cả cột khóa thì bảng tự chốt. API kiểm hạn chính xác; tác vụ nền xử lý điểm 0/khóa mỗi 30 giây và khi khởi động, kể cả bỏ lỡ thời hạn khi tắt máy. Để tự khóa toàn bảng, đặt lịch cho **tất cả cột**; bảng cũ chưa có lịch vẫn theo cổng nhập hiện có, không tự đặt hạn hoặc ghi 0 vào dữ liệu đang dùng. Không mở lại cột đã khóa. Tính tổng kết theo phân công. Sau khi các bảng và tổng kết hoàn tất, QTV sửa **Học kỳ** và bật **Đã công bố** để công bố xếp loại. Trước đó học sinh có thể xem điểm của mình nhưng chưa thấy xếp loại.
+
+Tài khoản giáo viên/học sinh mới dùng số điện thoại 10 chữ số bắt đầu bằng 0. Mẫu `mau_tai_khoan_so_dien_thoai.xlsx` giữ username dạng văn bản để không mất số 0. Tài khoản cũ giữ nguyên. Hai vai trò không đổi tên; học sinh không đổi mật khẩu. Danh mục quản trị chỉ QTV thấy/mở. Học sinh không thấy phòng học trong lịch; QTV có tùy chọn nhóm lớp/phòng.
+
+Migration tiến tiếp `202610040001_school_workflow` và `202610040002_workflow_guards` giữ dữ liệu hiện có; chạy `pnpm.cmd db:migrate`, không reset hoặc seed lại DB đang dùng. Xem [ADR-0013](docs/adr/0013-school-workflow.md).
+
+## GitHub và cộng tác
 
 Repository đích: https://github.com/khaiho150405-pixel/He_Thong_QL_Diem. Issue/PR templates và CI nằm trong .github. CODEOWNERS khai báo @trongv2310 và @caohaidang157; yêu cầu số lượt Approve phải cấu hình riêng trong branch protection. Phase 0 đã merge qua PR #1. Không có license đã được chủ dự án chọn và không deploy production tự động.
+
+Trong bảng điểm toàn trường đã bỏ **Chọn & sắp xếp môn** và **Quản lý môn học**. Danh mục môn vẫn quản lý tại mục riêng của QTV. Bộ lọc admin tải đầy đủ các trang bảng điểm. Trong từng bảng, **Lịch nhập điểm của nhà trường** hiển thị các cột trên một hàng cuộn ngang, gồm tên cột, giờ mở/hạn và nút đặt/sửa lịch cho QTV.
+
+Thời khóa biểu QTV: bấm **Thêm môn vào lịch** hoặc ô trống trong lưới để thêm với ngày/tiết/lớp được chọn sẵn. Bấm ô có môn để **Sửa môn / giáo viên**, **Chuyển ngày / tiết** hoặc **Xóa khỏi lịch** (có xác nhận). Chuyển tiết giữ nguyên phân công; chọn môn khác dùng chức năng sửa. Form chỉ dùng phân công hợp lệ, có Chủ nhật và buổi chiều; màn nhỏ tự bố trí phần chọn buổi theo chiều dọc. Lọc theo lớp/học kỳ giới hạn phân công trong form. Backend tiếp tục kiểm trùng lớp/giáo viên và quy tắc lịch. GV/HS chỉ xem.
+
+Bộ lọc **Lớp học** và **Giáo viên** trong thời khóa biểu dùng ô chuẩn cao 48 px; mở danh sách để xem đầy đủ tên và tìm ngay khi gõ, không cần Enter. Chọn **Tất cả** để bỏ lọc; đóng danh sách giữ lựa chọn hiện tại. Tên dài trong ô đóng có tooltip, danh sách mở cho phép xuống dòng và cuộn riêng.
+
+Migration `202610040003_grade_deadlines` bổ sung lịch nhập và quyền thực thi riêng; giữ lịch sử và trường hệ số cũ trong DB để truy vết, loại khỏi form/badge và không dùng trong tính mới. Chi tiết [ADR-0014](docs/adr/0014-grade-entry-deadlines.md).

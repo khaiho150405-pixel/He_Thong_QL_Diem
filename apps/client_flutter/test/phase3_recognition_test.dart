@@ -14,32 +14,9 @@ class FakeRecognitionPicker implements RecognitionImagePicker {
   @override
   Future<RecognitionImage?> pick() async => RecognitionImage(
     name: 'bang-diem.png',
-    bytes: Uint8List.fromList([
-      137,
-      80,
-      78,
-      71,
-      13,
-      10,
-      26,
-      10,
-      0,
-      0,
-      0,
-      0,
-      73,
-      72,
-      68,
-      82,
-      0,
-      0,
-      0,
-      100,
-      0,
-      0,
-      0,
-      100,
-    ]),
+    bytes: base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII=',
+    ),
   );
 }
 
@@ -216,7 +193,11 @@ void main() {
     await tester.tap(find.text('Nhận dạng bảng điểm từ ảnh'));
     await tester.pumpAndSettle();
     expect(find.text('Số dòng khai báo: 2'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('recognition-pick')));
+    await tester.runAsync(() async {
+      await tester.tap(find.byKey(const ValueKey('recognition-pick')));
+      // Allow the engine image decoder to complete outside the fake clock.
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
     await tester.pumpAndSettle();
     expect(find.text('bang-diem.png'), findsOneWidget);
 
@@ -250,8 +231,19 @@ void main() {
       find.byKey(const ValueKey('review-value-51')),
       '0.0',
     );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('review-confirm-all')),
+      150,
+      scrollable: find
+          .descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
     await tester.pump();
+    await tester.ensureVisible(find.byKey(const ValueKey('review-approve')));
     await tester.tap(find.byKey(const ValueKey('review-approve')));
     await tester.pumpAndSettle();
     expect(server.approvalBody?['expectedTicketVersion'], 1);

@@ -120,11 +120,11 @@ export class PrismaFinalResultStore implements FinalResultStore {
           studentResults: (userId, termId) =>
             tx.$queryRaw<StudentSubjectResult[]>`
               SELECT b.ma_bang_diem AS "gradebookId",m.ma_mon AS "subjectId",
-                m.ten_mon AS "subjectName",h.ma_hoc_ky AS "termId",h.ten AS "termName",
+                m.ten_mon AS "subjectName",m.danh_gia_dat AS "passFail",h.ma_hoc_ky AS "termId",h.ten AS "termName",
                 jsonb_agg(jsonb_build_object('componentId',tp.ma_thanh_phan,
-                  'componentName',tp.ten_thanh_phan,'coefficient',tp.he_so::text,
+                  'componentName',tp.ten_thanh_phan,'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,
                   'value',d.gia_tri::text) ORDER BY tp.thu_tu_hien_thi) AS components,
-                k.diem_tong_ket::text AS "finalScore",k.xep_loai AS classification,
+                k.diem_tong_ket::text AS "finalScore",CASE WHEN h.da_cong_bo THEN k.xep_loai ELSE NULL END AS classification,
                 CASE WHEN k.ngay_tinh IS NULL THEN NULL ELSE
                   to_char(k.ngay_tinh AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') END AS "calculatedAt"
               FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop=hs.ma_lop
@@ -135,10 +135,10 @@ export class PrismaFinalResultStore implements FinalResultStore {
               LEFT JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
                 AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
               WHERE hs.ma_nguoi_dung=${userId}::integer
-                AND b.trang_thai='DA_CHOT'
+                AND (b.trang_thai='DA_CHOT' OR EXISTS(SELECT 1 FROM public.chot_cot_diem c WHERE c.ma_bang_diem=b.ma_bang_diem AND c.ma_thanh_phan=d.ma_thanh_phan))
                 AND (${termId}::integer IS NULL OR b.ma_hoc_ky=${termId}::integer)
               GROUP BY b.ma_bang_diem,m.ma_mon,m.ten_mon,h.ma_hoc_ky,h.ten,
-                k.diem_tong_ket,k.xep_loai,k.ngay_tinh
+                k.diem_tong_ket,k.xep_loai,k.ngay_tinh,h.da_cong_bo
               ORDER BY h.ma_hoc_ky DESC,m.ten_mon`,
           studentSummary: async (userId, termId) => {
             const rows = await tx.$queryRaw<StudentResultSummary[]>`
@@ -159,7 +159,7 @@ export class PrismaFinalResultStore implements FinalResultStore {
                   AND b.trang_thai='DA_CHOT'
                 JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
                   AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
-                WHERE hs.dang_theo_hoc
+                WHERE hs.dang_theo_hoc AND EXISTS(SELECT 1 FROM public.hoc_ky h WHERE h.ma_hoc_ky=st.term_id AND h.da_cong_bo) AND NOT EXISTS(SELECT 1 FROM public.mon_hoc m WHERE m.ma_mon=b.ma_mon AND m.danh_gia_dat)
                 GROUP BY hs.ma_hoc_sinh
               ), ranked AS (
                 SELECT ma_hoc_sinh,average_score,
@@ -172,7 +172,7 @@ export class PrismaFinalResultStore implements FinalResultStore {
                  FROM public.ket_qua_tong_ket k JOIN public.bang_diem b
                    ON b.ma_lop=me.ma_lop AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
                  WHERE k.ma_hoc_sinh=me.ma_hoc_sinh AND k.ma_hoc_ky=st.term_id
-                   AND b.trang_thai='DA_CHOT') AS "publishedSubjects",
+                   AND b.trang_thai='DA_CHOT' AND EXISTS(SELECT 1 FROM public.hoc_ky h WHERE h.ma_hoc_ky=st.term_id AND h.da_cong_bo)) AS "publishedSubjects",
                 (SELECT count(DISTINCT b.ma_mon)::integer FROM public.bang_diem b
                  WHERE b.ma_lop=me.ma_lop AND b.ma_hoc_ky=st.term_id
                    AND b.trang_thai='DA_CHOT') AS "totalSubjects",

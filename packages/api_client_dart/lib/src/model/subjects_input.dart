@@ -17,7 +17,16 @@ part 'subjects_input.g.dart';
 )
 class SubjectsInput {
   /// Returns a new [SubjectsInput] instance.
-  SubjectsInput({required this.tenMon, required this.soTietTuan});
+  SubjectsInput({
+    this.danhGiaDat,
+
+    required this.tenMon,
+
+    required this.soTietTuan,
+  });
+
+  @JsonKey(name: r'danh_gia_dat', required: false, includeIfNull: false)
+  final bool? danhGiaDat;
 
   @JsonKey(name: r'ten_mon', required: true, includeIfNull: false)
   final String tenMon;
@@ -29,11 +38,13 @@ class SubjectsInput {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SubjectsInput &&
+          other.danhGiaDat == danhGiaDat &&
           other.tenMon == tenMon &&
           other.soTietTuan == soTietTuan;
 
   @override
-  int get hashCode => tenMon.hashCode + soTietTuan.hashCode;
+  int get hashCode =>
+      danhGiaDat.hashCode + tenMon.hashCode + soTietTuan.hashCode;
 
   factory SubjectsInput.fromJson(Map<String, dynamic> json) =>
       _$SubjectsInputFromJson(json);

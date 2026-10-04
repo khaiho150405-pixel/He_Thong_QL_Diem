@@ -96,6 +96,7 @@ export interface StudentApprovedComponent {
 }
 
 export interface StudentSubjectResult {
+  passFail?: boolean;
   gradebookId: number;
   subjectId: number;
   subjectName: string;

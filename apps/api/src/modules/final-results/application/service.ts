@@ -139,7 +139,16 @@ export class FinalResultsService {
       const book = await tx.findBook(gradebookId);
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book);
-      return page(await tx.list(gradebookId, after));
+      const rows = await tx.list(gradebookId, after);
+      const term = await tx.authorization.find("hoc_ky", {
+        ma_hoc_ky: book.termId,
+      });
+      return page(
+        rows.map((r) => ({
+          ...r,
+          classification: term?.da_cong_bo ? r.classification : "CHUA_CONG_BO",
+        })),
+      );
     });
   }
 
@@ -164,7 +173,7 @@ export class FinalResultsService {
       const book = await tx.findBook(gradebookId);
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book, true);
-      return tx.calculate({
+      const result = await tx.calculate({
         sessionHash: actor.sessionHash,
         gradebookId,
         expectedVersion: data.expectedVersion,
@@ -172,6 +181,16 @@ export class FinalResultsService {
         idempotencyKey,
         requestHash,
       });
+      const term = await tx.authorization.find("hoc_ky", {
+        ma_hoc_ky: book.termId,
+      });
+      return {
+        ...result,
+        results: result.results.map((r) => ({
+          ...r,
+          classification: term?.da_cong_bo ? r.classification : "CHUA_CONG_BO",
+        })),
+      };
     });
   }
 
@@ -184,7 +203,19 @@ export class FinalResultsService {
       const book = await tx.findBook(gradebookId);
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book);
-      return page(await tx.history(gradebookId, resultId, after));
+      const rows = await tx.history(gradebookId, resultId, after);
+      const term = await tx.authorization.find("hoc_ky", {
+        ma_hoc_ky: book.termId,
+      });
+      return page(
+        rows.map((r) => ({
+          ...r,
+          oldClassification: term?.da_cong_bo ? r.oldClassification : null,
+          newClassification: term?.da_cong_bo
+            ? r.newClassification
+            : "CHUA_CONG_BO",
+        })),
+      );
     });
   }
 

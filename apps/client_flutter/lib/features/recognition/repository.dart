@@ -37,7 +37,9 @@ class RecognitionRepository {
     required num componentId,
     required int declaredRows,
     required RecognitionImage image,
+    ProgressCallback? onSendProgress,
   }) async {
+    final mime = recognitionImageMime(image);
     final signature =
         '$gradebookId:$componentId:$declaredRows:${identityHashCode(image)}';
     if (_pendingSignature != signature) {
@@ -45,10 +47,7 @@ class RecognitionRepository {
       _pendingKey =
           'flutter-recognition-${DateTime.now().microsecondsSinceEpoch}-${_keySequence++}';
     }
-    final lower = image.name.toLowerCase();
-    final type = lower.endsWith('.png')
-        ? DioMediaType('image', 'png')
-        : DioMediaType('image', 'jpeg');
+    final type = DioMediaType('image', mime);
     final result = (await api.getRecognitionApi().recognitionUpload(
       xIdempotencyKey: _pendingKey!,
       gradebookId: gradebookId,
@@ -59,6 +58,7 @@ class RecognitionRepository {
       ),
       componentId: componentId.toInt(),
       declaredRows: declaredRows,
+      onSendProgress: onSendProgress,
     )).data!;
     _pendingSignature = null;
     _pendingKey = null;

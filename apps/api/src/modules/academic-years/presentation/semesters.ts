@@ -24,6 +24,7 @@ import type { Request } from "express";
 import type { Actor } from "../../authorization/application/policy.js";
 import { SemestersService } from "../application/semesters.js";
 export class SemestersInput {
+  @ApiProperty({ type: Boolean, required: false }) da_cong_bo?: boolean;
   @ApiProperty({ type: Number }) ma_nam_hoc!: number;
   @ApiProperty({ type: String }) ten!: string;
   @ApiProperty({ type: Number }) thu_tu!: number;

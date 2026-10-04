@@ -1,3 +1,4 @@
+import '../../app/widgets/app_edge_scrollbar.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,136 +56,144 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
           ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: FutureBuilder<List<StudentSubjectResultDto>>(
-            future: data,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: ShimmerLoading(itemCount: 4, itemHeight: 96),
-                );
-              }
-              if (snapshot.hasError) {
-                return EmptyState(
-                  icon: Icons.error_outline,
-                  title: 'Lỗi tải kết quả',
-                  message: errorMessage(snapshot.error!),
-                  actionLabel: 'Thử lại',
-                  onAction: () => setState(reload),
-                );
-              }
-              final items = snapshot.data!;
-              if (items.isEmpty) {
-                return const Center(child: Text('Bạn chưa có điểm đã duyệt.'));
-              }
+      body: AppEdgeScrollbar(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: FutureBuilder<List<StudentSubjectResultDto>>(
+              future: data,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: ShimmerLoading(itemCount: 4, itemHeight: 96),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return EmptyState(
+                    icon: Icons.error_outline,
+                    title: 'Lỗi tải kết quả',
+                    message: errorMessage(snapshot.error!),
+                    actionLabel: 'Thử lại',
+                    onAction: () => setState(reload),
+                  );
+                }
+                final items = snapshot.data!;
+                if (items.isEmpty) {
+                  return const Center(
+                    child: Text('Bạn chưa có điểm đã duyệt.'),
+                  );
+                }
 
-              // Tính toán trạng thái tổng kết học kỳ
-              final totalSubjects = items.length;
-              final lockedSubjects = items
-                  .where((i) => i.finalScore != null)
-                  .length;
-              final allLocked =
-                  totalSubjects > 0 && lockedSubjects == totalSubjects;
+                // Tính toán trạng thái tổng kết học kỳ
+                final totalSubjects = items.length;
+                final lockedSubjects = items
+                    .where((i) => i.classification != null)
+                    .length;
+                final allLocked =
+                    totalSubjects > 0 && lockedSubjects == totalSubjects;
 
-              double? gpa;
-              if (allLocked) {
-                final scores = items.map(
-                  (i) => double.tryParse(i.finalScore ?? '') ?? 0.0,
-                );
-                gpa = scores.reduce((a, b) => a + b) / totalSubjects;
-              }
-
-              // Danh sách các cột điểm thành phần duy nhất (ĐĐGtx 1, ĐĐGtx 2, ĐĐGgk, ĐĐGck...)
-              final componentNames = <String>[];
-              for (final item in items) {
-                for (final comp in item.components) {
-                  if (!componentNames.contains(comp.componentName)) {
-                    componentNames.add(comp.componentName);
+                double? gpa;
+                if (allLocked) {
+                  final scores = items
+                      .where((i) => i.passFail != true)
+                      .map((i) => double.tryParse(i.finalScore ?? ''))
+                      .whereType<double>()
+                      .toList();
+                  if (scores.isNotEmpty) {
+                    gpa = scores.reduce((a, b) => a + b) / scores.length;
                   }
                 }
-              }
 
-              return ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 20,
-                ),
-                children: [
-                  // Banner Thông tin Học sinh & Trường học
-                  _buildStudentHeaderBanner(
-                    colorScheme: colorScheme,
-                    theme: theme,
-                    studentName: studentName,
-                    termName: items.first.termName,
-                    totalSubjects: totalSubjects,
-                    lockedSubjects: lockedSubjects,
-                    allLocked: allLocked,
-                    gpa: gpa,
+                // Danh sách các cột điểm thành phần duy nhất (ĐĐGtx 1, ĐĐGtx 2, ĐĐGgk, ĐĐGck...)
+                final componentNames = <String>[];
+                for (final item in items) {
+                  for (final comp in item.components) {
+                    if (!componentNames.contains(comp.componentName)) {
+                      componentNames.add(comp.componentName);
+                    }
+                  }
+                }
+
+                return ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
                   ),
-
-                  const SizedBox(height: 16),
-
-                  // Thanh chuyển đổi View (Bảng tổng hợp vs Thẻ chi tiết)
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'Kết quả học tập các môn',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SegmentedButton<String>(
-                        segments: const [
-                          ButtonSegment(
-                            value: 'cards',
-                            icon: Icon(Icons.view_agenda_rounded, size: 16),
-                            label: Text('Thẻ theo môn'),
-                          ),
-                          ButtonSegment(
-                            value: 'table',
-                            icon: Icon(Icons.table_chart_rounded, size: 16),
-                            label: Text('Bảng tổng hợp'),
-                          ),
-                        ],
-                        selected: {_viewMode},
-                        onSelectionChanged: (val) =>
-                            setState(() => _viewMode = val.first),
-                        style: SegmentedButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          textStyle: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Nội dung hiển thị theo chế độ
-                  if (_viewMode == 'table')
-                    _buildUnifiedGradeTable(
+                  children: [
+                    // Banner Thông tin Học sinh & Trường học
+                    _buildStudentHeaderBanner(
                       colorScheme: colorScheme,
                       theme: theme,
-                      items: items,
-                      componentNames: componentNames,
+                      studentName: studentName,
+                      termName: items.first.termName,
+                      totalSubjects: totalSubjects,
+                      lockedSubjects: lockedSubjects,
                       allLocked: allLocked,
                       gpa: gpa,
-                    )
-                  else
-                    _buildSubjectCards(
-                      colorScheme: colorScheme,
-                      theme: theme,
-                      items: items,
                     ),
-                ],
-              );
-            },
+
+                    const SizedBox(height: 16),
+
+                    // Thanh chuyển đổi View (Bảng tổng hợp vs Thẻ chi tiết)
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Kết quả học tập các môn',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment(
+                              value: 'cards',
+                              icon: Icon(Icons.view_agenda_rounded, size: 16),
+                              label: Text('Thẻ theo môn'),
+                            ),
+                            ButtonSegment(
+                              value: 'table',
+                              icon: Icon(Icons.table_chart_rounded, size: 16),
+                              label: Text('Bảng tổng hợp'),
+                            ),
+                          ],
+                          selected: {_viewMode},
+                          onSelectionChanged: (val) =>
+                              setState(() => _viewMode = val.first),
+                          style: SegmentedButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Nội dung hiển thị theo chế độ
+                    if (_viewMode == 'table')
+                      _buildUnifiedGradeTable(
+                        colorScheme: colorScheme,
+                        theme: theme,
+                        items: items,
+                        componentNames: componentNames,
+                        allLocked: allLocked,
+                        gpa: gpa,
+                      )
+                    else
+                      _buildSubjectCards(
+                        colorScheme: colorScheme,
+                        theme: theme,
+                        items: items,
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -491,7 +500,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                comp.value,
+                                item.passFail == true
+                                    ? (comp.value == '10.0'
+                                          ? 'Đạt'
+                                          : 'Không đạt')
+                                    : comp.value,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   color: colorScheme.onSurface,
@@ -513,7 +526,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                item.finalScore!,
+                                item.passFail == true
+                                    ? (item.finalScore == '10.0'
+                                          ? 'Đạt'
+                                          : 'Không đạt')
+                                    : item.finalScore!,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   color: colorScheme.onPrimaryContainer,
@@ -721,7 +738,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '${items[i].finalScore} · ${items[i].classification ?? "—"}',
+                        '${items[i].passFail == true ? (items[i].finalScore == '10.0' ? 'Đạt' : 'Không đạt') : items[i].finalScore} · ${items[i].classification ?? "Chưa công bố"}',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           color: colorScheme.onPrimaryContainer,
@@ -790,7 +807,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        comp.value,
+                                        items[i].passFail == true
+                                            ? (comp.value == '10.0'
+                                                  ? 'Đạt'
+                                                  : 'Không đạt')
+                                            : comp.value,
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w900,

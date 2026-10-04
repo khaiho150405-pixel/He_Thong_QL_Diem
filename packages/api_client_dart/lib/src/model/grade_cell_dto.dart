@@ -38,6 +38,16 @@ class GradeCellDto {
 
     this.openForInput,
 
+    this.columnLocked,
+
+    this.passFail,
+
+    this.opensAt,
+
+    this.closesAt,
+
+    this.deadlineVersion,
+
     required this.value,
 
     required this.status,
@@ -75,6 +85,21 @@ class GradeCellDto {
   @JsonKey(name: r'openForInput', required: false, includeIfNull: false)
   final bool? openForInput;
 
+  @JsonKey(name: r'columnLocked', required: false, includeIfNull: false)
+  final bool? columnLocked;
+
+  @JsonKey(name: r'passFail', required: false, includeIfNull: false)
+  final bool? passFail;
+
+  @JsonKey(name: r'opensAt', required: false, includeIfNull: false)
+  final String? opensAt;
+
+  @JsonKey(name: r'closesAt', required: false, includeIfNull: false)
+  final String? closesAt;
+
+  @JsonKey(name: r'deadlineVersion', required: false, includeIfNull: false)
+  final num? deadlineVersion;
+
   @JsonKey(name: r'value', required: true, includeIfNull: true)
   final String? value;
 
@@ -98,6 +123,11 @@ class GradeCellDto {
           other.required_ == required_ &&
           other.displayOrder == displayOrder &&
           other.openForInput == openForInput &&
+          other.columnLocked == columnLocked &&
+          other.passFail == passFail &&
+          other.opensAt == opensAt &&
+          other.closesAt == closesAt &&
+          other.deadlineVersion == deadlineVersion &&
           other.value == value &&
           other.status == status &&
           other.source_ == source_;
@@ -114,6 +144,11 @@ class GradeCellDto {
       required_.hashCode +
       displayOrder.hashCode +
       openForInput.hashCode +
+      columnLocked.hashCode +
+      passFail.hashCode +
+      (opensAt == null ? 0 : opensAt.hashCode) +
+      (closesAt == null ? 0 : closesAt.hashCode) +
+      deadlineVersion.hashCode +
       (value == null ? 0 : value.hashCode) +
       status.hashCode +
       source_.hashCode;

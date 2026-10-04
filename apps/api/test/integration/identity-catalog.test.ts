@@ -91,11 +91,17 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
       ).rows.some((r) => r.ma_bam === token),
       false,
     );
+    const phones: Record<string, string> = {};
     const makeAccount = async (role: string, name: string) => {
+      phones[name] =
+        "000" +
+        String(
+          parseInt(randomBytes(4).toString("hex"), 16) % 10000000,
+        ).padStart(7, "0");
       const result = await call(
         "identity/accounts",
         "POST",
-        { username: `${name}_${suffix}`, password, role },
+        { username: phones[name], password, role },
         token,
       );
       assert.equal(result.status, 200);
@@ -185,9 +191,9 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
       ngay_sinh: "2010-01-01",
       dang_theo_hoc: true,
     });
-    const teacherToken = (await login(`teacher_${suffix}`)).body.token;
-    const studentToken = (await login(`student_${suffix}`)).body.token;
-    const otherToken = (await login(`other_${suffix}`)).body.token;
+    const teacherToken = (await login(phones["teacher"]!)).body.token;
+    const studentToken = (await login(phones["student"]!)).body.token;
+    const otherToken = (await login(phones["other"]!)).body.token;
     assert.equal(
       (await call("identity/profile", "GET", undefined, studentToken)).body
         .name,
@@ -198,7 +204,7 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
         await call(
           "identity/profile",
           "PUT",
-          { name: "Tên giả đã sửa", email: null, phone: null },
+          { name: "Học sinh giả", email: null, phone: null },
           studentToken,
         )
       ).status,
@@ -399,8 +405,8 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
       401,
     );
     for (let i = 0; i < 5; i++)
-      assert.equal((await login(`other_${suffix}`, "wrong")).status, 401);
-    assert.equal((await login(`other_${suffix}`)).status, 401);
+      assert.equal((await login(phones["other"]!, "wrong")).status, 401);
+    assert.equal((await login(phones["other"]!)).status, 401);
     assert.equal(
       (
         await call(
@@ -412,7 +418,7 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
       ).status,
       200,
     );
-    assert.equal((await login(`other_${suffix}`)).status, 200);
+    assert.equal((await login(phones["other"]!)).status, 200);
     await owner.query(
       "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '31 minutes' WHERE ma_nguoi_dung=$1",
       [student],

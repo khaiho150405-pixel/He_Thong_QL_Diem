@@ -227,10 +227,16 @@ try {
     const compIds: number[] = [];
     for (const c of components) {
       await db.query(
-        `INSERT INTO thanh_phan_diem (ma_mon, ten_thanh_phan, he_so, bat_buoc, thu_tu_hien_thi)
-         VALUES ($1, $2, $3, true, $4)
+        `INSERT INTO thanh_phan_diem (ma_mon, ten_thanh_phan, he_so, bat_buoc, thu_tu_hien_thi, loai_he_so)
+         VALUES ($1, $2, $3, true, $4, $5)
          ON CONFLICT (ma_mon, ten_thanh_phan) DO NOTHING`,
-        [subId, c.name, c.weight, c.order],
+        [
+          subId,
+          c.name,
+          c.weight,
+          c.order,
+          c.weight === 3 ? "CK" : c.weight === 2 ? "GK" : "TX",
+        ],
       );
       const cId = (
         await db.query(

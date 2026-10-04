@@ -23,6 +23,14 @@ import { audit } from "../../audit/application/write.js";
 export const digest = (token: string) =>
   createHash("sha256").update(token).digest("hex");
 const random = () => randomBytes(32).toString("hex");
+export function accountUsername(username: unknown, role: Role): boolean {
+  return (
+    typeof username === "string" &&
+    (role === "QUAN_TRI_VIEN"
+      ? /^[a-zA-Z0-9_.-]{3,50}$/.test(username)
+      : /^0[0-9]{9}$/.test(username))
+  );
+}
 const idle = 30 * 60 * 1000;
 const publicUser = (u: Row) => ({
   id: Number(u.ma_nguoi_dung),
@@ -90,6 +98,10 @@ export class IdentityService {
           throw new BadRequestException();
         if (table === "hoc_sinh" && (data.email != null || data.phone != null))
           throw new BadRequestException();
+        if (data.name.trim() !== row.ho_ten)
+          throw new ForbiddenException(
+            "Họ tên do nhà trường quản lý; liên hệ quản trị viên để điều chỉnh.",
+          );
         const update = {
           ho_ten: data.name.trim(),
           ...(table === "giao_vien"
@@ -268,10 +280,12 @@ export class IdentityService {
     )
       throw new BadRequestException();
     if (
-      !/^[a-zA-Z0-9_.-]{3,50}$/.test(input.username) ||
+      !accountUsername(input.username, input.role) ||
       !roles.includes(input.role)
     )
-      throw new BadRequestException();
+      throw new BadRequestException(
+        "Tài khoản giáo viên/học sinh phải dùng số điện thoại 10 chữ số, bắt đầu bằng 0.",
+      );
     const hashed = await passwordHash(input.password);
     return this.store.run(async (tx) => {
       const row = await tx.create("nguoi_dung", {
@@ -298,10 +312,12 @@ export class IdentityService {
           Object.keys(input).some(
             (key) => !["username", "password", "role"].includes(key),
           ) ||
-          !/^[a-zA-Z0-9_.-]{3,50}$/.test(input.username) ||
+          !accountUsername(input.username, input.role) ||
           !roles.includes(input.role)
         )
-          throw new BadRequestException("Dữ liệu tài khoản nhập không hợp lệ.");
+          throw new BadRequestException(
+            "Tài khoản nhập không hợp lệ: giáo viên/học sinh phải dùng số điện thoại 10 chữ số bắt đầu bằng 0; giữ cột username ở dạng văn bản.",
+          );
         return { ...input, hashed: await passwordHash(input.password) };
       }),
     );
@@ -380,6 +396,10 @@ export class IdentityService {
     newPassword: string,
   ) {
     authenticated(actor);
+    if (actor.role === "HOC_SINH")
+      throw new ForbiddenException(
+        "Học sinh không được tự đổi mật khẩu; liên hệ quản trị viên.",
+      );
     const user = await this.store.run((tx) =>
       tx.find("nguoi_dung", { ma_nguoi_dung: actor.id }),
     );

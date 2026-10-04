@@ -7,6 +7,8 @@ part of 'semesters_input.dart';
 // **************************************************************************
 
 abstract class _$SemestersInputCWProxy {
+  SemestersInput daCongBo(bool? daCongBo);
+
   SemestersInput maNamHoc(num maNamHoc);
 
   SemestersInput ten(String ten);
@@ -24,6 +26,7 @@ abstract class _$SemestersInputCWProxy {
   /// SemestersInput(...).copyWith(id: 12, name: "My name")
   /// ````
   SemestersInput call({
+    bool? daCongBo,
     num maNamHoc,
     String ten,
     num thuTu,
@@ -37,6 +40,9 @@ class _$SemestersInputCWProxyImpl implements _$SemestersInputCWProxy {
   const _$SemestersInputCWProxyImpl(this._value);
 
   final SemestersInput _value;
+
+  @override
+  SemestersInput daCongBo(bool? daCongBo) => this(daCongBo: daCongBo);
 
   @override
   SemestersInput maNamHoc(num maNamHoc) => this(maNamHoc: maNamHoc);
@@ -62,6 +68,7 @@ class _$SemestersInputCWProxyImpl implements _$SemestersInputCWProxy {
   /// SemestersInput(...).copyWith(id: 12, name: "My name")
   /// ````
   SemestersInput call({
+    Object? daCongBo = const $CopyWithPlaceholder(),
     Object? maNamHoc = const $CopyWithPlaceholder(),
     Object? ten = const $CopyWithPlaceholder(),
     Object? thuTu = const $CopyWithPlaceholder(),
@@ -69,6 +76,10 @@ class _$SemestersInputCWProxyImpl implements _$SemestersInputCWProxy {
     Object? ngayKetThuc = const $CopyWithPlaceholder(),
   }) {
     return SemestersInput(
+      daCongBo: daCongBo == const $CopyWithPlaceholder()
+          ? _value.daCongBo
+          // ignore: cast_nullable_to_non_nullable
+          : daCongBo as bool?,
       maNamHoc: maNamHoc == const $CopyWithPlaceholder()
           ? _value.maNamHoc
           // ignore: cast_nullable_to_non_nullable
@@ -119,6 +130,7 @@ SemestersInput _$SemestersInputFromJson(Map<String, dynamic> json) =>
           ],
         );
         final val = SemestersInput(
+          daCongBo: $checkedConvert('da_cong_bo', (v) => v as bool?),
           maNamHoc: $checkedConvert('ma_nam_hoc', (v) => v as num),
           ten: $checkedConvert('ten', (v) => v as String),
           thuTu: $checkedConvert('thu_tu', (v) => v as num),
@@ -128,6 +140,7 @@ SemestersInput _$SemestersInputFromJson(Map<String, dynamic> json) =>
         return val;
       },
       fieldKeyMap: const {
+        'daCongBo': 'da_cong_bo',
         'maNamHoc': 'ma_nam_hoc',
         'thuTu': 'thu_tu',
         'ngayBatDau': 'ngay_bat_dau',
@@ -137,6 +150,7 @@ SemestersInput _$SemestersInputFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$SemestersInputToJson(SemestersInput instance) =>
     <String, dynamic>{
+      'da_cong_bo': ?instance.daCongBo,
       'ma_nam_hoc': instance.maNamHoc,
       'ten': instance.ten,
       'thu_tu': instance.thuTu,

@@ -77,8 +77,7 @@ final routerProvider = Provider.family<GoRouter, String>((
       final resource = state.pathParameters['resource'];
       if (resource != null &&
           (!resources.any((r) => r.key == resource) ||
-              (user.role.value == 'HOC_SINH' && resource != 'students') ||
-              (user.role.value == 'GIAO_VIEN' && resource == 'accounts'))) {
+              user.role.value != 'QUAN_TRI_VIEN')) {
         return '/';
       }
       return null;

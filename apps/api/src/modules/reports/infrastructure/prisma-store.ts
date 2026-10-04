@@ -60,11 +60,11 @@ export class PrismaReportStore implements ReportStore {
         summary: async (gradebookId) => {
           const rows = await tx.$queryRaw<GradebookSummary[]>`
             WITH scoped AS (
-              SELECT k.*,
-                coalesce((SELECT c.dat FROM public.chinh_sach_xep_loai p
+              SELECT k.*, (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=k.ma_mon) AS pass_fail,
+                CASE WHEN (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=k.ma_mon) THEN k.diem_tong_ket=10.0 ELSE coalesce((SELECT c.dat FROM public.chinh_sach_xep_loai p
                   JOIN public.tieu_chi_xep_loai c USING(ma_chinh_sach)
                   WHERE p.phien_ban=k.bo_he_so->'classificationPolicy'->>'version'
-                    AND c.ma_xep_loai=k.xep_loai LIMIT 1),false) AS dat
+                    AND c.ma_xep_loai=k.xep_loai LIMIT 1),false) END AS dat
               FROM public.ket_qua_tong_ket k JOIN public.hoc_sinh hs USING(ma_hoc_sinh)
               JOIN public.bang_diem b ON b.ma_bang_diem=${gradebookId}::integer
                 AND b.ma_lop=hs.ma_lop AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
@@ -72,8 +72,8 @@ export class PrismaReportStore implements ReportStore {
               SELECT xep_loai,count(*)::integer AS students FROM scoped GROUP BY xep_loai
             )
             SELECT ${gradebookId}::integer AS "gradebookId",count(*)::integer AS students,
-              round(avg(diem_tong_ket),1)::text AS average,max(diem_tong_ket)::text AS highest,
-              min(diem_tong_ket)::text AS lowest,count(*) FILTER(WHERE dat)::integer AS passed,
+              round(avg(diem_tong_ket) FILTER(WHERE NOT pass_fail),1)::text AS average,max(diem_tong_ket) FILTER(WHERE NOT pass_fail)::text AS highest,
+              min(diem_tong_ket) FILTER(WHERE NOT pass_fail)::text AS lowest,count(*) FILTER(WHERE dat)::integer AS passed,
               count(*) FILTER(WHERE NOT dat)::integer AS failed,
               coalesce((SELECT jsonb_agg(jsonb_build_object('classification',xep_loai,
                 'students',students) ORDER BY xep_loai) FROM dist),'[]'::jsonb) AS distribution
@@ -83,7 +83,7 @@ export class PrismaReportStore implements ReportStore {
         exportRows: (gradebookId) => tx.$queryRaw<ExportRow[]>`
           SELECT hs.ma_hoc_sinh AS "studentId",hs.ho_ten AS "studentName",
             coalesce(jsonb_agg(jsonb_build_object('name',tp.ten_thanh_phan,
-              'coefficient',tp.he_so::text,'value',CASE WHEN d.trang_thai='DA_DUYET'
+              'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,'value',CASE WHEN d.trang_thai='DA_DUYET'
               THEN d.gia_tri::text ELSE NULL END) ORDER BY tp.thu_tu_hien_thi)
               FILTER(WHERE tp.ma_thanh_phan IS NOT NULL),'[]'::jsonb) AS components,
             k.diem_tong_ket::text AS "finalScore",k.xep_loai AS classification

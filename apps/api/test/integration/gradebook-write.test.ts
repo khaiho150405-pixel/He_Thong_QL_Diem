@@ -1,3 +1,4 @@
+import { closedFixture } from "./legacy-closed-fixture.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
@@ -485,18 +486,31 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       409,
     );
     assert.equal(
-      (await request("/" + book2.id + "/lock", "POST", { expectedVersion: 0 }))
-        .status,
-      409,
+      (
+        await request(
+          "/" +
+            book2.id +
+            "/components/" +
+            (await service.cells(teacher, book2.id)).items[0]!.componentId +
+            "/lock",
+          "POST",
+          { expectedVersion: 0 },
+        )
+      ).status,
+      403,
     );
-    // Mandatory missing grades prevent lock.
+    // Teachers cannot manually lock columns.
     assert.equal(
       (
-        await request("/" + book.id + "/lock", "POST", {
-          expectedVersion: version,
-        })
+        await request(
+          "/" + book.id + "/components/" + cells[0]!.componentId + "/lock",
+          "POST",
+          {
+            expectedVersion: version,
+          },
+        )
       ).status,
-      409,
+      403,
     );
     // Add a new student: GET stays read-only; explicit sync adds NULL cells without losing existing rows.
     await owner.query(
@@ -598,47 +612,18 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       version,
     );
 
-    // Edit vs lock shares the same lock/version. The loser cannot overwrite the winner.
-    const lockInput = { expectedVersion: version };
-    const lockRace = await Promise.all([
-      request(
-        "/" + book.id + "/lock",
-        "POST",
-        lockInput,
-        teacher.token,
-        "lock-race",
-      ),
-      request("/" + book.id + "/grades", "PUT", body("8.0")),
-    ]);
-    assert.deepEqual(lockRace.map((r) => r.status).sort(), [200, 409]);
-    version++;
-    if (lockRace[0]!.status === 409) {
-      assert.equal(
-        (
-          await request(
-            "/" + book.id + "/lock",
-            "POST",
-            { expectedVersion: version },
-            teacher.token,
-            "lock-final",
-          )
-        ).status,
-        200,
+    // Historical closed-column fixture; deadline races are covered in grade-deadlines.test.ts.
+    for (const componentId of new Set(cells.map((c) => c.componentId))) {
+      const closed = await closedFixture(
+        owner,
+        service,
+        teacher,
+        book.id,
+        componentId,
+        "closed-fixture-" + componentId,
+        { expectedVersion: version },
       );
-      version++;
-    } else {
-      assert.equal(
-        (
-          await request(
-            "/" + book.id + "/lock",
-            "POST",
-            lockInput,
-            teacher.token,
-            "lock-race",
-          )
-        ).data.status,
-        "DA_CHOT",
-      );
+      version = closed.version;
     }
     assert.equal(
       (await request("/" + book.id + "/grades", "PUT", body("4.0"))).status,

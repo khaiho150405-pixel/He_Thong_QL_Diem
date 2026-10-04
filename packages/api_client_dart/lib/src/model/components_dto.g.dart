@@ -7,11 +7,13 @@ part of 'components_dto.dart';
 // **************************************************************************
 
 abstract class _$ComponentsDtoCWProxy {
+  ComponentsDto loaiHeSo(String? loaiHeSo);
+
   ComponentsDto maMon(num maMon);
 
   ComponentsDto tenThanhPhan(String tenThanhPhan);
 
-  ComponentsDto heSo(String heSo);
+  ComponentsDto heSo(String? heSo);
 
   ComponentsDto batBuoc(bool batBuoc);
 
@@ -30,9 +32,10 @@ abstract class _$ComponentsDtoCWProxy {
   /// ComponentsDto(...).copyWith(id: 12, name: "My name")
   /// ````
   ComponentsDto call({
+    String? loaiHeSo,
     num maMon,
     String tenThanhPhan,
-    String heSo,
+    String? heSo,
     bool batBuoc,
     num thuTuHienThi,
     bool? choPhepNhap,
@@ -48,6 +51,9 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
   final ComponentsDto _value;
 
   @override
+  ComponentsDto loaiHeSo(String? loaiHeSo) => this(loaiHeSo: loaiHeSo);
+
+  @override
   ComponentsDto maMon(num maMon) => this(maMon: maMon);
 
   @override
@@ -55,7 +61,7 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
       this(tenThanhPhan: tenThanhPhan);
 
   @override
-  ComponentsDto heSo(String heSo) => this(heSo: heSo);
+  ComponentsDto heSo(String? heSo) => this(heSo: heSo);
 
   @override
   ComponentsDto batBuoc(bool batBuoc) => this(batBuoc: batBuoc);
@@ -82,6 +88,7 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
   /// ComponentsDto(...).copyWith(id: 12, name: "My name")
   /// ````
   ComponentsDto call({
+    Object? loaiHeSo = const $CopyWithPlaceholder(),
     Object? maMon = const $CopyWithPlaceholder(),
     Object? tenThanhPhan = const $CopyWithPlaceholder(),
     Object? heSo = const $CopyWithPlaceholder(),
@@ -92,6 +99,10 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
     Object? maThanhPhan = const $CopyWithPlaceholder(),
   }) {
     return ComponentsDto(
+      loaiHeSo: loaiHeSo == const $CopyWithPlaceholder()
+          ? _value.loaiHeSo
+          // ignore: cast_nullable_to_non_nullable
+          : loaiHeSo as String?,
       maMon: maMon == const $CopyWithPlaceholder()
           ? _value.maMon
           // ignore: cast_nullable_to_non_nullable
@@ -103,7 +114,7 @@ class _$ComponentsDtoCWProxyImpl implements _$ComponentsDtoCWProxy {
       heSo: heSo == const $CopyWithPlaceholder()
           ? _value.heSo
           // ignore: cast_nullable_to_non_nullable
-          : heSo as String,
+          : heSo as String?,
       batBuoc: batBuoc == const $CopyWithPlaceholder()
           ? _value.batBuoc
           // ignore: cast_nullable_to_non_nullable
@@ -148,7 +159,6 @@ ComponentsDto _$ComponentsDtoFromJson(Map<String, dynamic> json) =>
           requiredKeys: const [
             'ma_mon',
             'ten_thanh_phan',
-            'he_so',
             'bat_buoc',
             'thu_tu_hien_thi',
             'label',
@@ -156,9 +166,10 @@ ComponentsDto _$ComponentsDtoFromJson(Map<String, dynamic> json) =>
           ],
         );
         final val = ComponentsDto(
+          loaiHeSo: $checkedConvert('loai_he_so', (v) => v as String?),
           maMon: $checkedConvert('ma_mon', (v) => v as num),
           tenThanhPhan: $checkedConvert('ten_thanh_phan', (v) => v as String),
-          heSo: $checkedConvert('he_so', (v) => v as String),
+          heSo: $checkedConvert('he_so', (v) => v as String?),
           batBuoc: $checkedConvert('bat_buoc', (v) => v as bool),
           thuTuHienThi: $checkedConvert('thu_tu_hien_thi', (v) => v as num),
           choPhepNhap: $checkedConvert('cho_phep_nhap', (v) => v as bool?),
@@ -168,6 +179,7 @@ ComponentsDto _$ComponentsDtoFromJson(Map<String, dynamic> json) =>
         return val;
       },
       fieldKeyMap: const {
+        'loaiHeSo': 'loai_he_so',
         'maMon': 'ma_mon',
         'tenThanhPhan': 'ten_thanh_phan',
         'heSo': 'he_so',
@@ -180,9 +192,10 @@ ComponentsDto _$ComponentsDtoFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$ComponentsDtoToJson(ComponentsDto instance) =>
     <String, dynamic>{
+      'loai_he_so': ?instance.loaiHeSo,
       'ma_mon': instance.maMon,
       'ten_thanh_phan': instance.tenThanhPhan,
-      'he_so': instance.heSo,
+      'he_so': ?instance.heSo,
       'bat_buoc': instance.batBuoc,
       'thu_tu_hien_thi': instance.thuTuHienThi,
       'cho_phep_nhap': ?instance.choPhepNhap,

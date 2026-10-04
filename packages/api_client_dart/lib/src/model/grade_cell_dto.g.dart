@@ -27,6 +27,16 @@ abstract class _$GradeCellDtoCWProxy {
 
   GradeCellDto openForInput(bool? openForInput);
 
+  GradeCellDto columnLocked(bool? columnLocked);
+
+  GradeCellDto passFail(bool? passFail);
+
+  GradeCellDto opensAt(String? opensAt);
+
+  GradeCellDto closesAt(String? closesAt);
+
+  GradeCellDto deadlineVersion(num? deadlineVersion);
+
   GradeCellDto value(String? value);
 
   GradeCellDto status(GradeCellDtoStatusEnum status);
@@ -50,6 +60,11 @@ abstract class _$GradeCellDtoCWProxy {
     bool required_,
     num displayOrder,
     bool? openForInput,
+    bool? columnLocked,
+    bool? passFail,
+    String? opensAt,
+    String? closesAt,
+    num? deadlineVersion,
     String? value,
     GradeCellDtoStatusEnum status,
     GradeCellDtoSource_Enum source_,
@@ -98,6 +113,23 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
       this(openForInput: openForInput);
 
   @override
+  GradeCellDto columnLocked(bool? columnLocked) =>
+      this(columnLocked: columnLocked);
+
+  @override
+  GradeCellDto passFail(bool? passFail) => this(passFail: passFail);
+
+  @override
+  GradeCellDto opensAt(String? opensAt) => this(opensAt: opensAt);
+
+  @override
+  GradeCellDto closesAt(String? closesAt) => this(closesAt: closesAt);
+
+  @override
+  GradeCellDto deadlineVersion(num? deadlineVersion) =>
+      this(deadlineVersion: deadlineVersion);
+
+  @override
   GradeCellDto value(String? value) => this(value: value);
 
   @override
@@ -125,6 +157,11 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
     Object? required_ = const $CopyWithPlaceholder(),
     Object? displayOrder = const $CopyWithPlaceholder(),
     Object? openForInput = const $CopyWithPlaceholder(),
+    Object? columnLocked = const $CopyWithPlaceholder(),
+    Object? passFail = const $CopyWithPlaceholder(),
+    Object? opensAt = const $CopyWithPlaceholder(),
+    Object? closesAt = const $CopyWithPlaceholder(),
+    Object? deadlineVersion = const $CopyWithPlaceholder(),
     Object? value = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? source_ = const $CopyWithPlaceholder(),
@@ -170,6 +207,26 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
           ? _value.openForInput
           // ignore: cast_nullable_to_non_nullable
           : openForInput as bool?,
+      columnLocked: columnLocked == const $CopyWithPlaceholder()
+          ? _value.columnLocked
+          // ignore: cast_nullable_to_non_nullable
+          : columnLocked as bool?,
+      passFail: passFail == const $CopyWithPlaceholder()
+          ? _value.passFail
+          // ignore: cast_nullable_to_non_nullable
+          : passFail as bool?,
+      opensAt: opensAt == const $CopyWithPlaceholder()
+          ? _value.opensAt
+          // ignore: cast_nullable_to_non_nullable
+          : opensAt as String?,
+      closesAt: closesAt == const $CopyWithPlaceholder()
+          ? _value.closesAt
+          // ignore: cast_nullable_to_non_nullable
+          : closesAt as String?,
+      deadlineVersion: deadlineVersion == const $CopyWithPlaceholder()
+          ? _value.deadlineVersion
+          // ignore: cast_nullable_to_non_nullable
+          : deadlineVersion as num?,
       value: value == const $CopyWithPlaceholder()
           ? _value.value
           // ignore: cast_nullable_to_non_nullable
@@ -229,6 +286,11 @@ GradeCellDto _$GradeCellDtoFromJson(Map<String, dynamic> json) =>
           required_: $checkedConvert('required', (v) => v as bool),
           displayOrder: $checkedConvert('displayOrder', (v) => v as num),
           openForInput: $checkedConvert('openForInput', (v) => v as bool?),
+          columnLocked: $checkedConvert('columnLocked', (v) => v as bool?),
+          passFail: $checkedConvert('passFail', (v) => v as bool?),
+          opensAt: $checkedConvert('opensAt', (v) => v as String?),
+          closesAt: $checkedConvert('closesAt', (v) => v as String?),
+          deadlineVersion: $checkedConvert('deadlineVersion', (v) => v as num?),
           value: $checkedConvert('value', (v) => v as String?),
           status: $checkedConvert(
             'status',
@@ -256,6 +318,11 @@ Map<String, dynamic> _$GradeCellDtoToJson(GradeCellDto instance) =>
       'required': instance.required_,
       'displayOrder': instance.displayOrder,
       'openForInput': ?instance.openForInput,
+      'columnLocked': ?instance.columnLocked,
+      'passFail': ?instance.passFail,
+      'opensAt': ?instance.opensAt,
+      'closesAt': ?instance.closesAt,
+      'deadlineVersion': ?instance.deadlineVersion,
       'value': instance.value,
       'status': _$GradeCellDtoStatusEnumEnumMap[instance.status]!,
       'source': _$GradeCellDtoSource_EnumEnumMap[instance.source_]!,

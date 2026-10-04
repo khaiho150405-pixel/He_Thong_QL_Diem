@@ -56,6 +56,15 @@ export class GradeCellDto {
   @ApiProperty({ type: Boolean }) required!: boolean;
   @ApiProperty({ type: Number }) displayOrder!: number;
   @ApiProperty({ type: Boolean, required: false }) openForInput?: boolean;
+  @ApiProperty({ type: Boolean, required: false }) columnLocked?: boolean;
+  @ApiProperty({ type: Boolean, required: false }) passFail?: boolean;
+  @ApiProperty({ type: String, required: false, nullable: true }) opensAt?:
+    | string
+    | null;
+  @ApiProperty({ type: String, required: false, nullable: true }) closesAt?:
+    | string
+    | null;
+  @ApiProperty({ type: Number, required: false }) deadlineVersion?: number;
   @ApiProperty({ type: String, nullable: true }) value!: string | null;
   @ApiProperty({
     type: String,
@@ -108,6 +117,12 @@ export class BatchUpdateResultDto {
   @ApiProperty({ type: [UpdatedCellDto] }) items!: UpdatedCellDto[];
   @ApiProperty({ type: Number }) bookId!: number;
   @ApiProperty({ type: Number }) version!: number;
+}
+
+export class GradeDeadlineInput {
+  @ApiProperty({ type: String, format: "date-time" }) opensAt!: string;
+  @ApiProperty({ type: String, format: "date-time" }) closesAt!: string;
+  @ApiProperty({ type: Number, minimum: 0 }) expectedVersion!: number;
 }
 
 export class LockInput {
@@ -191,6 +206,36 @@ export class GradebooksController {
     return this.service.batchUpdate(req.actor, id, idemKey, body);
   }
 
+  @Put(":id/components/:componentId/deadline")
+  @HttpCode(204)
+  @ApiBody({ type: GradeDeadlineInput })
+  @ApiParam({ name: "id", type: Number })
+  @ApiParam({ name: "componentId", type: Number })
+  setDeadline(
+    @Req() req: Request & { actor: Actor },
+    @Param("id", ParseIntPipe) id: number,
+    @Param("componentId", ParseIntPipe) componentId: number,
+    @Body() input: unknown,
+  ) {
+    return this.service.setDeadline(req.actor, id, componentId, input);
+  }
+
+  @Post(":id/components/:componentId/lock")
+  @HttpCode(200)
+  @ApiBody({ type: LockInput })
+  @ApiOkResponse({ type: GradebookDto })
+  @ApiParam({ name: "id", type: Number })
+  @ApiParam({ name: "componentId", type: Number })
+  @ApiHeader({ name: "x-idempotency-key", required: true })
+  lockColumn(
+    @Req() req: Request & { actor: Actor },
+    @Param("id", ParseIntPipe) id: number,
+    @Param("componentId", ParseIntPipe) componentId: number,
+    @Headers("x-idempotency-key") key: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.lockColumn(req.actor, id, componentId, key, body);
+  }
   @Post(":id/lock")
   @HttpCode(200)
   @ApiBody({ type: LockInput })

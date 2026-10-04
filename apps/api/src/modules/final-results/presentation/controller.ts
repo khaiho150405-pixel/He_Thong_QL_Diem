@@ -126,6 +126,7 @@ export class StudentApprovedComponentDto {
 }
 
 export class StudentSubjectResultDto {
+  @ApiProperty({ type: Boolean, required: false }) passFail?: boolean;
   @ApiProperty({ type: Number }) gradebookId!: number;
   @ApiProperty({ type: Number }) subjectId!: number;
   @ApiProperty({ type: String }) subjectName!: string;

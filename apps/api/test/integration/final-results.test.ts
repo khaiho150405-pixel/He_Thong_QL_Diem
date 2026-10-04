@@ -1,3 +1,4 @@
+import { closedFixture } from "./legacy-closed-fixture.js";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { test } from "node:test";
@@ -117,6 +118,10 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
       "INSERT INTO phan_cong_giang_day(ma_giao_vien,ma_lop,ma_mon,ma_hoc_ky,ngay_phan_cong) VALUES($1,$2,$3,$4,CURRENT_DATE)",
       [teacher.id, cls, subject, term],
     );
+    await owner.query(
+      "UPDATE thanh_phan_diem SET loai_he_so='GK' WHERE ma_mon=$1 AND ten_thanh_phan='CK'",
+      [subject],
+    );
     const book = await gradebooks.create(teacher, {
       classId: cls,
       subjectId: subject,
@@ -148,9 +153,17 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
       "final-grades",
       { expectedVersion: 0, changes },
     );
-    const locked = await gradebooks.lock(teacher, book.id, "final-lock", {
-      expectedVersion: updated.version,
-    });
+    let locked = { ...book, version: updated.version };
+    for (const componentId of new Set(cells.map((c) => c.componentId)))
+      locked = await closedFixture(
+        owner,
+        gradebooks,
+        teacher,
+        book.id,
+        componentId,
+        "final-lock-" + componentId,
+        { expectedVersion: locked.version },
+      );
     assert.equal(locked.status, "DA_CHOT");
 
     const first = await finalResults.calculate(
@@ -168,8 +181,8 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
         .map((item) => [item.finalScore, item.classification])
         .sort((a, b) => a[0]!.localeCompare(b[0]!)),
       [
-        ["4.0", "YEU"],
-        ["8.7", "GIOI"],
+        ["4.0", "CHUA_CONG_BO"],
+        ["8.7", "CHUA_CONG_BO"],
       ],
     );
     assert.deepEqual(
@@ -214,8 +227,8 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
         average: "6.4",
         highest: "8.7",
         lowest: "4.0",
-        passed: 1,
-        failed: 1,
+        passed: 0,
+        failed: 0,
       },
     );
     const exported = await reports.export(teacher, book.id);
@@ -303,12 +316,15 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
     const hiddenCell = cells.find(
       (cell) => cell.studentId === linkedStudentId,
     )!.id;
-    await owner.query(
-      "UPDATE diem_thanh_phan SET trang_thai='CHO_DOI_CHIEU' WHERE ma_diem=$1",
-      [hiddenCell],
+    await assert.rejects(
+      owner.query(
+        "UPDATE diem_thanh_phan SET trang_thai='CHO_DOI_CHIEU' WHERE ma_diem=$1",
+        [hiddenCell],
+      ),
+      { code: "23514" },
     );
     const filtered = await finalResults.myResults(studentActor, term);
-    assert.equal(filtered[0]!.components.length, 1);
+    assert.equal(filtered[0]!.components.length, 2);
   } finally {
     await app.close();
     await runtime.end();

@@ -46,6 +46,7 @@ doc/FinalResultListDto.md
 doc/FinalResultsApi.md
 doc/GradeCellDto.md
 doc/GradeChangeInput.md
+doc/GradeDeadlineInput.md
 doc/GradeHistoryDto.md
 doc/GradeHistoryEntryDto.md
 doc/GradebookDto.md
@@ -72,6 +73,10 @@ doc/ReviewApi.md
 doc/ReviewApprovalInput.md
 doc/ReviewApprovalResultDto.md
 doc/ReviewDecisionInput.md
+doc/SemesterWeightsApi.md
+doc/SemesterWeightsDto.md
+doc/SemesterWeightsInput.md
+doc/SemesterWeightsPage.md
 doc/SemestersApi.md
 doc/SemestersDto.md
 doc/SemestersInput.md
@@ -120,6 +125,7 @@ lib/src/api/identity_api.dart
 lib/src/api/recognition_api.dart
 lib/src/api/reports_api.dart
 lib/src/api/review_api.dart
+lib/src/api/semester_weights_api.dart
 lib/src/api/semesters_api.dart
 lib/src/api/student_results_api.dart
 lib/src/api/students_api.dart
@@ -172,6 +178,7 @@ lib/src/model/final_result_dto.dart
 lib/src/model/final_result_list_dto.dart
 lib/src/model/grade_cell_dto.dart
 lib/src/model/grade_change_input.dart
+lib/src/model/grade_deadline_input.dart
 lib/src/model/grade_history_dto.dart
 lib/src/model/grade_history_entry_dto.dart
 lib/src/model/gradebook_dto.dart
@@ -192,6 +199,9 @@ lib/src/model/recognition_ticket_dto.dart
 lib/src/model/review_approval_input.dart
 lib/src/model/review_approval_result_dto.dart
 lib/src/model/review_decision_input.dart
+lib/src/model/semester_weights_dto.dart
+lib/src/model/semester_weights_input.dart
+lib/src/model/semester_weights_page.dart
 lib/src/model/semesters_dto.dart
 lib/src/model/semesters_input.dart
 lib/src/model/semesters_page.dart

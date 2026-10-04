@@ -18,6 +18,8 @@ part 'semesters_dto.g.dart';
 class SemestersDto {
   /// Returns a new [SemestersDto] instance.
   SemestersDto({
+    this.daCongBo,
+
     required this.maNamHoc,
 
     required this.ten,
@@ -32,6 +34,9 @@ class SemestersDto {
 
     required this.maHocKy,
   });
+
+  @JsonKey(name: r'da_cong_bo', required: false, includeIfNull: false)
+  final bool? daCongBo;
 
   @JsonKey(name: r'ma_nam_hoc', required: true, includeIfNull: false)
   final num maNamHoc;
@@ -58,6 +63,7 @@ class SemestersDto {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SemestersDto &&
+          other.daCongBo == daCongBo &&
           other.maNamHoc == maNamHoc &&
           other.ten == ten &&
           other.thuTu == thuTu &&
@@ -68,6 +74,7 @@ class SemestersDto {
 
   @override
   int get hashCode =>
+      daCongBo.hashCode +
       maNamHoc.hashCode +
       ten.hashCode +
       thuTu.hashCode +

@@ -7,6 +7,8 @@ part of 'subjects_input.dart';
 // **************************************************************************
 
 abstract class _$SubjectsInputCWProxy {
+  SubjectsInput danhGiaDat(bool? danhGiaDat);
+
   SubjectsInput tenMon(String tenMon);
 
   SubjectsInput soTietTuan(num soTietTuan);
@@ -17,7 +19,7 @@ abstract class _$SubjectsInputCWProxy {
   /// ```dart
   /// SubjectsInput(...).copyWith(id: 12, name: "My name")
   /// ````
-  SubjectsInput call({String tenMon, num soTietTuan});
+  SubjectsInput call({bool? danhGiaDat, String tenMon, num soTietTuan});
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfSubjectsInput.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfSubjectsInput.copyWith.fieldName(...)`
@@ -25,6 +27,9 @@ class _$SubjectsInputCWProxyImpl implements _$SubjectsInputCWProxy {
   const _$SubjectsInputCWProxyImpl(this._value);
 
   final SubjectsInput _value;
+
+  @override
+  SubjectsInput danhGiaDat(bool? danhGiaDat) => this(danhGiaDat: danhGiaDat);
 
   @override
   SubjectsInput tenMon(String tenMon) => this(tenMon: tenMon);
@@ -40,10 +45,15 @@ class _$SubjectsInputCWProxyImpl implements _$SubjectsInputCWProxy {
   /// SubjectsInput(...).copyWith(id: 12, name: "My name")
   /// ````
   SubjectsInput call({
+    Object? danhGiaDat = const $CopyWithPlaceholder(),
     Object? tenMon = const $CopyWithPlaceholder(),
     Object? soTietTuan = const $CopyWithPlaceholder(),
   }) {
     return SubjectsInput(
+      danhGiaDat: danhGiaDat == const $CopyWithPlaceholder()
+          ? _value.danhGiaDat
+          // ignore: cast_nullable_to_non_nullable
+          : danhGiaDat as bool?,
       tenMon: tenMon == const $CopyWithPlaceholder()
           ? _value.tenMon
           // ignore: cast_nullable_to_non_nullable
@@ -73,16 +83,22 @@ SubjectsInput _$SubjectsInputFromJson(Map<String, dynamic> json) =>
       ($checkedConvert) {
         $checkKeys(json, requiredKeys: const ['ten_mon', 'so_tiet_tuan']);
         final val = SubjectsInput(
+          danhGiaDat: $checkedConvert('danh_gia_dat', (v) => v as bool?),
           tenMon: $checkedConvert('ten_mon', (v) => v as String),
           soTietTuan: $checkedConvert('so_tiet_tuan', (v) => v as num),
         );
         return val;
       },
-      fieldKeyMap: const {'tenMon': 'ten_mon', 'soTietTuan': 'so_tiet_tuan'},
+      fieldKeyMap: const {
+        'danhGiaDat': 'danh_gia_dat',
+        'tenMon': 'ten_mon',
+        'soTietTuan': 'so_tiet_tuan',
+      },
     );
 
 Map<String, dynamic> _$SubjectsInputToJson(SubjectsInput instance) =>
     <String, dynamic>{
+      'danh_gia_dat': ?instance.danhGiaDat,
       'ten_mon': instance.tenMon,
       'so_tiet_tuan': instance.soTietTuan,
     };

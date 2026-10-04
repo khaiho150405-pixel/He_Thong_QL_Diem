@@ -7,6 +7,8 @@ part of 'student_subject_result_dto.dart';
 // **************************************************************************
 
 abstract class _$StudentSubjectResultDtoCWProxy {
+  StudentSubjectResultDto passFail(bool? passFail);
+
   StudentSubjectResultDto gradebookId(num gradebookId);
 
   StudentSubjectResultDto subjectId(num subjectId);
@@ -34,6 +36,7 @@ abstract class _$StudentSubjectResultDtoCWProxy {
   /// StudentSubjectResultDto(...).copyWith(id: 12, name: "My name")
   /// ````
   StudentSubjectResultDto call({
+    bool? passFail,
     num gradebookId,
     num subjectId,
     String subjectName,
@@ -52,6 +55,9 @@ class _$StudentSubjectResultDtoCWProxyImpl
   const _$StudentSubjectResultDtoCWProxyImpl(this._value);
 
   final StudentSubjectResultDto _value;
+
+  @override
+  StudentSubjectResultDto passFail(bool? passFail) => this(passFail: passFail);
 
   @override
   StudentSubjectResultDto gradebookId(num gradebookId) =>
@@ -96,6 +102,7 @@ class _$StudentSubjectResultDtoCWProxyImpl
   /// StudentSubjectResultDto(...).copyWith(id: 12, name: "My name")
   /// ````
   StudentSubjectResultDto call({
+    Object? passFail = const $CopyWithPlaceholder(),
     Object? gradebookId = const $CopyWithPlaceholder(),
     Object? subjectId = const $CopyWithPlaceholder(),
     Object? subjectName = const $CopyWithPlaceholder(),
@@ -107,6 +114,10 @@ class _$StudentSubjectResultDtoCWProxyImpl
     Object? calculatedAt = const $CopyWithPlaceholder(),
   }) {
     return StudentSubjectResultDto(
+      passFail: passFail == const $CopyWithPlaceholder()
+          ? _value.passFail
+          // ignore: cast_nullable_to_non_nullable
+          : passFail as bool?,
       gradebookId: gradebookId == const $CopyWithPlaceholder()
           ? _value.gradebookId
           // ignore: cast_nullable_to_non_nullable
@@ -176,6 +187,7 @@ StudentSubjectResultDto _$StudentSubjectResultDtoFromJson(
     ],
   );
   final val = StudentSubjectResultDto(
+    passFail: $checkedConvert('passFail', (v) => v as bool?),
     gradebookId: $checkedConvert('gradebookId', (v) => v as num),
     subjectId: $checkedConvert('subjectId', (v) => v as num),
     subjectName: $checkedConvert('subjectName', (v) => v as String),
@@ -203,6 +215,7 @@ StudentSubjectResultDto _$StudentSubjectResultDtoFromJson(
 Map<String, dynamic> _$StudentSubjectResultDtoToJson(
   StudentSubjectResultDto instance,
 ) => <String, dynamic>{
+  'passFail': ?instance.passFail,
   'gradebookId': instance.gradebookId,
   'subjectId': instance.subjectId,
   'subjectName': instance.subjectName,

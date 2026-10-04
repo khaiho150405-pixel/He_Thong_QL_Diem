@@ -8,9 +8,10 @@ import 'package:api_client_dart/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**loaiHeSo** | **String** |  | [optional]
 **maMon** | **num** |  |
 **tenThanhPhan** | **String** |  |
-**heSo** | **String** |  |
+**heSo** | **String** |  | [optional]
 **batBuoc** | **bool** |  |
 **thuTuHienThi** | **num** |  |
 **choPhepNhap** | **bool** |  | [optional]

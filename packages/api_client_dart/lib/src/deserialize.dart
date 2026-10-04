@@ -37,6 +37,7 @@ import 'package:api_client_dart/src/model/final_result_dto.dart';
 import 'package:api_client_dart/src/model/final_result_list_dto.dart';
 import 'package:api_client_dart/src/model/grade_cell_dto.dart';
 import 'package:api_client_dart/src/model/grade_change_input.dart';
+import 'package:api_client_dart/src/model/grade_deadline_input.dart';
 import 'package:api_client_dart/src/model/grade_history_dto.dart';
 import 'package:api_client_dart/src/model/grade_history_entry_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_dto.dart';
@@ -57,6 +58,9 @@ import 'package:api_client_dart/src/model/recognition_ticket_dto.dart';
 import 'package:api_client_dart/src/model/review_approval_input.dart';
 import 'package:api_client_dart/src/model/review_approval_result_dto.dart';
 import 'package:api_client_dart/src/model/review_decision_input.dart';
+import 'package:api_client_dart/src/model/semester_weights_dto.dart';
+import 'package:api_client_dart/src/model/semester_weights_input.dart';
+import 'package:api_client_dart/src/model/semester_weights_page.dart';
 import 'package:api_client_dart/src/model/semesters_dto.dart';
 import 'package:api_client_dart/src/model/semesters_input.dart';
 import 'package:api_client_dart/src/model/semesters_page.dart';
@@ -218,6 +222,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'GradeChangeInput':
       return GradeChangeInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'GradeDeadlineInput':
+      return GradeDeadlineInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'GradeHistoryDto':
       return GradeHistoryDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -272,6 +279,15 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'ReviewDecisionInput':
       return ReviewDecisionInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SemesterWeightsDto':
+      return SemesterWeightsDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SemesterWeightsInput':
+      return SemesterWeightsInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SemesterWeightsPage':
+      return SemesterWeightsPage.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'SemestersDto':
       return SemestersDto.fromJson(value as Map<String, dynamic>) as ReturnType;

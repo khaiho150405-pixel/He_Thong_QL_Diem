@@ -318,9 +318,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Phiên bản 3'), findsOneWidget);
 
-    await tester.tap(find.text('Chốt bảng'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Chốt bảng'));
+    expect(find.textContaining('Chốt cột'), findsNothing);
+    expect(find.text('Lịch nhập điểm của nhà trường'), findsOneWidget);
+    server.locked = true;
+    server.version++;
+    await tester.tap(find.byTooltip('Tải lại').first);
     await tester.pumpAndSettle();
     expect(server.locked, true);
     expect(find.text('Đã chốt'), findsWidgets);

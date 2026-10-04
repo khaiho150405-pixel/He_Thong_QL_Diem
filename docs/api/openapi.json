@@ -1903,6 +1903,195 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks/{id}/components/{componentId}/deadline": {
+      "put": {
+        "operationId": "gradebooksSetDeadline",
+        "parameters": [
+          {
+            "name": "componentId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GradeDeadlineInput" }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "" },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/components/{componentId}/lock": {
+      "post": {
+        "operationId": "gradebooksLockColumn",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "componentId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LockInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/gradebooks/{id}/lock": {
       "post": {
         "operationId": "gradebooksLock",
@@ -4101,6 +4290,334 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/catalog/semester-weights": {
+      "get": {
+        "operationId": "semesterWeightsList",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SemesterWeightsPage" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semester-weights"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      },
+      "post": {
+        "operationId": "semesterWeightsCreate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SemesterWeightsInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SemesterWeightsDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semester-weights"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/semester-weights/{id}": {
+      "put": {
+        "operationId": "semesterWeightsUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SemesterWeightsInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SemesterWeightsDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semester-weights"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      },
+      "delete": {
+        "operationId": "semesterWeightsRemove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "" },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semester-weights"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/subjects": {
       "get": {
         "operationId": "subjectsList",
@@ -5929,6 +6446,7 @@
       "SemestersDto": {
         "type": "object",
         "properties": {
+          "da_cong_bo": { "type": "boolean" },
           "ma_nam_hoc": { "type": "number" },
           "ten": { "type": "string" },
           "thu_tu": { "type": "number" },
@@ -5967,6 +6485,7 @@
       "SemestersInput": {
         "type": "object",
         "properties": {
+          "da_cong_bo": { "type": "boolean" },
           "ma_nam_hoc": { "type": "number" },
           "ten": { "type": "string" },
           "thu_tu": { "type": "number" },
@@ -6210,6 +6729,7 @@
       "StudentSubjectResultDto": {
         "type": "object",
         "properties": {
+          "passFail": { "type": "boolean" },
           "gradebookId": { "type": "number" },
           "subjectId": { "type": "number" },
           "subjectName": { "type": "string" },
@@ -6333,6 +6853,11 @@
           "required": { "type": "boolean" },
           "displayOrder": { "type": "number" },
           "openForInput": { "type": "boolean" },
+          "columnLocked": { "type": "boolean" },
+          "passFail": { "type": "boolean" },
+          "opensAt": { "type": "string", "nullable": true },
+          "closesAt": { "type": "string", "nullable": true },
+          "deadlineVersion": { "type": "number" },
           "value": { "type": "string", "nullable": true },
           "status": {
             "type": "string",
@@ -6418,6 +6943,15 @@
           "version": { "type": "number" }
         },
         "required": ["items", "bookId", "version"]
+      },
+      "GradeDeadlineInput": {
+        "type": "object",
+        "properties": {
+          "opensAt": { "type": "string", "format": "date-time" },
+          "closesAt": { "type": "string", "format": "date-time" },
+          "expectedVersion": { "type": "number", "minimum": 0 }
+        },
+        "required": ["opensAt", "closesAt", "expectedVersion"]
       },
       "LockInput": {
         "type": "object",
@@ -7021,9 +7555,41 @@
         },
         "required": ["imported", "items"]
       },
+      "SemesterWeightsDto": {
+        "type": "object",
+        "properties": {
+          "loai_he_so": { "type": "string", "enum": ["TX", "GK", "CK"] },
+          "ma_hoc_ky": { "type": "number" },
+          "he_so": { "type": "string" },
+          "label": { "type": "string" },
+          "ma_he_so": { "type": "number" }
+        },
+        "required": ["loai_he_so", "ma_hoc_ky", "he_so", "label", "ma_he_so"]
+      },
+      "SemesterWeightsPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SemesterWeightsDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "SemesterWeightsInput": {
+        "type": "object",
+        "properties": {
+          "loai_he_so": { "type": "string", "enum": ["TX", "GK", "CK"] },
+          "ma_hoc_ky": { "type": "number" },
+          "he_so": { "type": "string" }
+        },
+        "required": ["loai_he_so", "ma_hoc_ky", "he_so"]
+      },
       "SubjectsDto": {
         "type": "object",
         "properties": {
+          "danh_gia_dat": { "type": "boolean" },
           "ten_mon": { "type": "string" },
           "so_tiet_tuan": { "type": "number" },
           "label": { "type": "string" },
@@ -7045,6 +7611,7 @@
       "SubjectsInput": {
         "type": "object",
         "properties": {
+          "danh_gia_dat": { "type": "boolean" },
           "ten_mon": { "type": "string" },
           "so_tiet_tuan": { "type": "number" }
         },
@@ -7053,9 +7620,10 @@
       "ComponentsDto": {
         "type": "object",
         "properties": {
+          "loai_he_so": { "type": "string" },
           "ma_mon": { "type": "number" },
           "ten_thanh_phan": { "type": "string" },
-          "he_so": { "type": "string" },
+          "he_so": { "type": "string", "deprecated": true },
           "bat_buoc": { "type": "boolean" },
           "thu_tu_hien_thi": { "type": "number" },
           "cho_phep_nhap": { "type": "boolean" },
@@ -7065,7 +7633,6 @@
         "required": [
           "ma_mon",
           "ten_thanh_phan",
-          "he_so",
           "bat_buoc",
           "thu_tu_hien_thi",
           "label",
@@ -7086,20 +7653,15 @@
       "ComponentsInput": {
         "type": "object",
         "properties": {
+          "loai_he_so": { "type": "string" },
           "ma_mon": { "type": "number" },
           "ten_thanh_phan": { "type": "string" },
-          "he_so": { "type": "string" },
+          "he_so": { "type": "string", "deprecated": true },
           "bat_buoc": { "type": "boolean" },
           "thu_tu_hien_thi": { "type": "number" },
           "cho_phep_nhap": { "type": "boolean" }
         },
-        "required": [
-          "ma_mon",
-          "ten_thanh_phan",
-          "he_so",
-          "bat_buoc",
-          "thu_tu_hien_thi"
-        ]
+        "required": ["ma_mon", "ten_thanh_phan", "bat_buoc", "thu_tu_hien_thi"]
       },
       "TeachersDto": {
         "type": "object",

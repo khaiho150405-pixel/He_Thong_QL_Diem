@@ -9,9 +9,10 @@ export class ComponentsService extends CatalogService {
       table: "thanh_phan_diem",
       id: "ma_thanh_phan",
       fields: {
+        loai_he_so: { kind: "text", optional: true },
         ma_mon: { kind: "int" },
         ten_thanh_phan: { kind: "text", max: 50 },
-        he_so: { kind: "decimal" },
+        he_so: { kind: "decimal", optional: true },
         bat_buoc: { kind: "boolean" },
         thu_tu_hien_thi: { kind: "int", max: 100 },
         cho_phep_nhap: { kind: "boolean", optional: true },

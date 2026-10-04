@@ -18,11 +18,13 @@ part 'components_input.g.dart';
 class ComponentsInput {
   /// Returns a new [ComponentsInput] instance.
   ComponentsInput({
+    this.loaiHeSo,
+
     required this.maMon,
 
     required this.tenThanhPhan,
 
-    required this.heSo,
+    this.heSo,
 
     required this.batBuoc,
 
@@ -31,14 +33,18 @@ class ComponentsInput {
     this.choPhepNhap,
   });
 
+  @JsonKey(name: r'loai_he_so', required: false, includeIfNull: false)
+  final String? loaiHeSo;
+
   @JsonKey(name: r'ma_mon', required: true, includeIfNull: false)
   final num maMon;
 
   @JsonKey(name: r'ten_thanh_phan', required: true, includeIfNull: false)
   final String tenThanhPhan;
 
-  @JsonKey(name: r'he_so', required: true, includeIfNull: false)
-  final String heSo;
+  @Deprecated('heSo has been deprecated')
+  @JsonKey(name: r'he_so', required: false, includeIfNull: false)
+  final String? heSo;
 
   @JsonKey(name: r'bat_buoc', required: true, includeIfNull: false)
   final bool batBuoc;
@@ -53,6 +59,7 @@ class ComponentsInput {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ComponentsInput &&
+          other.loaiHeSo == loaiHeSo &&
           other.maMon == maMon &&
           other.tenThanhPhan == tenThanhPhan &&
           other.heSo == heSo &&
@@ -62,6 +69,7 @@ class ComponentsInput {
 
   @override
   int get hashCode =>
+      loaiHeSo.hashCode +
       maMon.hashCode +
       tenThanhPhan.hashCode +
       heSo.hashCode +

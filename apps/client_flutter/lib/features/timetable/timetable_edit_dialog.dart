@@ -10,11 +10,16 @@ class TimetableEditDialog extends StatefulWidget {
     required this.assignments,
     required this.repository,
     this.item,
+    this.initialDay,
+    this.initialPeriod,
+    this.moving = false,
   });
 
   final List<Json> assignments;
   final TimetableRepository repository;
   final TimetableItem? item;
+  final int? initialDay, initialPeriod;
+  final bool moving;
 
   @override
   State<TimetableEditDialog> createState() => _TimetableEditDialogState();
@@ -36,7 +41,9 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
     super.initState();
     final item = widget.item;
     final matches = item == null
-        ? <Json>[]
+        ? (widget.assignments.length == 1
+              ? [widget.assignments.single]
+              : <Json>[])
         : widget.assignments
               .where(
                 (row) =>
@@ -49,8 +56,8 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
     _assignmentId = matches.isEmpty
         ? null
         : matches.first['ma_phan_cong'] as num?;
-    _day = item?.thu ?? 2;
-    _period = item?.tiet ?? 1;
+    _day = item?.thu ?? widget.initialDay ?? 2;
+    _period = item?.tiet ?? widget.initialPeriod ?? 1;
     _afternoon = _period > 5;
     _room = TextEditingController(text: item?.phongHoc ?? '');
     _note = TextEditingController(text: item?.ghiChu ?? '');
@@ -118,7 +125,13 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       icon: const Icon(Icons.edit_calendar_outlined),
-      title: Text(widget.item == null ? 'Xếp tiết học' : 'Cập nhật tiết học'),
+      title: Text(
+        widget.moving
+            ? 'Chuyển ngày / tiết học'
+            : widget.item == null
+            ? 'Xếp tiết học'
+            : 'Cập nhật tiết học',
+      ),
       content: SizedBox(
         width: 520,
         child: Form(
@@ -152,6 +165,7 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
                 DropdownButtonFormField<num>(
                   initialValue: _assignmentId,
                   isExpanded: true,
+                  itemHeight: null,
                   decoration: const InputDecoration(
                     labelText: 'Lớp · môn · giáo viên · học kỳ',
                     helperText: 'Chỉ hiển thị các phân công giảng dạy hợp lệ',
@@ -160,14 +174,11 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
                       .map(
                         (row) => DropdownMenuItem<num>(
                           value: row['ma_phan_cong'] as num?,
-                          child: Text(
-                            row['label']?.toString() ?? 'Phân công',
-                            maxLines: 2,
-                          ),
+                          child: Text(row['label']?.toString() ?? 'Phân công'),
                         ),
                       )
                       .toList(),
-                  onChanged: _saving
+                  onChanged: _saving || widget.moving
                       ? null
                       : (value) => setState(() => _assignmentId = value),
                   validator: (value) => value == null ? 'Chọn phân công' : null,
@@ -178,6 +189,8 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
                     Expanded(
                       child: DropdownButtonFormField<int>(
                         initialValue: _day,
+                        isExpanded: true,
+                        itemHeight: null,
                         decoration: const InputDecoration(labelText: 'Thứ'),
                         items: const [
                           DropdownMenuItem(value: 2, child: Text('Thứ Hai')),
@@ -207,30 +220,35 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
                 const SizedBox(height: 6),
                 SizedBox(
                   width: double.infinity,
-                  child: SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(
-                        value: false,
-                        icon: Icon(Icons.wb_sunny_outlined),
-                        label: Text('Buổi sáng'),
-                      ),
-                      ButtonSegment(
-                        value: true,
-                        icon: Icon(Icons.wb_twilight_outlined),
-                        label: Text('Buổi chiều'),
-                      ),
-                    ],
-                    selected: {_afternoon},
-                    onSelectionChanged: _saving
-                        ? null
-                        : (value) {
-                            setState(() {
-                              _afternoon = value.first;
-                              _period = _afternoon
-                                  ? (_period > 5 ? _period : 6)
-                                  : (_period <= 5 ? _period : 1);
-                            });
-                          },
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => SegmentedButton<bool>(
+                      direction: constraints.maxWidth < 340
+                          ? Axis.vertical
+                          : Axis.horizontal,
+                      segments: const [
+                        ButtonSegment(
+                          value: false,
+                          icon: Icon(Icons.wb_sunny_outlined),
+                          label: Text('Buổi sáng'),
+                        ),
+                        ButtonSegment(
+                          value: true,
+                          icon: Icon(Icons.wb_twilight_outlined),
+                          label: Text('Buổi chiều'),
+                        ),
+                      ],
+                      selected: {_afternoon},
+                      onSelectionChanged: _saving
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _afternoon = value.first;
+                                _period = _afternoon
+                                    ? (_period > 5 ? _period : 6)
+                                    : (_period <= 5 ? _period : 1);
+                              });
+                            },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -238,6 +256,7 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
                   key: ValueKey(_afternoon),
                   initialValue: _period,
                   isExpanded: true,
+                  itemHeight: null,
                   decoration: const InputDecoration(
                     labelText: 'Tiết học và khung giờ',
                     prefixIcon: Icon(Icons.schedule_outlined),

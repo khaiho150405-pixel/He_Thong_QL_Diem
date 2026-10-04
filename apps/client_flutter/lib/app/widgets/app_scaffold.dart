@@ -38,6 +38,7 @@ class AppScaffold extends ConsumerWidget {
         return Icons.people_alt_outlined;
       case 'subjects':
         return Icons.menu_book_outlined;
+      case 'semester-weights':
       case 'components':
         return Icons.percent_outlined;
       case 'teachers':
@@ -181,14 +182,9 @@ class AppScaffold extends ConsumerWidget {
     }
 
     final role = user.role.value;
-    final visibleResources = resources
-        .where(
-          (r) =>
-              role == 'QUAN_TRI_VIEN' ||
-              (role == 'GIAO_VIEN' && r.key != 'accounts') ||
-              (role == 'HOC_SINH' && r.key == 'students'),
-        )
-        .toList();
+    final visibleResources = role == 'QUAN_TRI_VIEN'
+        ? resources
+        : <ResourceSpec>[];
 
     // Reusable Nav Item
     Widget buildNavTile({
@@ -763,7 +759,7 @@ class AppScaffold extends ConsumerWidget {
                   buildNavTile(
                     icon: Icons.table_chart_outlined,
                     title: role == 'GIAO_VIEN'
-                        ? 'Bảng điểm của tôi'
+                        ? 'Bảng điểm'
                         : 'Quản lý bảng điểm',
                     route: '/gradebooks',
                     countBadge: role == 'QUAN_TRI_VIEN' ? '08' : null,
@@ -784,18 +780,19 @@ class AppScaffold extends ConsumerWidget {
                   ),
 
                 // Catalog Section
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
-                  child: Text(
-                    role == 'HOC_SINH' ? 'TRA CỨU' : 'DANH MỤC HỌC VỤ',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                      color: Color(0xFF9B9588),
+                if (role == 'QUAN_TRI_VIEN')
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+                    child: Text(
+                      role == 'HOC_SINH' ? 'TRA CỨU' : 'DANH MỤC HỌC VỤ',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                        color: Color(0xFF9B9588),
+                      ),
                     ),
                   ),
-                ),
 
                 for (final r in visibleResources)
                   buildNavTile(
@@ -849,15 +846,16 @@ class AppScaffold extends ConsumerWidget {
                       );
                     },
                   ),
-                buildNavTile(
-                  icon: Icons.lock_reset_outlined,
-                  title: 'Đổi mật khẩu',
-                  route: '#',
-                  onTap: () {
-                    if (!isDesktop) Navigator.of(context).maybePop();
-                    _changePassword(context, ref);
-                  },
-                ),
+                if (role != 'HOC_SINH')
+                  buildNavTile(
+                    icon: Icons.lock_reset_outlined,
+                    title: 'Đổi mật khẩu',
+                    route: '#',
+                    onTap: () {
+                      if (!isDesktop) Navigator.of(context).maybePop();
+                      _changePassword(context, ref);
+                    },
+                  ),
                 buildNavTile(
                   icon: Icons.logout_rounded,
                   title: 'Đăng xuất',

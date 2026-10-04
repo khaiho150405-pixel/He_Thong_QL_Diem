@@ -506,7 +506,7 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       },
     );
     const competingLock = fetch(
-      `${baseUrl}/api/v1/gradebooks/${book.id}/lock`,
+      `${baseUrl}/api/v1/gradebooks/${book.id}/components/${component}/lock`,
       {
         method: "POST",
         headers: {
@@ -522,7 +522,7 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       competingLock,
     ]);
     assert.equal(approvalRaceResult.status, 200);
-    assert.equal(lockRaceResult.status, 409);
+    assert.equal(lockRaceResult.status, 403);
     const afterLockRace = await owner.query(
       `SELECT
         (SELECT trang_thai::text FROM bang_diem WHERE ma_bang_diem=$1) book_status,

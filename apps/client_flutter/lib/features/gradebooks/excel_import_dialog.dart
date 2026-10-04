@@ -281,7 +281,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
         if (rawVal.isEmpty) continue;
 
         // Check if Admin locked this column
-        if (comp.openForInput == false) {
+        if (comp.openForInput == false || comp.columnLocked == true) {
           if (!_skippedLockedColumns.contains(comp.componentName)) {
             _skippedLockedColumns.add(comp.componentName);
           }
@@ -289,7 +289,29 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
         }
 
         // Validate score
-        final parsedNum = double.tryParse(rawVal.replaceAll(',', '.'));
+        final text = rawVal.toLowerCase();
+        final double? parsedNum;
+        if (comp.passFail == true) {
+          if (['đạt', 'dat', 'đ', 'd'].contains(text)) {
+            parsedNum = 10.0;
+          } else if ([
+            'không đạt',
+            'khong dat',
+            'kđ',
+            'kd',
+            'chưa đạt',
+            'chua dat',
+          ].contains(text)) {
+            parsedNum = 0.0;
+          } else {
+            throw Exception(
+              'Cột ${comp.componentName}: chỉ nhập Đạt hoặc Không đạt.',
+            );
+          }
+        } else {
+          parsedNum = double.tryParse(rawVal.replaceAll(',', '.'));
+        }
+
         if (parsedNum != null && parsedNum >= 0.0 && parsedNum <= 10.0) {
           final normalizedScore = parsedNum.toStringAsFixed(1);
           final targetCell = matchedStudentCells.firstWhere(

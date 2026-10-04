@@ -18,6 +18,11 @@ Name | Type | Description | Notes
 **required_** | **bool** |  |
 **displayOrder** | **num** |  |
 **openForInput** | **bool** |  | [optional]
+**columnLocked** | **bool** |  | [optional]
+**passFail** | **bool** |  | [optional]
+**opensAt** | **String** |  | [optional]
+**closesAt** | **String** |  | [optional]
+**deadlineVersion** | **num** |  | [optional]
 **value** | **String** |  |
 **status** | **String** |  |
 **source_** | **String** |  |

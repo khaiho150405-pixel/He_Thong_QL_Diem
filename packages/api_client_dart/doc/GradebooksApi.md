@@ -16,6 +16,8 @@ Method | HTTP request | Description
 [**gradebooksHistoryAll**](GradebooksApi.md#gradebookshistoryall) | **GET** /api/v1/gradebooks/{id}/history |
 [**gradebooksList**](GradebooksApi.md#gradebookslist) | **GET** /api/v1/gradebooks |
 [**gradebooksLock**](GradebooksApi.md#gradebookslock) | **POST** /api/v1/gradebooks/{id}/lock |
+[**gradebooksLockColumn**](GradebooksApi.md#gradebookslockcolumn) | **POST** /api/v1/gradebooks/{id}/components/{componentId}/lock |
+[**gradebooksSetDeadline**](GradebooksApi.md#gradebookssetdeadline) | **PUT** /api/v1/gradebooks/{id}/components/{componentId}/deadline |
 [**gradebooksSyncRoster**](GradebooksApi.md#gradebookssyncroster) | **POST** /api/v1/gradebooks/{id}/sync-roster |
 
 
@@ -350,6 +352,113 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**GradebookDto**](GradebookDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **gradebooksLockColumn**
+> GradebookDto gradebooksLockColumn(xIdempotencyKey, componentId, id, lockInput)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getGradebooksApi();
+final String xIdempotencyKey = xIdempotencyKey_example; // String |
+final num componentId = 8.14; // num |
+final num id = 8.14; // num |
+final LockInput lockInput = ; // LockInput |
+
+try {
+    final response = api.gradebooksLockColumn(xIdempotencyKey, componentId, id, lockInput);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling GradebooksApi->gradebooksLockColumn: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **xIdempotencyKey** | **String**|  |
+ **componentId** | **num**|  |
+ **id** | **num**|  |
+ **lockInput** | [**LockInput**](LockInput.md)|  |
+
+### Return type
+
+[**GradebookDto**](GradebookDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **gradebooksSetDeadline**
+> gradebooksSetDeadline(componentId, id, gradeDeadlineInput)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getGradebooksApi();
+final num componentId = 8.14; // num |
+final num id = 8.14; // num |
+final GradeDeadlineInput gradeDeadlineInput = ; // GradeDeadlineInput |
+
+try {
+    api.gradebooksSetDeadline(componentId, id, gradeDeadlineInput);
+} catch on DioException (e) {
+    print('Exception when calling GradebooksApi->gradebooksSetDeadline: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **componentId** | **num**|  |
+ **id** | **num**|  |
+ **gradeDeadlineInput** | [**GradeDeadlineInput**](GradeDeadlineInput.md)|  |
+
+### Return type
+
+void (empty response body)
 
 ### Authorization
 

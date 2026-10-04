@@ -1,3 +1,4 @@
+import '../../app/widgets/app_edge_scrollbar.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,7 +79,26 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   }
 
   void reload() {
-    page = ref.read(gradebooksRepositoryProvider).list(cursor: cursors.last);
+    page = teacher
+        ? ref.read(gradebooksRepositoryProvider).list(cursor: cursors.last)
+        : _allBooks();
+  }
+
+  Future<GradebookListDto> _allBooks() async {
+    num? cursor;
+    final items = <GradebookDto>[];
+    final seen = <num>{};
+    do {
+      final result = await ref
+          .read(gradebooksRepositoryProvider)
+          .list(cursor: cursor);
+      items.addAll(result.items);
+      cursor = result.nextCursor;
+      if (cursor != null && !seen.add(cursor)) {
+        throw StateError('Không thể tải tiếp danh sách bảng điểm.');
+      }
+    } while (cursor != null);
+    return GradebookListDto(items: items, nextCursor: null);
   }
 
   Future<void> create() async {
@@ -220,7 +240,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bảng điểm'),
+        title: Text(teacher ? 'Bảng điểm' : 'Bảng điểm toàn trường'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/'),
@@ -240,109 +260,123 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
               label: const Text('Tạo bảng điểm'),
             )
           : null,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1140),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildFilterBar(colorScheme, theme),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: FutureBuilder<GradebookListDto>(
-                    future: page,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState != ConnectionState.done) {
-                        return const ShimmerLoading(
-                          itemCount: 5,
-                          itemHeight: 84,
-                        );
-                      }
-                      if (snapshot.hasError) {
-                        return EmptyState(
-                          icon: Icons.error_outline,
-                          title: 'Lỗi tải danh sách bảng điểm',
-                          message: errorMessage(snapshot.error!),
-                          actionLabel: 'Thử lại',
-                          onAction: () => setState(reload),
-                        );
-                      }
-                      final data = snapshot.data!;
-
-                      if (data.items.isEmpty) {
-                        return EmptyState(
-                          icon: Icons.table_chart_outlined,
-                          title: 'Chưa có bảng điểm',
-                          message: teacher
-                              ? 'Bạn chưa tạo bảng điểm nào cho các lớp phụ trách.'
-                              : 'Hệ thống chưa có bảng điểm nào được tạo.',
-                          actionLabel: teacher ? 'Tạo bảng điểm' : null,
-                          onAction: teacher ? create : null,
-                        );
-                      }
-
-                      final filteredItems = data.items.where((book) {
-                        if (_filterClassId != null &&
-                            book.classId != _filterClassId) {
-                          return false;
+      body: AppEdgeScrollbar(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1140),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildFilterBar(colorScheme, theme),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: FutureBuilder<GradebookListDto>(
+                      future: page,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const ShimmerLoading(
+                            itemCount: 5,
+                            itemHeight: 84,
+                          );
                         }
-                        if (_filterSubjectId != null &&
-                            book.subjectId != _filterSubjectId) {
-                          return false;
+                        if (snapshot.hasError) {
+                          return EmptyState(
+                            icon: Icons.error_outline,
+                            title: 'Lỗi tải danh sách bảng điểm',
+                            message: errorMessage(snapshot.error!),
+                            actionLabel: 'Thử lại',
+                            onAction: () => setState(reload),
+                          );
                         }
-                        if (_filterStatus != null &&
-                            book.status.value != _filterStatus) {
-                          return false;
+                        final data = snapshot.data!;
+
+                        if (data.items.isEmpty) {
+                          return EmptyState(
+                            icon: Icons.table_chart_outlined,
+                            title: 'Chưa có bảng điểm',
+                            message: teacher
+                                ? 'Bạn chưa tạo bảng điểm nào cho các lớp phụ trách.'
+                                : 'Hệ thống chưa có bảng điểm nào được tạo.',
+                            actionLabel: teacher ? 'Tạo bảng điểm' : null,
+                            onAction: teacher ? create : null,
+                          );
                         }
-                        return true;
-                      }).toList();
 
-                      if (filteredItems.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.filter_alt_off_rounded,
-                                size: 48,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Không có bảng điểm phù hợp với bộ lọc.',
-                              ),
-                              const SizedBox(height: 8),
-                              TextButton.icon(
-                                onPressed: () => setState(() {
-                                  _filterClassId = null;
-                                  _filterSubjectId = null;
-                                  _filterStatus = null;
-                                }),
-                                icon: const Icon(Icons.refresh_rounded),
-                                label: const Text('Xóa bộ lọc'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+                        final filteredItems = data.items.where((book) {
+                          if (_filterClassId != null &&
+                              book.classId != _filterClassId) {
+                            return false;
+                          }
+                          if (_filterSubjectId != null &&
+                              book.subjectId != _filterSubjectId) {
+                            return false;
+                          }
+                          if (_filterStatus != null &&
+                              book.status.value != _filterStatus) {
+                            return false;
+                          }
+                          return true;
+                        }).toList();
 
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: LayoutBuilder(
-                              builder: (context, box) {
-                                if (box.maxWidth >= 768) {
-                                  return GridView.builder(
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisExtent: 94,
-                                          crossAxisSpacing: 14,
-                                          mainAxisSpacing: 12,
-                                        ),
+                        if (filteredItems.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.filter_alt_off_rounded,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Không có bảng điểm phù hợp với bộ lọc.',
+                                ),
+                                const SizedBox(height: 8),
+                                TextButton.icon(
+                                  onPressed: () => setState(() {
+                                    _filterClassId = null;
+                                    _filterSubjectId = null;
+                                    _filterStatus = null;
+                                  }),
+                                  icon: const Icon(Icons.refresh_rounded),
+                                  label: const Text('Xóa bộ lọc'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: LayoutBuilder(
+                                builder: (context, box) {
+                                  if (box.maxWidth >= 768) {
+                                    return GridView.builder(
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            mainAxisExtent: 94,
+                                            crossAxisSpacing: 14,
+                                            mainAxisSpacing: 12,
+                                          ),
+                                      itemCount: filteredItems.length,
+                                      itemBuilder: (context, index) =>
+                                          _buildGradebookCard(
+                                            context,
+                                            filteredItems[index],
+                                            colorScheme,
+                                            theme,
+                                          ),
+                                    );
+                                  }
+                                  return ListView.separated(
                                     itemCount: filteredItems.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 10),
                                     itemBuilder: (context, index) =>
                                         _buildGradebookCard(
                                           context,
@@ -351,79 +385,71 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                                           theme,
                                         ),
                                   );
-                                }
-                                return ListView.separated(
-                                  itemCount: filteredItems.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 10),
-                                  itemBuilder: (context, index) =>
-                                      _buildGradebookCard(
-                                        context,
-                                        filteredItems[index],
-                                        colorScheme,
-                                        theme,
-                                      ),
-                                );
-                              },
+                                },
+                              ),
                             ),
-                          ),
 
-                          // Pagination
-                          Padding(
-                            padding: const EdgeInsets.only(top: 14, bottom: 20),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                IconButton(
-                                  tooltip: 'Trang trước',
-                                  onPressed: cursors.length > 1
-                                      ? () => setState(() {
-                                          cursors.removeLast();
-                                          reload();
-                                        })
-                                      : null,
-                                  icon: const Icon(Icons.chevron_left),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 6,
+                            // Pagination
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 14,
+                                bottom: 20,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Trang trước',
+                                    onPressed: cursors.length > 1
+                                        ? () => setState(() {
+                                            cursors.removeLast();
+                                            reload();
+                                          })
+                                        : null,
+                                    icon: const Icon(Icons.chevron_left),
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.surfaceContainerHigh,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: colorScheme.outlineVariant
-                                          .withAlpha(80),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surfaceContainerHigh,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: colorScheme.outlineVariant
+                                            .withAlpha(80),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Trang ${cursors.length}',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: colorScheme.primary,
+                                          ),
                                     ),
                                   ),
-                                  child: Text(
-                                    'Trang ${cursors.length}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: colorScheme.primary,
-                                    ),
+                                  IconButton(
+                                    tooltip: 'Trang sau',
+                                    onPressed: data.nextCursor == null
+                                        ? null
+                                        : () => setState(() {
+                                            cursors.add(data.nextCursor);
+                                            reload();
+                                          }),
+                                    icon: const Icon(Icons.chevron_right),
                                   ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Trang sau',
-                                  onPressed: data.nextCursor == null
-                                      ? null
-                                      : () => setState(() {
-                                          cursors.add(data.nextCursor);
-                                          reload();
-                                        }),
-                                  icon: const Icon(Icons.chevron_right),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
