@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **id** | **String** |  |
 **studentId** | **num** |  |
 **studentName** | **String** |  |
+**stt** | **num** | STT trong lớp theo thứ tự tên; null khi học sinh đã nghỉ |
 **active** | **bool** |  |
 **componentId** | **num** |  |
 **componentName** | **String** |  |

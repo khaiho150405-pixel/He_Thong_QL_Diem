@@ -40,10 +40,13 @@ export async function repairRecognitionMultipart() {
         r'componentId',
         componentId.toString(),
       ));
-      _formData.fields.add(MapEntry(
-        r'declaredRows',
-        declaredRows.toString(),
-      ));
+      // declaredRows is deprecated and optional (ADR-0015): send it only when the caller provides it.
+      if (declaredRows != null) {
+        _formData.fields.add(MapEntry(
+          r'declaredRows',
+          declaredRows.toString(),
+        ));
+      }
       _bodyData = _formData;
     } catch (error, stackTrace) {`;
   await writeWithWindowsRetry(file, content.replace(empty, form));

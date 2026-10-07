@@ -17,6 +17,8 @@ export interface GradeCell {
   id: string;
   studentId: number;
   studentName: string;
+  /** STT trong lớp (common/student-order); null khi học sinh đã nghỉ/chuyển lớp. */
+  stt: number | null;
   active: boolean;
   componentId: number;
   componentName: string;

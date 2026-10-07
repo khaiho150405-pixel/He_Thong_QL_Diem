@@ -1,0 +1,102 @@
+{
+  "modelVersion": "fake-dev-v1",
+  "pageStartStt": 39,
+  "rows": [
+    {
+      "rowIndex": 1,
+      "struck": false,
+      "stt": {
+        "raw": "39",
+        "value": 39,
+        "confidence": "0.97",
+        "isBlank": false
+      },
+      "name": {
+        "raw": "Học sinh 39",
+        "confidence": "0.90",
+        "isBlank": false
+      },
+      "numeric": {
+        "rawOutput": "0.7",
+        "value": "0.7",
+        "confidence": "0.95",
+        "isBlank": false
+      },
+      "written": {
+        "rawOutput": "không phẩy bảy",
+        "value": "0.7",
+        "confidence": "0.93",
+        "isBlank": false
+      },
+      "numericCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "writtenCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "comparison": "KHOP",
+      "reviewLevel": "XANH"
+    },
+    {
+      "rowIndex": 2,
+      "struck": true,
+      "stt": {
+        "raw": "40",
+        "value": 40,
+        "confidence": "0.97",
+        "isBlank": false
+      },
+      "name": {
+        "raw": "Học sinh 40",
+        "confidence": "0.90",
+        "isBlank": false
+      },
+      "numeric": {
+        "rawOutput": null,
+        "value": null,
+        "confidence": null,
+        "isBlank": true
+      },
+      "written": {
+        "rawOutput": null,
+        "value": null,
+        "confidence": null,
+        "isBlank": true
+      },
+      "numericCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "writtenCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "comparison": "KHONG_DOC_DUOC",
+      "reviewLevel": "DO"
+    },
+    {
+      "rowIndex": 3,
+      "struck": false,
+      "stt": {
+        "raw": "41",
+        "value": 41,
+        "confidence": "0.97",
+        "isBlank": false
+      },
+      "name": {
+        "raw": "Học sinh 41",
+        "confidence": "0.90",
+        "isBlank": false
+      },
+      "numeric": {
+        "rawOutput": "2.1",
+        "value": "2.1",
+        "confidence": "0.95",
+        "isBlank": false
+      },
+      "written": {
+        "rawOutput": "hai phẩy một",
+        "value": "2.1",
+        "confidence": "0.93",
+        "isBlank": false
+      },
+      "numericCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "writtenCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "comparison": "KHOP",
+      "reviewLevel": "XANH"
+    }
+  ]
+}

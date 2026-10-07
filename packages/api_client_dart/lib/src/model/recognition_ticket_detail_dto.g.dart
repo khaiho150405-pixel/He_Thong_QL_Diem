@@ -31,6 +31,12 @@ abstract class _$RecognitionTicketDetailDtoCWProxy {
 
   RecognitionTicketDetailDto createdAt(DateTime createdAt);
 
+  RecognitionTicketDetailDto greenRows(num greenRows);
+
+  RecognitionTicketDetailDto yellowRows(num yellowRows);
+
+  RecognitionTicketDetailDto redRows(num redRows);
+
   RecognitionTicketDetailDto sourceImageUrl(String sourceImageUrl);
 
   RecognitionTicketDetailDto imageUrlExpiresInSeconds(
@@ -57,6 +63,9 @@ abstract class _$RecognitionTicketDetailDtoCWProxy {
     String? modelVersion,
     num version,
     DateTime createdAt,
+    num greenRows,
+    num yellowRows,
+    num redRows,
     String sourceImageUrl,
     num imageUrlExpiresInSeconds,
     List<RecognitionEvidenceRowDto> rows,
@@ -115,6 +124,17 @@ class _$RecognitionTicketDetailDtoCWProxyImpl
       this(createdAt: createdAt);
 
   @override
+  RecognitionTicketDetailDto greenRows(num greenRows) =>
+      this(greenRows: greenRows);
+
+  @override
+  RecognitionTicketDetailDto yellowRows(num yellowRows) =>
+      this(yellowRows: yellowRows);
+
+  @override
+  RecognitionTicketDetailDto redRows(num redRows) => this(redRows: redRows);
+
+  @override
   RecognitionTicketDetailDto sourceImageUrl(String sourceImageUrl) =>
       this(sourceImageUrl: sourceImageUrl);
 
@@ -146,6 +166,9 @@ class _$RecognitionTicketDetailDtoCWProxyImpl
     Object? modelVersion = const $CopyWithPlaceholder(),
     Object? version = const $CopyWithPlaceholder(),
     Object? createdAt = const $CopyWithPlaceholder(),
+    Object? greenRows = const $CopyWithPlaceholder(),
+    Object? yellowRows = const $CopyWithPlaceholder(),
+    Object? redRows = const $CopyWithPlaceholder(),
     Object? sourceImageUrl = const $CopyWithPlaceholder(),
     Object? imageUrlExpiresInSeconds = const $CopyWithPlaceholder(),
     Object? rows = const $CopyWithPlaceholder(),
@@ -195,6 +218,18 @@ class _$RecognitionTicketDetailDtoCWProxyImpl
           ? _value.createdAt
           // ignore: cast_nullable_to_non_nullable
           : createdAt as DateTime,
+      greenRows: greenRows == const $CopyWithPlaceholder()
+          ? _value.greenRows
+          // ignore: cast_nullable_to_non_nullable
+          : greenRows as num,
+      yellowRows: yellowRows == const $CopyWithPlaceholder()
+          ? _value.yellowRows
+          // ignore: cast_nullable_to_non_nullable
+          : yellowRows as num,
+      redRows: redRows == const $CopyWithPlaceholder()
+          ? _value.redRows
+          // ignore: cast_nullable_to_non_nullable
+          : redRows as num,
       sourceImageUrl: sourceImageUrl == const $CopyWithPlaceholder()
           ? _value.sourceImageUrl
           // ignore: cast_nullable_to_non_nullable
@@ -240,6 +275,9 @@ RecognitionTicketDetailDto _$RecognitionTicketDetailDtoFromJson(
       'modelVersion',
       'version',
       'createdAt',
+      'greenRows',
+      'yellowRows',
+      'redRows',
       'sourceImageUrl',
       'imageUrlExpiresInSeconds',
       'rows',
@@ -260,6 +298,9 @@ RecognitionTicketDetailDto _$RecognitionTicketDetailDtoFromJson(
     modelVersion: $checkedConvert('modelVersion', (v) => v as String?),
     version: $checkedConvert('version', (v) => v as num),
     createdAt: $checkedConvert('createdAt', (v) => DateTime.parse(v as String)),
+    greenRows: $checkedConvert('greenRows', (v) => v as num),
+    yellowRows: $checkedConvert('yellowRows', (v) => v as num),
+    redRows: $checkedConvert('redRows', (v) => v as num),
     sourceImageUrl: $checkedConvert('sourceImageUrl', (v) => v as String),
     imageUrlExpiresInSeconds: $checkedConvert(
       'imageUrlExpiresInSeconds',
@@ -292,6 +333,9 @@ Map<String, dynamic> _$RecognitionTicketDetailDtoToJson(
   'modelVersion': instance.modelVersion,
   'version': instance.version,
   'createdAt': instance.createdAt.toIso8601String(),
+  'greenRows': instance.greenRows,
+  'yellowRows': instance.yellowRows,
+  'redRows': instance.redRows,
   'sourceImageUrl': instance.sourceImageUrl,
   'imageUrlExpiresInSeconds': instance.imageUrlExpiresInSeconds,
   'rows': instance.rows.map((e) => e.toJson()).toList(),

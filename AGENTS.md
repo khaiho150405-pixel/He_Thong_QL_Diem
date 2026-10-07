@@ -258,7 +258,7 @@ Các enum nền tảng:
 2. Mỗi ô nhận dạng lưu riêng giá trị và độ tin cậy của kênh Điểm số và kênh Điểm chữ; không gộp mất dữ liệu gốc.
 3. Màn hình đối chiếu luôn hiển thị ảnh ô cắt cùng hai kết quả và độ tin cậy.
 4. Xanh: hai kênh khớp và đủ tin cậy. Vàng: lệch, tin cậy thấp hoặc chỉ một kênh đọc được. Đỏ: ô trống, cả hai kênh không đọc được hoặc ca hòa chưa giải quyết; không tự gợi ý một giá trị tùy tiện.
-5. Nếu số dòng/lưới phát hiện khác số dòng khai báo, dừng xử lý và yêu cầu ảnh khác; không tiếp tục đoán.
+5. Số dòng không do giáo viên khai báo. Mọi dòng có điểm phát hiện được phải ghép được với danh sách lớp đã chốt của phiếu; ghép thất bại thì dừng xử lý, yêu cầu ảnh khác, không đoán (ADR-0015).
 6. Duyệt một phiếu là giao dịch nguyên tử gồm: ghi điểm chính thức, thêm lịch sử, đóng dấu người/thời điểm duyệt, đổi trạng thái phiếu. Lỗi ở bất kỳ bước nào phải rollback toàn bộ.
 7. Chỉ điểm `DA_DUYET` mới được tính tổng kết. Không xếp loại trước khi tính tổng kết thành công.
 8. Bảng điểm `DA_CHOT` không được sửa bằng luồng thông thường.
@@ -280,10 +280,10 @@ Thời khóa biểu là phần mở rộng được chủ dự án yêu cầu sa
 
 ### UC11–UC12: tải ảnh và nhận dạng
 
-1. Giáo viên chọn bảng điểm/thành phần và khai báo số dòng.
+1. Giáo viên chọn bảng điểm/thành phần và tải ảnh; không khai báo số dòng. API chốt danh sách lớp (STT → học sinh) vào phiếu (ADR-0015).
 2. API kiểm tra phân công, loại/kích thước tệp, tạo checksum, lưu ảnh và tạo `phieu_nhan_dien`.
 3. API đẩy job idempotent vào queue và trả `202`.
-4. Worker nắn phối cảnh, tách lưới, đếm dòng. Lệch lưới thì đánh dấu `LOI` và dừng.
+4. Worker nắn phối cảnh, tách lưới, đọc STT/họ tên và ghép từng dòng có điểm với danh sách lớp đã chốt. Không ghép được thì đánh dấu `LOI` (`ROW_MATCH_FAILED`) và dừng.
 5. Worker nhận biết ô trống trước khi gọi mô hình.
 6. Với từng dòng, gọi riêng hai kênh, lưu ảnh ô cắt, raw output, giá trị chuẩn hóa và confidence.
 7. Đối chiếu chéo, phân loại Xanh/Vàng/Đỏ, rồi chuyển phiếu sang `CHO_DOI_CHIEU`.

@@ -11,9 +11,19 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
 
   RecognitionEvidenceRowDto order(num order);
 
+  RecognitionEvidenceRowDto stt(num? stt);
+
+  RecognitionEvidenceRowDto sttOnPaper(num? sttOnPaper);
+
   RecognitionEvidenceRowDto studentId(num studentId);
 
   RecognitionEvidenceRowDto studentName(String studentName);
+
+  RecognitionEvidenceRowDto nameRead(String? nameRead);
+
+  RecognitionEvidenceRowDto matchConfidence(String? matchConfidence);
+
+  RecognitionEvidenceRowDto matchNote(String? matchNote);
 
   RecognitionEvidenceRowDto numericRaw(String? numericRaw);
 
@@ -41,6 +51,8 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
 
   RecognitionEvidenceRowDto writtenCropUrl(String? writtenCropUrl);
 
+  RecognitionEvidenceRowDto nameCropUrl(String? nameCropUrl);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `RecognitionEvidenceRowDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -50,8 +62,13 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
   RecognitionEvidenceRowDto call({
     String rowId,
     num order,
+    num? stt,
+    num? sttOnPaper,
     num studentId,
     String studentName,
+    String? nameRead,
+    String? matchConfidence,
+    String? matchNote,
     String? numericRaw,
     String? numericValue,
     String? numericConfidence,
@@ -63,6 +80,7 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
     String? finalValue,
     String? numericCropUrl,
     String? writtenCropUrl,
+    String? nameCropUrl,
   });
 }
 
@@ -80,12 +98,31 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
   RecognitionEvidenceRowDto order(num order) => this(order: order);
 
   @override
+  RecognitionEvidenceRowDto stt(num? stt) => this(stt: stt);
+
+  @override
+  RecognitionEvidenceRowDto sttOnPaper(num? sttOnPaper) =>
+      this(sttOnPaper: sttOnPaper);
+
+  @override
   RecognitionEvidenceRowDto studentId(num studentId) =>
       this(studentId: studentId);
 
   @override
   RecognitionEvidenceRowDto studentName(String studentName) =>
       this(studentName: studentName);
+
+  @override
+  RecognitionEvidenceRowDto nameRead(String? nameRead) =>
+      this(nameRead: nameRead);
+
+  @override
+  RecognitionEvidenceRowDto matchConfidence(String? matchConfidence) =>
+      this(matchConfidence: matchConfidence);
+
+  @override
+  RecognitionEvidenceRowDto matchNote(String? matchNote) =>
+      this(matchNote: matchNote);
 
   @override
   RecognitionEvidenceRowDto numericRaw(String? numericRaw) =>
@@ -134,6 +171,10 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
       this(writtenCropUrl: writtenCropUrl);
 
   @override
+  RecognitionEvidenceRowDto nameCropUrl(String? nameCropUrl) =>
+      this(nameCropUrl: nameCropUrl);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `RecognitionEvidenceRowDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -143,8 +184,13 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
   RecognitionEvidenceRowDto call({
     Object? rowId = const $CopyWithPlaceholder(),
     Object? order = const $CopyWithPlaceholder(),
+    Object? stt = const $CopyWithPlaceholder(),
+    Object? sttOnPaper = const $CopyWithPlaceholder(),
     Object? studentId = const $CopyWithPlaceholder(),
     Object? studentName = const $CopyWithPlaceholder(),
+    Object? nameRead = const $CopyWithPlaceholder(),
+    Object? matchConfidence = const $CopyWithPlaceholder(),
+    Object? matchNote = const $CopyWithPlaceholder(),
     Object? numericRaw = const $CopyWithPlaceholder(),
     Object? numericValue = const $CopyWithPlaceholder(),
     Object? numericConfidence = const $CopyWithPlaceholder(),
@@ -156,6 +202,7 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
     Object? finalValue = const $CopyWithPlaceholder(),
     Object? numericCropUrl = const $CopyWithPlaceholder(),
     Object? writtenCropUrl = const $CopyWithPlaceholder(),
+    Object? nameCropUrl = const $CopyWithPlaceholder(),
   }) {
     return RecognitionEvidenceRowDto(
       rowId: rowId == const $CopyWithPlaceholder()
@@ -166,6 +213,14 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
           ? _value.order
           // ignore: cast_nullable_to_non_nullable
           : order as num,
+      stt: stt == const $CopyWithPlaceholder()
+          ? _value.stt
+          // ignore: cast_nullable_to_non_nullable
+          : stt as num?,
+      sttOnPaper: sttOnPaper == const $CopyWithPlaceholder()
+          ? _value.sttOnPaper
+          // ignore: cast_nullable_to_non_nullable
+          : sttOnPaper as num?,
       studentId: studentId == const $CopyWithPlaceholder()
           ? _value.studentId
           // ignore: cast_nullable_to_non_nullable
@@ -174,6 +229,18 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
           ? _value.studentName
           // ignore: cast_nullable_to_non_nullable
           : studentName as String,
+      nameRead: nameRead == const $CopyWithPlaceholder()
+          ? _value.nameRead
+          // ignore: cast_nullable_to_non_nullable
+          : nameRead as String?,
+      matchConfidence: matchConfidence == const $CopyWithPlaceholder()
+          ? _value.matchConfidence
+          // ignore: cast_nullable_to_non_nullable
+          : matchConfidence as String?,
+      matchNote: matchNote == const $CopyWithPlaceholder()
+          ? _value.matchNote
+          // ignore: cast_nullable_to_non_nullable
+          : matchNote as String?,
       numericRaw: numericRaw == const $CopyWithPlaceholder()
           ? _value.numericRaw
           // ignore: cast_nullable_to_non_nullable
@@ -218,6 +285,10 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
           ? _value.writtenCropUrl
           // ignore: cast_nullable_to_non_nullable
           : writtenCropUrl as String?,
+      nameCropUrl: nameCropUrl == const $CopyWithPlaceholder()
+          ? _value.nameCropUrl
+          // ignore: cast_nullable_to_non_nullable
+          : nameCropUrl as String?,
     );
   }
 }
@@ -241,8 +312,13 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
     requiredKeys: const [
       'rowId',
       'order',
+      'stt',
+      'sttOnPaper',
       'studentId',
       'studentName',
+      'nameRead',
+      'matchConfidence',
+      'matchNote',
       'numericRaw',
       'numericValue',
       'numericConfidence',
@@ -254,13 +330,19 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
       'finalValue',
       'numericCropUrl',
       'writtenCropUrl',
+      'nameCropUrl',
     ],
   );
   final val = RecognitionEvidenceRowDto(
     rowId: $checkedConvert('rowId', (v) => v as String),
     order: $checkedConvert('order', (v) => v as num),
+    stt: $checkedConvert('stt', (v) => v as num?),
+    sttOnPaper: $checkedConvert('sttOnPaper', (v) => v as num?),
     studentId: $checkedConvert('studentId', (v) => v as num),
     studentName: $checkedConvert('studentName', (v) => v as String),
+    nameRead: $checkedConvert('nameRead', (v) => v as String?),
+    matchConfidence: $checkedConvert('matchConfidence', (v) => v as String?),
+    matchNote: $checkedConvert('matchNote', (v) => v as String?),
     numericRaw: $checkedConvert('numericRaw', (v) => v as String?),
     numericValue: $checkedConvert('numericValue', (v) => v as String?),
     numericConfidence: $checkedConvert(
@@ -284,6 +366,7 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
     finalValue: $checkedConvert('finalValue', (v) => v as String?),
     numericCropUrl: $checkedConvert('numericCropUrl', (v) => v as String?),
     writtenCropUrl: $checkedConvert('writtenCropUrl', (v) => v as String?),
+    nameCropUrl: $checkedConvert('nameCropUrl', (v) => v as String?),
   );
   return val;
 });
@@ -293,8 +376,13 @@ Map<String, dynamic> _$RecognitionEvidenceRowDtoToJson(
 ) => <String, dynamic>{
   'rowId': instance.rowId,
   'order': instance.order,
+  'stt': instance.stt,
+  'sttOnPaper': instance.sttOnPaper,
   'studentId': instance.studentId,
   'studentName': instance.studentName,
+  'nameRead': instance.nameRead,
+  'matchConfidence': instance.matchConfidence,
+  'matchNote': instance.matchNote,
   'numericRaw': instance.numericRaw,
   'numericValue': instance.numericValue,
   'numericConfidence': instance.numericConfidence,
@@ -308,6 +396,7 @@ Map<String, dynamic> _$RecognitionEvidenceRowDtoToJson(
   'finalValue': instance.finalValue,
   'numericCropUrl': instance.numericCropUrl,
   'writtenCropUrl': instance.writtenCropUrl,
+  'nameCropUrl': instance.nameCropUrl,
 };
 
 const _$RecognitionEvidenceRowDtoComparisonEnumEnumMap = {

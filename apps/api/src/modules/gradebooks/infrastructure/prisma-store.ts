@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import type { PrismaClient } from "../../../generated/prisma/client.js";
 import { unit } from "../../../common/store.js";
+import { classStudentOrder } from "../../../common/student-order.js";
 import { transaction, sqlStateOf } from "../../../common/transaction.js";
 import type {
   Gradebook,
@@ -102,7 +103,8 @@ export class PrismaGradebookStore implements GradebookStore {
             ORDER BY b.ma_bang_diem LIMIT 51`;
             return rows.map(book);
           },
-          cells: (bookId, after) => tx.$queryRaw<GradeCell[]>`
+          cells: async (bookId, after) => {
+            const rows = await tx.$queryRaw<Array<Omit<GradeCell, "stt">>>`
           SELECT d.ma_diem::text AS id, hs.ma_hoc_sinh AS "studentId", hs.ho_ten AS "studentName",
             (hs.dang_theo_hoc AND hs.ma_lop = b.ma_lop) AS active,
             tp.ma_thanh_phan AS "componentId", tp.ten_thanh_phan AS "componentName",
@@ -119,7 +121,22 @@ export class PrismaGradebookStore implements GradebookStore {
           JOIN public.thanh_phan_diem tp USING (ma_thanh_phan)
           LEFT JOIN public.lich_nhap_diem w ON w.ma_bang_diem=b.ma_bang_diem AND w.ma_thanh_phan=tp.ma_thanh_phan
           WHERE d.ma_bang_diem = ${bookId}::integer AND d.ma_diem > ${after}::bigint
-          ORDER BY d.ma_diem LIMIT 51`,
+          ORDER BY d.ma_diem LIMIT 51`;
+            if (!rows.length) return [];
+            const roster = await tx.$queryRaw<
+              Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
+            >`
+              SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten
+              FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop = hs.ma_lop
+              WHERE b.ma_bang_diem = ${bookId}::integer AND hs.dang_theo_hoc`;
+            const order = classStudentOrder(
+              roster.map((row) => ({ ...row, dang_theo_hoc: true })),
+            );
+            return rows.map((row) => ({
+              ...row,
+              stt: row.active ? (order.get(row.studentId) ?? null) : null,
+            }));
+          },
           updateGrades: async (sessionHash, bookId, version, changes) => {
             const rows = await tx.$queryRaw<Array<{ result: BatchResult }>>`
               SELECT public.cap_nhat_diem(${sessionHash}::text, ${bookId}::integer,

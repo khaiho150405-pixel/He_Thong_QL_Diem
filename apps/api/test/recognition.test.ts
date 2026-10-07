@@ -87,7 +87,6 @@ test("upload keeps one object on replay and never exposes the object key", async
     bytes: png(),
     claimedType: "image/png",
     componentId: "2",
-    declaredRows: "3",
   };
   const first = await service.upload(actor, 1, "same-key", upload);
   const replay = await service.upload(actor, 1, "same-key", upload);
@@ -98,6 +97,41 @@ test("upload keeps one object on replay and never exposes the object key", async
     status: "DANG_XU_LY",
   });
   assert.equal(objects.size, 1);
+  assert.equal("declaredRows" in stored!, false);
+  assert.equal(stored!.componentId, 2);
+});
+
+test("legacy declaredRows never changes the idempotency hash", async () => {
+  const hashes: string[] = [];
+  const store: RecognitionStore = {
+    authorizeUpload: async () => {},
+    list: async () => [],
+    detail: async () => null,
+    createTicket: async (input) => {
+      hashes.push(input.requestHash);
+      return {
+        ticketId: "42",
+        jobId: "recognition-42",
+        status: "DANG_XU_LY",
+        storedObjectKey: input.objectKey,
+      };
+    },
+  };
+  const storage: ObjectStorage = {
+    put: async () => {},
+    get: async () => new Uint8Array(),
+    signedGetUrl: async () => "",
+    remove: async () => {},
+  };
+  const service = new RecognitionService(store, storage);
+  const base = { bytes: png(), claimedType: "image/png", componentId: "2" };
+  await service.upload(actor, 1, "key-a", base);
+  await service.upload(actor, 1, "key-b", {
+    ...base,
+    declaredRows: "99",
+  } as typeof base);
+  assert.equal(hashes.length, 2);
+  assert.equal(hashes[0], hashes[1]);
 });
 
 test("detail signs private images and keeps storage keys internal", async () => {
@@ -127,13 +161,21 @@ test("detail signs private images and keeps storage keys internal", async () => 
       modelVersion: "fake-dev-v1",
       version: 1,
       createdAt: "2026-09-12T00:00:00.000Z",
+      greenRows: 1,
+      yellowRows: 0,
+      redRows: 0,
       sourceObjectKey: "recognition/original/private.png",
       rows: [
         {
           rowId: "9",
           order: 1,
+          stt: 4,
+          sttOnPaper: 4,
           studentId: 3,
           studentName: "Học sinh giả",
+          nameRead: "Hoc sinh gia",
+          matchConfidence: "0.9700",
+          matchNote: "Khớp họ tên và STT.",
           numericRaw: "0.0",
           numericValue: "0.0",
           numericConfidence: "0.9500",
@@ -145,6 +187,7 @@ test("detail signs private images and keeps storage keys internal", async () => 
           finalValue: null,
           numericCropKey: "recognition/crops/42/1-numeric.png",
           writtenCropKey: "recognition/crops/42/1-written.png",
+          nameCropKey: "recognition/crops/42/1-name.png",
         },
       ],
     }),
@@ -159,10 +202,22 @@ test("detail signs private images and keeps storage keys internal", async () => 
   assert.equal(result.rows[0]!.numericCropUrl?.includes("numeric.png"), true);
   assert.equal("sourceObjectKey" in result, false);
   assert.equal("numericCropKey" in result.rows[0]!, false);
+  assert.equal("nameCropKey" in result.rows[0]!, false);
+  assert.equal(result.rows[0]!.nameCropUrl?.includes("1-name.png"), true);
+  assert.equal(result.rows[0]!.stt, 4);
+  assert.equal(result.rows[0]!.sttOnPaper, 4);
+  assert.equal(result.rows[0]!.nameRead, "Hoc sinh gia");
+  assert.equal(result.rows[0]!.matchConfidence, "0.9700");
+  assert.equal(result.rows[0]!.matchNote, "Khớp họ tên và STT.");
+  assert.deepEqual(
+    [result.greenRows, result.yellowRows, result.redRows],
+    [1, 0, 0],
+  );
   assert.deepEqual(signed, [
     "recognition/original/private.png:300",
     "recognition/crops/42/1-numeric.png:300",
     "recognition/crops/42/1-written.png:300",
+    "recognition/crops/42/1-name.png:300",
   ]);
 });
 

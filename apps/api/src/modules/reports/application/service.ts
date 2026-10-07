@@ -10,6 +10,7 @@ import {
   gradebookAccess,
   gradebookActor,
 } from "../../authorization/application/gradebook-policy.js";
+import { classStudentOrder } from "../../../common/student-order.js";
 import { REPORT_STORE, type ReportStore } from "./port.js";
 
 function id(value: number) {
@@ -24,26 +25,6 @@ function safeCell(value: string) {
 
 function numericCell(value: string | null | undefined) {
   return value == null ? null : Number(value);
-}
-
-const viCollator = new Intl.Collator("vi", {
-  sensitivity: "accent",
-  numeric: true,
-});
-
-export function compareVietnameseNames(
-  fullNameA: string,
-  fullNameB: string,
-): number {
-  const partsA = fullNameA.trim().split(/\s+/);
-  const partsB = fullNameB.trim().split(/\s+/);
-  const givenA = partsA[partsA.length - 1] || "";
-  const givenB = partsB[partsB.length - 1] || "";
-  const cmp = viCollator.compare(givenA, givenB);
-  if (cmp !== 0) return cmp;
-  const restA = partsA.slice(0, -1).join(" ");
-  const restB = partsB.slice(0, -1).join(" ");
-  return viCollator.compare(restA, restB);
 }
 
 @Injectable()
@@ -91,14 +72,22 @@ export class ReportsService {
       }));
       if (!rawRows.length) throw new NotFoundException();
 
-      // Sort students according to standard Vietnamese alphabet (given name first)
-      const rows = [...rawRows].sort((a, b) =>
-        compareVietnameseNames(a.studentName, b.studentName),
+      // STT dùng chung với lưới điểm và nhận dạng (common/student-order).
+      const order = classStudentOrder(
+        rawRows.map((r) => ({
+          ma_hoc_sinh: r.studentId,
+          ma_lop: book.classId,
+          ho_ten: r.studentName,
+          dang_theo_hoc: true,
+        })),
       );
+      const rows = rawRows
+        .map((row) => ({ row, stt: order.get(row.studentId) ?? 0 }))
+        .sort((a, b) => a.stt - b.stt);
 
       const componentNames = [
         ...new Set(
-          rows.flatMap((row) => row.components.map((item) => item.name)),
+          rows.flatMap(({ row }) => row.components.map((item) => item.name)),
         ),
       ];
       const passFail =
@@ -130,14 +119,12 @@ export class ReportsService {
         { header: "Điểm tổng kết", key: "finalScore", width: 16 },
         { header: "Xếp loại", key: "classification", width: 18 },
       ];
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row) continue;
+      for (const { row, stt } of rows) {
         const components = new Map(
           row.components.map((item) => [item.name, item.value]),
         );
         sheet.addRow({
-          stt: i + 1,
+          stt,
           studentId: row.studentId,
           studentName: safeCell(row.studentName),
           ...Object.fromEntries(

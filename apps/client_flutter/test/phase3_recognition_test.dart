@@ -22,6 +22,7 @@ class FakeRecognitionPicker implements RecognitionImagePicker {
 
 class RecognitionFakeServer implements HttpClientAdapter {
   bool uploaded = false;
+  int listCallsAfterUpload = 0;
   int detailCalls = 0;
   FormData? uploadedForm;
   Map<String, dynamic>? approvalBody;
@@ -98,8 +99,13 @@ class RecognitionFakeServer implements HttpClientAdapter {
           {
             'rowId': '51',
             'order': 1,
+            'stt': 1,
+            'sttOnPaper': null,
             'studentId': 101,
             'studentName': 'An',
+            'nameRead': 'An',
+            'matchConfidence': '0.9900',
+            'matchNote': null,
             'numericRaw': '0.0',
             'numericValue': '0.0',
             'numericConfidence': '0.9500',
@@ -111,6 +117,7 @@ class RecognitionFakeServer implements HttpClientAdapter {
             'finalValue': null,
             'numericCropUrl': 'https://storage.test/numeric.png',
             'writtenCropUrl': 'https://storage.test/written.png',
+            'nameCropUrl': 'https://storage.test/name.png',
           },
         ],
       };
@@ -127,24 +134,35 @@ class RecognitionFakeServer implements HttpClientAdapter {
     );
   }
 
-  Map<String, Object?> _ticket() => {
+  Map<String, Object?> _ticket({
+    String status = 'CHO_DOI_CHIEU',
+    String? errorCode,
+    int detectedRows = 2,
+    int greenRows = 1,
+    int yellowRows = 1,
+    int redRows = 0,
+  }) => {
     'ticketId': '42',
     'gradebookId': 7,
     'componentId': 201,
     'componentName': 'Điểm ảnh',
     'declaredRows': 2,
-    'detectedRows': 2,
-    'status': 'CHO_DOI_CHIEU',
-    'errorCode': null,
+    'detectedRows': detectedRows,
+    'status': status,
+    'errorCode': errorCode,
     'modelVersion': 'fake-dev-v1',
     'version': 1,
     'createdAt': '2026-09-12T01:02:03.000Z',
+    'greenRows': greenRows,
+    'yellowRows': yellowRows,
+    'redRows': redRows,
   };
 
   Map<String, Object?> _cell(String id, int studentId, String name) => {
     'id': id,
     'studentId': studentId,
     'studentName': name,
+    'stt': 1,
     'active': true,
     'componentId': 201,
     'componentName': 'Điểm ảnh',
@@ -192,7 +210,7 @@ void main() {
     expect(find.text('Nhận dạng bảng điểm từ ảnh'), findsOneWidget);
     await tester.tap(find.text('Nhận dạng bảng điểm từ ảnh'));
     await tester.pumpAndSettle();
-    expect(find.text('Số dòng khai báo: 2'), findsOneWidget);
+    expect(find.textContaining('Số dòng khai báo'), findsNothing);
     await tester.runAsync(() async {
       await tester.tap(find.byKey(const ValueKey('recognition-pick')));
       // Allow the engine image decoder to complete outside the fake clock.
@@ -205,12 +223,11 @@ void main() {
     await tester.pumpAndSettle();
     final fields = Map.fromEntries(server.uploadedForm!.fields);
     expect(fields['componentId'], '201');
-    expect(fields['declaredRows'], '2');
+    expect(fields.containsKey('declaredRows'), isFalse);
     expect(server.uploadedForm?.files.single.key, 'image');
-    expect(find.textContaining('Chờ đối chiếu'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Phiếu #42'));
-    await tester.pumpAndSettle();
+    // Polling receives CHO_DOI_CHIEU and automatically navigates to ReviewScreen.
+    expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
     expect(find.textContaining('An · XANH'), findsOneWidget);
     expect(find.textContaining('Giá trị: 0.0'), findsNWidgets(2));
     await tester.enterText(
@@ -234,16 +251,20 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('review-confirm-all')),
       150,
-      scrollable: find
-          .descendant(
-            of: find.byType(AlertDialog),
-            matching: find.byType(Scrollable),
-          )
-          .first,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
     await tester.pump();
-    await tester.ensureVisible(find.byKey(const ValueKey('review-approve')));
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('review-approve')),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    // Dismiss any active SnackBar from upload so it doesn't overlap the approve button.
+    ScaffoldMessenger.of(
+      tester.element(find.byType(Scaffold).first),
+    ).clearSnackBars();
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('review-approve')));
     await tester.pumpAndSettle();
     expect(server.approvalBody?['expectedTicketVersion'], 1);
@@ -251,6 +272,6 @@ void main() {
     final decisions = server.approvalBody?['decisions'] as List<dynamic>;
     expect(decisions.single['rowId'], '51');
     expect(decisions.single['value'], '0.0');
-    expect(find.text('Phiếu nhận dạng #42'), findsNothing);
+    expect(find.text('Đối chiếu nhận dạng #42'), findsNothing);
   });
 }

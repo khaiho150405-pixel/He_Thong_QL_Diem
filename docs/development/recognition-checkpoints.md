@@ -30,3 +30,20 @@ Các metric trên do checkpoint cung cấp, chưa được đánh giá độc l�
 4. Nối adapter thật vào contract hiện có, thêm test ảnh thực tế/timeout/malformed/model unavailable; giữ xử lý job bất đồng bộ và người duyệt trước khi ghi điểm.
 
 Adapter thật hiện vẫn báo `MODEL_UNAVAILABLE` khi chưa cấu hình. Không triển khai OCR production từ riêng các file trọng số.
+
+## Chế độ weights (BE-17 → BE-19, ADR-0015)
+
+Mô hình thật chỉ chạy khi `RECOGNITION_MODEL_MODE=weights` (mặc định) và đủ bốn biến sau, nếu thiếu hoặc sai thì dịch vụ trả `503 MODEL_UNAVAILABLE` và worker không ghi gì:
+
+| Biến                                                              | Ý nghĩa                                                     |
+| ----------------------------------------------------------------- | ----------------------------------------------------------- |
+| `RECOGNITION_CRNN_WEIGHTS` / `RECOGNITION_CRNN_SHA256`            | CRNN đọc ô Đ.số và STT (`crnn_num_best_dot5.pth`)           |
+| `RECOGNITION_VIETOCR_WEIGHTS` / `RECOGNITION_VIETOCR_SHA256`      | VietOCR đọc ô Điểm chữ và Họ tên (`vietocr_best_tang4.pth`) |
+| `RECOGNITION_NUMERIC_THRESHOLD` / `RECOGNITION_WRITTEN_THRESHOLD` | ngưỡng Xanh riêng từng kênh, mặc định 0.95 / 0.90           |
+| `RECOGNITION_DEVICE`                                              | `cpu` (mặc định) hoặc `cuda`                                |
+
+Quy tắc an toàn: SHA-256 được kiểm trước khi nạp; trọng số chỉ nạp bằng `torch.load(weights_only=True)` (không nạp được thì `MODEL_UNAVAILABLE`, không hạ sang pickle tùy ý); cấu hình VietOCR (`src/adapters/vietocr_vgg_seq2seq.yml`) đã loại mọi URL tải mô hình; không tải gì từ Internet lúc chạy. `vietocr==0.3.13` phải cài `pip install --no-deps vietocr==0.3.13` (cùng `einops`), vì các phụ thuộc của nó không cần cho suy luận. Dùng `crnn_num_best_dot5.pth` và `vietocr_best_tang4.pth`, không dùng bản `*_dev.pth` (chỉ để dò ngưỡng). `modelVersion` = `crnn-dot5+vietocr-tang4:<12 ký tự đầu của SHA-256 ghép hai hash>`.
+
+Ảnh bị từ chối trả `422` với `{"detail": {"code", "message"}}`, mã ổn định: `IMAGE_UNREADABLE`, `IMAGE_QUALITY_LOW`, `GRID_NOT_FOUND`, `NOT_A_GRADEBOOK`, `SCORE_COLUMN_NOT_FOUND`; worker đánh dấu phiếu `LOI` đúng mã, không thử lại.
+
+Đã thử local (dữ liệu huấn luyện, chỉ để kiểm tra đường chạy, không phải đánh giá độc lập): hai trọng số nạp được bằng chế độ an toàn; ~4 giây/ảnh trên CPU. Việc dò ngưỡng và đánh giá trên ảnh cấp 3 thật thuộc BE-21–BE-22.

@@ -31,6 +31,7 @@ GradeCellDto column() => GradeCellDto.fromJson({
   'id': '1',
   'studentId': 1,
   'studentName': 'Fixture',
+  'stt': 1,
   'active': true,
   'componentId': 201,
   'componentName': 'Thường xuyên lần 1',

@@ -6,7 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'dart:ui' as ui;
 import '../../app/widgets/app_controls.dart';
 import 'image_preview.dart';
+import 'review_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../authentication/session.dart';
 import 'image_picker.dart';
@@ -23,7 +25,6 @@ class RecognitionPanel extends ConsumerStatefulWidget {
     super.key,
     required this.gradebookId,
     required this.components,
-    required this.declaredRows,
     required this.gradebookVersion,
     required this.enabled,
     required this.onApproved,
@@ -31,7 +32,6 @@ class RecognitionPanel extends ConsumerStatefulWidget {
 
   final num gradebookId;
   final List<RecognitionComponentOption> components;
-  final int declaredRows;
   final num gradebookVersion;
   final bool enabled;
   final VoidCallback onApproved;
@@ -50,6 +50,8 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   double? uploadProgress;
   String? imageError;
   bool showAllTickets = false;
+  String? _uploadedTicketId;
+  bool _navigating = false;
 
   @override
   void initState() {
@@ -65,6 +67,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     if (oldWidget.gradebookId != widget.gradebookId) {
       image = null;
       imageError = null;
+      _uploadedTicketId = null;
       reload();
     }
     if (!widget.components.any((item) => item.id == componentId)) {
@@ -78,6 +81,30 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     tickets
         .then((items) {
           if (!mounted) return;
+          if (_uploadedTicketId != null) {
+            final tracked = items
+                .where((it) => it.ticketId == _uploadedTicketId)
+                .firstOrNull;
+            if (tracked != null) {
+              if (tracked.status.value == 'CHO_DOI_CHIEU') {
+                final targetId = _uploadedTicketId!;
+                _uploadedTicketId = null;
+                final isCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+                if (isCurrent && !_navigating) {
+                  _navigating = true;
+                  showDetail(targetId).whenComplete(() {
+                    if (mounted) _navigating = false;
+                  });
+                  return;
+                }
+              } else if (tracked.status.value == 'LOI') {
+                _uploadedTicketId = null;
+                setState(() {
+                  imageError = recognitionFailureMessage(tracked.errorCode);
+                });
+              }
+            }
+          }
           if (items.any((item) => item.status.value == 'DANG_XU_LY')) {
             pollTimer = Timer(const Duration(seconds: 3), () {
               if (mounted) setState(reload);
@@ -174,22 +201,17 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       showMessage('Chọn thành phần điểm và ảnh bảng điểm trước.');
       return;
     }
-    if (widget.declaredRows < 1) {
-      showMessage('Bảng điểm chưa có học sinh đang theo học.');
-      return;
-    }
     setState(() {
       busy = true;
       uploadProgress = null;
       imageError = null;
     });
     try {
-      await ref
+      final receipt = await ref
           .read(recognitionRepositoryProvider)
           .upload(
             gradebookId: widget.gradebookId,
             componentId: selectedComponent,
-            declaredRows: widget.declaredRows,
             image: selected,
             onSendProgress: (sent, total) {
               if (mounted && total > 0) {
@@ -201,6 +223,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       setState(() {
         busy = false;
         image = null;
+        _uploadedTicketId = receipt.ticketId;
         reload();
       });
       showMessage('Đã tải ảnh. Hệ thống đang nhận dạng.');
@@ -216,17 +239,26 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   ).showSnackBar(SnackBar(content: Text(message)));
 
   Future<void> showDetail(String ticketId) async {
-    final approved = await showDialog<bool>(
-      context: context,
-      builder: (_) => RecognitionDetailDialog(
-        gradebookId: widget.gradebookId,
-        ticketId: ticketId,
-        gradebookVersion: widget.gradebookVersion,
-      ),
-    );
+    bool? approved;
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      approved = await context.push<bool>(
+        '/gradebooks/${widget.gradebookId}/recognition/$ticketId',
+        extra: widget.gradebookVersion,
+      );
+    } else {
+      approved = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => ReviewScreen(
+            gradebookId: widget.gradebookId,
+            ticketId: ticketId,
+            gradebookVersion: widget.gradebookVersion,
+          ),
+        ),
+      );
+    }
     if (!mounted) return;
     if (approved == true) {
-      showMessage('Đã duyệt phiếu và cập nhật điểm chính thức.');
       widget.onApproved();
     }
     setState(reload);
@@ -236,6 +268,13 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final enabled =
+        widget.enabled && !busy && !picking && widget.components.isNotEmpty;
+    final picker = ref.read(recognitionImagePickerProvider);
+    final camera =
+        picker is RecognitionCameraPicker &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
 
     return Card(
       child: ExpansionTile(
@@ -265,7 +304,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
         children: [
           const Divider(height: 24),
           const Text(
-            'Chụp thẳng toàn bộ bảng, đủ sáng, không lóa và rõ hai cột điểm số/điểm chữ. PNG hoặc JPEG, tối đa 10 MB. Thứ tự dòng phải trùng danh sách học sinh.',
+            'Chụp thẳng toàn bộ bảng, đủ sáng, rõ các cột Họ tên, Điểm số, Điểm chữ. PNG hoặc JPEG, tối đa 10 MB. Hệ thống tự xác định học sinh theo họ tên.',
           ),
           const SizedBox(height: 16),
           LayoutBuilder(
@@ -273,17 +312,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
               final width = constraints.maxWidth < 600
                   ? constraints.maxWidth
                   : 320.0;
-              final enabled =
-                  widget.enabled &&
-                  !busy &&
-                  !picking &&
-                  widget.declaredRows > 0 &&
-                  widget.components.isNotEmpty;
-              final picker = ref.read(recognitionImagePickerProvider);
-              final camera =
-                  picker is RecognitionCameraPicker &&
-                  (defaultTargetPlatform == TargetPlatform.android ||
-                      defaultTargetPlatform == TargetPlatform.iOS);
               return Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -349,22 +377,41 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
               );
             },
           ),
-          const SizedBox(height: 12),
-          Text('Số dòng khai báo: ${widget.declaredRows}'),
           if (!widget.enabled)
             const Text(
               'Bảng điểm hiện không cho phép gửi ảnh. Kiểm tra trạng thái chốt hoặc tải lại bảng điểm.',
             ),
-          if (widget.declaredRows < 1 || widget.components.isEmpty)
-            const Text(
-              'Cần học sinh đang theo học và thành phần điểm trước khi gửi ảnh.',
-            ),
+          if (widget.components.isEmpty)
+            const Text('Cần thành phần điểm trước khi gửi ảnh.'),
           if (imageError != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                imageError!,
-                style: TextStyle(color: colorScheme.error),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(imageError!, style: TextStyle(color: colorScheme.error)),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      if (camera)
+                        TextButton.icon(
+                          key: const ValueKey('recognition-retry-camera'),
+                          onPressed: enabled
+                              ? () => pickImage(camera: true)
+                              : null,
+                          icon: const Icon(Icons.camera_alt_outlined),
+                          label: const Text('Chụp lại'),
+                        ),
+                      TextButton.icon(
+                        key: const ValueKey('recognition-retry-pick'),
+                        onPressed: enabled ? () => pickImage() : null,
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Chọn ảnh khác'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           if (image != null) ...[
@@ -533,7 +580,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
 String _statusText(RecognitionTicketDto item) => switch (item.status.value) {
   'DANG_XU_LY' => 'Đang xử lý · tự động cập nhật sau 3 giây',
   'CHO_DOI_CHIEU' =>
-    'Chờ đối chiếu · đã đọc ${item.detectedRows ?? 0}/${item.declaredRows} dòng',
+    'Chờ đối chiếu · ${item.detectedRows ?? 0} dòng · ${item.greenRows} Xanh · ${item.yellowRows} Vàng · ${item.redRows} Đỏ',
   'DA_DUYET' => 'Đã duyệt và ghi điểm chính thức',
   'LOI' => recognitionFailureMessage(item.errorCode),
   _ => item.status.value,
@@ -552,641 +599,3 @@ Color _statusColor(String status) => switch (status) {
   'LOI' => Colors.red.shade700,
   _ => Colors.grey.shade600,
 };
-
-class RecognitionDetailDialog extends ConsumerStatefulWidget {
-  const RecognitionDetailDialog({
-    super.key,
-    required this.gradebookId,
-    required this.ticketId,
-    required this.gradebookVersion,
-  });
-
-  final num gradebookId;
-  final String ticketId;
-  final num gradebookVersion;
-
-  @override
-  ConsumerState<RecognitionDetailDialog> createState() =>
-      _RecognitionDetailDialogState();
-}
-
-class _RecognitionDetailDialogState
-    extends ConsumerState<RecognitionDetailDialog> {
-  final formKey = GlobalKey<FormState>();
-  final values = <String, TextEditingController>{};
-  final reasons = <String, TextEditingController>{};
-  late Future<RecognitionTicketDetailDto> detail;
-  RecognitionTicketDetailDto? loaded;
-  bool confirmed = false;
-  bool busy = false;
-  String _reviewLevelFilter = 'ALL'; // 'ALL' | 'DO' | 'VANG' | 'XANH'
-
-  @override
-  void initState() {
-    super.initState();
-    detail = _loadDetail();
-  }
-
-  Future<RecognitionTicketDetailDto> _loadDetail() async {
-    final data = await ref
-        .read(recognitionRepositoryProvider)
-        .detail(gradebookId: widget.gradebookId, ticketId: widget.ticketId);
-    if (!mounted) return data;
-    loaded = data;
-    for (final row in data.rows) {
-      if (!values.containsKey(row.rowId)) {
-        final suggested = _suggested(row);
-        values[row.rowId] = TextEditingController(text: suggested ?? '');
-        reasons[row.rowId] = TextEditingController(
-          text: suggested == null ? '' : 'Đã đối chiếu ảnh nhận dạng',
-        );
-      }
-    }
-    return data;
-  }
-
-  void refreshEvidence() {
-    if (busy) return;
-    final next = _loadDetail();
-    setState(() {
-      detail = next;
-    });
-  }
-
-  String? _suggested(RecognitionEvidenceRowDto row) {
-    if (row.reviewLevel.value == 'DO') return null;
-    if (row.comparison.value == 'KHOP') return row.numericValue;
-    if (row.comparison.value == 'MOT_KENH') {
-      return row.numericValue ?? row.writtenValue;
-    }
-    return null;
-  }
-
-  @override
-  void dispose() {
-    for (final controller in [...values.values, ...reasons.values]) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  Future<void> approve() async {
-    final data = loaded;
-    if (data == null ||
-        !confirmed ||
-        !(formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-    for (final row in data.rows) {
-      final value = values[row.rowId]!.text.trim();
-      final reason = reasons[row.rowId]!.text.trim();
-      if ((value.isNotEmpty &&
-              !RegExp(r'^(10[.]0|[0-9][.][0-9])$').hasMatch(value)) ||
-          reason.isEmpty ||
-          reason.length > 500) {
-        setState(() {
-          _reviewLevelFilter = 'ALL';
-          confirmed = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Kiểm tra điểm và lý do của dòng ${row.order} (${row.studentName}) trước khi duyệt.',
-            ),
-          ),
-        );
-        return;
-      }
-    }
-    setState(() => busy = true);
-    try {
-      await ref
-          .read(recognitionRepositoryProvider)
-          .approve(
-            gradebookId: widget.gradebookId,
-            ticketId: widget.ticketId,
-            expectedTicketVersion: data.version,
-            expectedGradebookVersion: widget.gradebookVersion,
-            decisions: [
-              for (final row in data.rows)
-                ReviewDecisionInput(
-                  rowId: row.rowId,
-                  value: values[row.rowId]!.text.trim().isEmpty
-                      ? null
-                      : values[row.rowId]!.text.trim(),
-                  reason: reasons[row.rowId]!.text.trim(),
-                ),
-            ],
-          );
-      if (!mounted) return;
-      Navigator.pop(context, true);
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => busy = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(errorMessage(error))));
-    }
-  }
-
-  Widget _reviewLevelBadge(String level) {
-    Color bg;
-    Color fg;
-    String label;
-    IconData icon;
-
-    switch (level) {
-      case 'XANH':
-        bg = Colors.green.shade50;
-        fg = Colors.green.shade800;
-        label = 'XANH · Khớp tin cậy';
-        icon = Icons.check_circle_rounded;
-        break;
-      case 'VANG':
-        bg = Colors.orange.shade50;
-        fg = Colors.orange.shade900;
-        label = 'VÀNG · Cần đối chiếu';
-        icon = Icons.warning_amber_rounded;
-        break;
-      case 'DO':
-      default:
-        bg = Colors.red.shade50;
-        fg = Colors.red.shade900;
-        label = 'ĐỎ · Bắt buộc xem xét';
-        icon = Icons.error_rounded;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: fg.withAlpha(80)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: fg,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return PopScope(
-      canPop: !busy,
-      child: AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        contentPadding: const EdgeInsets.all(16),
-        title: Text('Phiếu nhận dạng #${widget.ticketId}'),
-        content: SizedBox(
-          width: 780,
-          height: 700,
-          child: FutureBuilder<RecognitionTicketDetailDto>(
-            future: detail,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Đang tải dữ liệu phiếu và ảnh ô cắt…'),
-                    ],
-                  ),
-                );
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(errorMessage(snapshot.error!)),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        key: const ValueKey('review-retry-detail'),
-                        onPressed: refreshEvidence,
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Tải lại phiếu'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              final data = snapshot.data!;
-              final canApprove = data.status.value == 'CHO_DOI_CHIEU';
-              final orderedRows = [...data.rows]
-                ..sort((left, right) {
-                  const priority = {'DO': 0, 'VANG': 1, 'XANH': 2};
-                  final level = (priority[left.reviewLevel.value] ?? 3)
-                      .compareTo(priority[right.reviewLevel.value] ?? 3);
-                  return level != 0 ? level : left.order.compareTo(right.order);
-                });
-
-              return Form(
-                key: formKey,
-                child: ListView(
-                  cacheExtent: 5000,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'Trạng thái: ${switch (data.status.value) {
-                              'DANG_XU_LY' => 'Đang xử lý',
-                              'CHO_DOI_CHIEU' => 'Chờ đối chiếu',
-                              'DA_DUYET' => 'Đã duyệt',
-                              'LOI' => 'Xử lý thất bại',
-                              _ => data.status.value,
-                            }}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: colorScheme.primary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Thành phần: ${data.componentName}',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    if (data.modelVersion?.startsWith('fake') ?? false)
-                      const Text(
-                        'Kết quả mô phỏng development. Không dùng để đánh giá độ chính xác mô hình thật.',
-                      ),
-                    const SizedBox(height: 12),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          data.sourceImageUrl,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => _expiredImage(
-                            key: const ValueKey('review-refresh-source'),
-                            label:
-                                'Không tải được ảnh gốc. URL có thể đã hết hạn.',
-                          ),
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => showRecognitionImage(
-                        context,
-                        image: Image.network(
-                          data.sourceImageUrl,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => const Center(
-                            child: Text(
-                              'Không tải được ảnh. Đóng và tải lại phiếu để lấy ảnh mới.',
-                            ),
-                          ),
-                        ),
-                      ),
-                      icon: const Icon(Icons.zoom_in),
-                      label: const Text('Phóng to ảnh gốc'),
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    if (data.rows.isNotEmpty) ...[
-                      DropdownButtonFormField<String>(
-                        key: ValueKey(_reviewLevelFilter),
-                        initialValue: _reviewLevelFilter,
-                        isExpanded: true,
-                        itemHeight: null,
-                        decoration: const InputDecoration(
-                          labelText: 'Lọc mức độ đối chiếu',
-                          prefixIcon: Icon(Icons.filter_alt_outlined),
-                        ),
-                        items: [
-                          DropdownMenuItem(
-                            value: 'ALL',
-                            child: Text('Tất cả (${data.rows.length} ô điểm)'),
-                          ),
-                          for (final level in ['DO', 'VANG', 'XANH'])
-                            DropdownMenuItem(
-                              value: level,
-                              child: Text(
-                                '${switch (level) {
-                                  'DO' => 'Đỏ · Bắt buộc xem xét',
-                                  'VANG' => 'Vàng · Cần đối chiếu',
-                                  _ => 'Xanh · Khớp tin cậy',
-                                }} (${data.rows.where((r) => r.reviewLevel.value == level).length})',
-                              ),
-                            ),
-                        ],
-                        onChanged: busy
-                            ? null
-                            : (value) => setState(
-                                () => _reviewLevelFilter = value ?? 'ALL',
-                              ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    if (data.rows.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Center(
-                          child: Text(
-                            data.status.value == 'LOI'
-                                ? recognitionFailureMessage(data.errorCode)
-                                : 'Kết quả từng dòng chưa sẵn sàng.',
-                          ),
-                        ),
-                      ),
-                    for (final row
-                        in (_reviewLevelFilter == 'ALL'
-                            ? orderedRows
-                            : orderedRows
-                                  .where(
-                                    (r) =>
-                                        r.reviewLevel.value ==
-                                        _reviewLevelFilter,
-                                  )
-                                  .toList()))
-                      Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  Text(
-                                    '${row.order}. ${row.studentName} · ${row.reviewLevel.value}',
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  _reviewLevelBadge(row.reviewLevel.value),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 16,
-                                runSpacing: 12,
-                                children: [
-                                  _channel(
-                                    'Điểm số',
-                                    row.numericCropUrl,
-                                    row.numericRaw,
-                                    row.numericValue,
-                                    row.numericConfidence,
-                                    refreshEvidence,
-                                  ),
-                                  _channel(
-                                    'Điểm chữ',
-                                    row.writtenCropUrl,
-                                    row.writtenRaw,
-                                    row.writtenValue,
-                                    row.writtenConfidence,
-                                    refreshEvidence,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              TextFormField(
-                                key: ValueKey('review-value-${row.rowId}'),
-                                controller: values[row.rowId],
-                                enabled: canApprove && !busy,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
-                                textInputAction: TextInputAction.next,
-                                decoration: const InputDecoration(
-                                  labelText:
-                                      'Điểm cuối (để trống nếu học sinh vắng)',
-                                ),
-                                validator: (value) {
-                                  final text = value?.trim() ?? '';
-                                  if (text.isEmpty) return null;
-                                  return RegExp(
-                                        r'^(10[.]0|[0-9][.][0-9])$',
-                                      ).hasMatch(text)
-                                      ? null
-                                      : 'Nhập 0.0–10.0 với một chữ số thập phân.';
-                                },
-                              ),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                key: ValueKey('review-reason-${row.rowId}'),
-                                controller: reasons[row.rowId],
-                                enabled: canApprove && !busy,
-                                textInputAction: TextInputAction.next,
-                                decoration: const InputDecoration(
-                                  labelText: 'Lý do / ghi chú xác nhận',
-                                ),
-                                validator: (value) {
-                                  final text = value?.trim() ?? '';
-                                  if (text.isEmpty) {
-                                    return 'Cần ghi lý do xác nhận.';
-                                  }
-                                  if (text.length > 500) {
-                                    return 'Tối đa 500 ký tự.';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    if (canApprove) ...[
-                      const SizedBox(height: 8),
-                      CheckboxListTile(
-                        key: const ValueKey('review-confirm-all'),
-                        value: confirmed,
-                        onChanged: busy
-                            ? null
-                            : (value) =>
-                                  setState(() => confirmed = value ?? false),
-                        title: const Text(
-                          'Tôi đã kiểm tra kỹ ảnh ô cắt và xác nhận các giá trị trên.',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        controlAffinity: ListTileControlAffinity.leading,
-                      ),
-                      const SizedBox(height: 8),
-                      FilledButton.icon(
-                        key: const ValueKey('review-approve'),
-                        onPressed: confirmed && !busy ? approve : null,
-                        icon: const Icon(Icons.check_circle_rounded, size: 20),
-                        label: const Text('Duyệt và ghi nhận điểm chính thức'),
-                      ),
-                      if (busy) ...[
-                        const SizedBox(height: 12),
-                        const LinearProgressIndicator(),
-                      ],
-                    ],
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: busy ? null : () => Navigator.pop(context),
-            child: const Text('Đóng'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _channel(
-    String label,
-    String? url,
-    String? raw,
-    String? value,
-    String? confidence,
-    VoidCallback onRefresh,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      width: (MediaQuery.sizeOf(context).width - 112).clamp(100, 330),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: colorScheme.outlineVariant.withAlpha(80)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 110,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: url == null
-                ? const Center(
-                    child: Text('Không có ảnh', style: TextStyle(fontSize: 11)),
-                  )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: Image.network(
-                      url,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => IconButton(
-                        tooltip: 'Ảnh hết hạn. Nhấn để tải lại.',
-                        onPressed: onRefresh,
-                        icon: const Icon(Icons.refresh_rounded, size: 20),
-                      ),
-                    ),
-                  ),
-          ),
-          if (url != null)
-            TextButton.icon(
-              onPressed: () => showRecognitionImage(
-                context,
-                image: Image.network(
-                  url,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Center(
-                    child: Text('Không tải được ảnh. Đóng và tải lại phiếu.'),
-                  ),
-                ),
-              ),
-              icon: const Icon(Icons.zoom_in, size: 18),
-              label: const Text('Phóng to ô điểm'),
-            ),
-          const SizedBox(height: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Ký tự thô: ${raw ?? '—'}',
-                style: const TextStyle(fontSize: 11.5),
-              ),
-              Text(
-                'Giá trị: ${value ?? '—'}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                'Độ tin cậy: ${confidence == null ? '—' : '${((double.tryParse(confidence) ?? 0) * 100).toStringAsFixed(1)}%'}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _expiredImage({required Key key, required String label}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12),
-        ),
-        const SizedBox(height: 6),
-        OutlinedButton.icon(
-          key: key,
-          onPressed: refreshEvidence,
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Lấy URL ảnh mới'),
-        ),
-      ],
-    ),
-  );
-}

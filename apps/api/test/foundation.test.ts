@@ -126,6 +126,18 @@ test("configuration fails without secrets and rejects owner database roles", () 
     () => readConfig({ ...secure, UPLOAD_RATE_LIMIT_PER_MINUTE: "0" }),
     /UPLOAD_RATE_LIMIT_PER_MINUTE/,
   );
+  assert.equal(readConfig(secure).recognitionTimeoutMs, 120_000);
+  assert.equal(
+    readConfig({ ...secure, RECOGNITION_TIMEOUT_MS: "45000" })
+      .recognitionTimeoutMs,
+    45_000,
+  );
+  for (const invalid of ["999", "600001", "abc", "1.5", "0"])
+    assert.throws(
+      () => readConfig({ ...secure, RECOGNITION_TIMEOUT_MS: invalid }),
+      /RECOGNITION_TIMEOUT_MS/,
+      invalid,
+    );
   for (const insecure of [
     {
       ...secure,

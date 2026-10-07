@@ -13,6 +13,8 @@ abstract class _$GradeCellDtoCWProxy {
 
   GradeCellDto studentName(String studentName);
 
+  GradeCellDto stt(num? stt);
+
   GradeCellDto active(bool active);
 
   GradeCellDto componentId(num componentId);
@@ -53,6 +55,7 @@ abstract class _$GradeCellDtoCWProxy {
     String id,
     num studentId,
     String studentName,
+    num? stt,
     bool active,
     num componentId,
     String componentName,
@@ -86,6 +89,9 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
   @override
   GradeCellDto studentName(String studentName) =>
       this(studentName: studentName);
+
+  @override
+  GradeCellDto stt(num? stt) => this(stt: stt);
 
   @override
   GradeCellDto active(bool active) => this(active: active);
@@ -150,6 +156,7 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
     Object? id = const $CopyWithPlaceholder(),
     Object? studentId = const $CopyWithPlaceholder(),
     Object? studentName = const $CopyWithPlaceholder(),
+    Object? stt = const $CopyWithPlaceholder(),
     Object? active = const $CopyWithPlaceholder(),
     Object? componentId = const $CopyWithPlaceholder(),
     Object? componentName = const $CopyWithPlaceholder(),
@@ -179,6 +186,10 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
           ? _value.studentName
           // ignore: cast_nullable_to_non_nullable
           : studentName as String,
+      stt: stt == const $CopyWithPlaceholder()
+          ? _value.stt
+          // ignore: cast_nullable_to_non_nullable
+          : stt as num?,
       active: active == const $CopyWithPlaceholder()
           ? _value.active
           // ignore: cast_nullable_to_non_nullable
@@ -264,6 +275,7 @@ GradeCellDto _$GradeCellDtoFromJson(Map<String, dynamic> json) =>
             'id',
             'studentId',
             'studentName',
+            'stt',
             'active',
             'componentId',
             'componentName',
@@ -279,6 +291,7 @@ GradeCellDto _$GradeCellDtoFromJson(Map<String, dynamic> json) =>
           id: $checkedConvert('id', (v) => v as String),
           studentId: $checkedConvert('studentId', (v) => v as num),
           studentName: $checkedConvert('studentName', (v) => v as String),
+          stt: $checkedConvert('stt', (v) => v as num?),
           active: $checkedConvert('active', (v) => v as bool),
           componentId: $checkedConvert('componentId', (v) => v as num),
           componentName: $checkedConvert('componentName', (v) => v as String),
@@ -311,6 +324,7 @@ Map<String, dynamic> _$GradeCellDtoToJson(GradeCellDto instance) =>
       'id': instance.id,
       'studentId': instance.studentId,
       'studentName': instance.studentName,
+      'stt': instance.stt,
       'active': instance.active,
       'componentId': instance.componentId,
       'componentName': instance.componentName,

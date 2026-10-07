@@ -2,11 +2,19 @@
 
 ## Phạm vi UC11–UC13
 
-Giáo viên chọn thành phần điểm và số dòng trên bảng đang nhập liệu. Điện thoại có nút **Chụp ảnh**; web/desktop có nút chọn tệp PNG/JPEG. Ảnh được xem trước, phóng to, bỏ chọn hoặc thay ảnh trước khi gửi. Hủy hộp chọn không làm mất ảnh đang chọn. Upload chỉ bật khi có ảnh hợp lệ, hiển thị tiến độ và giữ ảnh khi gửi lỗi để thử lại.
+Giáo viên chọn thành phần điểm trên bảng đang nhập liệu (không còn chọn số dòng khai báo; backend tự chốt danh sách học sinh theo STT và tự ghép theo họ tên theo ADR-0015). Điện thoại có nút **Chụp ảnh**; web/desktop có nút chọn tệp PNG/JPEG. Hướng dẫn chụp: _"Chụp thẳng toàn bộ bảng, đủ sáng, rõ các cột Họ tên, Điểm số, Điểm chữ. PNG hoặc JPEG, tối đa 10 MB. Hệ thống tự xác định học sinh theo họ tên."_ Ảnh được xem trước, phóng to, bỏ chọn hoặc thay ảnh trước khi gửi. Hủy hộp chọn không làm mất ảnh đang chọn. Upload chỉ bật khi có ảnh hợp lệ, hiển thị tiến độ và giữ ảnh khi gửi lỗi để thử lại.
 
 Client kiểm nội dung PNG/JPEG, giới hạn 10 MiB, chiều tối đa 10.000 pixel và tổng tối đa 40 triệu pixel, rồi thử giải mã ảnh trước khi hiển thị. Backend vẫn kiểm độc lập và giữ quyền phân công, idempotency, checksum, lưu private. HEIC cần chuyển sang JPEG/PNG. Khi chụp, lấy đủ khung bảng, đặt máy thẳng, đủ sáng và tránh bóng/ánh phản chiếu.
 
-Biểu mẫu tự xuống dòng trên màn nhỏ, tên thành phần được xuống dòng; ảnh gốc/ảnh ô có chế độ phóng to. Màn đối chiếu hiển thị riêng hai kênh và confidence, kiểm tất cả dòng kể cả dòng bị lọc trước khi duyệt. Dòng đỏ không tự đề xuất điểm. Fake model có cảnh báo; lỗi model/queue không hướng dẫn người dùng đổi ảnh sai nguyên nhân.
+Sau khi tải ảnh lên, polling 3 giây theo dõi trạng thái phiếu. Khi phiếu chuyển sang `CHO_DOI_CHIEU`, ứng dụng tự động điều hướng sang **Màn hình kiểm tra riêng** (`/gradebooks/:id/recognition/:ticketId`). Nếu phiếu chuyển sang `LOI`, hệ thống hiển thị thông báo lỗi thân thiện theo `errorCode` (ví dụ: `ROW_MATCH_FAILED`, `IMAGE_UNREADABLE`, `GRID_NOT_FOUND`,...) kèm nút "Chụp lại" hoặc "Chọn ảnh khác".
+
+Màn hình kiểm tra hiển thị danh sách dòng đã được ghép theo STT hệ thống:
+
+- Ảnh cắt ô họ tên trên giấy (`nameCropUrl`, hỗ trợ chạm phóng to), STT hệ thống, tên học sinh trong danh sách đã chốt.
+- Họ tên máy đọc (`nameRead`), độ tin cậy ghép (`matchConfidence`) và ghi chú ghép (`matchNote`).
+- Ảnh cắt ô Điểm số (`numericCropUrl`) và Điểm chữ (`writtenCropUrl`), giá trị hai kênh kèm độ tin cậy.
+- Phân loại màu Xanh / Vàng / Đỏ (gộp từ mức điểm và mức ghép) với bộ lọc 3 màu và sắp xếp ưu tiên dòng Vàng/Đỏ cần chú ý trước.
+- **Bất biến:** Dòng Đỏ tuyệt đối không tự điền giá trị đề xuất (ô nhập để trống); giáo viên bắt buộc phải xem/xác nhận tất cả các dòng trước khi bấm Duyệt. Khi duyệt thành công, giao dịch nguyên tử ghi điểm chính thức và quay lại màn hình bảng điểm để tự động tải lại dữ liệu mới nhất.
 
 ## Tích hợp nền tảng
 

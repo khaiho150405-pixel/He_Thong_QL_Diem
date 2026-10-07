@@ -19,5 +19,8 @@ Name | Type | Description | Notes
 **modelVersion** | **String** |  |
 **version** | **num** |  |
 **createdAt** | [**DateTime**](DateTime.md) |  |
+**greenRows** | **num** | Số dòng mức Xanh (mức cuối) |
+**yellowRows** | **num** | Số dòng mức Vàng (mức cuối) |
+**redRows** | **num** | Số dòng mức Đỏ (mức cuối) |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

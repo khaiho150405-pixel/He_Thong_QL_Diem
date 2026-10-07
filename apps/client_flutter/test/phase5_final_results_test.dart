@@ -54,6 +54,7 @@ class Phase5FakeServer implements HttpClientAdapter {
             'id': '9001',
             'studentId': 101,
             'studentName': 'An',
+            'stt': 1,
             'active': true,
             'componentId': 201,
             'componentName': 'Cuối kỳ',

@@ -11,6 +11,7 @@ import {
 } from "../modules/authorization/application/policy.js";
 import { catalogScope } from "../modules/authorization/application/catalog-policy.js";
 import { audit } from "../modules/audit/application/write.js";
+import { compareStudents, numberByClass } from "./student-order.js";
 
 export interface Field {
   kind: "text" | "int" | "date" | "boolean" | "decimal";
@@ -30,41 +31,14 @@ export interface StudentOrderNumbers {
   byClass: Map<number, number>;
 }
 
-const viCollator = new Intl.Collator("vi", { sensitivity: "variant" });
-
-function compareStudentRows(first: Row, second: Row): number {
-  const firstName = String(first.ho_ten ?? "").trim();
-  const secondName = String(second.ho_ten ?? "").trim();
-  const firstGivenName = firstName.split(/\s+/).at(-1) ?? "";
-  const secondGivenName = secondName.split(/\s+/).at(-1) ?? "";
-  return (
-    viCollator.compare(firstGivenName, secondGivenName) ||
-    viCollator.compare(firstName, secondName) ||
-    Number(first.ma_hoc_sinh) - Number(second.ma_hoc_sinh)
-  );
-}
-
 export function buildStudentOrderNumbers(students: Row[]): StudentOrderNumbers {
   const school = new Map<number, number>();
-  const byClass = new Map<number, number>();
-  const sorted = [...students].sort(compareStudentRows);
-  sorted.forEach((row, index) =>
-    school.set(Number(row.ma_hoc_sinh), index + 1),
-  );
-  const groups = new Map<number, Row[]>();
-  for (const row of students) {
-    const classId = Number(row.ma_lop);
-    const group = groups.get(classId) ?? [];
-    group.push(row);
-    groups.set(classId, group);
-  }
-  for (const group of groups.values()) {
-    group
-      .sort(compareStudentRows)
-      .forEach((row, index) => byClass.set(Number(row.ma_hoc_sinh), index + 1));
-  }
-  return { school, byClass };
+  [...students]
+    .sort(compareStudents)
+    .forEach((row, index) => school.set(Number(row.ma_hoc_sinh), index + 1));
+  return { school, byClass: numberByClass(students) };
 }
+
 export function validateInput(
   input: unknown,
   fields: Record<string, Field>,

@@ -92,3 +92,76 @@ class ClassificationTest(TestCase):
                 prediction("8.0", "0.9"),
                 green_confidence=Decimal("1.1"),
             )
+
+
+class PerChannelThresholdTest(TestCase):
+    def classify(self, numeric, written, **kwargs):
+        return classify_channels(numeric, written, **kwargs)
+
+    def test_each_channel_uses_its_own_threshold(self) -> None:
+        # numeric 0.94 < 0.95 → yellow even though the written channel is strong
+        low_numeric = self.classify(
+            prediction("8.0", "0.94"), prediction("8.0", "0.99")
+        )
+        self.assertEqual(low_numeric.level, ReviewLevel.YELLOW)
+        # written 0.91 ≥ 0.90 while a single shared 0.95 would have rejected it
+        ok = self.classify(prediction("8.0", "0.96"), prediction("8.0", "0.91"))
+        self.assertEqual(ok.level, ReviewLevel.GREEN)
+        shared = self.classify(
+            prediction("8.0", "0.96"),
+            prediction("8.0", "0.91"),
+            green_confidence=Decimal("0.95"),
+        )
+        self.assertEqual(shared.level, ReviewLevel.YELLOW)
+
+    def test_thresholds_are_inclusive_and_configurable(self) -> None:
+        edge = self.classify(prediction("7.5", "0.95"), prediction("7.5", "0.90"))
+        self.assertEqual(edge.level, ReviewLevel.GREEN)
+        stricter = self.classify(
+            prediction("7.5", "0.95"),
+            prediction("7.5", "0.90"),
+            numeric_confidence=Decimal("0.99"),
+            written_confidence=Decimal("0.90"),
+        )
+        self.assertEqual(stricter.level, ReviewLevel.YELLOW)
+
+    def test_there_is_no_arbiter_when_channels_disagree_or_are_both_weak(self) -> None:
+        # Strong numeric vs weak written, and the reverse: neither value is chosen; both stay yellow.
+        for numeric, written in (
+            (prediction("8.0", "0.99"), prediction("7.0", "0.30")),
+            (prediction("8.0", "0.30"), prediction("7.0", "0.99")),
+            (prediction("8.0", "0.30"), prediction("7.0", "0.30")),
+        ):
+            result = self.classify(numeric, written)
+            self.assertEqual(
+                result, Classification(Comparison.MISMATCH, ReviewLevel.YELLOW)
+            )
+
+    def test_zero_with_low_confidence_is_yellow_not_red(self) -> None:
+        result = self.classify(prediction("0.0", "0.40"), prediction("0.0", "0.40"))
+        self.assertEqual(result, Classification(Comparison.MATCH, ReviewLevel.YELLOW))
+
+    def test_defaults_match_the_agreed_starting_values(self) -> None:
+        from src.domain import (
+            DEFAULT_NUMERIC_THRESHOLD,
+            DEFAULT_WRITTEN_THRESHOLD,
+            thresholds_from_env,
+        )
+
+        self.assertEqual(
+            (DEFAULT_NUMERIC_THRESHOLD, DEFAULT_WRITTEN_THRESHOLD),
+            (Decimal("0.95"), Decimal("0.90")),
+        )
+        self.assertEqual(thresholds_from_env({}), (Decimal("0.95"), Decimal("0.90")))
+        self.assertEqual(
+            thresholds_from_env(
+                {
+                    "RECOGNITION_NUMERIC_THRESHOLD": "0.97",
+                    "RECOGNITION_WRITTEN_THRESHOLD": "0.8",
+                }
+            ),
+            (Decimal("0.97"), Decimal("0.8")),
+        )
+        for bad in ("abc", "1.2", "-0.1", "NaN"):
+            with self.assertRaises(ValueError):
+                thresholds_from_env({"RECOGNITION_NUMERIC_THRESHOLD": bad})

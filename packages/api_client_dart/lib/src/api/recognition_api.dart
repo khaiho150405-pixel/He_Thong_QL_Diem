@@ -214,7 +214,7 @@ class RecognitionApi {
   /// * [gradebookId]
   /// * [image]
   /// * [componentId]
-  /// * [declaredRows]
+  /// * [declaredRows] - Deprecated và bị bỏ qua: hệ thống tự chốt danh sách lớp khi tạo phiếu (ADR-0015).
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -229,7 +229,7 @@ class RecognitionApi {
     required num gradebookId,
     required MultipartFile image,
     required int componentId,
-    required int declaredRows,
+    int? declaredRows,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -278,7 +278,12 @@ class RecognitionApi {
       final _formData = FormData();
       _formData.files.add(MapEntry(r'image', image));
       _formData.fields.add(MapEntry(r'componentId', componentId.toString()));
-      _formData.fields.add(MapEntry(r'declaredRows', declaredRows.toString()));
+      // declaredRows is deprecated and optional (ADR-0015): send it only when the caller provides it.
+      if (declaredRows != null) {
+        _formData.fields.add(
+          MapEntry(r'declaredRows', declaredRows.toString()),
+        );
+      }
       _bodyData = _formData;
     } catch (error, stackTrace) {
       throw DioException(

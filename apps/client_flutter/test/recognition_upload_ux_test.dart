@@ -108,7 +108,6 @@ void main() {
                         'Điểm thường xuyên kiểm tra viết tay',
                       ),
                     ],
-                    declaredRows: 2,
                     gradebookVersion: 1,
                     enabled: true,
                     onApproved: () {},
@@ -161,9 +160,7 @@ void main() {
         await tester.tap(upload);
         await tester.pumpAndSettle();
         expect(server.uploaded, isTrue);
-        await tester.ensureVisible(find.textContaining('Phiếu #42'));
-        await tester.tap(find.textContaining('Phiếu #42'));
-        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
         expect(find.textContaining('Giá trị: 0.0'), findsNWidgets(2));
 
         expect(tester.takeException(), isNull);

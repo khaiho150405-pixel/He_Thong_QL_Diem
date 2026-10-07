@@ -20,7 +20,7 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu','he_so_hoc_ky','he_so_hoc_ky_chung','chot_cot_diem','lich_nhap_diem')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu','he_so_hoc_ky','he_so_hoc_ky_chung','chot_cot_diem','lich_nhap_diem','danh_sach_phieu')",
     );
     assert.equal(tables.rows[0].n, 16);
     const timetable = await owner.query(
@@ -38,6 +38,12 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     await denied("TRUNCATE lich_su_sua_diem");
     await denied("UPDATE lich_nhap_diem SET dong_luc=now()");
     await denied("DELETE FROM lich_nhap_diem");
+    await denied(
+      "INSERT INTO danh_sach_phieu(ma_phieu,stt,ma_hoc_sinh,ho_ten) VALUES(1,1,1,'Học sinh giả')",
+    );
+    await denied("UPDATE danh_sach_phieu SET ho_ten=ho_ten");
+    await denied("DELETE FROM danh_sach_phieu");
+    await denied("TRUNCATE danh_sach_phieu");
     await denied("SELECT * FROM public.chot_cot('invalid',1,1,0)");
     await denied("SELECT * FROM public.chot_bang_diem('invalid',1,0)");
     await denied("DELETE FROM lich_su_tong_ket");
@@ -179,6 +185,74 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
       "INSERT INTO ket_qua_dong (ma_phieu,ma_hoc_sinh,thu_tu_dong,ket_luan_doi_chieu,muc_phan_loai) VALUES ($1,$2,1,'KHONG_DOC_DUOC','DO')",
       [slip, student],
       "23505",
+    );
+    // ADR-0015: roster snapshot is append-only, unique per ticket/student and tied to the ticket.
+    await owner.query(
+      "INSERT INTO danh_sach_phieu(ma_phieu,stt,ma_hoc_sinh,ho_ten) VALUES($1,1,$2,'Học sinh giả')",
+      [slip, student],
+    );
+    await reject(
+      "INSERT INTO danh_sach_phieu(ma_phieu,stt,ma_hoc_sinh,ho_ten) VALUES($1,1,$2,'Học sinh giả khác')",
+      [slip, student],
+      "23505",
+    );
+    await reject(
+      "INSERT INTO danh_sach_phieu(ma_phieu,stt,ma_hoc_sinh,ho_ten) VALUES($1,2,$2,'Học sinh giả')",
+      [slip, student],
+      "23505",
+    );
+    await reject(
+      "INSERT INTO danh_sach_phieu(ma_phieu,stt,ma_hoc_sinh,ho_ten) SELECT $1,0,ma_hoc_sinh,'Học sinh giả' FROM hoc_sinh WHERE ma_hoc_sinh<>$2 LIMIT 1",
+      [slip, student],
+      "23514",
+    );
+    await reject(
+      "INSERT INTO danh_sach_phieu(ma_phieu,stt,ma_hoc_sinh,ho_ten) VALUES(-1,3,$1,'Học sinh giả')",
+      [student],
+      "23503",
+    );
+    await reject(
+      "UPDATE danh_sach_phieu SET ho_ten='Sửa lén' WHERE ma_phieu=$1",
+      [slip],
+      "42501",
+    );
+    await reject(
+      "DELETE FROM danh_sach_phieu WHERE ma_phieu=$1",
+      [slip],
+      "42501",
+    );
+    await reject("TRUNCATE danh_sach_phieu", [], "42501");
+    await reject(
+      "DELETE FROM phieu_nhan_dien WHERE ma_phieu=$1",
+      [slip],
+      "23503",
+    );
+    // Matching columns on ket_qua_dong.
+    await owner.query(
+      "UPDATE ket_qua_dong SET stt_giay=1,ho_ten_doc_duoc='Học sinh giả',do_tin_cay_ghep=0.9500,duong_dan_anh_o_ten='recognition/crops/x/1-name.png',ghi_chu_ghep='ok' WHERE ma_phieu=$1 AND thu_tu_dong=1",
+      [slip],
+    );
+    await reject(
+      "UPDATE ket_qua_dong SET do_tin_cay_ghep=1.5000 WHERE ma_phieu=$1 AND thu_tu_dong=1",
+      [slip],
+      "23514",
+    );
+    // phieu_luoi: row count must be within 1..declared size; fewer detected rows than the roster are allowed.
+    const roster = (
+      await owner.query(
+        "INSERT INTO phieu_nhan_dien (ma_bang_diem,ma_thanh_phan,nguoi_tai,ma_bam_tep,duong_dan_anh_goc,so_dong_khai_bao) VALUES ($1,$2,$3,$4,'test/image2',3) RETURNING ma_phieu",
+        [book, component, teacher, "b".repeat(64)],
+      )
+    ).rows[0].ma_phieu;
+    for (const rows of [0, 4])
+      await reject(
+        "UPDATE phieu_nhan_dien SET trang_thai='CHO_DOI_CHIEU',so_dong_nhan_dien=$2 WHERE ma_phieu=$1",
+        [roster, rows],
+        "23514",
+      );
+    await owner.query(
+      "UPDATE phieu_nhan_dien SET trang_thai='CHO_DOI_CHIEU',so_dong_nhan_dien=2 WHERE ma_phieu=$1",
+      [roster],
     );
     // SET ROLE uses the actual database role, inside this rollback-only fixture.
     await owner.query("SET LOCAL ROLE app_runtime");

@@ -56,13 +56,49 @@ export class RecognitionTicketDto {
   @ApiProperty({ type: String, nullable: true }) modelVersion!: string | null;
   @ApiProperty({ type: Number }) version!: number;
   @ApiProperty({ type: String, format: "date-time" }) createdAt!: string;
+  @ApiProperty({ type: Number, description: "Số dòng mức Xanh (mức cuối)" })
+  greenRows!: number;
+  @ApiProperty({ type: Number, description: "Số dòng mức Vàng (mức cuối)" })
+  yellowRows!: number;
+  @ApiProperty({ type: Number, description: "Số dòng mức Đỏ (mức cuối)" })
+  redRows!: number;
 }
 
 export class RecognitionEvidenceRowDto {
   @ApiProperty({ type: String }) rowId!: string;
-  @ApiProperty({ type: Number }) order!: number;
+  @ApiProperty({ type: Number, description: "Vị trí dòng trên ảnh" })
+  order!: number;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: "STT hệ thống trong danh sách lớp đã chốt của phiếu",
+  })
+  stt!: number | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: "STT in trên giấy đọc được",
+  })
+  sttOnPaper!: number | null;
   @ApiProperty({ type: Number }) studentId!: number;
-  @ApiProperty({ type: String }) studentName!: string;
+  @ApiProperty({
+    type: String,
+    description: "Họ tên học sinh theo danh sách lớp đã chốt",
+  })
+  studentName!: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Họ tên máy đọc được trên giấy",
+  })
+  nameRead!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Độ tin cậy ghép dòng với học sinh, 0..1",
+  })
+  matchConfidence!: string | null;
+  @ApiProperty({ type: String, nullable: true }) matchNote!: string | null;
   @ApiProperty({ type: String, nullable: true }) numericRaw!: string | null;
   @ApiProperty({ type: String, nullable: true }) numericValue!: string | null;
   @ApiProperty({ type: String, nullable: true }) numericConfidence!:
@@ -83,6 +119,12 @@ export class RecognitionEvidenceRowDto {
   @ApiProperty({ type: String, nullable: true }) finalValue!: string | null;
   @ApiProperty({ type: String, nullable: true }) numericCropUrl!: string | null;
   @ApiProperty({ type: String, nullable: true }) writtenCropUrl!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Ảnh ô họ tên trên giấy (URL ký 300 giây)",
+  })
+  nameCropUrl!: string | null;
 }
 
 export class RecognitionTicketDetailDto extends RecognitionTicketDto {
@@ -130,11 +172,17 @@ export class RecognitionController {
   @ApiBody({
     schema: {
       type: "object",
-      required: ["image", "componentId", "declaredRows"],
+      required: ["image", "componentId"],
       properties: {
         image: { type: "string", format: "binary" },
         componentId: { type: "integer", minimum: 1 },
-        declaredRows: { type: "integer", minimum: 1 },
+        declaredRows: {
+          type: "integer",
+          minimum: 1,
+          deprecated: true,
+          description:
+            "Deprecated và bị bỏ qua: hệ thống tự chốt danh sách lớp khi tạo phiếu (ADR-0015).",
+        },
       },
     },
   })
@@ -150,14 +198,14 @@ export class RecognitionController {
     @Req() req: Request & { actor: Actor },
     @Param("gradebookId", ParseIntPipe) gradebookId: number,
     @Headers("x-idempotency-key") idempotencyKey: string,
-    @Body() body: { componentId?: unknown; declaredRows?: unknown },
+    // `declaredRows` do client cũ gửi được bỏ qua (ADR-0015).
+    @Body() body: { componentId?: unknown },
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.service.upload(req.actor, gradebookId, idempotencyKey, {
       bytes: file?.buffer ?? new Uint8Array(),
       claimedType: file?.mimetype ?? "",
       componentId: body.componentId,
-      declaredRows: body.declaredRows,
     });
   }
 }

@@ -39,6 +39,12 @@ class RecognitionTicketDto {
     required this.version,
 
     required this.createdAt,
+
+    required this.greenRows,
+
+    required this.yellowRows,
+
+    required this.redRows,
   });
 
   @JsonKey(name: r'ticketId', required: true, includeIfNull: false)
@@ -74,6 +80,18 @@ class RecognitionTicketDto {
   @JsonKey(name: r'createdAt', required: true, includeIfNull: false)
   final DateTime createdAt;
 
+  /// Số dòng mức Xanh (mức cuối)
+  @JsonKey(name: r'greenRows', required: true, includeIfNull: false)
+  final num greenRows;
+
+  /// Số dòng mức Vàng (mức cuối)
+  @JsonKey(name: r'yellowRows', required: true, includeIfNull: false)
+  final num yellowRows;
+
+  /// Số dòng mức Đỏ (mức cuối)
+  @JsonKey(name: r'redRows', required: true, includeIfNull: false)
+  final num redRows;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -88,7 +106,10 @@ class RecognitionTicketDto {
           other.errorCode == errorCode &&
           other.modelVersion == modelVersion &&
           other.version == version &&
-          other.createdAt == createdAt;
+          other.createdAt == createdAt &&
+          other.greenRows == greenRows &&
+          other.yellowRows == yellowRows &&
+          other.redRows == redRows;
 
   @override
   int get hashCode =>
@@ -102,7 +123,10 @@ class RecognitionTicketDto {
       (errorCode == null ? 0 : errorCode.hashCode) +
       (modelVersion == null ? 0 : modelVersion.hashCode) +
       version.hashCode +
-      createdAt.hashCode;
+      createdAt.hashCode +
+      greenRows.hashCode +
+      yellowRows.hashCode +
+      redRows.hashCode;
 
   factory RecognitionTicketDto.fromJson(Map<String, dynamic> json) =>
       _$RecognitionTicketDtoFromJson(json);

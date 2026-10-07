@@ -9,6 +9,7 @@ export interface AppConfig {
   s3SecretKey: string;
   s3Bucket: string;
   recognitionServiceUrl: string;
+  recognitionTimeoutMs: number;
   uploadRateLimitPerMinute: number;
 }
 
@@ -34,6 +35,14 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
     uploadRateLimitPerMinute > 1000
   )
     throw new Error("Invalid UPLOAD_RATE_LIMIT_PER_MINUTE");
+  // Thời gian chờ dịch vụ nhận dạng cho mỗi ảnh; chờ OCR trên CPU có thể lâu (đo thật ở BE-20).
+  const recognitionTimeoutMs = Number(env.RECOGNITION_TIMEOUT_MS ?? "120000");
+  if (
+    !Number.isInteger(recognitionTimeoutMs) ||
+    recognitionTimeoutMs < 1_000 ||
+    recognitionTimeoutMs > 600_000
+  )
+    throw new Error("Invalid RECOGNITION_TIMEOUT_MS");
   const url = (key: string, protocols: string[]) => {
     const value = required(key);
     let parsed: URL;
@@ -95,6 +104,7 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
     s3SecretKey: required("S3_SECRET_KEY"),
     s3Bucket: required("S3_BUCKET"),
     recognitionServiceUrl,
+    recognitionTimeoutMs,
     uploadRateLimitPerMinute,
   };
 }

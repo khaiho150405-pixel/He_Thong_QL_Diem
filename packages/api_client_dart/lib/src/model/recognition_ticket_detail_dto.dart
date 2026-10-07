@@ -41,6 +41,12 @@ class RecognitionTicketDetailDto {
 
     required this.createdAt,
 
+    required this.greenRows,
+
+    required this.yellowRows,
+
+    required this.redRows,
+
     required this.sourceImageUrl,
 
     required this.imageUrlExpiresInSeconds,
@@ -81,6 +87,18 @@ class RecognitionTicketDetailDto {
   @JsonKey(name: r'createdAt', required: true, includeIfNull: false)
   final DateTime createdAt;
 
+  /// Số dòng mức Xanh (mức cuối)
+  @JsonKey(name: r'greenRows', required: true, includeIfNull: false)
+  final num greenRows;
+
+  /// Số dòng mức Vàng (mức cuối)
+  @JsonKey(name: r'yellowRows', required: true, includeIfNull: false)
+  final num yellowRows;
+
+  /// Số dòng mức Đỏ (mức cuối)
+  @JsonKey(name: r'redRows', required: true, includeIfNull: false)
+  final num redRows;
+
   @JsonKey(name: r'sourceImageUrl', required: true, includeIfNull: false)
   final String sourceImageUrl;
 
@@ -109,6 +127,9 @@ class RecognitionTicketDetailDto {
           other.modelVersion == modelVersion &&
           other.version == version &&
           other.createdAt == createdAt &&
+          other.greenRows == greenRows &&
+          other.yellowRows == yellowRows &&
+          other.redRows == redRows &&
           other.sourceImageUrl == sourceImageUrl &&
           other.imageUrlExpiresInSeconds == imageUrlExpiresInSeconds &&
           other.rows == rows;
@@ -126,6 +147,9 @@ class RecognitionTicketDetailDto {
       (modelVersion == null ? 0 : modelVersion.hashCode) +
       version.hashCode +
       createdAt.hashCode +
+      greenRows.hashCode +
+      yellowRows.hashCode +
+      redRows.hashCode +
       sourceImageUrl.hashCode +
       imageUrlExpiresInSeconds.hashCode +
       rows.hashCode;

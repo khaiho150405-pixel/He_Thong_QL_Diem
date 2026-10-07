@@ -29,6 +29,12 @@ abstract class _$RecognitionTicketDtoCWProxy {
 
   RecognitionTicketDto createdAt(DateTime createdAt);
 
+  RecognitionTicketDto greenRows(num greenRows);
+
+  RecognitionTicketDto yellowRows(num yellowRows);
+
+  RecognitionTicketDto redRows(num redRows);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `RecognitionTicketDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -47,6 +53,9 @@ abstract class _$RecognitionTicketDtoCWProxy {
     String? modelVersion,
     num version,
     DateTime createdAt,
+    num greenRows,
+    num yellowRows,
+    num redRows,
   });
 }
 
@@ -100,6 +109,16 @@ class _$RecognitionTicketDtoCWProxyImpl
       this(createdAt: createdAt);
 
   @override
+  RecognitionTicketDto greenRows(num greenRows) => this(greenRows: greenRows);
+
+  @override
+  RecognitionTicketDto yellowRows(num yellowRows) =>
+      this(yellowRows: yellowRows);
+
+  @override
+  RecognitionTicketDto redRows(num redRows) => this(redRows: redRows);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `RecognitionTicketDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -118,6 +137,9 @@ class _$RecognitionTicketDtoCWProxyImpl
     Object? modelVersion = const $CopyWithPlaceholder(),
     Object? version = const $CopyWithPlaceholder(),
     Object? createdAt = const $CopyWithPlaceholder(),
+    Object? greenRows = const $CopyWithPlaceholder(),
+    Object? yellowRows = const $CopyWithPlaceholder(),
+    Object? redRows = const $CopyWithPlaceholder(),
   }) {
     return RecognitionTicketDto(
       ticketId: ticketId == const $CopyWithPlaceholder()
@@ -164,6 +186,18 @@ class _$RecognitionTicketDtoCWProxyImpl
           ? _value.createdAt
           // ignore: cast_nullable_to_non_nullable
           : createdAt as DateTime,
+      greenRows: greenRows == const $CopyWithPlaceholder()
+          ? _value.greenRows
+          // ignore: cast_nullable_to_non_nullable
+          : greenRows as num,
+      yellowRows: yellowRows == const $CopyWithPlaceholder()
+          ? _value.yellowRows
+          // ignore: cast_nullable_to_non_nullable
+          : yellowRows as num,
+      redRows: redRows == const $CopyWithPlaceholder()
+          ? _value.redRows
+          // ignore: cast_nullable_to_non_nullable
+          : redRows as num,
     );
   }
 }
@@ -196,6 +230,9 @@ RecognitionTicketDto _$RecognitionTicketDtoFromJson(
       'modelVersion',
       'version',
       'createdAt',
+      'greenRows',
+      'yellowRows',
+      'redRows',
     ],
   );
   final val = RecognitionTicketDto(
@@ -213,6 +250,9 @@ RecognitionTicketDto _$RecognitionTicketDtoFromJson(
     modelVersion: $checkedConvert('modelVersion', (v) => v as String?),
     version: $checkedConvert('version', (v) => v as num),
     createdAt: $checkedConvert('createdAt', (v) => DateTime.parse(v as String)),
+    greenRows: $checkedConvert('greenRows', (v) => v as num),
+    yellowRows: $checkedConvert('yellowRows', (v) => v as num),
+    redRows: $checkedConvert('redRows', (v) => v as num),
   );
   return val;
 });
@@ -231,6 +271,9 @@ Map<String, dynamic> _$RecognitionTicketDtoToJson(
   'modelVersion': instance.modelVersion,
   'version': instance.version,
   'createdAt': instance.createdAt.toIso8601String(),
+  'greenRows': instance.greenRows,
+  'yellowRows': instance.yellowRows,
+  'redRows': instance.redRows,
 };
 
 const _$RecognitionTicketDtoStatusEnumEnumMap = {

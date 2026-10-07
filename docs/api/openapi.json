@@ -3367,11 +3367,16 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["image", "componentId", "declaredRows"],
+                "required": ["image", "componentId"],
                 "properties": {
                   "image": { "type": "string", "format": "binary" },
                   "componentId": { "type": "integer", "minimum": 1 },
-                  "declaredRows": { "type": "integer", "minimum": 1 }
+                  "declaredRows": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "deprecated": true,
+                    "description": "Deprecated và bị bỏ qua: hệ thống tự chốt danh sách lớp khi tạo phiếu (ADR-0015)."
+                  }
                 }
               }
             }
@@ -6846,6 +6851,11 @@
           "id": { "type": "string" },
           "studentId": { "type": "number" },
           "studentName": { "type": "string" },
+          "stt": {
+            "type": "number",
+            "nullable": true,
+            "description": "STT trong lớp theo thứ tự tên; null khi học sinh đã nghỉ"
+          },
           "active": { "type": "boolean" },
           "componentId": { "type": "number" },
           "componentName": { "type": "string" },
@@ -6869,6 +6879,7 @@
           "id",
           "studentId",
           "studentName",
+          "stt",
           "active",
           "componentId",
           "componentName",
@@ -7157,7 +7168,19 @@
           "errorCode": { "type": "string", "nullable": true },
           "modelVersion": { "type": "string", "nullable": true },
           "version": { "type": "number" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "createdAt": { "type": "string", "format": "date-time" },
+          "greenRows": {
+            "type": "number",
+            "description": "Số dòng mức Xanh (mức cuối)"
+          },
+          "yellowRows": {
+            "type": "number",
+            "description": "Số dòng mức Vàng (mức cuối)"
+          },
+          "redRows": {
+            "type": "number",
+            "description": "Số dòng mức Đỏ (mức cuối)"
+          }
         },
         "required": [
           "ticketId",
@@ -7170,16 +7193,43 @@
           "errorCode",
           "modelVersion",
           "version",
-          "createdAt"
+          "createdAt",
+          "greenRows",
+          "yellowRows",
+          "redRows"
         ]
       },
       "RecognitionEvidenceRowDto": {
         "type": "object",
         "properties": {
           "rowId": { "type": "string" },
-          "order": { "type": "number" },
+          "order": { "type": "number", "description": "Vị trí dòng trên ảnh" },
+          "stt": {
+            "type": "number",
+            "nullable": true,
+            "description": "STT hệ thống trong danh sách lớp đã chốt của phiếu"
+          },
+          "sttOnPaper": {
+            "type": "number",
+            "nullable": true,
+            "description": "STT in trên giấy đọc được"
+          },
           "studentId": { "type": "number" },
-          "studentName": { "type": "string" },
+          "studentName": {
+            "type": "string",
+            "description": "Họ tên học sinh theo danh sách lớp đã chốt"
+          },
+          "nameRead": {
+            "type": "string",
+            "nullable": true,
+            "description": "Họ tên máy đọc được trên giấy"
+          },
+          "matchConfidence": {
+            "type": "string",
+            "nullable": true,
+            "description": "Độ tin cậy ghép dòng với học sinh, 0..1"
+          },
+          "matchNote": { "type": "string", "nullable": true },
           "numericRaw": { "type": "string", "nullable": true },
           "numericValue": { "type": "string", "nullable": true },
           "numericConfidence": { "type": "string", "nullable": true },
@@ -7193,13 +7243,23 @@
           "reviewLevel": { "type": "string", "enum": ["XANH", "VANG", "DO"] },
           "finalValue": { "type": "string", "nullable": true },
           "numericCropUrl": { "type": "string", "nullable": true },
-          "writtenCropUrl": { "type": "string", "nullable": true }
+          "writtenCropUrl": { "type": "string", "nullable": true },
+          "nameCropUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Ảnh ô họ tên trên giấy (URL ký 300 giây)"
+          }
         },
         "required": [
           "rowId",
           "order",
+          "stt",
+          "sttOnPaper",
           "studentId",
           "studentName",
+          "nameRead",
+          "matchConfidence",
+          "matchNote",
           "numericRaw",
           "numericValue",
           "numericConfidence",
@@ -7210,7 +7270,8 @@
           "reviewLevel",
           "finalValue",
           "numericCropUrl",
-          "writtenCropUrl"
+          "writtenCropUrl",
+          "nameCropUrl"
         ]
       },
       "RecognitionTicketDetailDto": {
@@ -7230,6 +7291,18 @@
           "modelVersion": { "type": "string", "nullable": true },
           "version": { "type": "number" },
           "createdAt": { "type": "string", "format": "date-time" },
+          "greenRows": {
+            "type": "number",
+            "description": "Số dòng mức Xanh (mức cuối)"
+          },
+          "yellowRows": {
+            "type": "number",
+            "description": "Số dòng mức Vàng (mức cuối)"
+          },
+          "redRows": {
+            "type": "number",
+            "description": "Số dòng mức Đỏ (mức cuối)"
+          },
           "sourceImageUrl": { "type": "string" },
           "imageUrlExpiresInSeconds": { "type": "number", "example": 300 },
           "rows": {
@@ -7251,6 +7324,9 @@
           "modelVersion",
           "version",
           "createdAt",
+          "greenRows",
+          "yellowRows",
+          "redRows",
           "sourceImageUrl",
           "imageUrlExpiresInSeconds",
           "rows"

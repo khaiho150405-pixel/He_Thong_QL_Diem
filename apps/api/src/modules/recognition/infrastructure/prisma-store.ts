@@ -10,6 +10,7 @@ import {
 import type { PrismaClient, Prisma } from "../../../generated/prisma/client.js";
 import { SETTINGS, type Settings } from "../../../common/database.js";
 import { unit } from "../../../common/store.js";
+import { classStudentOrder } from "../../../common/student-order.js";
 import { sqlStateOf, transaction } from "../../../common/transaction.js";
 import { gradebookAccess } from "../../authorization/application/gradebook-policy.js";
 import { currentActor } from "../../authorization/application/policy.js";
@@ -55,7 +56,19 @@ export class PrismaRecognitionStore implements RecognitionStore {
         orderBy: { ma_phieu: "desc" },
         take: 20,
       });
+      const counts = await tx.ket_qua_dong.groupBy({
+        by: ["ma_phieu", "muc_phan_loai"],
+        where: { ma_phieu: { in: rows.map((row) => row.ma_phieu) } },
+        _count: { _all: true },
+      });
+      const levelCount = (ticket: bigint, level: string) =>
+        counts.find(
+          (item) => item.ma_phieu === ticket && item.muc_phan_loai === level,
+        )?._count._all ?? 0;
       return rows.map((row) => ({
+        greenRows: levelCount(row.ma_phieu, "XANH"),
+        yellowRows: levelCount(row.ma_phieu, "VANG"),
+        redRows: levelCount(row.ma_phieu, "DO"),
         ticketId: row.ma_phieu.toString(),
         gradebookId: row.ma_bang_diem,
         componentId: row.ma_thanh_phan,
@@ -89,12 +102,26 @@ export class PrismaRecognitionStore implements RecognitionStore {
         },
       });
       if (!row) return null;
+      // Danh sách lớp đã chốt khi tạo phiếu: STT và họ tên tại thời điểm đó (ADR-0015).
+      const roster = new Map(
+        (
+          await tx.danh_sach_phieu.findMany({
+            where: { ma_phieu: row.ma_phieu },
+          })
+        ).map((entry) => [entry.ma_hoc_sinh, entry]),
+      );
       const evidence: RecognitionEvidenceRow[] = row.ket_qua_dong_rows.map(
         (item) => ({
           rowId: item.ma_dong.toString(),
           order: item.thu_tu_dong,
+          stt: roster.get(item.ma_hoc_sinh)?.stt ?? null,
+          sttOnPaper: item.stt_giay,
           studentId: item.ma_hoc_sinh,
-          studentName: item.ma_hoc_sinh_ref.ho_ten,
+          studentName:
+            roster.get(item.ma_hoc_sinh)?.ho_ten ?? item.ma_hoc_sinh_ref.ho_ten,
+          nameRead: item.ho_ten_doc_duoc,
+          matchConfidence: item.do_tin_cay_ghep?.toFixed(4) ?? null,
+          matchNote: item.ghi_chu_ghep,
           numericRaw: item.raw_kenh_a,
           numericValue: item.gia_tri_kenh_a?.toFixed(1) ?? null,
           numericConfidence: item.do_tin_cay_a?.toFixed(4) ?? null,
@@ -106,8 +133,18 @@ export class PrismaRecognitionStore implements RecognitionStore {
           finalValue: item.gia_tri_chot?.toFixed(1) ?? null,
           numericCropKey: item.duong_dan_anh_o_so,
           writtenCropKey: item.duong_dan_anh_o_chu,
+          nameCropKey: item.duong_dan_anh_o_ten,
         }),
       );
+      // Sắp theo STT hệ thống (phiếu cũ không có STT xếp cuối theo vị trí trên ảnh).
+      evidence.sort(
+        (a, b) =>
+          (a.stt ?? Number.MAX_SAFE_INTEGER) -
+            (b.stt ?? Number.MAX_SAFE_INTEGER) || a.order - b.order,
+      );
+      const levelCount = (level: string) =>
+        row.ket_qua_dong_rows.filter((item) => item.muc_phan_loai === level)
+          .length;
       return {
         ticketId: row.ma_phieu.toString(),
         gradebookId: row.ma_bang_diem,
@@ -120,6 +157,9 @@ export class PrismaRecognitionStore implements RecognitionStore {
         modelVersion: row.phien_ban_mo_hinh,
         version: row.version,
         createdAt: row.ngay_tao.toISOString(),
+        greenRows: levelCount("XANH"),
+        yellowRows: levelCount("VANG"),
+        redRows: levelCount("DO"),
         sourceObjectKey: row.duong_dan_anh_goc,
         rows: evidence,
       };
@@ -188,6 +228,23 @@ export class PrismaRecognitionStore implements RecognitionStore {
   ): Promise<StoredRecognitionReceipt> {
     try {
       return await transaction(this.db, async (tx) => {
+        // Danh sách lớp được chốt vào phiếu ngay trong giao dịch tạo phiếu (ADR-0015).
+        const students = await tx.$queryRaw<
+          Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
+        >`
+          SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten
+          FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop = hs.ma_lop
+          WHERE b.ma_bang_diem = ${input.gradebookId}::integer AND hs.dang_theo_hoc`;
+        const order = classStudentOrder(
+          students.map((row) => ({ ...row, dang_theo_hoc: true })),
+        );
+        const roster = students
+          .map((row) => ({
+            stt: order.get(row.ma_hoc_sinh)!,
+            studentId: row.ma_hoc_sinh,
+            fullName: row.ho_ten,
+          }))
+          .sort((a, b) => a.stt - b.stt);
         const rows = await tx.$queryRaw<
           Array<{ result: StoredRecognitionReceipt }>
         >`
@@ -197,7 +254,7 @@ export class PrismaRecognitionStore implements RecognitionStore {
             ${input.componentId}::integer,
             ${input.checksum}::text,
             ${input.objectKey}::text,
-            ${input.declaredRows}::integer,
+            ${JSON.stringify(roster)}::jsonb,
             ${input.idempotencyKey}::text,
             ${input.requestHash}::text
           ) AS result`;

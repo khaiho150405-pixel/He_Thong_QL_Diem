@@ -1,6 +1,7 @@
 import type { PrismaClient } from "../../../generated/prisma/client.js";
 import { transaction } from "../../../common/transaction.js";
 import type { RecognitionWorkerStore } from "../application/worker.js";
+import type { RosterEntry } from "../domain/row-matching.js";
 
 export class PrismaRecognitionWorkerStore implements RecognitionWorkerStore {
   constructor(private readonly db: PrismaClient) {}
@@ -11,16 +12,26 @@ export class PrismaRecognitionWorkerStore implements RecognitionWorkerStore {
       select: {
         trang_thai: true,
         duong_dan_anh_goc: true,
-        so_dong_khai_bao: true,
       },
     });
     return ticket
       ? {
           status: ticket.trang_thai,
           objectKey: ticket.duong_dan_anh_goc,
-          declaredRows: ticket.so_dong_khai_bao,
         }
       : null;
+  }
+
+  async roster(ticketId: string): Promise<RosterEntry[]> {
+    const rows = await this.db.danh_sach_phieu.findMany({
+      where: { ma_phieu: BigInt(ticketId) },
+      orderBy: { stt: "asc" },
+    });
+    return rows.map((row) => ({
+      stt: row.stt,
+      studentId: row.ma_hoc_sinh,
+      fullName: row.ho_ten,
+    }));
   }
 
   complete(

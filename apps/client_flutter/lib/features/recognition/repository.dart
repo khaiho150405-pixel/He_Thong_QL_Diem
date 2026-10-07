@@ -35,13 +35,11 @@ class RecognitionRepository {
   Future<RecognitionReceiptDto> upload({
     required num gradebookId,
     required num componentId,
-    required int declaredRows,
     required RecognitionImage image,
     ProgressCallback? onSendProgress,
   }) async {
     final mime = recognitionImageMime(image);
-    final signature =
-        '$gradebookId:$componentId:$declaredRows:${identityHashCode(image)}';
+    final signature = '$gradebookId:$componentId:${identityHashCode(image)}';
     if (_pendingSignature != signature) {
       _pendingSignature = signature;
       _pendingKey =
@@ -57,7 +55,6 @@ class RecognitionRepository {
         contentType: type,
       ),
       componentId: componentId.toInt(),
-      declaredRows: declaredRows,
       onSendProgress: onSendProgress,
     )).data!;
     _pendingSignature = null;

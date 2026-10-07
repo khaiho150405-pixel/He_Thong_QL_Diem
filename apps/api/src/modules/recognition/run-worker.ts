@@ -21,7 +21,11 @@ async function main() {
   const processor = new RecognitionJobProcessor(
     store,
     makeObjectStorage(config),
-    new HttpRecognitionModel(config.recognitionServiceUrl),
+    new HttpRecognitionModel(
+      config.recognitionServiceUrl,
+      fetch,
+      config.recognitionTimeoutMs,
+    ),
   );
   const worker = new Worker<{ ticketId: string }>(
     "recognition",

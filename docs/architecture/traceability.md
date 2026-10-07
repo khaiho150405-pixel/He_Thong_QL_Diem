@@ -47,3 +47,7 @@ UC09–13: QTV đặt lịch từng bảng/cột, giáo viên không chốt. DB 
 `grade_deadline_ui_test.dart` kiểm lịch nằm ngang/cuộn và biểu mẫu UTC trên 320/390/1280, giáo viên chỉ xem lịch. Theo yêu cầu mới đã bỏ chọn/sắp xếp môn và nút quản lý môn khỏi bảng điểm toàn trường. Các test legacy tạo fixture chốt bằng role migration trong DB test để giữ kiểm tra dữ liệu lịch sử, không dùng API/role runtime chốt thủ công.
 
 Mở rộng thời khóa biểu: `timetable_admin_ux_test.dart` kiểm thao tác từ ô trống/ô có môn, preset ngày/tiết, gửi tạo Chủ nhật/buổi chiều và chuyển ngày giữ nguyên môn/GV; profile 320/390/1440 với chữ 130%. `timetable_layout_test.dart` tiếp tục kiểm chia bảng toàn trường và GV/HS cuộn lịch chỉ đọc. Không đổi quy tắc backend, quyền hay schema trong phần UI này.
+
+## Ghép dòng nhận dạng (ADR-0015)
+
+UC11–UC13 (nút 3.2, 4.1–4.9, 5.1–5.8; sơ đồ phân cấp chức năng không đổi): một hàm STT chung ở API (`common/student-order.ts`); phiếu nhận dạng chốt danh sách lớp STT → học sinh vào `danh_sach_phieu` (append-only); bỏ số dòng khai báo; ghép dòng theo STT + họ tên đọc trên giấy (`recognition/domain/row-matching.ts`); mức dòng là mức thấp hơn giữa mức điểm và mức ghép; ghép thất bại → phiếu `LOI` (`ROW_MATCH_FAILED`); màn hình kiểm tra riêng. Bất biến 5 trong AGENTS.md được diễn giải lại. Trạng thái triển khai theo `docs/development/phase-7-prompts.md`; test tương ứng được liệt kê khi từng bước BE/FE hoàn tất.

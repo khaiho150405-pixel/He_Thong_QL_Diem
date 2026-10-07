@@ -11,7 +11,6 @@ import '../final_results/final_results_panel.dart';
 import '../final_results/repository.dart';
 import '../recognition/recognition_panel.dart';
 import '../reports/reports_panel.dart';
-import '../../core/vietnamese_sort.dart';
 import 'excel_import_dialog.dart';
 import 'repository.dart';
 
@@ -385,13 +384,19 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     for (final cell in widget.data.items) {
       rawStudents.putIfAbsent(cell.studentId, () => []).add(cell);
     }
-    // Sắp xếp danh sách học sinh theo bảng chữ cái tiếng Việt chuẩn (A-Z)
+    // Sắp xếp danh sách học sinh theo STT từ API (stt null xếp cuối, giữ thứ tự ổn định theo studentId)
     final sortedStudentRows = rawStudents.values.toList()
       ..sort((a, b) {
-        final nameA = a.isNotEmpty ? a.first.studentName : '';
-        final nameB = b.isNotEmpty ? b.first.studentName : '';
-        final byName = VietnameseCollation.compareStudentNames(nameA, nameB);
-        if (byName != 0) return byName;
+        final sttA = a.isNotEmpty ? a.first.stt : null;
+        final sttB = b.isNotEmpty ? b.first.stt : null;
+        if (sttA != null && sttB != null) {
+          final cmp = sttA.compareTo(sttB);
+          if (cmp != 0) return cmp;
+        } else if (sttA != null && sttB == null) {
+          return -1;
+        } else if (sttA == null && sttB != null) {
+          return 1;
+        }
         final idA = a.isNotEmpty ? a.first.studentId : 0;
         final idB = b.isNotEmpty ? b.first.studentId : 0;
         return idA.compareTo(idB);
@@ -513,9 +518,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                           item.componentName,
                         ),
                     ],
-                    declaredRows: students.values
-                        .where((row) => row.first.active)
-                        .length,
                     gradebookVersion: widget.data.book.version,
                     enabled: !locked && !busy && !conflict,
                     onApproved: widget.onReload,
@@ -612,7 +614,13 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             for (final entry in students.values.toList().asMap().entries)
               DataRow(
                 cells: [
-                  DataCell(Text('${entry.key + 1}')),
+                  DataCell(
+                    Text(
+                      entry.value.first.stt != null
+                          ? '${entry.value.first.stt}'
+                          : '—',
+                    ),
+                  ),
                   DataCell(
                     SizedBox(
                       width: 190,
@@ -681,7 +689,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'STT ${entry.key + 1} · ${entry.value.first.studentName}',
+                  'STT ${entry.value.first.stt ?? '—'} · ${entry.value.first.studentName}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 if (!entry.value.first.active) const Text('Ngừng theo học'),

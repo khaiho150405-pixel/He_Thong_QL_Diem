@@ -24,6 +24,8 @@ class GradeCellDto {
 
     required this.studentName,
 
+    required this.stt,
+
     required this.active,
 
     required this.componentId,
@@ -63,6 +65,10 @@ class GradeCellDto {
 
   @JsonKey(name: r'studentName', required: true, includeIfNull: false)
   final String studentName;
+
+  /// STT trong lớp theo thứ tự tên; null khi học sinh đã nghỉ
+  @JsonKey(name: r'stt', required: true, includeIfNull: true)
+  final num? stt;
 
   @JsonKey(name: r'active', required: true, includeIfNull: false)
   final bool active;
@@ -116,6 +122,7 @@ class GradeCellDto {
           other.id == id &&
           other.studentId == studentId &&
           other.studentName == studentName &&
+          other.stt == stt &&
           other.active == active &&
           other.componentId == componentId &&
           other.componentName == componentName &&
@@ -137,6 +144,7 @@ class GradeCellDto {
       id.hashCode +
       studentId.hashCode +
       studentName.hashCode +
+      (stt == null ? 0 : stt.hashCode) +
       active.hashCode +
       componentId.hashCode +
       componentName.hashCode +

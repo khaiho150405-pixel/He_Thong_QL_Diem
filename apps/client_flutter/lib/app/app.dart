@@ -10,6 +10,7 @@ import '../features/academic_catalog/catalog_screen.dart';
 import '../features/academic_catalog/fields.dart';
 import '../features/gradebooks/gradebook_screen.dart';
 import '../features/gradebooks/gradebooks_screen.dart';
+import '../features/recognition/review_screen.dart';
 import '../features/final_results/student_results_screen.dart';
 import '../features/final_results/classification_policy_screen.dart';
 import '../features/timetable/timetable_screen.dart';
@@ -55,6 +56,20 @@ final routerProvider = Provider.family<GoRouter, String>((
           return id == null
               ? const GradebooksScreen()
               : GradebookScreen(bookId: id);
+        },
+      ),
+      GoRoute(
+        path: '/gradebooks/:id/recognition/:ticketId',
+        builder: (_, state) {
+          final id = num.tryParse(state.pathParameters['id'] ?? '');
+          final ticketId = state.pathParameters['ticketId'] ?? '';
+          return id == null || ticketId.isEmpty
+              ? const GradebooksScreen()
+              : ReviewScreen(
+                  gradebookId: id,
+                  ticketId: ticketId,
+                  gradebookVersion: state.extra as num?,
+                );
         },
       ),
     ],

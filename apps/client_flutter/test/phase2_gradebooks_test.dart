@@ -18,6 +18,7 @@ class GradebookFakeServer implements HttpClientAdapter {
   String? lastIdempotencyKey;
   final batchKeys = <String>[];
   Map<String, dynamic>? lastBatch;
+  List<Map<String, dynamic>>? customCellItems;
 
   @override
   void close({bool force = false}) {}
@@ -61,10 +62,12 @@ class GradebookFakeServer implements HttpClientAdapter {
         options.method == 'GET') {
       body = {
         'book': book,
-        'items': [
-          _cell('9001', 101, 'An', 201, 'Miệng', firstValue),
-          _cell('9002', 101, 'An', 202, 'Giữa kỳ', '0.0'),
-        ],
+        'items':
+            customCellItems ??
+            [
+              _cell('9001', 101, 'An', 201, 'Miệng', firstValue),
+              _cell('9002', 101, 'An', 202, 'Giữa kỳ', '0.0'),
+            ],
         'nextCursor': null,
       };
     } else if (options.path.endsWith('/gradebooks/7/grades')) {
@@ -153,12 +156,15 @@ class GradebookFakeServer implements HttpClientAdapter {
     String studentName,
     int componentId,
     String componentName,
-    String? value,
-  ) => {
+    String? value, {
+    int? stt = 1,
+    bool active = true,
+  }) => {
     'id': id,
     'studentId': studentId,
     'studentName': studentName,
-    'active': true,
+    'stt': stt,
+    'active': active,
     'componentId': componentId,
     'componentName': componentName,
     'coefficient': componentId == 201 ? '1.0' : '2.0',
@@ -329,4 +335,49 @@ void main() {
     expect(find.text('Lưu thay đổi'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'grid orders students by stt from API instead of studentId or name',
+    (tester) async {
+      final server = GradebookFakeServer();
+      server.customCellItems = [
+        server._cell('9003', 100, 'An', 201, 'Miệng', '8.0', stt: 2),
+        server._cell('9001', 200, 'Vũ', 201, 'Miệng', '9.0', stt: 1),
+        server._cell(
+          '9002',
+          150,
+          'Bình',
+          201,
+          'Miệng',
+          null,
+          stt: null,
+          active: false,
+        ),
+      ];
+      final container = await pumpGradebooks(tester, server, width: 1280);
+      addTearDown(container.dispose);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.tap(find.textContaining('10A1'));
+      await tester.pumpAndSettle();
+
+      final textWidgets = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => t.data)
+          .toList();
+      final vuIndex = textWidgets.indexOf('Vũ');
+      final anIndex = textWidgets.indexOf('An');
+      final binhIndex = textWidgets.indexOf('Bình\nNgừng theo học');
+      expect(vuIndex, isNonNegative);
+      expect(anIndex, isNonNegative);
+      expect(binhIndex, isNonNegative);
+      expect(vuIndex < anIndex, isTrue);
+      expect(anIndex < binhIndex, isTrue);
+
+      expect(find.text('1'), findsWidgets);
+      expect(find.text('2'), findsWidgets);
+      expect(find.text('—'), findsWidgets);
+    },
+  );
 }

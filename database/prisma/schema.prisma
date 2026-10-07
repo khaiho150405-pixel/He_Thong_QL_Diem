@@ -180,6 +180,7 @@ model hoc_sinh {
   diem_thanh_phan_rows  diem_thanh_phan[]
   ket_qua_tong_ket_rows ket_qua_tong_ket[]
   ket_qua_dong_rows     ket_qua_dong[]
+  danh_sach_phieu_rows  danh_sach_phieu[]
 
   @@index([ma_lop])
 }
@@ -375,6 +376,7 @@ model phieu_nhan_dien {
   ma_thanh_phan_ref thanh_phan_diem     @relation(fields: [ma_thanh_phan], references: [ma_thanh_phan], onDelete: Restrict, onUpdate: Restrict)
   nguoi_tai_ref     nguoi_dung          @relation(fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
   ket_qua_dong_rows ket_qua_dong[]
+  danh_sach_rows    danh_sach_phieu[]
   outbox_row        recognition_outbox?
 
   @@index([ma_bang_diem])
@@ -420,6 +422,11 @@ model ket_qua_dong {
   thoi_diem_duyet     DateTime?        @db.Timestamptz(6)
   ma_phieu_ref        phieu_nhan_dien  @relation(fields: [ma_phieu], references: [ma_phieu], onDelete: Restrict, onUpdate: Restrict)
   ma_hoc_sinh_ref     hoc_sinh         @relation(fields: [ma_hoc_sinh], references: [ma_hoc_sinh], onDelete: Restrict, onUpdate: Restrict)
+  stt_giay            Int?
+  ho_ten_doc_duoc     String?          @db.VarChar(150)
+  do_tin_cay_ghep     Decimal?         @db.Decimal(5, 4)
+  duong_dan_anh_o_ten String?          @db.VarChar(512)
+  ghi_chu_ghep        String?          @db.VarChar(200)
   ma_diem_ref         diem_thanh_phan? @relation(fields: [ma_diem], references: [ma_diem], onDelete: Restrict, onUpdate: Restrict)
   nguoi_duyet_ref     nguoi_dung?      @relation(fields: [nguoi_duyet], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
 
@@ -428,6 +435,20 @@ model ket_qua_dong {
   @@index([ma_hoc_sinh])
   @@index([ma_diem])
   @@index([nguoi_duyet])
+}
+
+// Technical table, not part of the sixteen business tables. Append-only roster snapshot (ADR-0015).
+model danh_sach_phieu {
+  ma_phieu        BigInt
+  stt             Int
+  ma_hoc_sinh     Int
+  ho_ten          String          @db.VarChar(100)
+  ma_phieu_ref    phieu_nhan_dien @relation(fields: [ma_phieu], references: [ma_phieu], onDelete: Restrict, onUpdate: Restrict)
+  ma_hoc_sinh_ref hoc_sinh        @relation(fields: [ma_hoc_sinh], references: [ma_hoc_sinh], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([ma_phieu, stt])
+  @@unique([ma_phieu, ma_hoc_sinh])
+  @@index([ma_hoc_sinh])
 }
 
 model tu_dien_diem_chu {

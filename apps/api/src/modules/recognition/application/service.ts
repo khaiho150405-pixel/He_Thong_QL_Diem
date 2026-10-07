@@ -20,7 +20,6 @@ export interface RecognitionUpload {
   bytes: Uint8Array;
   claimedType: string;
   componentId: unknown;
-  declaredRows: unknown;
 }
 
 function positiveInt(value: unknown): number {
@@ -63,19 +62,34 @@ export class RecognitionService {
       this.storage.signedGetUrl(ticket.sourceObjectKey, expiresInSeconds),
       Promise.all(
         ticket.rows.map(async (row) => {
-          const [numericCropUrl, writtenCropUrl] = await Promise.all([
-            row.numericCropKey
-              ? this.storage.signedGetUrl(row.numericCropKey, expiresInSeconds)
-              : Promise.resolve(null),
-            row.writtenCropKey
-              ? this.storage.signedGetUrl(row.writtenCropKey, expiresInSeconds)
-              : Promise.resolve(null),
-          ]);
+          const [numericCropUrl, writtenCropUrl, nameCropUrl] =
+            await Promise.all([
+              row.numericCropKey
+                ? this.storage.signedGetUrl(
+                    row.numericCropKey,
+                    expiresInSeconds,
+                  )
+                : Promise.resolve(null),
+              row.writtenCropKey
+                ? this.storage.signedGetUrl(
+                    row.writtenCropKey,
+                    expiresInSeconds,
+                  )
+                : Promise.resolve(null),
+              row.nameCropKey
+                ? this.storage.signedGetUrl(row.nameCropKey, expiresInSeconds)
+                : Promise.resolve(null),
+            ]);
           return {
             rowId: row.rowId,
             order: row.order,
+            stt: row.stt,
+            sttOnPaper: row.sttOnPaper,
             studentId: row.studentId,
             studentName: row.studentName,
+            nameRead: row.nameRead,
+            matchConfidence: row.matchConfidence,
+            matchNote: row.matchNote,
             numericRaw: row.numericRaw,
             numericValue: row.numericValue,
             numericConfidence: row.numericConfidence,
@@ -87,6 +101,7 @@ export class RecognitionService {
             finalValue: row.finalValue,
             numericCropUrl,
             writtenCropUrl,
+            nameCropUrl,
           };
         }),
       ),
@@ -103,6 +118,9 @@ export class RecognitionService {
       modelVersion: ticket.modelVersion,
       version: ticket.version,
       createdAt: ticket.createdAt,
+      greenRows: ticket.greenRows,
+      yellowRows: ticket.yellowRows,
+      redRows: ticket.redRows,
       sourceImageUrl,
       imageUrlExpiresInSeconds: expiresInSeconds,
       rows,
@@ -117,7 +135,6 @@ export class RecognitionService {
   ): Promise<RecognitionReceipt> {
     const gradebookId = positiveInt(gradebookIdInput);
     const componentId = positiveInt(upload.componentId);
-    const declaredRows = positiveInt(upload.declaredRows);
     if (
       typeof idempotencyKey !== "string" ||
       !/^[a-zA-Z0-9_-]{1,64}$/.test(idempotencyKey)
@@ -127,9 +144,7 @@ export class RecognitionService {
     await this.store.authorizeUpload(actor, gradebookId, componentId);
     const checksum = createHash("sha256").update(upload.bytes).digest("hex");
     const requestHash = createHash("sha256")
-      .update(
-        JSON.stringify({ gradebookId, componentId, declaredRows, checksum }),
-      )
+      .update(JSON.stringify({ gradebookId, componentId, checksum }))
       .digest("hex");
     const objectKey = `recognition/original/${randomUUID()}.${image.extension}`;
     await this.storage.put({
@@ -143,7 +158,6 @@ export class RecognitionService {
         actor,
         gradebookId,
         componentId,
-        declaredRows,
         checksum,
         objectKey,
         idempotencyKey,

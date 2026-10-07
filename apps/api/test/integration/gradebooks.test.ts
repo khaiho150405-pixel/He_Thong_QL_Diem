@@ -144,6 +144,15 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
       ),
     );
     assert.ok(cells.every((c) => ["1.00", "2.00"].includes(c.coefficient)));
+    // STT follows the shared name order, not ma_hoc_sinh: given names "1","10".."19","2","20".."26","3".."9".
+    const sttByName = new Map(cells.map((c) => [c.studentName, c.stt]));
+    assert.equal(new Set(cells.map((c) => c.stt)).size, 26);
+    assert.deepEqual(
+      ["1", "10", "19", "2", "26", "3", "9"].map((n) =>
+        sttByName.get(`Học sinh giả ${n}`),
+      ),
+      [1, 2, 11, 12, 19, 20, 26],
+    );
     assert.doesNotThrow(() => JSON.stringify(first));
     assert.equal((await service.cells(admin, created.id)).items.length, 50);
     await assert.rejects(
@@ -197,6 +206,7 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
     const retained = (await service.cells(teacher, created.id)).items[0]!;
     assert.equal(retained.value, "0.0");
     assert.equal(retained.active, false);
+    assert.equal(retained.stt, null);
     assert.equal(await auditCount(created.id), 1);
 
     const rolledBack = await makeSubject("rollback");

@@ -107,7 +107,7 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       )
     ).rows[0].ma_lop;
     await owner.query(
-      "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,'HS OCR 1','2010-01-01'),($1,'HS OCR 2','2010-01-01')",
+      "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,'Trần Văn Bình','2010-01-01'),($1,'Lê Thị An','2010-01-01')",
       [cls],
     );
     const subject = (
@@ -135,11 +135,9 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       bytes: png(randomBytes(8)),
       claimedType: "image/png",
       componentId: String(component),
-      declaredRows: "2",
     };
     const form = new FormData();
     form.set("componentId", String(component));
-    form.set("declaredRows", "2");
     const imageBytes = input.bytes;
     form.set(
       "image",
@@ -184,15 +182,50 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       (error: { getStatus?: () => number }) => error.getStatus?.() === 409,
     );
     assert.equal(objects.size, 1);
-    await assert.rejects(
-      recognition.upload(teacher, book.id, "wrong-rows", {
-        ...input,
-        bytes: png(randomBytes(8)),
-        declaredRows: "3",
-      }),
-      (error: { getStatus?: () => number }) => error.getStatus?.() === 409,
+    // Client cũ vẫn gửi declaredRows (sai sĩ số): bị bỏ qua, replay cùng khóa trả lại phiếu cũ.
+    const legacyForm = new FormData();
+    legacyForm.set("componentId", String(component));
+    legacyForm.set("declaredRows", "3");
+    legacyForm.set(
+      "image",
+      new Blob([imageBytes.buffer as ArrayBuffer], { type: "image/png" }),
+      "grades.png",
     );
+    const legacy = await fetch(
+      `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets`,
+      {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${teacher.token}`,
+          "x-idempotency-key": "upload-one",
+        },
+        body: legacyForm,
+      },
+    );
+    assert.equal(legacy.status, 202);
+    assert.deepEqual(await legacy.json(), receipt);
     assert.equal(objects.size, 1);
+    // Snapshot theo STT: Lê Thị An (mã lớn hơn) là STT 1, Trần Văn Bình là STT 2.
+    const roster = await owner.query(
+      "SELECT d.stt,h.ho_ten FROM danh_sach_phieu d JOIN hoc_sinh h USING(ma_hoc_sinh) WHERE d.ma_phieu=$1 ORDER BY d.stt",
+      [receipt.ticketId],
+    );
+    assert.deepEqual(
+      roster.rows.map((r) => [r.stt, r.ho_ten]),
+      [
+        [1, "Lê Thị An"],
+        [2, "Trần Văn Bình"],
+      ],
+    );
+    assert.equal(
+      (
+        await owner.query(
+          "SELECT so_dong_khai_bao FROM phieu_nhan_dien WHERE ma_phieu=$1",
+          [receipt.ticketId],
+        )
+      ).rows[0].so_dong_khai_bao,
+      2,
+    );
     await assert.rejects(
       recognition.upload(intruder, book.id, "intruder", {
         ...input,
@@ -227,24 +260,37 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       storage,
       {
         recognize: async () => ({
-          detectedRows: 2,
           modelVersion: "fake-dev-v1",
-          rows: [1, 2].map((order) => ({
-            order,
+          pageStartStt: 1,
+          rows: [1, 2].map((rowIndex) => ({
+            rowIndex,
+            struck: false,
+            stt: {
+              raw: String(rowIndex),
+              value: rowIndex,
+              confidence: "0.97",
+              isBlank: false,
+            },
+            name: {
+              raw: rowIndex === 1 ? "Lê Thị An" : "Trần Văn Bình",
+              confidence: "0.90",
+              isBlank: false,
+            },
             numeric: {
-              rawOutput: order === 1 ? "0.0" : "8.0",
-              value: order === 1 ? "0.0" : "8.0",
+              rawOutput: rowIndex === 1 ? "0.0" : "8.0",
+              value: rowIndex === 1 ? "0.0" : "8.0",
               confidence: "0.95",
               isBlank: false,
             },
             written: {
-              rawOutput: order === 1 ? "không" : "tám",
-              value: order === 1 ? "0.0" : "8.0",
+              rawOutput: rowIndex === 1 ? "không" : "tám",
+              value: rowIndex === 1 ? "0.0" : "8.0",
               confidence: "0.93",
               isBlank: false,
             },
             numericCropBase64: pixel,
             writtenCropBase64: pixel,
+            nameCropBase64: pixel,
             comparison: "KHOP" as const,
             reviewLevel: "XANH" as const,
           })),
@@ -278,9 +324,24 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     const tickets = (await ticketsResponse.json()) as Array<{
       ticketId: string;
       status: string;
+      detectedRows: number | null;
+      errorCode: string | null;
+      greenRows: number;
+      yellowRows: number;
+      redRows: number;
     }>;
     assert.equal(tickets[0]?.ticketId, receipt.ticketId);
     assert.equal(tickets[0]?.status, "CHO_DOI_CHIEU");
+    assert.deepEqual(
+      [
+        tickets[0]?.detectedRows,
+        tickets[0]?.errorCode,
+        tickets[0]?.greenRows,
+        tickets[0]?.yellowRows,
+        tickets[0]?.redRows,
+      ],
+      [2, null, 2, 0, 0],
+    );
 
     const detailResponse = await fetch(
       `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets/${receipt.ticketId}`,
@@ -305,7 +366,61 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     );
     assert.equal("sourceObjectKey" in detail, false);
     assert.equal("numericCropKey" in detail.rows[0]!, false);
+    assert.equal("nameCropKey" in detail.rows[0]!, false);
+    // Thông tin ghép học sinh (ADR-0015): sắp theo STT hệ thống, tên theo danh sách lớp đã chốt.
+    assert.deepEqual(
+      detail.rows.map((row) => [row.stt, row.sttOnPaper, row.studentName]),
+      [
+        [1, 1, "Lê Thị An"],
+        [2, 2, "Trần Văn Bình"],
+      ],
+    );
+    assert.deepEqual(
+      detail.rows.map((row) => [row.nameRead, row.matchNote]),
+      [
+        ["Lê Thị An", "Khớp họ tên và STT."],
+        ["Trần Văn Bình", "Khớp họ tên và STT."],
+      ],
+    );
+    assert.equal(detail.rows[0]?.matchConfidence, "1.0000");
+    assert.equal(
+      detail.rows[0]?.nameCropUrl,
+      `https://storage.test/recognition/crops/${receipt.ticketId}/1-name.png`,
+    );
+    assert.deepEqual(
+      [detail.greenRows, detail.yellowRows, detail.redRows],
+      [2, 0, 0],
+    );
 
+    // IDOR: giáo viên không được phân công và học sinh đều bị chặn ở cả danh sách lẫn chi tiết.
+    const studentToken = randomBytes(32).toString("hex");
+    const studentUser = (
+      await owner.query(
+        "INSERT INTO nguoi_dung(ten_dang_nhap,mat_khau_ma_hoa,vai_tro) VALUES($1,'test-only','HOC_SINH') RETURNING ma_nguoi_dung",
+        ["recognition_student_" + suffix],
+      )
+    ).rows[0].ma_nguoi_dung;
+    await owner.query(
+      "INSERT INTO phien_lam_viec VALUES($1,$2,$3,now()+interval '1 hour',now())",
+      [
+        createHash("sha256").update(studentToken).digest("hex"),
+        studentUser,
+        randomBytes(32).toString("hex"),
+      ],
+    );
+    for (const token of [intruder.token, studentToken]) {
+      for (const path of ["", `/${receipt.ticketId}`]) {
+        const response = await fetch(
+          `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets${path}`,
+          { headers: { authorization: `Bearer ${token}` } },
+        );
+        assert.equal(
+          response.status,
+          403,
+          `${token === studentToken ? "student" : "intruder"} ${path}`,
+        );
+      }
+    }
     const denied = await fetch(
       `${baseUrl}/api/v1/gradebooks/${book.id}/recognition-tickets/${receipt.ticketId}`,
       { headers: { authorization: `Bearer ${intruder.token}` } },
@@ -429,7 +544,8 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     assert.deepEqual(committed.rows[0], {
       status: "DA_DUYET",
       approved_rows: "2",
-      grades: "0.0,7.5",
+      // Sắp theo mã học sinh: Trần Văn Bình (mã nhỏ, STT 2) nhận 7.5; Lê Thị An (STT 1) nhận 0.0 → "7.5,0.0".
+      grades: "7.5,0.0",
       official: "2",
       history: "2",
       audits: "1",

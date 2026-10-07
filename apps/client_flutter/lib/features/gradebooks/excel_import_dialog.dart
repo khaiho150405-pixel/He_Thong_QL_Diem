@@ -5,8 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/vietnamese_sort.dart';
-
 class ExcelImportDialog extends StatefulWidget {
   const ExcelImportDialog({
     super.key,
@@ -60,20 +58,32 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
       }
       sheet.appendRow(headers);
 
-      // Data rows (sorted by Vietnamese name)
+      // Data rows (sorted by STT from API, stt null at end, tie-break by studentId)
       final sortedStudents = widget.students.values.toList()
         ..sort((a, b) {
-          final nameA = a.isNotEmpty ? a.first.studentName : '';
-          final nameB = b.isNotEmpty ? b.first.studentName : '';
-          return VietnameseCollation.compareStudentNames(nameA, nameB);
+          final sttA = a.isNotEmpty ? a.first.stt : null;
+          final sttB = b.isNotEmpty ? b.first.stt : null;
+          if (sttA != null && sttB != null) {
+            final cmp = sttA.compareTo(sttB);
+            if (cmp != 0) return cmp;
+          } else if (sttA != null && sttB == null) {
+            return -1;
+          } else if (sttA == null && sttB != null) {
+            return 1;
+          }
+          final idA = a.isNotEmpty ? a.first.studentId : 0;
+          final idB = b.isNotEmpty ? b.first.studentId : 0;
+          return idA.compareTo(idB);
         });
 
-      var stt = 1;
       for (final studentRow in sortedStudents) {
         if (studentRow.isEmpty) continue;
         final student = studentRow.first;
+        final CellValue sttValue = student.stt != null
+            ? IntCellValue(student.stt!.toInt())
+            : TextCellValue('—');
         final rowValues = <CellValue>[
-          IntCellValue(stt++),
+          sttValue,
           IntCellValue(student.studentId.toInt()),
           TextCellValue(student.studentName),
         ];

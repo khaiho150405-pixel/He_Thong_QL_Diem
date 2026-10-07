@@ -49,6 +49,12 @@ export class GradeCellDto {
   @ApiProperty({ type: String }) id!: string;
   @ApiProperty({ type: Number }) studentId!: number;
   @ApiProperty({ type: String }) studentName!: string;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: "STT trong lớp theo thứ tự tên; null khi học sinh đã nghỉ",
+  })
+  stt!: number | null;
   @ApiProperty({ type: Boolean }) active!: boolean;
   @ApiProperty({ type: Number }) componentId!: number;
   @ApiProperty({ type: String }) componentName!: string;

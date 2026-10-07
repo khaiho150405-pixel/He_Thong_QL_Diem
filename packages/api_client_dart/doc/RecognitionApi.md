@@ -128,7 +128,7 @@ final String xIdempotencyKey = xIdempotencyKey_example; // String |
 final num gradebookId = 8.14; // num |
 final MultipartFile image = BINARY_DATA_HERE; // MultipartFile |
 final int componentId = 56; // int |
-final int declaredRows = 56; // int |
+final int declaredRows = 56; // int | Deprecated và bị bỏ qua: hệ thống tự chốt danh sách lớp khi tạo phiếu (ADR-0015).
 
 try {
     final response = api.recognitionUpload(xIdempotencyKey, gradebookId, image, componentId, declaredRows);
@@ -146,7 +146,7 @@ Name | Type | Description  | Notes
  **gradebookId** | **num**|  |
  **image** | **MultipartFile**|  |
  **componentId** | **int**|  |
- **declaredRows** | **int**|  |
+ **declaredRows** | **int**| Deprecated và bị bỏ qua: hệ thống tự chốt danh sách lớp khi tạo phiếu (ADR-0015). | [optional]
 
 ### Return type
 

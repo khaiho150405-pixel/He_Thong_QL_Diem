@@ -2,7 +2,243 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
-## 2026-10-04 — Bộ lọc thời khóa biểu và bàn giao GitHub (mới nhất)
+## Giai đoạn 7 — Phần B Frontend: nhật ký từng bước (mới nhất ở đầu)
+
+Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md` (FE-01 → FE-05 đã hoàn tất 100%).
+
+### FE-05 — Hiển thị thông tin ghép học sinh (xong)
+
+- File: `apps/client_flutter/lib/features/recognition/review_screen.dart`, `apps/client_flutter/test/recognition_review_screen_test.dart` (mới, 7 test), `docs/ux/recognition-capture.md`.
+- Giao diện đối chiếu hiển thị đầy đủ thông tin từng dòng:
+  - STT hệ thống, tên học sinh được gán từ snapshot.
+  - Tên máy đọc (`nameRead`), độ tin cậy ghép (`matchConfidence`) và ghi chú ghép (`matchNote` hiển thị cảnh báo đỏ khi mức Đỏ).
+  - Hộp ảnh cắt ô họ tên trên giấy (`nameCropUrl`) với hỗ trợ chạm xem phóng to qua dialog `showRecognitionImage()`, hiển thị placeholder `"Không có ảnh họ tên"` khi null.
+  - Ảnh cắt ô Điểm số (`numericCropUrl`) và Điểm chữ (`writtenCropUrl`), giá trị nhận dạng hai kênh và độ tin cậy.
+  - Phân loại màu Xanh / Vàng / Đỏ (gộp từ mức điểm và mức ghép) với badge màu rõ ràng, bộ lọc 4 chế độ (Tất cả, Đỏ, Vàng, Xanh) và tự động sắp xếp ưu tiên dòng Đỏ -> Vàng -> Xanh -> STT để giáo viên xử lý dòng rủi ro cao trước.
+  - **Bất biến:** Dòng Đỏ tuyệt đối không tự điền giá trị đề xuất (ô nhập để trống); giáo viên bắt buộc phải duyệt xem mọi dòng (checkbox xác nhận) trước khi bấm nút Duyệt nguyên tử.
+- Kiểm tra: Responsive layout đạt chuẩn Material 3 trên các kích thước 320px, 390px, 1280px với text scale 1.3x không bị tràn màn hình (A11y & responsive verified). Test bao phủ đầy đủ luồng đối chiếu và hiển thị ảnh họ tên.
+
+### FE-04 — Tự chuyển sang màn hình kiểm tra (xong)
+
+- File: `apps/client_flutter/lib/features/recognition/recognition_panel.dart`, `apps/client_flutter/test/recognition_review_screen_test.dart`.
+- Hành vi mới:
+  - Khi giáo viên tải ảnh lên thành công, `RecognitionPanel` lưu lại `_uploadedTicketId`.
+  - Cơ chế polling 3 giây theo dõi trạng thái phiếu. Khi phiếu vừa tải đạt trạng thái `CHO_DOI_CHIEU` và người dùng vẫn đang ở trên màn hình bảng điểm (`ModalRoute.of(context)?.isCurrent == true`), ứng dụng tự động điều hướng sang `/gradebooks/:id/recognition/:ticketId` bằng `context.push`.
+  - Nếu người dùng đã điều hướng rời khỏi màn hình trước khi polling xong, cờ tự động chuyển bị hủy để tránh làm gián đoạn trải nghiệm.
+  - Khi phiếu rơi vào trạng thái `LOI`: hiển thị thông báo lỗi thân thiện được ánh xạ từ `errorCode` (sử dụng `recognitionFailureMessage`) và cung cấp nút thao tác "Chụp lại" / "Chọn ảnh khác".
+
+### FE-03 — Màn hình kiểm tra riêng (route mới) (xong)
+
+- File: `apps/client_flutter/lib/features/recognition/review_screen.dart` (mới), `apps/client_flutter/lib/app/app.dart`, `apps/client_flutter/lib/features/recognition/recognition_panel.dart` (xóa `_RecognitionDetailDialog` cũ).
+- Hành vi mới:
+  - Tạo route mới `/gradebooks/:id/recognition/:ticketId` trong `app.dart`. Quyền truy cập được bảo vệ bởi route guard: vai trò `HOC_SINH` tự động bị redirect về `/` (chống truy cập trái phép).
+  - `ReviewScreen` kế thừa `AppScaffold` đầy đủ, thanh công cụ chuẩn 48px với `AppFilterDropdown` lọc màu và `AppActionButton` duyệt kết quả.
+  - Chuyển toàn bộ logic đối chiếu, duyệt giao dịch nguyên tử (phiên bản bảng điểm, phiên bản phiếu, optimistic locking, `idempotencyKey`), cơ chế làm mới signed URL khi hết hạn (300s) mà không làm mất dữ liệu người dùng đang nhập dở.
+  - Danh sách phiếu trong `RecognitionPanel` nay chuyển sang mở `ReviewScreen` qua GoRouter `context.push` (có fallback an toàn trong môi trường test). Duyệt xong tự động pop và kích hoạt callback tải lại bảng điểm.
+
+### FE-02 — Khối nhận dạng: bỏ số dòng khai báo (xong)
+
+- File: `apps/client_flutter/lib/features/recognition/repository.dart`, `apps/client_flutter/lib/features/recognition/recognition_panel.dart`, `apps/client_flutter/lib/features/recognition/image_preview.dart`, `apps/client_flutter/test/recognition_upload_ux_test.dart`, `apps/client_flutter/test/phase3_recognition_test.dart`.
+- Hành vi mới:
+  - Bỏ hoàn toàn tham số `declaredRows` khỏi phương thức `upload()` và hàm tính `idempotencyKey` của repository.
+  - Loại bỏ giao diện nhập số dòng khai báo và điều kiện chặn upload khi `declaredRows < 1`.
+  - Cập nhật văn bản hướng dẫn: _"Chụp thẳng toàn bộ bảng, đủ sáng, rõ các cột Họ tên, Điểm số, Điểm chữ. PNG hoặc JPEG, tối đa 10 MB. Hệ thống tự xác định học sinh theo họ tên."_
+  - Thẻ phiếu trong danh sách: khi ở trạng thái `CHO_DOI_CHIEU`, hiển thị tóm tắt: _"Chờ đối chiếu · N dòng · X Xanh · Y Vàng · Z Đỏ"_ (sử dụng `detectedRows`, `greenRows`, `yellowRows`, `redRows`).
+  - Cập nhật `recognitionFailureMessage`: bổ sung đầy đủ các mã lỗi mới từ pipeline nhận dạng (`ROW_MATCH_FAILED`, `IMAGE_UNREADABLE`, `IMAGE_QUALITY_LOW`, `GRID_NOT_FOUND`, `NOT_A_GRADEBOOK`, `SCORE_COLUMN_NOT_FOUND`, `GRADE_DEADLINE_EXPIRED`, `RECOGNITION_TIMEOUT`, `RECOGNITION_SERVICE_ERROR`, v.v.).
+
+### FE-01 — Lưới điểm dùng STT từ API (xong)
+
+- File: `apps/client_flutter/lib/features/gradebooks/gradebook_screen.dart`, `apps/client_flutter/lib/features/gradebooks/excel_import_dialog.dart`, `apps/client_flutter/test/phase2_gradebooks_test.dart`, các file fixture test liên quan.
+- Hành vi mới:
+  - Bỏ logic tự sắp xếp học sinh bằng `VietnameseCollation` ở phía client trên bảng điểm; hiển thị theo `stt` trả về từ API trong `GradeCellDto` (học sinh nghỉ học có `stt == null` xếp ở cuối, giữ thứ tự ổn định theo `studentId`).
+  - Cột STT trên desktop và nhãn "STT n · tên" trên mobile hiển thị trực tiếp giá trị `stt` từ API (hiển thị `—` khi null).
+  - Mẫu Excel trong `excel_import_dialog.dart` điền cột STT từ thuộc tính `student.stt`.
+  - Cập nhật toàn bộ fixture JSON test trong Flutter bổ sung trường `"stt"`.
+
+- Kiểm tra tổng hợp Frontend:
+  - `dart run melos run check`: đạt 100% (72/72 tests passed, analyze sạch 0 issues, format chuẩn).
+  - `flutter build web --dart-define-from-file=config/development.json`: build thành công ra thư mục `build/web`.
+
+## Giai đoạn 7 — Phần A Backend: nhật ký từng bước (mới nhất ở đầu)
+
+Nhánh `codex/recognition-row-matching` (tạo từ nhánh `dang` ở BE-00). Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md`. Không sửa `apps/client_flutter`; chỗ Flutter cần xử lý ghi dưới mục "Việc cho FE".
+
+### BE-19 — Phân loại hai kênh và nối mô hình thật (xong)
+
+- File (apps/recognition-service): `src/domain/classification.py` + `src/domain/__init__.py` (ngưỡng riêng từng kênh, `thresholds_from_env`), `src/adapters/model.py` (`WeightsRecognitionModel`, `weights_model`, `configured_model` nhánh `weights`), `src/api/main.py` (ngưỡng từ env, suy luận chạy trong threadpool, 422), tests `test_classification.py` (+5), `test_weights_model.py` (mới, 20); apps/api: `recognition/application/port.ts` (`PIPELINE_ERROR_CODES`, `isPipelineErrorCode`), `infrastructure/http-model.ts` (422 → mã ổn định), `application/worker.ts` (mã pipeline → `LOI`, không retry), `test/recognition-worker.test.ts` (+3); `.env.example`, `README.md`, `docs/development/recognition-checkpoints.md`, `docs/adr/0015-recognition-row-matching.md`, `apps/recognition-service/src/adapters/vietocr_vgg_seq2seq.yml` (prettier, nội dung YAML không đổi).
+- Phân loại: `RECOGNITION_NUMERIC_THRESHOLD` (0.95) và `RECOGNITION_WRITTEN_THRESHOLD` (0.90), bao gồm đúng ngưỡng; ngưỡng chung `green_confidence` còn dùng để tương thích. Không có nhánh trọng tài chọn giá trị: lệch nhau, cùng yếu, một kênh đều chỉ là Vàng; chỉ khi cả hai kênh không đọc được mới Đỏ, không gợi ý giá trị. Ngưỡng sai (ngoài 0..1, không phải số) → 503 `MODEL_UNAVAILABLE`, không crash. `RECOGNITION_GREEN_THRESHOLD` không còn dùng (đã bỏ khỏi `.env.example`).
+- `WeightsRecognitionModel` = `analyze_page` + CRNN (Đ.số, STT) + VietOCR (Điểm chữ, Họ tên) + `written_grade` + phân loại, trả contract mới (`rowIndex`, `struck`, `stt`, `name`, hai kênh, ba ảnh ô PNG, `pageStartStt`). Dòng gạch và ô không mực không chạy mô hình (kênh trống); ô có mực mà đọc không ra điểm hợp lệ là "không đọc được" chứ không bị ép thành giá trị; điểm chữ chỉ được nắn từ điển khi cách cụm hợp lệ ≤ 2 ký tự. `modelVersion` = `crnn-dot5+vietocr-tang4:<12 ký tự đầu của SHA-256(hash CRNN + hash VietOCR)>` (kiểm đúng định dạng bằng test). `configured_model` đọc `RECOGNITION_CRNN_WEIGHTS`/`_SHA256`, `RECOGNITION_VIETOCR_WEIGHTS`/`_SHA256` (+ `RECOGNITION_DEVICE` = cpu|cuda); thiếu/sai hash/sai tệp/mode lạ → `ModelUnavailableError` → 503; nạp một lần cho mỗi cấu hình (bộ nhớ đệm có khóa). Fake vẫn chỉ ở development/test.
+- Lỗi pipeline → HTTP 422 `{"detail": {"code", "message"}}` với `IMAGE_UNREADABLE | IMAGE_QUALITY_LOW | GRID_NOT_FOUND | NOT_A_GRADEBOOK | SCORE_COLUMN_NOT_FOUND`; ảnh rỗng/quá 10 MB cũng 422 `IMAGE_UNREADABLE`; API (`http-model.ts`) giữ nguyên mã, worker đánh dấu phiếu `LOI` đúng mã và kết thúc job thành công (không retry); lỗi hạ tầng (`MODEL_UNAVAILABLE`, timeout, 5xx) vẫn ném lại cho hàng đợi thử lại; body 422 lạ (vd lỗi validation của FastAPI) → `RECOGNITION_SERVICE_ERROR`.
+- Thử local end-to-end với trọng số thật (venv có vietocr; dữ liệu huấn luyện nên chỉ để kiểm tra đường chạy, không phải đánh giá độc lập), 16 ảnh P03–P04 S03–S04 (p1+p2, phone+scan): ~3,9–4,2 s/ảnh trên CPU (chậm nhất 7,1 s); 304 dòng không gạch: 304 dòng hai kênh KHỚP; điểm số 288/288 đúng nhãn manifest, **không dòng Xanh nào sai**; 161 Xanh / 143 Vàng — toàn bộ Vàng do độ tin cậy dưới ngưỡng (40 dòng điểm số < 0.95, 121 dòng điểm chữ < 0.90: thang prob của VietOCR thấp hơn ngưỡng khởi điểm) → cần dò ngưỡng ở BE-22. **Cần lưu ý cho BE-20/21:** CRNN (huấn luyện trên chữ số viết tay, ký tự `.0-9`) đọc cột STT in sẵn kém — chỉ 71 ô trang 1 đọc ra số nguyên hợp lệ và trong đó chỉ 16 khớp vị trí dòng — nên việc ghép dòng hiện phải dựa chủ yếu vào họ tên; nên đánh giá đọc STT bằng VietOCR hoặc dùng STT chỉ như bằng chứng phụ. Tên đọc được ở 48/48 ô thử nhưng độ chính xác ghép tên với danh sách lớp chưa kiểm (chưa có danh sách lớp thật).
+- Kiểm tra: `pnpm check` đạt (78 unit/HTTP), `pnpm test:db` đạt, `pnpm test:integration` 17/17 đạt, `pnpm contracts:check` exit 0 (OpenAPI không đổi); Python `py -3.12 -m unittest discover -s tests` (apps/recognition-service) 142 test đạt, 7 bỏ qua (cần vietocr/trọng số thật); trong venv có vietocr + trọng số thật 142/142 đạt, không bỏ qua.
+- Dừng sau BE-19 theo phạm vi: BE-20 → BE-22 cần Phần B (FE) hoàn tất và ảnh bảng điểm cấp 3 thật.
+
+### BE-18 — Adapter VietOCR và đổi chữ thành số (xong)
+
+- File (apps/recognition-service): `src/adapters/vietocr_reader.py`, `src/adapters/vietocr_vgg_seq2seq.yml` (sao chép nguyên văn, cấu hình không phải trọng số), `src/domain/written_grade.py` (sinh bằng script cục bộ từ `hop_nhat.py` + `cau_hinh_hop_nhat.json`), `tests/test_written_grade.py` (9), `tests/test_vietocr_reader.py` (12), `pyproject.toml` (+`einops`, `pillow`, `pyyaml`; `vietocr==0.3.13` ghim trong extra `vietocr` kèm ghi chú phải cài `pip install --no-deps`).
+- `vietocr_reader.py`: cấu hình đúng lúc fine-tune (image_height 32, min 32, max 384, `beamsearch` False, `cnn.pretrained` False); `weights`/`pretrain` URL của vocr.vn trong yml bị ghi đè/loại và có kiểm tra không còn URL nào (cấu hình giữ URL → `ModelUnavailableError`). Không dùng `Predictor` của vietocr (nạp trọng số bằng `torch.load` mặc định và có đường tải URL): dựng `build_model`, nạp state dict bằng `weights_only=True`, kiểm SHA-256 trước khi nạp, mọi lỗi (thiếu gói, sai hash, pickle, sai kiến trúc) → `ModelUnavailableError`, không hạ sang pickle tùy ý. `read_cells(images)` → `[(text NFC đã strip, prob)]`, gom lô theo bề rộng như `predict_batch` gốc; dùng cho ô Điểm chữ và Họ tên.
+- `written_grade.py`: `so_tu_chuoi_so`, `so_tu_chuoi_chu`, `dinh_dang_diem`, `khoang_cach_sua`, `hau_xu_ly_tu_dien` giữ nguyên bản gốc + từ điển 133 cụm (`TU_DIEN`) + `grade_decimal`. **Thêm `nan_diem_chu`**: bản gốc luôn nắn về cụm gần nhất kể cả khi chuỗi đọc ra là rác, nên nhiễu trở thành một điểm chữ hợp lệ trông chắc chắn; `nan_diem_chu` chỉ nắn khi cách cụm hợp lệ ≤ 2 ký tự sửa, ngoài ra giữ nguyên (không giải ra điểm → kênh chữ coi là không đọc được; bảo vệ bất biến "Đỏ không gợi ý giá trị"). Không mang sang `hop_nhat_mot_o`/trọng tài hiệu chuẩn nhiệt độ (có test).
+- Thử local với `vietocr_best_tang4.pth`: SHA-256 **`32999513a94f822f4ba4c302749a8d97be0e065631cedceacc0134327f9a73c9`**, nạp trong ~6 s bằng `weights_only=True` (state dict thuần). Đọc 280 ô điểm chữ do pipeline cắt từ 8 ảnh trang 1: 277/280 khớp nhãn trong `manifest_tong.csv` (ảnh thuộc dữ liệu huấn luyện, không phải ước lượng độc lập), 48/48 ô họ tên đọc ra chuỗi không rỗng; ~0,1 s/ô trên CPU.
+- Môi trường: `vietocr` chưa có trong Python 3.12 của máy nên tôi dựng venv cô lập trong thư mục tạm của phiên (`--system-site-packages`, `pip install --no-deps vietocr==0.3.13 einops`; không đụng môi trường toàn cục, không tải mô hình). Trong môi trường toàn cục các test phụ thuộc vietocr tự bỏ qua (có skip) để CI/máy thiếu gói không gãy.
+- Kiểm tra: `py -3.12 -m unittest discover -s tests` (apps/recognition-service) → 117 test đạt, 6 bỏ qua (cần vietocr/trọng số thật); trong venv có vietocr + trọng số thật (`RECOGNITION_VIETOCR_WEIGHTS`) toàn bộ `test_vietocr_reader.py` đạt (12/12, không bỏ qua).
+
+### BE-17 — Adapter CRNN (xong)
+
+- File (apps/recognition-service): `src/adapters/crnn.py` (mới), `src/adapters/errors.py` (mới: `ModelUnavailableError` dùng chung, `model.py` import lại), `tests/test_crnn.py` (14 test), `pyproject.toml` (+`torch>=2.4,<3`, `torchvision>=0.19,<1`).
+- `crnn.py` ← `ket_hop/suy_luan_hai_mo_hinh.py`: kiến trúc `CRNN` sao chép nguyên vẹn (CHARSET `['.','0'..'9']`, blank 0), tiền xử lý xám 32×128 pad trắng ở giữa, chuẩn hóa `(x/255-0.5)/0.5`, giải mã CTC greedy với `conf_mean` (cộng `conf_min`, `conf_path` để hiệu chỉnh ở BE-22). `CrnnReader.load(path, expected_sha256)`: kiểm SHA-256 trước khi nạp (sai/thiếu → `ModelUnavailableError`), nạp bằng `torch.load(..., weights_only=True)`; không nạp được thì `ModelUnavailableError`, không hạ sang chế độ pickle tùy ý (có test với tệp pickle chứa `__reduce__` và test kiểm mã nguồn). `read_cells(images)` theo lô cho ô Đ.số; `read_stt(images)` chỉ chấp nhận số nguyên 1–500 (không dấu chấm), còn lại `value=None`, `confidence=0`.
+- Test: tiền xử lý (hình dạng, miền giá trị, pad, ảnh rỗng, xám = màu), giải mã CTC (gộp lặp/blank, cùng chữ số hai lần cần blank, toàn blank), nạp (sai hash, thiếu hash/tệp, pickle độc hại, checkpoint sai kiến trúc), đọc lô đúng thứ tự (khối ngẫu nhiên từ seed), STT; test nạp trọng số thật chỉ chạy khi có `RECOGNITION_CRNN_WEIGHTS` (CI bỏ qua).
+- Thử local với `D:\HocTap\KhoaLuan\App\weights\crnn_num_best_dot5.pth`: SHA-256 **`6ca4044d1b7a7c9a51e1b641eade1880461d0d85e5eb4fbf035e827f1afbef91`**; nạp được bằng `weights_only=True` (cảnh báo giao thức pickle 4 của torch, vô hại). Đọc 424 ô điểm số do pipeline tự cắt từ 12 ảnh trang 1 (phone + scan, P01–P04, S01–S03) so với nhãn trong `manifest_tong.csv`: 424/424 đúng chuỗi, độ tin cậy trung bình 0.98 — lưu ý các ảnh này nằm trong dữ liệu huấn luyện nên KHÔNG phải ước lượng độc lập.
+- Kiểm tra: `py -3.12 -m unittest discover -s tests` (apps/recognition-service). Rủi ro: thêm torch vào dependencies mặc định làm `pip install -e apps/recognition-service` trong CI nặng và lâu hơn (cần xem workflow nếu muốn bản CPU nhẹ — ngoài phạm vi sửa của bước này).
+
+### BE-16 — Thử local trên ảnh mẫu (xong)
+
+- Lần đo đầu (trước khi sửa): 56/80 = 70%; trang 1 đúng 40/40, trang 2 chỉ 16/40 (nhiều `GRID_NOT_FOUND`). Chủ dự án chốt phương án A và đổi tiêu chí đạt (đã sửa prompt BE-16): đo số dòng CÓ ĐIỂM, trang 1 100%, trang 2 không còn `GRID_NOT_FOUND`, tổng ≥ 95%, không ảnh nào thiếu dòng có điểm.
+- Thay đổi (ghi trong docstring `grid.py` và ADR-0015): `grid.trich_luoi` dựng bảng từ các vạch dọc cột trước (`_luoi_theo_vach_doc`: ≥ 4 vạch dọc cùng khoảng y, ngưỡng độ dài vạch dọc 2,2% chiều cao trang để bảng tiêu đề + 1 dòng ~90 px vẫn thấy; vạch ngang nhận theo độ phủ cộng dồn các đoạn ≥ 55% bề ngang bảng, chỉ cần ≥ 3 vạch; mép trên/dưới suy từ đầu mút vạch dọc), không được thì dùng thuật toán gốc (`_trich_luoi_goc`). `rows.chuan_hoa_hang_y` sửa lần thứ hai: (a) bước dòng chọn theo số khoảng cách "ủng hộ" nhiều nhất (hòa thì lấy bước lớn hơn) thay cho trung vị vì bảng ngắn có trung vị rơi vào nửa bước dòng; (b) mỗi vòng chỉ gỡ một vạch giả có tổng hai dòng kề sát bước dòng nhất (85–115%), để vạch dưới tiêu đề không bị gỡ nhầm. `page.py` không đổi.
+- Số lần điều chỉnh: dùng 1 lượt điều chỉnh thuật toán (gồm các vòng đo thử) trong giới hạn 2 lần; cũng chỉnh công cụ đo: tham chiếu có `trong=false` ở mọi dòng và đo cả nét gạch nên `try_pipeline.py` nay so TỪNG VỊ TRÍ dòng, bỏ các dòng pipeline xác định là gạch bỏ ở cả hai phía; "có điểm" = có mực ở ô điểm số hoặc điểm chữ.
+- Kết quả cuối trên 80 ảnh P01–P04 (phone + scan), chạy `scripts/recognition/try_pipeline.py --quiet`:
+  - trang 1/phone 20/20, trang 1/scan 20/20, trang 2/phone 20/20, trang 2/scan 20/20 → **80/80 = 100%** đúng số dòng có điểm;
+  - thiếu dòng có điểm: 0; thừa dòng trống: 0 (tổng số dòng bằng tham chiếu ở cả 80 ảnh); `GRID_NOT_FOUND`: 0; thời gian 0,4–3,1 s/ảnh (CPU).
+  - Dòng gạch: trang 1 có 2–3 dòng gạch tùy tờ (S01–S02: 3, S03–S05: 2), giống hệt giữa phone và scan; không có dòng "chỉ gạch ở ô điểm" bị bỏ sót hay nhận nhầm.
+- Test tổng hợp mới `tests/test_pipeline_short_tables.py` (8 test): bảng tiêu đề + 1/2/3/5 dòng chụp nghiêng có phối cảnh và quét scan, vạch ngang giữa bị đứt 35–40%, dòng gạch trong bảng ngắn, vạch ký tên ngoài bảng không thành dòng, bảng 38 dòng không đổi, nắn phẳng bảng 1 dòng. Toàn bộ Python: 82 test đạt (BE-13 → BE-15 không hỏng).
+- Sửa kèm `scripts/repair-generated-client.mjs` (theo chỉ đạo): `declaredRows` chỉ được thêm vào form multipart khi khác null. Đã `pnpm client:generate` (client Dart đúng) và `pnpm contracts:check` exit 0.
+
+### BE-15 — Tách dòng, dòng gạch, cắt ô (xong)
+
+- File (apps/recognition-service): `src/pipeline/rows.py` (mới), `tests/test_pipeline_rows.py` (mới, 20 test).
+- Nội dung: `do_dam_muc` (← `tien_xu_ly_v3`), `la_gach_ngang` (← `_la_gach_ngang`), `suy_stt_bat_dau(stt_theo_dong, so_dong)` (← `_suy_stt_bat_dau`, nhận `{rowIndex từ 1: STT đọc được}` vì việc đọc STT thuộc BE-17–19; bỏ phiếu, cần ≥2/≥3 phiếu và ≥35% số phiếu hợp lệ nên chịu được vài lần đọc sai/sót), `extract_rows` (cắt ô STT / Họ tên / Đ.số / Điểm chữ từng dòng, đo mực, gạch bỏ, `has_grade_ink`, `has_name_ink`), `analyze_page(image_bytes, ocr=None) -> PageAnalysis` gom BE-13–BE-15 (giải mã → nắn trang → dò lưới → kiểm định chất lượng bằng hộp bảng → định danh cột → kiểm tra bảng điểm → chọn cột điểm → tách dòng; mã lỗi `IMAGE_UNREADABLE`, `IMAGE_QUALITY_LOW`, `GRID_NOT_FOUND`, `NOT_A_GRADEBOOK`, `SCORE_COLUMN_NOT_FOUND`). `PageAnalysis.guessed_columns` báo cột điểm suy đoán hình học (không có tiêu đề); `page_start_stt()` dùng số dòng thật của trang.
+- Hai điều chỉnh có chủ đích so với bản gốc (ghi rõ vì ảnh hưởng độ an toàn): (1) **dòng gạch bỏ** chỉ tính khi nét ngang dài cắt qua ô điểm VÀ ô họ tên hoặc ô điểm chữ — gốc chỉ xét ô điểm, nhưng dòng bị gạch bị loại im lặng nên không được để thanh ngang của số 7/5 trong ô điểm làm mất dòng có điểm (có test); (2) **`chuan_hoa_hang_y`**: nét gạch suốt bề ngang bảng bị `trich_luoi` coi là vạch kẻ và cắt dòng bị gạch thành hai dòng thấp (phát hiện qua test tổng hợp); hàm gỡ vạch khi hai dòng kề đều < 75% bước dòng và tổng 75–130% bước, để nét gạch nằm trong dòng.
+- Test (ảnh tổng hợp 10 dòng chụp xoay 3°, OCR tiêu đề giả; 1 dòng gạch, 1 dòng trống, 1 dòng có gạch ngang chỉ trong ô điểm): `struck`/`has_grade_ink`/`has_name_ink` đúng từng dòng; cột đúng kích thước; có/không OCR (`guessed_columns`); lỗi ảnh hỏng/mờ/bảng 3 cột/không có cột điểm; `suy_stt_bat_dau` với 2 giá trị sai + 1 sót vẫn ra 39, trang đầu bắt đầu 1, không đủ chứng cứ trả `None`; chuẩn hóa vạch ngang (gỡ vạch gạch, giữ dòng cao thật, giữ hai dòng mỏng không thành một dòng).
+- Kiểm tra: `py -3.12 -m unittest discover -s tests` (apps/recognition-service) → 74 test đạt (~32 s).
+
+### BE-14 — Port dò lưới và định danh cột (xong)
+
+- File (apps/recognition-service): `src/pipeline/grid.py` (mới), `tests/test_pipeline_grid.py` (mới). `grid.py` được trích nguyên văn từ `label_tool/luoi_tong_quat.py` bằng script cục bộ: `bo_dau`, `khop_tu_khoa` (+ `_luat_vai_tro`), `_doan_vach`, `_gop_vach`, `_cum_bang`, `trich_luoi`, `cot_cua_hang`, `cat_o`, `doc_hang_tieu_de`, `dinh_danh_cot`, `chon_cot_diem`, `kiem_tra_la_bang_diem`; bỏ toàn bộ khối khởi tạo OCR (easyocr/tesseract/vietocr) và hàm chữ ký mẫu hai mặt. OCR tiêu đề nhận qua tham số `ocr_ham` (ảnh xám → chuỗi); module không import engine OCR, không tải gì từ mạng (có test kiểm tra mã nguồn).
+- Từ khóa cấp 3 đã thêm: `ma_hs` (mahs, mahocsinh), `diem_qua_trinh` (kiemtra15phut, mieng, ddgtx), `diem_so` (ddggk, ddgck, giuaky, diemgiuaky, cuoiky), `ho_ten` (hotenhocsinh). Quyết định cần lưu ý: theo đúng danh sách của kế hoạch, "giữa kỳ" chuyển từ `diem_qua_trinh` (bản gốc) sang `diem_so`; `ma_hs` được coi như `ma_sv` (không bao giờ là cột điểm).
+- Mã lỗi: `phat_hien_luoi` → `GRID_NOT_FOUND`; `bao_dam_la_bang_diem` → `NOT_A_GRADEBOOK`; `chon_cot_diem_bat_buoc` → `SCORE_COLUMN_NOT_FOUND`. **Đường lui hình học** (`chon_cot_diem_hinh_hoc`, thêm mới vì bản gốc cần hàm chấm nội dung mới chọn được cột khi không có tiêu đề): khi không cột nào có vai trò, chọn cột hẹp 4.5–13 mm nằm ngay trước cột rộng hơn 15 mm (Điểm chữ), cách mép trái ≥20% bề ngang bảng; kết quả gắn `suy_doan_hinh_hoc`/`suy_doan` để tầng trên hạ độ tin cậy (BE-15/19 phải dùng cờ này). Không chọn được → `SCORE_COLUMN_NOT_FOUND`.
+- Test (ảnh bảng tổng hợp, OCR giả theo bề rộng ô): bảng 39 hàng × 6 cột đúng vị trí cột (±6 px); tiêu đề "STT | Họ và tên | Đ.số | Điểm chữ | Ký tên | Ghi chú" định danh đúng 4 cột in và chọn Đ.số + Điểm chữ; OCR `None` hoặc OCR ra chuỗi rác → đường lui hình học chọn cột hẹp; bảng cấp 3 "STT | Mã HS | Họ tên học sinh | ĐĐGtx | ĐĐGgk | ĐĐGck" → vai trò đúng và cột điểm chính là điểm giữa/cuối kỳ, ĐĐGtx là cột phụ; trang trắng → `GRID_NOT_FOUND`; bảng 3 cột → `NOT_A_GRADEBOOK`; có tiêu đề nhưng không có cột điểm hoặc bảng không có cột hẹp → `SCORE_COLUMN_NOT_FOUND`; bộ chấm nội dung tùy chọn vẫn hoạt động; 20+ mẫu tiêu đề khớp từ khóa (kể cả lỗi OCR "D.s6").
+- Kiểm tra: `py -3.12 -m unittest discover -s tests` (apps/recognition-service) → 50 test đạt.
+
+### BE-13 — Port kiểm định ảnh và nắn trang (xong)
+
+- File (apps/recognition-service): `src/pipeline/{__init__,errors,page,quality}.py` (mới), `tests/synthetic.py` (sinh ảnh tổng hợp bằng code), `tests/test_pipeline_page.py`, `pyproject.toml` (+`numpy`, `opencv-python-headless`).
+- `page.py` ← `label_tool/tien_xu_ly_v3.py` (trích nguyên văn bằng script cục bộ để không gõ lại: `_mat_na_giay`, `_khop_canh_hough`, `_quad_hop_le`, `do_to_giay_chi_tiet`, `_nhi_phan`, `_do_vach`, `_diem_tu`, `_H_nan_theo_diem_tu`, `_H_chinh_theo_luoi`, `nan_theo_luoi`, `_mau_trung_vi`, `_truong_lech`, `nan_anh`, `_diem_luoi_tho`, `nan_trang`, `_do_tu_the_giay`). Bỏ `QUAD_OVERRIDES` và mọi tham số `ten_file`/nhánh `quad_tay`, bỏ HEIC và đọc theo đường dẫn: `doc_anh(bytes)` giải mã PNG/JPEG, lỗi → `IMAGE_UNREADABLE`; `nan_trang` thất bại → `GRID_NOT_FOUND`. Chỉ OpenCV + NumPy, tất định, không mạng.
+- `quality.py` ← `label_tool/kiem_dinh_anh.py` (`do_net`, `danh_gia_chat_luong` và các hằng ngưỡng): `assess_quality`/`ensure_quality`; cảnh báo mức `chan` (DPI < 100, độ nét < 120) → `PipelineError("IMAGE_QUALITY_LOW", chi tiết)`, mức `canh_bao` (xiên, chụp chéo, cắt cạnh…) không chặn. `do_net` nhận hộp bảng tùy chọn (BE-15 truyền hộp bảng đã dò).
+- `errors.py`: `PipelineError(code, detail)` với bộ mã ổn định `IMAGE_UNREADABLE`, `IMAGE_QUALITY_LOW`, `GRID_NOT_FOUND`, `NOT_A_GRADEBOOK`, `SCORE_COLUMN_NOT_FOUND` (BE-19 map sang HTTP 422).
+- Test (ảnh tổng hợp: bảng kẻ 38 dòng trên giấy trắng, nền nâu, xoay 5°/−4°, phối cảnh nhẹ): trang nắn A4, vạch ngang/dọc thẳng (độ dốc trung vị < tan 0.3°), đo đúng góc nghiêng 5°±1.5, tất định (hai lần chạy bằng nhau), ảnh sắc nét qua kiểm tra, ảnh mờ (độ nét < 120) và ảnh quá nhỏ (DPI < 100) → `IMAGE_QUALITY_LOW`, cảnh báo xiên/chéo không chặn, ảnh hỏng → `IMAGE_UNREADABLE`, mã lỗi ngoài danh sách bị từ chối, mã nguồn không còn tên file/QUAD_OVERRIDES/HEIC.
+- Kiểm tra: `py -3.12 -m unittest discover -s tests` (apps/recognition-service) → 34 test đạt (~10 s).
+- Ghi chú: ảnh thật chưa thử (BE-16). Môi trường 3.12 trên máy đã có opencv-python (không headless) và numpy 2.3.5.
+
+### BE-12 — API chi tiết phiếu trả thông tin ghép (xong)
+
+- File: `apps/api/src/modules/recognition/{application/port.ts,application/service.ts,infrastructure/prisma-store.ts,presentation/controller.ts}`, tests `apps/api/test/recognition.test.ts`, `apps/api/test/integration/recognition-upload.test.ts`, `docs/api/openapi.json`, `packages/api_client_dart` (sinh bằng `pnpm client:generate`).
+- Hành vi mới: `RecognitionEvidenceRowDto` thêm `stt` (STT hệ thống từ `danh_sach_phieu`, null với phiếu cũ), `sttOnPaper`, `nameRead`, `nameCropUrl` (URL ký 300 giây như ảnh ô điểm; khóa đối tượng không lộ), `matchConfidence` (chuỗi 0..1, 4 chữ số), `matchNote`; `studentName` lấy theo họ tên trong snapshot (ổn định theo thời điểm tạo phiếu), dòng sắp theo STT rồi vị trí ảnh. `RecognitionTicketDto` (danh sách và chi tiết) thêm `greenRows`, `yellowRows`, `redRows` (theo mức cuối); `detectedRows` = số dòng nhận dạng, `errorCode` đã có.
+- Test: unit (URL ký đúng thứ tự, không lộ khóa, trường ghép) và tích hợp PostgreSQL thật (danh sách có số dòng/Xanh-Vàng-Đỏ; chi tiết có STT/ghi chú/độ tin cậy/URL ảnh họ tên, sắp theo STT; giáo viên không được phân công và học sinh nhận 403 ở cả danh sách lẫn chi tiết).
+- Kiểm tra: `pnpm check` đạt (75 unit/HTTP), `pnpm contracts:check` exit 0, `pnpm test:integration` 17/17 đạt.
+
+### BE-11 — Worker dùng thuật toán ghép (xong)
+
+- File: `apps/api/src/modules/recognition/application/worker.ts` (viết lại), `infrastructure/prisma-worker-store.ts` (thêm `roster()`, bỏ `declaredRows`), tests `apps/api/test/recognition-worker.test.ts`, `apps/api/test/integration/{recognition-matching,roster-fixture,recognition-upload}.test.ts`.
+- Worker mới: bỏ kiểm `detectedRows === declaredRows` và `order === index+1`; đọc snapshot `danh_sach_phieu` qua store, đổi từng dòng mô hình sang `DetectedRow` (`hasGradeInk` = một trong hai kênh không rỗng, `hasNameInk` = ô tên không rỗng), gọi `matchRows`. Thất bại (`ROW_MATCH_FAILED`) hoặc phiếu không có snapshot → `danh_dau_phieu_nhan_dien_loi(ticket,'ROW_MATCH_FAILED')`, không ghi kết quả, không lưu ảnh ô. Thành công → lưu ảnh ô điểm/chữ/họ tên `recognition/crops/<ticket>/<rowIndex>-{numeric,written,name}.png` chỉ cho dòng được ghép (dòng gạch/bị bỏ không lưu), gọi `luu_ket_qua_nhan_dien` với `order=rowIndex`, `stt` đã ghép, `sttOnPaper`, `nameRead`, `matchConfidence`, `matchNote`, `nameCropKey`, và `reviewLevel = combineLevel(mức điểm, mức ghép)` (`comparison` giữ nguyên của dịch vụ). Lỗi upload ảnh/ lưu → dọn ảnh đã ghi và ném lại để retry; phiếu đã `CHO_DOI_CHIEU/DA_DUYET/LOI` không gọi lại mô hình (idempotent).
+- Test đơn vị (store/storage giả): hai kênh được giữ, ánh xạ theo STT khi trang chỉ chứa STT 3–4, dòng gạch bị bỏ, kết hợp mức, ghép thất bại/nhiều dòng hơn sĩ số/phiếu không có snapshot → `ROW_MATCH_FAILED`, phiếu đã xong không xử lý lại, dọn ảnh khi lỗi storage, ảnh ô hỏng bị từ chối trước khi lưu. Test tích hợp (PostgreSQL thật, worker thật, dữ liệu giả, mã ≠ thứ tự tên): upload → worker → `CHO_DOI_CHIEU`, mỗi dòng đúng học sinh theo STT, dòng gạch bỏ, `diem_thanh_phan` chưa có điểm, chạy lại idempotent; mức cuối kết hợp (Vàng điểm + Đỏ do STT mâu thuẫn); sai lớp (FAKE_START_STT sai) → `LOI` `ROW_MATCH_FAILED`, không có dòng/ảnh; thừa dòng → `LOI`. Test `recognition-upload` cũ dùng tên đúng với danh sách lớp. Fixture dùng chung đánh dấu các sự kiện outbox của nó là đã gửi để dispatcher của test khác (lô 10) không bị lệch.
+- Kiểm tra: `pnpm check` đạt (75 unit/HTTP), `pnpm test:integration` 17/17 đạt (chạy 2 lần liên tiếp), `pnpm test:db` đạt.
+- Chưa làm: chưa kiểm cặp API ↔ dịch vụ Python thật qua HTTP (dịch vụ fake chạy riêng; kiểm ở BE-19/BE-20). `scripts` ngoài phạm vi không đổi.
+
+### BE-10 — Thuật toán ghép dòng ↔ học sinh (miền thuần) (xong)
+
+- File: `apps/api/src/modules/recognition/domain/row-matching.ts` (mới, miền thuần), `apps/api/test/row-matching.test.ts` (mới, 23 test).
+- Thuật toán `matchRows(detected, roster)`: bỏ dòng gạch và dòng không mực ở cả ô điểm lẫn ô tên; căn chỉnh quy hoạch động giữ thứ tự giữa dòng trên ảnh và danh sách lớp (độ giống họ tên chuẩn hóa — NFC, bỏ dấu, chữ thường, gộp khoảng trắng; 1 − khoảng cách sửa/độ dài — cộng thưởng khi STT đọc được khớp, trừ khi STT tin cậy mâu thuẫn; khoảng trống đầu/cuối roster không phạt, giữa bị phạt). Dòng có điểm bắt buộc phải ghép được; dòng chỉ có họ tên (ô điểm trống) ghép khi có lợi, nếu không bị bỏ (`UNMATCHED_BLANK`). Trả `stt`, `studentId`, `matchConfidence` (0..1, 4 chữ số), `matchLevel`, `note` (≤200, không chứa họ tên), `sttOnPaper`, `nameRead`.
+- Mức ghép: XANH = tên giống ≥ `NAME_STRONG` (0.85) và STT không mâu thuẫn, tên không trùng trong lớp, không có học sinh kề khớp hơn; VANG = giống một phần (≥ `NAME_WEAK` 0.6), trùng họ tên trong lớp, không đọc được họ tên nhưng có STT, hoặc STT lệch với độ tin cậy thấp; DO = STT tin cậy (≥0.5) mâu thuẫn, họ tên khớp học sinh kề tốt hơn từ `NEIGHBOR_MARGIN` 0.15, họ tên khác nhiều (<`NAME_WEAK`), hoặc không có cả STT lẫn họ tên (chỉ theo vị trí). `combineLevel(gradeLevel, matchLevel)` = mức thấp hơn (DO < VANG < XANH).
+- Lỗi `ROW_MATCH_FAILED` (kèm `reason`): `NO_ROWS`, `ROW_UNMATCHED` (dòng có điểm không ghép được: nhiều dòng hơn sĩ số/sai thứ tự/roster rỗng), `DUPLICATE_STUDENT` (hai dòng cùng chỉ khớp mạnh duy nhất một học sinh, hoặc hai dòng ghép cùng một học sinh), `TOO_MANY_LOW_CONFIDENCE` (tỷ lệ dòng Đỏ do ghép > `MAX_RED_RATIO` 0.3). Mọi ngưỡng là hằng số có tên, ghi chú giá trị khởi điểm chờ dò ở BE-21–BE-22.
+- Test (dữ liệu giả): đúng thứ tự; trang 2 bắt đầu STT 39; dòng gạch/dòng trống; giấy thiếu một học sinh; dòng học sinh lạ; sai 1 ký tự vs hư hại nặng; một phần/khác nhiều; trùng họ tên; không đọc được STT (chỉ tên, kể cả trang cuối); STT mâu thuẫn (tin cậy cao/thấp); họ tên khớp học sinh kề; dòng không đọc được tên; sai lớp → lỗi; hai dòng cùng học sinh → lỗi; dòng thừa/ chân trang; ô điểm trống; đầu vào rỗng; dòng không theo thứ tự; `combineLevel`; ghi chú không lộ họ tên. Thêm mô phỏng nhiễu OCR hạt giống cố định (400 trang, lớp 41, 5334 dòng Xanh): không dòng Xanh nào sai học sinh, chỉ 1/400 trang bị từ chối.
+- Kiểm tra: `pnpm check` đạt (68 unit/HTTP, lint + kiểm tra ranh giới module).
+- Chưa làm (đúng phạm vi): chưa nối vào worker (BE-11).
+
+### BE-09 — Phía API đọc contract mới và cấu hình thời gian chờ (xong)
+
+- File: `apps/api/src/modules/recognition/application/port.ts` (kiểu hợp đồng mô hình `RecognitionResult`/`RecognitionRowResult`/`SttResult`/`NameResult`/`ChannelResult` + `RecognitionModelClient.recognize(image)`; `worker.ts` re-export để không gãy import), `infrastructure/http-model.ts` (viết lại: `parseRecognitionResponse` kiểm chặt contract mới, không gửi `declaredRows`), `application/worker.ts` (chỉ chỉnh tạm cho khớp kiểu mới, BE-11 làm lại), `apps/api/src/common/config.ts` + `run-worker.ts` (`RECOGNITION_TIMEOUT_MS`, mặc định 120000, hợp lệ 1000–600000), `.env.example`, tests `recognition-worker.test.ts`, `foundation.test.ts`, `integration/recognition-upload.test.ts`, fixture `apps/api/test/fixtures/recognition-fake-response.json`, `apps/recognition-service/tests/test_api.py`.
+- Validate: thiếu/sai kiểu trường (`modelVersion` ≤80, `pageStartStt` null|số nguyên ≥1, `rowIndex` 1..9999 và không trùng, `struck`, `stt`/`name` kèm `isBlank`, điểm chuỗi 0.0–10.0 một chữ số thập phân, confidence chuỗi 0..1 tối đa 4 chữ số — sửa lỗi cũ chỉ nhận 1 chữ số nên từ chối `0.95` của dịch vụ), ảnh ô base64 hỏng/rỗng/>2 MB (cả ảnh họ tên), nhất quán `comparison` ↔ `reviewLevel` ↔ giá trị kênh. Sai → `MALFORMED_RESPONSE`; 503 → `MODEL_UNAVAILABLE`; lỗi kết nối/timeout → `RECOGNITION_TIMEOUT`; HTTP khác → `RECOGNITION_SERVICE_ERROR`.
+- Contract test liên ngôn ngữ: dịch vụ FastAPI sinh file vàng `recognition-fake-response.json` (test Python so sánh để phát hiện lệch), parser TypeScript đọc đúng file đó.
+- Kiểm tra: `pnpm check` đạt (45 unit/HTTP gồm 35 trường hợp contract sai + timeout thật bằng AbortSignal), `pnpm test:integration` 13/13 đạt, `py -3.12 -m unittest discover -s tests` (apps/recognition-service) 22 đạt.
+- Chưa làm: worker vẫn chạy luồng tạm (kiểm số dòng = sĩ số, `stt = rowIndex`, chưa lưu ảnh họ tên) cho tới BE-11; không có thay đổi API công khai nên chưa chạy `api:export`.
+
+### BE-08 — Contract dịch vụ nhận dạng và fake adapter (xong)
+
+- File: `apps/recognition-service/src/adapters/model.py`, `apps/recognition-service/src/api/main.py`, `apps/recognition-service/tests/test_api.py`.
+- Contract mới `POST /v1/recognize`: chỉ cần `image` (multipart); `declaredRows` là Form tùy chọn, bị bỏ qua (dịch vụ không nhận danh sách học sinh). Response `{ modelVersion, pageStartStt: int|null, rows: [{ rowIndex, struck, stt:{raw,value,confidence,isBlank}, name:{raw,confidence,isBlank}, numeric:{...cũ}, written:{...cũ}, numericCropBase64, writtenCropBase64, nameCropBase64, comparison, reviewLevel }] }`. Không còn `detectedRows`/`order` (số dòng = `rows.length`, vị trí = `rowIndex`). **Bổ sung ngoài mẫu trong kế hoạch:** `isBlank` ở `stt` và `name` để BE-10 suy `hasNameInk` mà không phải đoán từ chuỗi rỗng. Số/điểm vẫn serialize dạng chuỗi thập phân.
+- Fake adapter (chỉ development/test, `RECOGNITION_MODEL_MODE=fake`): 6 dòng mặc định (`FAKE_DETECTED_ROWS`), mỗi dòng điểm khác nhau (`(rowIndex*7 mod 101)/10`), STT liên tục từ `FAKE_START_STT` (mặc định 1), họ tên giả "Học sinh NN", dòng gạch qua `FAKE_STRUCK_ROWS` (vị trí 1-based, vd `2,4`; dòng gạch có ô điểm trống nên `DO`). Cấu hình sai → `ValueError`. Production không bao giờ chọn fake (`MODEL_UNAVAILABLE` 503).
+- Test (21, Python 3.12): tập khóa response, điểm khác nhau mỗi dòng, STT/tên liên tục từ 39, dòng gạch, cấu hình sai, `declaredRows` cũ bị bỏ qua, ảnh rỗng 422, thiếu weights 503, HTTP multipart chỉ có `image` (TestClient) và thiếu `image` → 422.
+- Kiểm tra: `py -3.12 -m unittest discover -s tests` (trong `apps/recognition-service`) → 21 test đạt. Lưu ý máy này `python` mặc định là 3.10 (không có `StrEnum`) nên dùng `py -3.12`; CI dùng 3.12.
+- Rủi ro: hợp đồng giữa API (TypeScript, `http-model.ts` vẫn đọc `detectedRows`/`order`) và dịch vụ bị lệch cho tới BE-09/BE-11; không chạy end-to-end API↔dịch vụ trong giai đoạn này. Ngoài ra `http-model.ts` hiện chỉ chấp nhận confidence một chữ số thập phân (`0.9`) nên sẽ từ chối `0.95` của dịch vụ — BE-09 phải sửa.
+
+### BE-07 — API upload bỏ số dòng khai báo, tạo snapshot (xong)
+
+- File: `apps/api/src/modules/recognition/{application/service.ts,application/port.ts,infrastructure/prisma-store.ts,presentation/controller.ts}`, tests `apps/api/test/recognition.test.ts`, `apps/api/test/integration/recognition-upload.test.ts`, `docs/api/openapi.json`, `packages/api_client_dart` (sinh bằng `pnpm client:generate`).
+- Hành vi mới: upload không cần `declaredRows` (OpenAPI: không còn required, đánh dấu `deprecated`, bỏ qua giá trị client cũ gửi). Request hash idempotency gồm `gradebookId`, `componentId`, `checksum` (không còn `declaredRows`); `CreateRecognitionTicket` không còn `declaredRows`. Store tính roster bằng `classStudentOrder` trong cùng giao dịch rồi gọi `tao_phieu_nhan_dien` (bỏ shim 409 tạm của BE-05). `declaredRows` trong DTO danh sách/chi tiết phiếu vẫn trả, nghĩa là sĩ số snapshot.
+- Test: unit — upload không truyền `declaredRows` xuống store, legacy `declaredRows` không đổi hash; integration — HTTP upload không gửi `declaredRows` trả 202, client cũ gửi `declaredRows=3` với cùng khóa trả đúng phiếu cũ (202, không tạo thêm), snapshot STT đúng khi mã ≠ thứ tự tên (Lê Thị An STT 1, Trần Văn Bình STT 2), `so_dong_khai_bao` = 2, replay idempotent. Kỳ vọng điểm sau duyệt trong test cũ phải đổi thành `7.5,0.0` vì test đã ngầm mã hóa lỗi gán theo mã (nay đúng theo STT).
+- Kiểm tra: `pnpm check` đạt (42 unit/HTTP), `pnpm contracts:check` exit 0, `pnpm test:integration` 13/13 đạt.
+- Rủi ro: `scripts/repair-generated-client.mjs` (ngoài phạm vi BE được phép, không sửa) vẫn luôn ghi `declaredRows.toString()` vào form multipart; với tham số nay là `int?` thì khi FE bỏ `declaredRows` client sẽ gửi chuỗi `"null"`; server bỏ qua nên vô hại nhưng nên sửa script để chỉ thêm field khi khác null.
+
+### BE-06 — Migration: lưu kết quả tra học sinh theo danh sách đã chốt (xong)
+
+- File: `database/migrations/202610060003_recognition_roster_results/migration.sql` (mới; rollback + lưu ý phiếu cũ ở đầu file), `apps/api/src/modules/recognition/application/worker.ts` (tạm: gửi `stt: row.order`), `apps/api/test/integration/roster-fixture.ts` (mới, fixture giả dùng chung), `recognition-roster.test.ts` (chuyển sang fixture), `recognition-roster-results.test.ts` (mới).
+- `luu_ket_qua_nhan_dien(p_ticket, p_model_version, p_rows)` (CREATE OR REPLACE, giữ SECURITY DEFINER/serializable/audit/idempotent khi phiếu đã CHO_DOI_CHIEU/DA_DUYET): mỗi row cần `order` (vị trí trên ảnh, số nguyên dương, không trùng) và `stt` (STT hệ thống); tùy chọn `sttOnPaper`, `nameRead` (≤150), `matchConfidence` (0..1), `matchNote` (≤200), `nameCropKey` (regex `recognition/crops/<ticket>/<n>-name.png`) — vắng hoặc null được. Học sinh tra từ `danh_sach_phieu(ticket, stt)`; STT ngoài snapshot, trùng giữa các row, trùng `order`, sai kiểu → `MALFORMED_RECOGNITION_RESULT`. Số row từ 1 đến `so_dong_khai_bao` (ngoài khoảng → `GRID_ROW_COUNT_MISMATCH`); `so_dong_nhan_dien` = số row. Đã bỏ hẳn `ORDER BY ma_hoc_sinh OFFSET`. Ghi 5 cột mới của `ket_qua_dong`.
+- Thay đổi tạm ở worker (BE-11 sẽ thay bằng ghép theo STT + họ tên): dòng thứ n gửi `stt = n`. Luồng hiện tại (worker vẫn kiểm `detectedRows === declaredRows`) nên chạy như cũ nhưng gán đúng theo STT thay vì theo mã.
+- Test PostgreSQL thật (dữ liệu giả, mã ≠ thứ tự tên): 12 trường hợp sai bị từ chối và không ghi dòng/đổi trạng thái; vị trí ảnh ≠ STT, thiếu STT 2 (dòng gạch) → ánh xạ đúng; thêm học sinh mới sau khi tạo phiếu → ánh xạ không đổi; gọi lại idempotent; chưa có điểm chính thức trước duyệt; `duyet_phieu_nhan_dien` ghi đúng điểm cho đúng học sinh, học sinh không có dòng giữ NULL/CHUA_CO.
+- Kiểm tra: migration 21 file từ DB rỗng `qld_phase7_fresh_test` + test roster/constraints đạt; nâng cấp `qld_phase7_test`; `pnpm test:db` đạt; `pnpm test:integration` 13/13 đạt; `pnpm check` đạt (41 unit/HTTP).
+- Rủi ro: học sinh nghỉ/chuyển lớp SAU khi tạo phiếu vẫn có dòng trong snapshot; khi duyệt, `duyet_phieu_nhan_dien` trả `GRADE_CELL_NOT_FOUND` (hành vi sẵn có, rollback toàn bộ) — cần giao diện/luật xử lý ở bước sau nếu muốn cho phép duyệt phần còn lại. Phiếu DANG_XU_LY tạo trước migration không có snapshot sẽ LOI khi lưu kết quả.
+
+### BE-05 — Migration: hàm tạo phiếu nhận danh sách lớp (xong)
+
+- File: `database/migrations/202610060002_recognition_roster_function/migration.sql` (mới; hướng rollback ghi ở đầu file), `apps/api/src/modules/recognition/infrastructure/prisma-store.ts` (tạm), `apps/api/test/integration/recognition-roster.test.ts` (mới).
+- Hàm mới `tao_phieu_nhan_dien(p_phien, p_book, p_component, p_checksum, p_object_key, p_roster jsonb, p_idempotency_key, p_request_hash)`; hàm cũ (`p_declared_rows`) đã DROP, REVOKE/GRANT như bản cũ. Giữ nguyên kiểm tra phiên, phân công, trạng thái bảng, idempotency, trùng checksum, phiếu đang chờ, outbox, audit, SERIALIZABLE; lịch nhập/cột khóa vẫn do trigger `recognition_column_policy` trên INSERT phiếu (không đổi). Rate limit ở tầng API (`tieu_thu_han_muc_tac_vu`) không đổi.
+- Kiểm roster: mảng 1..2000 object đúng ba khóa `{stt, studentId, fullName}` (số nguyên dương, chuỗi ≤100); n = sĩ số đang học; STT là 1..n không trùng; học sinh không trùng, thuộc lớp của bảng điểm, `dang_theo_hoc`, và `fullName` trùng đúng `hoc_sinh.ho_ten` (kiểm thêm để runtime không giả mạo tên trong snapshot). Sai → `INVALID_ROSTER_SNAPSHOT` (23514). Ghi `danh_sach_phieu`; `so_dong_khai_bao = n`.
+- Thay đổi tạm ở API (sẽ làm lại ở BE-07): `PrismaRecognitionStore.createTicket` tính roster bằng `classStudentOrder` trong cùng giao dịch rồi gọi hàm mới; vẫn giữ kiểm "declaredRows == sĩ số → 409" để hành vi và test hiện có không đổi. Service/controller/OpenAPI chưa đổi (contract chưa đổi nên không chạy `api:export`).
+- Test mới (PostgreSQL thật, dữ liệu giả, runtime role): roster hợp lệ ghi đúng STT → học sinh với mã ≠ thứ tự tên; 14 trường hợp sai (thiếu/thừa học sinh, học sinh nghỉ, lớp khác, STT không liên tục/từ 0/trùng/số thực, trùng học sinh, sai họ tên, thừa khóa, mảng rỗng, không phải mảng, null) đều bị từ chối và không tạo phiếu; replay idempotent không ghi thêm snapshot, cùng khóa khác hash → 23505; học sinh thêm/nghỉ sau khi tạo phiếu không đổi snapshot; roster cũ bị từ chối khi sĩ số đã đổi.
+- Kiểm tra: migration từ DB rỗng `qld_phase7_fresh_test` (20 migration) và nâng cấp `qld_phase7_test`; `pnpm test:db` đạt (DB nâng cấp); test roster đạt trên cả hai DB; `pnpm test:integration` 12/12 đạt; `pnpm check` đạt (41 unit/HTTP).
+
+### BE-04 — Migration: bảng danh sách phiếu và cột mới (xong)
+
+- File: `database/migrations/202610060001_recognition_roster_snapshot/migration.sql` (mới; rollback ghi ở đầu file), `database/prisma/schema.prisma` (model `danh_sach_phieu` + 5 cột mới của `ket_qua_dong`), `database/tests/constraints.test.ts`.
+- Nội dung: bảng kỹ thuật `danh_sach_phieu` (PK `(ma_phieu, stt)`, UNIQUE `(ma_phieu, ma_hoc_sinh)`, CHECK `stt>0`, FK RESTRICT), trigger `danh_sach_phieu_append_only` chặn UPDATE/DELETE/TRUNCATE kể cả owner (42501), runtime chỉ SELECT; `ket_qua_dong` thêm `stt_giay`, `ho_ten_doc_duoc`, `do_tin_cay_ghep` (CHECK 0..1), `duong_dan_anh_o_ten`, `ghi_chu_ghep`; CHECK `phieu_luoi` đổi thành `so_dong_nhan_dien BETWEEN 1 AND so_dong_khai_bao`. Không đổi hàm SQL.
+- Test mới trong `constraints.test.ts`: runtime bị từ chối INSERT/UPDATE/DELETE/TRUNCATE; owner bị trigger chặn UPDATE/DELETE/TRUNCATE; trùng stt/học sinh (23505), stt=0 (23514), FK phiếu (23503), không xóa được phiếu có roster; `do_tin_cay_ghep>1` bị từ chối; phiếu CHO_DOI_CHIEU cho phép 2/3 dòng, từ chối 0 và 4. Danh sách bảng kỹ thuật trong test đếm 16 bảng đã thêm `danh_sach_phieu`.
+- Kiểm tra: migration từ DB rỗng `qld_phase7_fresh_test` (19 migration) + seed + `pnpm test:db` đạt; nâng cấp DB `qld_phase7_test` (từ 18 migration) + `pnpm test:db` đạt; `prisma migrate diff` không báo khác biệt ở `danh_sach_phieu`, `ket_qua_dong`, `phieu_nhan_dien` (diff còn lại ở bảng khác là sẵn có, không do bước này); `pnpm db:generate` đạt; `pnpm test:integration` 11/11 đạt (PostgreSQL/Redis/MinIO compose, API env `APP_ENV=development`); `pnpm check` đạt.
+- Lưu ý: Redis/MinIO dùng chung với stack compose dev (queue `recognition`, bucket dev, khóa/đối tượng ngẫu nhiên); không có worker dev đang chạy khi test.
+
+### BE-03 — Báo cáo dùng STT chung (xong)
+
+- File: `apps/api/src/modules/reports/application/service.ts` (bỏ `compareVietnameseNames`/collator riêng; export.xlsx sắp theo STT của `classStudentOrder`, cột STT lấy đúng STT đó; `summary` là thống kê tổng hợp, không có danh sách học sinh nên không cần sắp), `apps/api/test/reports-export.test.ts` (mới, store giả: mã ≠ thứ tự tên, hai học sinh trùng hoàn toàn họ tên phân định bằng mã; đọc lại workbook).
+- Không còn code/test nào dùng `compareVietnameseNames`.
+- Kiểm tra: `pnpm check` đạt (41 unit/HTTP); integration `final-results.test.ts` (gọi `reports.export` trên PostgreSQL `qld_phase7_test`) đạt.
+
+### BE-02 — Trả STT trong API lưới điểm (xong)
+
+- File: `apps/api/src/modules/gradebooks/{application/port.ts,infrastructure/prisma-store.ts,presentation/controller.ts}` (trường `stt: number | null` trong `GradeCellDto`; store tính bằng `classStudentOrder` trên danh sách học sinh đang học của lớp bảng điểm; học sinh nghỉ/chuyển lớp → `null`; phân trang/quyền/version không đổi), `apps/api/test/integration/gradebooks.test.ts` (STT theo thứ tự tên khi mã ≠ thứ tự tên; học sinh nghỉ → `stt` null), `docs/api/openapi.json`, `packages/api_client_dart` (sinh bằng `pnpm client:generate`).
+- DB test riêng: `qld_phase7_test` tạo trong cụm Postgres compose (cổng 5433, cùng cụm với DB dev nhưng database khác), đủ 18 migration + seed giả. Đặt env bằng script ngoài repo; DB `quan_ly_diem_dev` không bị đụng (vẫn 18 migration, không migrate/seed lại).
+- Kiểm tra: `pnpm exec tsx --test apps/api/test/integration/gradebooks.test.ts` đạt; `pnpm check` đạt; `pnpm contracts:check` exit 0.
+
+### BE-01 — Hàm STT chung ở API (xong)
+
+- File: `apps/api/src/common/student-order.ts` (mới: `compareStudents`, `numberByClass`, `classStudentOrder`), `apps/api/src/common/catalog.ts` (dùng hàm chung, `buildStudentOrderNumbers` giữ kết quả cũ), `apps/api/test/student-order.test.ts` (thêm 5 test: dấu tiếng Việt, trùng tên, trùng họ tên phân định bằng mã, học sinh nghỉ không có STT, hai lớp độc lập). Định dạng lại bằng prettier hai file kế hoạch `phase-7-*.md` (chỉ khoảng trắng/căn bảng) vì `pnpm format:check` toàn repo từng đỏ do chúng.
+- Kiểm tra: `pnpm check` đạt (40 unit/HTTP, build).
+
+### BE-00 — nhánh, ADR-0015, bất biến (xong)
+
+- File: `docs/adr/0015-recognition-row-matching.md` (mới), `AGENTS.md` (bất biến 5, UC11–UC12 bước 1 và 4), `docs/architecture/traceability.md`.
+- Kiểm tra: `prettier --check` 3 file đã đổi đạt. `docs/development/phase-7-prompts.md` (file của chủ dự án, chưa tracked) báo prettier warn từ trước; không tự định dạng lại.
+
+### Việc cho FE (ghi dồn từ các bước BE — ĐÃ HOÀN TẤT BỞI FE-01 → FE-05)
+
+- BE-12: Các DTO sinh ra có trường mới BẮT BUỘC: `RecognitionEvidenceRowDto` (`stt`, `sttOnPaper`, `nameRead`, `matchConfidence`, `matchNote`, `nameCropUrl`) và `RecognitionTicketDto`/`RecognitionTicketDetailDto` (`greenRows`, `yellowRows`, `redRows`). Đã cập nhật toàn bộ fixture test và hiển thị đầy đủ trong `ReviewScreen` (FE-03, FE-05).
+- BE-07: `RecognitionApi.createRecognitionTicket` (generated) nay có `declaredRows` kiểu `int?` (không còn bắt buộc, deprecated). Đã loại bỏ hoàn toàn khỏi `repository.dart` và UI `RecognitionPanel` (FE-02).
+- BE-02: GradeCellDto có trường bắt buộc `stt` (num?, nullable). Đã cập nhật toàn bộ fixture test, sắp xếp và hiển thị STT từ API trong `gradebook_screen.dart` và `excel_import_dialog.dart` (FE-01).
+
+## 2026-10-06 — Giai đoạn 7: nhận dạng tự động và ghép đúng học sinh (kế hoạch)
+
+- Chủ dự án chốt phương án sửa lỗi ghép dòng nhận dạng ↔ học sinh (`luu_ket_qua_nhan_dien` dùng `ORDER BY ma_hoc_sinh`). Không sửa sơ đồ phân cấp chức năng.
+- Kế hoạch: `docs/development/phase-7-nhan-dang-ghep-hoc-sinh.md`. Prompt từng bước, chia Phần A Backend (BE-00 → BE-22) và Phần B Frontend (FE-01 → FE-05), mục Tiến độ chính thức: `docs/development/phase-7-prompts.md`. Khi nhận `continue`, lấy bước chưa [x] đầu tiên trong mục "Thứ tự đề xuất" có đủ phụ thuộc, làm theo KHỐI CHUNG, xong một bước thì dừng và báo cáo.
+- Chưa có thay đổi code. Nhánh dự kiến `codex/recognition-row-matching` (tạo ở BE-00). BE-21 cần ảnh bảng điểm cấp 3 thật từ chủ dự án.
+
+## 2026-10-04 — Bộ lọc thời khóa biểu và bàn giao GitHub
 
 - Chủ dự án đã yêu cầu sửa UI bộ lọc lớp/giáo viên và push để tự merge. Nhánh `codex/semester-weights-recognition`, base `82dc9f9`, chứa các thay đổi sản phẩm từ hệ số/checkpoint/camera đến quy trình nhà trường/lịch nhập/UI. Không tự merge/deploy.
 - `TimetableFilter`: control 48 px dùng token chung; danh sách có tìm khi gõ, tên đầy đủ xuống dòng, Tất cả để bỏ lọc, đóng không đổi lựa chọn. Ô đóng tên dài có tooltip; bộ lọc được đưa trước các thao tác và hướng dẫn trong thanh cuộn ngang. Sheet có vùng an toàn/bàn phím và cuộn riêng.
