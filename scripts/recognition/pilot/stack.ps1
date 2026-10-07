@@ -16,11 +16,13 @@ $pidDir = Join-Path $root '.local\pilot\pids'
 $logDir = Join-Path $root '.local\pilot\logs'
 New-Item -ItemType Directory -Force $pidDir, $logDir | Out-Null
 
-$weights = 'D:\HocTap\KhoaLuan\App\weights'
+# Có thể đổi bằng biến môi trường PILOT_WEIGHTS_DIR / PILOT_DATABASE (máy khác đặt trọng số ở thư mục khác).
+$weights = if ($env:PILOT_WEIGHTS_DIR) { $env:PILOT_WEIGHTS_DIR } else { 'D:\HocTap\KhoaLuan\App\weights' }
 $crnnSha = '6ca4044d1b7a7c9a51e1b641eade1880461d0d85e5eb4fbf035e827f1afbef91'
 $vietocrSha = '32999513a94f822f4ba4c302749a8d97be0e065631cedceacc0134327f9a73c9'
 $nameSha = '0921503a41375a0584268e23ef3d414ea478a8fe8777865c7745d38f2d0bc5db'
-$testDatabase = 'qld_phase7_test'
+$testDatabase = if ($env:PILOT_DATABASE) { $env:PILOT_DATABASE } else { 'qld_phase7_test' }
+if (-not $testDatabase.EndsWith('_test')) { throw 'PILOT_DATABASE phải kết thúc bằng _test' }
 $timeoutMs = if ($env:PILOT_RECOGNITION_TIMEOUT_MS) { $env:PILOT_RECOGNITION_TIMEOUT_MS } else { '120000' }
 $all = 'recognition', 'api', 'dispatcher', 'worker', 'web'
 

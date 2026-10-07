@@ -89,7 +89,20 @@ Ngưỡng ghép (`NAME_STRONG`, `NAME_WEAK`, `MAX_RED_RATIO`) KHÔNG đổi; vi�
 
 "Giá trị cuối đúng" tính trên mọi ô có nhãn (dòng Đỏ hoặc không gợi ý tính là chưa đúng); trên các dòng có gợi ý, độ chính xác của luật mới là 99,8% (DEV) và 96,2% (TEST), của luật cũ là 100% và 99,8%. Số dòng Vàng có gợi ý sai: DEV 2, TEST 67 (luật cũ: 0 và 4), tức người duyệt phải xem các dòng Vàng. Hai dòng Xanh sai trên TEST (một phone, một scan) là lỗi im lặng còn tồn tại của nhánh đồng thuận: hai mô hình đọc sai giống nhau; DEV không có dòng nào nên không có căn cứ đặt sàn, và không chỉnh sau khi đã xem TEST.
 
-**Ghép học sinh (bộ ghép thật, chỉ các trang có danh sách lớp Sheet_xx).** DEV: 723 dòng, gán sai 0, 2/40 trang bị từ chối `TOO_MANY_LOW_CONFIDENCE`; TEST: 1100 dòng, gán sai 0, 3/60 trang bị từ chối. Mức cuối (hợp điểm và ghép) luật mới: DEV 534 / 157 / 32 (Xanh/Vàng/Đỏ), TEST 495 / 421 / 184, không có Xanh cuối sai ở DEV và 1 ở TEST. Các trang dùng bộ danh sách khác (T01–T05) không có danh sách lớp trong bộ dữ liệu nên chưa đánh giá phần ghép học sinh. Thời gian: DEV trung vị 1,5 s, lớn nhất 2,9 s mỗi ảnh trang; TEST 1,9 s và 6,9 s (CPU).
+**Ghép học sinh (bộ ghép thật, chỉ các trang có danh sách lớp Sheet_xx; số liệu sau BE-23).** DEV: 725 dòng, gán sai 0; mức cuối (hợp điểm và ghép) Xanh/Vàng/Đỏ 705 / 14 / 6, Xanh cuối sai 0. TEST: 1105 dòng, gán sai 0; mức cuối 816 / 176 / 113, Xanh cuối sai 2 (đúng hai lỗi im lặng của nhánh đồng thuận ở trên; trước BE-23 một trong hai bị mức ghép hạ xuống Vàng nên chỉ thấy 1). Mỗi tập có một trang bị từ chối `TOO_MANY_LOW_CONFIDENCE` (35 dòng; trang này chọn nhầm cột "Lớp" làm cột họ tên). Các trang dùng bộ danh sách khác (T01–T05) không có danh sách lớp trong bộ dữ liệu nên chưa đo phần ghép học sinh. Thời gian: DEV trung vị 1,5 s, lớn nhất 2,9 s mỗi ảnh trang; TEST 1,8 s và 6,1 s (CPU).
+
+## Gom khe ô họ tên bền với ảnh chụp điện thoại (BE-23)
+
+Trên ảnh chụp điện thoại, `compact_name_cell` bỏ sót khe ở 12–13% ô họ tên (DEV: phone 86,8%, scan 89,1% ô được thu khe) vì (a) đường kẻ ngang lọt vào ô khiến mọi cột "có mực", (b) bóng/nền xám làm Otsu toàn cục coi nền là mực, nên VietOCR đọc thiếu phần tên và dòng bị hạ xuống Vàng. Mặt nạ mực nay: bù nền (chia cho nền ước lượng bằng lọc trung vị rồi Otsu), bỏ hàng có mực > 50% chiều rộng, bỏ dải 3 điểm ảnh sát bốn mép ô (tàn dư đường kẻ), và chỉ tính cột có ≥ 2 điểm mực; ô không có điểm nào tối hơn nền đáng kể được coi là trống. Các hằng `NGUONG_KHE_TEN`, `KHE_TEN_SAU_KHI_GOM`, `LE_TEN_SAU_KHI_GOM` và mọi ngưỡng ghép không đổi; ảnh đầu ra vẫn chỉ ghép từ các mảnh của ảnh gốc. Dòng bị gạch không được đọc nên không gom.
+
+| Tập                             | Ô họ tên được thu khe, trước → sau | Gán sai học sinh | Xanh/Vàng/Đỏ cuối, trước → sau    |
+| ------------------------------- | ---------------------------------- | ---------------- | --------------------------------- |
+| DEV phone                       | 86,8% → 94,0%                      | 0 → 0            | (gộp)                             |
+| DEV scan                        | 89,1% → 100%                       | 0 → 0            | (gộp)                             |
+| DEV tất cả                      | 87,9% → 97,0%                      | 0 → 0            | 534 / 157 / 32 → 705 / 14 / 6     |
+| TEST (đo một lần, sau khi chốt) | 98,2% (phone 96,4%, scan 100%)     | 0                | 495 / 421 / 184 → 816 / 176 / 113 |
+
+Phần ô chưa thu khe (DEV: 35 ô phone) đều thuộc một trang mà cột được chọn làm họ tên thực ra là cột "Lớp"; đó là lỗi chọn cột chứ không phải lỗi gom khe và chưa được xử lý ở bước này.
 
 **Giới hạn đánh giá.** Mọi số liệu đo trên mẫu E0330113 của trường đại học (chữ viết tay chép lại có chủ đích, 41 học sinh, hai trang), không phải bảng điểm cấp 3 thật; chưa có ảnh bảng điểm cấp 3 thật. Độ chính xác TEST thấp hơn DEV rõ rệt (90,6% so với 99,1%) nên không suy ra cho người viết/mẫu khác. Phiếu dùng với hệ thống PHẢI có cột Đ.số và cột Điểm chữ (luật dựa trên hai kênh độc lập). Bố cục cấp 3 mô phỏng chỉ được kiểm bằng ảnh tổng hợp ở mức cấu trúc, không dùng để dò ngưỡng.
 

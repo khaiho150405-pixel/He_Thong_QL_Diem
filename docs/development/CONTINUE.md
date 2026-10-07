@@ -63,6 +63,14 @@ Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính 
 
 Nhánh `codex/recognition-row-matching` (tạo từ nhánh `dang` ở BE-00). Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md`. Không sửa `apps/client_flutter`; chỗ Flutter cần xử lý ghi dưới mục "Việc cho FE".
 
+### BE-23 — compact_name_cell bền với ảnh chụp điện thoại (xong)
+
+- `rows.py`: mặt nạ mực của `compact_name_cell` bù nền (chia cho nền lọc trung vị rồi Otsu), bỏ hàng mực > 50% chiều rộng (đường kẻ ngang), bỏ dải 3 px sát bốn mép, cột có mực khi ≥ 2 điểm, ô không đủ tương phản coi là trống; không đổi `NGUONG_KHE_TEN`/`KHE_TEN_SAU_KHI_GOM`/`LE_TEN_SAU_KHI_GOM`, không đổi ngưỡng ghép, đầu ra vẫn chỉ ghép từ ảnh gốc. Dòng bị gạch không gom. Test tổng hợp mới (đường kẻ + khe, nền xám dần, bóng + đường kẻ, nhiễu 1 px, chỉ có tàn dư mép, đầu ra chỉ chứa điểm ảnh gốc); đã kiểm các ca đó mà logic cũ không thu được khe.
+- `evaluate_pages.py`: thêm `--tag` (so sánh trước/sau) và đo tỉ lệ ô họ tên được thu khe.
+- DEV: ô thu khe 87,9% → 97,0% (phone 86,8% → 94,0%, scan 89,1% → 100%); gán sai 0 → 0; Xanh cuối 534 → 705 (Vàng 157 → 14, Đỏ 32 → 6); Xanh cuối sai 0. 35 ô phone còn lại cùng một trang chọn nhầm cột "Lớp" làm cột họ tên (không phải lỗi gom khe).
+- TEST (một lần sau khi chốt): ô thu khe 98,2% (phone 96,4%, scan 100%); gán sai 0 trên 1105 dòng; Xanh/Vàng/Đỏ cuối 495/421/184 → 816/176/113; Xanh cuối sai 1 → 2 (là hai lỗi im lặng của nhánh đồng thuận đã có ở BE-22, nay không còn bị mức ghép hạ xuống).
+- Đã restart dịch vụ nhận dạng. Kiểm tra: Python 161 test (7 bỏ qua), `pnpm typecheck`/`lint`/`format:check` sạch. Chưa commit/push/PR.
+
 ### BE-21 + BE-22 — Luật hợp nhất hai kênh, đánh giá DEV/TEST và khóa cấu hình (xong, làm gộp)
 
 - Luật mới (ADR-0015, bất biến 4 trong AGENTS.md đã sửa): từ `hop_nhat.py::hop_nhat_mot_o`, τ số 0,95 / τ chữ 0,90, bỏ trọng tài. Hai kênh đồng thuận → Xanh (sàn `RECOGNITION_NUMERIC_FLOOR`/`RECOGNITION_WRITTEN_FLOOR` mặc định 0); chỉ một kênh ≥ τ → Vàng + gợi ý kênh đó ("Lấy theo điểm số/chữ"); mâu thuẫn mạnh–mạnh, yếu–yếu hoặc không hợp lệ → Đỏ, không gợi ý. Mã: `classification.py` (`Suggestion`, `floors_from_env`), dịch vụ trả thêm `suggestedSource` (SO/CHU/null); API: parser nới kiểm nhất quán Xanh/Vàng/Đỏ, migration `202610070002_recognition_suggestion` (cột `ket_qua_dong.kenh_goi_y` + hàm `luu_ket_qua_nhan_dien`), DTO/OpenAPI/client Dart sinh lại, màn hình đối chiếu điền sẵn theo `suggestedSource` (phiếu cũ không có kênh thì giữ cách cũ). Độ tin cậy ghép bỏ STT; ghi chú "STT không đọc được" bỏ.

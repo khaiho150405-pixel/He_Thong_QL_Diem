@@ -224,6 +224,15 @@ class CompactNameCellTest(unittest.TestCase):
         return int(((gray < 128).sum(axis=0) > 0).sum())
 
     @staticmethod
+    def widest_gap_in(image: np.ndarray, ignore_rule_rows: bool = False) -> int:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        dark = gray < 128
+        if ignore_rule_rows:
+            dark[dark.sum(axis=1) > 0.5 * dark.shape[1], :] = False
+        columns = np.flatnonzero(dark.any(axis=0))
+        return int(np.diff(columns).max()) - 1
+
+    @staticmethod
     def widest_gap(image: np.ndarray) -> int:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         has_ink = (gray < 128).any(axis=0)
@@ -257,9 +266,51 @@ class CompactNameCellTest(unittest.TestCase):
         after = rw.compact_name_cell(image)
         self.assertLess(after.shape[1], image.shape[1] - 100)
 
-    def test_a_strike_through_all_columns_is_not_split(self) -> None:
-        image = self.cell("Le Minh", "Duc")
-        cv2.line(image, (0, 20), (self.HEIGHT * 9, 20), (30, 30, 30), 2)
+    def test_a_horizontal_rule_inside_the_cell_does_not_hide_the_gap(self) -> None:
+        # Đường kẻ ngang lọt vào ô (ảnh chụp lệch): trước đây mọi cột đều "có mực" nên không thu được khe.
+        image = self.cell("Nguyen Van", "Anh")
+        cv2.line(image, (0, 9), (image.shape[1], 9), (40, 40, 40), 2)
+        after = rw.compact_name_cell(image)
+        self.assertLess(after.shape[1], image.shape[1] - 100)
+        self.assertLess(self.widest_gap_in(after, ignore_rule_rows=True), rw.NGUONG_KHE_TEN * self.HEIGHT)
+
+    def test_a_grey_gradient_background_does_not_count_as_ink(self) -> None:
+        # Bóng/nền xám dần: Otsu toàn cục coi vùng tối của nền là mực nên khe biến mất.
+        image = self.cell("Tran Quoc", "Bao").astype(np.float32)
+        ramp = np.linspace(95, 245, image.shape[1], dtype=np.float32)[None, :, None] / 240.0
+        image = np.clip(image * ramp, 0, 255).astype(np.uint8)
+        after = rw.compact_name_cell(image)
+        self.assertLess(after.shape[1], image.shape[1] - 100)
+
+    def test_a_dark_shadow_band_and_a_rule_together_still_collapse_the_gap(self) -> None:
+        image = self.cell("Le Thi", "Mai").astype(np.float32)
+        image[:, :180] *= 0.55  # bóng đổ phủ nửa trái
+        image = np.clip(image, 0, 255).astype(np.uint8)
+        cv2.line(image, (0, 30), (image.shape[1], 30), (50, 50, 50), 2)
+        after = rw.compact_name_cell(image)
+        self.assertLess(after.shape[1], image.shape[1] - 100)
+
+    def test_single_pixel_specks_in_the_gap_are_ignored(self) -> None:
+        image = self.cell("Pham Van", "Dung")
+        for x in (150, 175, 200, 215):
+            image[18, x] = (30, 30, 30)  # 1 điểm mực: nhiễu, không phải chữ
+        after = rw.compact_name_cell(image)
+        self.assertLess(after.shape[1], image.shape[1] - 100)
+
+    def test_the_output_only_contains_pixels_of_the_original_cell(self) -> None:
+        image = self.cell("Vo Minh", "Chau")
+        cv2.line(image, (0, 9), (image.shape[1], 9), (40, 40, 40), 2)
+        after = rw.compact_name_cell(image)
+        original_colours = {tuple(c) for c in image.reshape(-1, 3)}
+        fill = {tuple(after[0, 0])}
+        self.assertTrue({tuple(c) for c in after.reshape(-1, 3)} <= original_colours | fill)
+        self.assertEqual(after.shape[0], image.shape[0])
+
+    def test_a_cell_whose_only_marks_are_edge_remnants_is_left_alone(self) -> None:
+        image = np.full((self.HEIGHT, 380, 3), 240, np.uint8)
+        image[:, 0:2] = 20
+        image[:, -2:] = 20
+        image[0:2, :] = 20
         self.assertIs(rw.compact_name_cell(image), image)
 
     def test_grayscale_cells_are_supported(self) -> None:
@@ -281,10 +332,15 @@ class CompactNameCellTest(unittest.TestCase):
 
         with mock.patch.object(rw, "compact_name_cell", side_effect=fake):
             analysis = rw.analyze_page(encode_png(photograph(page)), HeaderOcr(SCORE_SHEET, SCORE_OCR))
-        self.assertEqual(len(seen), len(analysis.rows))
-        for row in analysis.rows:
-            self.assertIs(row.name_cell, marker)  # the stored/read cell is the compacted one
-        inked = [row for row in analysis.rows if row.has_name_ink]
+        struck = [row for row in analysis.rows if row.struck]
+        others = [row for row in analysis.rows if not row.struck]
+        self.assertEqual(len(struck), 1)
+        # Dòng bị gạch không được đọc nên không gom; mọi dòng còn lại mang ô đã gom.
+        self.assertEqual(len(seen), len(others))
+        self.assertIsNot(struck[0].name_cell, marker)
+        for row in others:
+            self.assertIs(row.name_cell, marker)
+        inked = [row for row in others if row.has_name_ink]
         self.assertTrue(inked)
         # ink was measured on the full-width original (marker is a flat 9x9 image: it would measure 0)
         self.assertTrue(all(row.name_ink > rw.NGUONG_TEN_TRONG for row in inked))

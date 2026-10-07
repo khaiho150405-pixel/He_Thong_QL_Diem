@@ -40,21 +40,55 @@ KHE_TEN_SAU_KHI_GOM = 0.4
 LE_TEN_SAU_KHI_GOM = 0.25
 # Cột mực phủ quá tỉ lệ này chiều cao ô là vạch kẻ bảng chứ không phải chữ.
 NGUONG_VACH_DUNG = 0.8
+# Hàng có tỉ lệ mực vượt mức này chiều rộng ô là đường kẻ ngang (lọt vào ô khi chụp nghiêng/lệch), không phải chữ.
+NGUONG_VACH_NGANG = 0.5
+# Cột chỉ được tính là có mực khi có ít nhất ngần này điểm mực (bỏ nhiễu 1 px).
+MUC_TOI_THIEU_CAT = 2
+# Cửa sổ lọc trung vị để ước lượng nền (tỉ lệ theo chiều cao ô, tối thiểu 15, luôn lẻ): lớn hơn nét chữ nên nền còn
+# lại sau khi lọc là bóng/độ xám của giấy.
+CUA_SO_NEN_TEN = 0.75
+# Dải sát bốn mép ô bị bỏ khỏi mặt nạ: tàn dư đường kẻ dọc/ngang của bảng (kể cả đường kẻ nghiêng), không phải chữ.
+LE_MEP_TEN = 3
+# Sau khi bù nền, điểm tối nhất còn sáng hơn mức này nghĩa là ô không có mực (chỉ nhiễu).
+DO_SANG_O_TRONG = 205
+
+
+def _name_ink_mask(gray) -> np.ndarray:
+    """Mặt nạ mực của ô họ tên, bền với bóng đổ/nền xám và đường kẻ ngang (ảnh chụp điện thoại).
+
+    1. Bù nền: chia cho ảnh nền ước lượng bằng lọc trung vị rồi Otsu trên ảnh đã chuẩn hóa (Otsu toàn cục trên ảnh có
+       nền xám dần coi cả nền là mực);
+    2. bỏ các hàng gần như toàn mực (đường kẻ ngang) trước khi chiếu theo cột.
+    """
+    height, width = gray.shape[:2]
+    window = max(15, int(round(CUA_SO_NEN_TEN * height)) | 1)
+    background = cv2.medianBlur(gray, window)
+    normalised = cv2.divide(gray, np.maximum(background, 1), scale=255)
+    if int(normalised.min()) > DO_SANG_O_TRONG:
+        return np.zeros(gray.shape[:2], bool)
+    ink = cv2.threshold(normalised, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1] > 0
+    ink[ink.sum(axis=1) > NGUONG_VACH_NGANG * width, :] = False
+    ink[:, :LE_MEP_TEN] = False
+    ink[:, max(width - LE_MEP_TEN, 0) :] = False
+    ink[:LE_MEP_TEN, :] = False
+    ink[max(height - LE_MEP_TEN, 0) :, :] = False
+    return ink
 
 
 def compact_name_cell(cell):
     """Gom ô họ tên về một dòng chữ liền: bỏ lề trắng và thu khe rộng giữa các cột con (họ đệm | tên).
 
     Mô hình đọc chuỗi dừng ở khoảng trắng quá rộng nên bỏ mất phần tên. Chỉ ảnh được ghép lại từ chính các mảnh
-    mực gốc (không vẽ, không đổi nội dung); ô trống hoặc không có khe rộng được trả về nguyên vẹn.
+    ảnh gốc (không vẽ, không đổi nội dung); mặt nạ mực chỉ dùng để tìm khe. Ô trống hoặc không có khe rộng được trả về
+    nguyên vẹn (cùng đối tượng).
     """
     if cell is None or getattr(cell, "size", 0) == 0:
         return cell
     gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY) if cell.ndim == 3 else cell
     height, width = gray.shape[:2]
-    ink = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1] > 0
+    ink = _name_ink_mask(gray)
     column_ink = ink.sum(axis=0)
-    has_ink = (column_ink > 0) & (column_ink < NGUONG_VACH_DUNG * height)
+    has_ink = (column_ink >= MUC_TOI_THIEU_CAT) & (column_ink < NGUONG_VACH_DUNG * height)
     if not has_ink.any():
         return cell
     # Các đoạn mực liên tiếp theo chiều ngang.
@@ -69,11 +103,11 @@ def compact_name_cell(cell):
             groups[-1][1] = int(end)
     if len(groups) == 1:
         return cell
-    background = np.median(gray[~ink]) if (~ink).any() else 255
+    fill_value = np.median(gray)
     fill = (
-        np.full((height, 1, cell.shape[2]), background, cell.dtype)
+        np.full((height, 1, cell.shape[2]), fill_value, cell.dtype)
         if cell.ndim == 3
-        else np.full((height, 1), background, cell.dtype)
+        else np.full((height, 1), fill_value, cell.dtype)
     )
     margin = max(1, int(round(LE_TEN_SAU_KHI_GOM * height)))
     gap = max(1, int(round(KHE_TEN_SAU_KHI_GOM * height)))
@@ -291,7 +325,8 @@ def extract_rows(
             PageRow(
                 row_index=position,
                 stt_cell=stt_cell,
-                name_cell=compact_name_cell(name_cell),
+                # Dòng bị gạch không được đọc nên không gom; đường gạch cũng sẽ bị coi là đường kẻ ngang.
+                name_cell=name_cell if struck else compact_name_cell(name_cell),
                 score_cell=score_cell,
                 written_cell=written_cell,
                 struck=bool(struck),

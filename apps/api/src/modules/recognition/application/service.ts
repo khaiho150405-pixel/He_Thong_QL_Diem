@@ -98,6 +98,7 @@ export class RecognitionService {
             writtenConfidence: row.writtenConfidence,
             comparison: row.comparison,
             reviewLevel: row.reviewLevel,
+            suggestedSource: row.suggestedSource,
             finalValue: row.finalValue,
             numericCropUrl,
             writtenCropUrl,

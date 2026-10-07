@@ -108,7 +108,7 @@ def channel_json(c: ChannelPrediction) -> dict:
     }
 
 
-def run(split: str, limit: int | None) -> None:
+def run(split: str, limit: int | None, tag: str = "") -> None:
     from src.adapters.crnn import sha256_of
     from src.adapters.model import configured_model
 
@@ -123,9 +123,21 @@ def run(split: str, limit: int | None) -> None:
         path = Path(env.setdefault(f"RECOGNITION_{prefix}_WEIGHTS", str(WEIGHTS / name)))
         env.setdefault(f"RECOGNITION_{prefix}_SHA256", sha256_of(path))
     model = configured_model(env)
+    # Ghi nhận ô họ tên nào thực sự được thu khe (compact_name_cell trả ảnh khác ảnh vào), theo thứ tự dòng.
+    import src.pipeline.rows as rows_module
+
+    collapsed: list[bool] = []
+    original_compact = rows_module.compact_name_cell
+
+    def recording_compact(cell):
+        result = original_compact(cell)
+        collapsed.append(cell is not None and result is not cell)
+        return result
+
+    rows_module.compact_name_cell = recording_compact
     labels = load_labels(split)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cache_path = CACHE_DIR / f"{split}.json"
+    cache_path = CACHE_DIR / f"{split}{tag}.json"
     cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.is_file() else {"pages": {}}
     keys = page_keys(labels)[: limit or None]
     for index, key in enumerate(keys, 1):
@@ -133,8 +145,12 @@ def run(split: str, limit: int | None) -> None:
         if name in cache["pages"]:
             continue
         started = time.time()
+        collapsed.clear()
         try:
             result = model.recognize(page_image(*key).read_bytes())
+            # compact_name_cell chỉ được gọi cho dòng không bị gạch, theo thứ tự dòng.
+            recorded = iter(collapsed)
+            flags = [None if r.struck else next(recorded, None) for r in result.rows]
             cache["modelVersion"] = result.model_version
             cache["pages"][name] = {
                 "seconds": round(time.time() - started, 2),
@@ -146,8 +162,9 @@ def run(split: str, limit: int | None) -> None:
                         "written": channel_json(r.written),
                         "nameRaw": r.name.raw_output,
                         "nameBlank": r.name.is_blank,
+                        "gapCollapsed": flags[i],
                     }
-                    for r in result.rows
+                    for i, r in enumerate(result.rows)
                 ],
             }
         except Exception as error:  # noqa: BLE001 - ghi mã lỗi ổn định, không in nội dung
@@ -274,6 +291,9 @@ def evaluate(cache: dict, labels: dict, matches: dict, rule: str, floor: Decimal
                 c["lost"] += 1
                 continue
             numeric, written = prediction(row["numeric"]), prediction(row["written"])
+            if not row["nameBlank"] and row.get("gapCollapsed") is not None:
+                c["name_ink"] += 1
+                c["name_collapsed"] += bool(row["gapCollapsed"])
             truth = label["num"]
             c["read"] += 1
             num_ok = numeric.value == truth
@@ -334,6 +354,8 @@ def print_report(title: str, result: dict) -> None:
             f"giá trị cuối đúng {pct(c['final_correct'], n)} (trên dòng có gợi ý {pct(c['final_correct'], c['final_suggested'])}) | "
             f"Xanh SAI {c['green_wrong']}, Vàng gợi ý sai {c['yellow_wrong']}"
         )
+        if c["name_ink"]:
+            print(f"           ô họ tên được thu khe: {c['name_collapsed']}/{c['name_ink']} ({pct(c['name_collapsed'], c['name_ink'])})")
         if c["match_eval"] or c["match_page_failed_rows"]:
             print(
                 f"           ghép học sinh: {c['match_eval']} dòng, gán sai {c['match_wrong']}, dòng ở trang ghép lỗi {c['match_page_failed_rows']}; "
@@ -351,8 +373,8 @@ def print_report(title: str, result: dict) -> None:
         print(f"  thời gian/ảnh trang: trung vị {statistics.median(sec):.1f}s, lớn nhất {max(sec):.1f}s ({len(sec)} ảnh)")
 
 
-def load_cache(split: str) -> dict:
-    path = CACHE_DIR / f"{split}.json"
+def load_cache(split: str, tag: str = "") -> dict:
+    path = CACHE_DIR / f"{split}{tag}.json"
     if not path.is_file():
         raise SystemExit(f"Chưa có {path}; chạy `run --split {split}` trước.")
     return json.loads(path.read_text(encoding="utf-8"))
@@ -364,15 +386,16 @@ def main() -> None:
     parser.add_argument("--split", choices=list(SPLITS), required=True)
     parser.add_argument("--floor", default="0.00", help="mức sàn đồng thuận mỗi kênh (luật nghiên cứu = 0)")
     parser.add_argument("--limit", type=int, default=None, help="chỉ chạy N trang đầu (thử nhanh)")
+    parser.add_argument("--tag", default="", help="hậu tố tên bộ nhớ đệm (so sánh trước/sau khi sửa)")
     parser.add_argument("--no-match", action="store_true", help="không chạy bộ ghép học sinh")
     args = parser.parse_args()
     if args.command == "tune" and args.split != "dev":
         raise SystemExit("Chỉ được dò tham số trên DEV.")
     if args.command == "run":
-        run(args.split, args.limit)
+        run(args.split, args.limit, args.tag)
         return
     labels = load_labels(args.split)
-    cache = load_cache(args.split)
+    cache = load_cache(args.split, args.tag)
     matches = {} if args.no_match else match_pages(cache, labels)
     if args.command == "report":
         floor = Decimal(args.floor)
