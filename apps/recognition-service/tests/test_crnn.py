@@ -7,7 +7,11 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import torch
+
+try:
+    import torch
+except ImportError:  # CI/máy không cài nhóm [ml]
+    raise unittest.SkipTest("torch is not installed (pip install -e apps/recognition-service[ml])")
 
 from src.adapters import crnn
 from src.adapters.crnn import CrnnReader, ModelUnavailableError, decode_ctc, tien_xu_ly_anh

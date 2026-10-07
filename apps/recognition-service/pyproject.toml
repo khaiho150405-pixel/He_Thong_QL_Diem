@@ -10,13 +10,17 @@ dependencies = [
   "pillow>=10,<13",
   "python-multipart==0.0.20",
   "pyyaml>=6,<7",
-  # Mô hình thật (CRNN/VietOCR). Nạp trọng số chỉ bằng chế độ an toàn của torch, không tải gì từ Internet.
-  "torch>=2.4,<3",
-  "torchvision>=0.19,<1",
   "uvicorn==0.35.0",
 ]
 
 [project.optional-dependencies]
+# Mô hình thật (CRNN/VietOCR): `pip install -e apps/recognition-service[ml]`. Không có nhóm này thì dịch vụ vẫn chạy
+# ở chế độ fake (development/test) và các bài test cần torch tự bỏ qua; chế độ weights trả MODEL_UNAVAILABLE.
+# Nạp trọng số chỉ bằng chế độ an toàn của torch, không tải gì từ Internet.
+ml = [
+  "torch>=2.4,<3",
+  "torchvision>=0.19,<1",
+]
 # vietocr==0.3.13 phải cài bằng `pip install --no-deps vietocr==0.3.13`: các phụ thuộc của nó (opencv-python,
 # albumentations, imgaug, lmdb, gdown...) không cần cho suy luận và xung đột với opencv-python-headless.
 # Dòng dưới chỉ ghi phiên bản được ghim; đừng cài extra này bằng pip thông thường.

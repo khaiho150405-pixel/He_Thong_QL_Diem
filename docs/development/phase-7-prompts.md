@@ -651,14 +651,15 @@ dùng dữ liệu thay thế dưới đây. Mục tiêu chính là độ chính 
 Mã bước: BE-21. Phụ thuộc (phải [x] trước): BE-20.
 Áp dụng KHỐI CHUNG.
 
-DỮ LIỆU (chỉ đọc, không commit, không in họ tên):
-- Tập DEV (dò ngưỡng) = người viết của tập valid nghiên cứu: P05, R03 trong
-  D:\HocTap\KhoaLuan\data\05_BANG_DIEM_GOC\BAN_PHONE|BAN_SCAN\PERSON_<người>; nhãn ô trong
-  D:\HocTap\KhoaLuan\data\MOI\valid\manifest_val_num.csv và manifest_val_txt.csv.
-- Tập TEST (chỉ đo, không dùng chọn tham số) = người viết chưa từng dùng huấn luyện: P08, R04, R05 trong
-  D:\HocTap\KhoaLuan\data\du_lieu_moi\data\05_BANG_DIEM_GOC\BAN_PHONE|BAN_SCAN\PERSON_<người> (60 ảnh);
-  nhãn trong D:\HocTap\KhoaLuan\data\MOI\test\manifest_test_num.csv và manifest_test_txt.csv.
-- Không dùng P01–P04, P06, P07, R01, R02 để đo (đã dùng huấn luyện/chỉnh thuật toán).
+DỮ LIỆU (chỉ đọc, không commit, không in họ tên). Gốc dữ liệu: D:\HocTap\KhoaLuan\App\KLCN_2026
+- Ảnh trang gốc: 05_BANG_DIEM_GOC\BAN_PHONE|BAN_SCAN\PERSON_<người>\ (10 ảnh/người/kênh).
+- Nhãn ô và ảnh ô cắt sẵn: 06_ANH_O_CAT\<train|valid|test>\manifest_*_num.csv, manifest_*_txt.csv.
+- Tập TRAIN (KHÔNG dùng để đo): P01, P02, P03, P04, P06, P07, P09, P10, P11, R01, R02, T02, T05.
+- Tập DEV (dò ngưỡng) = valid: P05, R03, T03 (06_ANH_O_CAT\valid).
+- Tập TEST (chỉ đo một lần, không dùng chọn tham số) = người viết chưa từng dùng huấn luyện: P08, R04, R05, T06, T07
+  (06_ANH_O_CAT\test; 100 ảnh trang phone + scan).
+- Bổ sung (tùy chọn, báo riêng): bảng điểm thật của giảng viên 05_BANG_DIEM_GOC\Data_coMai — chỉ dùng các trang thuộc
+  tập test Cô Mai theo 06_ANH_O_CAT\CO_MAI\phan_chia_trang.csv (các trang train Cô Mai đã dùng fine-tune).
 - Thiếu thư mục hoặc nhãn → dừng và báo.
 
 NHIỆM VỤ:

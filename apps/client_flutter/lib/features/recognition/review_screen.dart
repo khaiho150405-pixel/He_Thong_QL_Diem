@@ -32,6 +32,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   late Future<RecognitionTicketDetailDto> detail;
   RecognitionTicketDetailDto? loaded;
   num? _gradebookVersion;
+  // Có giá trị khi không lấy được version bảng điểm: không duyệt bằng version giả (tránh ghi đè/xung đột âm thầm).
+  String? _versionError;
   bool confirmed = false;
   bool busy = false;
   String _reviewLevelFilter = 'ALL'; // 'ALL' | 'DO' | 'VANG' | 'XANH'
@@ -50,8 +52,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             .read(gradebooksRepositoryProvider)
             .cells(widget.gradebookId);
         _gradebookVersion = cells.book.version;
+        _versionError = null;
       } catch (_) {
-        _gradebookVersion = 1;
+        // Không dùng giá trị giả: giữ null, hiển thị lỗi + "Tải lại" và vô hiệu nút Duyệt.
+        _versionError = 'Không tải được phiên bản bảng điểm';
       }
     }
     final data = await ref
@@ -98,7 +102,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   Future<void> approve() async {
     final data = loaded;
+    final version = _gradebookVersion;
     if (data == null ||
+        version == null ||
         !confirmed ||
         !(formKey.currentState?.validate() ?? false)) {
       return;
@@ -132,7 +138,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             gradebookId: widget.gradebookId,
             ticketId: widget.ticketId,
             expectedTicketVersion: data.version,
-            expectedGradebookVersion: _gradebookVersion ?? 1,
+            expectedGradebookVersion: version,
             decisions: [
               for (final row in data.rows)
                 ReviewDecisionInput(
@@ -291,6 +297,40 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 padding: const EdgeInsets.all(16),
                 cacheExtent: 5000,
                 children: [
+                  if (_versionError != null) ...[
+                    Card(
+                      key: const ValueKey('review-version-error'),
+                      color: colorScheme.errorContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              color: colorScheme.onErrorContainer,
+                            ),
+                            Text(
+                              '$_versionError. Chưa thể duyệt phiếu.',
+                              style: TextStyle(
+                                color: colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            OutlinedButton.icon(
+                              key: const ValueKey('review-retry-version'),
+                              onPressed: busy ? null : refreshEvidence,
+                              icon: const Icon(Icons.refresh_rounded),
+                              label: const Text('Tải lại'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -602,7 +642,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     const SizedBox(height: 8),
                     FilledButton.icon(
                       key: const ValueKey('review-approve'),
-                      onPressed: confirmed && !busy ? approve : null,
+                      onPressed: confirmed && !busy && _gradebookVersion != null
+                          ? approve
+                          : null,
                       icon: const Icon(Icons.check_circle_rounded, size: 20),
                       label: const Text('Duyệt và ghi nhận điểm chính thức'),
                     ),

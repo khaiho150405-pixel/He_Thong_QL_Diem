@@ -165,10 +165,11 @@ def _confidence(value: float) -> Decimal:
 
 
 BLANK_CHANNEL = ChannelPrediction(None, None, None, is_blank=True)
+STT_NOT_READ = SttPrediction(None, None, Decimal("0"), is_blank=True)
 
 
 class WeightsRecognitionModel(RecognitionModel):
-    """Mô hình thật: ``analyze_page`` (BE-13–15) + CRNN (Đ.số, STT) + VietOCR (Điểm chữ, Họ tên).
+    """Mô hình thật: ``analyze_page`` (BE-13–15) + CRNN (Đ.số; không đọc STT) + VietOCR (Điểm chữ, Họ tên).
 
     Dịch vụ không nhận danh sách học sinh; chỉ trả những gì đọc được trên giấy. Kênh điểm chữ đi qua ``nan_diem_chu``
     (chỉ nắn về từ điển khi gần một cụm hợp lệ) rồi ``so_tu_chuoi_chu``; kênh điểm số qua ``so_tu_chuoi_so``. Chuỗi
@@ -197,12 +198,6 @@ class WeightsRecognitionModel(RecognitionModel):
         if not rows:
             raise PipelineError("GRID_NOT_FOUND", "Bảng không có dòng dữ liệu nào.")
         active = [r for r in rows if not r.struck]
-        stt_reads = dict(
-            zip(
-                (r.row_index for r in active),
-                self._crnn.read_stt([r.stt_cell for r in active]),
-            )
-        )
         score_rows = [r for r in active if r.score_ink >= 1.0]
         score_reads = dict(
             zip((r.row_index for r in score_rows), self._crnn.read_cells([r.score_cell for r in score_rows]))
@@ -222,17 +217,9 @@ class WeightsRecognitionModel(RecognitionModel):
         out: list[ModelRow] = []
         for row in rows:
             i = row.row_index
-            stt = stt_reads.get(i)
-            stt_pred = (
-                SttPrediction(None, None, None, is_blank=True)
-                if stt is None
-                else SttPrediction(
-                    stt.raw or None,
-                    stt.value,
-                    _confidence(stt.confidence) if stt.value is not None else None,
-                    is_blank=not stt.raw,
-                )
-            )
+            # Chủ dự án chốt (BE-19b): KHÔNG đọc STT; mục tiêu là điểm số và điểm chữ. STT luôn là null với độ tin cậy 0,
+            # còn việc ghép dòng ↔ học sinh dựa vào họ tên và thứ tự (row-matching.ts đã hỗ trợ ghép không cần STT).
+            stt_pred = STT_NOT_READ
             name = name_reads.get(i)
             # Ô họ tên "trống" theo MỰC (không theo việc OCR đọc ra chữ): có mực mà không đọc được vẫn là có dữ liệu.
             name_pred = (
@@ -271,8 +258,7 @@ class WeightsRecognitionModel(RecognitionModel):
                     name_crop=_png(row.name_cell),
                 )
             )
-        starts = {i: r.value for i, r in stt_reads.items() if r.value is not None}
-        return ModelResult(self._version, analysis.page_start_stt(starts), tuple(out))
+        return ModelResult(self._version, None, tuple(out))
 
 
 _WEIGHTS_LOCK = threading.Lock()

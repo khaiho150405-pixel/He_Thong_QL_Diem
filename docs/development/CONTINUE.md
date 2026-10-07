@@ -63,6 +63,33 @@ Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính 
 
 Nhánh `codex/recognition-row-matching` (tạo từ nhánh `dang` ở BE-00). Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md`. Không sửa `apps/client_flutter`; chỗ Flutter cần xử lý ghi dưới mục "Việc cho FE".
 
+### BE-19b — Tắt đọc STT, chẩn đoán hai kênh điểm, torch tùy chọn, version bảng điểm ở màn đối chiếu (xong)
+
+Nhánh `codex/recognition-row-matching` (commit nền `edf09a3`); chưa commit phần này. Ưu tiên chủ dự án: nhận dạng đúng cột **Điểm số** và **Điểm chữ**; không đầu tư đọc STT.
+
+1. **Tắt đọc STT** (`apps/recognition-service/src/adapters/model.py`): `WeightsRecognitionModel` không chạy mô hình trên ô STT; luôn trả `stt = {raw: null, value: null, confidence: "0", isBlank: true}` và `pageStartStt = null`. `row-matching.ts` không sửa. Test: Python (STT không được đọc, JSON serialise đúng), worker (`recognition-worker.test.ts`: trang chỉ có STT 3–5 của lớp 6 ghép đúng theo họ tên + thứ tự, dòng không đọc được tên là Đỏ), tích hợp PostgreSQL (`recognition-matching.test.ts`: không STT vẫn ghép đúng học sinh, 5/5). `row-matching.test.ts` 23/23 vẫn đạt. Thời gian suy luận 16 ảnh giảm từ ~3,9 s xuống ~1,7 s/ảnh (CPU) khi bỏ bước đọc STT.
+2. **Chẩn đoán hai kênh điểm** (chỉ đo; không đổi ngưỡng, không huấn luyện lại; script cục bộ ngoài repo `diag19b.py`, không in họ tên, không lưu ảnh). 304 dòng có điểm (không gạch) trên 16 ảnh (P03–P04, S03–S04, p1/p2, phone/scan), cùng các dòng, hai nguồn ô: (a) pipeline mới cắt; (b) ô cắt sẵn lúc huấn luyện trong `06_ANH_O_CAT/BAN_1_THEO_LINE_A4`.
+
+   | Chỉ số                                 | (a) pipeline mới      | (b) ô lúc huấn luyện  |
+   | -------------------------------------- | --------------------- | --------------------- |
+   | Điểm số CRNN: đúng                     | 304/304               | 304/304               |
+   | Điểm số: tin cậy trung vị / p10 / p90  | 0.999 / 0.934 / 1.000 | 0.999 / 0.935 / 1.000 |
+   | Điểm số: % ≥ 0.95                      | 86.8%                 | 85.5%                 |
+   | Điểm chữ VietOCR: đúng (giá trị)       | 304/304               | 304/304               |
+   | Điểm chữ: tin cậy trung vị / p10 / p90 | 0.901 / 0.894 / 0.905 | 0.901 / 0.894 / 0.905 |
+   | Điểm chữ: % ≥ 0.90                     | 58.9%                 | 59.5%                 |
+   | Xanh / Vàng / Đỏ                       | 160 / 144 / 0         | 157 / 147 / 0         |
+   | Xanh sai                               | 0                     | 0                     |
+   | Lý do Vàng (chỉ số / chữ / cả hai)     | 21 / 104 / 19         | 25 / 103 / 19         |
+
+   Ô: cao 44 px, rộng ~79–80 (số) và 156 (chữ), mực trung vị 12,0% vs 12,9% (số) và 17,8% vs 18,6% (chữ). Theo trang/nguồn, trung vị tin cậy (a/b) giống nhau ở p1 phone/scan (số 0.999/0.999, chữ 0.901/0.901); p2 (n=8 mỗi nhóm) lệch nhẹ ở p2/scan điểm số 0.933 vs 0.962.
+   **Kết luận:** dòng Vàng KHÔNG do cách cắt/nắn ảnh: hai nguồn cho kết quả gần như đồng nhất (đúng 100%, cùng phân bố tin cậy, số dòng Vàng chênh 3/304). Nguyên nhân là **thang độ tin cậy**: (i) độ tin cậy kênh Điểm chữ là trung bình xác suất top‑1 của VietOCR trên các ký tự; mô hình được huấn luyện với `LabelSmoothingLoss(smoothing=0.1)` (xem `vietocr/model/trainer.py`) nên xác suất top‑1 bị chặn quanh 0.90 — phân bố rất hẹp (p10 0.894, p90 0.905) và ngưỡng 0.90 nằm ngay giữa phân bố, nên khoảng 41% dòng bị Vàng ngẫu nhiên bất kể đúng sai (104 + 19 dòng); (ii) kênh Điểm số CRNN bão hòa gần 1.0 nhưng ~13% dòng có độ tin cậy trung bình dưới 0.95 dù đúng (40 dòng). Không có dòng sai nào trong mẫu nên chưa đo được khả năng tách đúng/sai của từng thang (mẫu thuộc dữ liệu huấn luyện). Không có chỉnh sửa pipeline cắt ảnh nào cần đề xuất cho vấn đề này. Đề xuất cho chủ dự án quyết định ở BE-22 (không tự làm): hiệu chỉnh lại độ tin cậy kênh chữ (ví dụ dùng xác suất tối thiểu theo ký tự hoặc chuẩn hóa chia cho 1 − 0.1 trước khi so ngưỡng, hoặc ngưỡng riêng khoảng 0.85–0.88) và kiểm lại trên ảnh cấp 3 có dòng sai thật; quyết định dựa trên dữ liệu có nhãn độc lập.
+
+3. **torch tùy chọn:** `torch`, `torchvision` chuyển sang `[project.optional-dependencies] ml` (cài bằng `pip install -e "apps/recognition-service[ml]"`, sau đó `pip install --no-deps vietocr==0.3.13`); README và `recognition-checkpoints.md` ghi lệnh. `test_crnn.py` bỏ qua cả module khi thiếu torch, các test vietocr bỏ qua khi thiếu vietocr/torch; mô phỏng thiếu torch (`sys.modules['torch']=None`): 130 test chạy, 7 bỏ qua, đạt. Chế độ weights khi thiếu torch → `MODEL_UNAVAILABLE`. Hệ quả: CI cài `pip install -e apps/recognition-service` không còn kéo torch.
+4. **Ngoại lệ phạm vi (chỉ `review_screen.dart`):** khi không lấy được version bảng điểm, không còn gán `_gradebookVersion = 1`; hiển thị thẻ lỗi "Không tải được phiên bản bảng điểm. Chưa thể duyệt phiếu." với nút "Tải lại" (`review-retry-version`, tải lại cả phiếu lẫn version), nút Duyệt vô hiệu (kể cả đã tick xác nhận) và `approve()` không gọi API khi version null. Widget test mới (`recognition_review_screen_test.dart`): lỗi + nút bị vô hiệu + không gửi duyệt; sau khi server phục hồi và bấm Tải lại, lỗi mất và Duyệt dùng được.
+5. **Kiểm tra:** `py -3.12 -m unittest discover -s tests` (apps/recognition-service) 143 test đạt, 7 bỏ qua (cần vietocr/trọng số thật); trong venv có vietocr + trọng số thật 143/143 đạt; `pnpm check` đạt (79 unit/HTTP); `pnpm test:integration` 18/18 đạt; `pnpm test:db` đạt; `pnpm contracts:check` exit 0; `dart run melos run check` (format, analyze, 73 test Flutter) đạt. Docker Desktop và ba container compose (`quan-ly-diem-postgres-1`, `-redis-1`, `-minio-1`) được khởi động lại cho lượt này (máy khởi động lại); DB test `qld_phase7_test` còn nguyên.
+6. Không làm BE-20; không commit/push/PR.
+
 ### BE-19 — Phân loại hai kênh và nối mô hình thật (xong)
 
 - File (apps/recognition-service): `src/domain/classification.py` + `src/domain/__init__.py` (ngưỡng riêng từng kênh, `thresholds_from_env`), `src/adapters/model.py` (`WeightsRecognitionModel`, `weights_model`, `configured_model` nhánh `weights`), `src/api/main.py` (ngưỡng từ env, suy luận chạy trong threadpool, 422), tests `test_classification.py` (+5), `test_weights_model.py` (mới, 20); apps/api: `recognition/application/port.ts` (`PIPELINE_ERROR_CODES`, `isPipelineErrorCode`), `infrastructure/http-model.ts` (422 → mã ổn định), `application/worker.ts` (mã pipeline → `LOI`, không retry), `test/recognition-worker.test.ts` (+3); `.env.example`, `README.md`, `docs/development/recognition-checkpoints.md`, `docs/adr/0015-recognition-row-matching.md`, `apps/recognition-service/src/adapters/vietocr_vgg_seq2seq.yml` (prettier, nội dung YAML không đổi).

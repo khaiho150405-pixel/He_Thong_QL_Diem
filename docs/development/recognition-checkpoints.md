@@ -42,6 +42,10 @@ Mô hình thật chỉ chạy khi `RECOGNITION_MODEL_MODE=weights` (mặc địn
 | `RECOGNITION_NUMERIC_THRESHOLD` / `RECOGNITION_WRITTEN_THRESHOLD` | ngưỡng Xanh riêng từng kênh, mặc định 0.95 / 0.90           |
 | `RECOGNITION_DEVICE`                                              | `cpu` (mặc định) hoặc `cuda`                                |
 
+Cài phụ thuộc mô hình: `pip install -e apps/recognition-service[ml]` (torch, torchvision; nhóm tùy chọn, CI và chế độ fake không cần) rồi `pip install --no-deps vietocr==0.3.13`. Không có torch thì chế độ weights trả `MODEL_UNAVAILABLE` và các bài test cần torch tự bỏ qua.
+
+Cột STT không được nhận dạng (quyết định của chủ dự án): dịch vụ luôn trả `stt.value = null`, `stt.confidence = 0`; ghép dòng dựa vào họ tên và thứ tự.
+
 Quy tắc an toàn: SHA-256 được kiểm trước khi nạp; trọng số chỉ nạp bằng `torch.load(weights_only=True)` (không nạp được thì `MODEL_UNAVAILABLE`, không hạ sang pickle tùy ý); cấu hình VietOCR (`src/adapters/vietocr_vgg_seq2seq.yml`) đã loại mọi URL tải mô hình; không tải gì từ Internet lúc chạy. `vietocr==0.3.13` phải cài `pip install --no-deps vietocr==0.3.13` (cùng `einops`), vì các phụ thuộc của nó không cần cho suy luận. Dùng `crnn_num_best_dot5.pth` và `vietocr_best_tang4.pth`, không dùng bản `*_dev.pth` (chỉ để dò ngưỡng). `modelVersion` = `crnn-dot5+vietocr-tang4:<12 ký tự đầu của SHA-256 ghép hai hash>`.
 
 Ảnh bị từ chối trả `422` với `{"detail": {"code", "message"}}`, mã ổn định: `IMAGE_UNREADABLE`, `IMAGE_QUALITY_LOW`, `GRID_NOT_FOUND`, `NOT_A_GRADEBOOK`, `SCORE_COLUMN_NOT_FOUND`; worker đánh dấu phiếu `LOI` đúng mã, không thử lại.

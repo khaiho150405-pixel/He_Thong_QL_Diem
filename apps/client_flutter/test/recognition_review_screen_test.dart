@@ -17,12 +17,14 @@ class ReviewTestServer implements HttpClientAdapter {
     this.ticketStatus = 'CHO_DOI_CHIEU',
     this.ticketErrorCode,
     this.includeNameCrop = true,
+    this.failCells = false,
   });
 
   final String role;
   String ticketStatus;
   String? ticketErrorCode;
   final bool includeNameCrop;
+  bool failCells;
   int detailCalls = 0;
   Map<String, dynamic>? lastApprovalBody;
 
@@ -47,6 +49,9 @@ class ReviewTestServer implements HttpClientAdapter {
         'token': 'test-token',
         'csrf': 'test-csrf',
       };
+    } else if (options.path.endsWith('/gradebooks/7/cells') && failCells) {
+      status = 500;
+      body = {'code': 'INTERNAL', 'message': 'lỗi giả lập'};
     } else if (options.path.endsWith('/gradebooks/7/cells')) {
       body = {
         'book': {
@@ -226,6 +231,77 @@ class ReviewTestServer implements HttpClientAdapter {
 
 void main() {
   group('ReviewScreen and auto-navigation', () {
+    testWidgets(
+      'ReviewScreen without a gradebook version shows an error, disables approval and recovers on reload',
+      (tester) async {
+        tester.view.physicalSize = const Size(1280, 3000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final server = ReviewTestServer(failCells: true);
+        final api = ApiClientDart(dio: Dio()..httpClientAdapter = server);
+        final container = ProviderContainer(
+          overrides: [apiProvider.overrideWithValue(api)],
+        );
+        addTearDown(container.dispose);
+        await tester.runAsync(
+          () => container
+              .read(sessionProvider.notifier)
+              .login('0987654321', 'password'),
+        );
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const GradebookApp(
+              initialLocation: '/gradebooks/7/recognition/42',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('Không tải được phiên bản bảng điểm'),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('review-retry-version')),
+          findsOneWidget,
+        );
+        // The evidence is still readable, but the approval button is disabled even after confirming.
+        final confirm = find.byKey(const ValueKey('review-confirm-all'));
+        await tester.ensureVisible(confirm);
+        await tester.tap(confirm);
+        await tester.pumpAndSettle();
+        FilledButton approveButton() => tester.widget<FilledButton>(
+          find.byKey(const ValueKey('review-approve')),
+        );
+        expect(approveButton().onPressed, isNull);
+        expect(server.lastApprovalBody, isNull);
+
+        // Reload after the server recovers: error gone, approval allowed with the real version.
+        server.failCells = false;
+        await tester.tap(find.byKey(const ValueKey('review-retry-version')));
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('Không tải được phiên bản bảng điểm'),
+          findsNothing,
+        );
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('review-confirm-all')),
+        );
+        if (!tester
+            .widget<CheckboxListTile>(
+              find.byKey(const ValueKey('review-confirm-all')),
+            )
+            .value!) {
+          await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
+          await tester.pumpAndSettle();
+        }
+        expect(approveButton().onPressed, isNotNull);
+      },
+    );
+
     testWidgets(
       'HOC_SINH is redirected from /gradebooks/:id/recognition/:ticketId',
       (tester) async {

@@ -98,8 +98,7 @@ class WeightsModelTest(unittest.TestCase):
         self.assertEqual(len(self.result.rows), ROWS)
         self.assertEqual(self.result.model_version, "crnn-dot5+vietocr-tang4:abcdef012345")
         self.assertEqual([r.row_index for r in self.result.rows], list(range(1, ROWS + 1)))
-        # STT read as 39, 40, ... on the active (non-struck) rows -> page starts at 39 or is None when evidence is thin
-        self.assertIn(self.result.page_start_stt, (None, 39, 38))
+        self.assertIsNone(self.result.page_start_stt)
 
     def test_both_channels_are_preserved_with_decimal_values(self) -> None:
         row = self.result.rows[0]
@@ -146,11 +145,31 @@ class WeightsModelTest(unittest.TestCase):
             result = build(crnn=StubCrnn(score_text=text)).recognize(self.image)
             self.assertIsNone(result.rows[0].numeric.value, text)
 
-    def test_stt_must_be_a_clean_integer(self) -> None:
-        unread = StubCrnn(stt_values=[0] * ROWS)
-        result = build(crnn=unread).recognize(self.image)
+    def test_stt_is_never_read(self) -> None:
+        # Project decision (BE-19b): the goal is the score and written-score columns; STT is not recognised.
+        crnn = StubCrnn()
+        result = build(crnn=crnn).recognize(self.image)
+        self.assertEqual(crnn.stt_calls, 0)
         self.assertIsNone(result.page_start_stt)
-        self.assertTrue(all(r.stt.value is None for r in result.rows))
+        for row in result.rows:
+            self.assertIsNone(row.stt.value)
+            self.assertIsNone(row.stt.raw_output)
+            self.assertEqual(row.stt.confidence, Decimal("0"))
+            self.assertTrue(row.stt.is_blank)
+
+    def test_stt_fields_serialise_as_null_value_and_zero_confidence(self) -> None:
+        with patch("src.api.main.configured_model", return_value=build()):
+            response = TestClient(app).post(
+                "/v1/recognize", files={"image": ("s.png", self.image, "image/png")}
+            )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIsNone(body["pageStartStt"])
+        for row in body["rows"]:
+            self.assertEqual(
+                row["stt"],
+                {"raw": None, "value": None, "confidence": "0", "isBlank": True},
+            )
 
     def test_empty_image_and_unusable_photo_raise(self) -> None:
         with self.assertRaises(ValueError):

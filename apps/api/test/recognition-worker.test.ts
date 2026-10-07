@@ -161,6 +161,55 @@ test("rows are mapped by STT and name, not by position on the paper", async () =
   );
 });
 
+test("rows without any STT reading (project decision: STT is not recognised) are matched by name and order", async () => {
+  const noStt = (rowIndex: number, name: string): RecognitionRowResult => ({
+    ...row(rowIndex),
+    stt: { raw: null, value: null, confidence: "0", isBlank: true },
+    name: { raw: name, confidence: "0.90", isBlank: false },
+  });
+  // The page holds students 3–5 of a class of 6; names alone locate the segment.
+  const { state, processor } = harness(
+    [noStt(1, "Học sinh 3"), noStt(2, "Học sinh 4"), noStt(3, "Học sinh 5")],
+    roster(6),
+  );
+  await processor.process("21");
+  assert.equal(state.failed, undefined);
+  assert.deepEqual(
+    state.completed!.map((item) => [item.order, item.stt, item.sttOnPaper]),
+    [
+      [1, 3, null],
+      [2, 4, null],
+      [3, 5, null],
+    ],
+  );
+  assert.ok(state.completed!.every((item) => item.reviewLevel === "XANH"));
+  // A row whose name cannot be read is never green when there is no STT either (red, 1 of 5 stays within the red ratio).
+  const unreadable = harness(
+    [
+      noStt(1, "Học sinh 1"),
+      noStt(2, "Học sinh 2"),
+      {
+        ...noStt(3, ""),
+        name: { raw: null, confidence: null, isBlank: false },
+      },
+      noStt(4, "Học sinh 4"),
+      noStt(5, "Học sinh 5"),
+    ],
+    roster(5),
+  );
+  await unreadable.processor.process("22");
+  assert.deepEqual(
+    unreadable.state.completed!.map((item) => [item.stt, item.reviewLevel]),
+    [
+      [1, "XANH"],
+      [2, "XANH"],
+      [3, "DO"],
+      [4, "XANH"],
+      [5, "XANH"],
+    ],
+  );
+});
+
 test("final level is the lower of the grade level and the match level", async () => {
   const yellowGrade: RecognitionRowResult = {
     ...row(1),

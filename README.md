@@ -28,6 +28,8 @@ pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
 python -m pip install -e apps/recognition-service
+# Chỉ khi chạy mô hình thật (chế độ weights); chế độ fake không cần torch:
+# python -m pip install -e "apps/recognition-service[ml]" && python -m pip install --no-deps vietocr==0.3.13
 pnpm dev:api
 ```
 

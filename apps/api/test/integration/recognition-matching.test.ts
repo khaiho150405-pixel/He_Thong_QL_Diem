@@ -252,3 +252,32 @@ test("more graded rows than the class size fail instead of guessing", async () =
     await t.close();
   }
 });
+
+test("without any STT reading the rows are still matched to the right students by name", async () => {
+  // STT is not recognised (project decision): the service sends stt.value = null, confidence 0.
+  const t = await setup((names) =>
+    [3, 1, 0, 2].map((nameIndex, i) =>
+      // paper order differs from the name order only by the real class order: An, Bảo, Cường, Đạt
+      paperRow(i + 1, null, names[[0, 1, 2, 3][i]!]!, `${6 + i}.0`),
+    ),
+  );
+  try {
+    const { students: s } = t.f;
+    await t.worker.process(t.receipt.ticketId);
+    const { ticket, evidence, official } = await t.state();
+    assert.equal(ticket.status, "CHO_DOI_CHIEU");
+    assert.deepEqual(
+      evidence.map((r) => [r.thu_tu_dong, r.ma_hoc_sinh, r.stt_giay]),
+      [
+        [1, s.an, null],
+        [2, s.bao, null],
+        [3, s.cuong, null],
+        [4, s.dat, null],
+      ],
+    );
+    assert.ok(evidence.every((r) => r.level === "XANH"));
+    assert.equal(official, 0);
+  } finally {
+    await t.close();
+  }
+});

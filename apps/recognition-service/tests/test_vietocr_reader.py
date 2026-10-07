@@ -14,7 +14,9 @@ import numpy as np
 from src.adapters import vietocr_reader as vr
 from src.adapters.errors import ModelUnavailableError
 
-HAS_VIETOCR = importlib.util.find_spec("vietocr") is not None
+HAS_VIETOCR = (
+    importlib.util.find_spec("vietocr") is not None and importlib.util.find_spec("torch") is not None
+)
 needs_vietocr = unittest.skipUnless(HAS_VIETOCR, "vietocr is not installed (pip install --no-deps vietocr==0.3.13)")
 
 
