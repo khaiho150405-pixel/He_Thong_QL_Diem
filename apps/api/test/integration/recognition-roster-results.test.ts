@@ -29,6 +29,7 @@ test("recognition results map rows by roster STT and approval writes the right s
       nameCropKey: `recognition/crops/${ticket}/${order}-name.png`,
       comparison: "KHOP",
       reviewLevel: "XANH",
+      suggestedSource: "SO",
       ...extra,
     });
     const save = (rows: unknown[]) =>
@@ -74,6 +75,7 @@ test("recognition results map rows by roster STT and approval writes the right s
         "khóa ảnh họ tên của phiếu khác",
         [row(1, 1, { nameCropKey: "recognition/crops/1/1-name.png" })],
       ],
+      ["kênh gợi ý không hợp lệ", [row(1, 1, { suggestedSource: "BOTH" })]],
       ["họ tên đọc quá dài", [row(1, 1, { nameRead: "x".repeat(151) })]],
       ["ghi chú ghép quá dài", [row(1, 1, { matchNote: "x".repeat(201) })]],
     ];
@@ -87,11 +89,17 @@ test("recognition results map rows by roster STT and approval writes the right s
     await save([
       row(1, 3, { nameRead: "Lê Văn Cường", matchNote: "Khớp tên" }),
       row(2, 1),
-      row(3, 4, { nameCropKey: null, sttOnPaper: null, matchConfidence: null }),
+      row(3, 4, {
+        nameCropKey: null,
+        sttOnPaper: null,
+        matchConfidence: null,
+        reviewLevel: "DO",
+        suggestedSource: null,
+      }),
     ]);
     assert.equal(await status(), "CHO_DOI_CHIEU");
     const saved = await owner.query(
-      "SELECT ma_dong,thu_tu_dong,ma_hoc_sinh,stt_giay,ho_ten_doc_duoc,do_tin_cay_ghep,duong_dan_anh_o_ten,ghi_chu_ghep FROM ket_qua_dong WHERE ma_phieu=$1 ORDER BY thu_tu_dong",
+      "SELECT ma_dong,thu_tu_dong,ma_hoc_sinh,stt_giay,ho_ten_doc_duoc,do_tin_cay_ghep,duong_dan_anh_o_ten,ghi_chu_ghep,kenh_goi_y FROM ket_qua_dong WHERE ma_phieu=$1 ORDER BY thu_tu_dong",
       [ticket],
     );
     assert.deepEqual(
@@ -117,6 +125,11 @@ test("recognition results map rows by roster STT and approval writes the right s
         `recognition/crops/${ticket}/1-name.png`,
         "Khớp tên",
       ],
+    );
+    // Kênh gợi ý được lưu theo dòng; dòng Đỏ không có gợi ý.
+    assert.deepEqual(
+      saved.rows.map((r) => r.kenh_goi_y),
+      ["SO", "SO", null],
     );
     assert.deepEqual(
       [

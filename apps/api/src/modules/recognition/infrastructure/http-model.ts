@@ -6,6 +6,7 @@ import {
   type RecognitionResult,
   type RecognitionRowResult,
   type SttResult,
+  type SuggestedSource,
 } from "../application/port.js";
 
 type Fetch = typeof fetch;
@@ -135,11 +136,28 @@ function row(value: unknown): RecognitionRowResult {
       numeric.value !== written.value) ||
     (comparison === "MOT_KENH" && numericReadable !== writtenReadable) ||
     (comparison === "KHONG_DOC_DUOC" && !numericReadable && !writtenReadable);
+  // Luật hợp nhất hai kênh: Xanh chỉ khi hai kênh đồng thuận; Đỏ không gợi ý giá trị; Xanh/Vàng gợi ý giá trị của một
+  // kênh ĐỌC ĐƯỢC (SO = điểm số, CHU = điểm chữ).
+  const suggestedSource = input.suggestedSource as SuggestedSource | null;
+  if (
+    suggestedSource !== null &&
+    suggestedSource !== "SO" &&
+    suggestedSource !== "CHU"
+  )
+    return malformed();
+  const suggestionConsistent =
+    reviewLevel === "DO"
+      ? suggestedSource === null
+      : (suggestedSource === "SO" && numericReadable) ||
+        (suggestedSource === "CHU" && writtenReadable);
   const levelConsistent =
-    (reviewLevel === "DO" && comparison === "KHONG_DOC_DUOC") ||
-    (reviewLevel === "XANH" && comparison === "KHOP") ||
-    (reviewLevel === "VANG" && comparison !== "KHONG_DOC_DUOC");
-  if (!classificationConsistent || !levelConsistent) return malformed();
+    (comparison === "KHONG_DOC_DUOC" && reviewLevel === "DO") ||
+    (comparison !== "KHONG_DOC_DUOC" &&
+      (reviewLevel === "VANG" ||
+        (reviewLevel === "XANH" && comparison === "KHOP") ||
+        (reviewLevel === "DO" && comparison !== "KHOP")));
+  if (!classificationConsistent || !levelConsistent || !suggestionConsistent)
+    return malformed();
   return {
     rowIndex: integer(input.rowIndex, 1, MAX_ROW_INDEX),
     struck: flag(input.struck),
@@ -152,6 +170,7 @@ function row(value: unknown): RecognitionRowResult {
     nameCropBase64: cropBase64(input.nameCropBase64),
     comparison: comparison as RecognitionRowResult["comparison"],
     reviewLevel: reviewLevel as RecognitionRowResult["reviewLevel"],
+    suggestedSource,
   };
 }
 

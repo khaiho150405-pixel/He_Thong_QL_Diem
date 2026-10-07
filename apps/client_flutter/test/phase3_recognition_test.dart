@@ -114,6 +114,7 @@ class RecognitionFakeServer implements HttpClientAdapter {
             'writtenConfidence': '0.9300',
             'comparison': 'KHOP',
             'reviewLevel': 'XANH',
+            'suggestedSource': 'SO',
             'finalValue': null,
             'numericCropUrl': 'https://storage.test/numeric.png',
             'writtenCropUrl': 'https://storage.test/written.png',

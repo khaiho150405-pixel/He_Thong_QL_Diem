@@ -67,6 +67,7 @@ class ApiContractTest(IsolatedAsyncioTestCase):
                 "nameCropBase64",
                 "comparison",
                 "reviewLevel",
+                "suggestedSource",
             },
         )
         self.assertEqual(set(body["rows"][0]["stt"]), {"raw", "value", "confidence", "isBlank"})

@@ -25,6 +25,7 @@ Name | Type | Description | Notes
 **writtenConfidence** | **String** |  |
 **comparison** | **String** |  |
 **reviewLevel** | **String** |  |
+**suggestedSource** | **String** | Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị |
 **finalValue** | **String** |  |
 **numericCropUrl** | **String** |  |
 **writtenCropUrl** | **String** |  |

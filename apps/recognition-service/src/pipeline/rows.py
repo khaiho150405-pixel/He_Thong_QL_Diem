@@ -32,6 +32,60 @@ NGUONG_TEN_TRONG = 0.8
 MAX_STT = 500
 
 
+# Khoảng trắng ngang trong ô họ tên rộng hơn mức này (tính theo chiều cao ô) bị coi là khe giữa hai cột con
+# (họ đệm | tên) và được thu lại; đo trên mẫu in thật: khe giữa hai cột ≈ 3 lần chiều cao ô, khoảng cách giữa hai từ
+# chỉ ≈ 0,2–0,5 lần.
+NGUONG_KHE_TEN = 1.0
+KHE_TEN_SAU_KHI_GOM = 0.4
+LE_TEN_SAU_KHI_GOM = 0.25
+# Cột mực phủ quá tỉ lệ này chiều cao ô là vạch kẻ bảng chứ không phải chữ.
+NGUONG_VACH_DUNG = 0.8
+
+
+def compact_name_cell(cell):
+    """Gom ô họ tên về một dòng chữ liền: bỏ lề trắng và thu khe rộng giữa các cột con (họ đệm | tên).
+
+    Mô hình đọc chuỗi dừng ở khoảng trắng quá rộng nên bỏ mất phần tên. Chỉ ảnh được ghép lại từ chính các mảnh
+    mực gốc (không vẽ, không đổi nội dung); ô trống hoặc không có khe rộng được trả về nguyên vẹn.
+    """
+    if cell is None or getattr(cell, "size", 0) == 0:
+        return cell
+    gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY) if cell.ndim == 3 else cell
+    height, width = gray.shape[:2]
+    ink = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1] > 0
+    column_ink = ink.sum(axis=0)
+    has_ink = (column_ink > 0) & (column_ink < NGUONG_VACH_DUNG * height)
+    if not has_ink.any():
+        return cell
+    # Các đoạn mực liên tiếp theo chiều ngang.
+    edges = np.diff(np.concatenate(([0], has_ink.astype(np.int8), [0])))
+    starts, ends = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)
+    limit = NGUONG_KHE_TEN * height
+    groups: list[list[int]] = [[int(starts[0]), int(ends[0])]]
+    for start, end in zip(starts[1:], ends[1:]):
+        if start - groups[-1][1] > limit:
+            groups.append([int(start), int(end)])
+        else:
+            groups[-1][1] = int(end)
+    if len(groups) == 1:
+        return cell
+    background = np.median(gray[~ink]) if (~ink).any() else 255
+    fill = (
+        np.full((height, 1, cell.shape[2]), background, cell.dtype)
+        if cell.ndim == 3
+        else np.full((height, 1), background, cell.dtype)
+    )
+    margin = max(1, int(round(LE_TEN_SAU_KHI_GOM * height)))
+    gap = max(1, int(round(KHE_TEN_SAU_KHI_GOM * height)))
+    pieces = [np.repeat(fill, margin, axis=1)]
+    for index, (start, end) in enumerate(groups):
+        if index:
+            pieces.append(np.repeat(fill, gap, axis=1))
+        pieces.append(cell[:, start:end])
+    pieces.append(np.repeat(fill, margin, axis=1))
+    return np.hstack(pieces)
+
+
 def do_dam_muc(o, le: int = 4) -> float:
     """Tỉ lệ % điểm ảnh là nét mực thật trong ô (giống ``tien_xu_ly_v3.do_dam_muc``)."""
     if o is None or o.size == 0:
@@ -237,7 +291,7 @@ def extract_rows(
             PageRow(
                 row_index=position,
                 stt_cell=stt_cell,
-                name_cell=name_cell,
+                name_cell=compact_name_cell(name_cell),
                 score_cell=score_cell,
                 written_cell=written_cell,
                 struck=bool(struck),

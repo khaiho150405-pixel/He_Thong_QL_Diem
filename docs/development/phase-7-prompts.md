@@ -825,9 +825,9 @@ Kiểm tra: dart run melos run check; flutter build web --dart-define-from-file=
 - [x] BE-17 Adapter CRNN
 - [x] BE-18 Adapter VietOCR và đổi chữ thành số
 - [x] BE-19 Phân loại hai kênh và nối mô hình thật
-- [ ] BE-20 Chạy đầu-cuối local và đo hiệu năng
-- [ ] BE-21 Bộ dữ liệu thay thế và thử mẫu bố cục khác
-- [ ] BE-22 Dò và khóa ngưỡng hai kênh, hoàn thiện tài liệu
+- [x] BE-20 Chạy đầu-cuối local và đo hiệu năng
+- [x] BE-21 Bộ dữ liệu thay thế và thử mẫu bố cục khác
+- [x] BE-22 Dò và khóa ngưỡng hai kênh, hoàn thiện tài liệu
 
 ### Phần B — Frontend
 

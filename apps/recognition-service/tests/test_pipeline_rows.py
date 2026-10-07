@@ -206,6 +206,91 @@ class RowLineNormalizationTest(unittest.TestCase):
         self.assertEqual(rw.chuan_hoa_hang_y(tiny)["hang_y"], [100.0, 144.0, 188.0])
 
 
+class CompactNameCellTest(unittest.TestCase):
+    """Ô họ tên gồm hai cột con (họ đệm | tên) cách nhau một khe rộng: khe phải được thu lại (BE-20b)."""
+
+    HEIGHT = 41
+
+    def cell(self, left: str, right: str, gap_at: int = 250, width: int = 380) -> np.ndarray:
+        image = np.full((self.HEIGHT, width, 3), 240, np.uint8)
+        cv2.putText(image, left, (4, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (30, 30, 30), 2)
+        if right:
+            cv2.putText(image, right, (gap_at, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (30, 30, 30), 2)
+        return image
+
+    @staticmethod
+    def ink_columns(image: np.ndarray) -> int:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return int(((gray < 128).sum(axis=0) > 0).sum())
+
+    @staticmethod
+    def widest_gap(image: np.ndarray) -> int:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        has_ink = (gray < 128).any(axis=0)
+        columns = np.flatnonzero(has_ink)
+        return int(np.diff(columns).max()) - 1
+
+    def test_the_wide_gap_between_the_two_columns_is_collapsed_and_ink_is_kept(self) -> None:
+        before = self.cell("Nguyen Van", "Anh")
+        after = rw.compact_name_cell(before)
+        self.assertEqual(after.shape[0], self.HEIGHT)
+        self.assertLess(after.shape[1], before.shape[1] - 100)
+        self.assertEqual(self.ink_columns(after), self.ink_columns(before))  # no ink lost, none invented
+        self.assertLess(self.widest_gap(after), rw.NGUONG_KHE_TEN * self.HEIGHT)
+        self.assertEqual(after.dtype, before.dtype)
+        # the background stays the background (no black bars)
+        self.assertGreater(int(after[0, 0].mean()), 200)
+
+    def test_word_spacing_inside_one_column_is_left_alone(self) -> None:
+        single = self.cell("Tran Trung Hieu", "")
+        self.assertIs(rw.compact_name_cell(single), single)
+
+    def test_blank_or_missing_cells_are_returned_unchanged(self) -> None:
+        blank = np.full((self.HEIGHT, 300, 3), 240, np.uint8)
+        self.assertIs(rw.compact_name_cell(blank), blank)
+        self.assertIsNone(rw.compact_name_cell(None))
+
+    def test_grid_lines_are_not_mistaken_for_ink(self) -> None:
+        image = self.cell("Le Minh", "Duc")
+        image[:, 0:2] = 20  # vertical rule at the left edge
+        image[:, 150:152] = 20  # a rule inside the gap
+        after = rw.compact_name_cell(image)
+        self.assertLess(after.shape[1], image.shape[1] - 100)
+
+    def test_a_strike_through_all_columns_is_not_split(self) -> None:
+        image = self.cell("Le Minh", "Duc")
+        cv2.line(image, (0, 20), (self.HEIGHT * 9, 20), (30, 30, 30), 2)
+        self.assertIs(rw.compact_name_cell(image), image)
+
+    def test_grayscale_cells_are_supported(self) -> None:
+        gray = cv2.cvtColor(self.cell("Pham Thi", "Lan"), cv2.COLOR_BGR2GRAY)
+        after = rw.compact_name_cell(gray)
+        self.assertEqual(after.ndim, 2)
+        self.assertLess(after.shape[1], gray.shape[1] - 100)
+
+    def test_extracted_rows_carry_the_compacted_name_cell_but_measure_ink_on_the_original(self) -> None:
+        from unittest import mock
+
+        page, _ = sheet()
+        marker = np.full((9, 9, 3), 7, np.uint8)
+        seen: list[tuple[int, int]] = []
+
+        def fake(cell):
+            seen.append(cell.shape[:2])
+            return marker
+
+        with mock.patch.object(rw, "compact_name_cell", side_effect=fake):
+            analysis = rw.analyze_page(encode_png(photograph(page)), HeaderOcr(SCORE_SHEET, SCORE_OCR))
+        self.assertEqual(len(seen), len(analysis.rows))
+        for row in analysis.rows:
+            self.assertIs(row.name_cell, marker)  # the stored/read cell is the compacted one
+        inked = [row for row in analysis.rows if row.has_name_ink]
+        self.assertTrue(inked)
+        # ink was measured on the full-width original (marker is a flat 9x9 image: it would measure 0)
+        self.assertTrue(all(row.name_ink > rw.NGUONG_TEN_TRONG for row in inked))
+        self.assertTrue(all(width > 9 for _, width in seen))
+
+
 class InkMeasureTest(unittest.TestCase):
     def test_ink_is_measured_in_percent_and_blank_is_zero(self) -> None:
         blank = np.full((44, 90, 3), 245, np.uint8)

@@ -54,6 +54,7 @@ function paperRow(
     nameCropBase64: pixel,
     comparison: "KHOP",
     reviewLevel: "XANH",
+    suggestedSource: "SO",
     ...overrides,
   };
 }
@@ -137,6 +138,7 @@ test("upload → worker maps each row to the right student by STT and drops stru
       written: blank,
       comparison: "KHONG_DOC_DUOC",
       reviewLevel: "DO",
+      suggestedSource: null,
     }),
     paperRow(3, 3, names[2]!, "7.5"),
     paperRow(4, 4, names[3]!, "6.0"),

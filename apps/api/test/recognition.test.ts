@@ -184,6 +184,7 @@ test("detail signs private images and keeps storage keys internal", async () => 
           writtenConfidence: "0.9300",
           comparison: "KHOP",
           reviewLevel: "XANH",
+          suggestedSource: "SO",
           finalValue: null,
           numericCropKey: "recognition/crops/42/1-numeric.png",
           writtenCropKey: "recognition/crops/42/1-written.png",

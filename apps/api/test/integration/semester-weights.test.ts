@@ -128,14 +128,14 @@ test("UC14 semester coefficients are isolated, authorized, snapshotted and froze
       ]);
     const rows = [...byStudent.values()];
     const changes = [
-      ...rows[0]!.map((cell, index) => ({
+      ...rows[0]!.map((cell) => ({
         cellId: cell.id,
-        value: index === 0 ? "8.0" : "9.0",
+        value: cell.componentName === "TX" ? "8.0" : "9.0",
         reason: "Fixture Phase 5",
       })),
-      ...rows[1]!.map((cell, index) => ({
+      ...rows[1]!.map((cell) => ({
         cellId: cell.id,
-        value: index === 0 ? "0.0" : "6.0",
+        value: cell.componentName === "TX" ? "0.0" : "6.0",
         reason: "Fixture Phase 5",
       })),
     ];

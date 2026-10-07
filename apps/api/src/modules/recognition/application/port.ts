@@ -61,6 +61,8 @@ export interface RecognitionTicket {
   redRows: number;
 }
 
+export type SuggestedSource = "SO" | "CHU";
+
 export interface RecognitionEvidenceRow {
   rowId: string;
   /** Vị trí dòng trên ảnh. */
@@ -84,6 +86,8 @@ export interface RecognitionEvidenceRow {
   writtenConfidence: string | null;
   comparison: "KHOP" | "LECH" | "MOT_KENH" | "KHONG_DOC_DUOC";
   reviewLevel: "XANH" | "VANG" | "DO";
+  /** Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi Đỏ: không gợi ý giá trị. */
+  suggestedSource: SuggestedSource | null;
   finalValue: string | null;
   numericCropKey: string | null;
   writtenCropKey: string | null;
@@ -132,6 +136,8 @@ export type RecognitionRowResult = {
   nameCropBase64: string;
   comparison: "KHOP" | "LECH" | "MOT_KENH" | "KHONG_DOC_DUOC";
   reviewLevel: "XANH" | "VANG" | "DO";
+  /** Kênh có giá trị được gợi ý theo luật hợp nhất hai kênh; null khi Đỏ. */
+  suggestedSource: SuggestedSource | null;
 };
 
 export type RecognitionResult = {

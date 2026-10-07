@@ -32,7 +32,8 @@
       "writtenCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "comparison": "KHOP",
-      "reviewLevel": "XANH"
+      "reviewLevel": "XANH",
+      "suggestedSource": "SO"
     },
     {
       "rowIndex": 2,
@@ -64,7 +65,8 @@
       "writtenCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "comparison": "KHONG_DOC_DUOC",
-      "reviewLevel": "DO"
+      "reviewLevel": "DO",
+      "suggestedSource": null
     },
     {
       "rowIndex": 3,
@@ -96,7 +98,8 @@
       "writtenCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "comparison": "KHOP",
-      "reviewLevel": "XANH"
+      "reviewLevel": "XANH",
+      "suggestedSource": "SO"
     }
   ]
 }

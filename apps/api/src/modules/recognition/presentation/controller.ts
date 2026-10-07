@@ -116,6 +116,14 @@ export class RecognitionEvidenceRowDto {
   comparison!: string;
   @ApiProperty({ type: String, enum: ["XANH", "VANG", "DO"] })
   reviewLevel!: string;
+  @ApiProperty({
+    type: String,
+    enum: ["SO", "CHU"],
+    nullable: true,
+    description:
+      "Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị",
+  })
+  suggestedSource!: string | null;
   @ApiProperty({ type: String, nullable: true }) finalValue!: string | null;
   @ApiProperty({ type: String, nullable: true }) numericCropUrl!: string | null;
   @ApiProperty({ type: String, nullable: true }) writtenCropUrl!: string | null;

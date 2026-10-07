@@ -257,7 +257,7 @@ Các enum nền tảng:
 1. **Máy chỉ đề xuất, người có thẩm quyền mới chốt.** Kết quả nhận dạng không được ghi thẳng vào `diem_thanh_phan`.
 2. Mỗi ô nhận dạng lưu riêng giá trị và độ tin cậy của kênh Điểm số và kênh Điểm chữ; không gộp mất dữ liệu gốc.
 3. Màn hình đối chiếu luôn hiển thị ảnh ô cắt cùng hai kết quả và độ tin cậy.
-4. Xanh: hai kênh khớp và đủ tin cậy. Vàng: lệch, tin cậy thấp hoặc chỉ một kênh đọc được. Đỏ: ô trống, cả hai kênh không đọc được hoặc ca hòa chưa giải quyết; không tự gợi ý một giá trị tùy tiện.
+4. Phân loại theo luật hợp nhất hai kênh (ADR-0015, BE-22). Xanh: hai kênh ĐỘC LẬP (Điểm số, Điểm chữ) đồng thuận cùng một giá trị hợp lệ (kèm mức sàn tin cậy mỗi kênh nếu được cấu hình; mặc định 0). Vàng: chỉ một kênh đủ tin cậy theo ngưỡng riêng (kênh kia yếu, không hợp lệ hoặc khác giá trị); gợi ý giá trị của kênh đó và ghi rõ "Lấy theo điểm số/chữ". Đỏ: ô trống, cả hai kênh mạnh nhưng mâu thuẫn, cả hai cùng yếu hoặc không kênh nào hợp lệ; không gợi ý giá trị. Mọi gợi ý chỉ là đề xuất, người duyệt chốt.
 5. Số dòng không do giáo viên khai báo. Mọi dòng có điểm phát hiện được phải ghép được với danh sách lớp đã chốt của phiếu; ghép thất bại thì dừng xử lý, yêu cầu ảnh khác, không đoán (ADR-0015).
 6. Duyệt một phiếu là giao dịch nguyên tử gồm: ghi điểm chính thức, thêm lịch sử, đóng dấu người/thời điểm duyệt, đổi trạng thái phiếu. Lỗi ở bất kỳ bước nào phải rollback toàn bộ.
 7. Chỉ điểm `DA_DUYET` mới được tính tổng kết. Không xếp loại trước khi tính tổng kết thành công.

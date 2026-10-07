@@ -427,6 +427,8 @@ model ket_qua_dong {
   do_tin_cay_ghep     Decimal?         @db.Decimal(5, 4)
   duong_dan_anh_o_ten String?          @db.VarChar(512)
   ghi_chu_ghep        String?          @db.VarChar(200)
+  ly_do_duyet         String?          @db.VarChar(500)
+  kenh_goi_y          String?          @db.VarChar(3)
   ma_diem_ref         diem_thanh_phan? @relation(fields: [ma_diem], references: [ma_diem], onDelete: Restrict, onUpdate: Restrict)
   nguoi_duyet_ref     nguoi_dung?      @relation(fields: [nguoi_duyet], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
 

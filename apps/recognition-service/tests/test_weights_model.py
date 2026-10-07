@@ -67,7 +67,7 @@ class StubCrnn:
 
 
 class StubVietOcr:
-    """Text reader: every written cell says 'tám rưỡi', every name cell a fake name."""
+    """Điểm chữ: mọi ô điểm chữ đọc ra 'tám rưỡi' (mô hình tinh chỉnh); không bao giờ nhận ô họ tên."""
 
     sha256 = "b" * 64
 
@@ -77,15 +77,27 @@ class StubVietOcr:
 
     def read_cells(self, images):
         self.calls.append(len(images))
-        # name cells are wide (480 px), written cells narrower (210 px)
-        return [
-            TextRead("Họ tên giả" if image.shape[1] > 300 else self.written, 0.93 if image.shape[1] > 300 else self.written_prob)
-            for image in images
-        ]
+        return [TextRead(self.written, self.written_prob) for _ in images]
 
 
-def build(crnn=None, vietocr=None) -> WeightsRecognitionModel:
-    return WeightsRecognitionModel(crnn or StubCrnn(), vietocr or StubVietOcr(), "crnn-dot5+vietocr-tang4:abcdef012345")
+class StubNameReader:
+    """Họ tên in: mô hình VietOCR gốc, tách biệt với mô hình điểm chữ."""
+
+    sha256 = "c" * 64
+
+    def __init__(self) -> None:
+        self.calls: list[int] = []
+
+    def read_cells(self, images):
+        self.calls.append(len(images))
+        return [TextRead("Họ tên giả", 0.93) for _ in images]
+
+
+VERSION = "crnn-dot5+vietocr-tang4+name-vgg:abcdef012345"
+
+
+def build(crnn=None, vietocr=None, name=None) -> WeightsRecognitionModel:
+    return WeightsRecognitionModel(crnn or StubCrnn(), vietocr or StubVietOcr(), name or StubNameReader(), VERSION)
 
 
 class WeightsModelTest(unittest.TestCase):
@@ -96,7 +108,7 @@ class WeightsModelTest(unittest.TestCase):
 
     def test_one_row_per_table_row_with_version_and_page_start(self) -> None:
         self.assertEqual(len(self.result.rows), ROWS)
-        self.assertEqual(self.result.model_version, "crnn-dot5+vietocr-tang4:abcdef012345")
+        self.assertEqual(self.result.model_version, VERSION)
         self.assertEqual([r.row_index for r in self.result.rows], list(range(1, ROWS + 1)))
         self.assertIsNone(self.result.page_start_stt)
 
@@ -110,6 +122,14 @@ class WeightsModelTest(unittest.TestCase):
         self.assertEqual(row.written.raw_output, "tám rưỡi")
         self.assertEqual(row.written.confidence, Decimal("0.9500"))
         self.assertEqual(row.name.raw_output, "Họ tên giả")
+
+    def test_names_are_read_by_the_name_model_and_written_grades_by_the_other(self) -> None:
+        vietocr, name = StubVietOcr(), StubNameReader()
+        result = build(vietocr=vietocr, name=name).recognize(self.image)
+        self.assertEqual(sum(vietocr.calls), sum(1 for r in result.rows if not r.written.is_blank))
+        self.assertEqual(sum(name.calls), sum(1 for r in result.rows if not r.name.is_blank))
+        self.assertTrue(all(r.name.raw_output == "Họ tên giả" for r in result.rows if not r.name.is_blank))
+        self.assertTrue(all(r.written.raw_output == "tám rưỡi" for r in result.rows if not r.written.is_blank))
 
     def test_struck_and_blank_rows_have_blank_channels_and_no_reading(self) -> None:
         struck = self.result.rows[STRUCK]
@@ -198,6 +218,8 @@ class ConfiguredModelTest(unittest.TestCase):
             "RECOGNITION_CRNN_SHA256": "a" * 64,
             "RECOGNITION_VIETOCR_WEIGHTS": "/models/vietocr.pth",
             "RECOGNITION_VIETOCR_SHA256": "b" * 64,
+            "RECOGNITION_NAME_WEIGHTS": "/models/name.pth",
+            "RECOGNITION_NAME_SHA256": "c" * 64,
         }
         cases = [
             {"APP_ENV": "production"},  # default mode is weights, nothing configured
@@ -205,6 +227,11 @@ class ConfiguredModelTest(unittest.TestCase):
             {k: v for k, v in good.items() if k != "RECOGNITION_CRNN_WEIGHTS"},
             {**good, "RECOGNITION_CRNN_SHA256": ""},
             {**good, "RECOGNITION_VIETOCR_SHA256": "xyz"},
+            # thiếu mô hình tên thì báo không dùng được, KHÔNG lặng lẽ dùng mô hình điểm chữ
+            {k: v for k, v in good.items() if k != "RECOGNITION_NAME_WEIGHTS"},
+            {**good, "RECOGNITION_NAME_WEIGHTS": ""},
+            {k: v for k, v in good.items() if k != "RECOGNITION_NAME_SHA256"},
+            {**good, "RECOGNITION_NAME_SHA256": "xyz"},
             good,  # files do not exist
             {**good, "RECOGNITION_DEVICE": "tpu"},
             {**good, "RECOGNITION_MODEL_MODE": "other"},
@@ -219,8 +246,10 @@ class ConfiguredModelTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             crnn = Path(directory) / "crnn.pth"
             ocr = Path(directory) / "vietocr.pth"
+            name = Path(directory) / "name.pth"
             crnn.write_bytes(b"x")
             ocr.write_bytes(b"y")
+            name.write_bytes(b"z")
             env = {
                 "APP_ENV": "production",
                 "RECOGNITION_MODEL_MODE": "weights",
@@ -228,12 +257,14 @@ class ConfiguredModelTest(unittest.TestCase):
                 "RECOGNITION_CRNN_SHA256": "0" * 64,
                 "RECOGNITION_VIETOCR_WEIGHTS": str(ocr),
                 "RECOGNITION_VIETOCR_SHA256": "0" * 64,
+                "RECOGNITION_NAME_WEIGHTS": str(name),
+                "RECOGNITION_NAME_SHA256": "0" * 64,
             }
             with self.assertRaises(ModelUnavailableError):
                 configured_model(env)
 
-    def test_valid_configuration_loads_once_and_builds_the_version_from_both_hashes(self) -> None:
-        crnn, ocr = StubCrnn(), StubVietOcr()
+    def test_valid_configuration_loads_once_and_builds_the_version_from_all_hashes(self) -> None:
+        crnn, ocr, name = StubCrnn(), StubVietOcr(), StubNameReader()
         env = {
             "APP_ENV": "production",
             "RECOGNITION_MODEL_MODE": "weights",
@@ -241,16 +272,24 @@ class ConfiguredModelTest(unittest.TestCase):
             "RECOGNITION_CRNN_SHA256": "a" * 64,
             "RECOGNITION_VIETOCR_WEIGHTS": "/m/v.pth",
             "RECOGNITION_VIETOCR_SHA256": "b" * 64,
+            "RECOGNITION_NAME_WEIGHTS": "/m/n.pth",
+            "RECOGNITION_NAME_SHA256": "c" * 64,
         }
         model_module._WEIGHTS_CACHE.clear()
         with patch("src.adapters.crnn.CrnnReader.load", return_value=crnn) as load_crnn, patch(
-            "src.adapters.vietocr_reader.VietOcrReader.load", return_value=ocr
+            "src.adapters.vietocr_reader.VietOcrReader.load", side_effect=[ocr, name]
         ) as load_ocr:
             first = configured_model(env)
             second = configured_model(env)
         self.assertIs(first, second)
-        self.assertEqual((load_crnn.call_count, load_ocr.call_count), (1, 1))
-        self.assertRegex(first._version, r"^crnn-dot5\+vietocr-tang4:[0-9a-f]{12}$")
+        self.assertEqual((load_crnn.call_count, load_ocr.call_count), (1, 2))
+        # mô hình điểm chữ và mô hình tên là hai tệp riêng, nạp theo đường dẫn riêng
+        self.assertEqual(
+            [call.args[0] for call in load_ocr.call_args_list], [Path("/m/v.pth"), Path("/m/n.pth")]
+        )
+        self.assertIs(first._vietocr, ocr)
+        self.assertIs(first._name_reader, name)
+        self.assertRegex(first._version, r"^crnn-dot5\+vietocr-tang4\+name-vgg:[0-9a-f]{12}$")
         model_module._WEIGHTS_CACHE.clear()
 
 
@@ -298,19 +337,26 @@ class HttpErrorContractTest(unittest.IsolatedAsyncioTestCase):
                 await recognize(image=self.upload())
         self.assertEqual(caught.exception.status_code, 503)
 
-    async def test_thresholds_from_the_environment_drive_the_colour(self) -> None:
-        # fake rows read 0.95 (numeric) and 0.93 (written)
+    async def test_floors_from_the_environment_demote_an_agreement_to_yellow(self) -> None:
+        # Fake rows read 0.95 (numeric) and 0.93 (written), with the same value on both channels: the research
+        # rule makes them green; only the optional agreement floors (default 0) can demote them.
         base = {"APP_ENV": "test", "RECOGNITION_MODEL_MODE": "fake"}
         with patch.dict(os.environ, base, clear=True):
             green = await recognize(image=self.upload())
         self.assertEqual(green.rows[0].reviewLevel, "XANH")
-        strict = {**base, "RECOGNITION_NUMERIC_THRESHOLD": "0.99"}
+        self.assertEqual(green.rows[0].suggestedSource, "SO")
+        strict = {**base, "RECOGNITION_NUMERIC_FLOOR": "0.99"}
         with patch.dict(os.environ, strict, clear=True):
             yellow = await recognize(image=self.upload())
         self.assertEqual(yellow.rows[0].reviewLevel, "VANG")
-        strict_written = {**base, "RECOGNITION_WRITTEN_THRESHOLD": "0.99"}
+        self.assertEqual(yellow.rows[0].suggestedSource, "SO")
+        strict_written = {**base, "RECOGNITION_WRITTEN_FLOOR": "0.99"}
         with patch.dict(os.environ, strict_written, clear=True):
             self.assertEqual((await recognize(image=self.upload())).rows[0].reviewLevel, "VANG")
+        with patch.dict(os.environ, {**base, "RECOGNITION_NUMERIC_FLOOR": "abc"}, clear=True):
+            with self.assertRaises(HTTPException) as caught:
+                await recognize(image=self.upload())
+        self.assertEqual(caught.exception.status_code, 503)
 
     def test_http_body_carries_the_code(self) -> None:
         with patch(
@@ -325,7 +371,7 @@ class HttpErrorContractTest(unittest.IsolatedAsyncioTestCase):
 
     def test_a_real_photo_through_the_endpoint_returns_the_new_contract(self) -> None:
         crnn, ocr = StubCrnn(), StubVietOcr()
-        model = WeightsRecognitionModel(crnn, ocr, "crnn-dot5+vietocr-tang4:abcdef012345")
+        model = WeightsRecognitionModel(crnn, ocr, StubNameReader(), VERSION)
         with patch("src.api.main.configured_model", return_value=model):
             response = TestClient(app).post(
                 "/v1/recognize", files={"image": ("s.png", sheet_photo(), "image/png")}
@@ -343,7 +389,9 @@ class HttpErrorContractTest(unittest.IsolatedAsyncioTestCase):
 
 
 @unittest.skipUnless(
-    os.getenv("RECOGNITION_CRNN_WEIGHTS") and os.getenv("RECOGNITION_VIETOCR_WEIGHTS"),
+    os.getenv("RECOGNITION_CRNN_WEIGHTS")
+    and os.getenv("RECOGNITION_VIETOCR_WEIGHTS")
+    and os.getenv("RECOGNITION_NAME_WEIGHTS"),
     "real weights are not configured (no weights in CI)",
 )
 class RealWeightsEndToEndTest(unittest.TestCase):
@@ -353,7 +401,7 @@ class RealWeightsEndToEndTest(unittest.TestCase):
             "RECOGNITION_MODEL_MODE": "weights",
             **{
                 k: os.environ[k]
-                for k in ("RECOGNITION_CRNN_WEIGHTS", "RECOGNITION_VIETOCR_WEIGHTS")
+                for k in ("RECOGNITION_CRNN_WEIGHTS", "RECOGNITION_VIETOCR_WEIGHTS", "RECOGNITION_NAME_WEIGHTS")
             },
         }
         from src.adapters.crnn import sha256_of
@@ -364,9 +412,12 @@ class RealWeightsEndToEndTest(unittest.TestCase):
         env["RECOGNITION_VIETOCR_SHA256"] = os.getenv("RECOGNITION_VIETOCR_SHA256") or sha256_of(
             Path(env["RECOGNITION_VIETOCR_WEIGHTS"])
         )
+        env["RECOGNITION_NAME_SHA256"] = os.getenv("RECOGNITION_NAME_SHA256") or sha256_of(
+            Path(env["RECOGNITION_NAME_WEIGHTS"])
+        )
         result = configured_model(env).recognize(sheet_photo())
         self.assertEqual(len(result.rows), ROWS)
-        self.assertRegex(result.model_version, r"^crnn-dot5\+vietocr-tang4:[0-9a-f]{12}$")
+        self.assertRegex(result.model_version, r"^crnn-dot5\+vietocr-tang4\+name-vgg:[0-9a-f]{12}$")
 
 
 if __name__ == "__main__":

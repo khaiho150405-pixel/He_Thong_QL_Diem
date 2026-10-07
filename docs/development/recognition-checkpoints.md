@@ -33,20 +33,24 @@ Adapter thật hiện vẫn báo `MODEL_UNAVAILABLE` khi chưa cấu hình. Khô
 
 ## Chế độ weights (BE-17 → BE-19, ADR-0015)
 
-Mô hình thật chỉ chạy khi `RECOGNITION_MODEL_MODE=weights` (mặc định) và đủ bốn biến sau, nếu thiếu hoặc sai thì dịch vụ trả `503 MODEL_UNAVAILABLE` và worker không ghi gì:
+Mô hình thật chỉ chạy khi `RECOGNITION_MODEL_MODE=weights` (mặc định) và đủ các biến sau (ba mô hình, mỗi mô hình một tệp + hash), nếu thiếu hoặc sai thì dịch vụ trả `503 MODEL_UNAVAILABLE` và worker không ghi gì:
 
-| Biến                                                              | Ý nghĩa                                                     |
-| ----------------------------------------------------------------- | ----------------------------------------------------------- |
-| `RECOGNITION_CRNN_WEIGHTS` / `RECOGNITION_CRNN_SHA256`            | CRNN đọc ô Đ.số và STT (`crnn_num_best_dot5.pth`)           |
-| `RECOGNITION_VIETOCR_WEIGHTS` / `RECOGNITION_VIETOCR_SHA256`      | VietOCR đọc ô Điểm chữ và Họ tên (`vietocr_best_tang4.pth`) |
-| `RECOGNITION_NUMERIC_THRESHOLD` / `RECOGNITION_WRITTEN_THRESHOLD` | ngưỡng Xanh riêng từng kênh, mặc định 0.95 / 0.90           |
-| `RECOGNITION_DEVICE`                                              | `cpu` (mặc định) hoặc `cuda`                                |
+| Biến                                                              | Ý nghĩa                                                                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `RECOGNITION_CRNN_WEIGHTS` / `RECOGNITION_CRNN_SHA256`            | CRNN đọc ô Đ.số và STT (`crnn_num_best_dot5.pth`)                                                      |
+| `RECOGNITION_VIETOCR_WEIGHTS` / `RECOGNITION_VIETOCR_SHA256`      | VietOCR tinh chỉnh đọc ô Điểm chữ (`vietocr_best_tang4.pth`)                                           |
+| `RECOGNITION_NAME_WEIGHTS` / `RECOGNITION_NAME_SHA256`            | VietOCR GỐC đọc ô Họ tên in (`vietocr_vgg_seq2seq_pretrained.pth`)                                     |
+| `RECOGNITION_NUMERIC_THRESHOLD` / `RECOGNITION_WRITTEN_THRESHOLD` | τ riêng từng kênh của luật hợp nhất (kênh đủ tin cậy ≥ τ), mặc định 0.95 / 0.90 (khóa ở BE-22)         |
+| `RECOGNITION_NUMERIC_FLOOR` / `RECOGNITION_WRITTEN_FLOOR`         | mức sàn nhánh đồng thuận, mặc định 0.00 = đúng luật nghiên cứu (khóa ở BE-22 vì DEV không có Xanh sai) |
+| `RECOGNITION_DEVICE`                                              | `cpu` (mặc định) hoặc `cuda`                                                                           |
 
 Cài phụ thuộc mô hình: `pip install -e apps/recognition-service[ml]` (torch, torchvision; nhóm tùy chọn, CI và chế độ fake không cần) rồi `pip install --no-deps vietocr==0.3.13`. Không có torch thì chế độ weights trả `MODEL_UNAVAILABLE` và các bài test cần torch tự bỏ qua.
 
+Cột Họ tên (BE-20b): họ tên trên mẫu là chữ IN, còn `vietocr_best_tang4.pth` được tinh chỉnh cho điểm chữ viết tay nên đọc tên in kém; cột Họ tên dùng bản VietOCR gốc `vgg_seq2seq` (tệp tải MỘT LẦN từ `https://vocr.vn/data/vietocr/vgg_seq2seq.pth` về `D:\HocTap\KhoaLuan\App\weights\vietocr_vgg_seq2seq_pretrained.pth`, SHA-256 `0921503a41375a0584268e23ef3d414ea478a8fe8777865c7745d38f2d0bc5db`; dịch vụ không tải gì lúc chạy). Thiếu cấu hình mô hình tên thì `MODEL_UNAVAILABLE`; không bao giờ tự dùng mô hình điểm chữ thay thế. Ô họ tên của mẫu gồm hai cột con (họ đệm | tên) cách nhau khe trắng rộng; mô hình đọc chuỗi dừng ở khe nên mất phần tên, vì vậy `rows.compact_name_cell` thu khe rộng hơn một chiều cao ô về 0,4 chiều cao (chỉ ghép lại mực gốc) trước khi đọc và lưu ảnh ô.
+
 Cột STT không được nhận dạng (quyết định của chủ dự án): dịch vụ luôn trả `stt.value = null`, `stt.confidence = 0`; ghép dòng dựa vào họ tên và thứ tự.
 
-Quy tắc an toàn: SHA-256 được kiểm trước khi nạp; trọng số chỉ nạp bằng `torch.load(weights_only=True)` (không nạp được thì `MODEL_UNAVAILABLE`, không hạ sang pickle tùy ý); cấu hình VietOCR (`src/adapters/vietocr_vgg_seq2seq.yml`) đã loại mọi URL tải mô hình; không tải gì từ Internet lúc chạy. `vietocr==0.3.13` phải cài `pip install --no-deps vietocr==0.3.13` (cùng `einops`), vì các phụ thuộc của nó không cần cho suy luận. Dùng `crnn_num_best_dot5.pth` và `vietocr_best_tang4.pth`, không dùng bản `*_dev.pth` (chỉ để dò ngưỡng). `modelVersion` = `crnn-dot5+vietocr-tang4:<12 ký tự đầu của SHA-256 ghép hai hash>`.
+Quy tắc an toàn: SHA-256 được kiểm trước khi nạp; trọng số chỉ nạp bằng `torch.load(weights_only=True)` (không nạp được thì `MODEL_UNAVAILABLE`, không hạ sang pickle tùy ý); cấu hình VietOCR (`src/adapters/vietocr_vgg_seq2seq.yml`) đã loại mọi URL tải mô hình; không tải gì từ Internet lúc chạy. `vietocr==0.3.13` phải cài `pip install --no-deps vietocr==0.3.13` (cùng `einops`), vì các phụ thuộc của nó không cần cho suy luận. Dùng `crnn_num_best_dot5.pth` và `vietocr_best_tang4.pth`, không dùng bản `*_dev.pth` (chỉ để dò ngưỡng). `modelVersion` = `crnn-dot5+vietocr-tang4+name-vgg:<12 ký tự đầu của SHA-256 ghép ba hash>`.
 
 Ảnh bị từ chối trả `422` với `{"detail": {"code", "message"}}`, mã ổn định: `IMAGE_UNREADABLE`, `IMAGE_QUALITY_LOW`, `GRID_NOT_FOUND`, `NOT_A_GRADEBOOK`, `SCORE_COLUMN_NOT_FOUND`; worker đánh dấu phiếu `LOI` đúng mã, không thử lại.
 

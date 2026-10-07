@@ -7241,6 +7241,12 @@
             "enum": ["KHOP", "LECH", "MOT_KENH", "KHONG_DOC_DUOC"]
           },
           "reviewLevel": { "type": "string", "enum": ["XANH", "VANG", "DO"] },
+          "suggestedSource": {
+            "type": "string",
+            "enum": ["SO", "CHU"],
+            "nullable": true,
+            "description": "Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị"
+          },
           "finalValue": { "type": "string", "nullable": true },
           "numericCropUrl": { "type": "string", "nullable": true },
           "writtenCropUrl": { "type": "string", "nullable": true },
@@ -7268,6 +7274,7 @@
           "writtenConfidence",
           "comparison",
           "reviewLevel",
+          "suggestedSource",
           "finalValue",
           "numericCropUrl",
           "writtenCropUrl",

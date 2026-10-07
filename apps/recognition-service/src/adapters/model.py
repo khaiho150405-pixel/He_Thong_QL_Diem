@@ -169,16 +169,21 @@ STT_NOT_READ = SttPrediction(None, None, Decimal("0"), is_blank=True)
 
 
 class WeightsRecognitionModel(RecognitionModel):
-    """Mô hình thật: ``analyze_page`` (BE-13–15) + CRNN (Đ.số; không đọc STT) + VietOCR (Điểm chữ, Họ tên).
+    """Mô hình thật: ``analyze_page`` (BE-13–15) + CRNN (Đ.số; không đọc STT) + VietOCR tinh chỉnh (Điểm chữ) + VietOCR
+    gốc (Họ tên).
+
+    Họ tên là chữ IN nên dùng mô hình VietOCR gốc tổng quát (``RECOGNITION_NAME_WEIGHTS``); bản tinh chỉnh cho điểm chữ
+    viết tay đọc tên in kém (BE-20b). Hai mô hình là hai đối tượng riêng, không dùng thay cho nhau.
 
     Dịch vụ không nhận danh sách học sinh; chỉ trả những gì đọc được trên giấy. Kênh điểm chữ đi qua ``nan_diem_chu``
     (chỉ nắn về từ điển khi gần một cụm hợp lệ) rồi ``so_tu_chuoi_chu``; kênh điểm số qua ``so_tu_chuoi_so``. Chuỗi
     không giải ra điểm hợp lệ để ``value=None`` (kênh không đọc được), không bị ép thành một giá trị.
     """
 
-    def __init__(self, crnn_reader: Any, vietocr_reader: Any, model_version: str) -> None:
+    def __init__(self, crnn_reader: Any, vietocr_reader: Any, name_reader: Any, model_version: str) -> None:
         self._crnn = crnn_reader
         self._vietocr = vietocr_reader
+        self._name_reader = name_reader
         self._version = model_version
 
     def recognize(self, image: bytes) -> ModelResult:
@@ -211,7 +216,7 @@ class WeightsRecognitionModel(RecognitionModel):
         )
         name_rows = [r for r in active if r.has_name_ink]
         name_reads = dict(
-            zip((r.row_index for r in name_rows), self._vietocr.read_cells([r.name_cell for r in name_rows]))
+            zip((r.row_index for r in name_rows), self._name_reader.read_cells([r.name_cell for r in name_rows]))
         )
 
         out: list[ModelRow] = []
@@ -262,11 +267,15 @@ class WeightsRecognitionModel(RecognitionModel):
 
 
 _WEIGHTS_LOCK = threading.Lock()
-_WEIGHTS_CACHE: dict[tuple[str, str, str, str, str], WeightsRecognitionModel] = {}
+_WEIGHTS_CACHE: dict[tuple[str, str, str, str, str, str, str], WeightsRecognitionModel] = {}
 
 
 def weights_model(values: Mapping[str, str]) -> WeightsRecognitionModel:
-    """Nạp (một lần cho mỗi cấu hình) CRNN + VietOCR từ ``RECOGNITION_*``; thiếu/sai hash/sai tệp → không dùng được."""
+    """Nạp (một lần cho mỗi cấu hình) CRNN + VietOCR (điểm chữ) + VietOCR gốc (họ tên) từ ``RECOGNITION_*``.
+
+    Thiếu/sai hash/sai tệp ở BẤT KỲ mô hình nào → ``ModelUnavailableError``; thiếu mô hình tên KHÔNG được âm thầm
+    chuyển sang mô hình điểm chữ.
+    """
     from .crnn import CrnnReader
     from .vietocr_reader import VietOcrReader
 
@@ -274,21 +283,26 @@ def weights_model(values: Mapping[str, str]) -> WeightsRecognitionModel:
     crnn_sha = values.get("RECOGNITION_CRNN_SHA256", "")
     ocr_path = values.get("RECOGNITION_VIETOCR_WEIGHTS", "")
     ocr_sha = values.get("RECOGNITION_VIETOCR_SHA256", "")
+    name_path = values.get("RECOGNITION_NAME_WEIGHTS", "")
+    name_sha = values.get("RECOGNITION_NAME_SHA256", "")
     device = values.get("RECOGNITION_DEVICE", "cpu")
-    if not (crnn_path and ocr_path):
+    if not (crnn_path and ocr_path and name_path):
         raise ModelUnavailableError("Recognition weights are not configured")
     if device not in {"cpu", "cuda"}:
         raise ModelUnavailableError("RECOGNITION_DEVICE must be cpu or cuda")
-    key = (crnn_path, crnn_sha.lower(), ocr_path, ocr_sha.lower(), device)
+    key = (crnn_path, crnn_sha.lower(), ocr_path, ocr_sha.lower(), name_path, name_sha.lower(), device)
     with _WEIGHTS_LOCK:
         cached = _WEIGHTS_CACHE.get(key)
         if cached is not None:
             return cached
         crnn_reader = CrnnReader.load(Path(crnn_path), crnn_sha, device)
         vietocr_reader = VietOcrReader.load(Path(ocr_path), ocr_sha, device)
-        digest = hashlib.sha256((crnn_reader.sha256 + vietocr_reader.sha256).encode("ascii")).hexdigest()
-        version = f"crnn-dot5+vietocr-tang4:{digest[:12]}"
-        model = WeightsRecognitionModel(crnn_reader, vietocr_reader, version)
+        name_reader = VietOcrReader.load(Path(name_path), name_sha, device)
+        digest = hashlib.sha256(
+            (crnn_reader.sha256 + vietocr_reader.sha256 + name_reader.sha256).encode("ascii")
+        ).hexdigest()
+        version = f"crnn-dot5+vietocr-tang4+name-vgg:{digest[:12]}"
+        model = WeightsRecognitionModel(crnn_reader, vietocr_reader, name_reader, version)
         _WEIGHTS_CACHE[key] = model
         return model
 

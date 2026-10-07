@@ -135,6 +135,7 @@ export class RecognitionJobProcessor {
           writtenCropKey: writtenKey,
           nameCropKey: nameKey,
           comparison: row.comparison,
+          suggestedSource: row.suggestedSource,
           // Mức cuối là mức thấp hơn giữa mức điểm (hai kênh) và mức ghép học sinh.
           reviewLevel: combineLevel(row.reviewLevel, match.matchLevel),
         });

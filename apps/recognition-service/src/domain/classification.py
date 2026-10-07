@@ -1,4 +1,17 @@
-"""Rules for comparing numeric and written-grade recognition channels."""
+"""Rules for comparing numeric and written-grade recognition channels.
+
+Luật hợp nhất hai kênh (BE-21/22) lấy từ ``ket_hop/hop_nhat.py::hop_nhat_mot_o`` của nghiên cứu, đổi sang ba màu:
+
+* Hai kênh cùng một giá trị hợp lệ (đồng thuận) → XANH, giá trị chung (kèm mức sàn mỗi kênh, mặc định 0 = đúng nghiên
+  cứu; dưới sàn thì hạ xuống VÀNG, vẫn gợi ý giá trị chung).
+* Chỉ kênh số đủ tin cậy (≥ τ số; kênh chữ yếu, không hợp lệ hoặc khác giá trị) → VÀNG, gợi ý giá trị kênh số.
+* Chỉ kênh chữ đủ tin cậy (≥ τ chữ; kênh số yếu, không hợp lệ hoặc khác giá trị) → VÀNG, gợi ý giá trị kênh chữ.
+* Cả hai mạnh nhưng mâu thuẫn, cả hai yếu hoặc không kênh nào hợp lệ → ĐỎ, KHÔNG gợi ý giá trị (không có trọng tài
+  hiệu chuẩn nhiệt độ của nghiên cứu).
+
+"Đủ tin cậy" của dòng Xanh nghĩa là hai kênh ĐỘC LẬP (mô hình số và mô hình chữ) đồng thuận, không cần độ tin cậy
+riêng từng kênh vượt ngưỡng. Hai kênh thô, giá trị chuẩn hóa và độ tin cậy luôn được giữ nguyên trong dữ liệu trả về.
+"""
 
 from dataclasses import dataclass
 from collections.abc import Mapping
@@ -47,16 +60,29 @@ class ChannelPrediction:
         return not self.is_blank and self.value is not None
 
 
+class Suggestion(StrEnum):
+    """Kênh cho giá trị gợi ý (máy chỉ đề xuất; người duyệt mới chốt)."""
+
+    NUMERIC = "SO"
+    WRITTEN = "CHU"
+
+
 @dataclass(frozen=True, slots=True)
 class Classification:
     comparison: Comparison
     level: ReviewLevel
+    # Kênh có giá trị được gợi ý; None khi Đỏ (không gợi ý giá trị). Khi hai kênh đồng thuận, hai giá trị bằng nhau
+    # nên chọn NUMERIC.
+    suggestion: Suggestion | None = None
 
 
-# Ngưỡng riêng từng kênh (giá trị khởi điểm từ ket_hop/ket_qua/tang4/cau_hinh_hop_nhat_dev_co_mai.json; dò lại ở
-# BE-21–BE-22): độ tin cậy CRNN+CTC và VietOCR không cùng thang đo nên không dùng chung một ngưỡng.
+# Ngưỡng riêng từng kênh (τ của nghiên cứu: ket_hop/ket_qua/tang4/cau_hinh_hop_nhat_dev_co_mai.json): độ tin cậy
+# CRNN+CTC và VietOCR không cùng thang đo nên không dùng chung một ngưỡng.
 DEFAULT_NUMERIC_THRESHOLD = Decimal("0.95")
 DEFAULT_WRITTEN_THRESHOLD = Decimal("0.90")
+# Mức sàn đồng thuận mỗi kênh; 0 = đúng luật nghiên cứu (đồng thuận luôn Xanh). Giá trị đã khóa ở BE-22.
+DEFAULT_NUMERIC_FLOOR = Decimal("0.00")
+DEFAULT_WRITTEN_FLOOR = Decimal("0.00")
 
 
 def _check_threshold(value: Decimal) -> Decimal:
@@ -75,44 +101,61 @@ def thresholds_from_env(env: Mapping[str, str]) -> tuple[Decimal, Decimal]:
     return _check_threshold(numeric), _check_threshold(written)
 
 
+def floors_from_env(env: Mapping[str, str]) -> tuple[Decimal, Decimal]:
+    """(sàn điểm số, sàn điểm chữ) của nhánh đồng thuận từ ``RECOGNITION_NUMERIC_FLOOR`` / ``RECOGNITION_WRITTEN_FLOOR``."""
+    try:
+        numeric = Decimal(env.get("RECOGNITION_NUMERIC_FLOOR", str(DEFAULT_NUMERIC_FLOOR)))
+        written = Decimal(env.get("RECOGNITION_WRITTEN_FLOOR", str(DEFAULT_WRITTEN_FLOOR)))
+    except InvalidOperation as error:
+        raise ValueError("Floor must be a decimal number") from error
+    return _check_threshold(numeric), _check_threshold(written)
+
+
 def classify_channels(
     numeric: ChannelPrediction,
     written: ChannelPrediction,
     *,
-    green_confidence: Decimal | None = None,
     numeric_confidence: Decimal | None = None,
     written_confidence: Decimal | None = None,
+    numeric_floor: Decimal | None = None,
+    written_floor: Decimal | None = None,
 ) -> Classification:
-    """Classify two preserved predictions without selecting a final grade.
+    """Phân loại ba màu theo luật hợp nhất (xem docstring module); hai dự đoán gốc không bị sửa.
 
-    Ngưỡng Xanh riêng từng kênh (``numeric_confidence``/``written_confidence``); ``green_confidence`` là một ngưỡng
-    chung dùng khi không đưa ngưỡng riêng. Không có nhánh "trọng tài" chọn giá trị: hai kênh lệch nhau, cùng yếu hoặc
-    chỉ một kênh đọc được đều chỉ là Vàng; chỉ khi cả hai kênh không đọc được mới là Đỏ, và không bao giờ gợi ý giá trị.
+    ``numeric_confidence``/``written_confidence`` là τ của từng kênh; ``numeric_floor``/``written_floor`` là sàn của
+    nhánh đồng thuận. Kênh không có giá trị hợp lệ coi như độ tin cậy 0 (như ``hop_nhat_mot_o``).
     """
-    numeric_threshold = _check_threshold(
-        numeric_confidence if numeric_confidence is not None else green_confidence
-        if green_confidence is not None else DEFAULT_NUMERIC_THRESHOLD
+    tau_numeric = _check_threshold(
+        numeric_confidence if numeric_confidence is not None else DEFAULT_NUMERIC_THRESHOLD
     )
-    written_threshold = _check_threshold(
-        written_confidence if written_confidence is not None else green_confidence
-        if green_confidence is not None else DEFAULT_WRITTEN_THRESHOLD
+    tau_written = _check_threshold(
+        written_confidence if written_confidence is not None else DEFAULT_WRITTEN_THRESHOLD
     )
+    floor_numeric = _check_threshold(numeric_floor if numeric_floor is not None else DEFAULT_NUMERIC_FLOOR)
+    floor_written = _check_threshold(written_floor if written_floor is not None else DEFAULT_WRITTEN_FLOOR)
 
-    readable = [channel for channel in (numeric, written) if channel.readable]
-    if not readable:
+    zero = Decimal("0")
+    numeric_score = (numeric.confidence or zero) if numeric.readable else zero
+    written_score = (written.confidence or zero) if written.readable else zero
+
+    if numeric.readable and written.readable:
+        comparison = Comparison.MATCH if numeric.value == written.value else Comparison.MISMATCH
+    elif numeric.readable or written.readable:
+        comparison = Comparison.ONE_CHANNEL
+    else:
         return Classification(Comparison.UNREADABLE, ReviewLevel.RED)
-    if len(readable) == 1:
-        return Classification(Comparison.ONE_CHANNEL, ReviewLevel.YELLOW)
-    if numeric.value != written.value:
-        return Classification(Comparison.MISMATCH, ReviewLevel.YELLOW)
 
-    confident = (
-        numeric.confidence is not None
-        and numeric.confidence >= numeric_threshold
-        and written.confidence is not None
-        and written.confidence >= written_threshold
-    )
-    return Classification(
-        Comparison.MATCH,
-        ReviewLevel.GREEN if confident else ReviewLevel.YELLOW,
-    )
+    if comparison is Comparison.MATCH:
+        agreed = numeric_score >= floor_numeric and written_score >= floor_written
+        return Classification(
+            comparison, ReviewLevel.GREEN if agreed else ReviewLevel.YELLOW, Suggestion.NUMERIC
+        )
+
+    strong_numeric = numeric.readable and numeric_score >= tau_numeric
+    strong_written = written.readable and written_score >= tau_written
+    if strong_numeric and not strong_written:
+        return Classification(comparison, ReviewLevel.YELLOW, Suggestion.NUMERIC)
+    if strong_written and not strong_numeric:
+        return Classification(comparison, ReviewLevel.YELLOW, Suggestion.WRITTEN)
+    # Cả hai mạnh mà mâu thuẫn, hoặc cả hai (còn đọc được) cùng yếu: Đỏ, không gợi ý giá trị.
+    return Classification(comparison, ReviewLevel.RED)

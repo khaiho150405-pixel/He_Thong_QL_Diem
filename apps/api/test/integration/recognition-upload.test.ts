@@ -293,6 +293,7 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
             nameCropBase64: pixel,
             comparison: "KHOP" as const,
             reviewLevel: "XANH" as const,
+            suggestedSource: "SO" as const,
           })),
         }),
       },

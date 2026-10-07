@@ -13,6 +13,7 @@ Màn hình kiểm tra hiển thị danh sách dòng đã được ghép theo STT
 - Ảnh cắt ô họ tên trên giấy (`nameCropUrl`, hỗ trợ chạm phóng to), STT hệ thống, tên học sinh trong danh sách đã chốt.
 - Họ tên máy đọc (`nameRead`), độ tin cậy ghép (`matchConfidence`) và ghi chú ghép (`matchNote`).
 - Ảnh cắt ô Điểm số (`numericCropUrl`) và Điểm chữ (`writtenCropUrl`), giá trị hai kênh kèm độ tin cậy.
+- **Yêu cầu phiếu:** bảng điểm chụp phải có cột Đ.số (điểm số) và cột Điểm chữ vì phân loại dựa trên hai kênh độc lập. Xanh = hai kênh cùng giá trị; Vàng = chỉ một kênh đủ tin cậy, ô được điền sẵn giá trị kênh đó kèm ghi chú "Lấy theo điểm số" hoặc "Lấy theo điểm chữ"; Đỏ = mâu thuẫn hoặc cùng yếu, không điền sẵn (ADR-0015).
 - Phân loại màu Xanh / Vàng / Đỏ (gộp từ mức điểm và mức ghép) với bộ lọc 3 màu và sắp xếp ưu tiên dòng Vàng/Đỏ cần chú ý trước.
 - **Bất biến:** Dòng Đỏ tuyệt đối không tự điền giá trị đề xuất (ô nhập để trống); giáo viên bắt buộc phải xem/xác nhận tất cả các dòng trước khi bấm Duyệt. Khi duyệt thành công, giao dịch nguyên tử ghi điểm chính thức và quay lại màn hình bảng điểm để tự động tải lại dữ liệu mới nhất.
 

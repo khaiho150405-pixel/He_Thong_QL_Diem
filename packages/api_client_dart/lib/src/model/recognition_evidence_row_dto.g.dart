@@ -45,6 +45,10 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
     RecognitionEvidenceRowDtoReviewLevelEnum reviewLevel,
   );
 
+  RecognitionEvidenceRowDto suggestedSource(
+    RecognitionEvidenceRowDtoSuggestedSourceEnum? suggestedSource,
+  );
+
   RecognitionEvidenceRowDto finalValue(String? finalValue);
 
   RecognitionEvidenceRowDto numericCropUrl(String? numericCropUrl);
@@ -77,6 +81,7 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
     String? writtenConfidence,
     RecognitionEvidenceRowDtoComparisonEnum comparison,
     RecognitionEvidenceRowDtoReviewLevelEnum reviewLevel,
+    RecognitionEvidenceRowDtoSuggestedSourceEnum? suggestedSource,
     String? finalValue,
     String? numericCropUrl,
     String? writtenCropUrl,
@@ -159,6 +164,11 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
   ) => this(reviewLevel: reviewLevel);
 
   @override
+  RecognitionEvidenceRowDto suggestedSource(
+    RecognitionEvidenceRowDtoSuggestedSourceEnum? suggestedSource,
+  ) => this(suggestedSource: suggestedSource);
+
+  @override
   RecognitionEvidenceRowDto finalValue(String? finalValue) =>
       this(finalValue: finalValue);
 
@@ -199,6 +209,7 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
     Object? writtenConfidence = const $CopyWithPlaceholder(),
     Object? comparison = const $CopyWithPlaceholder(),
     Object? reviewLevel = const $CopyWithPlaceholder(),
+    Object? suggestedSource = const $CopyWithPlaceholder(),
     Object? finalValue = const $CopyWithPlaceholder(),
     Object? numericCropUrl = const $CopyWithPlaceholder(),
     Object? writtenCropUrl = const $CopyWithPlaceholder(),
@@ -273,6 +284,10 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
           ? _value.reviewLevel
           // ignore: cast_nullable_to_non_nullable
           : reviewLevel as RecognitionEvidenceRowDtoReviewLevelEnum,
+      suggestedSource: suggestedSource == const $CopyWithPlaceholder()
+          ? _value.suggestedSource
+          // ignore: cast_nullable_to_non_nullable
+          : suggestedSource as RecognitionEvidenceRowDtoSuggestedSourceEnum?,
       finalValue: finalValue == const $CopyWithPlaceholder()
           ? _value.finalValue
           // ignore: cast_nullable_to_non_nullable
@@ -327,6 +342,7 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
       'writtenConfidence',
       'comparison',
       'reviewLevel',
+      'suggestedSource',
       'finalValue',
       'numericCropUrl',
       'writtenCropUrl',
@@ -363,6 +379,13 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
       'reviewLevel',
       (v) => $enumDecode(_$RecognitionEvidenceRowDtoReviewLevelEnumEnumMap, v),
     ),
+    suggestedSource: $checkedConvert(
+      'suggestedSource',
+      (v) => $enumDecodeNullable(
+        _$RecognitionEvidenceRowDtoSuggestedSourceEnumEnumMap,
+        v,
+      ),
+    ),
     finalValue: $checkedConvert('finalValue', (v) => v as String?),
     numericCropUrl: $checkedConvert('numericCropUrl', (v) => v as String?),
     writtenCropUrl: $checkedConvert('writtenCropUrl', (v) => v as String?),
@@ -393,6 +416,9 @@ Map<String, dynamic> _$RecognitionEvidenceRowDtoToJson(
       _$RecognitionEvidenceRowDtoComparisonEnumEnumMap[instance.comparison]!,
   'reviewLevel':
       _$RecognitionEvidenceRowDtoReviewLevelEnumEnumMap[instance.reviewLevel]!,
+  'suggestedSource':
+      _$RecognitionEvidenceRowDtoSuggestedSourceEnumEnumMap[instance
+          .suggestedSource],
   'finalValue': instance.finalValue,
   'numericCropUrl': instance.numericCropUrl,
   'writtenCropUrl': instance.writtenCropUrl,
@@ -410,4 +436,9 @@ const _$RecognitionEvidenceRowDtoReviewLevelEnumEnumMap = {
   RecognitionEvidenceRowDtoReviewLevelEnum.XANH: 'XANH',
   RecognitionEvidenceRowDtoReviewLevelEnum.VANG: 'VANG',
   RecognitionEvidenceRowDtoReviewLevelEnum.DO: 'DO',
+};
+
+const _$RecognitionEvidenceRowDtoSuggestedSourceEnumEnumMap = {
+  RecognitionEvidenceRowDtoSuggestedSourceEnum.SO: 'SO',
+  RecognitionEvidenceRowDtoSuggestedSourceEnum.CHU: 'CHU',
 };

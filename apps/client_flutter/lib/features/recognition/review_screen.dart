@@ -85,6 +85,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   String? _suggested(RecognitionEvidenceRowDto row) {
     if (row.reviewLevel.value == 'DO') return null;
+    // Luật hợp nhất hai kênh: máy cho biết kênh nào có giá trị gợi ý.
+    switch (row.suggestedSource) {
+      case RecognitionEvidenceRowDtoSuggestedSourceEnum.SO:
+        return row.numericValue;
+      case RecognitionEvidenceRowDtoSuggestedSourceEnum.CHU:
+        return row.writtenValue;
+      case null:
+        break;
+    }
+    // Phiếu tạo trước luật hợp nhất (không có kênh gợi ý): giữ cách gợi ý cũ.
     if (row.comparison.value == 'KHOP') return row.numericValue;
     if (row.comparison.value == 'MOT_KENH') {
       return row.numericValue ?? row.writtenValue;
@@ -552,6 +562,23 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                 ),
                               ),
                             ],
+                            if (row.reviewLevel.value == 'VANG' &&
+                                row.suggestedSource != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                row.suggestedSource ==
+                                        RecognitionEvidenceRowDtoSuggestedSourceEnum
+                                            .SO
+                                    ? 'Lấy theo điểm số'
+                                    : 'Lấy theo điểm chữ',
+                                key: ValueKey('review-source-${row.rowId}'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.amber.shade900,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             Wrap(
                               spacing: 12,
@@ -587,8 +614,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                   ),
                               textInputAction: TextInputAction.next,
                               decoration: const InputDecoration(
-                                labelText:
-                                    'Điểm cuối (để trống nếu học sinh vắng)',
+                                labelText: 'Điểm cuối',
+                                helperText:
+                                    'Để trống nếu không ghi điểm cho học sinh này (ví dụ vắng); khi đó bắt buộc ghi lý do.',
+                                helperMaxLines: 2,
                               ),
                               validator: (value) {
                                 final text = value?.trim() ?? '';
@@ -612,7 +641,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                               validator: (value) {
                                 final text = value?.trim() ?? '';
                                 if (text.isEmpty) {
-                                  return 'Cần ghi lý do xác nhận.';
+                                  return values[row.rowId]!.text.trim().isEmpty
+                                      ? 'Cần ghi lý do không ghi điểm cho học sinh này.'
+                                      : 'Cần ghi lý do xác nhận.';
                                 }
                                 if (text.length > 500) {
                                   return 'Tối đa 500 ký tự.';

@@ -41,6 +41,7 @@ const row = (rowIndex: number): RecognitionRowResult => ({
   nameCropBase64: pixel,
   comparison: "KHOP",
   reviewLevel: "XANH",
+  suggestedSource: "SO",
 });
 
 const roster = (size: number) =>
@@ -123,6 +124,7 @@ test("struck rows are dropped and their crops are never stored", async () => {
     written: { rawOutput: null, value: null, confidence: null, isBlank: true },
     comparison: "KHONG_DOC_DUOC",
     reviewLevel: "DO",
+    suggestedSource: null,
   };
   const { state, storage, processor } = harness(
     [row(1), struck, row(3)],
@@ -357,6 +359,7 @@ test("HTTP model accepts the full contract and sends only the image", async () =
     written: { rawOutput: null, value: null, confidence: null, isBlank: true },
     comparison: "KHONG_DOC_DUOC",
     reviewLevel: "DO",
+    suggestedSource: null,
   };
   const parsed = await respond({
     ...page([row(1), struck]),
@@ -478,6 +481,54 @@ test("HTTP model rejects every missing field, wrong type and corrupt crop", asyn
       page([{ ...row(1), comparison: "KHONG_DOC_DUOC", reviewLevel: "XANH" }]),
     ],
     [
+      "red with a suggested source",
+      page([
+        {
+          ...row(1),
+          numeric: { ...row(1).numeric, value: "1.0" },
+          comparison: "LECH",
+          reviewLevel: "DO",
+        },
+      ]),
+    ],
+    [
+      "yellow without a suggested source",
+      page([
+        {
+          ...row(1),
+          comparison: "LECH",
+          reviewLevel: "VANG",
+          suggestedSource: null,
+          written: { ...row(1).written, value: "1.0" },
+        },
+      ]),
+    ],
+    [
+      "suggested source is not a channel",
+      page([{ ...row(1), suggestedSource: "BOTH" }]),
+    ],
+    [
+      "suggested source missing",
+      page([{ ...row(1), suggestedSource: undefined }]),
+    ],
+    [
+      "suggests the written channel but it is blank",
+      page([
+        {
+          ...row(1),
+          written: {
+            rawOutput: null,
+            value: null,
+            confidence: null,
+            isBlank: true,
+          },
+          comparison: "MOT_KENH",
+          reviewLevel: "VANG",
+          suggestedSource: "CHU",
+        },
+      ]),
+    ],
+    [
       "mismatch but green",
       page([
         {
@@ -495,6 +546,43 @@ test("HTTP model rejects every missing field, wrong type and corrupt crop", asyn
       /MALFORMED_RESPONSE/,
       label,
     );
+});
+
+test("the research merge rule is accepted: red mismatches, one-channel yellows and the written suggestion", async () => {
+  const strongBoth = {
+    ...row(1),
+    numeric: { ...row(1).numeric, value: "8.0", confidence: "0.99" },
+    written: { ...row(1).written, value: "7.0", confidence: "0.99" },
+    comparison: "LECH",
+    reviewLevel: "DO",
+    suggestedSource: null,
+  };
+  const writtenOnly = {
+    ...row(2),
+    numeric: { ...row(2).numeric, value: "8.0", confidence: "0.20" },
+    written: { ...row(2).written, value: "7.0", confidence: "0.95" },
+    comparison: "LECH",
+    reviewLevel: "VANG",
+    suggestedSource: "CHU",
+  };
+  const weakOne = {
+    ...row(3),
+    written: { rawOutput: null, value: null, confidence: null, isBlank: true },
+    comparison: "MOT_KENH",
+    reviewLevel: "DO",
+    suggestedSource: null,
+  };
+  const parsed = await respond(
+    page([strongBoth, writtenOnly, weakOne]),
+  ).recognize(image);
+  assert.deepEqual(
+    parsed.rows.map((item) => [item.reviewLevel, item.suggestedSource]),
+    [
+      ["DO", null],
+      ["VANG", "CHU"],
+      ["DO", null],
+    ],
+  );
 });
 
 test("API parser accepts the response produced by the real FastAPI service", () => {

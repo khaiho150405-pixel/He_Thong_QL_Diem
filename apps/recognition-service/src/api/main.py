@@ -15,7 +15,7 @@ from src.adapters.model import (
     SttPrediction,
     configured_model,
 )
-from src.domain import ChannelPrediction, classify_channels, thresholds_from_env
+from src.domain import ChannelPrediction, classify_channels, floors_from_env, thresholds_from_env
 from src.pipeline.errors import PipelineError
 
 
@@ -51,6 +51,8 @@ class RowResponse(BaseModel):
     nameCropBase64: str
     comparison: str
     reviewLevel: str
+    # Kênh cho giá trị gợi ý: "SO" | "CHU"; null khi Đỏ (không gợi ý giá trị).
+    suggestedSource: str | None = None
 
 
 class RecognitionResponse(BaseModel):
@@ -122,6 +124,7 @@ async def recognize(
         ) from error
     try:
         numeric_threshold, written_threshold = thresholds_from_env(os.environ)
+        numeric_floor, written_floor = floors_from_env(os.environ)
     except ValueError as error:
         raise HTTPException(status_code=503, detail="MODEL_UNAVAILABLE") from error
     rows: list[RowResponse] = []
@@ -131,6 +134,8 @@ async def recognize(
             item.written,
             numeric_confidence=numeric_threshold,
             written_confidence=written_threshold,
+            numeric_floor=numeric_floor,
+            written_floor=written_floor,
         )
         rows.append(
             RowResponse(
@@ -145,6 +150,9 @@ async def recognize(
                 nameCropBase64=crop(item.name_crop),
                 comparison=classification.comparison.value,
                 reviewLevel=classification.level.value,
+                suggestedSource=(
+                    classification.suggestion.value if classification.suggestion else None
+                ),
             )
         )
     return RecognitionResponse(

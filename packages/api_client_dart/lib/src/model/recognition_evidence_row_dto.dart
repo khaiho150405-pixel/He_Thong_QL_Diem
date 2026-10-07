@@ -52,6 +52,8 @@ class RecognitionEvidenceRowDto {
 
     required this.reviewLevel,
 
+    required this.suggestedSource,
+
     required this.finalValue,
 
     required this.numericCropUrl,
@@ -118,6 +120,10 @@ class RecognitionEvidenceRowDto {
   @JsonKey(name: r'reviewLevel', required: true, includeIfNull: false)
   final RecognitionEvidenceRowDtoReviewLevelEnum reviewLevel;
 
+  /// Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị
+  @JsonKey(name: r'suggestedSource', required: true, includeIfNull: true)
+  final RecognitionEvidenceRowDtoSuggestedSourceEnum? suggestedSource;
+
   @JsonKey(name: r'finalValue', required: true, includeIfNull: true)
   final String? finalValue;
 
@@ -152,6 +158,7 @@ class RecognitionEvidenceRowDto {
           other.writtenConfidence == writtenConfidence &&
           other.comparison == comparison &&
           other.reviewLevel == reviewLevel &&
+          other.suggestedSource == suggestedSource &&
           other.finalValue == finalValue &&
           other.numericCropUrl == numericCropUrl &&
           other.writtenCropUrl == writtenCropUrl &&
@@ -176,6 +183,7 @@ class RecognitionEvidenceRowDto {
       (writtenConfidence == null ? 0 : writtenConfidence.hashCode) +
       comparison.hashCode +
       reviewLevel.hashCode +
+      (suggestedSource == null ? 0 : suggestedSource.hashCode) +
       (finalValue == null ? 0 : finalValue.hashCode) +
       (numericCropUrl == null ? 0 : numericCropUrl.hashCode) +
       (writtenCropUrl == null ? 0 : writtenCropUrl.hashCode) +
@@ -219,6 +227,24 @@ enum RecognitionEvidenceRowDtoReviewLevelEnum {
   DO(r'DO');
 
   const RecognitionEvidenceRowDtoReviewLevelEnum(this.value);
+
+  final String value;
+
+  @override
+  String toString() => value;
+}
+
+/// Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị
+enum RecognitionEvidenceRowDtoSuggestedSourceEnum {
+  /// Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị
+  @JsonValue(r'SO')
+  SO(r'SO'),
+
+  /// Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị
+  @JsonValue(r'CHU')
+  CHU(r'CHU');
+
+  const RecognitionEvidenceRowDtoSuggestedSourceEnum(this.value);
 
   final String value;
 

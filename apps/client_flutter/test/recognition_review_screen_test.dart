@@ -136,6 +136,7 @@ class ReviewTestServer implements HttpClientAdapter {
             'writtenConfidence': '0.9400',
             'comparison': 'KHOP',
             'reviewLevel': 'XANH',
+            'suggestedSource': 'SO',
             'finalValue': null,
             'numericCropUrl': 'https://storage.test/crop-num-1.png',
             'writtenCropUrl': 'https://storage.test/crop-wri-1.png',
@@ -161,6 +162,7 @@ class ReviewTestServer implements HttpClientAdapter {
             'writtenConfidence': '0.5000',
             'comparison': 'MOT_KENH',
             'reviewLevel': 'VANG',
+            'suggestedSource': 'SO',
             'finalValue': null,
             'numericCropUrl': 'https://storage.test/crop-num-2.png',
             'writtenCropUrl': 'https://storage.test/crop-wri-2.png',
@@ -186,6 +188,7 @@ class ReviewTestServer implements HttpClientAdapter {
             'writtenConfidence': '0.8800',
             'comparison': 'LECH',
             'reviewLevel': 'DO',
+            'suggestedSource': null,
             'finalValue': null,
             'numericCropUrl': 'https://storage.test/crop-num-3.png',
             'writtenCropUrl': 'https://storage.test/crop-wri-3.png',
@@ -390,6 +393,9 @@ void main() {
           find.byKey(const ValueKey('review-value-r-yellow')),
         );
         expect(yellowField.controller?.text, '7.0');
+        // The yellow row says which channel the suggestion comes from (research merge rule).
+        expect(find.text('Lấy theo điểm số'), findsOneWidget);
+        expect(find.text('Lấy theo điểm chữ'), findsNothing);
 
         // RED ROW MUST NEVER HAVE PRE-FILLED SUGGESTION
         final redField = tester.widget<TextFormField>(
@@ -514,6 +520,93 @@ void main() {
                 as Map<String, dynamic>;
         expect(redDecision['value'], '8.5');
         expect(redDecision['reason'], 'Đã đối chiếu bài thi gốc');
+      },
+    );
+
+    testWidgets(
+      'ReviewScreen lets a row stay empty when a reason explains why no grade is written',
+      (tester) async {
+        tester.view.physicalSize = const Size(1280, 2500);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final server = ReviewTestServer();
+        final api = ApiClientDart(dio: Dio()..httpClientAdapter = server);
+        final container = ProviderContainer(
+          overrides: [apiProvider.overrideWithValue(api)],
+        );
+        addTearDown(container.dispose);
+        await tester.runAsync(
+          () => container
+              .read(sessionProvider.notifier)
+              .login('0987654321', 'password'),
+        );
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const GradebookApp(
+              initialLocation: '/gradebooks/7/recognition/42',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // The hint explains the empty option and that a reason is then mandatory.
+        expect(
+          find.textContaining('Để trống nếu không ghi điểm cho học sinh này'),
+          findsNWidgets(3),
+        );
+
+        Future<void> approve() async {
+          await tester.scrollUntilVisible(
+            find.byKey(const ValueKey('review-confirm-all')),
+            150,
+            scrollable: find.byType(Scrollable).first,
+          );
+          final confirm = tester.widget<CheckboxListTile>(
+            find.byKey(const ValueKey('review-confirm-all')),
+          );
+          if (confirm.value != true) {
+            await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
+            await tester.pump();
+          }
+          await tester.scrollUntilVisible(
+            find.byKey(const ValueKey('review-approve')),
+            150,
+            scrollable: find.byType(Scrollable).first,
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const ValueKey('review-approve')));
+          await tester.pumpAndSettle();
+        }
+
+        // Red row left empty with no reason: blocked with a specific message, nothing is sent.
+        await approve();
+        expect(
+          find.text('Cần ghi lý do không ghi điểm cho học sinh này.'),
+          findsOneWidget,
+        );
+        expect(server.lastApprovalBody, isNull);
+
+        // With a reason the empty value is sent as null (no grade written for this student).
+        await tester.enterText(
+          find.byKey(const ValueKey('review-reason-r-red')),
+          'Học sinh vắng, không ghi điểm',
+        );
+        await approve();
+        expect(server.lastApprovalBody, isNotNull);
+        final decisions =
+            server.lastApprovalBody!['decisions'] as List<dynamic>;
+        final red =
+            decisions.firstWhere((d) => d['rowId'] == 'r-red')
+                as Map<String, dynamic>;
+        expect(red['value'], isNull);
+        expect(red['reason'], 'Học sinh vắng, không ghi điểm');
+        final green =
+            decisions.firstWhere((d) => d['rowId'] == 'r-green')
+                as Map<String, dynamic>;
+        expect(green['value'], '8.5');
       },
     );
 

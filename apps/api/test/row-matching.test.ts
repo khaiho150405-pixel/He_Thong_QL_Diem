@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   MAX_RED_RATIO,
   NAME_STRONG,
+  ORDER_NOTE,
   NAME_WEAK,
   combineLevel,
   matchRows,
@@ -290,6 +291,77 @@ test("a name that fits the neighbouring student better is red", () => {
   assert.equal(matches[3]!.matchLevel, "XANH");
 });
 
+// Thứ tự trên giấy khác thứ tự hệ thống (STT đọc từ giấy không dùng): ghép theo họ tên, không theo vị trí.
+const paperOrder = (roster: RosterEntry[], order: number[]) =>
+  order.map((stt, index) =>
+    row(index + 1, roster[stt - 1]!, { sttValue: null, sttConfidence: null }),
+  );
+
+test("two adjacent pairs swapped on paper still map by name and stay green with an order note", () => {
+  const roster = makeRoster(20);
+  const order = Array.from({ length: 20 }, (_, index) => index + 1);
+  [order[4], order[5]] = [order[5]!, order[4]!];
+  [order[14], order[15]] = [order[15]!, order[14]!];
+  const { matches } = ok(matchRows(paperOrder(roster, order), roster));
+  assert.deepEqual(
+    matches.map((m) => m.stt),
+    order,
+  );
+  assert.deepEqual(
+    matches.map((m) => m.studentId),
+    order.map((stt) => roster[stt - 1]!.studentId),
+  );
+  assert.ok(matches.every((m) => m.matchLevel === "XANH"));
+  const flagged = matches.filter((m) => m.note === ORDER_NOTE);
+  assert.deepEqual(
+    flagged.map((m) => m.rowIndex),
+    [5, 6, 15, 16],
+  );
+});
+
+test("a far swap (row 3 with row 20) is matched by name and only those two rows are flagged", () => {
+  const roster = makeRoster(25);
+  const order = Array.from({ length: 25 }, (_, index) => index + 1);
+  [order[2], order[19]] = [order[19]!, order[2]!];
+  const { matches } = ok(matchRows(paperOrder(roster, order), roster));
+  assert.deepEqual(
+    matches.map((m) => m.stt),
+    order,
+  );
+  assert.ok(matches.every((m) => m.matchLevel === "XANH"));
+  assert.deepEqual(
+    matches.filter((m) => m.note === ORDER_NOTE).map((m) => m.rowIndex),
+    [3, 20],
+  );
+});
+
+test("identical full names are told apart by page order and never green", () => {
+  const roster = makeRoster(8);
+  roster[5] = { ...roster[5]!, fullName: roster[1]!.fullName };
+  const { matches } = ok(
+    matchRows(paperOrder(roster, [1, 2, 3, 4, 5, 6, 7, 8]), roster),
+  );
+  assert.equal(matches[1]!.studentId, roster[1]!.studentId);
+  assert.equal(matches[5]!.studentId, roster[5]!.studentId);
+  assert.equal(matches[1]!.matchLevel, "VANG");
+  assert.equal(matches[5]!.matchLevel, "VANG");
+  assert.equal(matches[0]!.matchLevel, "XANH");
+});
+
+test("a whole page of weak names still fails with ROW_MATCH_FAILED even in the right order", () => {
+  const roster = makeRoster(12);
+  const detected = paperOrder(
+    roster,
+    roster.map((entry) => entry.stt),
+  ).map((entry, index) => ({ ...entry, nameRaw: `zzzz wwww kkkkk ${index}` }));
+  const result = matchRows(detected, roster);
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.code, "ROW_MATCH_FAILED");
+    assert.equal(result.reason, "TOO_MANY_LOW_CONFIDENCE");
+  }
+});
+
 test("a row between two others with an unreadable name is red, never guessed green", () => {
   const roster = makeRoster(6);
   const detected = pages(roster, 1, 6);
@@ -508,4 +580,27 @@ test("simulated noisy pages never produce a green row for the wrong student", ()
   }
   assert.ok(green > 1_000, `expected many green rows, got ${green}`);
   assert.ok(failures < 80, `too many refused pages: ${failures}`);
+});
+
+test("match confidence depends on the name only and unread STT is never mentioned", () => {
+  const roster = makeRoster(6);
+  const withStt = pages(roster, 1, 6);
+  withStt[2] = { ...withStt[2]!, nameRaw: "Lê Ngọc Chaa" };
+  const withoutStt = withStt.map((entry) => ({
+    ...entry,
+    sttValue: null,
+    sttConfidence: null,
+  }));
+  const a = ok(matchRows(withStt, roster)).matches;
+  const b = ok(matchRows(withoutStt, roster)).matches;
+  assert.deepEqual(
+    b.map((m) => m.matchConfidence),
+    a.map((m) => m.matchConfidence),
+  );
+  assert.equal(
+    b.every((m) => !/STT không đọc được|STT lẫn/.test(m.note)),
+    true,
+  );
+  assert.equal(b[0]!.note, "Khớp họ tên.");
+  assert.equal(b[0]!.matchConfidence, 1);
 });

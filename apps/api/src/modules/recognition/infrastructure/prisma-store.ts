@@ -130,6 +130,11 @@ export class PrismaRecognitionStore implements RecognitionStore {
           writtenConfidence: item.do_tin_cay_b?.toFixed(4) ?? null,
           comparison: item.ket_luan_doi_chieu,
           reviewLevel: item.muc_phan_loai,
+          // Mức cuối Đỏ (kể cả do ghép học sinh) không gợi ý giá trị.
+          suggestedSource:
+            item.muc_phan_loai === "DO"
+              ? null
+              : (item.kenh_goi_y as "SO" | "CHU" | null),
           finalValue: item.gia_tri_chot?.toFixed(1) ?? null,
           numericCropKey: item.duong_dan_anh_o_so,
           writtenCropKey: item.duong_dan_anh_o_chu,
