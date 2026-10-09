@@ -45,7 +45,54 @@ GradeCellDto column() => GradeCellDto.fromJson({
 });
 
 void main() {
-  testWidgets('school deadlines stay on one horizontally scrollable row', (
+  testWidgets('school deadlines stay on one horizontally scrollable row on desktop', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(700, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final second = GradeCellDto.fromJson({
+      ...column().toJson(),
+      'componentId': 202,
+      'componentName': 'Cuối kỳ',
+      'displayOrder': 2,
+    });
+    final third = GradeCellDto.fromJson({
+      ...column().toJson(),
+      'componentId': 203,
+      'componentName': 'Thường xuyên lần 2',
+      'displayOrder': 3,
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: GradeDeadlinesPanel(
+              bookId: 7,
+              components: [column(), second, third],
+              isAdmin: true,
+              locked: false,
+              onReload: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('Thường xuyên lần 1')).dy,
+      tester.getTopLeft(find.text('Cuối kỳ')).dy,
+    );
+    final scroll = find.byKey(const ValueKey('grade-deadlines-horizontal'));
+    final before = tester.getTopLeft(find.text('Thường xuyên lần 2')).dx;
+    await tester.drag(scroll, const Offset(-150, 0));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.text('Thường xuyên lần 2')).dx, lessThan(before));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('school deadlines render as a vertical list on mobile', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -76,13 +123,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.getTopLeft(find.text('Thường xuyên lần 1')).dy,
-      tester.getTopLeft(find.text('Cuối kỳ')).dy,
+      lessThan(tester.getTopLeft(find.text('Cuối kỳ')).dy),
     );
-    final scroll = find.byKey(const ValueKey('grade-deadlines-horizontal'));
-    final before = tester.getTopLeft(find.text('Cuối kỳ')).dx;
-    await tester.drag(scroll, const Offset(-280, 0));
-    await tester.pumpAndSettle();
-    expect(tester.getTopLeft(find.text('Cuối kỳ')).dx, lessThan(before));
+    expect(find.byKey(const ValueKey('grade-deadlines-vertical')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   for (final width in [320.0, 390.0, 1280.0]) {

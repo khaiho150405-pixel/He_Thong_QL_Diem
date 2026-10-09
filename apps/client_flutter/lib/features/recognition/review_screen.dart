@@ -382,12 +382,64 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              Chip(
-                                label: Text(
-                                  '$totalRows dòng · $greenCount Xanh · $yellowCount Vàng · $redCount Đỏ',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: colorScheme.outlineVariant,
                                   ),
+                                ),
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: '$totalRows dòng · ',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: '$greenCount Xanh',
+                                        style: TextStyle(
+                                          color: Colors.green.shade800,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: ' · ',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: '$yellowCount Vàng',
+                                        style: TextStyle(
+                                          color: Colors.orange.shade900,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: ' · ',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: '$redCount Đỏ',
+                                        style: TextStyle(
+                                          color: Colors.red.shade900,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  style: const TextStyle(fontSize: 12),
                                 ),
                               ),
                             ],
@@ -454,19 +506,40 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                       items: [
                         DropdownMenuItem(
                           value: 'ALL',
-                          child: Text('Tất cả ($totalRows dòng)'),
+                          child: Text(
+                            'Tất cả ($totalRows dòng)',
+                            style: TextStyle(color: colorScheme.onSurface),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'DO',
-                          child: Text('Đỏ · Bắt buộc xem xét ($redCount)'),
+                          child: Text(
+                            'Đỏ · Bắt buộc xem xét ($redCount)',
+                            style: TextStyle(
+                              color: Colors.red.shade900,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'VANG',
-                          child: Text('Vàng · Cần đối chiếu ($yellowCount)'),
+                          child: Text(
+                            'Vàng · Cần đối chiếu ($yellowCount)',
+                            style: TextStyle(
+                              color: Colors.orange.shade900,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: 'XANH',
-                          child: Text('Xanh · Khớp tin cậy ($greenCount)'),
+                          child: Text(
+                            'Xanh · Khớp tin cậy ($greenCount)',
+                            style: TextStyle(
+                              color: Colors.green.shade800,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                       onChanged: busy

@@ -311,6 +311,8 @@ void main() {
 
     await tester.tap(find.textContaining('10A1'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Lịch sử cập nhật'));
     await tester.pumpAndSettle();
     expect(find.text('Lịch sử cập nhật điểm'), findsOneWidget);
@@ -320,10 +322,14 @@ void main() {
     await tester.tap(find.text('Đóng'));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Đồng bộ sĩ số'));
     await tester.pumpAndSettle();
     expect(find.text('Phiên bản 3'), findsOneWidget);
 
+    await tester.tap(find.text('Báo cáo & Tiện ích'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('Chốt cột'), findsNothing);
     expect(find.text('Lịch nhập điểm của nhà trường'), findsOneWidget);
     server.locked = true;

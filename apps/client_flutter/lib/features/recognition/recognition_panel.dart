@@ -28,6 +28,7 @@ class RecognitionPanel extends ConsumerStatefulWidget {
     required this.gradebookVersion,
     required this.enabled,
     required this.onApproved,
+    this.embedded = false,
   });
 
   final num gradebookId;
@@ -35,6 +36,7 @@ class RecognitionPanel extends ConsumerStatefulWidget {
   final num gradebookVersion;
   final bool enabled;
   final VoidCallback onApproved;
+  final bool embedded;
 
   @override
   ConsumerState<RecognitionPanel> createState() => _RecognitionPanelState();
@@ -276,42 +278,68 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS);
 
-    return Card(
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
+    final panelChildren = [
+      if (!widget.embedded) ...[
+        const Divider(height: 24),
+        const Text(
+          'Chụp thẳng toàn bộ bảng, đủ sáng, rõ các cột Họ tên, Điểm số, Điểm chữ. PNG hoặc JPEG, tối đa 10 MB. Hệ thống tự xác định học sinh theo họ tên.',
+        ),
+        const SizedBox(height: 16),
+      ] else ...[
+        Container(
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withAlpha(25),
-            borderRadius: BorderRadius.circular(8),
+            color: colorScheme.surfaceContainerHigh.withAlpha(120),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colorScheme.outlineVariant.withAlpha(80)),
           ),
-          child: Icon(
-            Icons.document_scanner_rounded,
-            color: colorScheme.primary,
-            size: 22,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.checklist_rounded,
+                    size: 18,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Quy chuẩn chụp bảng điểm',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildChecklistItem(
+                theme,
+                Icons.crop_free_rounded,
+                'Chụp thẳng toàn bộ bảng, đủ sáng, không bị bóng mờ',
+              ),
+              const SizedBox(height: 4),
+              _buildChecklistItem(
+                theme,
+                Icons.table_rows_rounded,
+                'Bao gồm rõ các cột Họ tên, Điểm số, Điểm chữ (PNG/JPEG ≤ 10 MB)',
+              ),
+              const SizedBox(height: 4),
+              _buildChecklistItem(
+                theme,
+                Icons.auto_awesome_rounded,
+                'Hệ thống tự động so khớp học sinh và đề xuất điểm',
+              ),
+            ],
           ),
         ),
-        title: Text(
-          'Nhận dạng bảng điểm từ ảnh',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: const Text(
-          'Máy chỉ đề xuất kết quả; giáo viên đối chiếu trước khi ghi điểm chính thức.',
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-        children: [
-          const Divider(height: 24),
-          const Text(
-            'Chụp thẳng toàn bộ bảng, đủ sáng, rõ các cột Họ tên, Điểm số, Điểm chữ. PNG hoặc JPEG, tối đa 10 MB. Hệ thống tự xác định học sinh theo họ tên.',
-          ),
-          const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth < 600
-                  ? constraints.maxWidth
-                  : 320.0;
+        const SizedBox(height: 16),
+      ],
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth < 600
+              ? constraints.maxWidth
+              : 320.0;
               return Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -519,6 +547,16 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                   ))
                     Card(
                       margin: const EdgeInsets.only(bottom: 8),
+                      elevation: 0,
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: item.status.value == 'CHO_DOI_CHIEU'
+                              ? Colors.orange.shade300
+                              : colorScheme.outlineVariant.withAlpha(120),
+                        ),
+                      ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -526,9 +564,12 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                         ),
                         title: Text(
                           'Phiếu #${item.ticketId} · ${item.componentName}',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurface,
+                          ),
                         ),
-                        subtitle: Text(_statusText(item)),
+                        subtitle: _buildTicketSubtitle(theme, colorScheme, item),
                         leading: item.status.value == 'DANG_XU_LY'
                             ? const SizedBox.square(
                                 dimension: 22,
@@ -540,10 +581,22 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                                 _statusIcon(item.status.value),
                                 color: _statusColor(item.status.value),
                               ),
-                        trailing: const Icon(
-                          Icons.chevron_right_rounded,
-                          size: 20,
-                        ),
+                        trailing: widget.embedded &&
+                                item.status.value == 'CHO_DOI_CHIEU'
+                            ? FilledButton.tonal(
+                                onPressed: () => showDetail(item.ticketId),
+                                style: FilledButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                ),
+                                child: const Text('Đối chiếu ngay'),
+                              )
+                            : const Icon(
+                                Icons.chevron_right_rounded,
+                                size: 20,
+                              ),
                         onTap: () => showDetail(item.ticketId),
                       ),
                     ),
@@ -571,7 +624,188 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
               );
             },
           ),
-        ],
+        ];
+
+    if (widget.embedded) {
+      return Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withAlpha(80),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withAlpha(25),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.document_scanner_rounded,
+                      color: colorScheme.primary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nhận dạng bảng điểm từ ảnh',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Máy chỉ đề xuất kết quả; giáo viên đối chiếu trước khi ghi điểm chính thức.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...panelChildren,
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colorScheme.primary.withAlpha(25),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.document_scanner_rounded,
+            color: colorScheme.primary,
+            size: 22,
+          ),
+        ),
+        title: Text(
+          'Nhận dạng bảng điểm từ ảnh',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: const Text(
+          'Máy chỉ đề xuất kết quả; giáo viên đối chiếu trước khi ghi điểm chính thức.',
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+        children: panelChildren,
+      ),
+    );
+  }
+
+  Widget _buildChecklistItem(
+    ThemeData theme,
+    IconData icon,
+    String text,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, size: 15, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTicketSubtitle(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    RecognitionTicketDto item,
+  ) {
+    if (item.status.value == 'CHO_DOI_CHIEU') {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              'Chờ đối chiếu · ${item.detectedRows ?? 0} dòng',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+            _miniStatusBadge(
+              label: '${item.greenRows} Xanh',
+              fg: Colors.green.shade800,
+              bg: Colors.green.shade50,
+              borderColor: Colors.green.shade200,
+            ),
+            _miniStatusBadge(
+              label: '${item.yellowRows} Vàng',
+              fg: Colors.orange.shade900,
+              bg: Colors.orange.shade50,
+              borderColor: Colors.orange.shade200,
+            ),
+            _miniStatusBadge(
+              label: '${item.redRows} Đỏ',
+              fg: Colors.red.shade900,
+              bg: Colors.red.shade50,
+              borderColor: Colors.red.shade200,
+            ),
+          ],
+        ),
+      );
+    }
+    return Text(
+      _statusText(item),
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: item.status.value == 'LOI'
+            ? colorScheme.error
+            : colorScheme.onSurfaceVariant,
+        fontSize: 12,
+      ),
+    );
+  }
+
+  Widget _miniStatusBadge({
+    required String label,
+    required Color fg,
+    required Color bg,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

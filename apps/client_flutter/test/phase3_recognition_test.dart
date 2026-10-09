@@ -208,9 +208,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Nhận dạng bảng điểm từ ảnh'), findsOneWidget);
-    await tester.tap(find.text('Nhận dạng bảng điểm từ ảnh'));
+    await tester.tap(find.text('Quét ảnh OCR'));
     await tester.pumpAndSettle();
+    expect(find.text('Nhận dạng bảng điểm từ ảnh'), findsOneWidget);
     expect(find.textContaining('Số dòng khai báo'), findsNothing);
     await tester.runAsync(() async {
       await tester.tap(find.byKey(const ValueKey('recognition-pick')));

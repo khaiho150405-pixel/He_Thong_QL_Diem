@@ -151,7 +151,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Thống kê và báo cáo',
+                            'Thống kê · Báo cáo kết quả',
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),

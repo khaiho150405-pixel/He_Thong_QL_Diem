@@ -52,80 +52,99 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
             child: Text('Chưa có cột điểm.'),
           )
         else
-          Scrollbar(
-            controller: horizontal,
-            thumbVisibility: true,
-            notificationPredicate: (notification) =>
-                notification.metrics.axis == Axis.horizontal,
-            child: SingleChildScrollView(
-              key: const ValueKey('grade-deadlines-horizontal'),
-              controller: horizontal,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final column in widget.components)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: SizedBox(
-                        width: 268,
-                        child: Card(
-                          margin: EdgeInsets.zero,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerLow,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(
-                                  column.componentName,
-                                  style: Theme.of(context).textTheme.titleSmall,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Mở: ${deadlineLabel(context, column.opensAt)}\nHạn: ${deadlineLabel(context, column.closesAt)}',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                const SizedBox(height: 8),
-                                if (column.columnLocked == true)
-                                  const Text('Đã khóa')
-                                else if (widget.isAdmin && !widget.locked)
-                                  OutlinedButton.icon(
-                                    icon: const Icon(Icons.event_outlined),
-                                    label: Text(
-                                      column.closesAt == null
-                                          ? 'Đặt lịch'
-                                          : 'Sửa lịch',
-                                    ),
-                                    onPressed: () async {
-                                      final saved = await showDialog<bool>(
-                                        context: context,
-                                        barrierDismissible: false,
-                                        builder: (_) => _DeadlineDialog(
-                                          bookId: widget.bookId,
-                                          column: column,
-                                        ),
-                                      );
-                                      if (saved == true) widget.onReload();
-                                    },
-                                  ),
-                              ],
-                            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              if (isMobile) {
+                return ListView.separated(
+                  key: const ValueKey('grade-deadlines-vertical'),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                  itemCount: widget.components.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final column = widget.components[index];
+                    return _buildDeadlineCard(context, column);
+                  },
+                );
+              }
+              return Scrollbar(
+                controller: horizontal,
+                thumbVisibility: true,
+                notificationPredicate: (notification) =>
+                    notification.metrics.axis == Axis.horizontal,
+                child: SingleChildScrollView(
+                  key: const ValueKey('grade-deadlines-horizontal'),
+                  controller: horizontal,
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final column in widget.components)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: SizedBox(
+                            width: 268,
+                            child: _buildDeadlineCard(context, column),
                           ),
                         ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
       ],
     ),
   );
+
+  Widget _buildDeadlineCard(BuildContext context, GradeCellDto column) {
+    return Card(
+      margin: EdgeInsets.zero,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              column.componentName,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Mở: ${deadlineLabel(context, column.opensAt)}\nHạn: ${deadlineLabel(context, column.closesAt)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            if (column.columnLocked == true)
+              const Text('Đã khóa')
+            else if (widget.isAdmin && !widget.locked)
+              OutlinedButton.icon(
+                icon: const Icon(Icons.event_outlined),
+                label: Text(
+                  column.closesAt == null ? 'Đặt lịch' : 'Sửa lịch',
+                ),
+                onPressed: () async {
+                  final saved = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => _DeadlineDialog(
+                      bookId: widget.bookId,
+                      column: column,
+                    ),
+                  );
+                  if (saved == true) widget.onReload();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _DeadlineDialog extends ConsumerStatefulWidget {

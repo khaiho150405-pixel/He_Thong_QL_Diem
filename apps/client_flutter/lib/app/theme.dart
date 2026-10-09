@@ -206,7 +206,21 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: const BorderSide(color: borderSubtle),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+        backgroundColor: Colors.white,
+        selectedColor: navActiveBg,
+        disabledColor: widgetBg,
+        labelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: textMain,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: primaryDark,
+        ),
+        checkmarkColor: primaryDark,
+        iconTheme: const IconThemeData(size: 16, color: primaryDark),
       ),
       dataTableTheme: DataTableThemeData(
         headingRowColor: WidgetStatePropertyAll(widgetBg.withAlpha(180)),

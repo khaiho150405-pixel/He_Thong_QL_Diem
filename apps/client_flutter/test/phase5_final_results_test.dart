@@ -210,6 +210,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     expect(find.text('Kết quả tổng kết và xếp loại'), findsNothing);
+    await tester.tap(find.text('Báo cáo & Tiện ích'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('Thống kê ·'), findsOneWidget);
     expect(find.text('0.0'), findsWidgets);
     expect(find.text('Xuất Excel'), findsOneWidget);

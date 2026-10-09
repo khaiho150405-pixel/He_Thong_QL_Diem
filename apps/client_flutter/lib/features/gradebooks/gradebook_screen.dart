@@ -1,17 +1,17 @@
-import 'grade_deadlines_panel.dart';
-import '../../app/widgets/app_edge_scrollbar.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/theme.dart';
 import '../authentication/session.dart';
 import '../final_results/final_results_panel.dart';
 import '../final_results/repository.dart';
 import '../recognition/recognition_panel.dart';
 import '../reports/reports_panel.dart';
 import 'excel_import_dialog.dart';
+import 'grade_deadlines_panel.dart';
 import 'repository.dart';
 
 class GradebookScreen extends ConsumerStatefulWidget {
@@ -37,43 +37,43 @@ class _GradebookScreenState extends ConsumerState<GradebookScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text('Bảng điểm #${widget.bookId}'),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => context.go('/gradebooks'),
-      ),
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: () => setState(reload),
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
-    body: AppEdgeScrollbar(
-      child: FutureBuilder<CellsResponseDto>(
-        future: data,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _GradebookLoadError(
-              error: snapshot.error!,
-              retry: () => setState(reload),
-            );
-          }
-          final value = snapshot.data!;
-          return GradebookEditor(
-            key: ValueKey('${value.book.id}-${value.book.version}'),
-            data: value,
-            onReload: () => setState(reload),
-          );
-        },
-      ),
-    ),
+  Widget build(BuildContext context) => FutureBuilder<CellsResponseDto>(
+    future: data,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState != ConnectionState.done) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Bảng điểm #${widget.bookId}'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/gradebooks'),
+            ),
+          ),
+          body: const Center(child: CircularProgressIndicator()),
+        );
+      }
+      if (snapshot.hasError) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Bảng điểm #${widget.bookId}'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/gradebooks'),
+            ),
+          ),
+          body: _GradebookLoadError(
+            error: snapshot.error!,
+            retry: () => setState(reload),
+          ),
+        );
+      }
+      final value = snapshot.data!;
+      return GradebookEditor(
+        key: ValueKey('${value.book.id}-${value.book.version}'),
+        data: value,
+        onReload: () => setState(reload),
+      );
+    },
   );
 }
 
@@ -95,8 +95,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
   final formKey = GlobalKey<FormState>();
   final controllers = <String, TextEditingController>{};
   final horizontalGridController = ScrollController();
+  final verticalGridController = ScrollController();
   bool busy = false;
   bool conflict = false;
+  num? _selectedComponentId;
   late Future<List<FinalResultDto>> finalResults;
 
   bool get teacher => ref.read(sessionProvider)?.role.value == 'GIAO_VIEN';
@@ -133,6 +135,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       controller.dispose();
     }
     horizontalGridController.dispose();
+    verticalGridController.dispose();
     super.dispose();
   }
 
@@ -378,13 +381,92 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
+  Widget _buildStatusBadge() {
+    final isLocked = locked;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: isLocked ? Colors.green.shade50 : Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isLocked ? Colors.green.shade600 : Colors.amber.shade700,
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isLocked ? Icons.lock_outline_rounded : Icons.edit_note_rounded,
+            size: 12,
+            color: isLocked ? Colors.green.shade800 : Colors.amber.shade900,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isLocked ? 'Đã chốt' : 'Đang nhập liệu',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: isLocked ? Colors.green.shade800 : Colors.amber.shade900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildStickyBottomBar() {
+    if (!editable) return null;
+    final changed = changedCells();
+
+    final theme = Theme.of(context);
+    return Material(
+      elevation: 8,
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                Icons.edit_note_rounded,
+                color: changed.isNotEmpty
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.outline,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  changed.isNotEmpty
+                      ? 'Đã sửa ${changed.length} ô điểm'
+                      : 'Chưa có thay đổi',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: changed.isNotEmpty
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.outline,
+                  ),
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: busy ? null : save,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Lưu thay đổi'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rawStudents = <num, List<GradeCellDto>>{};
     for (final cell in widget.data.items) {
       rawStudents.putIfAbsent(cell.studentId, () => []).add(cell);
     }
-    // Sắp xếp danh sách học sinh theo STT từ API (stt null xếp cuối, giữ thứ tự ổn định theo studentId)
     final sortedStudentRows = rawStudents.values.toList()
       ..sort((a, b) {
         final sttA = a.isNotEmpty ? a.first.stt : null;
@@ -411,159 +493,643 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final orderedComponents = components.values.toList()
       ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
 
-    return Column(
-      children: [
-        Material(
-          elevation: 2,
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      '${widget.data.book.className} · '
-                      '${widget.data.book.subjectName} · '
-                      '${widget.data.book.termName}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    if (admin)
-                      IconButton(
-                        tooltip: 'Xem mã tham chiếu',
-                        onPressed: showIdentifiers,
-                        icon: const Icon(Icons.info_outline),
+    return FutureBuilder<List<FinalResultDto>>(
+      future: finalResults,
+      builder: (context, resultsSnapshot) {
+        final results = {
+          for (final result in resultsSnapshot.data ?? const <FinalResultDto>[])
+            result.studentId: result,
+        };
+
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
+            appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/gradebooks'),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '${widget.data.book.className} · ${widget.data.book.subjectName}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    Chip(
-                      avatar: Icon(locked ? Icons.lock : Icons.edit, size: 18),
-                      label: Text(locked ? 'Đã chốt' : 'Đang nhập liệu'),
-                    ),
-                    Text('Phiên bản ${widget.data.book.version}'),
-                    OutlinedButton.icon(
-                      onPressed: showAllHistory,
-                      icon: const Icon(Icons.history_outlined),
-                      label: const Text('Lịch sử cập nhật'),
-                    ),
-                    if (locked && teacher)
-                      OutlinedButton.icon(
-                        onPressed: showFinalResults,
-                        icon: const Icon(Icons.functions),
-                        label: const Text('Tính tổng kết'),
+                      const SizedBox(width: 8),
+                      _buildStatusBadge(),
+                    ],
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          widget.data.book.termName,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    if (editable) ...[
-                      OutlinedButton.icon(
-                        onPressed: busy ? null : syncRoster,
-                        icon: const Icon(Icons.group_add_outlined),
-                        label: const Text('Đồng bộ sĩ số'),
+                      Text(
+                        ' · ',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: busy
-                            ? null
-                            : () =>
-                                  openExcelImport(students, orderedComponents),
-                        icon: const Icon(Icons.table_chart_outlined),
-                        label: const Text('Nhập từ Excel'),
-                      ),
-                      FilledButton.tonalIcon(
-                        onPressed: busy ? null : save,
-                        icon: const Icon(Icons.save_outlined),
-                        label: const Text('Lưu thay đổi'),
+                      Text(
+                        'Phiên bản ${widget.data.book.version}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                       ),
                     ],
-                    ReportsPanel(
-                      gradebookId: widget.data.book.id,
-                      compact: true,
+                  ),
+                ],
+              ),
+              actions: [
+                IconButton(
+                  tooltip: 'Tải lại',
+                  onPressed: widget.onReload,
+                  icon: const Icon(Icons.refresh),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: 'Thao tác khác',
+                  icon: const Icon(Icons.more_vert_rounded),
+                  onSelected: (action) {
+                    switch (action) {
+                      case 'history':
+                        showAllHistory();
+                        break;
+                      case 'sync_roster':
+                        syncRoster();
+                        break;
+                      case 'import_excel':
+                        openExcelImport(students, orderedComponents);
+                        break;
+                      case 'identifiers':
+                        showIdentifiers();
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'history',
+                      child: Row(
+                        children: [
+                          Icon(Icons.history_outlined, size: 20),
+                          SizedBox(width: 10),
+                          Expanded(child: Text('Lịch sử cập nhật')),
+                        ],
+                      ),
                     ),
+                    if (editable)
+                      PopupMenuItem(
+                        value: 'sync_roster',
+                        enabled: !busy,
+                        child: const Row(
+                          children: [
+                            Icon(Icons.group_add_outlined, size: 20),
+                            SizedBox(width: 10),
+                            Expanded(child: Text('Đồng bộ sĩ số')),
+                          ],
+                        ),
+                      ),
+                    if (editable)
+                      PopupMenuItem(
+                        value: 'import_excel',
+                        enabled: !busy,
+                        child: const Row(
+                          children: [
+                            Icon(Icons.table_chart_outlined, size: 20),
+                            SizedBox(width: 10),
+                            Expanded(child: Text('Nhập từ Excel')),
+                          ],
+                        ),
+                      ),
+                    if (admin)
+                      const PopupMenuItem(
+                        value: 'identifiers',
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 20),
+                            SizedBox(width: 10),
+                            Expanded(child: Text('Mã tham chiếu')),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
+              ],
+              bottom: const TabBar(
+                tabs: [
+                  Tab(
+                    icon: Icon(Icons.edit_note_rounded),
+                    text: 'Nhập điểm',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.camera_alt_outlined),
+                    text: 'Quét ảnh OCR',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.analytics_outlined),
+                    text: 'Báo cáo & Tiện ích',
+                  ),
+                ],
+              ),
+            ),
+            body: TabBarView(
+              children: [
+                _buildTabGradeEntry(
+                  students,
+                  sortedStudentRows,
+                  orderedComponents,
+                  results,
+                ),
+                _buildTabOcr(orderedComponents),
+                _buildTabReports(students, orderedComponents),
+              ],
+            ),
+            bottomNavigationBar: _buildStickyBottomBar(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTabGradeEntry(
+    Map<num, List<GradeCellDto>> students,
+    List<List<GradeCellDto>> sortedStudentRows,
+    List<GradeCellDto> orderedComponents,
+    Map<num, FinalResultDto> results,
+  ) {
+    if (widget.data.items.isEmpty) {
+      return const Center(child: Text('Bảng điểm chưa có ô dữ liệu.'));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (conflict)
+          MaterialBanner(
+            content: const Text(
+              'Bảng điểm đã thay đổi ở nơi khác. Tải lại để đối chiếu trước khi nhập lại.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: widget.onReload,
+                child: const Text('Tải lại'),
+              ),
+            ],
+          ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              bottom: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant.withAlpha(80),
               ),
             ),
           ),
-        ),
-        Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            scrollDirection: Axis.horizontal,
+            child: Row(
               children: [
-                if (conflict)
-                  MaterialBanner(
-                    content: const Text(
-                      'Bảng điểm đã thay đổi ở nơi khác. Tải lại để đối chiếu trước khi nhập lại.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: widget.onReload,
-                        child: const Text('Tải lại'),
-                      ),
-                    ],
+                FilterChip(
+                  selected: _selectedComponentId == null,
+                  avatar: Icon(
+                    Icons.grid_view_rounded,
+                    size: 16,
+                    color: _selectedComponentId == null
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                if (teacher) ...[
-                  const SizedBox(height: 8),
-                  RecognitionPanel(
-                    gradebookId: widget.data.book.id,
-                    components: [
-                      for (final item in orderedComponents.where(
-                        (c) =>
-                            c.columnLocked != true &&
-                            c.passFail != true &&
-                            c.openForInput != false,
-                      ))
-                        RecognitionComponentOption(
-                          item.componentId,
-                          item.componentName,
-                        ),
-                    ],
-                    gradebookVersion: widget.data.book.version,
-                    enabled: !locked && !busy && !conflict,
-                    onApproved: widget.onReload,
+                  label: Text(
+                    'Tất cả cột',
+                    style: TextStyle(
+                      color: _selectedComponentId == null
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface,
+                      fontWeight: _selectedComponentId == null
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                  backgroundColor: Colors.white,
+                  selectedColor: AppTheme.navActiveBg,
+                  checkmarkColor: Theme.of(context).colorScheme.primary,
+                  side: BorderSide(
+                    color: _selectedComponentId == null
+                        ? Theme.of(context).colorScheme.primary.withAlpha(150)
+                        : Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  onSelected: (_) => setState(() => _selectedComponentId = null),
+                ),
+                for (final comp in orderedComponents) ...[
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    selected: _selectedComponentId == comp.componentId,
+                    avatar: comp.openForInput == false
+                        ? const Icon(
+                            Icons.lock_outline_rounded,
+                            size: 14,
+                            color: Colors.orange,
+                          )
+                        : null,
+                    label: Text(
+                      comp.componentName,
+                      style: TextStyle(
+                        color: _selectedComponentId == comp.componentId
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurface,
+                        fontWeight: _selectedComponentId == comp.componentId
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                    backgroundColor: Colors.white,
+                    selectedColor: AppTheme.navActiveBg,
+                    checkmarkColor: Theme.of(context).colorScheme.primary,
+                    side: BorderSide(
+                      color: _selectedComponentId == comp.componentId
+                          ? Theme.of(context).colorScheme.primary.withAlpha(150)
+                          : Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                    onSelected: (_) =>
+                        setState(() => _selectedComponentId = comp.componentId),
                   ),
                 ],
-                GradeDeadlinesPanel(
-                  bookId: widget.data.book.id,
-                  components: orderedComponents,
-                  isAdmin: !teacher,
-                  locked: locked,
-                  onReload: widget.onReload,
-                ),
-                const SizedBox(height: 8),
-                FutureBuilder<List<FinalResultDto>>(
-                  future: finalResults,
-                  builder: (context, snapshot) =>
-                      _gradeGrid(students, orderedComponents, {
-                        for (final result in snapshot.data ?? const [])
-                          result.studentId: result,
-                      }),
-                ),
-                if (busy) const LinearProgressIndicator(),
               ],
             ),
+          ),
+        ),
+        if (busy) const LinearProgressIndicator(),
+        Expanded(
+          child: Form(
+            key: formKey,
+            child: _selectedComponentId != null
+                ? _singleColumnView(sortedStudentRows, orderedComponents)
+                : LayoutBuilder(
+                    builder: (context, box) => box.maxWidth >= 800
+                        ? _wideGrid(students, orderedComponents, results)
+                        : _mobileGrid(students, results),
+                  ),
           ),
         ),
       ],
     );
   }
 
-  Widget _gradeGrid(
-    Map<num, List<GradeCellDto>> students,
-    List<GradeCellDto> components,
-    Map<num, FinalResultDto> results,
-  ) => SizedBox(
-    height: 520,
-    child: widget.data.items.isEmpty
-        ? const Center(child: Text('Bảng điểm chưa có ô dữ liệu.'))
-        : Form(
-            key: formKey,
-            child: LayoutBuilder(
-              builder: (context, box) => box.maxWidth >= 800
-                  ? _wideGrid(students, components, results)
-                  : _mobileGrid(students, results),
+  Widget _singleColumnView(
+    List<List<GradeCellDto>> sortedStudentRows,
+    List<GradeCellDto> orderedComponents,
+  ) {
+    final selectedComp = orderedComponents.firstWhere(
+      (c) => c.componentId == _selectedComponentId,
+    );
+    final isLocked =
+        selectedComp.openForInput == false || selectedComp.columnLocked == true;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withAlpha(120),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color:
+                  Theme.of(context).colorScheme.outlineVariant.withAlpha(100),
             ),
           ),
+          child: Row(
+            children: [
+              Icon(
+                isLocked
+                    ? Icons.lock_outline_rounded
+                    : Icons.info_outline_rounded,
+                size: 18,
+                color: isLocked
+                    ? Colors.orange
+                    : Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Cột: ${selectedComp.componentName} · Hệ số ${selectedComp.coefficient}'
+                  '${selectedComp.required_ ? ' · Bắt buộc' : ''}'
+                  '${isLocked ? ' · (Đang khóa)' : ''}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        for (final studentRow in sortedStudentRows) ...[
+          Builder(
+            builder: (context) {
+              final student = studentRow.first;
+              final cell = studentRow
+                  .cast<GradeCellDto?>()
+                  .firstWhere(
+                    (c) => c?.componentId == _selectedComponentId,
+                    orElse: () => null,
+                  );
+              return Card(
+                elevation: 0,
+                margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outlineVariant
+                        .withAlpha(120),
+                  ),
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.primaryContainer,
+                        child: Text(
+                          student.stt != null ? '${student.stt}' : '—',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              student.studentName,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                            if (!student.active)
+                              Text(
+                                'Ngừng theo học',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (cell != null)
+                        _gradeField(cell, width: 150)
+                      else
+                        const Text('—'),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTabOcr(List<GradeCellDto> orderedComponents) {
+    if (!teacher) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 48,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Chức năng nhận dạng OCR chỉ dành cho giáo viên phụ trách.',
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+      child: RecognitionPanel(
+        gradebookId: widget.data.book.id,
+        components: [
+          for (final item in orderedComponents.where(
+            (c) =>
+                c.columnLocked != true &&
+                c.passFail != true &&
+                c.openForInput != false,
+          ))
+            RecognitionComponentOption(
+              item.componentId,
+              item.componentName,
+            ),
+        ],
+        gradebookVersion: widget.data.book.version,
+        enabled: !locked && !busy && !conflict,
+        onApproved: widget.onReload,
+        embedded: true,
+      ),
+    );
+  }
+
+  Widget _buildTabReports(
+    Map<num, List<GradeCellDto>> students,
+    List<GradeCellDto> orderedComponents,
+  ) => SingleChildScrollView(
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ReportsPanel(
+          gradebookId: widget.data.book.id,
+          compact: false,
+        ),
+        const SizedBox(height: 16),
+        if (editable) ...[
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.file_upload_outlined,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nhập điểm từ Excel',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        Text(
+                          'Nạp điểm học sinh tự động từ bảng tính Excel',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: busy
+                        ? null
+                        : () => openExcelImport(students, orderedComponents),
+                    icon: const Icon(Icons.table_chart_outlined, size: 18),
+                    label: const Text('Nhập Excel'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (locked && teacher) ...[
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.tertiaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.functions_rounded,
+                      color:
+                          Theme.of(context).colorScheme.onTertiaryContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tổng kết môn học',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        Text(
+                          'Tính ĐTB và xếp loại cho toàn bộ học sinh trong bảng điểm',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: showFinalResults,
+                    icon: const Icon(Icons.calculate_outlined, size: 18),
+                    label: const Text('Tính tổng kết'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        GradeDeadlinesPanel(
+          bookId: widget.data.book.id,
+          components: orderedComponents,
+          isAdmin: !teacher,
+          locked: locked,
+          onReload: widget.onReload,
+        ),
+      ],
+    ),
   );
 
   Widget _wideGrid(
@@ -576,101 +1142,107 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     child: SingleChildScrollView(
       controller: horizontalGridController,
       scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        child: DataTable(
-          columns: [
-            const DataColumn(label: Text('STT')),
-            const DataColumn(label: Text('Học sinh')),
-            for (final component in components)
-              DataColumn(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${component.componentName}\nHệ số ${component.coefficient}'
-                      '${component.required_ ? ' · bắt buộc' : ''}',
-                    ),
-                    if (component.openForInput == false) ...[
-                      const SizedBox(width: 4),
-                      const Tooltip(
-                        message:
-                            'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
-                        child: Icon(
-                          Icons.lock_outline_rounded,
-                          size: 14,
-                          color: Colors.orange,
+      child: Scrollbar(
+        controller: verticalGridController,
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          controller: verticalGridController,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+          child: DataTable(
+            columns: [
+              const DataColumn(label: Text('STT')),
+              const DataColumn(label: Text('Học sinh')),
+              for (final component in components)
+                DataColumn(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${component.componentName}\nHệ số ${component.coefficient}'
+                        '${component.required_ ? ' · bắt buộc' : ''}',
+                      ),
+                      if (component.openForInput == false) ...[
+                        const SizedBox(width: 4),
+                        const Tooltip(
+                          message:
+                              'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
+                          child: Icon(
+                            Icons.lock_outline_rounded,
+                            size: 14,
+                            color: Colors.orange,
+                          ),
                         ),
+                      ],
+                    ],
+                  ),
+                ),
+              if (locked) ...[
+                const DataColumn(label: Text('Điểm tổng kết')),
+                const DataColumn(label: Text('Xếp loại')),
+              ],
+            ],
+            rows: [
+              for (final entry in students.values.toList().asMap().entries)
+                DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        entry.value.first.stt != null
+                            ? '${entry.value.first.stt}'
+                            : '—',
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 190,
+                        child: Text(
+                          entry.value.first.active
+                              ? entry.value.first.studentName
+                              : '${entry.value.first.studentName}\nNgừng theo học',
+                        ),
+                      ),
+                    ),
+                    for (final component in components)
+                      DataCell(
+                        Builder(
+                          builder: (context) {
+                            final cell = entry.value
+                                .cast<GradeCellDto?>()
+                                .firstWhere(
+                                  (c) => c?.componentId == component.componentId,
+                                  orElse: () => null,
+                                );
+                            return cell != null
+                                ? _gradeField(cell)
+                                : const Text('—');
+                          },
+                        ),
+                      ),
+                    if (locked) ...[
+                      DataCell(
+                        Text(
+                          resultScore(
+                            results[entry.value.first.studentId]?.finalScore,
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        results[entry.value.first.studentId] == null
+                            ? const Text('—')
+                            : Chip(
+                                label: Text(
+                                  classificationLabel(
+                                    results[entry.value.first.studentId]!
+                                        .classification,
+                                  ),
+                                ),
+                              ),
                       ),
                     ],
                   ],
                 ),
-              ),
-            if (locked) ...[
-              const DataColumn(label: Text('Điểm tổng kết')),
-              const DataColumn(label: Text('Xếp loại')),
             ],
-          ],
-          rows: [
-            for (final entry in students.values.toList().asMap().entries)
-              DataRow(
-                cells: [
-                  DataCell(
-                    Text(
-                      entry.value.first.stt != null
-                          ? '${entry.value.first.stt}'
-                          : '—',
-                    ),
-                  ),
-                  DataCell(
-                    SizedBox(
-                      width: 190,
-                      child: Text(
-                        entry.value.first.active
-                            ? entry.value.first.studentName
-                            : '${entry.value.first.studentName}\nNgừng theo học',
-                      ),
-                    ),
-                  ),
-                  for (final component in components)
-                    DataCell(
-                      Builder(
-                        builder: (context) {
-                          final cell = entry.value
-                              .cast<GradeCellDto?>()
-                              .firstWhere(
-                                (c) => c?.componentId == component.componentId,
-                                orElse: () => null,
-                              );
-                          return cell != null
-                              ? _gradeField(cell)
-                              : const Text('—');
-                        },
-                      ),
-                    ),
-                  if (locked) ...[
-                    DataCell(
-                      Text(
-                        resultScore(
-                          results[entry.value.first.studentId]?.finalScore,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      results[entry.value.first.studentId] == null
-                          ? const Text('—')
-                          : Chip(
-                              label: Text(
-                                classificationLabel(
-                                  results[entry.value.first.studentId]!
-                                      .classification,
-                                ),
-                              ),
-                            ),
-                    ),
-                  ],
-                ],
-              ),
-          ],
+          ),
         ),
       ),
     ),
@@ -680,35 +1252,121 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     Map<num, List<GradeCellDto>> students,
     Map<num, FinalResultDto> results,
   ) => ListView(
+    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
     children: [
       for (final entry in students.values.toList().asMap().entries)
         Card(
+          elevation: 1,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant.withAlpha(100),
+            ),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'STT ${entry.value.first.stt ?? '—'} · ${entry.value.first.studentName}',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      child: Text(
+                        entry.value.first.stt != null
+                            ? '${entry.value.first.stt}'
+                            : '—',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        entry.value.first.studentName,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
-                if (!entry.value.first.active) const Text('Ngừng theo học'),
+                if (!entry.value.first.active)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Ngừng theo học',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 if (locked) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'Điểm tổng kết: '
-                    '${resultScore(results[entry.value.first.studentId]?.finalScore)} · '
-                    'Xếp loại: ${results[entry.value.first.studentId]?.classification == 'CHUA_CONG_BO' ? 'Chưa công bố' : results[entry.value.first.studentId]?.classification ?? '—'}',
-                    style: Theme.of(context).textTheme.labelLarge,
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Điểm tổng kết: '
+                      '${resultScore(results[entry.value.first.studentId]?.finalScore)} · '
+                      'Xếp loại: ${classificationLabel(results[entry.value.first.studentId]?.classification ?? 'CHUA_CONG_BO')}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
                 for (final cell in entry.value) ...[
-                  Text(
-                    '${cell.componentName} · Hệ số ${cell.coefficient}'
-                    '${cell.required_ ? ' · bắt buộc' : ''}',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${cell.componentName} · Hệ số ${cell.coefficient}'
+                          '${cell.required_ ? ' · bắt buộc' : ''}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ),
+                      if (cell.source_.value == 'NHAN_DIEN')
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).colorScheme.tertiaryContainer,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '● AI',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onTertiaryContainer,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   _gradeField(cell, width: double.infinity),
                   const SizedBox(height: 12),
                 ],
@@ -719,85 +1377,116 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     ],
   );
 
-  Widget _gradeField(GradeCellDto cell, {double width = 170}) => SizedBox(
-    width: width,
-    child: Row(
-      children: [
-        Expanded(
-          child: cell.passFail == true
-              ? DropdownButtonFormField<String>(
-                  initialValue: controllers[cell.id]!.text.isEmpty
-                      ? 'EMPTY'
-                      : controllers[cell.id]!.text,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Đánh giá'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'EMPTY',
-                      child: Text('Chưa đánh giá'),
-                    ),
-                    DropdownMenuItem(value: '10.0', child: Text('Đạt')),
-                    DropdownMenuItem(value: '0.0', child: Text('Không đạt')),
-                  ],
-                  onChanged:
-                      editable &&
-                          cell.active &&
-                          cell.openForInput != false &&
-                          cell.columnLocked != true &&
-                          cell.status.value != 'CHO_DOI_CHIEU'
-                      ? (v) => setState(
-                          () => controllers[cell.id]!.text = v == 'EMPTY'
-                              ? ''
-                              : v ?? '',
-                        )
-                      : null,
-                )
-              : TextFormField(
-                  key: ValueKey('grade-${cell.id}'),
-                  controller: controllers[cell.id],
-                  enabled:
-                      editable &&
-                      cell.active &&
-                      cell.openForInput != false &&
-                      cell.columnLocked != true &&
-                      cell.status.value != 'CHO_DOI_CHIEU',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    hintText: '—',
-                    prefixIcon: cell.openForInput == false
-                        ? const Tooltip(
-                            message:
-                                'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
-                            child: Icon(
-                              Icons.lock_rounded,
-                              size: 14,
-                              color: Colors.orange,
-                            ),
-                          )
-                        : null,
-                    helperText: cell.columnLocked == true
-                        ? 'Cột đã chốt'
-                        : cell.openForInput == false
-                        ? 'Ngoài lịch nhập / đang khóa'
-                        : cell.status.value == 'CHO_DOI_CHIEU'
-                        ? 'Chờ đối chiếu'
-                        : cell.value == null
-                        ? 'Chưa có điểm'
-                        : cell.source_.value == 'NHAN_DIEN'
-                        ? 'Nhận dạng'
-                        : null,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  validator: validateGrade,
+  Widget _gradeField(GradeCellDto cell, {double width = 170}) {
+    final isLocked = cell.columnLocked == true || cell.openForInput == false;
+    final isPending = cell.status.value == 'CHO_DOI_CHIEU';
+    final isAi = cell.source_.value == 'NHAN_DIEN';
+    final isEnabled =
+        editable && cell.active && !isLocked && !isPending;
+
+    return SizedBox(
+      width: width,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isAi && width < 200)
+            Container(
+              margin: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '● AI',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onTertiaryContainer,
                 ),
-        ),
-      ],
-    ),
-  );
+              ),
+            ),
+          Expanded(
+            child: cell.passFail == true
+                ? DropdownButtonFormField<String>(
+                    key: ValueKey('grade-pf-${cell.id}'),
+                    initialValue: controllers[cell.id]!.text.isEmpty
+                        ? 'EMPTY'
+                        : controllers[cell.id]!.text,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: 'Đánh giá',
+                      prefixIcon: isLocked
+                          ? const Tooltip(
+                              message: 'Cột đang khóa hoặc ngoài lịch nhập',
+                              child: Icon(
+                                Icons.lock_outline_rounded,
+                                size: 14,
+                                color: Colors.orange,
+                              ),
+                            )
+                          : null,
+                      border: const OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'EMPTY',
+                        child: Text('Chưa đánh giá'),
+                      ),
+                      DropdownMenuItem(value: '10.0', child: Text('Đạt')),
+                      DropdownMenuItem(value: '0.0', child: Text('Không đạt')),
+                    ],
+                    onChanged: isEnabled
+                        ? (v) => setState(() {
+                              controllers[cell.id]!.text =
+                                  v == 'EMPTY' ? '' : v ?? '';
+                            })
+                        : null,
+                  )
+                : TextFormField(
+                    key: ValueKey('grade-${cell.id}'),
+                    controller: controllers[cell.id],
+                    enabled: isEnabled,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    textInputAction: TextInputAction.next,
+                    onChanged: (_) {
+                      setState(() {});
+                    },
+                    decoration: InputDecoration(
+                      hintText: '—',
+                      prefixIcon: isLocked
+                          ? const Tooltip(
+                              message:
+                                  'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
+                              child: Icon(
+                                Icons.lock_rounded,
+                                size: 14,
+                                color: Colors.orange,
+                              ),
+                            )
+                          : null,
+                      helperText: cell.columnLocked == true
+                          ? 'Cột đã chốt'
+                          : cell.openForInput == false
+                          ? 'Ngoài lịch nhập'
+                          : isPending
+                          ? 'Chờ đối chiếu'
+                          : cell.value == null
+                          ? 'Chưa có điểm'
+                          : null,
+                      border: const OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    validator: validateGrade,
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class GradebookHistoryDialog extends ConsumerWidget {
