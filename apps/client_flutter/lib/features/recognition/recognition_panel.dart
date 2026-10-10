@@ -340,300 +340,282 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
           final width = constraints.maxWidth < 600
               ? constraints.maxWidth
               : 320.0;
-              return Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  SizedBox(
-                    width: width,
-                    child: DropdownButtonFormField<num>(
-                      key: ValueKey('recognition-component-$componentId'),
-                      initialValue: componentId,
-                      isExpanded: true,
-                      itemHeight: null,
-                      decoration: const InputDecoration(
-                        labelText: 'Thành phần điểm',
-                        prefixIcon: Icon(Icons.percent_rounded),
-                      ),
-                      items: [
-                        for (final item in widget.components)
-                          DropdownMenuItem(
-                            value: item.id,
-                            child: Text(item.name),
-                          ),
-                      ],
-                      onChanged: enabled
-                          ? (value) => setState(() => componentId = value)
-                          : null,
-                    ),
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: width,
+                child: DropdownButtonFormField<num>(
+                  key: ValueKey('recognition-component-$componentId'),
+                  initialValue: componentId,
+                  isExpanded: true,
+                  itemHeight: null,
+                  decoration: const InputDecoration(
+                    labelText: 'Thành phần điểm',
+                    prefixIcon: Icon(Icons.percent_rounded),
                   ),
+                  items: [
+                    for (final item in widget.components)
+                      DropdownMenuItem(value: item.id, child: Text(item.name)),
+                  ],
+                  onChanged: enabled
+                      ? (value) => setState(() => componentId = value)
+                      : null,
+                ),
+              ),
+              if (camera)
+                SizedBox(
+                  width: width,
+                  child: AppActionButton(
+                    key: const ValueKey('recognition-camera'),
+                    kind: AppActionButtonKind.secondary,
+                    onPressed: enabled ? () => pickImage(camera: true) : null,
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Chụp bảng điểm',
+                  ),
+                ),
+              SizedBox(
+                width: width,
+                child: AppActionButton(
+                  key: const ValueKey('recognition-pick'),
+                  kind: AppActionButtonKind.secondary,
+                  onPressed: enabled ? () => pickImage() : null,
+                  icon: Icons.photo_library_outlined,
+                  label: image == null ? 'Chọn ảnh bảng điểm' : 'Chọn ảnh khác',
+                ),
+              ),
+              SizedBox(
+                width: width,
+                child: AppActionButton(
+                  key: const ValueKey('recognition-upload'),
+                  onPressed: enabled && image != null ? upload : null,
+                  icon: Icons.cloud_upload_outlined,
+                  label: 'Tải ảnh & Nhận dạng',
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+      if (!widget.enabled)
+        const Text(
+          'Bảng điểm hiện không cho phép gửi ảnh. Kiểm tra trạng thái chốt hoặc tải lại bảng điểm.',
+        ),
+      if (widget.components.isEmpty)
+        const Text('Cần thành phần điểm trước khi gửi ảnh.'),
+      if (imageError != null)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(imageError!, style: TextStyle(color: colorScheme.error)),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                children: [
                   if (camera)
-                    SizedBox(
-                      width: width,
-                      child: AppActionButton(
-                        key: const ValueKey('recognition-camera'),
-                        kind: AppActionButtonKind.secondary,
-                        onPressed: enabled
-                            ? () => pickImage(camera: true)
-                            : null,
-                        icon: Icons.camera_alt_outlined,
-                        label: 'Chụp bảng điểm',
-                      ),
+                    TextButton.icon(
+                      key: const ValueKey('recognition-retry-camera'),
+                      onPressed: enabled ? () => pickImage(camera: true) : null,
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      label: const Text('Chụp lại'),
                     ),
-                  SizedBox(
-                    width: width,
-                    child: AppActionButton(
-                      key: const ValueKey('recognition-pick'),
-                      kind: AppActionButtonKind.secondary,
-                      onPressed: enabled ? () => pickImage() : null,
-                      icon: Icons.photo_library_outlined,
-                      label: image == null
-                          ? 'Chọn ảnh bảng điểm'
-                          : 'Chọn ảnh khác',
-                    ),
-                  ),
-                  SizedBox(
-                    width: width,
-                    child: AppActionButton(
-                      key: const ValueKey('recognition-upload'),
-                      onPressed: enabled && image != null ? upload : null,
-                      icon: Icons.cloud_upload_outlined,
-                      label: 'Tải ảnh & Nhận dạng',
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          if (!widget.enabled)
-            const Text(
-              'Bảng điểm hiện không cho phép gửi ảnh. Kiểm tra trạng thái chốt hoặc tải lại bảng điểm.',
-            ),
-          if (widget.components.isEmpty)
-            const Text('Cần thành phần điểm trước khi gửi ảnh.'),
-          if (imageError != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(imageError!, style: TextStyle(color: colorScheme.error)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      if (camera)
-                        TextButton.icon(
-                          key: const ValueKey('recognition-retry-camera'),
-                          onPressed: enabled
-                              ? () => pickImage(camera: true)
-                              : null,
-                          icon: const Icon(Icons.camera_alt_outlined),
-                          label: const Text('Chụp lại'),
-                        ),
-                      TextButton.icon(
-                        key: const ValueKey('recognition-retry-pick'),
-                        onPressed: enabled ? () => pickImage() : null,
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Chọn ảnh khác'),
-                      ),
-                    ],
+                  TextButton.icon(
+                    key: const ValueKey('recognition-retry-pick'),
+                    onPressed: enabled ? () => pickImage() : null,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Chọn ảnh khác'),
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+      if (image != null) ...[
+        const SizedBox(height: 12),
+        Text(image!.name, key: const ValueKey('recognition-filename')),
+        Text(
+          '${(image!.bytes.length / 1024 / 1024).toStringAsFixed(2)} MB · Kiểm tra độ rõ trước khi gửi',
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => showRecognitionImage(
+            context,
+            image: Image.memory(image!.bytes, fit: BoxFit.contain),
+          ),
+          child: SizedBox(
+            height: 180,
+            width: double.infinity,
+            child: Image.memory(
+              image!.bytes,
+              cacheWidth: 640,
+              fit: BoxFit.contain,
             ),
-          if (image != null) ...[
-            const SizedBox(height: 12),
-            Text(image!.name, key: const ValueKey('recognition-filename')),
-            Text(
-              '${(image!.bytes.length / 1024 / 1024).toStringAsFixed(2)} MB · Kiểm tra độ rõ trước khi gửi',
-            ),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () => showRecognitionImage(
+          ),
+        ),
+        Wrap(
+          spacing: 12,
+          children: [
+            TextButton.icon(
+              onPressed: () => showRecognitionImage(
                 context,
                 image: Image.memory(image!.bytes, fit: BoxFit.contain),
               ),
-              child: SizedBox(
-                height: 180,
-                width: double.infinity,
-                child: Image.memory(
-                  image!.bytes,
-                  cacheWidth: 640,
-                  fit: BoxFit.contain,
-                ),
-              ),
+              icon: const Icon(Icons.zoom_in),
+              label: const Text('Phóng to ảnh'),
             ),
-            Wrap(
-              spacing: 12,
+            TextButton.icon(
+              key: const ValueKey('recognition-clear'),
+              onPressed: busy || picking
+                  ? null
+                  : () => setState(() {
+                      image = null;
+                      imageError = null;
+                    }),
+              icon: const Icon(Icons.close),
+              label: const Text('Bỏ ảnh đã chọn'),
+            ),
+          ],
+        ),
+      ],
+      if (busy || picking) ...[
+        const SizedBox(height: 14),
+        LinearProgressIndicator(value: busy ? uploadProgress : null),
+        Text(
+          picking
+              ? 'Đang đọc ảnh…'
+              : uploadProgress == 1
+              ? 'Ảnh đã gửi, đang chờ xác nhận…'
+              : 'Đang tải ảnh…',
+        ),
+      ],
+      const SizedBox(height: 18),
+      FutureBuilder<List<RecognitionTicketDto>>(
+        future: tickets,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return Row(
               children: [
-                TextButton.icon(
-                  onPressed: () => showRecognitionImage(
-                    context,
-                    image: Image.memory(image!.bytes, fit: BoxFit.contain),
-                  ),
-                  icon: const Icon(Icons.zoom_in),
-                  label: const Text('Phóng to ảnh'),
-                ),
-                TextButton.icon(
-                  key: const ValueKey('recognition-clear'),
-                  onPressed: busy || picking
-                      ? null
-                      : () => setState(() {
-                          image = null;
-                          imageError = null;
-                        }),
-                  icon: const Icon(Icons.close),
-                  label: const Text('Bỏ ảnh đã chọn'),
+                Expanded(child: Text(errorMessage(snapshot.error!))),
+                TextButton(
+                  onPressed: () => setState(reload),
+                  child: const Text('Thử lại'),
                 ),
               ],
-            ),
-          ],
-          if (busy || picking) ...[
-            const SizedBox(height: 14),
-            LinearProgressIndicator(value: busy ? uploadProgress : null),
-            Text(
-              picking
-                  ? 'Đang đọc ảnh…'
-                  : uploadProgress == 1
-                  ? 'Ảnh đã gửi, đang chờ xác nhận…'
-                  : 'Đang tải ảnh…',
-            ),
-          ],
-          const SizedBox(height: 18),
-          FutureBuilder<List<RecognitionTicketDto>>(
-            future: tickets,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (snapshot.hasError) {
-                return Row(
-                  children: [
-                    Expanded(child: Text(errorMessage(snapshot.error!))),
-                    TextButton(
-                      onPressed: () => setState(reload),
-                      child: const Text('Thử lại'),
+            );
+          }
+          final items = snapshot.data!;
+          if (items.isEmpty) {
+            return const Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('Chưa có phiếu nhận dạng nào.'),
+              ),
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Lịch sử phiếu nhận dạng gần đây',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (final item in items.take(showAllTickets ? items.length : 3))
+                Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  elevation: 0,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: item.status.value == 'CHO_DOI_CHIEU'
+                          ? Colors.orange.shade300
+                          : colorScheme.outlineVariant.withAlpha(120),
                     ),
-                  ],
-                );
-              }
-              final items = snapshot.data!;
-              if (items.isEmpty) {
-                return const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text('Chưa có phiếu nhận dạng nào.'),
                   ),
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Lịch sử phiếu nhận dạng gần đây',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
+                    title: Text(
+                      'Phiếu #${item.ticketId} · ${item.componentName}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: _buildTicketSubtitle(theme, colorScheme, item),
+                    leading: item.status.value == 'DANG_XU_LY'
+                        ? const SizedBox.square(
+                            dimension: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            _statusIcon(item.status.value),
+                            color: _statusColor(item.status.value),
+                          ),
+                    trailing:
+                        widget.embedded && item.status.value == 'CHO_DOI_CHIEU'
+                        ? FilledButton.tonal(
+                            onPressed: () => showDetail(item.ticketId),
+                            style: FilledButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                            ),
+                            child: const Text('Đối chiếu ngay'),
+                          )
+                        : const Icon(Icons.chevron_right_rounded, size: 20),
+                    onTap: () => showDetail(item.ticketId),
+                  ),
+                ),
+              if (items.length > 3)
+                TextButton(
+                  onPressed: () =>
+                      setState(() => showAllTickets = !showAllTickets),
+                  child: Text(
+                    showAllTickets ? 'Thu gọn lịch sử' : 'Xem tất cả phiếu',
+                  ),
+                ),
+              if (items.length > 3)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    showAllTickets
+                        ? 'Đang hiển thị ${items.length} phiếu.'
+                        : 'Đang hiển thị 3 trên ${items.length} phiếu.',
+                    style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  for (final item in items.take(
-                    showAllTickets ? items.length : 3,
-                  ))
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: item.status.value == 'CHO_DOI_CHIEU'
-                              ? Colors.orange.shade300
-                              : colorScheme.outlineVariant.withAlpha(120),
-                        ),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 4,
-                        ),
-                        title: Text(
-                          'Phiếu #${item.ticketId} · ${item.componentName}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        subtitle: _buildTicketSubtitle(theme, colorScheme, item),
-                        leading: item.status.value == 'DANG_XU_LY'
-                            ? const SizedBox.square(
-                                dimension: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Icon(
-                                _statusIcon(item.status.value),
-                                color: _statusColor(item.status.value),
-                              ),
-                        trailing: widget.embedded &&
-                                item.status.value == 'CHO_DOI_CHIEU'
-                            ? FilledButton.tonal(
-                                onPressed: () => showDetail(item.ticketId),
-                                style: FilledButton.styleFrom(
-                                  visualDensity: VisualDensity.compact,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
-                                ),
-                                child: const Text('Đối chiếu ngay'),
-                              )
-                            : const Icon(
-                                Icons.chevron_right_rounded,
-                                size: 20,
-                              ),
-                        onTap: () => showDetail(item.ticketId),
-                      ),
-                    ),
-                  if (items.length > 3)
-                    TextButton(
-                      onPressed: () =>
-                          setState(() => showAllTickets = !showAllTickets),
-                      child: Text(
-                        showAllTickets ? 'Thu gọn lịch sử' : 'Xem tất cả phiếu',
-                      ),
-                    ),
-                  if (items.length > 3)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        showAllTickets
-                            ? 'Đang hiển thị ${items.length} phiếu.'
-                            : 'Đang hiển thị 3 trên ${items.length} phiếu.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ];
+                ),
+            ],
+          );
+        },
+      ),
+    ];
 
     if (widget.embedded) {
       return Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: colorScheme.outlineVariant.withAlpha(80),
-          ),
+          side: BorderSide(color: colorScheme.outlineVariant.withAlpha(80)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -714,11 +696,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     );
   }
 
-  Widget _buildChecklistItem(
-    ThemeData theme,
-    IconData icon,
-    String text,
-  ) {
+  Widget _buildChecklistItem(ThemeData theme, IconData icon, String text) {
     return Row(
       children: [
         Icon(icon, size: 15, color: theme.colorScheme.primary),
@@ -801,11 +779,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: fg,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }

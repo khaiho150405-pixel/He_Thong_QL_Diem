@@ -133,19 +133,23 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
     };
 
     final classLabel = _filterClassId != null
-        ? (_classes.firstWhere(
-              (c) => c['ma_lop'] == _filterClassId,
-              orElse: () => {'ten_lop': 'Lớp $_filterClassId'},
-            )['ten_lop']?.toString() ??
-            'Lớp $_filterClassId')
+        ? (_classes
+                  .firstWhere(
+                    (c) => c['ma_lop'] == _filterClassId,
+                    orElse: () => {'ten_lop': 'Lớp $_filterClassId'},
+                  )['ten_lop']
+                  ?.toString() ??
+              'Lớp $_filterClassId')
         : 'Lớp học ▾';
 
     final subjectLabel = _filterSubjectId != null
-        ? (_subjects.firstWhere(
-              (s) => s['ma_mon'] == _filterSubjectId,
-              orElse: () => {'ten_mon': 'Môn $_filterSubjectId'},
-            )['ten_mon']?.toString() ??
-            'Môn $_filterSubjectId')
+        ? (_subjects
+                  .firstWhere(
+                    (s) => s['ma_mon'] == _filterSubjectId,
+                    orElse: () => {'ten_mon': 'Môn $_filterSubjectId'},
+                  )['ten_mon']
+                  ?.toString() ??
+              'Môn $_filterSubjectId')
         : 'Môn học ▾';
 
     return Column(
@@ -160,9 +164,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: colorScheme.outlineVariant.withAlpha(90),
-              ),
+              side: BorderSide(color: colorScheme.outlineVariant.withAlpha(90)),
             ),
           ),
           padding: const WidgetStatePropertyAll(
@@ -201,8 +203,8 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                   _filterStatus == null
                       ? Icons.tune_rounded
                       : (_filterStatus == 'DA_CHOT'
-                          ? Icons.lock_rounded
-                          : Icons.edit_note_rounded),
+                            ? Icons.lock_rounded
+                            : Icons.edit_note_rounded),
                   size: 16,
                 ),
                 label: Text(statusLabel),
@@ -269,9 +271,9 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Text(
                 'Lọc theo trạng thái',
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             ListTile(
@@ -283,7 +285,10 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
               onTap: () => Navigator.pop(ctx, 'ALL'),
             ),
             ListTile(
-              leading: const Icon(Icons.edit_note_rounded, color: Colors.orange),
+              leading: const Icon(
+                Icons.edit_note_rounded,
+                color: Colors.orange,
+              ),
               title: const Text('Đang nhập liệu'),
               trailing: _filterStatus == 'DANG_NHAP_LIEU'
                   ? const Icon(Icons.check_rounded, color: Colors.blue)
@@ -326,13 +331,15 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Chọn lớp học',
                   style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               ListTile(
@@ -391,13 +398,15 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Text(
                   'Chọn môn học',
                   style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               ListTile(
@@ -525,12 +534,15 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                           }
                           if (_searchQuery.isNotEmpty) {
                             final q = _searchQuery.toLowerCase();
-                            final matchClass =
-                                book.className.toLowerCase().contains(q);
-                            final matchSubject =
-                                book.subjectName.toLowerCase().contains(q);
-                            final matchTerm =
-                                book.termName.toLowerCase().contains(q);
+                            final matchClass = book.className
+                                .toLowerCase()
+                                .contains(q);
+                            final matchSubject = book.subjectName
+                                .toLowerCase()
+                                .contains(q);
+                            final matchTerm = book.termName
+                                .toLowerCase()
+                                .contains(q);
                             if (!matchClass && !matchSubject && !matchTerm) {
                               return false;
                             }
@@ -578,19 +590,19 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                                     return GridView.builder(
                                       gridDelegate:
                                           const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisExtent: 130,
-                                        crossAxisSpacing: 14,
-                                        mainAxisSpacing: 12,
-                                      ),
+                                            crossAxisCount: 2,
+                                            mainAxisExtent: 130,
+                                            crossAxisSpacing: 14,
+                                            mainAxisSpacing: 12,
+                                          ),
                                       itemCount: filteredItems.length,
                                       itemBuilder: (context, index) =>
                                           _buildGradebookCard(
-                                        context,
-                                        filteredItems[index],
-                                        colorScheme,
-                                        theme,
-                                      ),
+                                            context,
+                                            filteredItems[index],
+                                            colorScheme,
+                                            theme,
+                                          ),
                                     );
                                   }
                                   return ListView.separated(
@@ -599,11 +611,11 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                                         const SizedBox(height: 10),
                                     itemBuilder: (context, index) =>
                                         _buildGradebookCard(
-                                      context,
-                                      filteredItems[index],
-                                      colorScheme,
-                                      theme,
-                                    ),
+                                          context,
+                                          filteredItems[index],
+                                          colorScheme,
+                                          theme,
+                                        ),
                                   );
                                 },
                               ),
@@ -645,9 +657,9 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                                       'Trang ${cursors.length}',
                                       style: theme.textTheme.bodySmall
                                           ?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: colorScheme.primary,
-                                      ),
+                                            fontWeight: FontWeight.w700,
+                                            color: colorScheme.primary,
+                                          ),
                                     ),
                                   ),
                                   IconButton(
@@ -692,9 +704,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outlineVariant.withAlpha(90),
-        ),
+        side: BorderSide(color: colorScheme.outlineVariant.withAlpha(90)),
       ),
       color: colorScheme.surface,
       clipBehavior: Clip.antiAlias,
@@ -747,11 +757,11 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                     decoration: BoxDecoration(
                       color: locked
                           ? (theme.brightness == Brightness.dark
-                              ? Colors.green.shade900.withAlpha(80)
-                              : Colors.green.shade50)
+                                ? Colors.green.shade900.withAlpha(80)
+                                : Colors.green.shade50)
                           : (theme.brightness == Brightness.dark
-                              ? Colors.orange.shade900.withAlpha(80)
-                              : Colors.orange.shade50),
+                                ? Colors.orange.shade900.withAlpha(80)
+                                : Colors.orange.shade50),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: locked

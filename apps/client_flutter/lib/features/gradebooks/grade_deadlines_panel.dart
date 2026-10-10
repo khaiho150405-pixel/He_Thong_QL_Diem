@@ -125,17 +125,13 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
             else if (widget.isAdmin && !widget.locked)
               OutlinedButton.icon(
                 icon: const Icon(Icons.event_outlined),
-                label: Text(
-                  column.closesAt == null ? 'Đặt lịch' : 'Sửa lịch',
-                ),
+                label: Text(column.closesAt == null ? 'Đặt lịch' : 'Sửa lịch'),
                 onPressed: () async {
                   final saved = await showDialog<bool>(
                     context: context,
                     barrierDismissible: false,
-                    builder: (_) => _DeadlineDialog(
-                      bookId: widget.bookId,
-                      column: column,
-                    ),
+                    builder: (_) =>
+                        _DeadlineDialog(bookId: widget.bookId, column: column),
                   );
                   if (saved == true) widget.onReload();
                 },

@@ -536,8 +536,11 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       Flexible(
                         child: Text(
                           widget.data.book.termName,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -545,14 +548,14 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       Text(
                         ' · ',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       Text(
                         'Phiên bản ${widget.data.book.version}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -634,10 +637,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               ],
               bottom: const TabBar(
                 tabs: [
-                  Tab(
-                    icon: Icon(Icons.edit_note_rounded),
-                    text: 'Nhập điểm',
-                  ),
+                  Tab(icon: Icon(Icons.edit_note_rounded), text: 'Nhập điểm'),
                   Tab(
                     icon: Icon(Icons.camera_alt_outlined),
                     text: 'Quét ảnh OCR',
@@ -699,7 +699,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             color: Theme.of(context).colorScheme.surface,
             border: Border(
               bottom: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant.withAlpha(80),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withAlpha(80),
               ),
             ),
           ),
@@ -736,7 +738,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         ? Theme.of(context).colorScheme.primary.withAlpha(150)
                         : Theme.of(context).colorScheme.outlineVariant,
                   ),
-                  onSelected: (_) => setState(() => _selectedComponentId = null),
+                  onSelected: (_) =>
+                      setState(() => _selectedComponentId = null),
                 ),
                 for (final comp in orderedComponents) ...[
                   const SizedBox(width: 8),
@@ -811,14 +814,14 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withAlpha(120),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withAlpha(120),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color:
-                  Theme.of(context).colorScheme.outlineVariant.withAlpha(100),
+              color: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withAlpha(100),
             ),
           ),
           child: Row(
@@ -838,9 +841,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   'Cột: ${selectedComp.componentName} · Hệ số ${selectedComp.coefficient}'
                   '${selectedComp.required_ ? ' · Bắt buộc' : ''}'
                   '${isLocked ? ' · (Đang khóa)' : ''}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -850,43 +853,41 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
           Builder(
             builder: (context) {
               final student = studentRow.first;
-              final cell = studentRow
-                  .cast<GradeCellDto?>()
-                  .firstWhere(
-                    (c) => c?.componentId == _selectedComponentId,
-                    orElse: () => null,
-                  );
+              final cell = studentRow.cast<GradeCellDto?>().firstWhere(
+                (c) => c?.componentId == _selectedComponentId,
+                orElse: () => null,
+              );
               return Card(
                 elevation: 0,
                 margin: const EdgeInsets.only(bottom: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outlineVariant
-                        .withAlpha(120),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withAlpha(120),
                   ),
                 ),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
                       CircleAvatar(
                         radius: 16,
-                        backgroundColor:
-                            Theme.of(context).colorScheme.primaryContainer,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
                         child: Text(
                           student.stt != null ? '${student.stt}' : '—',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelMedium
+                          style: Theme.of(context).textTheme.labelMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
                               ),
                         ),
                       ),
@@ -897,12 +898,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                           children: [
                             Text(
                               student.studentName,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             if (!student.active)
                               Text(
@@ -966,10 +963,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 c.passFail != true &&
                 c.openForInput != false,
           ))
-            RecognitionComponentOption(
-              item.componentId,
-              item.componentName,
-            ),
+            RecognitionComponentOption(item.componentId, item.componentName),
         ],
         gradebookVersion: widget.data.book.version,
         enabled: !locked && !busy && !conflict,
@@ -987,10 +981,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ReportsPanel(
-          gradebookId: widget.data.book.id,
-          compact: false,
-        ),
+        ReportsPanel(gradebookId: widget.data.book.id, compact: false),
         const SizedBox(height: 16),
         if (editable) ...[
           Card(
@@ -1023,22 +1014,16 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       children: [
                         Text(
                           'Nhập điểm từ Excel',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           'Nạp điểm học sinh tự động từ bảng tính Excel',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -1078,8 +1063,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                     ),
                     child: Icon(
                       Icons.functions_rounded,
-                      color:
-                          Theme.of(context).colorScheme.onTertiaryContainer,
+                      color: Theme.of(context).colorScheme.onTertiaryContainer,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -1089,22 +1073,16 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       children: [
                         Text(
                           'Tổng kết môn học',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           'Tính ĐTB và xếp loại cho toàn bộ học sinh trong bảng điểm',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                         ),
                       ],
@@ -1209,7 +1187,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                             final cell = entry.value
                                 .cast<GradeCellDto?>()
                                 .firstWhere(
-                                  (c) => c?.componentId == component.componentId,
+                                  (c) =>
+                                      c?.componentId == component.componentId,
                                   orElse: () => null,
                                 );
                             return cell != null
@@ -1261,7 +1240,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant.withAlpha(100),
+              color: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withAlpha(100),
             ),
           ),
           child: Padding(
@@ -1273,27 +1254,27 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   children: [
                     CircleAvatar(
                       radius: 14,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
                       child: Text(
                         entry.value.first.stt != null
                             ? '${entry.value.first.stt}'
                             : '—',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
-                            ),
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         entry.value.first.studentName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1312,11 +1293,14 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 if (locked) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1324,8 +1308,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       '${resultScore(results[entry.value.first.studentId]?.finalScore)} · '
                       'Xếp loại: ${classificationLabel(results[entry.value.first.studentId]?.classification ?? 'CHUA_CONG_BO')}',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -1337,9 +1321,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         child: Text(
                           '${cell.componentName} · Hệ số ${cell.coefficient}'
                           '${cell.required_ ? ' · bắt buộc' : ''}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w500),
                         ),
                       ),
                       if (cell.source_.value == 'NHAN_DIEN')
@@ -1349,8 +1332,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                             vertical: 1.5,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).colorScheme.tertiaryContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.tertiaryContainer,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -1358,9 +1342,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onTertiaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onTertiaryContainer,
                             ),
                           ),
                         ),
@@ -1381,8 +1365,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final isLocked = cell.columnLocked == true || cell.openForInput == false;
     final isPending = cell.status.value == 'CHO_DOI_CHIEU';
     final isAi = cell.source_.value == 'NHAN_DIEN';
-    final isEnabled =
-        editable && cell.active && !isLocked && !isPending;
+    final isEnabled = editable && cell.active && !isLocked && !isPending;
 
     return SizedBox(
       width: width,
@@ -1439,9 +1422,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                     ],
                     onChanged: isEnabled
                         ? (v) => setState(() {
-                              controllers[cell.id]!.text =
-                                  v == 'EMPTY' ? '' : v ?? '';
-                            })
+                            controllers[cell.id]!.text = v == 'EMPTY'
+                                ? ''
+                                : v ?? '';
+                          })
                         : null,
                   )
                 : TextFormField(
