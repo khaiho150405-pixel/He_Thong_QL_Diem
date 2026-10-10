@@ -1,9 +1,8 @@
-import '../../app/widgets/app_edge_scrollbar.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../app/widgets/app_controls.dart';
+import '../../app/widgets/app_scaffold.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/role_badge.dart';
 import '../../app/widgets/shimmer_loading.dart';
@@ -460,21 +459,17 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(spec.label),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+    return AppScaffold(
+      title: spec.label,
+      currentPath: '/catalog/${widget.resource}',
+      showBackButton: true,
+      actions: [
+        IconButton(
+          tooltip: 'Tải lại',
+          onPressed: () => setState(reload),
+          icon: const Icon(Icons.refresh),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Tải lại',
-            onPressed: () => setState(reload),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      ],
       floatingActionButton: admin
           ? Column(
               mainAxisSize: MainAxisSize.min,
@@ -499,163 +494,144 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               ],
             )
           : null,
-      body: AppEdgeScrollbar(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1140),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Học sinh chỉ nhận đúng hồ sơ của mình từ backend, nên không
-                  // hiển thị bộ lọc/tìm kiếm không có ý nghĩa cho một bản ghi.
-                  if (!studentViewer) _buildFilterBar(colorScheme, theme),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1140),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Học sinh chỉ nhận đúng hồ sơ của mình từ backend, nên không
+                // hiển thị bộ lọc/tìm kiếm không có ý nghĩa cho một bản ghi.
+                if (!studentViewer) _buildFilterBar(colorScheme, theme),
 
-                  // Student Sort Toolbar
-                  if (spec.key == 'students' && !studentViewer) ...[
-                    const SizedBox(height: 8),
-                    _buildStudentSortToolbar(colorScheme, theme),
-                  ],
+                // Student Sort Toolbar
+                if (spec.key == 'students' && !studentViewer) ...[
+                  const SizedBox(height: 8),
+                  _buildStudentSortToolbar(colorScheme, theme),
+                ],
 
-                  const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-                  // Main Content
-                  Expanded(
-                    child: FutureBuilder<CatalogPageData>(
-                      future: page,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const ShimmerLoading(
-                            itemCount: 6,
-                            itemHeight: 76,
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return EmptyState(
-                            icon: Icons.error_outline,
-                            title: 'Lỗi tải dữ liệu',
-                            message: errorMessage(snapshot.error!),
-                            actionLabel: 'Thử lại',
-                            onAction: () => setState(reload),
-                          );
-                        }
-                        final data = snapshot.data!;
-                        var rows = data.items.where(_matchesRow).toList();
+                // Main Content
+                Expanded(
+                  child: FutureBuilder<CatalogPageData>(
+                    future: page,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        return const ShimmerLoading(
+                          itemCount: 6,
+                          itemHeight: 76,
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return EmptyState(
+                          icon: Icons.error_outline,
+                          title: 'Lỗi tải dữ liệu',
+                          message: errorMessage(snapshot.error!),
+                          actionLabel: 'Thử lại',
+                          onAction: () => setState(reload),
+                        );
+                      }
+                      final data = snapshot.data!;
+                      var rows = data.items.where(_matchesRow).toList();
 
-                        // Student Sorting Logic & STT Calculation
-                        if (spec.key == 'students') {
-                          _calculateStudentOrders(data.items);
-                          rows.sort((a, b) {
-                            int res = 0;
-                            if (_studentSortBy == 'name') {
+                      // Student Sorting Logic & STT Calculation
+                      if (spec.key == 'students') {
+                        _calculateStudentOrders(data.items);
+                        rows.sort((a, b) {
+                          int res = 0;
+                          if (_studentSortBy == 'name') {
+                            final nameA = (a['ho_ten'] ?? rowLabel(a))
+                                .toString();
+                            final nameB = (b['ho_ten'] ?? rowLabel(b))
+                                .toString();
+                            res = _compareVietnameseNames(nameA, nameB);
+                          } else if (_studentSortBy == 'class') {
+                            final classA = _extractClassName(a);
+                            final classB = _extractClassName(b);
+                            res = classA.compareTo(classB);
+                            if (res == 0) {
                               final nameA = (a['ho_ten'] ?? rowLabel(a))
                                   .toString();
                               final nameB = (b['ho_ten'] ?? rowLabel(b))
                                   .toString();
                               res = _compareVietnameseNames(nameA, nameB);
-                            } else if (_studentSortBy == 'class') {
-                              final classA = _extractClassName(a);
-                              final classB = _extractClassName(b);
-                              res = classA.compareTo(classB);
-                              if (res == 0) {
-                                final nameA = (a['ho_ten'] ?? rowLabel(a))
-                                    .toString();
-                                final nameB = (b['ho_ten'] ?? rowLabel(b))
-                                    .toString();
-                                res = _compareVietnameseNames(nameA, nameB);
-                              }
-                            } else if (_studentSortBy == 'status') {
-                              final statusA = a['dang_theo_hoc'] == true
-                                  ? 1
-                                  : 0;
-                              final statusB = b['dang_theo_hoc'] == true
-                                  ? 1
-                                  : 0;
-                              res = statusB.compareTo(
-                                statusA,
-                              ); // active (1) first by default
-                              if (res == 0) {
-                                final nameA = (a['ho_ten'] ?? rowLabel(a))
-                                    .toString();
-                                final nameB = (b['ho_ten'] ?? rowLabel(b))
-                                    .toString();
-                                res = _compareVietnameseNames(nameA, nameB);
-                              }
                             }
-                            return _sortAscending ? res : -res;
-                          });
-                        }
+                          } else if (_studentSortBy == 'status') {
+                            final statusA = a['dang_theo_hoc'] == true ? 1 : 0;
+                            final statusB = b['dang_theo_hoc'] == true ? 1 : 0;
+                            res = statusB.compareTo(
+                              statusA,
+                            ); // active (1) first by default
+                            if (res == 0) {
+                              final nameA = (a['ho_ten'] ?? rowLabel(a))
+                                  .toString();
+                              final nameB = (b['ho_ten'] ?? rowLabel(b))
+                                  .toString();
+                              res = _compareVietnameseNames(nameA, nameB);
+                            }
+                          }
+                          return _sortAscending ? res : -res;
+                        });
+                      }
 
-                        if (rows.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.search_off_rounded,
-                                  size: 48,
-                                  color: Colors.grey,
+                      if (rows.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.search_off_rounded,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(height: 12),
+                              const Text('Chưa có dữ liệu phù hợp.'),
+                              if (_hasActiveFilter) ...[
+                                const SizedBox(height: 8),
+                                TextButton.icon(
+                                  onPressed: _resetFilters,
+                                  icon: const Icon(Icons.refresh_rounded),
+                                  label: const Text('Xóa bộ lọc'),
                                 ),
-                                const SizedBox(height: 12),
-                                const Text('Chưa có dữ liệu phù hợp.'),
-                                if (_hasActiveFilter) ...[
-                                  const SizedBox(height: 8),
-                                  TextButton.icon(
-                                    onPressed: _resetFilters,
-                                    icon: const Icon(Icons.refresh_rounded),
-                                    label: const Text('Xóa bộ lọc'),
-                                  ),
-                                ],
                               ],
-                            ),
-                          );
-                        }
-
-                        final isClientPaged = data.nextCursor == null;
-                        const pageSize = 50;
-                        final totalClientPages = (rows.length / pageSize)
-                            .ceil();
-                        final safeClientPage = _clientPage.clamp(
-                          0,
-                          (totalClientPages - 1).clamp(0, 9999),
+                            ],
+                          ),
                         );
-                        final displayRows =
-                            isClientPaged && rows.length > pageSize
-                            ? rows
-                                  .skip(safeClientPage * pageSize)
-                                  .take(pageSize)
-                                  .toList()
-                            : rows;
+                      }
 
-                        return Column(
-                          children: [
-                            Expanded(
-                              child: LayoutBuilder(
-                                builder: (context, box) {
-                                  if (box.maxWidth >= 768) {
-                                    return GridView.builder(
-                                      gridDelegate:
-                                          const SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: 2,
-                                            mainAxisExtent: 94,
-                                            crossAxisSpacing: 12,
-                                            mainAxisSpacing: 10,
-                                          ),
-                                      itemCount: displayRows.length,
-                                      itemBuilder: (context, index) =>
-                                          _buildRowCard(
-                                            context,
-                                            displayRows[index],
-                                            colorScheme,
-                                            theme,
-                                          ),
-                                    );
-                                  }
-                                  return ListView.separated(
+                      final isClientPaged = data.nextCursor == null;
+                      const pageSize = 50;
+                      final totalClientPages = (rows.length / pageSize).ceil();
+                      final safeClientPage = _clientPage.clamp(
+                        0,
+                        (totalClientPages - 1).clamp(0, 9999),
+                      );
+                      final displayRows =
+                          isClientPaged && rows.length > pageSize
+                          ? rows
+                                .skip(safeClientPage * pageSize)
+                                .take(pageSize)
+                                .toList()
+                          : rows;
+
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, box) {
+                                if (box.maxWidth >= 768) {
+                                  return GridView.builder(
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisExtent: 94,
+                                          crossAxisSpacing: 12,
+                                          mainAxisSpacing: 10,
+                                        ),
                                     itemCount: displayRows.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(height: 10),
                                     itemBuilder: (context, index) =>
                                         _buildRowCard(
                                           context,
@@ -664,84 +640,95 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                           theme,
                                         ),
                                   );
-                                },
-                              ),
+                                }
+                                return ListView.separated(
+                                  itemCount: displayRows.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 10),
+                                  itemBuilder: (context, index) =>
+                                      _buildRowCard(
+                                        context,
+                                        displayRows[index],
+                                        colorScheme,
+                                        theme,
+                                      ),
+                                );
+                              },
                             ),
+                          ),
 
-                            // Pagination Controls
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 24),
-                              child: Wrap(
-                                alignment: WrapAlignment.center,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  if (isClientPaged &&
-                                      totalClientPages > 1) ...[
-                                    TextButton(
-                                      onPressed: safeClientPage > 0
-                                          ? () => setState(
-                                              () => _clientPage =
-                                                  safeClientPage - 1,
-                                            )
-                                          : null,
-                                      child: const Text('Trang trước'),
+                          // Pagination Controls
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                if (isClientPaged && totalClientPages > 1) ...[
+                                  TextButton(
+                                    onPressed: safeClientPage > 0
+                                        ? () => setState(
+                                            () => _clientPage =
+                                                safeClientPage - 1,
+                                          )
+                                        : null,
+                                    child: const Text('Trang trước'),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                      ),
-                                      child: Text(
-                                        'Trang ${safeClientPage + 1} / $totalClientPages (${rows.length} mục)',
-                                      ),
+                                    child: Text(
+                                      'Trang ${safeClientPage + 1} / $totalClientPages (${rows.length} mục)',
                                     ),
-                                    TextButton(
-                                      onPressed:
-                                          safeClientPage < totalClientPages - 1
-                                          ? () => setState(
-                                              () => _clientPage =
-                                                  safeClientPage + 1,
-                                            )
-                                          : null,
-                                      child: const Text('Trang sau'),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        safeClientPage < totalClientPages - 1
+                                        ? () => setState(
+                                            () => _clientPage =
+                                                safeClientPage + 1,
+                                          )
+                                        : null,
+                                    child: const Text('Trang sau'),
+                                  ),
+                                ] else ...[
+                                  TextButton(
+                                    onPressed: cursors.length > 1
+                                        ? () => setState(() {
+                                            cursors.removeLast();
+                                            reload();
+                                          })
+                                        : null,
+                                    child: const Text('Trang trước'),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
                                     ),
-                                  ] else ...[
-                                    TextButton(
-                                      onPressed: cursors.length > 1
-                                          ? () => setState(() {
-                                              cursors.removeLast();
-                                              reload();
-                                            })
-                                          : null,
-                                      child: const Text('Trang trước'),
+                                    child: Text(
+                                      'Trang ${cursors.length} (${rows.length} mục)',
                                     ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                      ),
-                                      child: Text(
-                                        'Trang ${cursors.length} (${rows.length} mục)',
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: data.nextCursor != null
-                                          ? () => setState(() {
-                                              cursors.add(data.nextCursor);
-                                              reload();
-                                            })
-                                          : null,
-                                      child: const Text('Trang sau'),
-                                    ),
-                                  ],
+                                  ),
+                                  TextButton(
+                                    onPressed: data.nextCursor != null
+                                        ? () => setState(() {
+                                            cursors.add(data.nextCursor);
+                                            reload();
+                                          })
+                                        : null,
+                                    child: const Text('Trang sau'),
+                                  ),
                                 ],
-                              ),
+                              ],
                             ),
-                          ],
-                        );
-                      },
-                    ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

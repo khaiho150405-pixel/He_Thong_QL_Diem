@@ -1,4 +1,5 @@
-import '../../app/widgets/app_edge_scrollbar.dart';
+import '../../app/widgets/app_scaffold.dart';
+import '../../app/widgets/app_controls.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -125,33 +126,6 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
         child: LinearProgressIndicator(),
       );
     }
-
-    final statusLabel = switch (_filterStatus) {
-      'DANG_NHAP_LIEU' => 'Đang nhập liệu',
-      'DA_CHOT' => 'Đã chốt sổ',
-      _ => 'Tất cả trạng thái ▾',
-    };
-
-    final classLabel = _filterClassId != null
-        ? (_classes
-                  .firstWhere(
-                    (c) => c['ma_lop'] == _filterClassId,
-                    orElse: () => {'ten_lop': 'Lớp $_filterClassId'},
-                  )['ten_lop']
-                  ?.toString() ??
-              'Lớp $_filterClassId')
-        : 'Lớp học ▾';
-
-    final subjectLabel = _filterSubjectId != null
-        ? (_subjects
-                  .firstWhere(
-                    (s) => s['ma_mon'] == _filterSubjectId,
-                    orElse: () => {'ten_mon': 'Môn $_filterSubjectId'},
-                  )['ten_mon']
-                  ?.toString() ??
-              'Môn $_filterSubjectId')
-        : 'Môn học ▾';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -194,257 +168,89 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
           onChanged: (val) => setState(() => _searchQuery = val.trim()),
         ),
         const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              FilterChip(
-                avatar: Icon(
-                  _filterStatus == null
-                      ? Icons.tune_rounded
-                      : (_filterStatus == 'DA_CHOT'
-                            ? Icons.lock_rounded
-                            : Icons.edit_note_rounded),
-                  size: 16,
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            AppFilterDropdown<String>(
+              label: 'Trạng thái',
+              icon: Icons.tune_rounded,
+              value: _filterStatus,
+              width: 170,
+              items: const [
+                DropdownMenuItem(value: null, child: Text('Tất cả trạng thái')),
+                DropdownMenuItem(
+                  value: 'DANG_NHAP_LIEU',
+                  child: Text('Đang nhập liệu'),
                 ),
-                label: Text(statusLabel),
-                selected: _filterStatus != null,
-                onSelected: (_) => _showStatusFilterSheet(context),
-                onDeleted: _filterStatus != null
-                    ? () => setState(() => _filterStatus = null)
-                    : null,
-              ),
-              const SizedBox(width: 8),
-              FilterChip(
-                avatar: const Icon(Icons.meeting_room_outlined, size: 16),
-                label: Text(classLabel),
-                selected: _filterClassId != null,
-                onSelected: (_) => _showClassFilterSheet(context),
-                onDeleted: _filterClassId != null
-                    ? () => setState(() => _filterClassId = null)
-                    : null,
-              ),
-              const SizedBox(width: 8),
-              FilterChip(
-                avatar: const Icon(Icons.menu_book_outlined, size: 16),
-                label: Text(subjectLabel),
-                selected: _filterSubjectId != null,
-                onSelected: (_) => _showSubjectFilterSheet(context),
-                onDeleted: _filterSubjectId != null
-                    ? () => setState(() => _filterSubjectId = null)
-                    : null,
-              ),
-              if (_hasFilter) ...[
-                const SizedBox(width: 8),
-                ActionChip(
-                  avatar: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Đặt lại'),
-                  onPressed: () => setState(() {
-                    _searchController.clear();
-                    _searchQuery = '';
-                    _filterClassId = null;
-                    _filterSubjectId = null;
-                    _filterStatus = null;
-                  }),
-                ),
+                DropdownMenuItem(value: 'DA_CHOT', child: Text('Đã chốt sổ')),
               ],
-            ],
-          ),
+              onChanged: (val) => setState(() => _filterStatus = val),
+            ),
+            AppFilterDropdown<num>(
+              label: 'Lớp học',
+              icon: Icons.meeting_room_outlined,
+              value: _filterClassId,
+              width: 170,
+              items: [
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('Tất cả các lớp'),
+                ),
+                for (final c in _classes)
+                  DropdownMenuItem(
+                    value: c['ma_lop'] as num?,
+                    child: Text(
+                      c['ten_lop']?.toString() ?? 'Lớp ${c['ma_lop']}',
+                    ),
+                  ),
+              ],
+              onChanged: (val) => setState(() => _filterClassId = val),
+            ),
+            AppFilterDropdown<num>(
+              label: 'Môn học',
+              icon: Icons.menu_book_outlined,
+              value: _filterSubjectId,
+              width: 180,
+              items: [
+                const DropdownMenuItem(
+                  value: null,
+                  child: Text('Tất cả môn học'),
+                ),
+                for (final s in _subjects)
+                  DropdownMenuItem(
+                    value: s['ma_mon'] as num?,
+                    child: Text(
+                      s['ten_mon']?.toString() ?? 'Môn ${s['ma_mon']}',
+                    ),
+                  ),
+              ],
+              onChanged: (val) => setState(() => _filterSubjectId = val),
+            ),
+            if (_hasFilter)
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Đặt lại'),
+                onPressed: () => setState(() {
+                  _searchController.clear();
+                  _searchQuery = '';
+                  _filterClassId = null;
+                  _filterSubjectId = null;
+                  _filterStatus = null;
+                }),
+              ),
+          ],
         ),
       ],
     );
-  }
-
-  Future<void> _showStatusFilterSheet(BuildContext context) async {
-    final selected = await showModalBottomSheet<String?>(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Text(
-                'Lọc theo trạng thái',
-                style: Theme.of(
-                  ctx,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.all_inclusive_rounded),
-              title: const Text('Tất cả trạng thái'),
-              trailing: _filterStatus == null
-                  ? const Icon(Icons.check_rounded, color: Colors.blue)
-                  : null,
-              onTap: () => Navigator.pop(ctx, 'ALL'),
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.edit_note_rounded,
-                color: Colors.orange,
-              ),
-              title: const Text('Đang nhập liệu'),
-              trailing: _filterStatus == 'DANG_NHAP_LIEU'
-                  ? const Icon(Icons.check_rounded, color: Colors.blue)
-                  : null,
-              onTap: () => Navigator.pop(ctx, 'DANG_NHAP_LIEU'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.lock_rounded, color: Colors.green),
-              title: const Text('Đã chốt sổ'),
-              trailing: _filterStatus == 'DA_CHOT'
-                  ? const Icon(Icons.check_rounded, color: Colors.blue)
-                  : null,
-              onTap: () => Navigator.pop(ctx, 'DA_CHOT'),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-    if (selected != null && mounted) {
-      setState(() => _filterStatus = selected == 'ALL' ? null : selected);
-    }
-  }
-
-  Future<void> _showClassFilterSheet(BuildContext context) async {
-    final selected = await showModalBottomSheet<num?>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.6,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Chọn lớp học',
-                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.all_inclusive_rounded),
-                title: const Text('Tất cả các lớp'),
-                trailing: _filterClassId == null
-                    ? const Icon(Icons.check_rounded, color: Colors.blue)
-                    : null,
-                onTap: () => Navigator.pop(ctx, -1),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _classes.length,
-                  itemBuilder: (context, index) {
-                    final c = _classes[index];
-                    final id = c['ma_lop'] as num?;
-                    final name = c['ten_lop']?.toString() ?? 'Lớp $id';
-                    final isSelected = id == _filterClassId;
-                    return ListTile(
-                      leading: const Icon(Icons.meeting_room_outlined),
-                      title: Text(name),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_rounded, color: Colors.blue)
-                          : null,
-                      onTap: () => Navigator.pop(ctx, id),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (selected != null && mounted) {
-      setState(() => _filterClassId = selected == -1 ? null : selected);
-    }
-  }
-
-  Future<void> _showSubjectFilterSheet(BuildContext context) async {
-    final selected = await showModalBottomSheet<num?>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.6,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Text(
-                  'Chọn môn học',
-                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.all_inclusive_rounded),
-                title: const Text('Tất cả môn học'),
-                trailing: _filterSubjectId == null
-                    ? const Icon(Icons.check_rounded, color: Colors.blue)
-                    : null,
-                onTap: () => Navigator.pop(ctx, -1),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _subjects.length,
-                  itemBuilder: (context, index) {
-                    final s = _subjects[index];
-                    final id = s['ma_mon'] as num?;
-                    final name = s['ten_mon']?.toString() ?? 'Môn $id';
-                    final isSelected = id == _filterSubjectId;
-                    return ListTile(
-                      leading: const Icon(Icons.menu_book_outlined),
-                      title: Text(name),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_rounded, color: Colors.blue)
-                          : null,
-                      onTap: () => Navigator.pop(ctx, id),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (selected != null && mounted) {
-      setState(() => _filterSubjectId = selected == -1 ? null : selected);
-    }
   }
 
   @override
@@ -452,22 +258,17 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(teacher ? 'Bảng điểm' : 'Bảng điểm toàn trường'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
+    return AppScaffold(
+      title: teacher ? 'Bảng điểm' : 'Bảng điểm toàn trường',
+      currentPath: '/gradebooks',
+      showBackButton: true,
+      actions: [
+        IconButton(
+          tooltip: 'Tải lại',
+          onPressed: () => setState(reload),
+          icon: const Icon(Icons.refresh),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Tải lại',
-            onPressed: () => setState(reload),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      ],
       floatingActionButton: teacher
           ? FloatingActionButton.extended(
               onPressed: create,
@@ -475,140 +276,126 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
               label: const Text('Tạo bảng điểm'),
             )
           : null,
-      body: AppEdgeScrollbar(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1140),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildFilterBar(colorScheme, theme),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: FutureBuilder<GradebookListDto>(
-                      future: page,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const ShimmerLoading(
-                            itemCount: 5,
-                            itemHeight: 84,
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return EmptyState(
-                            icon: Icons.error_outline,
-                            title: 'Lỗi tải danh sách bảng điểm',
-                            message: errorMessage(snapshot.error!),
-                            actionLabel: 'Thử lại',
-                            onAction: () => setState(reload),
-                          );
-                        }
-                        final data = snapshot.data!;
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1140),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildFilterBar(colorScheme, theme),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: FutureBuilder<GradebookListDto>(
+                    future: page,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        return const ShimmerLoading(
+                          itemCount: 5,
+                          itemHeight: 84,
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return EmptyState(
+                          icon: Icons.error_outline,
+                          title: 'Lỗi tải danh sách bảng điểm',
+                          message: errorMessage(snapshot.error!),
+                          actionLabel: 'Thử lại',
+                          onAction: () => setState(reload),
+                        );
+                      }
+                      final data = snapshot.data!;
 
-                        if (data.items.isEmpty) {
-                          return EmptyState(
-                            icon: Icons.table_chart_outlined,
-                            title: 'Chưa có bảng điểm',
-                            message: teacher
-                                ? 'Bạn chưa tạo bảng điểm nào cho các lớp phụ trách.'
-                                : 'Hệ thống chưa có bảng điểm nào được tạo.',
-                            actionLabel: teacher ? 'Tạo bảng điểm' : null,
-                            onAction: teacher ? create : null,
-                          );
-                        }
+                      if (data.items.isEmpty) {
+                        return EmptyState(
+                          icon: Icons.table_chart_outlined,
+                          title: 'Chưa có bảng điểm',
+                          message: teacher
+                              ? 'Bạn chưa tạo bảng điểm nào cho các lớp phụ trách.'
+                              : 'Hệ thống chưa có bảng điểm nào được tạo.',
+                          actionLabel: teacher ? 'Tạo bảng điểm' : null,
+                          onAction: teacher ? create : null,
+                        );
+                      }
 
-                        final filteredItems = data.items.where((book) {
-                          if (_filterClassId != null &&
-                              book.classId != _filterClassId) {
+                      final filteredItems = data.items.where((book) {
+                        if (_filterClassId != null &&
+                            book.classId != _filterClassId) {
+                          return false;
+                        }
+                        if (_filterSubjectId != null &&
+                            book.subjectId != _filterSubjectId) {
+                          return false;
+                        }
+                        if (_filterStatus != null &&
+                            book.status.value != _filterStatus) {
+                          return false;
+                        }
+                        if (_searchQuery.isNotEmpty) {
+                          final q = _searchQuery.toLowerCase();
+                          final matchClass = book.className
+                              .toLowerCase()
+                              .contains(q);
+                          final matchSubject = book.subjectName
+                              .toLowerCase()
+                              .contains(q);
+                          final matchTerm = book.termName
+                              .toLowerCase()
+                              .contains(q);
+                          if (!matchClass && !matchSubject && !matchTerm) {
                             return false;
                           }
-                          if (_filterSubjectId != null &&
-                              book.subjectId != _filterSubjectId) {
-                            return false;
-                          }
-                          if (_filterStatus != null &&
-                              book.status.value != _filterStatus) {
-                            return false;
-                          }
-                          if (_searchQuery.isNotEmpty) {
-                            final q = _searchQuery.toLowerCase();
-                            final matchClass = book.className
-                                .toLowerCase()
-                                .contains(q);
-                            final matchSubject = book.subjectName
-                                .toLowerCase()
-                                .contains(q);
-                            final matchTerm = book.termName
-                                .toLowerCase()
-                                .contains(q);
-                            if (!matchClass && !matchSubject && !matchTerm) {
-                              return false;
-                            }
-                          }
-                          return true;
-                        }).toList();
-
-                        if (filteredItems.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.filter_alt_off_rounded,
-                                  size: 48,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Không có bảng điểm phù hợp với bộ lọc.',
-                                ),
-                                const SizedBox(height: 8),
-                                TextButton.icon(
-                                  onPressed: () => setState(() {
-                                    _searchController.clear();
-                                    _searchQuery = '';
-                                    _filterClassId = null;
-                                    _filterSubjectId = null;
-                                    _filterStatus = null;
-                                  }),
-                                  icon: const Icon(Icons.refresh_rounded),
-                                  label: const Text('Xóa bộ lọc'),
-                                ),
-                              ],
-                            ),
-                          );
                         }
+                        return true;
+                      }).toList();
 
-                        return Column(
-                          children: [
-                            Expanded(
-                              child: LayoutBuilder(
-                                builder: (context, box) {
-                                  if (box.maxWidth >= 768) {
-                                    return GridView.builder(
-                                      gridDelegate:
-                                          const SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: 2,
-                                            mainAxisExtent: 130,
-                                            crossAxisSpacing: 14,
-                                            mainAxisSpacing: 12,
-                                          ),
-                                      itemCount: filteredItems.length,
-                                      itemBuilder: (context, index) =>
-                                          _buildGradebookCard(
-                                            context,
-                                            filteredItems[index],
-                                            colorScheme,
-                                            theme,
-                                          ),
-                                    );
-                                  }
-                                  return ListView.separated(
+                      if (filteredItems.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.filter_alt_off_rounded,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Không có bảng điểm phù hợp với bộ lọc.',
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton.icon(
+                                onPressed: () => setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                  _filterClassId = null;
+                                  _filterSubjectId = null;
+                                  _filterStatus = null;
+                                }),
+                                icon: const Icon(Icons.refresh_rounded),
+                                label: const Text('Xóa bộ lọc'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: LayoutBuilder(
+                              builder: (context, box) {
+                                if (box.maxWidth >= 768) {
+                                  return GridView.builder(
+                                    gridDelegate:
+                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisExtent: 130,
+                                          crossAxisSpacing: 14,
+                                          mainAxisSpacing: 12,
+                                        ),
                                     itemCount: filteredItems.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(height: 10),
                                     itemBuilder: (context, index) =>
                                         _buildGradebookCard(
                                           context,
@@ -617,71 +404,82 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                                           theme,
                                         ),
                                   );
-                                },
-                              ),
-                            ),
-
-                            // Pagination
-                            Padding(
-                              padding: EdgeInsets.only(
-                                top: 14,
-                                bottom: teacher ? 72 : 20,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    tooltip: 'Trang trước',
-                                    onPressed: cursors.length > 1
-                                        ? () => setState(() {
-                                            cursors.removeLast();
-                                            reload();
-                                          })
-                                        : null,
-                                    icon: const Icon(Icons.chevron_left),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.surfaceContainerHigh,
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: colorScheme.outlineVariant
-                                            .withAlpha(80),
+                                }
+                                return ListView.separated(
+                                  itemCount: filteredItems.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 10),
+                                  itemBuilder: (context, index) =>
+                                      _buildGradebookCard(
+                                        context,
+                                        filteredItems[index],
+                                        colorScheme,
+                                        theme,
                                       ),
-                                    ),
-                                    child: Text(
-                                      'Trang ${cursors.length}',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w700,
-                                            color: colorScheme.primary,
-                                          ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: 'Trang sau',
-                                    onPressed: data.nextCursor == null
-                                        ? null
-                                        : () => setState(() {
-                                            cursors.add(data.nextCursor);
-                                            reload();
-                                          }),
-                                    icon: const Icon(Icons.chevron_right),
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
-                          ],
-                        );
-                      },
-                    ),
+                          ),
+
+                          // Pagination
+                          Padding(
+                            padding: EdgeInsets.only(
+                              top: 14,
+                              bottom: teacher ? 72 : 20,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Trang trước',
+                                  onPressed: cursors.length > 1
+                                      ? () => setState(() {
+                                          cursors.removeLast();
+                                          reload();
+                                        })
+                                      : null,
+                                  icon: const Icon(Icons.chevron_left),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceContainerHigh,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: colorScheme.outlineVariant
+                                          .withAlpha(80),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Trang ${cursors.length}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Trang sau',
+                                  onPressed: data.nextCursor == null
+                                      ? null
+                                      : () => setState(() {
+                                          cursors.add(data.nextCursor);
+                                          reload();
+                                        }),
+                                  icon: const Icon(Icons.chevron_right),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

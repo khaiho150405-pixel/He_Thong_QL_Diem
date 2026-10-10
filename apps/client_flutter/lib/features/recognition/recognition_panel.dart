@@ -58,7 +58,10 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   @override
   void initState() {
     super.initState();
-    componentId = widget.components.firstOrNull?.id;
+    // Bắt buộc chọn cột điểm nếu có nhiều hơn 1 thành phần
+    componentId = widget.components.length == 1
+        ? widget.components.first.id
+        : null;
     reload();
     WidgetsBinding.instance.addPostFrameCallback((_) => recoverImage());
   }
@@ -73,7 +76,9 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       reload();
     }
     if (!widget.components.any((item) => item.id == componentId)) {
-      componentId = widget.components.firstOrNull?.id;
+      componentId = widget.components.length == 1
+          ? widget.components.first.id
+          : null;
     }
   }
 
@@ -351,9 +356,17 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                   initialValue: componentId,
                   isExpanded: true,
                   itemHeight: null,
-                  decoration: const InputDecoration(
-                    labelText: 'Thành phần điểm',
-                    prefixIcon: Icon(Icons.percent_rounded),
+                  hint: const Text('Chọn cột điểm (đang mở nhập)'),
+                  decoration: InputDecoration(
+                    labelText: 'Thành phần điểm (bắt buộc)*',
+                    prefixIcon: const Icon(Icons.percent_rounded),
+                    helperText: componentId == null
+                        ? 'Bắt buộc chọn cột điểm trước khi nhận dạng'
+                        : null,
+                    helperStyle: TextStyle(
+                      color: colorScheme.primary,
+                      fontSize: 11,
+                    ),
                   ),
                   items: [
                     for (final item in widget.components)
@@ -389,7 +402,9 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                 width: width,
                 child: AppActionButton(
                   key: const ValueKey('recognition-upload'),
-                  onPressed: enabled && image != null ? upload : null,
+                  onPressed: enabled && image != null && componentId != null
+                      ? upload
+                      : null,
                   icon: Icons.cloud_upload_outlined,
                   label: 'Tải ảnh & Nhận dạng',
                 ),
@@ -398,12 +413,42 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
           );
         },
       ),
+      if (image != null && componentId == null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withAlpha(80),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: colorScheme.primary.withAlpha(120)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 18, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Vui lòng chọn cột thành phần điểm (đang mở nhập) ở trên để kích hoạt nhận dạng.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       if (!widget.enabled)
         const Text(
           'Bảng điểm hiện không cho phép gửi ảnh. Kiểm tra trạng thái chốt hoặc tải lại bảng điểm.',
         ),
       if (widget.components.isEmpty)
-        const Text('Cần thành phần điểm trước khi gửi ảnh.'),
+        const Text(
+          'Không có cột điểm nào đang mở nhập để nhận dạng. Vui lòng kiểm tra thời hạn mở nhập cột điểm.',
+        ),
       if (imageError != null)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),

@@ -117,6 +117,7 @@ class GradebookApp extends ConsumerWidget {
     title: 'Quản lý điểm',
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light(),
+    scrollBehavior: const AppScrollBehavior(),
     routerConfig: ref.watch(routerProvider(initialLocation)),
   );
 }

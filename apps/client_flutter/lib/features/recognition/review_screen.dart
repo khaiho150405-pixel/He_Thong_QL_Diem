@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../authentication/session.dart';
 import '../gradebooks/repository.dart';
@@ -494,15 +495,12 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   ),
                   const SizedBox(height: 16),
                   if (data.rows.isNotEmpty) ...[
-                    DropdownButtonFormField<String>(
+                    AppFilterDropdown<String>(
                       key: ValueKey(_reviewLevelFilter),
-                      initialValue: _reviewLevelFilter,
-                      isExpanded: true,
-                      itemHeight: null,
-                      decoration: const InputDecoration(
-                        labelText: 'Lọc mức độ đối chiếu',
-                        prefixIcon: Icon(Icons.filter_alt_outlined),
-                      ),
+                      label: 'Lọc mức độ đối chiếu',
+                      icon: Icons.filter_alt_outlined,
+                      value: _reviewLevelFilter,
+                      width: double.infinity,
                       items: [
                         DropdownMenuItem(
                           value: 'ALL',

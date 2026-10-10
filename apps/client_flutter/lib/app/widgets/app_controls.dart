@@ -27,27 +27,35 @@ abstract final class AppControlMetrics {
       labelText: label,
       hintText: hintText,
       floatingLabelBehavior: FloatingLabelBehavior.always,
-      labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      labelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: colors.primary,
+      ),
       hintStyle: TextStyle(
         fontSize: 12,
         color: colors.onSurfaceVariant.withAlpha(150),
       ),
       isDense: true,
-      prefixIcon: Icon(icon, size: 18),
+      prefixIcon: Icon(icon, size: 18, color: colors.primary),
       prefixIconConstraints: const BoxConstraints(
-        minWidth: 44,
+        minWidth: 40,
         minHeight: height,
       ),
       suffixIcon: suffixIcon,
       suffixIconConstraints: const BoxConstraints(
-        minWidth: 44,
+        minWidth: 40,
         minHeight: height,
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      contentPadding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(radius)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radius),
         borderSide: BorderSide(color: colors.outline.withAlpha(120)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radius),
+        borderSide: BorderSide(color: colors.primary, width: 1.5),
       ),
     );
   }
@@ -85,6 +93,7 @@ class AppFilterDropdown<T> extends StatelessWidget {
         isExpanded: true,
         style: TextStyle(
           fontSize: 13,
+          fontWeight: FontWeight.w500,
           color: Theme.of(context).colorScheme.onSurface,
         ),
         decoration: AppControlMetrics.decoration(
@@ -98,14 +107,16 @@ class AppFilterDropdown<T> extends StatelessWidget {
                 value: item.value,
                 enabled: item.enabled,
                 alignment: item.alignment,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: item.child,
-                  ),
-                ),
+                child: item.child is Text
+                    ? Text(
+                        (item.child as Text).data ?? '',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        maxLines: 1,
+                      )
+                    : item.child,
               ),
             )
             .toList(),

@@ -1,0 +1,10 @@
+{
+  "description": "Manage academic records with user authentication, grade entry, image-based score recognition, result approval, and detailed reporting for schools.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

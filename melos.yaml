@@ -6,4 +6,6 @@ scripts:
   check:
     run: dart run melos exec --scope=client_flutter --concurrency=1 -- "dart format --output=none --set-exit-if-changed lib test && flutter analyze && flutter test"
   dev:web:
+    run: dart run melos exec --scope=client_flutter --concurrency=1 -- "flutter run -d web-server --web-port=8080 --web-hostname=localhost --dart-define-from-file=config/development.json"
+  dev:chrome:
     run: dart run melos exec --scope=client_flutter --concurrency=1 -- "flutter run -d chrome --web-port=8080 --dart-define-from-file=config/development.json"

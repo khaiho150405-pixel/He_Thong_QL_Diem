@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/theme.dart';
+import '../../app/widgets/app_scaffold.dart';
 import '../authentication/session.dart';
 import '../final_results/final_results_panel.dart';
 import '../final_results/repository.dart';
@@ -41,26 +42,20 @@ class _GradebookScreenState extends ConsumerState<GradebookScreen> {
     future: data,
     builder: (context, snapshot) {
       if (snapshot.connectionState != ConnectionState.done) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Bảng điểm #${widget.bookId}'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/gradebooks'),
-            ),
-          ),
+        return AppScaffold(
+          title: 'Bảng điểm #${widget.bookId}',
+          currentPath: '/gradebooks',
+          showBackButton: true,
+          onBack: () => context.go('/gradebooks'),
           body: const Center(child: CircularProgressIndicator()),
         );
       }
       if (snapshot.hasError) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Bảng điểm #${widget.bookId}'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/gradebooks'),
-            ),
-          ),
+        return AppScaffold(
+          title: 'Bảng điểm #${widget.bookId}',
+          currentPath: '/gradebooks',
+          showBackButton: true,
+          onBack: () => context.go('/gradebooks'),
           body: _GradebookLoadError(
             error: snapshot.error!,
             retry: () => setState(reload),
@@ -503,151 +498,146 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
 
         return DefaultTabController(
           length: 3,
-          child: Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => context.go('/gradebooks'),
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          '${widget.data.book.className} · ${widget.data.book.subjectName}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+          child: AppScaffold(
+            title:
+                '${widget.data.book.className} · ${widget.data.book.subjectName}',
+            currentPath: '/gradebooks',
+            showBackButton: true,
+            onBack: () => context.go('/gradebooks'),
+            titleWidget: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '${widget.data.book.className} · ${widget.data.book.subjectName}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildStatusBadge(),
-                    ],
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          widget.data.book.termName,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        ' · ',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      Text(
-                        'Phiên bản ${widget.data.book.version}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  tooltip: 'Tải lại',
-                  onPressed: widget.onReload,
-                  icon: const Icon(Icons.refresh),
-                ),
-                PopupMenuButton<String>(
-                  tooltip: 'Thao tác khác',
-                  icon: const Icon(Icons.more_vert_rounded),
-                  onSelected: (action) {
-                    switch (action) {
-                      case 'history':
-                        showAllHistory();
-                        break;
-                      case 'sync_roster':
-                        syncRoster();
-                        break;
-                      case 'import_excel':
-                        openExcelImport(students, orderedComponents);
-                        break;
-                      case 'identifiers':
-                        showIdentifiers();
-                        break;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'history',
-                      child: Row(
-                        children: [
-                          Icon(Icons.history_outlined, size: 20),
-                          SizedBox(width: 10),
-                          Expanded(child: Text('Lịch sử cập nhật')),
-                        ],
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (editable)
-                      PopupMenuItem(
-                        value: 'sync_roster',
-                        enabled: !busy,
-                        child: const Row(
-                          children: [
-                            Icon(Icons.group_add_outlined, size: 20),
-                            SizedBox(width: 10),
-                            Expanded(child: Text('Đồng bộ sĩ số')),
-                          ],
+                    const SizedBox(width: 8),
+                    _buildStatusBadge(),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.data.book.termName,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    if (editable)
-                      PopupMenuItem(
-                        value: 'import_excel',
-                        enabled: !busy,
-                        child: const Row(
-                          children: [
-                            Icon(Icons.table_chart_outlined, size: 20),
-                            SizedBox(width: 10),
-                            Expanded(child: Text('Nhập từ Excel')),
-                          ],
-                        ),
+                    ),
+                    Text(
+                      ' · ',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                    if (admin)
-                      const PopupMenuItem(
-                        value: 'identifiers',
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline, size: 20),
-                            SizedBox(width: 10),
-                            Expanded(child: Text('Mã tham chiếu')),
-                          ],
-                        ),
+                    ),
+                    Text(
+                      'Phiên bản ${widget.data.book.version}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
+                    ),
                   ],
                 ),
               ],
-              bottom: const TabBar(
-                tabs: [
-                  Tab(icon: Icon(Icons.edit_note_rounded), text: 'Nhập điểm'),
-                  Tab(
-                    icon: Icon(Icons.camera_alt_outlined),
-                    text: 'Quét ảnh OCR',
+            ),
+            actions: [
+              IconButton(
+                tooltip: 'Tải lại',
+                onPressed: widget.onReload,
+                icon: const Icon(Icons.refresh),
+              ),
+              PopupMenuButton<String>(
+                tooltip: 'Thao tác khác',
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (action) {
+                  switch (action) {
+                    case 'history':
+                      showAllHistory();
+                      break;
+                    case 'sync_roster':
+                      syncRoster();
+                      break;
+                    case 'import_excel':
+                      openExcelImport(students, orderedComponents);
+                      break;
+                    case 'identifiers':
+                      showIdentifiers();
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'history',
+                    child: Row(
+                      children: [
+                        Icon(Icons.history_outlined, size: 20),
+                        SizedBox(width: 10),
+                        Expanded(child: Text('Lịch sử cập nhật')),
+                      ],
+                    ),
                   ),
-                  Tab(
-                    icon: Icon(Icons.analytics_outlined),
-                    text: 'Báo cáo & Tiện ích',
-                  ),
+                  if (editable)
+                    PopupMenuItem(
+                      value: 'sync_roster',
+                      enabled: !busy,
+                      child: const Row(
+                        children: [
+                          Icon(Icons.group_add_outlined, size: 20),
+                          SizedBox(width: 10),
+                          Expanded(child: Text('Đồng bộ sĩ số')),
+                        ],
+                      ),
+                    ),
+                  if (editable)
+                    PopupMenuItem(
+                      value: 'import_excel',
+                      enabled: !busy,
+                      child: const Row(
+                        children: [
+                          Icon(Icons.table_chart_outlined, size: 20),
+                          SizedBox(width: 10),
+                          Expanded(child: Text('Nhập từ Excel')),
+                        ],
+                      ),
+                    ),
+                  if (admin)
+                    const PopupMenuItem(
+                      value: 'identifiers',
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 20),
+                          SizedBox(width: 10),
+                          Expanded(child: Text('Mã tham chiếu')),
+                        ],
+                      ),
+                    ),
                 ],
               ),
+            ],
+            bottom: const TabBar(
+              tabs: [
+                Tab(icon: Icon(Icons.edit_note_rounded), text: 'Nhập điểm'),
+                Tab(
+                  icon: Icon(Icons.camera_alt_outlined),
+                  text: 'Quét ảnh OCR',
+                ),
+                Tab(
+                  icon: Icon(Icons.analytics_outlined),
+                  text: 'Báo cáo & Tiện ích',
+                ),
+              ],
             ),
             body: TabBarView(
               children: [
@@ -661,7 +651,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 _buildTabReports(students, orderedComponents),
               ],
             ),
-            bottomNavigationBar: _buildStickyBottomBar(),
+            bottomBar: _buildStickyBottomBar(),
           ),
         );
       },
