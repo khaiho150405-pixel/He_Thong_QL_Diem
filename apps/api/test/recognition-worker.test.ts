@@ -71,6 +71,7 @@ function harness(
   rows: RecognitionRowResult[],
   entries = roster(2),
   status: "DANG_XU_LY" | "CHO_DOI_CHIEU" = "DANG_XU_LY",
+  sttCheck = false,
 ) {
   const state = {
     completed: undefined as Array<Record<string, unknown>> | undefined,
@@ -93,6 +94,7 @@ function harness(
         return { modelVersion: "fake-dev-v1", pageStartStt: 1, rows };
       },
     },
+    { sttCheck },
   );
   return { state, storage, processor };
 }
@@ -111,7 +113,7 @@ test("worker preserves two channels, matches students and never writes an offici
   assert.equal(first.nameRead, "Học sinh 1");
   assert.equal(first.nameCropKey, "recognition/crops/42/1-name.png");
   assert.equal(first.reviewLevel, "XANH");
-  assert.match(String(first.matchNote), /Khớp họ tên và STT/);
+  assert.match(String(first.matchNote), /Khớp họ tên/);
   // original + 3 crops per row.
   assert.equal(storage.objects.size, 7);
 });
@@ -221,18 +223,43 @@ test("final level is the lower of the grade level and the match level", async ()
   };
   const redMatch: RecognitionRowResult = {
     ...row(2),
-    // STT in trên giấy mâu thuẫn học sinh được ghép → Đỏ do ghép dù hai kênh khớp.
+    // Tên khớp mạnh nhưng STT in trên giấy mâu thuẫn học sinh được ghép → hạ xuống Vàng (khi bật RECOGNITION_STT_CHECK).
     stt: { ...row(2).stt, value: 9, raw: "9" },
   };
-  const { state, processor } = harness(
-    [yellowGrade, redMatch, row(3), row(4), row(5), row(6)],
-    roster(6),
-  );
-  await processor.process("9");
+  const rows = [yellowGrade, redMatch, row(3), row(4), row(5), row(6)];
+  const logs: string[] = [];
+  const originalLog = console.log;
+  console.log = (line: unknown) => void logs.push(String(line));
+  const { state, processor } = harness(rows, roster(6), "DANG_XU_LY", true);
+  try {
+    await processor.process("9");
+  } finally {
+    console.log = originalLog;
+  }
   assert.deepEqual(
     state.completed!.map((item) => item.reviewLevel),
-    ["VANG", "DO", "XANH", "XANH", "XANH", "XANH"],
+    ["VANG", "VANG", "XANH", "XANH", "XANH", "XANH"],
   );
+  assert.equal(
+    state.completed![1]!.matchNote,
+    "STT trên giấy 9 khác STT dự kiến 2.",
+  );
+  // Mô hình STT đã chọn (quy ước, k, cộng dòng gạch) được ghi log có cấu trúc, không chứa họ tên.
+  const logged = logs
+    .map((line) => JSON.parse(line) as Record<string, unknown>)
+    .find((entry) => entry.event === "recognition_stt_model");
+  assert.deepEqual(logged?.model, {
+    convention: "A",
+    k: 0,
+    strikeShift: false,
+    support: 5,
+  });
+  assert.equal(logged?.ticketId, "9");
+  assert.equal(JSON.stringify(logged).includes("Học sinh"), false);
+  // Cờ tắt (mặc định): STT bị bỏ qua hoàn toàn.
+  const off = harness(rows, roster(6));
+  await off.processor.process("9");
+  assert.equal(off.state.completed![1]!.reviewLevel, "XANH");
   // Mức điểm gốc của dịch vụ vẫn được giữ trong comparison.
   assert.equal(state.completed![0]!.comparison, "LECH");
 });

@@ -125,6 +125,7 @@ powershell -NoProfile -File scripts/recognition/pilot/stack.ps1 status
 | `web`         | giao diện tại http://localhost:8080 (phục vụ `apps/client_flutter/build/web`) | không mở được trang                         |
 
 - `stack.ps1` tự đọc `.env` và trỏ mọi dịch vụ vào `qld_phase7_test` ở chế độ `weights`.
+- `stack.ps1` đặt `RECOGNITION_STT_CHECK=1` (ràng buộc STT + họ tên, mặc định bật): dịch vụ đọc thêm ô STT in, mỗi dòng cần cả tên và STT khớp mới Xanh. Đặt `0` ở cả `recognition` và `worker` để tắt (khi đó Xanh chỉ cần tên khớp).
 - Thư mục trọng số lấy từ `PILOT_WEIGHTS_DIR`. Nếu không đặt biến này thì mặc định là `D:\HocTap\KhoaLuan\App\weights` (máy chủ dự án).
 - Muốn dùng database thử tên khác thì đặt `PILOT_DATABASE` (tên phải kết thúc bằng `_test`).
 - Biến `PILOT_WEIGHTS_DIR` phải được đặt **trong cùng cửa sổ PowerShell** trước khi chạy `stack.ps1 start` hoặc `restart`.
@@ -168,6 +169,7 @@ Các lệnh khác:
 4. Khi phiếu chuyển sang **Chờ đối chiếu**, bấm vào phiếu để mở màn hình **Đối chiếu nhận dạng**:
    - Dùng bộ lọc để xem các dòng **Đỏ** và **Vàng** trước.
    - Mỗi dòng có ảnh ô (bấm để phóng to), **ký tự thô** (chuỗi máy đọc), **giá trị** (điểm đổi từ chuỗi), độ tin cậy và ghi chú ghép tên.
+   - Tiêu đề dòng ghi **STT hệ thống M · trên giấy N**; N màu cam khi khác M, ẩn khi máy không xác nhận được STT trên giấy (dòng đó là Vàng "Không xác nhận được STT"). STT trên giấy có thể khác STT hệ thống một cách hợp lệ (học sinh đã nghỉ bị gạch, hoặc giấy sắp theo chữ không dấu); khi đó dòng là Vàng chứ không sai.
    - Sửa **Điểm cuối** nếu cần. Để trống nghĩa là không ghi điểm, khi đó phải ghi lý do.
 5. Bấm **Duyệt** để ghi điểm vào bảng. Đã duyệt thì **không xóa phiếu được nữa**. Nếu chỉ muốn xem thử thì đừng duyệt.
 
@@ -201,6 +203,7 @@ Chỉ chạy web và API thì vẫn tải ảnh lên được, nhưng **sẽ kh�
 | Màn hình đối chiếu báo "Không thể kết nối dịch vụ" | API tắt, hoặc dữ liệu phiếu không đúng định nghĩa client                                                           | `stack.ps1 status`; chạy `check-ticket.ps1 <mã>` để xem trường bị thiếu hoặc sai                              |
 | Phiếu lỗi `MODEL_UNAVAILABLE`                      | sai thư mục trọng số, sai mã băm, venv thiếu torch/vietocr                                                         | kiểm tra `PILOT_WEIGHTS_DIR`, `Get-FileHash`, làm lại B1; xem `.local/pilot/logs/recognition.err.log`         |
 | Phiếu lỗi `ROW_MATCH_FAILED`                       | họ tên trên ảnh không khớp danh sách lớp                                                                           | kiểm tra `class.json` có đúng lớp của ảnh không                                                               |
+| Nhiều dòng Vàng, ghi chú "Không xác nhận được STT" | ô STT in bị mờ/bóng nên không đọc chắc; chụp lại rõ cột STT, hoặc tạm đặt `RECOGNITION_STT_CHECK=0`                |
 | Nhiều dòng Vàng, ghi chú "Họ tên khớp một phần"    | ảnh mờ hoặc có bóng, đọc thiếu phần tên                                                                            | chụp thẳng, đủ sáng, không có bóng tay; xem phóng to ô họ tên                                                 |
 | `TEST_MIGRATION_URL ending with _test is required` | chưa chạy B3 trong cửa sổ PowerShell hiện tại                                                                      | chạy lại đoạn B3                                                                                              |
 | Web vẫn là bản cũ                                  | trình duyệt giữ cache                                                                                              | Ctrl+F5; nếu code Flutter đổi thì build lại web rồi `stack.ps1 restart web`                                   |

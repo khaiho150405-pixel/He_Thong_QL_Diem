@@ -379,8 +379,8 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     assert.deepEqual(
       detail.rows.map((row) => [row.nameRead, row.matchNote]),
       [
-        ["Lê Thị An", "Khớp họ tên và STT."],
-        ["Trần Văn Bình", "Khớp họ tên và STT."],
+        ["Lê Thị An", "Khớp họ tên."],
+        ["Trần Văn Bình", "Khớp họ tên."],
       ],
     );
     assert.equal(detail.rows[0]?.matchConfidence, "1.0000");

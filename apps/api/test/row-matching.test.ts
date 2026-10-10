@@ -250,17 +250,288 @@ test("without a readable STT the name alone matches (green when unambiguous)", (
   );
 });
 
-test("a printed STT that contradicts the matched student is red", () => {
+// --- Ràng buộc STT + họ tên (BE-24b, RECOGNITION_STT_CHECK) ---
+const STT_ON = { sttCheck: true };
+
+const viCollator = new Intl.Collator("vi", { sensitivity: "variant" });
+const baseCollator = new Intl.Collator("en", { sensitivity: "base" });
+const fold = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+const given = (name: string) => name.trim().split(/\s+/).at(-1) ?? "";
+
+/** Danh sách lớp theo quy ước A (collator tiếng Việt như student-order.ts), họ tên giả có cặp Đ/D và ô/o. */
+function accentRoster(names: string[]): RosterEntry[] {
+  return names
+    .map((fullName, index) => ({ fullName, studentId: 100 + index }))
+    .sort(
+      (x, y) =>
+        viCollator.compare(given(x.fullName), given(y.fullName)) ||
+        viCollator.compare(x.fullName, y.fullName),
+    )
+    .map((entry, index) => ({ ...entry, stt: index + 1 }));
+}
+
+/** STT 1..n theo quy ước B (bỏ dấu, đ → d, rồi mới so dấu) của từng học sinh. */
+function foldedNumbers(roster: RosterEntry[]): Map<number, number> {
+  const sorted = [...roster].sort(
+    (x, y) =>
+      baseCollator.compare(fold(given(x.fullName)), fold(given(y.fullName))) ||
+      baseCollator.compare(fold(x.fullName), fold(y.fullName)) ||
+      viCollator.compare(given(x.fullName), given(y.fullName)) ||
+      viCollator.compare(x.fullName, y.fullName),
+  );
+  return new Map(sorted.map((entry, index) => [entry.studentId, index + 1]));
+}
+
+const ACCENT_NAMES = [
+  "Lê Văn Đức",
+  "Trần Thị Duy",
+  "Phạm Ngọc Dũng",
+  "Vũ Minh Đạt",
+  "Bùi An Dương",
+  "Hồ Thanh Ôn",
+  "Đỗ Quang On",
+  "Lý Hữu Ân",
+  "Mai Thị An",
+  "Cao Gia Bảo",
+];
+
+/** Dòng trên giấy theo thứ tự `paper` (STT in = vị trí + offset). */
+const paperRows = (
+  paper: RosterEntry[],
+  firstStt: number,
+  extra: (index: number) => Partial<DetectedRow> = () => ({}),
+) =>
+  paper.map((entry, index) =>
+    row(index + 1, entry, { sttValue: firstStt + index, ...extra(index) }),
+  );
+
+test("without the flag the printed STT is ignored and green needs only the name", () => {
   const roster = makeRoster(5);
   const detected = pages(roster, 1, 5);
-  detected[2] = { ...detected[2]!, sttValue: 9, sttConfidence: 0.95 };
-  const { matches } = ok(matchRows(detected, roster));
-  assert.equal(matches[2]!.stt, 3);
-  assert.equal(matches[2]!.matchLevel, "DO");
-  assert.match(matches[2]!.note, /STT trên giấy \(9\)/);
-  // STT lệch nhưng độ tin cậy thấp chỉ làm Vàng.
-  detected[2] = { ...detected[2]!, sttValue: 9, sttConfidence: 0.2 };
-  assert.equal(ok(matchRows(detected, roster)).matches[2]!.matchLevel, "VANG");
+  detected[2] = { ...detected[2]!, sttValue: 9 };
+  const result = ok(matchRows(detected, roster));
+  assert.equal(result.matches[2]!.matchLevel, "XANH");
+  assert.equal(result.stt.enabled, false);
+  assert.equal(result.stt.model, null);
+});
+
+test("green needs a strong name AND an STT that fits the page model; a different or missing STT is yellow", () => {
+  const roster = makeRoster(8);
+  const detected = pages(roster, 1, 8);
+  detected[2] = { ...detected[2]!, sttValue: 9 }; // lệch mô hình
+  detected[4] = { ...detected[4]!, sttValue: null }; // không xác nhận được
+  const result = ok(matchRows(detected, roster, STT_ON));
+  const { matches } = result;
+  assert.deepEqual(result.stt.model, {
+    convention: "A",
+    k: 0,
+    strikeShift: false,
+    support: 6,
+  });
+  assert.equal(matches[2]!.studentId, roster[2]!.studentId); // STT không quyết định gán
+  assert.equal(matches[2]!.matchLevel, "VANG");
+  assert.equal(matches[2]!.note, "STT trên giấy 9 khác STT dự kiến 3.");
+  assert.equal(matches[4]!.matchLevel, "VANG");
+  assert.equal(matches[4]!.note, "Không xác nhận được STT.");
+  const green = matches.filter((m) => m.matchLevel === "XANH");
+  assert.equal(green.length, 6);
+  assert.ok(green.every((m) => m.note === "Khớp họ tên và STT."));
+});
+
+test("a matching STT never lifts a name-based yellow or red; a weak name with an STT off the model is red", () => {
+  const roster = makeRoster(8);
+  const detected = pages(roster, 1, 8);
+  detected[3] = {
+    ...detected[3]!,
+    nameRaw: roster[3]!.fullName.slice(0, -3) + "xyz",
+  };
+  detected[5] = { ...detected[5]!, nameRaw: null, hasNameInk: false };
+  const { matches } = ok(matchRows(detected, roster, STT_ON));
+  assert.equal(matches[3]!.matchLevel, "VANG");
+  assert.match(matches[3]!.note, /một phần/);
+  assert.equal(matches[5]!.matchLevel, "DO");
+  assert.equal(matches[5]!.studentId, roster[5]!.studentId);
+  // Tên yếu + STT lệch mô hình → Đỏ (nhưng 2 Đỏ / 8 dòng vẫn dưới ngưỡng MAX_RED_RATIO).
+  detected[3] = { ...detected[3]!, sttValue: 12 };
+  const weak = ok(matchRows(detected, roster, STT_ON)).matches[3]!;
+  assert.equal(weak.matchLevel, "DO");
+  assert.match(weak.note, /STT trên giấy 12 khác STT dự kiến 4\.$/);
+});
+
+test("the page model picks convention A or B by how many strong-name rows it explains; ties go to A", () => {
+  const roster = accentRoster(ACCENT_NAMES);
+  const folded = foldedNumbers(roster);
+  // Hai quy ước phải khác nhau với dữ liệu giả này (cặp Đ/D, ô/o), nếu không thì test vô nghĩa.
+  assert.ok(roster.some((entry) => folded.get(entry.studentId) !== entry.stt));
+
+  // Giấy sắp theo quy ước B (bỏ dấu): chọn B và mọi dòng Xanh dù STT hệ thống (A) khác.
+  const paperB = [...roster].sort(
+    (x, y) => folded.get(x.studentId)! - folded.get(y.studentId)!,
+  );
+  const b = ok(matchRows(paperRows(paperB, 1), roster, STT_ON));
+  assert.equal(b.stt.model?.convention, "B");
+  assert.equal(b.stt.model?.k, 0);
+  assert.ok(b.matches.every((m) => m.matchLevel === "XANH"));
+  assert.deepEqual(
+    b.matches.map((m) => m.studentId),
+    paperB.map((entry) => entry.studentId),
+  );
+
+  // Giấy sắp theo quy ước A: chọn A và mọi dòng Xanh.
+  const a = ok(matchRows(paperRows(roster, 1), roster, STT_ON));
+  assert.equal(a.stt.model?.convention, "A");
+  assert.ok(a.matches.every((m) => m.matchLevel === "XANH"));
+
+  // Không có STT nào: không có mô hình → mọi dòng Vàng "Không xác nhận được STT."
+  const none = ok(
+    matchRows(
+      paperRows(roster, 1, () => ({ sttValue: null })),
+      roster,
+      STT_ON,
+    ),
+  );
+  assert.equal(none.stt.model, null);
+  assert.ok(none.matches.every((m) => m.note === "Không xác nhận được STT."));
+});
+
+test("a struck row whose student left shifts the printed STT after it by one (model adds one per struck row)", () => {
+  const full = makeRoster(8);
+  // Học sinh STT 4 đã nghỉ: dòng 4 bị gạch trên giấy và không có trong danh sách lớp đã chốt.
+  const snapshot = full
+    .filter((entry) => entry.stt !== 4)
+    .map((entry, index) => ({ ...entry, stt: index + 1 }));
+  const detected: DetectedRow[] = full.map((entry, index) =>
+    entry.stt === 4
+      ? row(4, null, { struck: true, hasGradeInk: false })
+      : row(index + 1, entry, { sttValue: entry.stt }),
+  );
+  const result = ok(matchRows(detected, snapshot, STT_ON));
+  assert.deepEqual(result.skipped, [{ rowIndex: 4, reason: "STRUCK" }]);
+  assert.equal(result.matches.length, 7);
+  assert.equal(result.stt.model?.strikeShift, true);
+  assert.equal(result.stt.model?.k, 0);
+  assert.ok(result.matches.every((m) => m.matchLevel === "XANH"));
+});
+
+test("a struck row whose student is still enrolled needs no shift", () => {
+  const roster = makeRoster(8);
+  const detected: DetectedRow[] = roster.map((entry, index) =>
+    entry.stt === 4
+      ? row(4, null, { struck: true, hasGradeInk: false })
+      : row(index + 1, entry, { sttValue: entry.stt }),
+  );
+  // Học sinh bị gạch vẫn có trong danh sách lớp: STT giấy = STT hệ thống, không cộng dòng gạch.
+  const result = ok(matchRows(detected, roster, STT_ON));
+  assert.equal(result.matches.length, 7);
+  assert.equal(result.stt.model?.strikeShift, false);
+  assert.equal(result.stt.model?.k, 0);
+  assert.ok(result.matches.every((m) => m.matchLevel === "XANH"));
+});
+
+test("a second page whose printed numbers are shifted by k (students left on the first page) is still green", () => {
+  const roster = makeRoster(6);
+  // Hai học sinh đã nghỉ ở trang trước: STT in ở trang này lớn hơn STT trong danh sách lớp đã chốt đúng 2.
+  const detected = pages(roster, 1, 6).map((entry, index) => ({
+    ...entry,
+    sttValue: index + 1 + 2,
+  }));
+  const result = ok(matchRows(detected, roster, STT_ON));
+  assert.equal(result.stt.model?.k, 2);
+  assert.ok(result.matches.every((m) => m.matchLevel === "XANH"));
+  // Một dòng lệch khỏi độ lệch của trang thì bị hạ.
+  detected[3] = { ...detected[3]!, sttValue: 4 };
+  const lowered = ok(matchRows(detected, roster, STT_ON)).matches;
+  assert.equal(lowered[3]!.matchLevel, "VANG");
+  assert.equal(lowered[3]!.note, "STT trên giấy 4 khác STT dự kiến 6.");
+  assert.equal(lowered.filter((m) => m.matchLevel === "XANH").length, 5);
+});
+
+test("two students whose names and printed numbers are swapped are both demoted", () => {
+  const roster = makeRoster(8);
+  const detected = pages(roster, 1, 8);
+  // Dòng 3 mang tên học sinh 4 và ngược lại, nhưng STT in vẫn là 3 và 4 theo vị trí giấy.
+  detected[2] = { ...detected[2]!, nameRaw: roster[3]!.fullName };
+  detected[3] = { ...detected[3]!, nameRaw: roster[2]!.fullName };
+  const { matches } = ok(matchRows(detected, roster, STT_ON));
+  assert.equal(matches[2]!.studentId, roster[3]!.studentId); // gán theo họ tên
+  assert.equal(matches[3]!.studentId, roster[2]!.studentId);
+  assert.equal(matches[2]!.matchLevel, "VANG");
+  assert.equal(matches[2]!.note, "STT trên giấy 3 khác STT dự kiến 4.");
+  assert.equal(matches[3]!.matchLevel, "VANG");
+  assert.equal(matches[3]!.note, "STT trên giấy 4 khác STT dự kiến 3.");
+  assert.equal(matches.filter((m) => m.matchLevel === "XANH").length, 6);
+});
+
+test("the model needs enough supporting rows, fewer for a very short page", () => {
+  const roster = makeRoster(10);
+  // 8 dòng, chỉ 2 dòng có STT: dưới 3 dòng ủng hộ → không có mô hình, mọi dòng "Không xác nhận được STT."
+  const sparse = pages(roster, 1, 8).map((entry, index) =>
+    index < 2 ? entry : { ...entry, sttValue: null },
+  );
+  const none = ok(matchRows(sparse, roster, STT_ON));
+  assert.equal(none.stt.model, null);
+  assert.ok(none.matches.every((m) => m.note === "Không xác nhận được STT."));
+  // Trang chỉ 3 dòng (như trang cuối của lớp): 2 dòng ủng hộ là đủ.
+  const short = pages(roster, 8, 10);
+  short[2] = { ...short[2]!, sttValue: null };
+  const result = ok(matchRows(short, roster, STT_ON));
+  assert.equal(result.stt.model?.support, 2);
+  assert.equal(result.matches.filter((m) => m.matchLevel === "XANH").length, 2);
+});
+
+test("a photo that lost its first rows is confirmed by the printed numbers, not by position", () => {
+  const roster = makeRoster(10);
+  // Ảnh mất 2 dòng đầu: dòng trên ảnh bắt đầu từ học sinh STT 3; STT in 3.. khớp danh sách lớp.
+  const detected = [3, 4, 5, 6, 7, 8, 9, 10].map((stt, index) =>
+    row(index + 1, roster[stt - 1]!, { sttValue: stt }),
+  );
+  const result = ok(matchRows(detected, roster, STT_ON));
+  assert.deepEqual(
+    result.matches.map((m) => m.stt),
+    [3, 4, 5, 6, 7, 8, 9, 10],
+  );
+  assert.equal(result.stt.model?.k, 0);
+  assert.ok(result.matches.every((m) => m.matchLevel === "XANH"));
+});
+
+test("identical full names are told apart by the printed STT; unresolved ones are red", () => {
+  const roster = makeRoster(8);
+  roster[5] = { ...roster[5]!, fullName: roster[1]!.fullName }; // STT 2 và 6 trùng họ tên
+  // Trên giấy hai dòng trùng tên xuất hiện theo thứ tự đảo (dòng 2 mang STT 6, dòng 6 mang STT 2).
+  const detected = pages(roster, 1, 8);
+  detected[1] = { ...detected[1]!, sttValue: 6 };
+  detected[5] = { ...detected[5]!, sttValue: 2 };
+  const { matches } = ok(matchRows(detected, roster, STT_ON));
+  assert.equal(matches[1]!.studentId, roster[5]!.studentId); // STT phân biệt trong nhóm trùng tên
+  assert.equal(matches[5]!.studentId, roster[1]!.studentId);
+  assert.equal(matches[1]!.matchLevel, "VANG");
+  assert.equal(matches[1]!.note, "Trùng họ tên — phân biệt bằng STT 6.");
+  assert.equal(matches[5]!.note, "Trùng họ tên — phân biệt bằng STT 2.");
+  // Các dòng không trùng tên vẫn Xanh.
+  assert.equal(matches.filter((m) => m.matchLevel === "XANH").length, 6);
+
+  // Không đọc được STT của hai dòng: không phân biệt được → Đỏ (2/8 dòng Đỏ vẫn dưới ngưỡng).
+  const unreadable = pages(roster, 1, 8);
+  unreadable[1] = { ...unreadable[1]!, sttValue: null };
+  unreadable[5] = { ...unreadable[5]!, sttValue: null };
+  const unresolved = ok(matchRows(unreadable, roster, STT_ON)).matches;
+  assert.equal(unresolved[1]!.matchLevel, "DO");
+  assert.equal(unresolved[5]!.matchLevel, "DO");
+  assert.equal(
+    unresolved[1]!.note,
+    "Trùng họ tên — không phân biệt được bằng STT.",
+  );
+  assert.notEqual(unresolved[1]!.studentId, unresolved[5]!.studentId);
+
+  // Cờ tắt: không dùng STT, chỉ Vàng theo thứ tự.
+  const off = ok(matchRows(pages(roster, 1, 8), roster)).matches;
+  assert.equal(off[1]!.matchLevel, "VANG");
+  assert.equal(off[1]!.studentId, roster[1]!.studentId);
 });
 
 test("a name that fits the neighbouring student better is red", () => {
@@ -375,10 +646,10 @@ test("a row between two others with an unreadable name is red, never guessed gre
   const { matches } = ok(matchRows(detected, roster));
   assert.equal(matches[2]!.stt, 3);
   assert.equal(matches[2]!.matchLevel, "DO");
-  // Chỉ còn STT: ghép theo STT nhưng không xanh.
+  // STT không nâng mức: tên không đọc được thì có STT khớp vẫn Đỏ.
   detected[2] = { ...detected[2]!, sttValue: 3, sttConfidence: 0.9 };
-  const stt = ok(matchRows(detected, roster)).matches[2]!;
-  assert.equal(stt.matchLevel, "VANG");
+  const stt = ok(matchRows(detected, roster, STT_ON)).matches[2]!;
+  assert.equal(stt.matchLevel, "DO");
 });
 
 test("rows from another class fail with ROW_MATCH_FAILED", () => {

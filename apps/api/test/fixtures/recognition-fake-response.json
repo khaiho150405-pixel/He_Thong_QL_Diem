@@ -33,7 +33,9 @@
       "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "comparison": "KHOP",
       "reviewLevel": "XANH",
-      "suggestedSource": "SO"
+      "suggestedSource": "SO",
+      "sttRead": null,
+      "sttFromPosition": null
     },
     {
       "rowIndex": 2,
@@ -66,7 +68,9 @@
       "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "comparison": "KHONG_DOC_DUOC",
       "reviewLevel": "DO",
-      "suggestedSource": null
+      "suggestedSource": null,
+      "sttRead": null,
+      "sttFromPosition": null
     },
     {
       "rowIndex": 3,
@@ -99,7 +103,9 @@
       "nameCropBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "comparison": "KHOP",
       "reviewLevel": "XANH",
-      "suggestedSource": "SO"
+      "suggestedSource": "SO",
+      "sttRead": null,
+      "sttFromPosition": null
     }
   ]
 }

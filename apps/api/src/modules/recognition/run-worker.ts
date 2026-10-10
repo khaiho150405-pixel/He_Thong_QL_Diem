@@ -26,6 +26,8 @@ async function main() {
       fetch,
       config.recognitionTimeoutMs,
     ),
+    // Ràng buộc STT + họ tên mặc định BẬT (BE-24b); đặt RECOGNITION_STT_CHECK=0 để tắt (cùng giá trị với dịch vụ nhận dạng).
+    { sttCheck: process.env.RECOGNITION_STT_CHECK !== "0" },
   );
   const worker = new Worker<{ ticketId: string }>(
     "recognition",

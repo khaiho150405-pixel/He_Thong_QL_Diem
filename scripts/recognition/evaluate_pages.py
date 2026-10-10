@@ -115,6 +115,7 @@ def run(split: str, limit: int | None, tag: str = "") -> None:
     env = dict(os.environ)
     env.setdefault("APP_ENV", "production")
     env["RECOGNITION_MODEL_MODE"] = "weights"
+    env["RECOGNITION_STT_CHECK"] = "1"  # luôn đọc STT khi đánh giá; bật/tắt lớp xác nhận STT ở bước report/ghép
     for prefix, name in (
         ("CRNN", "crnn_num_best_dot5.pth"),
         ("VIETOCR", "vietocr_best_tang4.pth"),
@@ -163,6 +164,7 @@ def run(split: str, limit: int | None, tag: str = "") -> None:
                         "nameRaw": r.name.raw_output,
                         "nameBlank": r.name.is_blank,
                         "gapCollapsed": flags[i],
+                        "stt": {"value": r.stt.value, "read": r.stt_read, "position": r.stt_from_position},
                     }
                     for i, r in enumerate(result.rows)
                 ],
@@ -244,7 +246,7 @@ def roster_names(sheet_number: int) -> list[str]:
     return names
 
 
-def match_pages(cache: dict, labels: dict) -> dict[str, dict]:
+def match_pages(cache: dict, labels: dict, stt_check: bool = False, struck_active: bool = False) -> dict[str, dict]:
     """Chạy bộ ghép dòng THẬT (row-matching.ts) cho các trang có danh sách lớp (Sheet_xx). Trang khác: không đánh giá."""
     rosters: dict[str, list[str]] = {}
     pages = []
@@ -257,9 +259,9 @@ def match_pages(cache: dict, labels: dict) -> dict[str, dict]:
             continue
         number = int(sheet[1:])
         rosters.setdefault(sheet, roster_names(number))
-        pages.append({"key": name, "sheet": sheet, "rows": page["rows"]})
+        pages.append({"key": name, "sheet": sheet, "start": PAGE_START[trang], "rows": page["rows"]})
     source = CACHE_DIR / "match-input.json"
-    source.write_text(json.dumps({"rosters": rosters, "pages": pages}), encoding="utf-8")
+    source.write_text(json.dumps({"rosters": rosters, "pages": pages, "sttCheck": stt_check, "struckStudentsActive": struck_active}), encoding="utf-8")
     out = subprocess.run(
         [shutil.which("node") or "node", "--import", "tsx", "scripts/recognition/evaluate_matching.ts", str(source)],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True,
@@ -291,6 +293,13 @@ def evaluate(cache: dict, labels: dict, matches: dict, rule: str, floor: Decimal
                 c["lost"] += 1
                 continue
             numeric, written = prediction(row["numeric"]), prediction(row["written"])
+            stt = row.get("stt")
+            if stt is not None:
+                c["stt_rows"] += 1
+                c["stt_read_ok"] += stt["read"] == key[4]
+                c["stt_position_ok"] += stt["position"] == key[4]
+                c["stt_value_present"] += stt["value"] is not None
+                c["stt_value_ok"] += stt["value"] == key[4]
             if not row["nameBlank"] and row.get("gapCollapsed") is not None:
                 c["name_ink"] += 1
                 c["name_collapsed"] += bool(row["gapCollapsed"])
@@ -327,6 +336,8 @@ def evaluate(cache: dict, labels: dict, matches: dict, rule: str, floor: Decimal
                     c["match_wrong"] += wrong
                     final = level if LEVEL_RANK[level] <= LEVEL_RANK[assigned["level"]] else assigned["level"]
                     c[f"final_{final}"] += 1
+                    if assigned["level"] == "VANG" and assigned.get("note") in ("STT_MISMATCH", "STT_UNCONFIRMED", "DUPLICATE_NAME"):
+                        c["yellow_" + assigned["note"].lower()] += 1
                     c["final_green_wrong"] += (final == "XANH") and (wrong or not correct)
             elif match is not None:
                 c["match_page_failed_rows"] += 1
@@ -354,12 +365,19 @@ def print_report(title: str, result: dict) -> None:
             f"giá trị cuối đúng {pct(c['final_correct'], n)} (trên dòng có gợi ý {pct(c['final_correct'], c['final_suggested'])}) | "
             f"Xanh SAI {c['green_wrong']}, Vàng gợi ý sai {c['yellow_wrong']}"
         )
+        if c["stt_rows"]:
+            print(
+                f"           STT: đọc đúng {pct(c['stt_read_ok'], c['stt_rows'])}, suy theo vị trí đúng {pct(c['stt_position_ok'], c['stt_rows'])}, "
+                f"sttOnPaper có giá trị {pct(c['stt_value_present'], c['stt_rows'])} và đúng {pct(c['stt_value_ok'], c['stt_rows'])} "
+                f"(sai {c['stt_value_present'] - c['stt_value_ok']} dòng)"
+            )
         if c["name_ink"]:
             print(f"           ô họ tên được thu khe: {c['name_collapsed']}/{c['name_ink']} ({pct(c['name_collapsed'], c['name_ink'])})")
         if c["match_eval"] or c["match_page_failed_rows"]:
             print(
                 f"           ghép học sinh: {c['match_eval']} dòng, gán sai {c['match_wrong']}, dòng ở trang ghép lỗi {c['match_page_failed_rows']}; "
-                f"mức cuối Xanh/Vàng/Đỏ {c['final_XANH']}/{c['final_VANG']}/{c['final_DO']}, Xanh cuối sai {c['final_green_wrong']}"
+                f"mức cuối Xanh/Vàng/Đỏ {c['final_XANH']}/{c['final_VANG']}/{c['final_DO']}, Xanh cuối sai {c['final_green_wrong']}; "
+                f"Vàng do STT lệch {c['yellow_stt_mismatch']}, do không xác nhận được STT {c['yellow_stt_unconfirmed']}, do trùng họ tên {c['yellow_duplicate_name']}"
             )
     conf = result["confidences"]
     for name, label in (("num", "Đ.số"), ("txt", "Điểm chữ")):
@@ -387,6 +405,8 @@ def main() -> None:
     parser.add_argument("--floor", default="0.00", help="mức sàn đồng thuận mỗi kênh (luật nghiên cứu = 0)")
     parser.add_argument("--limit", type=int, default=None, help="chỉ chạy N trang đầu (thử nhanh)")
     parser.add_argument("--tag", default="", help="hậu tố tên bộ nhớ đệm (so sánh trước/sau khi sửa)")
+    parser.add_argument("--stt-check", action="store_true", help="bật lớp xác nhận STT khi ghép học sinh (RECOGNITION_STT_CHECK)")
+    parser.add_argument("--struck-active", action="store_true", help="danh sách lớp CÓ học sinh ở dòng bị gạch (còn theo học); mặc định: không có (đã nghỉ)")
     parser.add_argument("--no-match", action="store_true", help="không chạy bộ ghép học sinh")
     args = parser.parse_args()
     if args.command == "tune" and args.split != "dev":
@@ -396,7 +416,13 @@ def main() -> None:
         return
     labels = load_labels(args.split)
     cache = load_cache(args.split, args.tag)
-    matches = {} if args.no_match else match_pages(cache, labels)
+    matches = {} if args.no_match else match_pages(cache, labels, args.stt_check, args.struck_active)
+    if matches and args.stt_check:
+        models = [v.get("model") for v in matches.values() if v["ok"]]
+        chosen = collections.Counter(
+            "không có mô hình" if m is None else f"{m['convention']}{'+gạch' if m['strikeShift'] else ''} k={m['k']}" for m in models
+        )
+        print(f"Mô hình STT theo trang ({'gạch còn học' if args.struck_active else 'gạch đã nghỉ'}): {dict(chosen)}")
     if args.command == "report":
         floor = Decimal(args.floor)
         print(f"Tập {args.split.upper()} — mô hình {cache.get('modelVersion')}, {len(cache['pages'])} ảnh trang")

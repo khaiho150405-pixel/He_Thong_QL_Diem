@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import os
+import re
 import threading
 from dataclasses import dataclass
 from decimal import Decimal
@@ -47,6 +48,10 @@ class ModelRow:
     numeric_crop: bytes
     written_crop: bytes
     name_crop: bytes
+    # Đối chiếu STT (BE-24, chỉ khi RECOGNITION_STT_CHECK=1): STT đọc được ở ô STT in và STT suy theo vị trí dòng. ``stt.value``
+    # là STT trên giấy = giá trị khi hai nguồn trùng nhau, khác nhau thì None.
+    stt_read: int | None = None
+    stt_from_position: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,6 +169,17 @@ def _confidence(value: float) -> Decimal:
     return Decimal(f"{min(max(value, 0.0), 1.0):.4f}")
 
 
+def parse_stt(text: str | None) -> int | None:
+    """Số thứ tự in trong ô STT (1–500); ký tự không phải chữ số ở hai đầu bị bỏ; không có đúng một số (hoặc ngoài khoảng) → None."""
+    if not text:
+        return None
+    match = re.fullmatch(r"\D*(\d{1,3})\D*", text.strip())
+    if not match:
+        return None
+    value = int(match.group(1))
+    return value if 1 <= value <= 500 else None
+
+
 BLANK_CHANNEL = ChannelPrediction(None, None, None, is_blank=True)
 STT_NOT_READ = SttPrediction(None, None, Decimal("0"), is_blank=True)
 
@@ -180,11 +196,19 @@ class WeightsRecognitionModel(RecognitionModel):
     không giải ra điểm hợp lệ để ``value=None`` (kênh không đọc được), không bị ép thành một giá trị.
     """
 
-    def __init__(self, crnn_reader: Any, vietocr_reader: Any, name_reader: Any, model_version: str) -> None:
+    def __init__(
+        self,
+        crnn_reader: Any,
+        vietocr_reader: Any,
+        name_reader: Any,
+        model_version: str,
+        stt_check: bool = False,
+    ) -> None:
         self._crnn = crnn_reader
         self._vietocr = vietocr_reader
         self._name_reader = name_reader
         self._version = model_version
+        self._stt_check = stt_check
 
     def recognize(self, image: bytes) -> ModelResult:
         from src.domain.written_grade import (
@@ -194,7 +218,7 @@ class WeightsRecognitionModel(RecognitionModel):
             so_tu_chuoi_so,
         )
         from src.pipeline.errors import PipelineError
-        from src.pipeline.rows import analyze_page
+        from src.pipeline.rows import NGUONG_TEN_TRONG, analyze_page, do_dam_muc, suy_stt_bat_dau
 
         if not image:
             raise ValueError("Image is empty")
@@ -219,12 +243,41 @@ class WeightsRecognitionModel(RecognitionModel):
             zip((r.row_index for r in name_rows), self._name_reader.read_cells([r.name_cell for r in name_rows]))
         )
 
+        # Đối chiếu STT (tùy chọn): đọc ô STT in bằng VietOCR gốc như cột họ tên (KHÔNG dùng CRNN), rồi suy STT theo vị trí
+        # dòng bằng bỏ phiếu. STT chỉ là lớp xác nhận ở API; không bao giờ quyết định gán học sinh.
+        stt_reads: dict[int, tuple[int | None, str, float]] = {}
+        stt_start: int | None = None
+        if self._stt_check:
+            stt_rows = [
+                r for r in active if r.stt_cell is not None and do_dam_muc(r.stt_cell) >= NGUONG_TEN_TRONG
+            ]
+            for r, read in zip(stt_rows, self._name_reader.read_cells([r.stt_cell for r in stt_rows])):
+                stt_reads[r.row_index] = (parse_stt(read.text), read.text, read.prob)
+            stt_start = suy_stt_bat_dau(
+                {i: v[0] for i, v in stt_reads.items() if v[0] is not None}, len(rows)
+            )
+
         out: list[ModelRow] = []
         for row in rows:
             i = row.row_index
             # Chủ dự án chốt (BE-19b): KHÔNG đọc STT; mục tiêu là điểm số và điểm chữ. STT luôn là null với độ tin cậy 0,
             # còn việc ghép dòng ↔ học sinh dựa vào họ tên và thứ tự (row-matching.ts đã hỗ trợ ghép không cần STT).
             stt_pred = STT_NOT_READ
+            stt_read_value: int | None = None
+            stt_position: int | None = None
+            if self._stt_check:
+                stt_position = stt_start + i - 1 if stt_start is not None else None
+                read = stt_reads.get(i)
+                if read is not None:
+                    stt_read_value = read[0]
+                    agreed = stt_read_value is not None and stt_read_value == stt_position
+                    stt_pred = SttPrediction(
+                        read[1] or None,
+                        stt_read_value if agreed else None,
+                        _confidence(read[2]) if read[1] else None,
+                    )
+                elif not row.struck:
+                    stt_pred = SttPrediction(None, None, None, is_blank=True)
             name = name_reads.get(i)
             # Ô họ tên "trống" theo MỰC (không theo việc OCR đọc ra chữ): có mực mà không đọc được vẫn là có dữ liệu.
             name_pred = (
@@ -261,13 +314,15 @@ class WeightsRecognitionModel(RecognitionModel):
                     numeric_crop=_png(row.score_cell),
                     written_crop=_png(row.written_cell),
                     name_crop=_png(row.name_cell),
+                    stt_read=stt_read_value,
+                    stt_from_position=stt_position,
                 )
             )
         return ModelResult(self._version, None, tuple(out))
 
 
 _WEIGHTS_LOCK = threading.Lock()
-_WEIGHTS_CACHE: dict[tuple[str, str, str, str, str, str, str], WeightsRecognitionModel] = {}
+_WEIGHTS_CACHE: dict[tuple[str, str, str, str, str, str, str, bool], WeightsRecognitionModel] = {}
 
 
 def weights_model(values: Mapping[str, str]) -> WeightsRecognitionModel:
@@ -290,7 +345,8 @@ def weights_model(values: Mapping[str, str]) -> WeightsRecognitionModel:
         raise ModelUnavailableError("Recognition weights are not configured")
     if device not in {"cpu", "cuda"}:
         raise ModelUnavailableError("RECOGNITION_DEVICE must be cpu or cuda")
-    key = (crnn_path, crnn_sha.lower(), ocr_path, ocr_sha.lower(), name_path, name_sha.lower(), device)
+    stt_check = values.get("RECOGNITION_STT_CHECK", "1") != "0"
+    key = (crnn_path, crnn_sha.lower(), ocr_path, ocr_sha.lower(), name_path, name_sha.lower(), device, stt_check)
     with _WEIGHTS_LOCK:
         cached = _WEIGHTS_CACHE.get(key)
         if cached is not None:
@@ -302,7 +358,7 @@ def weights_model(values: Mapping[str, str]) -> WeightsRecognitionModel:
             (crnn_reader.sha256 + vietocr_reader.sha256 + name_reader.sha256).encode("ascii")
         ).hexdigest()
         version = f"crnn-dot5+vietocr-tang4+name-vgg:{digest[:12]}"
-        model = WeightsRecognitionModel(crnn_reader, vietocr_reader, name_reader, version)
+        model = WeightsRecognitionModel(crnn_reader, vietocr_reader, name_reader, version, stt_check)
         _WEIGHTS_CACHE[key] = model
         return model
 

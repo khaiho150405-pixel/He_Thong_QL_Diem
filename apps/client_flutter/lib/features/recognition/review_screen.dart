@@ -582,8 +582,34 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                               runSpacing: 8,
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                Text(
-                                  'STT ${row.stt ?? '—'} · ${row.studentName} · ${row.reviewLevel.value}',
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: 'STT hệ thống ${row.stt ?? '—'}',
+                                      ),
+                                      // STT in trên giấy (hai nguồn xác nhận); ẩn khi không xác nhận được, cam khi khác STT hệ thống.
+                                      if (row.sttOnPaper != null) ...[
+                                        const TextSpan(text: ' · trên giấy '),
+                                        TextSpan(
+                                          text: '${row.sttOnPaper!.toInt()}',
+                                          style:
+                                              row.stt != null &&
+                                                  row.sttOnPaper!.toInt() !=
+                                                      row.stt
+                                              ? TextStyle(
+                                                  color: Colors.orange.shade800,
+                                                  fontWeight: FontWeight.w800,
+                                                )
+                                              : null,
+                                        ),
+                                      ],
+                                      TextSpan(
+                                        text:
+                                            ' · ${row.studentName} · ${row.reviewLevel.value}',
+                                      ),
+                                    ],
+                                  ),
                                   style: theme.textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),

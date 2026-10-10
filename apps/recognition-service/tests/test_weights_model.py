@@ -85,19 +85,31 @@ class StubNameReader:
 
     sha256 = "c" * 64
 
-    def __init__(self) -> None:
+    def __init__(self, stt_values=None) -> None:
         self.calls: list[int] = []
+        self.stt_values = list(stt_values) if stt_values is not None else None
+        self.stt_cells_read = 0
 
     def read_cells(self, images):
         self.calls.append(len(images))
-        return [TextRead("Họ tên giả", 0.93) for _ in images]
+        out = []
+        for image in images:
+            if image.shape[1] < 100:  # ô STT (60 px) hẹp hơn ô họ tên (480 px) và ô điểm
+                value = self.stt_values[self.stt_cells_read] if self.stt_values else None
+                self.stt_cells_read += 1
+                out.append(TextRead("" if value is None else str(value), 0.95))
+            else:
+                out.append(TextRead("Họ tên giả", 0.93))
+        return out
 
 
 VERSION = "crnn-dot5+vietocr-tang4+name-vgg:abcdef012345"
 
 
-def build(crnn=None, vietocr=None, name=None) -> WeightsRecognitionModel:
-    return WeightsRecognitionModel(crnn or StubCrnn(), vietocr or StubVietOcr(), name or StubNameReader(), VERSION)
+def build(crnn=None, vietocr=None, name=None, stt_check=False) -> WeightsRecognitionModel:
+    return WeightsRecognitionModel(
+        crnn or StubCrnn(), vietocr or StubVietOcr(), name or StubNameReader(), VERSION, stt_check
+    )
 
 
 class WeightsModelTest(unittest.TestCase):
@@ -130,6 +142,56 @@ class WeightsModelTest(unittest.TestCase):
         self.assertEqual(sum(name.calls), sum(1 for r in result.rows if not r.name.is_blank))
         self.assertTrue(all(r.name.raw_output == "Họ tên giả" for r in result.rows if not r.name.is_blank))
         self.assertTrue(all(r.written.raw_output == "tám rưỡi" for r in result.rows if not r.written.is_blank))
+
+    def test_stt_is_not_read_unless_the_check_is_enabled(self) -> None:
+        name = StubNameReader(stt_values=[39] * 20)
+        result = build(name=name).recognize(self.image)
+        self.assertEqual(name.stt_cells_read, 0)
+        for row in result.rows:
+            self.assertIsNone(row.stt.value)
+            self.assertIsNone(row.stt_read)
+            self.assertIsNone(row.stt_from_position)
+
+    def test_stt_check_reads_the_printed_number_with_the_stock_model_and_infers_it_from_position(self) -> None:
+        # Hàng đọc: mọi dòng trừ dòng bị gạch (không đọc) — 39, 40, 41, (42 bị gạch), 43...
+        # Dòng trống có ô STT in nên vẫn được đọc.
+        reads = [39 + i for i in range(ROWS) if i != STRUCK]
+        name = StubNameReader(stt_values=reads)
+        crnn = StubCrnn()
+        result = build(crnn=crnn, name=name, stt_check=True).recognize(self.image)
+        self.assertEqual(crnn.stt_calls, 0)  # STT không bao giờ qua CRNN
+        self.assertEqual(name.stt_cells_read, len(reads))
+        for index, row in enumerate(result.rows):
+            self.assertEqual(row.stt_from_position, 39 + index)
+            if index == STRUCK:
+                self.assertIsNone(row.stt_read)
+                continue
+            self.assertEqual(row.stt_read, 39 + index)
+            self.assertEqual(row.stt.value, 39 + index)  # hai nguồn trùng nhau
+            self.assertEqual(row.stt.confidence, Decimal("0.9500"))
+
+    def test_stt_on_paper_is_empty_when_the_two_sources_disagree(self) -> None:
+        reads = [39 + i for i in range(ROWS) if i != STRUCK]
+        reads[1] = 88  # một ô STT đọc sai; bỏ phiếu vẫn suy đúng STT đầu trang
+        result = build(name=StubNameReader(stt_values=reads), stt_check=True).recognize(self.image)
+        self.assertEqual(result.rows[1].stt_read, 88)
+        self.assertEqual(result.rows[1].stt_from_position, 40)
+        self.assertIsNone(result.rows[1].stt.value)
+        self.assertEqual(result.rows[1].stt.raw_output, "88")
+        self.assertEqual(result.rows[0].stt.value, 39)
+
+    def test_a_page_with_unreadable_stt_cells_has_no_position_inference(self) -> None:
+        result = build(name=StubNameReader(stt_values=[None] * 20), stt_check=True).recognize(self.image)
+        for row in result.rows:
+            self.assertIsNone(row.stt_from_position)
+            self.assertIsNone(row.stt.value)
+
+    def test_stt_parsing_accepts_one_number_only(self) -> None:
+        from src.adapters.model import parse_stt
+
+        self.assertEqual([parse_stt(t) for t in ("12", "12.", " 7 ", "a12", "123")], [12, 12, 7, 12, 123])
+        for bad in ("", None, "1 2", "0", "501", "abc"):
+            self.assertIsNone(parse_stt(bad))
 
     def test_struck_and_blank_rows_have_blank_channels_and_no_reading(self) -> None:
         struck = self.result.rows[STRUCK]

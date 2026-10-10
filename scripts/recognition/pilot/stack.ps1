@@ -51,6 +51,7 @@ function Set-PilotEnvironment {
   $env:RECOGNITION_NAME_WEIGHTS = Join-Path $weights 'vietocr_vgg_seq2seq_pretrained.pth'
   $env:RECOGNITION_NAME_SHA256 = $nameSha
   $env:RECOGNITION_DEVICE = 'cpu'
+  $env:RECOGNITION_STT_CHECK = '1'
   $env:RECOGNITION_TIMEOUT_MS = $timeoutMs
   $env:PYTHONIOENCODING = 'utf-8'
 }

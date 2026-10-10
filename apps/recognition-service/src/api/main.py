@@ -53,6 +53,10 @@ class RowResponse(BaseModel):
     reviewLevel: str
     # Kênh cho giá trị gợi ý: "SO" | "CHU"; null khi Đỏ (không gợi ý giá trị).
     suggestedSource: str | None = None
+    # Đối chiếu STT (RECOGNITION_STT_CHECK=1): STT đọc ở ô STT in, STT suy theo vị trí dòng; null khi tắt/không có. `stt.value` là
+    # STT trên giấy = giá trị khi hai nguồn trùng nhau.
+    sttRead: int | None = None
+    sttFromPosition: int | None = None
 
 
 class RecognitionResponse(BaseModel):
@@ -150,6 +154,8 @@ async def recognize(
                 nameCropBase64=crop(item.name_crop),
                 comparison=classification.comparison.value,
                 reviewLevel=classification.level.value,
+                sttRead=item.stt_read,
+                sttFromPosition=item.stt_from_position,
                 suggestedSource=(
                     classification.suggestion.value if classification.suggestion else None
                 ),

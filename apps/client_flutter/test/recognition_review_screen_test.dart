@@ -148,7 +148,7 @@ class ReviewTestServer implements HttpClientAdapter {
             'rowId': 'r-yellow',
             'order': 2,
             'stt': 2,
-            'sttOnPaper': null,
+            'sttOnPaper': 5,
             'studentId': 102,
             'studentName': 'Trần Thị Bình',
             'nameRead': 'Tran Thi Binh',
@@ -174,7 +174,7 @@ class ReviewTestServer implements HttpClientAdapter {
             'rowId': 'r-red',
             'order': 3,
             'stt': 3,
-            'sttOnPaper': null,
+            'sttOnPaper': 3,
             'studentId': 103,
             'studentName': 'Lê Hoàng Cúc',
             'nameRead': 'Le Hoang Cuc',
@@ -372,9 +372,41 @@ void main() {
         expect(find.text('Đối chiếu nhận dạng #42'), findsOneWidget);
 
         // STT and student names
-        expect(find.textContaining('STT 1 · Nguyễn Văn An'), findsOneWidget);
-        expect(find.textContaining('STT 2 · Trần Thị Bình'), findsOneWidget);
-        expect(find.textContaining('STT 3 · Lê Hoàng Cúc'), findsOneWidget);
+        expect(
+          find.textContaining('STT hệ thống 1 · Nguyễn Văn An'),
+          findsOneWidget,
+        ); // sttOnPaper null: ẩn "trên giấy"
+        expect(
+          find.textContaining('STT hệ thống 2 · trên giấy 5 · Trần Thị Bình'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('STT hệ thống 3 · trên giấy 3 · Lê Hoàng Cúc'),
+          findsOneWidget,
+        );
+
+        // N màu cam khi khác M; khi bằng nhau hoặc ẩn thì không có màu cảnh báo.
+        Color? paperColour(String title) {
+          final rich = tester
+              .widgetList<RichText>(find.byType(RichText))
+              .firstWhere((w) => w.text.toPlainText().startsWith(title));
+          final spans = <TextSpan>[];
+          rich.text.visitChildren((span) {
+            if (span is TextSpan) spans.add(span);
+            return true;
+          });
+          return spans
+              .firstWhere((span) => span.text == title.split('trên giấy ').last)
+              .style
+              ?.color;
+        }
+
+        expect(
+          paperColour('STT hệ thống 2 · trên giấy 5'),
+          Colors.orange.shade800,
+        );
+        expect(paperColour('STT hệ thống 3 · trên giấy 3'), isNull);
+        expect(find.textContaining('STT hệ thống 1 · trên giấy'), findsNothing);
 
         // Name crops & match confidences
         expect(find.text('Tên đọc được: Nguyen Van An'), findsOneWidget);

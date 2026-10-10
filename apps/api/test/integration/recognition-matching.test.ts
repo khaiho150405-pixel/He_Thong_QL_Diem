@@ -59,7 +59,10 @@ function paperRow(
   };
 }
 
-async function setup(rows: (names: string[]) => RecognitionRowResult[]) {
+async function setup(
+  rows: (names: string[]) => RecognitionRowResult[],
+  sttCheck = false,
+) {
   const f = await createRosterFixture();
   const database = new PrismaClient({
     adapter: new PrismaPg({
@@ -90,6 +93,7 @@ async function setup(rows: (names: string[]) => RecognitionRowResult[]) {
     new PrismaRecognitionWorkerStore(database),
     storage,
     model,
+    { sttCheck },
   );
   const state = async () => {
     const ticket = (
@@ -186,25 +190,31 @@ test("upload → worker maps each row to the right student by STT and drops stru
 });
 
 test("final level combines the grade level with the match level and keeps both traces", async () => {
-  const t = await setup((names) => [
-    paperRow(1, 1, names[0]!, "9.0", {
-      comparison: "LECH",
-      reviewLevel: "VANG",
-    }),
-    // STT in trên giấy mâu thuẫn học sinh được ghép → Đỏ do ghép dù hai kênh khớp.
-    paperRow(2, 9, names[1]!, "5.0"),
-    paperRow(3, 3, names[2]!, "7.5"),
-    paperRow(4, 4, names[3]!, "6.0"),
-  ]);
+  const t = await setup(
+    (names) => [
+      paperRow(1, 1, names[0]!, "9.0", {
+        comparison: "LECH",
+        reviewLevel: "VANG",
+      }),
+      // Tên khớp mạnh nhưng STT in trên giấy mâu thuẫn học sinh được ghép → hạ xuống Vàng (cờ xác nhận STT bật).
+      paperRow(2, 9, names[1]!, "5.0"),
+      paperRow(3, 3, names[2]!, "7.5"),
+      paperRow(4, 4, names[3]!, "6.0"),
+    ],
+    true,
+  );
   try {
     await t.worker.process(t.receipt.ticketId);
     const { ticket, evidence } = await t.state();
     assert.equal(ticket.status, "CHO_DOI_CHIEU");
     assert.deepEqual(
       evidence.map((r) => r.level),
-      ["VANG", "DO", "XANH", "XANH"],
+      ["VANG", "VANG", "XANH", "XANH"],
     );
-    assert.match(String(evidence[1]!.ghi_chu_ghep), /STT trên giấy \(9\)/);
+    assert.equal(
+      evidence[1]!.ghi_chu_ghep,
+      "STT trên giấy 9 khác STT dự kiến 2.",
+    );
     assert.equal(Number(evidence[1]!.match_conf) >= 0, true);
     assert.equal(evidence[1]!.stt_giay, 9);
   } finally {

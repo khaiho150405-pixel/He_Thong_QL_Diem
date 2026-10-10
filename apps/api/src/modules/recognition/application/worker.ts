@@ -67,6 +67,8 @@ export class RecognitionJobProcessor {
     private readonly store: RecognitionWorkerStore,
     private readonly storage: ObjectStorage,
     private readonly model: RecognitionModelClient,
+    /** Lớp xác nhận STT (RECOGNITION_STT_CHECK, mặc định tắt): chỉ hạ mức dòng, không gán học sinh. */
+    private readonly options: { sttCheck?: boolean } = {},
   ) {}
 
   async process(ticketId: string): Promise<void> {
@@ -93,11 +95,23 @@ export class RecognitionJobProcessor {
       }
       throw error;
     }
-    const matched = matchRows(result.rows.map(detected), roster);
+    const matched = matchRows(result.rows.map(detected), roster, {
+      sttCheck: this.options.sttCheck === true,
+    });
     if (!matched.ok) {
       await this.store.fail(ticketId, matched.code);
       return;
     }
+    if (matched.stt.enabled)
+      // Mô hình STT đã chọn cho trang (quy ước A/B, độ lệch k, có cộng dòng gạch không); không chứa họ tên.
+      console.log(
+        JSON.stringify({
+          event: "recognition_stt_model",
+          ticketId,
+          model: matched.stt.model,
+          evidence: matched.stt.evidence,
+        }),
+      );
     const byIndex = new Map(result.rows.map((row) => [row.rowIndex, row]));
     const stored: unknown[] = [];
     const uploaded: string[] = [];

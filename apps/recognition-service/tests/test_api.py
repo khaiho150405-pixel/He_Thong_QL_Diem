@@ -68,6 +68,8 @@ class ApiContractTest(IsolatedAsyncioTestCase):
                 "comparison",
                 "reviewLevel",
                 "suggestedSource",
+                "sttRead",
+                "sttFromPosition",
             },
         )
         self.assertEqual(set(body["rows"][0]["stt"]), {"raw", "value", "confidence", "isBlank"})
