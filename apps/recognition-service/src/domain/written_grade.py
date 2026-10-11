@@ -47,9 +47,24 @@ def so_tu_chuoi_so(pred: str):
     return v if 0.0 <= v <= 10.0 else None
 
 
+# Từ "điểm" viết kèm (mười điểm, chín điểm rưỡi, bảy điểm năm) không mang giá trị: bỏ token đứng riêng này trước khi giải.
+TU_THUA = frozenset({"điểm", "diem", "đ"})
+
+
+def bo_tu_thua(pred: str) -> str:
+    """Bỏ các token đứng riêng "điểm"/"diem"/"đ" ("chín điểm rưỡi" -> "chín rưỡi"); chuỗi không có token này (hoặc chỉ
+    gồm các token này) được trả về nguyên vẹn."""
+    p = unicodedata.normalize("NFC", (pred or "").strip())
+    tokens = p.split()
+    giu = [t for t in tokens if t.lower() not in TU_THUA]
+    if not giu or len(giu) == len(tokens):
+        return p
+    return " ".join(giu)
+
+
 def so_tu_chuoi_chu(pred: str):
-    """'bảy rưỡi' -> 7.5 ; 'mười' -> 10.0 ; trả None nếu không giải được."""
-    p = chuan_hoa(pred)
+    """'bảy rưỡi' -> 7.5 ; 'mười' -> 10.0 ; 'chín điểm rưỡi' -> 9.5 ; trả None nếu không giải được."""
+    p = chuan_hoa(bo_tu_thua(pred))
     if not p:
         return None
     tokens = p.split()
@@ -103,7 +118,7 @@ def nan_diem_chu(pred: str, tu_dien=None, khoang_cach_toi_da: int = 2) -> str:
     chắn. Ở đây chuỗi quá xa từ điển được giữ nguyên (không giải được ra điểm) để kênh chữ được coi là không đọc được
     và dòng không bị gợi ý giá trị tùy tiện (bất biến 4 trong AGENTS.md).
     """
-    p = unicodedata.normalize("NFC", (pred or "").strip())
+    p = bo_tu_thua(pred)
     dic = list(TU_DIEN if tu_dien is None else tu_dien)
     if not p or p in dic or so_tu_chuoi_chu(p) is not None:
         return p

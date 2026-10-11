@@ -192,6 +192,61 @@ Các lệnh `.ts` chạy trong cửa sổ đã chạy B3.
 
 Chỉ chạy web và API thì vẫn tải ảnh lên được, nhưng **sẽ không nhận dạng**: thiếu dispatcher/worker/recognition thì phiếu nằm mãi ở "Đang xử lý".
 
+### B9. Thử trên điện thoại qua LAN (chỉ môi trường phát triển)
+
+Khi mở bảng điểm trên điện thoại, API trả cho app các URL ảnh có chữ ký. Mặc định URL này trỏ tới `localhost:9000`, mà `localhost` trên điện thoại là chính điện thoại, nên **ảnh gốc và ảnh ô hiện khung xám trống**. Biến tùy chọn `S3_PUBLIC_ENDPOINT` cho API ký URL bằng địa chỉ mà điện thoại truy cập được; API vẫn upload và đọc MinIO qua `S3_ENDPOINT` (localhost).
+
+1. **Điều kiện:** điện thoại và máy tính cùng một Wi-Fi. Xem IP của máy bằng `ipconfig` (dòng IPv4 của card Wi-Fi), ví dụ `192.168.0.10`. Nên đặt IP cố định hoặc đặt chỗ trong router để IP không đổi.
+2. **Mở cổng MinIO ra LAN** (mặc định MinIO chỉ nghe `127.0.0.1`). Dùng thêm tệp ghi đè `infrastructure/compose.lan.yaml`, chỉ đổi MinIO; PostgreSQL và Redis vẫn chỉ nghe ở máy:
+
+   ```powershell
+   docker compose --env-file .env -f infrastructure/compose.yaml -f infrastructure/compose.lan.yaml up -d minio
+   ```
+
+   Lệnh tạo lại container MinIO; dữ liệu ảnh nằm trong volume nên không mất.
+
+3. **Đặt biến trong `.env`** (không commit), thay IP của bạn rồi khởi động lại API:
+
+   ```text
+   S3_PUBLIC_ENDPOINT=http://192.168.0.10:9000
+   ```
+
+   ```powershell
+   powershell -NoProfile -File scripts/recognition/pilot/stack.ps1 restart api
+   ```
+
+   Giữ nguyên `S3_ENDPOINT=http://localhost:9000`. Chỉ API cần biến mới; worker và dịch vụ nhận dạng không ký URL. Ngoài môi trường phát triển, `S3_PUBLIC_ENDPOINT` phải là `https`.
+
+4. **Mở tường lửa Windows** cho đúng hai cổng, chỉ ở mạng Private. Chạy PowerShell **với quyền Administrator**:
+
+   ```powershell
+   New-NetFirewallRule -DisplayName "QLD dev API 3000" -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow -Profile Private
+   New-NetFirewallRule -DisplayName "QLD dev MinIO 9000" -Direction Inbound -Protocol TCP -LocalPort 9000 -Action Allow -Profile Private
+   ```
+
+   Không mở 8000 (dịch vụ nhận dạng), 5433 (PostgreSQL), 6379 (Redis), 9001 (bảng điều khiển MinIO). Nếu Wi-Fi đang là mạng **Public** thì Windows vẫn chặn: đổi sang Private trong Cài đặt → Mạng, hoặc đổi `-Profile`.
+
+5. **Cấu hình app trên điện thoại** trỏ tới API qua LAN, ví dụ `apps/client_flutter/config/mobile-lan.json` (tệp riêng của máy bạn):
+
+   ```json
+   { "APP_ENV": "development", "API_BASE_URL": "http://192.168.0.10:3000" }
+   ```
+
+   rồi build/cài với `flutter run --dart-define-from-file=config/mobile-lan.json` (hoặc `flutter build apk --dart-define-from-file=config/mobile-lan.json`).
+
+6. **Kiểm tra từ trình duyệt trên điện thoại:** `http://192.168.0.10:9000/minio/health/live` phải trả 200 (MinIO) và `http://192.168.0.10:3000/api/v1/health/live` phải trả 200 (API). Sau đó mở một phiếu trong app: ảnh gốc và ảnh ô hiện ra, URL ảnh bắt đầu bằng `http://192.168.0.10:9000/`.
+
+**Dọn sau khi thử:**
+
+```powershell
+Remove-NetFirewallRule -DisplayName "QLD dev API 3000", "QLD dev MinIO 9000"
+docker compose --env-file .env -f infrastructure/compose.yaml up -d minio
+```
+
+rồi xóa dòng `S3_PUBLIC_ENDPOINT` trong `.env` và `stack.ps1 restart api`.
+
+**Lưu ý an toàn:** chỉ làm trên mạng nhà/mạng tin cậy. MinIO mở cổng 9000 với tài khoản gốc từ `.env`, API chạy HTTP không mã hóa, và URL ký chỉ sống tối đa 300 giây. Không dùng cách này ở mạng công cộng hay môi trường thật. Nếu IP máy đổi, sửa lại `S3_PUBLIC_ENDPOINT`, `mobile-lan.json` và restart API.
+
 ---
 
 ## Xử lý sự cố
@@ -206,6 +261,7 @@ Chỉ chạy web và API thì vẫn tải ảnh lên được, nhưng **sẽ kh�
 | Nhiều dòng Vàng, ghi chú "Không xác nhận được STT" | ô STT in bị mờ/bóng nên không đọc chắc; chụp lại rõ cột STT, hoặc tạm đặt `RECOGNITION_STT_CHECK=0`                |
 | Nhiều dòng Vàng, ghi chú "Họ tên khớp một phần"    | ảnh mờ hoặc có bóng, đọc thiếu phần tên                                                                            | chụp thẳng, đủ sáng, không có bóng tay; xem phóng to ô họ tên                                                 |
 | `TEST_MIGRATION_URL ending with _test is required` | chưa chạy B3 trong cửa sổ PowerShell hiện tại                                                                      | chạy lại đoạn B3                                                                                              |
+| Ảnh gốc/ảnh ô là khung xám trống trên điện thoại   | URL ảnh ký ra `localhost:9000` (điện thoại không tới được)                                                         | đặt `S3_PUBLIC_ENDPOINT` theo IP LAN, mở MinIO ra LAN và tường lửa, `stack.ps1 restart api` (mục B9)          |
 | Web vẫn là bản cũ                                  | trình duyệt giữ cache                                                                                              | Ctrl+F5; nếu code Flutter đổi thì build lại web rồi `stack.ps1 restart web`                                   |
 
 ## Lưu ý an toàn dữ liệu

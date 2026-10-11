@@ -5,6 +5,8 @@ export interface AppConfig {
   databaseUrl: string;
   redisUrl: string;
   s3Endpoint: string;
+  /** Host công khai dùng để KÝ URL ảnh trả cho client (điện thoại qua LAN); API vẫn upload/đọc MinIO qua s3Endpoint. */
+  s3PublicEndpoint?: string;
   s3AccessKey: string;
   s3SecretKey: string;
   s3Bucket: string;
@@ -78,6 +80,10 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
   }
   const redisUrl = url("REDIS_URL", ["redis:", "rediss:"]);
   const s3Endpoint = url("S3_ENDPOINT", ["http:", "https:"]);
+  // Tùy chọn: bỏ trống/không đặt thì URL ký dùng chính S3_ENDPOINT. Kiểm như S3_ENDPOINT (http/https; ngoài development phải https).
+  const s3PublicEndpoint = env.S3_PUBLIC_ENDPOINT?.trim()
+    ? url("S3_PUBLIC_ENDPOINT", ["http:", "https:"])
+    : undefined;
   const recognitionServiceUrl = url("RECOGNITION_SERVICE_URL", [
     "http:",
     "https:",
@@ -87,6 +93,8 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
       throw new Error("TLS required: REDIS_URL");
     if (new URL(s3Endpoint).protocol !== "https:")
       throw new Error("TLS required: S3_ENDPOINT");
+    if (s3PublicEndpoint && new URL(s3PublicEndpoint).protocol !== "https:")
+      throw new Error("TLS required: S3_PUBLIC_ENDPOINT");
     if (new URL(recognitionServiceUrl).protocol !== "https:")
       throw new Error("TLS required: RECOGNITION_SERVICE_URL");
     const sslMode = new URL(databaseUrl).searchParams.get("sslmode");
@@ -100,6 +108,7 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
     databaseUrl,
     redisUrl,
     s3Endpoint,
+    s3PublicEndpoint,
     s3AccessKey: required("S3_ACCESS_KEY"),
     s3SecretKey: required("S3_SECRET_KEY"),
     s3Bucket: required("S3_BUCKET"),

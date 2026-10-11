@@ -104,7 +104,7 @@ async function setup(
     ).rows[0];
     const evidence = (
       await f.owner.query(
-        "SELECT thu_tu_dong,ma_hoc_sinh,muc_phan_loai::text AS level,stt_giay,ho_ten_doc_duoc,do_tin_cay_ghep::text AS match_conf,duong_dan_anh_o_ten,ghi_chu_ghep FROM ket_qua_dong WHERE ma_phieu=$1 ORDER BY thu_tu_dong",
+        "SELECT thu_tu_dong,ma_hoc_sinh,muc_phan_loai::text AS level,stt_giay,ho_ten_doc_duoc,do_tin_cay_ghep::text AS match_conf,duong_dan_anh_o_ten,ghi_chu_ghep,muc_ghep::text AS match_level FROM ket_qua_dong WHERE ma_phieu=$1 ORDER BY thu_tu_dong",
         [receipt.ticketId],
       )
     ).rows;
@@ -217,6 +217,11 @@ test("final level combines the grade level with the match level and keeps both t
     );
     assert.equal(Number(evidence[1]!.match_conf) >= 0, true);
     assert.equal(evidence[1]!.stt_giay, 9);
+    // Mức ghép lưu riêng cột muc_ghep: dòng 1 điểm Vàng nhưng ghép Xanh, dòng 2 ghép Vàng (STT lệch).
+    assert.deepEqual(
+      evidence.map((r) => r.match_level),
+      ["XANH", "VANG", "XANH", "XANH"],
+    );
   } finally {
     await t.close();
   }

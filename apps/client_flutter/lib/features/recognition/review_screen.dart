@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../authentication/session.dart';
 import '../gradebooks/repository.dart';
-import 'image_preview.dart';
 import 'repository.dart';
+import 'review/review_bottom_bar.dart';
+import 'review/review_green_group.dart';
+import 'review/review_header.dart';
+import 'review/review_mobile_pager.dart';
+import 'review/review_models.dart';
+import 'review/review_row_card.dart';
+import 'review/review_source_image.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   const ReviewScreen({
@@ -30,14 +35,19 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   final formKey = GlobalKey<FormState>();
   final values = <String, TextEditingController>{};
   final reasons = <String, TextEditingController>{};
+  final leavingEmpty = <String, bool>{};
+  final agreedYellow = <String, bool>{};
+  final sttConfirmed = <String, bool>{};
+  final focusNodes = <String, FocusNode>{};
+
   late Future<RecognitionTicketDetailDto> detail;
   RecognitionTicketDetailDto? loaded;
   num? _gradebookVersion;
-  // Có giá trị khi không lấy được version bảng điểm: không duyệt bằng version giả (tránh ghi đè/xung đột âm thầm).
   String? _versionError;
   bool confirmed = false;
   bool busy = false;
   String _reviewLevelFilter = 'ALL'; // 'ALL' | 'DO' | 'VANG' | 'XANH'
+  bool _mobileShowList = false;
 
   @override
   void initState() {
@@ -55,7 +65,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         _gradebookVersion = cells.book.version;
         _versionError = null;
       } catch (_) {
-        // Không dùng giá trị giả: giữ null, hiển thị lỗi + "Tải lại" và vô hiệu nút Duyệt.
         _versionError = 'Không tải được phiên bản bảng điểm';
       }
     }
@@ -71,6 +80,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         reasons[row.rowId] = TextEditingController(
           text: suggested == null ? '' : 'Đã đối chiếu ảnh nhận dạng',
         );
+        leavingEmpty[row.rowId] = false;
+        agreedYellow[row.rowId] = false;
+        sttConfirmed[row.rowId] = false;
+        focusNodes[row.rowId] = FocusNode();
       }
     }
     return data;
@@ -86,7 +99,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   String? _suggested(RecognitionEvidenceRowDto row) {
     if (row.reviewLevel.value == 'DO') return null;
-    // Luật hợp nhất hai kênh: máy cho biết kênh nào có giá trị gợi ý.
     switch (row.suggestedSource) {
       case RecognitionEvidenceRowDtoSuggestedSourceEnum.SO:
         return row.numericValue;
@@ -95,7 +107,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       case null:
         break;
     }
-    // Phiếu tạo trước luật hợp nhất (không có kênh gợi ý): giữ cách gợi ý cũ.
     if (row.comparison.value == 'KHOP') return row.numericValue;
     if (row.comparison.value == 'MOT_KENH') {
       return row.numericValue ?? row.writtenValue;
@@ -108,7 +119,99 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     for (final controller in [...values.values, ...reasons.values]) {
       controller.dispose();
     }
+    for (final node in focusNodes.values) {
+      node.dispose();
+    }
     super.dispose();
+  }
+
+  bool _hasSttDiff(RecognitionEvidenceRowDto r) =>
+      r.sttOnPaper != null && r.stt != null && r.sttOnPaper!.toInt() != r.stt;
+
+  bool _isSttWarning(RecognitionEvidenceRowDto r) =>
+      _hasSttDiff(r) && r.matchLevel?.value != 'XANH';
+
+  bool _isSttInfo(RecognitionEvidenceRowDto r) =>
+      _hasSttDiff(r) && r.matchLevel?.value == 'XANH';
+
+  bool _isRowRedHandled(RecognitionEvidenceRowDto row) {
+    return isRedRowHandled(
+      value: values[row.rowId]?.text,
+      reason: reasons[row.rowId]?.text,
+      leavingEmpty: leavingEmpty[row.rowId] ?? false,
+    );
+  }
+
+  bool _isRowYellowHandled(RecognitionEvidenceRowDto row) {
+    return isYellowRowHandled(
+      value: values[row.rowId]?.text,
+      reason: reasons[row.rowId]?.text,
+      suggestedValue: _suggested(row),
+      agreedYellow: agreedYellow[row.rowId] ?? false,
+      leavingEmpty: leavingEmpty[row.rowId] ?? false,
+    );
+  }
+
+  bool _isRowHandled(RecognitionEvidenceRowDto row) {
+    // Nếu là cảnh báo STT, bắt buộc phải tích "Đúng học sinh này"
+    if (_isSttWarning(row) && (sttConfirmed[row.rowId] != true)) {
+      return false;
+    }
+    if (row.reviewLevel.value == 'DO') return _isRowRedHandled(row);
+    if (row.reviewLevel.value == 'VANG') return _isRowYellowHandled(row);
+    if (_isSttInfo(row)) return true;
+    return true;
+  }
+
+  void _onSttConfirmedChanged(String rowId, bool isConfirmed) {
+    setState(() {
+      sttConfirmed[rowId] = isConfirmed;
+    });
+  }
+
+  void _onGradeChanged(String rowId, String text) {
+    setState(() {
+      if (isValidGrade(text)) {
+        reasons[rowId]?.text = 'Đã đối chiếu ảnh nhận dạng';
+        leavingEmpty[rowId] = false;
+      }
+    });
+  }
+
+  void _onLeaveEmpty(String rowId) {
+    setState(() {
+      values[rowId]?.text = '';
+      reasons[rowId]?.text = '';
+      leavingEmpty[rowId] = true;
+    });
+  }
+
+  void _onCancelLeaveEmpty(String rowId, RecognitionEvidenceRowDto row) {
+    setState(() {
+      leavingEmpty[rowId] = false;
+      final suggested = _suggested(row);
+      if (suggested != null) {
+        values[rowId]?.text = suggested;
+        reasons[rowId]?.text = 'Đã đối chiếu ảnh nhận dạng';
+      }
+    });
+  }
+
+  void _onAgreeYellow(String rowId) {
+    setState(() {
+      agreedYellow[rowId] = true;
+    });
+  }
+
+  void _focusNextNeedReview(
+    String currentRowId,
+    List<RecognitionEvidenceRowDto> needReviewRows,
+  ) {
+    final index = needReviewRows.indexWhere((r) => r.rowId == currentRowId);
+    if (index >= 0 && index + 1 < needReviewRows.length) {
+      final nextId = needReviewRows[index + 1].rowId;
+      focusNodes[nextId]?.requestFocus();
+    }
   }
 
   Future<void> approve() async {
@@ -120,6 +223,31 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         !(formKey.currentState?.validate() ?? false)) {
       return;
     }
+
+    final redRows = data.rows.where((r) => r.reviewLevel.value == 'DO');
+    if (!redRows.every(_isRowRedHandled)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Vui lòng xử lý tất cả các dòng Đỏ (nhập điểm hoặc để trống có lý do) trước khi duyệt.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final sttWarningRows = data.rows.where(_isSttWarning);
+    if (!sttWarningRows.every((r) => sttConfirmed[r.rowId] == true)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Vui lòng xác nhận đúng học sinh cho các dòng có cảnh báo STT trước khi duyệt.',
+          ),
+        ),
+      );
+      return;
+    }
+
     for (final row in data.rows) {
       final value = values[row.rowId]!.text.trim();
       final reason = reasons[row.rowId]!.text.trim();
@@ -141,6 +269,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         return;
       }
     }
+
     setState(() => busy = true);
     try {
       await ref
@@ -177,65 +306,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     }
   }
 
-  Widget _reviewLevelBadge(String level) {
-    Color bg;
-    Color fg;
-    String label;
-    IconData icon;
-
-    switch (level) {
-      case 'XANH':
-        bg = Colors.green.shade50;
-        fg = Colors.green.shade800;
-        label = 'XANH · Khớp tin cậy';
-        icon = Icons.check_circle_rounded;
-        break;
-      case 'VANG':
-        bg = Colors.orange.shade50;
-        fg = Colors.orange.shade900;
-        label = 'VÀNG · Cần đối chiếu';
-        icon = Icons.warning_amber_rounded;
-        break;
-      case 'DO':
-      default:
-        bg = Colors.red.shade50;
-        fg = Colors.red.shade900;
-        label = 'ĐỎ · Bắt buộc xem xét';
-        icon = Icons.error_rounded;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: fg.withAlpha(80)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: fg),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: fg,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isDesktop = screenWidth >= 1024;
+    final isTablet = screenWidth >= 600 && screenWidth < 1024;
+    final isMobile = screenWidth < 600;
 
     return PopScope(
       canPop: !busy,
@@ -275,8 +353,11 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 ),
               );
             }
+
             final data = snapshot.data!;
             final canApprove = data.status.value == 'CHO_DOI_CHIEU';
+
+            // Sắp xếp thứ tự: Đỏ -> Vàng -> Xanh, sau đó theo STT
             final orderedRows = [...data.rows]
               ..sort((left, right) {
                 const priority = {'DO': 0, 'VANG': 1, 'XANH': 2};
@@ -297,490 +378,164 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 return left.order.compareTo(right.order);
               });
 
-            final greenCount = data.greenRows;
-            final yellowCount = data.yellowRows;
-            final redCount = data.redRows;
-            final totalRows = data.detectedRows ?? data.rows.length;
+            final needReviewRows = orderedRows
+                .where(
+                  (r) =>
+                      r.reviewLevel.value == 'DO' ||
+                      r.reviewLevel.value == 'VANG' ||
+                      _hasSttDiff(r),
+                )
+                .toList();
+            final greenRows = orderedRows
+                .where((r) => r.reviewLevel.value == 'XANH' && !_hasSttDiff(r))
+                .toList();
+
+            final totalNeedReview = needReviewRows.length;
+            final reviewedCount = needReviewRows
+                .where((r) => _isRowHandled(r))
+                .length;
+            final allRedHandled = orderedRows
+                .where((r) => r.reviewLevel.value == 'DO')
+                .every((r) => _isRowRedHandled(r));
+            final allSttWarningsConfirmed = orderedRows
+                .where(_isSttWarning)
+                .every((r) => sttConfirmed[r.rowId] == true);
+
+            // Bộ lọc: danh sách các dòng cần hiển thị
+            final filteredNeedReviewRows = needReviewRows.where((r) {
+              if (_reviewLevelFilter == 'ALL') return true;
+              if (_reviewLevelFilter == 'STT_DIFF') return _hasSttDiff(r);
+              return r.reviewLevel.value == _reviewLevelFilter;
+            }).toList();
+
+            final showGreenCollapsible =
+                (_reviewLevelFilter == 'ALL' || _reviewLevelFilter == 'XANH') &&
+                _reviewLevelFilter != 'STT_DIFF';
 
             return Form(
               key: formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                cacheExtent: 5000,
+              child: Column(
                 children: [
-                  if (_versionError != null) ...[
-                    Card(
+                  // Lỗi version nếu có
+                  if (_versionError != null)
+                    Container(
                       key: const ValueKey('review-version-error'),
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       color: colorScheme.errorContainer,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline_rounded,
-                              color: colorScheme.onErrorContainer,
-                            ),
-                            Text(
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: colorScheme.onErrorContainer,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
                               '$_versionError. Chưa thể duyệt phiếu.',
                               style: TextStyle(
                                 color: colorScheme.onErrorContainer,
                                 fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            OutlinedButton.icon(
-                              key: const ValueKey('review-retry-version'),
-                              onPressed: busy ? null : refreshEvidence,
-                              icon: const Icon(Icons.refresh_rounded),
-                              label: const Text('Tải lại'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceContainerHigh,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'Trạng thái: ${switch (data.status.value) {
-                                    'DANG_XU_LY' => 'Đang xử lý',
-                                    'CHO_DOI_CHIEU' => 'Chờ đối chiếu',
-                                    'DA_DUYET' => 'Đã duyệt',
-                                    'LOI' => 'Xử lý thất bại',
-                                    _ => data.status.value,
-                                  }}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: colorScheme.primary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                'Thành phần: ${data.componentName}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                child: Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: '$totalRows dòng · ',
-                                        style: TextStyle(
-                                          color: colorScheme.onSurface,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: '$greenCount Xanh',
-                                        style: TextStyle(
-                                          color: Colors.green.shade800,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: ' · ',
-                                        style: TextStyle(
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: '$yellowCount Vàng',
-                                        style: TextStyle(
-                                          color: Colors.orange.shade900,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: ' · ',
-                                        style: TextStyle(
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: '$redCount Đỏ',
-                                        style: TextStyle(
-                                          color: Colors.red.shade900,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (data.modelVersion?.startsWith('fake') ?? false)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                'Kết quả mô phỏng development. Không dùng để đánh giá độ chính xác mô hình thật.',
-                                style: TextStyle(
-                                  color: colorScheme.error,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 12),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 220),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                data.sourceImageUrl,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, _, _) => _expiredImage(
-                                  key: const ValueKey('review-refresh-source'),
-                                  label:
-                                      'Không tải được ảnh gốc. URL có thể đã hết hạn.',
-                                ),
+                                fontSize: 13,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          TextButton.icon(
-                            onPressed: () => showRecognitionImage(
-                              context,
-                              image: Image.network(
-                                data.sourceImageUrl,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, _, _) => const Center(
-                                  child: Text(
-                                    'Không tải được ảnh. Đóng và tải lại phiếu để lấy ảnh mới.',
-                                  ),
-                                ),
-                              ),
+                          OutlinedButton.icon(
+                            key: const ValueKey('review-retry-version'),
+                            onPressed: busy ? null : refreshEvidence,
+                            icon: const Icon(Icons.refresh_rounded, size: 16),
+                            label: const Text('Tải lại'),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(48, 36),
                             ),
-                            icon: const Icon(Icons.zoom_in),
-                            label: const Text('Phóng to ảnh gốc'),
                           ),
                         ],
                       ),
                     ),
+
+                  // Nội dung chính
+                  Expanded(
+                    child:
+                        isMobile &&
+                            !_mobileShowList &&
+                            totalNeedReview > 0 &&
+                            canApprove
+                        ? ReviewMobilePager(
+                            needReviewRows: filteredNeedReviewRows,
+                            greenRows: greenRows,
+                            values: values,
+                            reasons: reasons,
+                            leavingEmpty: leavingEmpty,
+                            agreedYellow: agreedYellow,
+                            enabled: canApprove && !busy,
+                            onGradeChanged: _onGradeChanged,
+                            onReasonChanged: (rowId, text) => setState(() {}),
+                            onLeaveEmpty: _onLeaveEmpty,
+                            onCancelLeaveEmpty: (rowId) {
+                              final row = needReviewRows.firstWhere(
+                                (r) => r.rowId == rowId,
+                              );
+                              _onCancelLeaveEmpty(rowId, row);
+                            },
+                            onAgreeYellow: _onAgreeYellow,
+                            onToggleMode: () =>
+                                setState(() => _mobileShowList = true),
+                            confirmed: confirmed,
+                            onConfirmedChanged: (val) =>
+                                setState(() => confirmed = val),
+                            onApprove: approve,
+                            totalRows: data.rows.length,
+                            canApprove: canApprove,
+                            allRedHandled: allRedHandled,
+                            hasGradebookVersion: _gradebookVersion != null,
+                            busy: busy,
+                            onRefresh: refreshEvidence,
+                            readOnly: !canApprove,
+                            sttConfirmed: sttConfirmed,
+                            onSttConfirmedChanged: _onSttConfirmedChanged,
+                            allSttWarningsConfirmed: allSttWarningsConfirmed,
+                            ticket: data,
+                            currentFilter: _reviewLevelFilter,
+                            onFilterChanged: (filter) =>
+                                setState(() => _reviewLevelFilter = filter),
+                            totalNeedReview: totalNeedReview,
+                            reviewedCount: reviewedCount,
+                          )
+                        : _buildStandardListLayout(
+                            context: context,
+                            ticket: data,
+                            needReviewRows: filteredNeedReviewRows,
+                            allNeedReviewRows: needReviewRows,
+                            greenRows: greenRows,
+                            totalNeedReview: totalNeedReview,
+                            reviewedCount: reviewedCount,
+                            canApprove: canApprove,
+                            allRedHandled: allRedHandled,
+                            isDesktop: isDesktop,
+                            isTablet: isTablet,
+                            isMobile: isMobile,
+                            showGreenCollapsible: showGreenCollapsible,
+                          ),
                   ),
-                  const SizedBox(height: 16),
-                  if (data.rows.isNotEmpty) ...[
-                    AppFilterDropdown<String>(
-                      key: ValueKey(_reviewLevelFilter),
-                      label: 'Lọc mức độ đối chiếu',
-                      icon: Icons.filter_alt_outlined,
-                      value: _reviewLevelFilter,
-                      width: double.infinity,
-                      items: [
-                        DropdownMenuItem(
-                          value: 'ALL',
-                          child: Text(
-                            'Tất cả ($totalRows dòng)',
-                            style: TextStyle(color: colorScheme.onSurface),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'DO',
-                          child: Text(
-                            'Đỏ · Bắt buộc xem xét ($redCount)',
-                            style: TextStyle(
-                              color: Colors.red.shade900,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'VANG',
-                          child: Text(
-                            'Vàng · Cần đối chiếu ($yellowCount)',
-                            style: TextStyle(
-                              color: Colors.orange.shade900,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'XANH',
-                          child: Text(
-                            'Xanh · Khớp tin cậy ($greenCount)',
-                            style: TextStyle(
-                              color: Colors.green.shade800,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                      onChanged: busy
-                          ? null
-                          : (value) => setState(
-                              () => _reviewLevelFilter = value ?? 'ALL',
-                            ),
+
+                  // Sticky bottom bar khi ở chế độ danh sách
+                  if (!isMobile || _mobileShowList || totalNeedReview == 0)
+                    ReviewBottomBar(
+                      confirmed: confirmed,
+                      onConfirmedChanged: (val) =>
+                          setState(() => confirmed = val),
+                      onApprove: approve,
+                      totalRows: data.rows.length,
+                      canApprove: canApprove,
+                      allRedHandled: allRedHandled,
+                      allSttWarningsConfirmed: allSttWarningsConfirmed,
+                      hasGradebookVersion: _gradebookVersion != null,
+                      busy: busy,
                     ),
-                    const SizedBox(height: 12),
-                  ],
-                  if (data.rows.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Center(
-                        child: Text(
-                          data.status.value == 'LOI'
-                              ? recognitionFailureMessage(data.errorCode)
-                              : 'Kết quả từng dòng chưa sẵn sàng.',
-                        ),
-                      ),
-                    ),
-                  for (final row
-                      in (_reviewLevelFilter == 'ALL'
-                          ? orderedRows
-                          : orderedRows
-                                .where(
-                                  (r) =>
-                                      r.reviewLevel.value == _reviewLevelFilter,
-                                )
-                                .toList()))
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: 'STT hệ thống ${row.stt ?? '—'}',
-                                      ),
-                                      // STT in trên giấy (hai nguồn xác nhận); ẩn khi không xác nhận được, cam khi khác STT hệ thống.
-                                      if (row.sttOnPaper != null) ...[
-                                        const TextSpan(text: ' · trên giấy '),
-                                        TextSpan(
-                                          text: '${row.sttOnPaper!.toInt()}',
-                                          style:
-                                              row.stt != null &&
-                                                  row.sttOnPaper!.toInt() !=
-                                                      row.stt
-                                              ? TextStyle(
-                                                  color: Colors.orange.shade800,
-                                                  fontWeight: FontWeight.w800,
-                                                )
-                                              : null,
-                                        ),
-                                      ],
-                                      TextSpan(
-                                        text:
-                                            ' · ${row.studentName} · ${row.reviewLevel.value}',
-                                      ),
-                                    ],
-                                  ),
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                _reviewLevelBadge(row.reviewLevel.value),
-                              ],
-                            ),
-                            if (row.matchNote != null &&
-                                row.matchNote!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: row.reviewLevel.value == 'DO'
-                                      ? Colors.red.shade50
-                                      : Colors.amber.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: row.reviewLevel.value == 'DO'
-                                        ? Colors.red.shade300
-                                        : Colors.amber.shade300,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.warning_amber_rounded,
-                                      size: 16,
-                                      color: row.reviewLevel.value == 'DO'
-                                          ? Colors.red.shade900
-                                          : Colors.amber.shade900,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        row.reviewLevel.value == 'DO'
-                                            ? 'Nghi lệch học sinh: ${row.matchNote}. Đối chiếu kỹ ảnh họ tên trên giấy với tên hệ thống!'
-                                            : 'Ghi chú ghép: ${row.matchNote}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: row.reviewLevel.value == 'DO'
-                                              ? Colors.red.shade900
-                                              : Colors.amber.shade900,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            if (row.reviewLevel.value == 'VANG' &&
-                                row.suggestedSource != null) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                row.suggestedSource ==
-                                        RecognitionEvidenceRowDtoSuggestedSourceEnum
-                                            .SO
-                                    ? 'Lấy theo điểm số'
-                                    : 'Lấy theo điểm chữ',
-                                key: ValueKey('review-source-${row.rowId}'),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.amber.shade900,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                _nameCropBox(row),
-                                _channel(
-                                  'Điểm số',
-                                  row.numericCropUrl,
-                                  row.numericRaw,
-                                  row.numericValue,
-                                  row.numericConfidence,
-                                  refreshEvidence,
-                                ),
-                                _channel(
-                                  'Điểm chữ',
-                                  row.writtenCropUrl,
-                                  row.writtenRaw,
-                                  row.writtenValue,
-                                  row.writtenConfidence,
-                                  refreshEvidence,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            TextFormField(
-                              key: ValueKey('review-value-${row.rowId}'),
-                              controller: values[row.rowId],
-                              enabled: canApprove && !busy,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Điểm cuối',
-                                helperText:
-                                    'Để trống nếu không ghi điểm cho học sinh này (ví dụ vắng); khi đó bắt buộc ghi lý do.',
-                                helperMaxLines: 2,
-                              ),
-                              validator: (value) {
-                                final text = value?.trim() ?? '';
-                                if (text.isEmpty) return null;
-                                return RegExp(
-                                      r'^(10[.]0|[0-9][.][0-9])$',
-                                    ).hasMatch(text)
-                                    ? null
-                                    : 'Nhập 0.0–10.0 với một chữ số thập phân.';
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              key: ValueKey('review-reason-${row.rowId}'),
-                              controller: reasons[row.rowId],
-                              enabled: canApprove && !busy,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Lý do / ghi chú xác nhận',
-                              ),
-                              validator: (value) {
-                                final text = value?.trim() ?? '';
-                                if (text.isEmpty) {
-                                  return values[row.rowId]!.text.trim().isEmpty
-                                      ? 'Cần ghi lý do không ghi điểm cho học sinh này.'
-                                      : 'Cần ghi lý do xác nhận.';
-                                }
-                                if (text.length > 500) {
-                                  return 'Tối đa 500 ký tự.';
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (canApprove) ...[
-                    const SizedBox(height: 8),
-                    CheckboxListTile(
-                      key: const ValueKey('review-confirm-all'),
-                      value: confirmed,
-                      onChanged: busy
-                          ? null
-                          : (value) =>
-                                setState(() => confirmed = value ?? false),
-                      title: const Text(
-                        'Tôi đã kiểm tra kỹ ảnh ô cắt và xác nhận các giá trị trên.',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      controlAffinity: ListTileControlAffinity.leading,
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton.icon(
-                      key: const ValueKey('review-approve'),
-                      onPressed: confirmed && !busy && _gradebookVersion != null
-                          ? approve
-                          : null,
-                      icon: const Icon(Icons.check_circle_rounded, size: 20),
-                      label: const Text('Duyệt và ghi nhận điểm chính thức'),
-                    ),
-                    if (busy) ...[
-                      const SizedBox(height: 12),
-                      const LinearProgressIndicator(),
-                    ],
-                  ],
                 ],
               ),
             );
@@ -790,244 +545,205 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  Widget _nameCropBox(RecognitionEvidenceRowDto row) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final boxWidth = (screenWidth - 72).clamp(100.0, 300.0);
-
-    return Container(
-      width: boxWidth,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: colorScheme.outlineVariant.withAlpha(80)),
-      ),
-      child: Column(
+  Widget _buildStandardListLayout({
+    required BuildContext context,
+    required RecognitionTicketDetailDto ticket,
+    required List<RecognitionEvidenceRowDto> needReviewRows,
+    required List<RecognitionEvidenceRowDto> allNeedReviewRows,
+    required List<RecognitionEvidenceRowDto> greenRows,
+    required int totalNeedReview,
+    required int reviewedCount,
+    required bool canApprove,
+    required bool allRedHandled,
+    required bool isDesktop,
+    required bool isTablet,
+    required bool isMobile,
+    required bool showGreenCollapsible,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.grey.shade300),
+          // Cột chính (danh sách các dòng)
+          Expanded(
+            child: ListView(
+              cacheExtent: 5000,
+              children: [
+                // Thanh tóm tắt dính đầu
+                ReviewHeader(
+                  ticket: ticket,
+                  currentFilter: _reviewLevelFilter,
+                  onFilterChanged: (filter) =>
+                      setState(() => _reviewLevelFilter = filter),
+                  totalNeedReview: totalNeedReview,
+                  reviewedCount: reviewedCount,
+                ),
+                const SizedBox(height: 12),
+
+                // Banner trạng thái khi phiếu không ở trạng thái CHO_DOI_CHIEU
+                if (!canApprove)
+                  _buildStatusBanner(context, ticket.status.value),
+
+                // Nút chuyển lại PageView trên mobile nếu có dòng cần xem
+                if (isMobile && totalNeedReview > 0 && canApprove) ...[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => setState(() => _mobileShowList = false),
+                      icon: const Icon(Icons.view_carousel_rounded, size: 18),
+                      label: const Text('Xem từng dòng (trượt)'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Ảnh gốc ở đầu trang khi ở Tablet hoặc Mobile List
+                if (!isDesktop) ...[
+                  ReviewSourceImage(ticket: ticket, onRefresh: refreshEvidence),
+                  const SizedBox(height: 12),
+                ],
+
+                // Danh sách dòng Đỏ / Vàng
+                for (final row in needReviewRows)
+                  ReviewRowCard(
+                    row: row,
+                    valueController: values[row.rowId]!,
+                    reasonController: reasons[row.rowId]!,
+                    isLeavingEmpty: leavingEmpty[row.rowId] ?? false,
+                    isAgreedYellow: agreedYellow[row.rowId] ?? false,
+                    enabled: canApprove && !busy,
+                    focusNode: focusNodes[row.rowId],
+                    onFocusNext: () =>
+                        _focusNextNeedReview(row.rowId, allNeedReviewRows),
+                    onGradeChanged: (val) => _onGradeChanged(row.rowId, val),
+                    onReasonChanged: (_) => setState(() {}),
+                    onLeaveEmpty: () => _onLeaveEmpty(row.rowId),
+                    onCancelLeaveEmpty: () =>
+                        _onCancelLeaveEmpty(row.rowId, row),
+                    onAgreeYellow: () => _onAgreeYellow(row.rowId),
+                    onRefresh: refreshEvidence,
+                    isDesktop: isDesktop,
+                    readOnly: !canApprove,
+                    isSttConfirmed: sttConfirmed[row.rowId] ?? false,
+                    onSttConfirmedChanged: (val) =>
+                        _onSttConfirmedChanged(row.rowId, val),
+                  ),
+
+                // Mục thu gọn dòng Xanh
+                if (showGreenCollapsible)
+                  ReviewGreenGroup(
+                    rows: greenRows,
+                    values: values,
+                    enabled: canApprove && !busy,
+                    onGradeChanged: _onGradeChanged,
+                    initiallyExpanded:
+                        _reviewLevelFilter == 'XANH' || totalNeedReview == 0,
+                    readOnly: !canApprove,
+                  ),
+              ],
             ),
-            child: row.nameCropUrl == null
-                ? const Center(
-                    child: Text(
-                      'Không có ảnh họ tên',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                  )
-                : InkWell(
-                    onTap: () => showRecognitionImage(
-                      context,
-                      image: Image.network(
-                        row.nameCropUrl!,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => const Center(
-                          child: Text(
-                            'Không tải được ảnh. Đóng và tải lại phiếu.',
-                          ),
-                        ),
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.network(
-                        row.nameCropUrl!,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => IconButton(
-                          tooltip: 'Ảnh hết hạn. Nhấn để tải lại.',
-                          onPressed: refreshEvidence,
-                          icon: const Icon(Icons.refresh_rounded, size: 20),
-                        ),
-                      ),
-                    ),
-                  ),
           ),
-          if (row.nameCropUrl != null)
-            TextButton.icon(
-              onPressed: () => showRecognitionImage(
-                context,
-                image: Image.network(
-                  row.nameCropUrl!,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Center(
-                    child: Text('Không tải được ảnh. Đóng và tải lại phiếu.'),
-                  ),
-                ),
-              ),
-              icon: const Icon(Icons.zoom_in, size: 18),
-              label: const Text('Phóng to họ tên'),
+
+          // Cột phải dính cho ảnh gốc trên Web (≥1024px)
+          if (isDesktop) ...[
+            const SizedBox(width: 14),
+            ReviewSourceImage(
+              ticket: ticket,
+              onRefresh: refreshEvidence,
+              isColumn: true,
             ),
-          const SizedBox(height: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Họ tên trên giấy',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Tên đọc được: ${row.nameRead ?? '—'}',
-                style: const TextStyle(fontSize: 11.5),
-              ),
-              if (row.matchConfidence != null)
-                Text(
-                  'Độ tin cậy: ${((double.tryParse(row.matchConfidence!) ?? 0) * 100).toStringAsFixed(1)}%',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _channel(
-    String label,
-    String? url,
-    String? raw,
-    String? value,
-    String? confidence,
-    VoidCallback onRefresh,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final boxWidth = (screenWidth - 72).clamp(100.0, 300.0);
-
-    return Container(
-      width: boxWidth,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: colorScheme.outlineVariant.withAlpha(80)),
+  Widget _buildStatusBanner(BuildContext context, String status) {
+    final (
+      icon,
+      bgColor,
+      borderColor,
+      textColor,
+      title,
+      subtitle,
+    ) = switch (status) {
+      'DA_DUYET' => (
+        Icons.verified_rounded,
+        Colors.green.shade50,
+        Colors.green.shade300,
+        Colors.green.shade900,
+        'Phiếu đã duyệt — chỉ xem',
+        'Điểm số đã được ghi chính thức vào hệ thống.',
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: url == null
-                ? const Center(
-                    child: Text('Không có ảnh', style: TextStyle(fontSize: 11)),
-                  )
-                : InkWell(
-                    onTap: () => showRecognitionImage(
-                      context,
-                      image: Image.network(
-                        url,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => const Center(
-                          child: Text(
-                            'Không tải được ảnh. Đóng và tải lại phiếu.',
-                          ),
-                        ),
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.network(
-                        url,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => IconButton(
-                          tooltip: 'Ảnh hết hạn. Nhấn để tải lại.',
-                          onPressed: onRefresh,
-                          icon: const Icon(Icons.refresh_rounded, size: 20),
-                        ),
-                      ),
+      'LOI' => (
+        Icons.error_outline_rounded,
+        Colors.red.shade50,
+        Colors.red.shade300,
+        Colors.red.shade900,
+        'Phiếu xử lý thất bại — chỉ xem',
+        'Đã xảy ra lỗi trong quá trình nhận dạng. Vui lòng kiểm tra lại ảnh.',
+      ),
+      'DANG_XU_LY' => (
+        Icons.pending_outlined,
+        Colors.amber.shade50,
+        Colors.amber.shade300,
+        Colors.amber.shade900,
+        'Phiếu đang xử lý — chỉ xem',
+        'Hệ thống đang tiến hành nhận dạng ảnh.',
+      ),
+      _ => (
+        Icons.info_outline_rounded,
+        Colors.blue.shade50,
+        Colors.blue.shade300,
+        Colors.blue.shade900,
+        'Phiếu ở trạng thái $status — chỉ xem',
+        'Chỉ xem, không thể chỉnh sửa giá trị.',
+      ),
+    };
+
+    return Card(
+      key: const ValueKey('review-status-banner'),
+      margin: const EdgeInsets.only(bottom: 12),
+      color: bgColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, color: textColor, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      color: textColor,
                     ),
                   ),
-          ),
-          if (url != null)
-            TextButton.icon(
-              onPressed: () => showRecognitionImage(
-                context,
-                image: Image.network(
-                  url,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Center(
-                    child: Text('Không tải được ảnh. Đóng và tải lại phiếu.'),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textColor.withAlpha(210),
+                    ),
                   ),
-                ),
+                ],
               ),
-              icon: const Icon(Icons.zoom_in, size: 18),
-              label: const Text('Phóng to ô điểm'),
             ),
-          const SizedBox(height: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Ký tự thô: ${raw ?? '—'}',
-                style: const TextStyle(fontSize: 11.5),
-              ),
-              Text(
-                'Giá trị: ${value ?? '—'}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                'Độ tin cậy: ${confidence == null ? '—' : '${((double.tryParse(confidence) ?? 0) * 100).toStringAsFixed(1)}%'}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-
-  Widget _expiredImage({required Key key, required String label}) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 12),
-        ),
-        const SizedBox(height: 6),
-        OutlinedButton.icon(
-          key: key,
-          onPressed: refreshEvidence,
-          icon: const Icon(Icons.refresh_rounded, size: 18),
-          label: const Text('Lấy URL ảnh mới'),
-        ),
-      ],
-    ),
-  );
 }

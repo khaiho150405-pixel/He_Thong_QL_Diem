@@ -63,6 +63,19 @@ Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính 
 
 Nhánh `codex/recognition-row-matching` (tạo từ nhánh `dang` ở BE-00). Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md`. Không sửa `apps/client_flutter`; chỗ Flutter cần xử lý ghi dưới mục "Việc cho FE".
 
+### Mức ghép riêng, lý do điểm trên màn hình đối chiếu, bỏ chữ "điểm" thừa (xong; chưa commit)
+
+- Migration `202610100001_match_level`: cột `ket_qua_dong.muc_ghep` (nullable) + `luu_ket_qua_nhan_dien` ghi `matchLevel` của row-matching; DTO thêm `matchLevel` (null với phiếu cũ) và `gradeLevel` (KHOP → XANH, có `suggestedSource` → VANG, còn lại DO; `grade-level.ts`). OpenAPI/client sinh lại. Lỗi cuối đã bắt: `service.ts` liệt kê trường thủ công nên bỏ mất trường mới → thêm test "không trường nào của kho bị bỏ khi dựng DTO".
+- `review_screen.dart`: "Nghi lệch học sinh" chỉ khi `matchLevel == DO` (null giữ hành vi cũ); ghép Xanh là ghi chú thông tin (xám, `info_outline`); dòng Vàng/Đỏ do điểm có thêm lý do ("Điểm chưa đủ tin cậy: Điểm số 10.0 (89,4%); Điểm chữ không đổi được ra điểm."); không thêm '.' thừa. 3 widget test.
+- `written_grade.py`: bỏ token đứng riêng "điểm"/"diem"/"đ" trước khi giải/nắn ("chín điểm rưỡi" → 9.5). DEV đo một lần: Điểm chữ 98,8%, Xanh/Vàng/Đỏ 697/22/6 (= BE-24c), gán sai 0; không đo TEST. `melos run check` dừng ở bước `dart format` vì `home_dashboard_content.dart` (commit giao diện gần nhất) chưa format, không sửa; analyze sạch và 78 test Flutter đạt.
+
+### S3_PUBLIC_ENDPOINT — URL ký ảnh dùng được từ điện thoại qua LAN (xong; chưa commit)
+
+- Triệu chứng: trên điện thoại ảnh gốc/ảnh ô là khung xám vì URL ký trỏ `localhost:9000`. Biến tùy chọn `S3_PUBLIC_ENDPOINT`: API vẫn upload/đọc MinIO qua `S3_ENDPOINT`, còn URL ký trả cho client được KÝ TRỰC TIẾP với endpoint công khai (client S3 thứ hai chỉ để ký, không thay chuỗi sau khi ký vì host nằm trong chữ ký).
+- `config.ts` (`s3PublicEndpoint?`, kiểm http/https như `S3_ENDPOINT`, ngoài development phải https), `database.ts` (`Settings`), `s3-object-storage.ts`, `.env.example`. Test: `foundation.test.ts` (đặt/không đặt/để trống/sai giao thức/TLS) và `object-storage-signing.test.ts` (URL ký bằng host nội bộ hoặc công khai, so với ký tham chiếu độc lập ở thời điểm cố định; không phải thay chuỗi; giới hạn hết hạn giữ nguyên).
+- `infrastructure/compose.lan.yaml` (chỉ MinIO nghe 0.0.0.0:9000, `!override`), mục B9 trong `phase-7-huong-dan-chay.md` (IP LAN, compose, `.env`, tường lửa chỉ cổng 3000 và 9000 ở profile Private, cấu hình app, kiểm tra, dọn dẹp) và một dòng xử lý sự cố. Chưa đặt biến trong `.env` của máy; cần `stack.ps1 restart api` sau khi đặt.
+- Kiểm tra: `pnpm typecheck`, `lint`, `format:check`, `pnpm test` (98). Chưa chạy lại integration (không đổi DB). Chưa commit/push.
+
 ### BE-24c — Mô hình độ lệch STT theo trang (xong; chưa commit)
 
 - Commit riêng trước: `8ea96e0 style(client): dart format` (5 tệp Flutter, không đổi logic). Lớp thử: hai học sinh ở dòng gạch (STT giấy 29, 38) đã đặt lại `dang_theo_hoc = true`.

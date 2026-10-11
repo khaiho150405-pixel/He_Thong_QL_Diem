@@ -116,6 +116,45 @@ test("configuration fails without secrets and rejects owner database roles", () 
     RECOGNITION_SERVICE_URL: "https://recognition.example.edu",
   };
   assert.equal(readConfig(secure).environment, "production");
+  // S3_PUBLIC_ENDPOINT (tùy chọn): không đặt/để trống → undefined; kiểm http/https như S3_ENDPOINT, ngoài development phải https.
+  assert.equal(readConfig(secure).s3PublicEndpoint, undefined);
+  assert.equal(
+    readConfig({ ...secure, S3_PUBLIC_ENDPOINT: "  " }).s3PublicEndpoint,
+    undefined,
+  );
+  assert.equal(
+    readConfig({ ...secure, S3_PUBLIC_ENDPOINT: "https://files.example.edu" })
+      .s3PublicEndpoint,
+    "https://files.example.edu",
+  );
+  assert.throws(
+    () =>
+      readConfig({ ...secure, S3_PUBLIC_ENDPOINT: "http://192.168.0.10:9000" }),
+    /TLS required: S3_PUBLIC_ENDPOINT/,
+  );
+  for (const invalid of ["not a url", "ftp://files.example.edu"])
+    assert.throws(
+      () => readConfig({ ...secure, S3_PUBLIC_ENDPOINT: invalid }),
+      /S3_PUBLIC_ENDPOINT/,
+      invalid,
+    );
+  const development = {
+    ...secure,
+    APP_ENV: "development",
+    ALLOWED_ORIGINS: "http://localhost:8080",
+    REDIS_URL: "redis://localhost:6379",
+    S3_ENDPOINT: "http://localhost:9000",
+    RECOGNITION_SERVICE_URL: "http://localhost:8000",
+    DATABASE_URL: "postgresql://app_runtime:hidden@localhost/grades",
+  };
+  assert.equal(
+    readConfig({
+      ...development,
+      S3_PUBLIC_ENDPOINT: "http://192.168.0.10:9000",
+    }).s3PublicEndpoint,
+    "http://192.168.0.10:9000",
+  );
+  assert.equal(readConfig(development).s3PublicEndpoint, undefined);
   assert.equal(readConfig(secure).uploadRateLimitPerMinute, 10);
   assert.equal(
     readConfig({ ...secure, UPLOAD_RATE_LIMIT_PER_MINUTE: "25" })

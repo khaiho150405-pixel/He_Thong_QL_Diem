@@ -54,6 +54,10 @@ class RecognitionEvidenceRowDto {
 
     required this.suggestedSource,
 
+    required this.matchLevel,
+
+    required this.gradeLevel,
+
     required this.finalValue,
 
     required this.numericCropUrl,
@@ -124,6 +128,14 @@ class RecognitionEvidenceRowDto {
   @JsonKey(name: r'suggestedSource', required: true, includeIfNull: true)
   final RecognitionEvidenceRowDtoSuggestedSourceEnum? suggestedSource;
 
+  /// Mức ghép học sinh (riêng khỏi mức điểm); null với phiếu cũ không lưu mức ghép
+  @JsonKey(name: r'matchLevel', required: true, includeIfNull: true)
+  final RecognitionEvidenceRowDtoMatchLevelEnum? matchLevel;
+
+  /// Mức điểm của hai kênh: hai kênh khớp = XANH; có kênh gợi ý = VANG; còn lại = DO
+  @JsonKey(name: r'gradeLevel', required: true, includeIfNull: true)
+  final RecognitionEvidenceRowDtoGradeLevelEnum? gradeLevel;
+
   @JsonKey(name: r'finalValue', required: true, includeIfNull: true)
   final String? finalValue;
 
@@ -159,6 +171,8 @@ class RecognitionEvidenceRowDto {
           other.comparison == comparison &&
           other.reviewLevel == reviewLevel &&
           other.suggestedSource == suggestedSource &&
+          other.matchLevel == matchLevel &&
+          other.gradeLevel == gradeLevel &&
           other.finalValue == finalValue &&
           other.numericCropUrl == numericCropUrl &&
           other.writtenCropUrl == writtenCropUrl &&
@@ -184,6 +198,8 @@ class RecognitionEvidenceRowDto {
       comparison.hashCode +
       reviewLevel.hashCode +
       (suggestedSource == null ? 0 : suggestedSource.hashCode) +
+      (matchLevel == null ? 0 : matchLevel.hashCode) +
+      (gradeLevel == null ? 0 : gradeLevel.hashCode) +
       (finalValue == null ? 0 : finalValue.hashCode) +
       (numericCropUrl == null ? 0 : numericCropUrl.hashCode) +
       (writtenCropUrl == null ? 0 : writtenCropUrl.hashCode) +
@@ -245,6 +261,50 @@ enum RecognitionEvidenceRowDtoSuggestedSourceEnum {
   CHU(r'CHU');
 
   const RecognitionEvidenceRowDtoSuggestedSourceEnum(this.value);
+
+  final String value;
+
+  @override
+  String toString() => value;
+}
+
+/// Mức ghép học sinh (riêng khỏi mức điểm); null với phiếu cũ không lưu mức ghép
+enum RecognitionEvidenceRowDtoMatchLevelEnum {
+  /// Mức ghép học sinh (riêng khỏi mức điểm); null với phiếu cũ không lưu mức ghép
+  @JsonValue(r'XANH')
+  XANH(r'XANH'),
+
+  /// Mức ghép học sinh (riêng khỏi mức điểm); null với phiếu cũ không lưu mức ghép
+  @JsonValue(r'VANG')
+  VANG(r'VANG'),
+
+  /// Mức ghép học sinh (riêng khỏi mức điểm); null với phiếu cũ không lưu mức ghép
+  @JsonValue(r'DO')
+  DO(r'DO');
+
+  const RecognitionEvidenceRowDtoMatchLevelEnum(this.value);
+
+  final String value;
+
+  @override
+  String toString() => value;
+}
+
+/// Mức điểm của hai kênh: hai kênh khớp = XANH; có kênh gợi ý = VANG; còn lại = DO
+enum RecognitionEvidenceRowDtoGradeLevelEnum {
+  /// Mức điểm của hai kênh: hai kênh khớp = XANH; có kênh gợi ý = VANG; còn lại = DO
+  @JsonValue(r'XANH')
+  XANH(r'XANH'),
+
+  /// Mức điểm của hai kênh: hai kênh khớp = XANH; có kênh gợi ý = VANG; còn lại = DO
+  @JsonValue(r'VANG')
+  VANG(r'VANG'),
+
+  /// Mức điểm của hai kênh: hai kênh khớp = XANH; có kênh gợi ý = VANG; còn lại = DO
+  @JsonValue(r'DO')
+  DO(r'DO');
+
+  const RecognitionEvidenceRowDtoGradeLevelEnum(this.value);
 
   final String value;
 

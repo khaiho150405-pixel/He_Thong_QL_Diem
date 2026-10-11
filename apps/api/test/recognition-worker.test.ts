@@ -262,6 +262,11 @@ test("final level is the lower of the grade level and the match level", async ()
   assert.equal(off.state.completed![1]!.reviewLevel, "XANH");
   // Mức điểm gốc của dịch vụ vẫn được giữ trong comparison.
   assert.equal(state.completed![0]!.comparison, "LECH");
+  // Mức ghép được ghi riêng khỏi mức cuối: dòng 1 điểm Vàng nhưng ghép Xanh; dòng 2 ghép Vàng (STT lệch) nên mức cuối Vàng.
+  assert.deepEqual(
+    state.completed!.map((item) => item.matchLevel),
+    ["XANH", "VANG", "XANH", "XANH", "XANH", "XANH"],
+  );
 });
 
 test("rows that cannot be matched mark the ticket ROW_MATCH_FAILED and store nothing", async () => {

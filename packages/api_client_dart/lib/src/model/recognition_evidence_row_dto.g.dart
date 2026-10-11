@@ -49,6 +49,14 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
     RecognitionEvidenceRowDtoSuggestedSourceEnum? suggestedSource,
   );
 
+  RecognitionEvidenceRowDto matchLevel(
+    RecognitionEvidenceRowDtoMatchLevelEnum? matchLevel,
+  );
+
+  RecognitionEvidenceRowDto gradeLevel(
+    RecognitionEvidenceRowDtoGradeLevelEnum? gradeLevel,
+  );
+
   RecognitionEvidenceRowDto finalValue(String? finalValue);
 
   RecognitionEvidenceRowDto numericCropUrl(String? numericCropUrl);
@@ -82,6 +90,8 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
     RecognitionEvidenceRowDtoComparisonEnum comparison,
     RecognitionEvidenceRowDtoReviewLevelEnum reviewLevel,
     RecognitionEvidenceRowDtoSuggestedSourceEnum? suggestedSource,
+    RecognitionEvidenceRowDtoMatchLevelEnum? matchLevel,
+    RecognitionEvidenceRowDtoGradeLevelEnum? gradeLevel,
     String? finalValue,
     String? numericCropUrl,
     String? writtenCropUrl,
@@ -169,6 +179,16 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
   ) => this(suggestedSource: suggestedSource);
 
   @override
+  RecognitionEvidenceRowDto matchLevel(
+    RecognitionEvidenceRowDtoMatchLevelEnum? matchLevel,
+  ) => this(matchLevel: matchLevel);
+
+  @override
+  RecognitionEvidenceRowDto gradeLevel(
+    RecognitionEvidenceRowDtoGradeLevelEnum? gradeLevel,
+  ) => this(gradeLevel: gradeLevel);
+
+  @override
   RecognitionEvidenceRowDto finalValue(String? finalValue) =>
       this(finalValue: finalValue);
 
@@ -210,6 +230,8 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
     Object? comparison = const $CopyWithPlaceholder(),
     Object? reviewLevel = const $CopyWithPlaceholder(),
     Object? suggestedSource = const $CopyWithPlaceholder(),
+    Object? matchLevel = const $CopyWithPlaceholder(),
+    Object? gradeLevel = const $CopyWithPlaceholder(),
     Object? finalValue = const $CopyWithPlaceholder(),
     Object? numericCropUrl = const $CopyWithPlaceholder(),
     Object? writtenCropUrl = const $CopyWithPlaceholder(),
@@ -288,6 +310,14 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
           ? _value.suggestedSource
           // ignore: cast_nullable_to_non_nullable
           : suggestedSource as RecognitionEvidenceRowDtoSuggestedSourceEnum?,
+      matchLevel: matchLevel == const $CopyWithPlaceholder()
+          ? _value.matchLevel
+          // ignore: cast_nullable_to_non_nullable
+          : matchLevel as RecognitionEvidenceRowDtoMatchLevelEnum?,
+      gradeLevel: gradeLevel == const $CopyWithPlaceholder()
+          ? _value.gradeLevel
+          // ignore: cast_nullable_to_non_nullable
+          : gradeLevel as RecognitionEvidenceRowDtoGradeLevelEnum?,
       finalValue: finalValue == const $CopyWithPlaceholder()
           ? _value.finalValue
           // ignore: cast_nullable_to_non_nullable
@@ -343,6 +373,8 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
       'comparison',
       'reviewLevel',
       'suggestedSource',
+      'matchLevel',
+      'gradeLevel',
       'finalValue',
       'numericCropUrl',
       'writtenCropUrl',
@@ -386,6 +418,20 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
         v,
       ),
     ),
+    matchLevel: $checkedConvert(
+      'matchLevel',
+      (v) => $enumDecodeNullable(
+        _$RecognitionEvidenceRowDtoMatchLevelEnumEnumMap,
+        v,
+      ),
+    ),
+    gradeLevel: $checkedConvert(
+      'gradeLevel',
+      (v) => $enumDecodeNullable(
+        _$RecognitionEvidenceRowDtoGradeLevelEnumEnumMap,
+        v,
+      ),
+    ),
     finalValue: $checkedConvert('finalValue', (v) => v as String?),
     numericCropUrl: $checkedConvert('numericCropUrl', (v) => v as String?),
     writtenCropUrl: $checkedConvert('writtenCropUrl', (v) => v as String?),
@@ -419,6 +465,10 @@ Map<String, dynamic> _$RecognitionEvidenceRowDtoToJson(
   'suggestedSource':
       _$RecognitionEvidenceRowDtoSuggestedSourceEnumEnumMap[instance
           .suggestedSource],
+  'matchLevel':
+      _$RecognitionEvidenceRowDtoMatchLevelEnumEnumMap[instance.matchLevel],
+  'gradeLevel':
+      _$RecognitionEvidenceRowDtoGradeLevelEnumEnumMap[instance.gradeLevel],
   'finalValue': instance.finalValue,
   'numericCropUrl': instance.numericCropUrl,
   'writtenCropUrl': instance.writtenCropUrl,
@@ -441,4 +491,16 @@ const _$RecognitionEvidenceRowDtoReviewLevelEnumEnumMap = {
 const _$RecognitionEvidenceRowDtoSuggestedSourceEnumEnumMap = {
   RecognitionEvidenceRowDtoSuggestedSourceEnum.SO: 'SO',
   RecognitionEvidenceRowDtoSuggestedSourceEnum.CHU: 'CHU',
+};
+
+const _$RecognitionEvidenceRowDtoMatchLevelEnumEnumMap = {
+  RecognitionEvidenceRowDtoMatchLevelEnum.XANH: 'XANH',
+  RecognitionEvidenceRowDtoMatchLevelEnum.VANG: 'VANG',
+  RecognitionEvidenceRowDtoMatchLevelEnum.DO: 'DO',
+};
+
+const _$RecognitionEvidenceRowDtoGradeLevelEnumEnumMap = {
+  RecognitionEvidenceRowDtoGradeLevelEnum.XANH: 'XANH',
+  RecognitionEvidenceRowDtoGradeLevelEnum.VANG: 'VANG',
+  RecognitionEvidenceRowDtoGradeLevelEnum.DO: 'DO',
 };

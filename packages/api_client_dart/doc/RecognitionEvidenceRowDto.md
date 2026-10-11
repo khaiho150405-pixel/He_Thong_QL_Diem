@@ -26,6 +26,8 @@ Name | Type | Description | Notes
 **comparison** | **String** |  |
 **reviewLevel** | **String** |  |
 **suggestedSource** | **String** | Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị |
+**matchLevel** | **String** | Mức ghép học sinh (riêng khỏi mức điểm); null với phiếu cũ không lưu mức ghép |
+**gradeLevel** | **String** | Mức điểm của hai kênh: hai kênh khớp = XANH; có kênh gợi ý = VANG; còn lại = DO |
 **finalValue** | **String** |  |
 **numericCropUrl** | **String** |  |
 **writtenCropUrl** | **String** |  |

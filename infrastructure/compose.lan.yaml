@@ -1,0 +1,10 @@
+# Thử ứng dụng trên điện thoại qua LAN (chỉ môi trường phát triển; xem docs/development/phase-7-huong-dan-chay.md, mục B9).
+# Chỉ MinIO được mở ra mạng LAN để điện thoại tải ảnh theo URL ký; PostgreSQL và Redis vẫn chỉ nghe ở 127.0.0.1.
+# Dùng kèm compose.yaml:
+#   docker compose --env-file .env -f infrastructure/compose.yaml -f infrastructure/compose.lan.yaml up -d minio
+services:
+  minio:
+    # !override thay hẳn danh sách ports của compose.yaml (nếu chỉ cộng thêm thì hai cổng 9000 sẽ xung đột).
+    ports: !override
+      - "0.0.0.0:9000:9000"
+      - "127.0.0.1:9001:9001"

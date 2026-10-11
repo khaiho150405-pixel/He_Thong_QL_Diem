@@ -185,6 +185,8 @@ test("detail signs private images and keeps storage keys internal", async () => 
           comparison: "KHOP",
           reviewLevel: "XANH",
           suggestedSource: "SO",
+          matchLevel: "XANH",
+          gradeLevel: "XANH",
           finalValue: null,
           numericCropKey: "recognition/crops/42/1-numeric.png",
           writtenCropKey: "recognition/crops/42/1-written.png",
@@ -210,6 +212,13 @@ test("detail signs private images and keeps storage keys internal", async () => 
   assert.equal(result.rows[0]!.nameRead, "Hoc sinh gia");
   assert.equal(result.rows[0]!.matchConfidence, "0.9700");
   assert.equal(result.rows[0]!.matchNote, "Khớp họ tên và STT.");
+  assert.equal(result.rows[0]!.suggestedSource, "SO");
+  assert.equal(result.rows[0]!.matchLevel, "XANH");
+  assert.equal(result.rows[0]!.gradeLevel, "XANH");
+  // Không trường nào của bản ghi trong kho được âm thầm bỏ khi dựng DTO (ngoài khóa đối tượng, được đổi thành URL ký).
+  const stored = (await store.detail(actor, 1, "42"))!.rows[0]!;
+  for (const key of Object.keys(stored).filter((k) => !k.endsWith("CropKey")))
+    assert.equal(key in result.rows[0]!, true, `thiếu trường ${key}`);
   assert.deepEqual(
     [result.greenRows, result.yellowRows, result.redRows],
     [1, 0, 0],

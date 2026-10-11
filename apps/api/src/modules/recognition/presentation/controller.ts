@@ -124,6 +124,22 @@ export class RecognitionEvidenceRowDto {
       "Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi mức Đỏ: không gợi ý giá trị",
   })
   suggestedSource!: string | null;
+  @ApiProperty({
+    type: String,
+    enum: ["XANH", "VANG", "DO"],
+    nullable: true,
+    description:
+      "Mức ghép học sinh (riêng khỏi mức điểm); null với phiếu cũ không lưu mức ghép",
+  })
+  matchLevel!: string | null;
+  @ApiProperty({
+    type: String,
+    enum: ["XANH", "VANG", "DO"],
+    nullable: true,
+    description:
+      "Mức điểm của hai kênh: hai kênh khớp = XANH; có kênh gợi ý = VANG; còn lại = DO",
+  })
+  gradeLevel!: string | null;
   @ApiProperty({ type: String, nullable: true }) finalValue!: string | null;
   @ApiProperty({ type: String, nullable: true }) numericCropUrl!: string | null;
   @ApiProperty({ type: String, nullable: true }) writtenCropUrl!: string | null;

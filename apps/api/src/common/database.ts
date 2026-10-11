@@ -10,6 +10,7 @@ export interface Settings {
   origins: string[];
   redisUrl?: string;
   s3Endpoint?: string;
+  s3PublicEndpoint?: string;
   s3AccessKey?: string;
   s3SecretKey?: string;
   s3Bucket?: string;

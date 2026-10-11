@@ -161,7 +161,10 @@ void main() {
         await tester.pumpAndSettle();
         expect(server.uploaded, isTrue);
         expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
-        expect(find.textContaining('Giá trị: 0.0'), findsNWidgets(2));
+        expect(
+          find.byKey(const ValueKey('review-green-group')),
+          findsOneWidget,
+        );
 
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());

@@ -99,6 +99,8 @@ export class RecognitionService {
             comparison: row.comparison,
             reviewLevel: row.reviewLevel,
             suggestedSource: row.suggestedSource,
+            matchLevel: row.matchLevel,
+            gradeLevel: row.gradeLevel,
             finalValue: row.finalValue,
             numericCropUrl,
             writtenCropUrl,

@@ -119,6 +119,11 @@ Phần ô chưa thu khe (DEV: 35 ô phone) đều thuộc một trang mà cột 
 - **Đã xử lý ở BE-24c:** luật BE-24b chỉ trừ dòng gạch trên chính trang nên trang 2 bị Vàng khi học sinh nghỉ ở trang 1 (phát hiện ở lớp thử); mô hình k theo trang hấp thụ độ lệch cố định đó, và học sinh bị gạch nhưng còn học không còn bị coi là lệch.
 - **Giới hạn:** chỉ đo trên mẫu E0330113 (thứ tự giấy theo chữ không dấu); danh sách lớp thật của trường có thể theo quy ước khác, khi đó trang hòa về A. Các trang dùng bộ danh sách T01–T05 chưa đo ghép học sinh. STT suy theo vị trí cần ít nhất 3 phiếu đồng ý (2 với trang ≤ 5 dòng), dưới mức này mọi dòng thành Vàng "Không xác nhận được STT".
 
+## Mức ghép lưu riêng, lý do điểm và chữ "điểm" thừa (sau BE-24c)
+
+- `muc_phan_loai` vẫn là mức cuối (thấp hơn của mức điểm và mức ghép); thêm `muc_ghep` lưu riêng mức ghép học sinh để giao diện chỉ báo "Nghi lệch học sinh" khi chính việc ghép là Đỏ (trước đây dòng Đỏ vì điểm cũng bị báo nhầm là lệch học sinh). DTO có `matchLevel` (null với phiếu cũ → giao diện giữ cách cũ) và `gradeLevel` suy từ dữ liệu sẵn có (hai kênh khớp → Xanh; có kênh gợi ý → Vàng; còn lại Đỏ), không đổi luật Xanh/Vàng/Đỏ hay ngưỡng. Với phiếu cũ `gradeLevel` suy từ `kenh_goi_y`/`ket_luan` nên có thể lệch nhẹ so với mức điểm thật.
+- Kênh chữ: token đứng riêng "điểm"/"diem"/"đ" bị bỏ trước khi giải và nắn từ điển ("mười điểm" → mười, "chín điểm rưỡi" → chín rưỡi). Đo DEV một lần: Điểm chữ đúng 98,8% và Xanh/Vàng/Đỏ cuối 697/22/6 như BE-24c, gán sai 0 (DEV không có chữ "điểm" thừa nên không đổi); không đo TEST.
+
 ## Tiêu chí nghiệm thu
 
 - Thứ tự mã ≠ thứ tự tên: kết quả gán đúng học sinh theo STT.

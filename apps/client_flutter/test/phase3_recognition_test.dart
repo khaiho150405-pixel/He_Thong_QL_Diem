@@ -115,6 +115,8 @@ class RecognitionFakeServer implements HttpClientAdapter {
             'comparison': 'KHOP',
             'reviewLevel': 'XANH',
             'suggestedSource': 'SO',
+            'matchLevel': null,
+            'gradeLevel': 'XANH',
             'finalValue': null,
             'numericCropUrl': 'https://storage.test/numeric.png',
             'writtenCropUrl': 'https://storage.test/written.png',
@@ -229,8 +231,8 @@ void main() {
 
     // Polling receives CHO_DOI_CHIEU and automatically navigates to ReviewScreen.
     expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
-    expect(find.textContaining('An · XANH'), findsOneWidget);
-    expect(find.textContaining('Giá trị: 0.0'), findsNWidgets(2));
+    expect(find.textContaining('An'), findsWidgets);
+    expect(find.byKey(const ValueKey('review-value-51')), findsOneWidget);
     await tester.enterText(
       find.byKey(const ValueKey('review-value-51')),
       '0.1',

@@ -88,6 +88,10 @@ export interface RecognitionEvidenceRow {
   reviewLevel: "XANH" | "VANG" | "DO";
   /** Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi Đỏ: không gợi ý giá trị. */
   suggestedSource: SuggestedSource | null;
+  /** Mức ghép học sinh (row-matching); null với phiếu cũ không lưu mức ghép riêng. */
+  matchLevel: "XANH" | "VANG" | "DO" | null;
+  /** Mức điểm của hai kênh (trước khi hợp với mức ghép), suy từ comparison/suggestedSource. */
+  gradeLevel: "XANH" | "VANG" | "DO" | null;
   finalValue: string | null;
   numericCropKey: string | null;
   writtenCropKey: string | null;

@@ -150,6 +150,8 @@ export class RecognitionJobProcessor {
           nameCropKey: nameKey,
           comparison: row.comparison,
           suggestedSource: row.suggestedSource,
+          // Mức ghép học sinh tách riêng khỏi mức điểm (reviewLevel là mức cuối = thấp hơn của hai mức).
+          matchLevel: match.matchLevel,
           // Mức cuối là mức thấp hơn giữa mức điểm (hai kênh) và mức ghép học sinh.
           reviewLevel: combineLevel(row.reviewLevel, match.matchLevel),
         });

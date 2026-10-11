@@ -27,6 +27,32 @@ class WrittenGradeTest(unittest.TestCase):
             else:
                 self.assertIsNone(wg.so_tu_chuoi_chu(text), text)
 
+    def test_a_stray_word_diem_is_ignored(self) -> None:
+        # "điểm"/"diem"/"đ" đứng riêng không mang giá trị: bỏ trước khi giải và trước khi nắn từ điển.
+        cases = {
+            "mười điểm": ("mười", 10.0),
+            "chín điểm rưỡi": ("chín rưỡi", 9.5),
+            "bảy điểm năm": ("bảy năm", 7.5),
+            "Chín Điểm Rưỡi": ("Chín Rưỡi", 9.5),
+            "tám diem hai": ("tám hai", 8.2),
+            "sáu đ bốn": ("sáu bốn", 6.4),
+        }
+        for text, (snapped, value) in cases.items():
+            self.assertEqual(wg.so_tu_chuoi_chu(text), value, text)
+            self.assertEqual(wg.nan_diem_chu(text), snapped, text)
+            self.assertEqual(wg.so_tu_chuoi_chu(wg.nan_diem_chu(text)), value, text)
+
+    def test_strings_without_the_stray_word_are_unchanged(self) -> None:
+        for text in ("tám rưỡi", "mười", "chín chẵn", "không", "xin chào", "điểm", "Điểm"):
+            self.assertEqual(wg.bo_tu_thua(text), text.strip(), text)
+        for text in ("tám rưỡi", "mười", "chín chẵn", "bảy tư"):
+            self.assertEqual(wg.nan_diem_chu(text), text)
+        # chuỗi chỉ gồm từ "điểm" không đổi thành chuỗi rỗng và vẫn không giải được ra điểm
+        self.assertIsNone(wg.so_tu_chuoi_chu("điểm"))
+        # chữ "điểm" nằm trong từ khác hoặc là nhiễu dài vẫn không được coi là điểm hợp lệ
+        self.assertIsNone(wg.so_tu_chuoi_chu("điểm điểm"))
+        self.assertIsNone(wg.so_tu_chuoi_chu("mười điểm điểm rưỡi"))
+
     def test_numeric_text_to_grade(self) -> None:
         cases = {"7.5": 7.5, "6": 6.0, "8.": 8.0, "10": 10.0, "10.0": 10.0, "0": 0.0, "0.0": 0.0, " 9.5 ": 9.5}
         for text, value in cases.items():

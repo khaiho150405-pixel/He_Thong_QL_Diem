@@ -34,8 +34,7 @@ final teacherOverviewProvider = FutureProvider.autoDispose<TeacherOverviewData>(
     final gradebooksRes = await api.getGradebooksApi().gradebooksList();
     final books = gradebooksRes.data?.items ?? [];
     final classNames = books.map((b) => b.className).toSet().toList()..sort();
-    final lockedCount =
-        books.where((b) => b.status.value == 'DA_CHOT').length;
+    final lockedCount = books.where((b) => b.status.value == 'DA_CHOT').length;
 
     int pendingOcr = 0;
     try {

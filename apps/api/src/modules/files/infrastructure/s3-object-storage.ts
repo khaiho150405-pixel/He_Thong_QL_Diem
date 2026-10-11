@@ -16,6 +16,9 @@ import type { ObjectStorage, StoredObject } from "../application/port.js";
 @Injectable()
 export class S3ObjectStorage implements ObjectStorage {
   private readonly client?: S3Client;
+  // Chỉ dùng để KÝ URL: ký trực tiếp với host công khai (không thay chuỗi sau khi ký vì host nằm trong chữ ký). Ký là phép tính
+  // cục bộ nên không cần kết nối tới host này.
+  private readonly signer?: S3Client;
   private readonly bucket?: string;
 
   constructor(@Inject(SETTINGS) settings: Settings) {
@@ -26,15 +29,19 @@ export class S3ObjectStorage implements ObjectStorage {
       settings.s3Bucket
     ) {
       this.bucket = settings.s3Bucket;
-      this.client = new S3Client({
-        endpoint: settings.s3Endpoint,
+      const options = (endpoint: string) => ({
+        endpoint,
         region: "us-east-1",
         forcePathStyle: true,
         credentials: {
-          accessKeyId: settings.s3AccessKey,
-          secretAccessKey: settings.s3SecretKey,
+          accessKeyId: settings.s3AccessKey!,
+          secretAccessKey: settings.s3SecretKey!,
         },
       });
+      this.client = new S3Client(options(settings.s3Endpoint));
+      this.signer = settings.s3PublicEndpoint
+        ? new S3Client(options(settings.s3PublicEndpoint))
+        : this.client;
     }
   }
 
@@ -70,7 +77,7 @@ export class S3ObjectStorage implements ObjectStorage {
   }
 
   async signedGetUrl(key: string, expiresInSeconds: number): Promise<string> {
-    if (!this.client || !this.bucket) throw new ServiceUnavailableException();
+    if (!this.signer || !this.bucket) throw new ServiceUnavailableException();
     if (
       !Number.isInteger(expiresInSeconds) ||
       expiresInSeconds < 1 ||
@@ -79,7 +86,7 @@ export class S3ObjectStorage implements ObjectStorage {
       throw new ServiceUnavailableException();
     try {
       return await getSignedUrl(
-        this.client,
+        this.signer,
         new GetObjectCommand({ Bucket: this.bucket, Key: key }),
         { expiresIn: expiresInSeconds },
       );

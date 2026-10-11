@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import type { PrismaClient, Prisma } from "../../../generated/prisma/client.js";
 import { SETTINGS, type Settings } from "../../../common/database.js";
+import { gradeLevelOf } from "../domain/grade-level.js";
 import { unit } from "../../../common/store.js";
 import { classStudentOrder } from "../../../common/student-order.js";
 import { sqlStateOf, transaction } from "../../../common/transaction.js";
@@ -135,6 +136,11 @@ export class PrismaRecognitionStore implements RecognitionStore {
             item.muc_phan_loai === "DO"
               ? null
               : (item.kenh_goi_y as "SO" | "CHU" | null),
+          matchLevel: item.muc_ghep,
+          gradeLevel: gradeLevelOf(
+            item.ket_luan_doi_chieu,
+            item.kenh_goi_y as "SO" | "CHU" | null,
+          ),
           finalValue: item.gia_tri_chot?.toFixed(1) ?? null,
           numericCropKey: item.duong_dan_anh_o_so,
           writtenCropKey: item.duong_dan_anh_o_chu,
