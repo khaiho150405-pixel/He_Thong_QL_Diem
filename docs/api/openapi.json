@@ -3265,6 +3265,13 @@
         "operationId": "recognitionList",
         "parameters": [
           {
+            "name": "includeCancelled",
+            "required": false,
+            "in": "query",
+            "description": "true: hiện cả phiếu đã hủy (DA_HUY); mặc định ẩn",
+            "schema": { "type": "boolean" }
+          },
+          {
             "name": "gradebookId",
             "required": true,
             "in": "path",
@@ -3542,6 +3549,109 @@
         },
         "tags": ["recognition"],
         "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/cancel": {
+      "post": {
+        "operationId": "recognitionCancel",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "ticketId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CancelTicketInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hủy mềm phiếu DANG_XU_LY/CHO_DOI_CHIEU/LOI (phiếu DA_DUYET trả 409, phiếu đã DA_HUY trả lại chính nó)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecognitionTicketDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["recognition"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
     "/api/v1/reports/gradebooks/{gradebookId}/summary": {
@@ -7163,12 +7273,23 @@
           "detectedRows": { "type": "number", "nullable": true },
           "status": {
             "type": "string",
-            "enum": ["DANG_XU_LY", "CHO_DOI_CHIEU", "DA_DUYET", "LOI"]
+            "enum": ["DANG_XU_LY", "CHO_DOI_CHIEU", "DA_DUYET", "LOI", "DA_HUY"]
           },
           "errorCode": { "type": "string", "nullable": true },
           "modelVersion": { "type": "string", "nullable": true },
           "version": { "type": "number" },
           "createdAt": { "type": "string", "format": "date-time" },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Lý do hủy phiếu; null khi phiếu chưa hủy"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Thời điểm hủy phiếu; null khi phiếu chưa hủy"
+          },
           "greenRows": {
             "type": "number",
             "description": "Số dòng mức Xanh (mức cuối)"
@@ -7194,6 +7315,8 @@
           "modelVersion",
           "version",
           "createdAt",
+          "cancelReason",
+          "cancelledAt",
           "greenRows",
           "yellowRows",
           "redRows"
@@ -7306,12 +7429,23 @@
           "detectedRows": { "type": "number", "nullable": true },
           "status": {
             "type": "string",
-            "enum": ["DANG_XU_LY", "CHO_DOI_CHIEU", "DA_DUYET", "LOI"]
+            "enum": ["DANG_XU_LY", "CHO_DOI_CHIEU", "DA_DUYET", "LOI", "DA_HUY"]
           },
           "errorCode": { "type": "string", "nullable": true },
           "modelVersion": { "type": "string", "nullable": true },
           "version": { "type": "number" },
           "createdAt": { "type": "string", "format": "date-time" },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Lý do hủy phiếu; null khi phiếu chưa hủy"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Thời điểm hủy phiếu; null khi phiếu chưa hủy"
+          },
           "greenRows": {
             "type": "number",
             "description": "Số dòng mức Xanh (mức cuối)"
@@ -7324,7 +7458,10 @@
             "type": "number",
             "description": "Số dòng mức Đỏ (mức cuối)"
           },
-          "sourceImageUrl": { "type": "string" },
+          "sourceImageUrl": {
+            "type": "string",
+            "description": "URL ký 300 giây của ảnh gốc; chuỗi rỗng khi phiếu đã hủy (ảnh đã bị xóa khỏi kho lưu trữ)"
+          },
           "imageUrlExpiresInSeconds": { "type": "number", "example": 300 },
           "rows": {
             "type": "array",
@@ -7345,6 +7482,8 @@
           "modelVersion",
           "version",
           "createdAt",
+          "cancelReason",
+          "cancelledAt",
           "greenRows",
           "yellowRows",
           "redRows",
@@ -7352,6 +7491,14 @@
           "imageUrlExpiresInSeconds",
           "rows"
         ]
+      },
+      "CancelTicketInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 0 },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 200 }
+        },
+        "required": ["expectedVersion", "reason"]
       },
       "RecognitionReceiptDto": {
         "type": "object",

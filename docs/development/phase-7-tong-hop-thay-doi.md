@@ -81,6 +81,7 @@ Thứ tự STT dùng chung một hàm duy nhất: `apps/api/src/common/student-o
 - `202610060003_recognition_roster_results`: `luu_ket_qua_nhan_dien` lưu theo snapshot và học sinh đã ghép.
 - `202610070001_review_skip_rows`: cột `ly_do_duyet`, duyệt dòng không ghi điểm.
 - `202610070002_recognition_suggestion`: cột `kenh_goi_y`.
+- Hủy mềm phiếu (ADR-0015 mục "Hủy mềm phiếu nhận dạng"): `202610120001_ticket_cancel_enum` (giá trị `DA_HUY`), `202610120002_ticket_cancel` (cột `ly_do_huy`/`nguoi_huy`/`thoi_diem_huy` + CHECK `phieu_huy_day_du`, UNIQUE một phần theo `ma_bam_tep`, hàm `huy_phieu_nhan_dien`, `tao_phieu_nhan_dien`/`luu_ket_qua_nhan_dien` thay thế). Endpoint `POST .../recognition-tickets/:ticketId/cancel`; thông báo tiếng Việt cho `TICKET_ALREADY_APPROVED`, `VERSION_CONFLICT`, `RECOGNITION_ALREADY_PENDING`, `DUPLICATE_FILE` ở `common/transaction.ts`.
 
 **API** (`apps/api`)
 
@@ -150,5 +151,5 @@ Thời gian khoảng 1,5–2 giây/trang. Lần đầu sau khi bật dịch vụ
 - Lỗi im lặng: hai kênh cùng đọc sai thành cùng một giá trị (≈ 0,25% số dòng Xanh trên TEST). Giáo viên vẫn phải duyệt cả phiếu.
 - Một mẫu trang bị chọn nhầm cột "Lớp" làm cột họ tên. Đề xuất: chọn cột họ tên theo mức khớp với danh sách lớp.
 - Ảnh điện thoại có bóng đổ nặng vẫn có thể ra nhiều dòng Vàng/Đỏ.
-- Thông báo lỗi `RECOGNITION_ALREADY_PENDING` / `DUPLICATE_FILE` trên giao diện còn chung chung ("vi phạm ràng buộc nghiệp vụ").
+- Thông báo `RECOGNITION_ALREADY_PENDING` / `DUPLICATE_FILE` đã có tiếng Việt rõ ràng ở API; giao diện cần hiển thị `message` của lỗi 409 (và thêm nút Hủy phiếu dùng endpoint `cancel`).
 - Cần thêm test bảo đảm DTO chi tiết phiếu có đủ trường `required` theo OpenAPI.

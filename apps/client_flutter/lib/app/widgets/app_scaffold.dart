@@ -21,6 +21,9 @@ class AppScaffold extends ConsumerWidget {
     this.showBackButton = false,
     this.onBack,
     this.bottomBar,
+    this.leading,
+    this.automaticallyImplyLeading,
+    this.onBeforeLeave,
   });
 
   final String title;
@@ -33,8 +36,16 @@ class AppScaffold extends ConsumerWidget {
   final bool showBackButton;
   final VoidCallback? onBack;
   final Widget? bottomBar;
+  final Widget? leading;
+  final bool? automaticallyImplyLeading;
+  final Future<bool> Function()? onBeforeLeave;
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    if (onBeforeLeave != null) {
+      final allow = await onBeforeLeave!();
+      if (!allow) return;
+    }
+    if (!context.mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -201,7 +212,12 @@ class AppScaffold extends ConsumerWidget {
       child: NavigationBar(
         selectedIndex: selectedIndex,
         height: 64,
-        onDestinationSelected: (idx) {
+        onDestinationSelected: (idx) async {
+          if (onBeforeLeave != null) {
+            final allow = await onBeforeLeave!();
+            if (!allow) return;
+          }
+          if (!context.mounted) return;
           final dest = destinations[idx];
           if (dest.route == '__profile__') {
             showDialog<void>(
@@ -214,7 +230,9 @@ class AppScaffold extends ConsumerWidget {
             try {
               context.go(dest.route);
             } catch (_) {
-              Navigator.of(context).pushNamed(dest.route);
+              if (context.mounted) {
+                Navigator.of(context).pushNamed(dest.route);
+              }
             }
           }
         },
@@ -272,6 +290,7 @@ class AppScaffold extends ConsumerWidget {
                   child: AppSidebar(
                     currentPath: currentPath,
                     isCollapsed: isCollapsed,
+                    onBeforeNavigate: onBeforeLeave,
                   ),
                 ),
               ),
@@ -298,21 +317,29 @@ class AppScaffold extends ConsumerWidget {
                     child: AppBar(
                       backgroundColor: Colors.transparent,
                       elevation: 0,
-                      leading: (!kIsWeb && showBackButton)
-                          ? IconButton(
-                              icon: const Icon(Icons.arrow_back),
-                              onPressed:
-                                  onBack ??
-                                  () {
-                                    if (Navigator.canPop(context)) {
-                                      Navigator.pop(context);
-                                    } else {
-                                      context.go('/');
-                                    }
-                                  },
-                            )
-                          : null,
-                      automaticallyImplyLeading: false,
+                      leading:
+                          leading ??
+                          ((!kIsWeb && showBackButton)
+                              ? IconButton(
+                                  icon: const Icon(Icons.arrow_back),
+                                  onPressed:
+                                      onBack ??
+                                      () async {
+                                        if (onBeforeLeave != null) {
+                                          final allow = await onBeforeLeave!();
+                                          if (!allow) return;
+                                        }
+                                        if (!context.mounted) return;
+                                        if (Navigator.canPop(context)) {
+                                          Navigator.pop(context);
+                                        } else {
+                                          context.go('/');
+                                        }
+                                      },
+                                )
+                              : null),
+                      automaticallyImplyLeading:
+                          automaticallyImplyLeading ?? false,
                       title:
                           titleWidget ??
                           Text(title, overflow: TextOverflow.ellipsis),
@@ -343,20 +370,30 @@ class AppScaffold extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppTheme.warmIvoryBg,
       appBar: AppBar(
-        leading: (!kIsWeb && showBackButton)
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed:
-                    onBack ??
-                    () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else {
-                        context.go('/');
-                      }
-                    },
-              )
-            : null,
+        leading:
+            leading ??
+            ((!kIsWeb && showBackButton)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed:
+                        onBack ??
+                        () async {
+                          if (onBeforeLeave != null) {
+                            final allow = await onBeforeLeave!();
+                            if (!allow) return;
+                          }
+                          if (!context.mounted) return;
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            context.go('/');
+                          }
+                        },
+                  )
+                : null),
+        automaticallyImplyLeading:
+            automaticallyImplyLeading ??
+            (!kIsWeb && showBackButton ? false : true),
         title: titleWidget ?? Text(title, overflow: TextOverflow.ellipsis),
         bottom: bottom,
         actions: [
@@ -373,7 +410,11 @@ class AppScaffold extends ConsumerWidget {
       ),
       drawer: Drawer(
         child: SafeArea(
-          child: AppSidebar(inDrawer: true, currentPath: currentPath),
+          child: AppSidebar(
+            inDrawer: true,
+            currentPath: currentPath,
+            onBeforeNavigate: onBeforeLeave,
+          ),
         ),
       ),
       bottomNavigationBar: () {

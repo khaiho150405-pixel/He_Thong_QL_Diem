@@ -25,6 +25,7 @@ class ReviewRowCard extends StatelessWidget {
     this.readOnly = false,
     this.isSttConfirmed = false,
     this.onSttConfirmedChanged,
+    this.isCancelled = false,
   });
 
   final RecognitionEvidenceRowDto row;
@@ -45,6 +46,7 @@ class ReviewRowCard extends StatelessWidget {
   final bool readOnly;
   final bool isSttConfirmed;
   final ValueChanged<bool>? onSttConfirmedChanged;
+  final bool isCancelled;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +95,7 @@ class ReviewRowCard extends StatelessWidget {
               onSttConfirmedChanged: onSttConfirmedChanged,
               layout: isWide ? ReviewRowLayout.wide : ReviewRowLayout.narrow,
               showInlineAgreeButton: true,
+              isCancelled: isCancelled,
             );
           },
         ),

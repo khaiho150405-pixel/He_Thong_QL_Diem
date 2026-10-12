@@ -65,29 +65,37 @@ class ReviewSourceImage extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  ticket.sourceImageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => _expiredImage(context),
-                ),
+                child:
+                    (ticket.sourceImageUrl.trim().isEmpty ||
+                        ticket.status.value == 'DA_HUY')
+                    ? _deletedImage(context)
+                    : Image.network(
+                        ticket.sourceImageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => _expiredImage(context),
+                      ),
               ),
             ),
             const SizedBox(height: 6),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => showRecognitionImage(
-                  context,
-                  image: Image.network(
-                    ticket.sourceImageUrl,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => const Center(
-                      child: Text(
-                        'Không tải được ảnh. Đóng và tải lại phiếu để lấy ảnh mới.',
+                onPressed:
+                    (ticket.sourceImageUrl.trim().isEmpty ||
+                        ticket.status.value == 'DA_HUY')
+                    ? null
+                    : () => showRecognitionImage(
+                        context,
+                        image: Image.network(
+                          ticket.sourceImageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const Center(
+                            child: Text(
+                              'Không tải được ảnh. Đóng và tải lại phiếu để lấy ảnh mới.',
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
                 icon: const Icon(Icons.zoom_in, size: 18),
                 label: const Text('Phóng to ảnh gốc'),
                 style: OutlinedButton.styleFrom(
@@ -109,6 +117,33 @@ class ReviewSourceImage extends StatelessWidget {
     }
 
     return content;
+  }
+
+  Widget _deletedImage(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.image_not_supported_outlined,
+              size: 28,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Ảnh đã xóa',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _expiredImage(BuildContext context) {

@@ -50,6 +50,7 @@ export 'package:api_client_dart/src/model/calculate_final_results_dto.dart';
 export 'package:api_client_dart/src/model/calculate_final_results_input.dart';
 export 'package:api_client_dart/src/model/calculation_history_dto.dart';
 export 'package:api_client_dart/src/model/calculation_history_list_dto.dart';
+export 'package:api_client_dart/src/model/cancel_ticket_input.dart';
 export 'package:api_client_dart/src/model/cells_response_dto.dart';
 export 'package:api_client_dart/src/model/classes_dto.dart';
 export 'package:api_client_dart/src/model/classes_input.dart';

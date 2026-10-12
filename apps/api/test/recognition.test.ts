@@ -12,7 +12,9 @@ import type {
   RecognitionQueue,
 } from "../src/modules/recognition/application/outbox.js";
 import { RecognitionDispatcher } from "../src/modules/recognition/application/outbox.js";
+import { BadRequestException } from "@nestjs/common";
 import type {
+  CancelRecognitionTicket,
   CreateRecognitionTicket,
   RecognitionStore,
 } from "../src/modules/recognition/application/port.js";
@@ -72,6 +74,7 @@ test("upload keeps one object on replay and never exposes the object key", async
     authorizeUpload: async () => {},
     list: async () => [],
     detail: async () => null,
+    cancel: async () => assert.fail("not used"),
     createTicket: async (input) => {
       if (!stored) stored = input;
       return {
@@ -107,6 +110,7 @@ test("legacy declaredRows never changes the idempotency hash", async () => {
     authorizeUpload: async () => {},
     list: async () => [],
     detail: async () => null,
+    cancel: async () => assert.fail("not used"),
     createTicket: async (input) => {
       hashes.push(input.requestHash);
       return {
@@ -149,6 +153,7 @@ test("detail signs private images and keeps storage keys internal", async () => 
     authorizeUpload: async () => {},
     createTicket: async () => assert.fail("not used"),
     list: async () => [],
+    cancel: async () => assert.fail("not used"),
     detail: async () => ({
       ticketId: "42",
       gradebookId: 1,
@@ -161,6 +166,8 @@ test("detail signs private images and keeps storage keys internal", async () => 
       modelVersion: "fake-dev-v1",
       version: 1,
       createdAt: "2026-09-12T00:00:00.000Z",
+      cancelReason: null,
+      cancelledAt: null,
       greenRows: 1,
       yellowRows: 0,
       redRows: 0,
@@ -253,4 +260,181 @@ test("dispatcher publishes a claimed outbox event and acknowledges it", async ()
     1,
   );
   assert.deepEqual(calls, ["queued:recognition-42", "published:9"]);
+});
+
+const cancelStorage = (removed: string[], failing = new Set<string>()) =>
+  ({
+    put: async () => {},
+    get: async () => new Uint8Array(),
+    signedGetUrl: async (key: string) => `https://storage.test/${key}`,
+    remove: async (key: string) => {
+      if (failing.has(key)) throw new Error("storage down");
+      removed.push(key);
+    },
+  }) satisfies ObjectStorage;
+
+function cancelStore(
+  calls: CancelRecognitionTicket[],
+  keys = ["recognition/original/a.png", "recognition/crops/42/1-numeric.png"],
+): RecognitionStore {
+  const cancelled = {
+    ticketId: "42",
+    gradebookId: 1,
+    componentId: 2,
+    componentName: "Giữa kỳ",
+    declaredRows: 1,
+    detectedRows: 1,
+    status: "DA_HUY" as const,
+    errorCode: null,
+    modelVersion: "fake-dev-v1",
+    version: 3,
+    createdAt: "2026-09-12T00:00:00.000Z",
+    cancelReason: "Chụp nhầm bảng",
+    cancelledAt: "2026-09-12T01:00:00.000Z",
+    greenRows: 1,
+    yellowRows: 0,
+    redRows: 0,
+    sourceObjectKey: keys[0]!,
+    rows: [
+      {
+        rowId: "9",
+        order: 1,
+        stt: 1,
+        sttOnPaper: 1,
+        studentId: 3,
+        studentName: "Học sinh giả",
+        nameRead: null,
+        matchConfidence: null,
+        matchNote: null,
+        numericRaw: "8.0",
+        numericValue: "8.0",
+        numericConfidence: "0.9900",
+        writtenRaw: null,
+        writtenValue: null,
+        writtenConfidence: null,
+        comparison: "MOT_KENH" as const,
+        reviewLevel: "VANG" as const,
+        suggestedSource: "SO" as const,
+        matchLevel: "XANH" as const,
+        gradeLevel: "VANG" as const,
+        finalValue: null,
+        numericCropKey: "recognition/crops/42/1-numeric.png",
+        writtenCropKey: null,
+        nameCropKey: null,
+      },
+    ],
+  };
+  return {
+    authorizeUpload: async () => {},
+    createTicket: async () => assert.fail("not used"),
+    list: async () => [],
+    detail: async () => cancelled,
+    cancel: async (input) => {
+      calls.push(input);
+      return { objectKeys: keys };
+    },
+  };
+}
+
+test("cancel validates input, hashes it, removes images and returns the cancelled ticket without image URLs", async () => {
+  const calls: CancelRecognitionTicket[] = [];
+  const removed: string[] = [];
+  const service = new RecognitionService(
+    cancelStore(calls),
+    cancelStorage(removed),
+  );
+  const result = await service.cancel(actor, 1, "42", "cancel-key", {
+    expectedVersion: 2,
+    reason: "  Chụp nhầm bảng  ",
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]!.reason, "Chụp nhầm bảng");
+  assert.equal(calls[0]!.expectedVersion, 2);
+  assert.match(calls[0]!.requestHash, /^[0-9a-f]{64}$/);
+  assert.deepEqual(removed.sort(), [
+    "recognition/crops/42/1-numeric.png",
+    "recognition/original/a.png",
+  ]);
+  assert.equal(result.status, "DA_HUY");
+  assert.equal(result.cancelReason, "Chụp nhầm bảng");
+  assert.equal(result.cancelledAt, "2026-09-12T01:00:00.000Z");
+  // Ảnh đã bị xóa nên không ký URL.
+  assert.equal(result.sourceImageUrl, "");
+  assert.equal(result.rows[0]!.numericCropUrl, null);
+  // Cùng yêu cầu → cùng hash (idempotency); khác lý do → hash khác.
+  await service.cancel(actor, 1, "42", "cancel-key", {
+    expectedVersion: 2,
+    reason: "Chụp nhầm bảng",
+  });
+  await service.cancel(actor, 1, "42", "cancel-key", {
+    expectedVersion: 2,
+    reason: "Lý do khác",
+  });
+  assert.equal(calls[1]!.requestHash, calls[0]!.requestHash);
+  assert.notEqual(calls[2]!.requestHash, calls[0]!.requestHash);
+});
+
+test("cancel survives storage cleanup failures (best-effort, logged only)", async () => {
+  const calls: CancelRecognitionTicket[] = [];
+  const removed: string[] = [];
+  const service = new RecognitionService(
+    cancelStore(calls),
+    cancelStorage(removed, new Set(["recognition/original/a.png"])),
+  );
+  const result = await service.cancel(actor, 1, "42", "cancel-key", {
+    expectedVersion: 0,
+    reason: "x",
+  });
+  assert.equal(result.status, "DA_HUY");
+  assert.deepEqual(removed, ["recognition/crops/42/1-numeric.png"]);
+});
+
+test("cancel rejects malformed requests before touching the store", async () => {
+  const calls: CancelRecognitionTicket[] = [];
+  const service = new RecognitionService(cancelStore(calls), cancelStorage([]));
+  const ok = { expectedVersion: 1, reason: "lý do" };
+  const bad: Array<[string, unknown, unknown, unknown]> = [
+    ["no key", "42", undefined, ok],
+    ["bad key", "42", "bad key!", ok],
+    ["bad ticket", "0", "k", ok],
+    ["huge ticket", "9223372036854775808", "k", ok],
+    ["no body", "42", "k", null],
+    ["extra field", "42", "k", { ...ok, extra: 1 }],
+    ["negative version", "42", "k", { ...ok, expectedVersion: -1 }],
+    ["float version", "42", "k", { ...ok, expectedVersion: 1.5 }],
+    ["string version", "42", "k", { ...ok, expectedVersion: "1" }],
+    ["empty reason", "42", "k", { ...ok, reason: "   " }],
+    ["long reason", "42", "k", { ...ok, reason: "a".repeat(201) }],
+    ["numeric reason", "42", "k", { ...ok, reason: 5 }],
+  ];
+  for (const [name, ticket, key, body] of bad)
+    await assert.rejects(
+      service.cancel(actor, 1, ticket, key, body),
+      BadRequestException,
+      name,
+    );
+  assert.equal(calls.length, 0);
+  // Đủ 200 ký tự thì hợp lệ.
+  await service.cancel(actor, 1, "42", "k", {
+    expectedVersion: 0,
+    reason: "a".repeat(200),
+  });
+  assert.equal(calls.length, 1);
+});
+
+test("list only accepts includeCancelled true/false and passes the flag to the store", async () => {
+  const flags: boolean[] = [];
+  const store: RecognitionStore = {
+    ...cancelStore([]),
+    list: async (_actor, _id, includeCancelled) => {
+      flags.push(includeCancelled);
+      return [];
+    },
+  };
+  const service = new RecognitionService(store, cancelStorage([]));
+  await service.list(actor, 1);
+  await service.list(actor, 1, "false");
+  await service.list(actor, 1, "true");
+  assert.deepEqual(flags, [false, false, true]);
+  assert.throws(() => service.list(actor, 1, "yes"), BadRequestException);
 });

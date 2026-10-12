@@ -124,6 +124,16 @@ Phần ô chưa thu khe (DEV: 35 ô phone) đều thuộc một trang mà cột 
 - `muc_phan_loai` vẫn là mức cuối (thấp hơn của mức điểm và mức ghép); thêm `muc_ghep` lưu riêng mức ghép học sinh để giao diện chỉ báo "Nghi lệch học sinh" khi chính việc ghép là Đỏ (trước đây dòng Đỏ vì điểm cũng bị báo nhầm là lệch học sinh). DTO có `matchLevel` (null với phiếu cũ → giao diện giữ cách cũ) và `gradeLevel` suy từ dữ liệu sẵn có (hai kênh khớp → Xanh; có kênh gợi ý → Vàng; còn lại Đỏ), không đổi luật Xanh/Vàng/Đỏ hay ngưỡng. Với phiếu cũ `gradeLevel` suy từ `kenh_goi_y`/`ket_luan` nên có thể lệch nhẹ so với mức điểm thật.
 - Kênh chữ: token đứng riêng "điểm"/"diem"/"đ" bị bỏ trước khi giải và nắn từ điển ("mười điểm" → mười, "chín điểm rưỡi" → chín rưỡi). Đo DEV một lần: Điểm chữ đúng 98,8% và Xanh/Vàng/Đỏ cuối 697/22/6 như BE-24c, gán sai 0 (DEV không có chữ "điểm" thừa nên không đổi); không đo TEST.
 
+## Hủy mềm phiếu nhận dạng (sau BE-24c)
+
+**Quyết định:** phiếu không bao giờ bị xóa cứng. Giáo viên (được phân công bảng điểm, hoặc chính người đã tải phiếu) hủy phiếu `DANG_XU_LY`, `CHO_DOI_CHIEU` hoặc `LOI` bằng `POST /api/v1/gradebooks/:id/recognition-tickets/:ticketId/cancel`; phiếu chuyển sang trạng thái mới `DA_HUY` kèm lý do (1–200 ký tự), người hủy và thời điểm hủy. Phiếu `DA_DUYET` **không** hủy được (`TICKET_ALREADY_APPROVED`): điểm chính thức và lịch sử đã ghi, muốn đổi phải sửa điểm qua luồng sửa điểm có lý do.
+
+- **Không mất bằng chứng:** `ket_qua_dong`, `danh_sach_phieu`, nhật ký bảo mật (`RECOGNITION_CANCELLED`) và `recognition_outbox` đều được giữ. Chỉ ảnh gốc và ảnh ô cắt bị xóa khỏi object storage sau khi giao dịch đã commit (best-effort, lỗi chỉ ghi log; gọi lại cùng khóa idempotency sẽ dọn tiếp). Vì vậy `GET` chi tiết phiếu `DA_HUY` vẫn trả được nhưng `sourceImageUrl` là chuỗi rỗng và các URL ảnh ô là `null`.
+- **Không phải phiếu chờ:** `DA_HUY` không nằm trong `('DANG_XU_LY','CHO_DOI_CHIEU')` ở chốt cột, kiểm tra ô có sửa tay được, job hạn nhập điểm (không bị chuyển `LOI` nhầm) và `RECOGNITION_ALREADY_PENDING`, nên hủy xong tải ảnh khác ngay được.
+- **Tải lại đúng ảnh đã hủy:** `ma_bam_tep` không còn UNIQUE toàn bảng mà là UNIQUE một phần `WHERE trang_thai <> 'DA_HUY'`; `tao_phieu_nhan_dien` chỉ báo `DUPLICATE_FILE` khi có phiếu chưa hủy cùng SHA-256.
+- **Idempotent và an toàn khi đua:** hủy phiếu đã `DA_HUY` trả lại chính phiếu (không đổi lý do/người/thời điểm đầu tiên); sai `expectedVersion` → `VERSION_CONFLICT`. Hàm khóa dòng bảng điểm nên tuần tự với duyệt và chốt. Worker nhận job của phiếu đã hủy thì kết thúc thành công (log `recognition_ticket_cancelled`, không retry, không gọi mô hình); nếu phiếu bị hủy lúc mô hình đang chạy, `luu_ket_qua_nhan_dien` bỏ qua kết quả và worker dọn ảnh ô vừa tải lên. Sự kiện outbox chưa gửi được đánh dấu đã xử lý để dispatcher không gửi lại.
+- Danh sách phiếu mặc định ẩn `DA_HUY`; `?includeCancelled=true` để hiện. Migration: `202610120001_ticket_cancel_enum` (chỉ `ADD VALUE`, phải đứng riêng) và `202610120002_ticket_cancel`.
+
 ## Tiêu chí nghiệm thu
 
 - Thứ tự mã ≠ thứ tự tên: kết quả gán đúng học sinh theo STT.

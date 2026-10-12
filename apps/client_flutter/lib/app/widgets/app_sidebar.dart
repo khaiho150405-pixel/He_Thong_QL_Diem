@@ -21,11 +21,13 @@ class AppSidebar extends ConsumerWidget {
     this.currentPath,
     this.inDrawer = false,
     this.isCollapsed,
+    this.onBeforeNavigate,
   });
 
   final String? currentPath;
   final bool inDrawer;
   final bool? isCollapsed;
+  final Future<bool> Function()? onBeforeNavigate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,7 +69,12 @@ class AppSidebar extends ConsumerWidget {
             waitDuration: const Duration(milliseconds: 200),
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
-              onTap: () {
+              onTap: () async {
+                if (onBeforeNavigate != null) {
+                  final allow = await onBeforeNavigate!();
+                  if (!allow) return;
+                }
+                if (!context.mounted) return;
                 if (inDrawer && Navigator.canPop(context)) {
                   Navigator.pop(context);
                 }
@@ -75,7 +82,9 @@ class AppSidebar extends ConsumerWidget {
                   try {
                     context.go(route);
                   } catch (_) {
-                    Navigator.of(context).pushNamed(route);
+                    if (context.mounted) {
+                      Navigator.of(context).pushNamed(route);
+                    }
                   }
                 }
               },
@@ -104,7 +113,12 @@ class AppSidebar extends ConsumerWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: () {
+          onTap: () async {
+            if (onBeforeNavigate != null) {
+              final allow = await onBeforeNavigate!();
+              if (!allow) return;
+            }
+            if (!context.mounted) return;
             if (inDrawer && Navigator.canPop(context)) {
               Navigator.pop(context);
             }
@@ -112,7 +126,9 @@ class AppSidebar extends ConsumerWidget {
               try {
                 context.go(route);
               } catch (_) {
-                Navigator.of(context).pushNamed(route);
+                if (context.mounted) {
+                  Navigator.of(context).pushNamed(route);
+                }
               }
             }
           },

@@ -34,6 +34,7 @@ enum TrangThaiPhieu {
   CHO_DOI_CHIEU
   DA_DUYET
   LOI
+  DA_HUY
 }
 
 enum KetLuan {
@@ -62,7 +63,8 @@ model nguoi_dung {
   giao_vien_rows        giao_vien?
   hoc_sinh_rows         hoc_sinh?
   lich_su_sua_diem_rows lich_su_sua_diem[]
-  phieu_nhan_dien_rows  phieu_nhan_dien[]
+  phieu_nhan_dien_rows  phieu_nhan_dien[] @relation("PhieuTai")
+  phieu_huy_rows        phieu_nhan_dien[] @relation("PhieuHuy")
   ket_qua_dong_rows     ket_qua_dong[]
   phien_rows            phien_lam_viec[]
   idempotency_rows      khoa_idempotency[]
@@ -363,7 +365,8 @@ model phieu_nhan_dien {
   ma_bang_diem      Int
   ma_thanh_phan     Int
   nguoi_tai         Int
-  ma_bam_tep        String              @unique @db.VarChar(64)
+  // UNIQUE một phần (WHERE trang_thai <> 'DA_HUY') nằm trong migration 202610120002; Prisma không biểu diễn được.
+  ma_bam_tep        String              @db.VarChar(64)
   duong_dan_anh_goc String              @db.VarChar(512)
   so_dong_khai_bao  Int
   so_dong_nhan_dien Int?
@@ -372,9 +375,13 @@ model phieu_nhan_dien {
   phien_ban_mo_hinh String?             @db.VarChar(80)
   version           Int                 @default(0)
   ngay_tao          DateTime            @default(now()) @db.Timestamptz(6)
+  ly_do_huy         String?             @db.VarChar(200)
+  nguoi_huy         Int?
+  thoi_diem_huy     DateTime?           @db.Timestamptz(6)
   ma_bang_diem_ref  bang_diem           @relation(fields: [ma_bang_diem], references: [ma_bang_diem], onDelete: Restrict, onUpdate: Restrict)
   ma_thanh_phan_ref thanh_phan_diem     @relation(fields: [ma_thanh_phan], references: [ma_thanh_phan], onDelete: Restrict, onUpdate: Restrict)
-  nguoi_tai_ref     nguoi_dung          @relation(fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_tai_ref     nguoi_dung          @relation("PhieuTai", fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_huy_ref     nguoi_dung?         @relation("PhieuHuy", fields: [nguoi_huy], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
   ket_qua_dong_rows ket_qua_dong[]
   danh_sach_rows    danh_sach_phieu[]
   outbox_row        recognition_outbox?
@@ -382,6 +389,7 @@ model phieu_nhan_dien {
   @@index([ma_bang_diem])
   @@index([ma_thanh_phan])
   @@index([nguoi_tai])
+  @@index([nguoi_huy])
 }
 
 // Technical table, not part of the sixteen business tables.

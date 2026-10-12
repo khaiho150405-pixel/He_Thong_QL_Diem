@@ -62,6 +62,12 @@ export async function transaction<T>(
             "Môn đã có bảng điểm; không thể đổi hình thức đánh giá.",
           PASS_FAIL_VALUE_REQUIRED:
             "Môn Đạt/Không đạt chỉ nhận Đạt hoặc Không đạt.",
+          // Hủy phiếu nhận dạng. VERSION_CONFLICT đứng sau mọi khóa khác chứa chuỗi này (ví dụ DEADLINE_VERSION_CONFLICT).
+          TICKET_ALREADY_APPROVED: "Phiếu đã duyệt, không thể hủy.",
+          RECOGNITION_ALREADY_PENDING:
+            "Thành phần điểm này đang có phiếu chờ xử lý/đối chiếu; duyệt hoặc hủy phiếu đó trước.",
+          INVALID_CANCEL_REQUEST: "Lý do hủy phải có từ 1 đến 200 ký tự.",
+          VERSION_CONFLICT: "Phiếu vừa thay đổi, tải lại rồi thử lại.",
         };
         throw new ConflictException(
           Object.entries(messages).find(([key]) =>
@@ -70,6 +76,16 @@ export async function transaction<T>(
             "Dữ liệu vi phạm ràng buộc nghiệp vụ; kiểm tra trạng thái và các liên kết trước khi thay đổi.",
         );
       }
+      if (
+        sqlState === "23505" &&
+        (
+          String(error) +
+          JSON.stringify((error as { meta?: unknown }).meta ?? {})
+        ).includes("DUPLICATE_FILE")
+      )
+        throw new ConflictException(
+          "Ảnh này đã được tải lên ở một phiếu khác.",
+        );
       if (["P2002", "P2003", "P2025", "P2034"].includes(code ?? ""))
         throw new ConflictException();
       throw error;

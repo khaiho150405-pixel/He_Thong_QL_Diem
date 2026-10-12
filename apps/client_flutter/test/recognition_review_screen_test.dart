@@ -117,6 +117,8 @@ class ReviewTestServer implements HttpClientAdapter {
         'modelVersion': 'v2',
         'version': 1,
         'createdAt': '2026-09-12T01:02:03.000Z',
+        'cancelReason': null,
+        'cancelledAt': null,
         'sourceImageUrl': 'https://storage.test/source-$detailCalls.png',
         'imageUrlExpiresInSeconds': 300,
         'rows':
@@ -226,6 +228,8 @@ class ReviewTestServer implements HttpClientAdapter {
           'modelVersion': 'v2',
           'version': 1,
           'createdAt': '2026-09-12T01:02:03.000Z',
+          'cancelReason': null,
+          'cancelledAt': null,
         },
       ];
     } else {
@@ -461,7 +465,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
-        expect(find.text('Đối chiếu nhận dạng #42'), findsOneWidget);
+        expect(find.text('Bảng điểm #7'), findsOneWidget);
+        expect(find.text(' › Phiếu #42'), findsOneWidget);
 
         // KHÔNG hiển thị: Ký tự thô, Độ tin cậy, Tên đọc được, Điểm chưa đủ tin cậy, enum tiếng Anh trong tiêu đề
         expect(find.textContaining('Ký tự thô'), findsNothing);

@@ -19,6 +19,8 @@ Name | Type | Description | Notes
 **modelVersion** | **String** |  |
 **version** | **num** |  |
 **createdAt** | [**DateTime**](DateTime.md) |  |
+**cancelReason** | **String** | Lý do hủy phiếu; null khi phiếu chưa hủy |
+**cancelledAt** | [**DateTime**](DateTime.md) | Thời điểm hủy phiếu; null khi phiếu chưa hủy |
 **greenRows** | **num** | Số dòng mức Xanh (mức cuối) |
 **yellowRows** | **num** | Số dòng mức Vàng (mức cuối) |
 **redRows** | **num** | Số dòng mức Đỏ (mức cuối) |

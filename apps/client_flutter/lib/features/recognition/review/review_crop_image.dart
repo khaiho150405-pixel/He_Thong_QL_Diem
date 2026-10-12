@@ -14,6 +14,7 @@ class ReviewCropImage extends StatelessWidget {
     this.width,
     this.subtitle,
     this.onRefresh,
+    this.isCancelled = false,
   });
 
   final String label;
@@ -23,11 +24,17 @@ class ReviewCropImage extends StatelessWidget {
   final double? width;
   final String? subtitle;
   final VoidCallback? onRefresh;
+  final bool isCancelled;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final hasNoImage = imageUrl == null || imageUrl!.trim().isEmpty;
+    final placeholderText =
+        (isCancelled || (imageUrl != null && imageUrl!.trim().isEmpty))
+        ? 'Ảnh đã xóa'
+        : nullPlaceholder;
 
     return Container(
       width: width,
@@ -69,10 +76,10 @@ class ReviewCropImage extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: imageUrl == null
+            child: hasNoImage
                 ? Center(
                     child: Text(
-                      nullPlaceholder,
+                      placeholderText,
                       style: TextStyle(
                         fontSize: 11,
                         color: colorScheme.onSurfaceVariant,

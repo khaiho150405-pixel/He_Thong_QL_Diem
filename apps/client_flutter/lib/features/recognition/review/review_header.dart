@@ -1,23 +1,22 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
-/// Thanh tóm tắt dính đầu: tên phiếu + thành phần điểm, chip lọc Đỏ/Vàng/Xanh,
-/// tiến độ "Còn X/Y dòng cần xem" + thanh tiến độ.
+/// Thanh tóm tắt dính đầu: tên phiếu + thành phần điểm, chip lọc Đỏ/Vàng/Xanh/STT khác.
 class ReviewHeader extends StatelessWidget {
   const ReviewHeader({
     super.key,
     required this.ticket,
     required this.currentFilter,
     required this.onFilterChanged,
-    required this.totalNeedReview,
-    required this.reviewedCount,
+    this.canCancel = false,
+    this.onCancel,
   });
 
   final RecognitionTicketDetailDto ticket;
   final String currentFilter;
   final ValueChanged<String> onFilterChanged;
-  final int totalNeedReview;
-  final int reviewedCount;
+  final bool canCancel;
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -37,14 +36,6 @@ class ReviewHeader extends StatelessWidget {
         )
         .length;
 
-    final remainingCount = (totalNeedReview - reviewedCount).clamp(
-      0,
-      totalNeedReview,
-    );
-    final progress = totalNeedReview == 0
-        ? 1.0
-        : (reviewedCount / totalNeedReview).clamp(0.0, 1.0);
-
     return Card(
       elevation: 1,
       margin: EdgeInsets.zero,
@@ -58,48 +49,80 @@ class ReviewHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'Phiếu #${ticket.ticketId}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Phiếu #${ticket.ticketId}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        '·  ${ticket.componentName}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          switch (ticket.status.value) {
+                            'DANG_XU_LY' => 'Đang xử lý',
+                            'CHO_DOI_CHIEU' => 'Chờ đối chiếu',
+                            'DA_DUYET' => 'Đã duyệt',
+                            'LOI' => 'Xử lý thất bại',
+                            'DA_HUY' => 'Đã hủy',
+                            _ => ticket.status.value,
+                          },
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.primary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  '·  ${ticket.componentName}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    switch (ticket.status.value) {
-                      'DANG_XU_LY' => 'Đang xử lý',
-                      'CHO_DOI_CHIEU' => 'Chờ đối chiếu',
-                      'DA_DUYET' => 'Đã duyệt',
-                      'LOI' => 'Xử lý thất bại',
-                      _ => ticket.status.value,
-                    },
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.primary,
-                      fontSize: 11,
+                if (canCancel) ...[
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    key: const ValueKey('review-cancel-ticket-button'),
+                    onPressed: onCancel,
+                    icon: Icon(
+                      Icons.cancel_outlined,
+                      size: 18,
+                      color: colorScheme.error,
+                    ),
+                    label: Text(
+                      'Hủy phiếu',
+                      style: TextStyle(
+                        color: colorScheme.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.error,
+                      side: BorderSide(color: colorScheme.error),
+                      minimumSize: const Size(100, 38),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
             const SizedBox(height: 10),
@@ -161,47 +184,6 @@ class ReviewHeader extends StatelessWidget {
                     ),
                   ],
                 ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    totalNeedReview == 0
-                        ? '0/0 dòng cần xem (tất cả đều Xanh)'
-                        : 'Còn $remainingCount/$totalNeedReview dòng cần xem',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: remainingCount > 0
-                          ? colorScheme.error
-                          : Colors.green.shade800,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${(progress * 100).toInt()}%',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  remainingCount == 0
-                      ? Colors.green.shade600
-                      : colorScheme.primary,
-                ),
               ),
             ),
           ],

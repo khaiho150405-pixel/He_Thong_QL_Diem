@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   BadRequestException,
+  Logger,
   Inject,
   Injectable,
   NotFoundException,
@@ -22,6 +23,16 @@ export interface RecognitionUpload {
   componentId: unknown;
 }
 
+function ticketIdOf(value: unknown): string {
+  if (
+    typeof value !== "string" ||
+    !/^[1-9][0-9]{0,18}$/.test(value) ||
+    BigInt(value) > 9_223_372_036_854_775_807n
+  )
+    throw new BadRequestException();
+  return value;
+}
+
 function positiveInt(value: unknown): number {
   const text = typeof value === "number" ? String(value) : value;
   if (typeof text !== "string" || !/^[1-9][0-9]{0,9}$/.test(text))
@@ -34,13 +45,105 @@ function positiveInt(value: unknown): number {
 
 @Injectable()
 export class RecognitionService {
+  private readonly logger = new Logger(RecognitionService.name);
+
   constructor(
     @Inject(RECOGNITION_STORE) private readonly store: RecognitionStore,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
-  list(actor: Actor, gradebookIdInput: unknown): Promise<RecognitionTicket[]> {
-    return this.store.list(actor, positiveInt(gradebookIdInput));
+  list(
+    actor: Actor,
+    gradebookIdInput: unknown,
+    includeCancelledInput?: unknown,
+  ): Promise<RecognitionTicket[]> {
+    // Chỉ nhận "true"/"false" (hoặc vắng); giá trị khác là yêu cầu sai.
+    if (
+      includeCancelledInput !== undefined &&
+      includeCancelledInput !== "true" &&
+      includeCancelledInput !== "false"
+    )
+      throw new BadRequestException();
+    return this.store.list(
+      actor,
+      positiveInt(gradebookIdInput),
+      includeCancelledInput === "true",
+    );
+  }
+
+  /**
+   * Hủy mềm phiếu (ADR-0015). Giao dịch SQL không xóa dòng nào; ảnh gốc và ảnh ô bị xóa khỏi object storage sau khi commit
+   * (best-effort: lỗi chỉ ghi log, gọi lại cùng khóa idempotency sẽ dọn tiếp).
+   */
+  async cancel(
+    actor: Actor,
+    gradebookIdInput: unknown,
+    ticketIdInput: unknown,
+    idempotencyKey: unknown,
+    bodyInput: unknown,
+  ) {
+    const gradebookId = positiveInt(gradebookIdInput);
+    const ticketId = ticketIdOf(ticketIdInput);
+    if (
+      typeof idempotencyKey !== "string" ||
+      !/^[a-zA-Z0-9_-]{1,64}$/.test(idempotencyKey)
+    )
+      throw new BadRequestException();
+    if (
+      !bodyInput ||
+      typeof bodyInput !== "object" ||
+      Array.isArray(bodyInput) ||
+      Object.keys(bodyInput).length !== 2 ||
+      !Object.hasOwn(bodyInput, "expectedVersion") ||
+      !Object.hasOwn(bodyInput, "reason")
+    )
+      throw new BadRequestException();
+    const body = bodyInput as Record<string, unknown>;
+    if (
+      typeof body.expectedVersion !== "number" ||
+      !Number.isSafeInteger(body.expectedVersion) ||
+      body.expectedVersion < 0 ||
+      body.expectedVersion > 2_147_483_647 ||
+      typeof body.reason !== "string"
+    )
+      throw new BadRequestException();
+    const reason = body.reason.trim();
+    if (reason.length < 1 || reason.length > 200)
+      throw new BadRequestException();
+    const requestHash = createHash("sha256")
+      .update(
+        JSON.stringify({
+          gradebookId,
+          ticketId,
+          expectedVersion: body.expectedVersion,
+          reason,
+        }),
+      )
+      .digest("hex");
+    const { objectKeys } = await this.store.cancel({
+      actor,
+      gradebookId,
+      ticketId,
+      expectedVersion: body.expectedVersion,
+      reason,
+      idempotencyKey,
+      requestHash,
+    });
+    const results = await Promise.allSettled(
+      objectKeys.map((key) => this.storage.remove(key)),
+    );
+    const failed = results.filter((result) => result.status === "rejected");
+    // Chỉ ghi số lượng: khóa object không chứa họ tên nhưng log không cần chi tiết hơn.
+    if (failed.length)
+      this.logger.warn(
+        JSON.stringify({
+          event: "recognition_cancel_cleanup_failed",
+          ticketId,
+          failed: failed.length,
+          total: objectKeys.length,
+        }),
+      );
+    return this.detail(actor, gradebookId, ticketId);
   }
 
   async detail(
@@ -49,34 +152,33 @@ export class RecognitionService {
     ticketIdInput: unknown,
   ) {
     const gradebookId = positiveInt(gradebookIdInput);
-    if (
-      typeof ticketIdInput !== "string" ||
-      !/^[1-9][0-9]{0,18}$/.test(ticketIdInput) ||
-      BigInt(ticketIdInput) > 9_223_372_036_854_775_807n
-    )
-      throw new BadRequestException();
-    const ticket = await this.store.detail(actor, gradebookId, ticketIdInput);
+    const ticketId = ticketIdOf(ticketIdInput);
+    const ticket = await this.store.detail(actor, gradebookId, ticketId);
     if (!ticket) throw new NotFoundException();
     const expiresInSeconds = 300;
+    // Phiếu đã hủy: ảnh gốc và ảnh ô đã bị xóa khỏi object storage nên không ký URL (chuỗi rỗng / null).
+    const imagesRemoved = ticket.status === "DA_HUY";
     const [sourceImageUrl, rows] = await Promise.all([
-      this.storage.signedGetUrl(ticket.sourceObjectKey, expiresInSeconds),
+      imagesRemoved
+        ? Promise.resolve("")
+        : this.storage.signedGetUrl(ticket.sourceObjectKey, expiresInSeconds),
       Promise.all(
         ticket.rows.map(async (row) => {
           const [numericCropUrl, writtenCropUrl, nameCropUrl] =
             await Promise.all([
-              row.numericCropKey
+              row.numericCropKey && !imagesRemoved
                 ? this.storage.signedGetUrl(
                     row.numericCropKey,
                     expiresInSeconds,
                   )
                 : Promise.resolve(null),
-              row.writtenCropKey
+              row.writtenCropKey && !imagesRemoved
                 ? this.storage.signedGetUrl(
                     row.writtenCropKey,
                     expiresInSeconds,
                   )
                 : Promise.resolve(null),
-              row.nameCropKey
+              row.nameCropKey && !imagesRemoved
                 ? this.storage.signedGetUrl(row.nameCropKey, expiresInSeconds)
                 : Promise.resolve(null),
             ]);
@@ -121,6 +223,8 @@ export class RecognitionService {
       modelVersion: ticket.modelVersion,
       version: ticket.version,
       createdAt: ticket.createdAt,
+      cancelReason: ticket.cancelReason,
+      cancelledAt: ticket.cancelledAt,
       greenRows: ticket.greenRows,
       yellowRows: ticket.yellowRows,
       redRows: ticket.redRows,

@@ -105,6 +105,7 @@ Class | Method | HTTP request | Description
 [*IdentityApi*](doc/IdentityApi.md) | [**identityProfile**](doc/IdentityApi.md#identityprofile) | **GET** /api/v1/identity/profile |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateAccount**](doc/IdentityApi.md#identityupdateaccount) | **PUT** /api/v1/identity/accounts/{id} |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateProfile**](doc/IdentityApi.md#identityupdateprofile) | **PUT** /api/v1/identity/profile |
+[*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionCancel**](doc/RecognitionApi.md#recognitioncancel) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/cancel |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionDetail**](doc/RecognitionApi.md#recognitiondetail) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId} |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionList**](doc/RecognitionApi.md#recognitionlist) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionUpload**](doc/RecognitionApi.md#recognitionupload) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
@@ -169,6 +170,7 @@ Class | Method | HTTP request | Description
  - [CalculateFinalResultsInput](doc/CalculateFinalResultsInput.md)
  - [CalculationHistoryDto](doc/CalculationHistoryDto.md)
  - [CalculationHistoryListDto](doc/CalculationHistoryListDto.md)
+ - [CancelTicketInput](doc/CancelTicketInput.md)
  - [CellsResponseDto](doc/CellsResponseDto.md)
  - [ClassesDto](doc/ClassesDto.md)
  - [ClassesInput](doc/ClassesInput.md)

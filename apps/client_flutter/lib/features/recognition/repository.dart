@@ -19,10 +19,13 @@ class RecognitionRepository {
   String? _pendingApprovalSignature;
   String? _pendingApprovalKey;
 
-  Future<List<RecognitionTicketDto>> list(num gradebookId) async =>
-      (await api.getRecognitionApi().recognitionList(
-        gradebookId: gradebookId,
-      )).data!;
+  Future<List<RecognitionTicketDto>> list(
+    num gradebookId, {
+    bool? includeCancelled,
+  }) async => (await api.getRecognitionApi().recognitionList(
+    gradebookId: gradebookId,
+    includeCancelled: includeCancelled,
+  )).data!;
 
   Future<RecognitionTicketDetailDto> detail({
     required num gradebookId,
@@ -36,6 +39,7 @@ class RecognitionRepository {
     required num gradebookId,
     required num componentId,
     required RecognitionImage image,
+    CancelToken? cancelToken,
     ProgressCallback? onSendProgress,
   }) async {
     final mime = recognitionImageMime(image);
@@ -55,10 +59,31 @@ class RecognitionRepository {
         contentType: type,
       ),
       componentId: componentId.toInt(),
+      cancelToken: cancelToken,
       onSendProgress: onSendProgress,
     )).data!;
     _pendingSignature = null;
     _pendingKey = null;
+    return result;
+  }
+
+  Future<RecognitionTicketDetailDto> cancel({
+    required num gradebookId,
+    required String ticketId,
+    required num expectedVersion,
+    required String reason,
+  }) async {
+    final idempotencyKey =
+        'flutter-cancel-${DateTime.now().microsecondsSinceEpoch}-${_keySequence++}';
+    final result = (await api.getRecognitionApi().recognitionCancel(
+      xIdempotencyKey: idempotencyKey,
+      ticketId: ticketId,
+      gradebookId: gradebookId,
+      cancelTicketInput: CancelTicketInput(
+        expectedVersion: expectedVersion,
+        reason: reason,
+      ),
+    )).data!;
     return result;
   }
 

@@ -20,6 +20,7 @@ import 'package:api_client_dart/src/model/calculate_final_results_dto.dart';
 import 'package:api_client_dart/src/model/calculate_final_results_input.dart';
 import 'package:api_client_dart/src/model/calculation_history_dto.dart';
 import 'package:api_client_dart/src/model/calculation_history_list_dto.dart';
+import 'package:api_client_dart/src/model/cancel_ticket_input.dart';
 import 'package:api_client_dart/src/model/cells_response_dto.dart';
 import 'package:api_client_dart/src/model/classes_dto.dart';
 import 'package:api_client_dart/src/model/classes_input.dart';
@@ -175,6 +176,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'CalculationHistoryListDto':
       return CalculationHistoryListDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'CancelTicketInput':
+      return CancelTicketInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'CellsResponseDto':
       return CellsResponseDto.fromJson(value as Map<String, dynamic>)

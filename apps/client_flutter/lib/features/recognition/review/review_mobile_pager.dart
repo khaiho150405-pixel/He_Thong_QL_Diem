@@ -145,8 +145,6 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
                   _pageController.jumpToPage(0);
                 }
               },
-              totalNeedReview: widget.totalNeedReview,
-              reviewedCount: widget.reviewedCount,
             ),
           ),
 
@@ -293,6 +291,7 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
             widget.onSttConfirmedChanged?.call(row.rowId, v),
         layout: ReviewRowLayout.narrow,
         showInlineAgreeButton: false,
+        isCancelled: widget.ticket?.status.value == 'DA_HUY',
       ),
     );
   }

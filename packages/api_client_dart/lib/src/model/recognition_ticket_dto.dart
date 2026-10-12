@@ -40,6 +40,10 @@ class RecognitionTicketDto {
 
     required this.createdAt,
 
+    required this.cancelReason,
+
+    required this.cancelledAt,
+
     required this.greenRows,
 
     required this.yellowRows,
@@ -80,6 +84,14 @@ class RecognitionTicketDto {
   @JsonKey(name: r'createdAt', required: true, includeIfNull: false)
   final DateTime createdAt;
 
+  /// Lý do hủy phiếu; null khi phiếu chưa hủy
+  @JsonKey(name: r'cancelReason', required: true, includeIfNull: true)
+  final String? cancelReason;
+
+  /// Thời điểm hủy phiếu; null khi phiếu chưa hủy
+  @JsonKey(name: r'cancelledAt', required: true, includeIfNull: true)
+  final DateTime? cancelledAt;
+
   /// Số dòng mức Xanh (mức cuối)
   @JsonKey(name: r'greenRows', required: true, includeIfNull: false)
   final num greenRows;
@@ -107,6 +119,8 @@ class RecognitionTicketDto {
           other.modelVersion == modelVersion &&
           other.version == version &&
           other.createdAt == createdAt &&
+          other.cancelReason == cancelReason &&
+          other.cancelledAt == cancelledAt &&
           other.greenRows == greenRows &&
           other.yellowRows == yellowRows &&
           other.redRows == redRows;
@@ -124,6 +138,8 @@ class RecognitionTicketDto {
       (modelVersion == null ? 0 : modelVersion.hashCode) +
       version.hashCode +
       createdAt.hashCode +
+      (cancelReason == null ? 0 : cancelReason.hashCode) +
+      (cancelledAt == null ? 0 : cancelledAt.hashCode) +
       greenRows.hashCode +
       yellowRows.hashCode +
       redRows.hashCode;
@@ -147,7 +163,9 @@ enum RecognitionTicketDtoStatusEnum {
   @JsonValue(r'DA_DUYET')
   DA_DUYET(r'DA_DUYET'),
   @JsonValue(r'LOI')
-  LOI(r'LOI');
+  LOI(r'LOI'),
+  @JsonValue(r'DA_HUY')
+  DA_HUY(r'DA_HUY');
 
   const RecognitionTicketDtoStatusEnum(this.value);
 

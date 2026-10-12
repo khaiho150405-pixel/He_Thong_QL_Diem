@@ -20,6 +20,16 @@ export interface CreateRecognitionTicket {
   requestHash: string;
 }
 
+export interface CancelRecognitionTicket {
+  actor: Actor;
+  gradebookId: number;
+  ticketId: string;
+  expectedVersion: number;
+  reason: string;
+  idempotencyKey: string;
+  requestHash: string;
+}
+
 export interface RecognitionStore {
   authorizeUpload(
     actor: Actor,
@@ -29,19 +39,29 @@ export interface RecognitionStore {
   createTicket(
     input: CreateRecognitionTicket,
   ): Promise<StoredRecognitionReceipt>;
-  list(actor: Actor, gradebookId: number): Promise<RecognitionTicket[]>;
+  list(
+    actor: Actor,
+    gradebookId: number,
+    includeCancelled: boolean,
+  ): Promise<RecognitionTicket[]>;
   detail(
     actor: Actor,
     gradebookId: number,
     ticketId: string,
   ): Promise<RecognitionTicketDetail | null>;
+  /**
+   * Hủy mềm phiếu (huy_phieu_nhan_dien). Trả các object key của ảnh gốc và ảnh ô để service xóa khỏi object storage
+   * sau khi giao dịch đã commit; phiếu và ket_qua_dong không bị xóa.
+   */
+  cancel(input: CancelRecognitionTicket): Promise<{ objectKeys: string[] }>;
 }
 
 export type RecognitionStatus =
   | "DANG_XU_LY"
   | "CHO_DOI_CHIEU"
   | "DA_DUYET"
-  | "LOI";
+  | "LOI"
+  | "DA_HUY";
 
 export interface RecognitionTicket {
   ticketId: string;
@@ -55,6 +75,10 @@ export interface RecognitionTicket {
   modelVersion: string | null;
   version: number;
   createdAt: string;
+  /** Lý do hủy; null khi phiếu chưa hủy. */
+  cancelReason: string | null;
+  /** Thời điểm hủy (ISO 8601); null khi phiếu chưa hủy. */
+  cancelledAt: string | null;
   /** Số dòng theo mức cuối (điểm + ghép học sinh); 0 khi chưa có kết quả. */
   greenRows: number;
   yellowRows: number;

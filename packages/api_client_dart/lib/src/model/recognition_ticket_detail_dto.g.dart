@@ -31,6 +31,10 @@ abstract class _$RecognitionTicketDetailDtoCWProxy {
 
   RecognitionTicketDetailDto createdAt(DateTime createdAt);
 
+  RecognitionTicketDetailDto cancelReason(String? cancelReason);
+
+  RecognitionTicketDetailDto cancelledAt(DateTime? cancelledAt);
+
   RecognitionTicketDetailDto greenRows(num greenRows);
 
   RecognitionTicketDetailDto yellowRows(num yellowRows);
@@ -63,6 +67,8 @@ abstract class _$RecognitionTicketDetailDtoCWProxy {
     String? modelVersion,
     num version,
     DateTime createdAt,
+    String? cancelReason,
+    DateTime? cancelledAt,
     num greenRows,
     num yellowRows,
     num redRows,
@@ -124,6 +130,14 @@ class _$RecognitionTicketDetailDtoCWProxyImpl
       this(createdAt: createdAt);
 
   @override
+  RecognitionTicketDetailDto cancelReason(String? cancelReason) =>
+      this(cancelReason: cancelReason);
+
+  @override
+  RecognitionTicketDetailDto cancelledAt(DateTime? cancelledAt) =>
+      this(cancelledAt: cancelledAt);
+
+  @override
   RecognitionTicketDetailDto greenRows(num greenRows) =>
       this(greenRows: greenRows);
 
@@ -166,6 +180,8 @@ class _$RecognitionTicketDetailDtoCWProxyImpl
     Object? modelVersion = const $CopyWithPlaceholder(),
     Object? version = const $CopyWithPlaceholder(),
     Object? createdAt = const $CopyWithPlaceholder(),
+    Object? cancelReason = const $CopyWithPlaceholder(),
+    Object? cancelledAt = const $CopyWithPlaceholder(),
     Object? greenRows = const $CopyWithPlaceholder(),
     Object? yellowRows = const $CopyWithPlaceholder(),
     Object? redRows = const $CopyWithPlaceholder(),
@@ -218,6 +234,14 @@ class _$RecognitionTicketDetailDtoCWProxyImpl
           ? _value.createdAt
           // ignore: cast_nullable_to_non_nullable
           : createdAt as DateTime,
+      cancelReason: cancelReason == const $CopyWithPlaceholder()
+          ? _value.cancelReason
+          // ignore: cast_nullable_to_non_nullable
+          : cancelReason as String?,
+      cancelledAt: cancelledAt == const $CopyWithPlaceholder()
+          ? _value.cancelledAt
+          // ignore: cast_nullable_to_non_nullable
+          : cancelledAt as DateTime?,
       greenRows: greenRows == const $CopyWithPlaceholder()
           ? _value.greenRows
           // ignore: cast_nullable_to_non_nullable
@@ -275,6 +299,8 @@ RecognitionTicketDetailDto _$RecognitionTicketDetailDtoFromJson(
       'modelVersion',
       'version',
       'createdAt',
+      'cancelReason',
+      'cancelledAt',
       'greenRows',
       'yellowRows',
       'redRows',
@@ -298,6 +324,11 @@ RecognitionTicketDetailDto _$RecognitionTicketDetailDtoFromJson(
     modelVersion: $checkedConvert('modelVersion', (v) => v as String?),
     version: $checkedConvert('version', (v) => v as num),
     createdAt: $checkedConvert('createdAt', (v) => DateTime.parse(v as String)),
+    cancelReason: $checkedConvert('cancelReason', (v) => v as String?),
+    cancelledAt: $checkedConvert(
+      'cancelledAt',
+      (v) => v == null ? null : DateTime.parse(v as String),
+    ),
     greenRows: $checkedConvert('greenRows', (v) => v as num),
     yellowRows: $checkedConvert('yellowRows', (v) => v as num),
     redRows: $checkedConvert('redRows', (v) => v as num),
@@ -333,6 +364,8 @@ Map<String, dynamic> _$RecognitionTicketDetailDtoToJson(
   'modelVersion': instance.modelVersion,
   'version': instance.version,
   'createdAt': instance.createdAt.toIso8601String(),
+  'cancelReason': instance.cancelReason,
+  'cancelledAt': instance.cancelledAt?.toIso8601String(),
   'greenRows': instance.greenRows,
   'yellowRows': instance.yellowRows,
   'redRows': instance.redRows,
@@ -346,4 +379,5 @@ const _$RecognitionTicketDetailDtoStatusEnumEnumMap = {
   RecognitionTicketDetailDtoStatusEnum.CHO_DOI_CHIEU: 'CHO_DOI_CHIEU',
   RecognitionTicketDetailDtoStatusEnum.DA_DUYET: 'DA_DUYET',
   RecognitionTicketDetailDtoStatusEnum.LOI: 'LOI',
+  RecognitionTicketDetailDtoStatusEnum.DA_HUY: 'DA_HUY',
 };

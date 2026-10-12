@@ -16,6 +16,7 @@ import { sqlStateOf, transaction } from "../../../common/transaction.js";
 import { gradebookAccess } from "../../authorization/application/gradebook-policy.js";
 import { currentActor } from "../../authorization/application/policy.js";
 import type {
+  CancelRecognitionTicket,
   CreateRecognitionTicket,
   RecognitionEvidenceRow,
   RecognitionStore,
@@ -48,11 +49,19 @@ export class PrismaRecognitionStore implements RecognitionStore {
     return row;
   }
 
-  list(actor: CreateRecognitionTicket["actor"], gradebookId: number) {
+  list(
+    actor: CreateRecognitionTicket["actor"],
+    gradebookId: number,
+    includeCancelled: boolean,
+  ) {
     return transaction(this.db, async (tx) => {
       await this.authorizeRead(tx, actor, gradebookId);
       const rows = await tx.phieu_nhan_dien.findMany({
-        where: { ma_bang_diem: gradebookId },
+        where: {
+          ma_bang_diem: gradebookId,
+          // Phiếu đã hủy mặc định bị ẩn khỏi danh sách (vẫn đọc được qua GET chi tiết).
+          ...(includeCancelled ? {} : { trang_thai: { not: "DA_HUY" } }),
+        },
         include: { ma_thanh_phan_ref: { select: { ten_thanh_phan: true } } },
         orderBy: { ma_phieu: "desc" },
         take: 20,
@@ -81,6 +90,8 @@ export class PrismaRecognitionStore implements RecognitionStore {
         modelVersion: row.phien_ban_mo_hinh,
         version: row.version,
         createdAt: row.ngay_tao.toISOString(),
+        cancelReason: row.ly_do_huy,
+        cancelledAt: row.thoi_diem_huy?.toISOString() ?? null,
       }));
     });
   }
@@ -168,6 +179,8 @@ export class PrismaRecognitionStore implements RecognitionStore {
         modelVersion: row.phien_ban_mo_hinh,
         version: row.version,
         createdAt: row.ngay_tao.toISOString(),
+        cancelReason: row.ly_do_huy,
+        cancelledAt: row.thoi_diem_huy?.toISOString() ?? null,
         greenRows: levelCount("XANH"),
         yellowRows: levelCount("VANG"),
         redRows: levelCount("DO"),
@@ -232,6 +245,62 @@ export class PrismaRecognitionStore implements RecognitionStore {
           HttpStatus.TOO_MANY_REQUESTS,
         );
     });
+  }
+
+  async cancel(
+    input: CancelRecognitionTicket,
+  ): Promise<{ objectKeys: string[] }> {
+    try {
+      return await transaction(this.db, async (tx) => {
+        await tx.$queryRaw`
+          SELECT public.huy_phieu_nhan_dien(
+            ${input.actor.sessionHash}::text,
+            ${input.gradebookId}::integer,
+            ${BigInt(input.ticketId)}::bigint,
+            ${input.expectedVersion}::integer,
+            ${input.reason}::text,
+            ${input.idempotencyKey}::text,
+            ${input.requestHash}::text
+          ) AS result`;
+        // Hàm SQL đã chặn phiếu không thuộc bảng điểm/không ở DA_HUY; đọc khóa ảnh để dọn object storage sau khi commit.
+        const ticket = await tx.phieu_nhan_dien.findFirst({
+          where: {
+            ma_phieu: BigInt(input.ticketId),
+            ma_bang_diem: input.gradebookId,
+            trang_thai: "DA_HUY",
+          },
+          select: {
+            duong_dan_anh_goc: true,
+            ket_qua_dong_rows: {
+              select: {
+                duong_dan_anh_o_so: true,
+                duong_dan_anh_o_chu: true,
+                duong_dan_anh_o_ten: true,
+              },
+            },
+          },
+        });
+        if (!ticket) throw new NotFoundException();
+        const objectKeys = [
+          ticket.duong_dan_anh_goc,
+          ...ticket.ket_qua_dong_rows.flatMap((row) => [
+            row.duong_dan_anh_o_so,
+            row.duong_dan_anh_o_chu,
+            row.duong_dan_anh_o_ten,
+          ]),
+        ].filter((key): key is string => Boolean(key));
+        return { objectKeys };
+      });
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      const state = sqlStateOf(error);
+      if (code === "P2010" && state === "42501") throw new ForbiddenException();
+      if (code === "P2010" && ["02000", "P0002"].includes(state ?? ""))
+        throw new NotFoundException();
+      if (code === "P2010" && ["23505", "23514", "40001"].includes(state ?? ""))
+        throw new ConflictException();
+      throw error;
+    }
   }
 
   async createTicket(

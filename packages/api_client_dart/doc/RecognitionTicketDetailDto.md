@@ -19,10 +19,12 @@ Name | Type | Description | Notes
 **modelVersion** | **String** |  |
 **version** | **num** |  |
 **createdAt** | [**DateTime**](DateTime.md) |  |
+**cancelReason** | **String** | Lý do hủy phiếu; null khi phiếu chưa hủy |
+**cancelledAt** | [**DateTime**](DateTime.md) | Thời điểm hủy phiếu; null khi phiếu chưa hủy |
 **greenRows** | **num** | Số dòng mức Xanh (mức cuối) |
 **yellowRows** | **num** | Số dòng mức Vàng (mức cuối) |
 **redRows** | **num** | Số dòng mức Đỏ (mức cuối) |
-**sourceImageUrl** | **String** |  |
+**sourceImageUrl** | **String** | URL ký 300 giây của ảnh gốc; chuỗi rỗng khi phiếu đã hủy (ảnh đã bị xóa khỏi kho lưu trữ) |
 **imageUrlExpiresInSeconds** | **num** |  |
 **rows** | [**List&lt;RecognitionEvidenceRowDto&gt;**](RecognitionEvidenceRowDto.md) |  |
 

@@ -23,7 +23,7 @@ export type {
 
 export interface RecognitionWorkerStore {
   load(ticketId: string): Promise<{
-    status: "DANG_XU_LY" | "CHO_DOI_CHIEU" | "DA_DUYET" | "LOI";
+    status: "DANG_XU_LY" | "CHO_DOI_CHIEU" | "DA_DUYET" | "LOI" | "DA_HUY";
     objectKey: string;
   } | null>;
   /** Danh sách lớp đã chốt khi tạo phiếu (STT → học sinh); rỗng với phiếu tạo trước ADR-0015. */
@@ -71,9 +71,20 @@ export class RecognitionJobProcessor {
     private readonly options: { sttCheck?: boolean } = {},
   ) {}
 
+  /** Phiếu đã hủy: kết thúc job thành công (không retry, không ghi kết quả). Log không chứa họ tên. */
+  private logCancelled(ticketId: string): void {
+    console.log(
+      JSON.stringify({ event: "recognition_ticket_cancelled", ticketId }),
+    );
+  }
+
   async process(ticketId: string): Promise<void> {
     const ticket = await this.store.load(ticketId);
     if (!ticket) throw new Error("TICKET_NOT_FOUND");
+    if (ticket.status === "DA_HUY") {
+      this.logCancelled(ticketId);
+      return;
+    }
     if (["CHO_DOI_CHIEU", "DA_DUYET"].includes(ticket.status)) return;
     if (ticket.status === "LOI") return;
     const roster = await this.store.roster(ticketId);
@@ -160,6 +171,12 @@ export class RecognitionJobProcessor {
     } catch (error) {
       await Promise.allSettled(uploaded.map((key) => this.storage.remove(key)));
       throw error;
+    }
+    // Phiếu có thể bị hủy trong lúc nhận dạng: SQL bỏ qua kết quả nên ảnh ô vừa tải lên thành mồ côi → dọn lại.
+    // Đặt ngoài try: lỗi ở bước này không được xóa ảnh ô của kết quả đã ghi.
+    if ((await this.store.load(ticketId))?.status === "DA_HUY") {
+      await Promise.allSettled(uploaded.map((key) => this.storage.remove(key)));
+      this.logCancelled(ticketId);
     }
   }
 }

@@ -69,6 +69,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
   final ValueChanged<bool>? onConfirmedChanged;
   final bool readOnly;
   final VoidCallback? onRefresh;
+  final bool isCancelled;
 
   const ReviewSttMismatchBox({
     super.key,
@@ -77,6 +78,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
     this.onConfirmedChanged,
     this.readOnly = false,
     this.onRefresh,
+    this.isCancelled = false,
   });
 
   @override
@@ -175,6 +177,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
             nullPlaceholder: 'Không có ảnh họ tên',
             height: 56,
             onRefresh: onRefresh,
+            isCancelled: isCancelled,
           ),
 
           // Checkbox xác nhận cho trường hợp cảnh báo (VANG/DO/null), không hiện ở chế độ chỉ xem

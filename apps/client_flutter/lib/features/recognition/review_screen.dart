@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../authentication/session.dart';
 import '../gradebooks/repository.dart';
+import 'cancel_ticket_dialog.dart';
 import 'repository.dart';
 import 'review/review_bottom_bar.dart';
 import 'review/review_green_group.dart';
@@ -306,6 +307,245 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     }
   }
 
+  bool _canCancelTicket(RecognitionTicketDetailDto? ticket) {
+    if (ticket == null) return false;
+    final user = ref.read(sessionProvider);
+    if (user?.role.value == 'QUAN_TRI_VIEN') return false;
+    return ticket.status.value == 'DANG_XU_LY' ||
+        ticket.status.value == 'CHO_DOI_CHIEU' ||
+        ticket.status.value == 'LOI';
+  }
+
+  bool _hasUnsavedChanges() {
+    final data = loaded;
+    if (data == null) return false;
+    if (data.status.value != 'CHO_DOI_CHIEU') return false;
+
+    if (confirmed) return true;
+    if (sttConfirmed.values.any((v) => v == true)) return true;
+    if (agreedYellow.values.any((v) => v == true)) return true;
+    if (leavingEmpty.values.any((v) => v == true)) return true;
+
+    for (final row in data.rows) {
+      final suggested = _suggested(row);
+      final initialVal = suggested ?? '';
+      final initialReason = suggested == null
+          ? ''
+          : 'Đã đối chiếu ảnh nhận dạng';
+
+      if (values[row.rowId]?.text != initialVal) return true;
+      if (reasons[row.rowId]?.text != initialReason) return true;
+    }
+    return false;
+  }
+
+  Future<bool> _confirmDiscardChanges() async {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    if (isMobile) {
+      final result = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (ctx) => SafeArea(
+          key: const ValueKey('discard-changes-bottom-sheet'),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange.shade800,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Bỏ các thay đổi chưa duyệt?',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Bạn đã chỉnh sửa điểm hoặc thông tin đối chiếu nhưng chưa duyệt phiếu. Các thay đổi này sẽ bị mất nếu rời đi.',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  key: const ValueKey('discard-stay-button'),
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: const Text('Ở lại'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  key: const ValueKey('discard-leave-button'),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  child: const Text('Rời đi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return result ?? false;
+    } else {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              SizedBox(width: 8),
+              Expanded(child: Text('Bỏ các thay đổi chưa duyệt?')),
+            ],
+          ),
+          content: const Text(
+            'Bạn đã chỉnh sửa điểm hoặc thông tin đối chiếu nhưng chưa duyệt phiếu. Các thay đổi này sẽ bị mất nếu rời đi.',
+          ),
+          actions: [
+            TextButton(
+              key: const ValueKey('discard-stay-button'),
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Ở lại'),
+            ),
+            FilledButton(
+              key: const ValueKey('discard-leave-button'),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              child: const Text('Rời đi'),
+            ),
+          ],
+        ),
+      );
+      return result ?? false;
+    }
+  }
+
+  Future<void> _handleBack() async {
+    if (busy) return;
+    if (_hasUnsavedChanges()) {
+      final allow = await _confirmDiscardChanges();
+      if (!allow || !mounted) return;
+    }
+    _doNavigateBack();
+  }
+
+  void _doNavigateBack() {
+    if (!mounted) return;
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      context.go('/gradebooks/${widget.gradebookId}');
+    }
+  }
+
+  Widget _buildBreadcrumb(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: _handleBack,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
+              'Bảng điểm #${widget.gradebookId}',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.primary,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ),
+        Text(
+          ' › Phiếu #${widget.ticketId}',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: theme.textTheme.titleMedium?.color ?? colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileCancelMenu(RecognitionTicketDetailDto ticket) {
+    return PopupMenuButton<String>(
+      key: const ValueKey('review-mobile-menu'),
+      icon: const Icon(Icons.more_vert_rounded),
+      tooltip: 'Thao tác phiếu',
+      onSelected: (action) {
+        if (action == 'cancel') {
+          _showCancelTicket(ticket);
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'cancel',
+          child: Row(
+            children: [
+              Icon(
+                Icons.cancel_outlined,
+                size: 18,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Hủy phiếu',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showCancelTicket(RecognitionTicketDetailDto ticket) async {
+    if (busy) return;
+    final cancelled = await showCancelTicketDialog(
+      context: context,
+      ref: ref,
+      gradebookId: widget.gradebookId,
+      ticketId: widget.ticketId,
+      expectedVersion: ticket.version,
+    );
+    if (cancelled == true && mounted) {
+      _doNavigateBack();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -316,11 +556,40 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final isMobile = screenWidth < 600;
 
     return PopScope(
-      canPop: !busy,
+      key: const ValueKey('review-pop-scope'),
+      canPop: !busy && !_hasUnsavedChanges(),
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop || busy) return;
+        final allow = await _confirmDiscardChanges();
+        if (allow && mounted) {
+          _doNavigateBack();
+        }
+      },
       child: AppScaffold(
         key: const ValueKey('review-screen'),
-        title: 'Đối chiếu nhận dạng #${widget.ticketId}',
-        showBackButton: true,
+        title: isMobile
+            ? 'Phiếu #${widget.ticketId}'
+            : 'Đối chiếu nhận dạng #${widget.ticketId}',
+        titleWidget: isMobile ? null : _buildBreadcrumb(context),
+        showBackButton: false,
+        automaticallyImplyLeading: false,
+        leading: isMobile
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Quay lại bảng điểm',
+                onPressed: _handleBack,
+              )
+            : null,
+        onBeforeLeave: () async {
+          if (_hasUnsavedChanges()) {
+            return await _confirmDiscardChanges();
+          }
+          return true;
+        },
+        actions: [
+          if (isMobile && _canCancelTicket(loaded))
+            _buildMobileCancelMenu(loaded!),
+        ],
         body: FutureBuilder<RecognitionTicketDetailDto>(
           future: detail,
           builder: (context, snapshot) {
@@ -576,14 +845,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   currentFilter: _reviewLevelFilter,
                   onFilterChanged: (filter) =>
                       setState(() => _reviewLevelFilter = filter),
-                  totalNeedReview: totalNeedReview,
-                  reviewedCount: reviewedCount,
+                  canCancel: !isMobile && _canCancelTicket(ticket),
+                  onCancel: () => _showCancelTicket(ticket),
                 ),
                 const SizedBox(height: 12),
 
                 // Banner trạng thái khi phiếu không ở trạng thái CHO_DOI_CHIEU
-                if (!canApprove)
-                  _buildStatusBanner(context, ticket.status.value),
+                if (!canApprove) _buildStatusBanner(context, ticket),
 
                 // Nút chuyển lại PageView trên mobile nếu có dòng cần xem
                 if (isMobile && totalNeedReview > 0 && canApprove) ...[
@@ -628,6 +896,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     isSttConfirmed: sttConfirmed[row.rowId] ?? false,
                     onSttConfirmedChanged: (val) =>
                         _onSttConfirmedChanged(row.rowId, val),
+                    isCancelled: ticket.status.value == 'DA_HUY',
                   ),
 
                 // Mục thu gọn dòng Xanh
@@ -659,7 +928,11 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  Widget _buildStatusBanner(BuildContext context, String status) {
+  Widget _buildStatusBanner(
+    BuildContext context,
+    RecognitionTicketDetailDto ticket,
+  ) {
+    final status = ticket.status.value;
     final (
       icon,
       bgColor,
@@ -675,6 +948,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         Colors.green.shade900,
         'Phiếu đã duyệt — chỉ xem',
         'Điểm số đã được ghi chính thức vào hệ thống.',
+      ),
+      'DA_HUY' => (
+        Icons.cancel_outlined,
+        Colors.grey.shade100,
+        Colors.grey.shade400,
+        Colors.grey.shade900,
+        'Phiếu đã hủy — ${ticket.cancelReason ?? 'Không có lý do'}',
+        ticket.cancelledAt != null
+            ? 'Đã hủy lúc ${ticket.cancelledAt!.toLocal().hour.toString().padLeft(2, '0')}:${ticket.cancelledAt!.toLocal().minute.toString().padLeft(2, '0')} ngày ${ticket.cancelledAt!.toLocal().day}/${ticket.cancelledAt!.toLocal().month}/${ticket.cancelledAt!.toLocal().year}. Ảnh và dữ liệu đã bị xóa.'
+            : 'Ảnh và dữ liệu đối chiếu đã bị xóa khỏi hệ thống.',
       ),
       'LOI' => (
         Icons.error_outline_rounded,

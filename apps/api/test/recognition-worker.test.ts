@@ -728,3 +728,87 @@ test("infrastructure errors are still thrown so the queue can retry them", async
     await assert.rejects(processor.process("78"), new RegExp(code));
   }
 });
+
+function cancellable(statuses: Array<"DANG_XU_LY" | "DA_HUY">) {
+  const state = {
+    completed: 0,
+    failed: 0,
+    recognized: 0,
+    logs: [] as string[],
+  };
+  const storage = new MemoryStorage();
+  let loads = 0;
+  const processor = new RecognitionJobProcessor(
+    {
+      load: async () => ({
+        status: statuses[Math.min(loads++, statuses.length - 1)]!,
+        objectKey: "original.png",
+      }),
+      roster: async () => roster(2),
+      complete: async () => void (state.completed += 1),
+      fail: async () => void (state.failed += 1),
+    },
+    storage,
+    {
+      recognize: async () => {
+        state.recognized += 1;
+        return {
+          modelVersion: "fake-dev-v1",
+          pageStartStt: 1,
+          rows: [row(1), row(2)],
+        };
+      },
+    },
+  );
+  return { state, storage, processor };
+}
+
+async function captureLogs<T>(logs: string[], work: () => Promise<T>) {
+  const originalLog = console.log;
+  console.log = (line: unknown) => void logs.push(String(line));
+  try {
+    return await work();
+  } finally {
+    console.log = originalLog;
+  }
+}
+
+test("worker finishes a job for a cancelled ticket without recognising, writing or failing it", async () => {
+  const { state, storage, processor } = cancellable(["DA_HUY"]);
+  await captureLogs(state.logs, () => processor.process("42"));
+  assert.deepEqual(
+    [state.recognized, state.completed, state.failed],
+    [0, 0, 0],
+  );
+  assert.equal(storage.objects.size, 1);
+  const logged = state.logs.map(
+    (line) => JSON.parse(line) as Record<string, unknown>,
+  );
+  assert.deepEqual(logged, [
+    { event: "recognition_ticket_cancelled", ticketId: "42" },
+  ]);
+});
+
+test("a ticket cancelled while the model runs: result is ignored and the orphan crops are removed", async () => {
+  const { state, storage, processor } = cancellable(["DANG_XU_LY", "DA_HUY"]);
+  await captureLogs(state.logs, () => processor.process("43"));
+  // complete() vẫn được gọi (SQL bỏ qua kết quả của phiếu đã hủy) nhưng ảnh ô vừa tải lên bị dọn.
+  assert.equal(state.recognized, 1);
+  assert.equal(state.failed, 0);
+  assert.deepEqual([...storage.objects.keys()], ["original.png"]);
+  assert.equal(
+    state.logs.some((line) => line.includes("recognition_ticket_cancelled")),
+    true,
+  );
+});
+
+test("a ticket that stays active keeps its crops after completion", async () => {
+  const { state, storage, processor } = cancellable(["DANG_XU_LY"]);
+  await captureLogs(state.logs, () => processor.process("44"));
+  assert.equal(state.completed, 1);
+  assert.equal(storage.objects.size, 7);
+  assert.equal(
+    state.logs.some((line) => line.includes("recognition_ticket_cancelled")),
+    false,
+  );
+});

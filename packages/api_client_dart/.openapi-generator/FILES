@@ -25,6 +25,7 @@ doc/CalculateFinalResultsDto.md
 doc/CalculateFinalResultsInput.md
 doc/CalculationHistoryDto.md
 doc/CalculationHistoryListDto.md
+doc/CancelTicketInput.md
 doc/CellsResponseDto.md
 doc/ClassesApi.md
 doc/ClassesDto.md
@@ -161,6 +162,7 @@ lib/src/model/calculate_final_results_dto.dart
 lib/src/model/calculate_final_results_input.dart
 lib/src/model/calculation_history_dto.dart
 lib/src/model/calculation_history_list_dto.dart
+lib/src/model/cancel_ticket_input.dart
 lib/src/model/cells_response_dto.dart
 lib/src/model/classes_dto.dart
 lib/src/model/classes_input.dart

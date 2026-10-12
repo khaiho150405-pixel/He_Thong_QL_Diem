@@ -1,7 +1,7 @@
 # Khởi động nhanh thử nhận dạng (bấm đúp)
 
 Dùng sau khi đã cài đặt xong một lần theo [phase-7-huong-dan-chay.md](phase-7-huong-dan-chay.md) (Docker, `.env`, database thử,
-`.local/venv-ml`, trọng số, lớp thử). Các file `.bat` nằm ở thư mục gốc repo.
+`.local/venv-ml`, trọng số, lớp thử). Các file `.bat` nằm trong thư mục `Khoi_Dong_Nhan_Dang` đặt CẠNH thư mục repo (vd `D:\HocTap\KhoaLuan\App\Khoi_Dong_Nhan_Dang`, không nằm trong git; kèm `HUONG_DAN.txt`). Chuyển máy khác thì chép cả thư mục này. Không có thư mục đó thì chạy trực tiếp `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/recognition/pilot/up.ps1 [-Usb]`.
 
 | Muốn làm                                              | Bấm đúp                        |
 | ----------------------------------------------------- | ------------------------------ |

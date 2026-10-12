@@ -34,6 +34,7 @@ class ReviewRowContent extends StatelessWidget {
   final ValueChanged<bool>? onSttConfirmedChanged;
   final ReviewRowLayout layout;
   final bool showInlineAgreeButton;
+  final bool isCancelled;
 
   const ReviewRowContent({
     super.key,
@@ -56,6 +57,7 @@ class ReviewRowContent extends StatelessWidget {
     this.onSttConfirmedChanged,
     this.layout = ReviewRowLayout.wide,
     this.showInlineAgreeButton = true,
+    this.isCancelled = false,
   });
 
   @override
@@ -88,6 +90,7 @@ class ReviewRowContent extends StatelessWidget {
             onConfirmedChanged: onSttConfirmedChanged,
             readOnly: readOnly,
             onRefresh: onRefresh,
+            isCancelled: isCancelled,
           ),
 
         const SizedBox(height: 6),
@@ -221,6 +224,7 @@ class ReviewRowContent extends StatelessWidget {
                   nullPlaceholder: 'Không có ảnh họ tên',
                   height: 48,
                   onRefresh: onRefresh,
+                  isCancelled: isCancelled,
                 ),
               ],
             ],
@@ -237,6 +241,7 @@ class ReviewRowContent extends StatelessWidget {
             nullPlaceholder: 'Không có ảnh',
             height: 64,
             onRefresh: onRefresh,
+            isCancelled: isCancelled,
           ),
         ),
         const SizedBox(width: 10),
@@ -250,6 +255,7 @@ class ReviewRowContent extends StatelessWidget {
             nullPlaceholder: 'Không có ảnh',
             height: 64,
             onRefresh: onRefresh,
+            isCancelled: isCancelled,
           ),
         ),
         const SizedBox(width: 12),
@@ -299,6 +305,7 @@ class ReviewRowContent extends StatelessWidget {
             nullPlaceholder: 'Không có ảnh họ tên',
             height: 68,
             onRefresh: onRefresh,
+            isCancelled: isCancelled,
           ),
           const SizedBox(height: 10),
         ],
@@ -310,6 +317,7 @@ class ReviewRowContent extends StatelessWidget {
           nullPlaceholder: 'Không có ảnh',
           height: 72,
           onRefresh: onRefresh,
+          isCancelled: isCancelled,
         ),
         const SizedBox(height: 10),
 
@@ -320,6 +328,7 @@ class ReviewRowContent extends StatelessWidget {
           nullPlaceholder: 'Không có ảnh',
           height: 72,
           onRefresh: onRefresh,
+          isCancelled: isCancelled,
         ),
         const SizedBox(height: 12),
 

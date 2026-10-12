@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:api_client_dart/api_client_dart.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:ui' as ui;
 import '../../app/widgets/app_controls.dart';
+import 'cancel_ticket_dialog.dart';
 import 'image_preview.dart';
 import 'review_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +54,8 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   double? uploadProgress;
   String? imageError;
   bool showAllTickets = false;
+  bool showCancelled = false;
+  CancelToken? _uploadCancelToken;
   String? _uploadedTicketId;
   bool _navigating = false;
 
@@ -84,7 +88,9 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
 
   void reload() {
     pollTimer?.cancel();
-    tickets = ref.read(recognitionRepositoryProvider).list(widget.gradebookId);
+    tickets = ref
+        .read(recognitionRepositoryProvider)
+        .list(widget.gradebookId, includeCancelled: showCancelled);
     tickets
         .then((items) {
           if (!mounted) return;
@@ -124,6 +130,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   @override
   void dispose() {
     pollTimer?.cancel();
+    _uploadCancelToken?.cancel();
     super.dispose();
   }
 
@@ -208,6 +215,8 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       showMessage('Chọn thành phần điểm và ảnh bảng điểm trước.');
       return;
     }
+    final cancelToken = CancelToken();
+    _uploadCancelToken = cancelToken;
     setState(() {
       busy = true;
       uploadProgress = null;
@@ -220,6 +229,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
             gradebookId: widget.gradebookId,
             componentId: selectedComponent,
             image: selected,
+            cancelToken: cancelToken,
             onSendProgress: (sent, total) {
               if (mounted && total > 0) {
                 setState(() => uploadProgress = (sent / total).clamp(0, 1));
@@ -227,6 +237,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
             },
           );
       if (!mounted) return;
+      _uploadCancelToken = null;
       setState(() {
         busy = false;
         image = null;
@@ -236,8 +247,42 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       showMessage('Đã tải ảnh. Hệ thống đang nhận dạng.');
     } catch (error) {
       if (!mounted) return;
+      _uploadCancelToken = null;
+      if (error is DioException && CancelToken.isCancel(error)) {
+        setState(() {
+          busy = false;
+          uploadProgress = null;
+        });
+        showMessage('Đã hủy tải lên');
+        return;
+      }
       setState(() => busy = false);
       setState(() => imageError = errorMessage(error));
+    }
+  }
+
+  void cancelUpload() {
+    _uploadCancelToken?.cancel('USER_CANCELLED');
+  }
+
+  bool _canCancelTicket(RecognitionTicketDto item) {
+    final user = ref.read(sessionProvider);
+    if (user?.role.value == 'QUAN_TRI_VIEN') return false;
+    return item.status.value == 'DANG_XU_LY' ||
+        item.status.value == 'CHO_DOI_CHIEU' ||
+        item.status.value == 'LOI';
+  }
+
+  Future<void> _handleCancelTicket(RecognitionTicketDto item) async {
+    final cancelled = await showCancelTicketDialog(
+      context: context,
+      ref: ref,
+      gradebookId: widget.gradebookId,
+      ticketId: item.ticketId,
+      expectedVersion: item.version,
+    );
+    if (cancelled == true && mounted) {
+      reload();
     }
   }
 
@@ -309,10 +354,12 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                     color: colorScheme.primary,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Quy chuẩn chụp bảng điểm',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: Text(
+                      'Quy chuẩn chụp bảng điểm',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -528,6 +575,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       if (busy || picking) ...[
         const SizedBox(height: 14),
         LinearProgressIndicator(value: busy ? uploadProgress : null),
+        const SizedBox(height: 6),
         Text(
           picking
               ? 'Đang đọc ảnh…'
@@ -535,6 +583,29 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
               ? 'Ảnh đã gửi, đang chờ xác nhận…'
               : 'Đang tải ảnh…',
         ),
+        if (busy) ...[
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              return SizedBox(
+                width: isMobile ? double.infinity : null,
+                height: 48,
+                child: OutlinedButton.icon(
+                  key: const ValueKey('recognition-cancel-upload'),
+                  onPressed: cancelUpload,
+                  icon: const Icon(Icons.close),
+                  label: const Text('Hủy tải lên'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    foregroundColor: colorScheme.error,
+                    side: BorderSide(color: colorScheme.error),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ],
       const SizedBox(height: 18),
       FutureBuilder<List<RecognitionTicketDto>>(
@@ -558,98 +629,212 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
             );
           }
           final items = snapshot.data!;
-          if (items.isEmpty) {
-            return const Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text('Chưa có phiếu nhận dạng nào.'),
-              ),
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Lịch sử phiếu nhận dạng gần đây',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (final item in items.take(showAllTickets ? items.length : 3))
-                Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  elevation: 0,
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(
-                      color: item.status.value == 'CHO_DOI_CHIEU'
-                          ? Colors.orange.shade300
-                          : colorScheme.outlineVariant.withAlpha(120),
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 4,
-                    ),
-                    title: Text(
-                      'Phiếu #${item.ticketId} · ${item.componentName}',
-                      style: TextStyle(
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isMobile) ...[
+                    Text(
+                      'Lịch sử phiếu nhận dạng gần đây',
+                      style: theme.textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    subtitle: _buildTicketSubtitle(theme, colorScheme, item),
-                    leading: item.status.value == 'DANG_XU_LY'
-                        ? const SizedBox.square(
-                            dimension: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(
-                            _statusIcon(item.status.value),
-                            color: _statusColor(item.status.value),
+                    SwitchListTile(
+                      key: const ValueKey('recognition-show-cancelled-switch'),
+                      value: showCancelled,
+                      onChanged: (val) {
+                        setState(() {
+                          showCancelled = val;
+                          reload();
+                        });
+                      },
+                      title: const Text(
+                        'Hiện phiếu đã hủy',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    ),
+                  ] else
+                    Row(
+                      children: [
+                        Text(
+                          'Lịch sử phiếu nhận dạng gần đây',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurfaceVariant,
                           ),
-                    trailing:
-                        widget.embedded && item.status.value == 'CHO_DOI_CHIEU'
-                        ? FilledButton.tonal(
-                            onPressed: () => showDetail(item.ticketId),
-                            style: FilledButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                        ),
+                        const Spacer(),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Hiện phiếu đã hủy',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            child: const Text('Đối chiếu ngay'),
-                          )
-                        : const Icon(Icons.chevron_right_rounded, size: 20),
-                    onTap: () => showDetail(item.ticketId),
-                  ),
-                ),
-              if (items.length > 3)
-                TextButton(
-                  onPressed: () =>
-                      setState(() => showAllTickets = !showAllTickets),
-                  child: Text(
-                    showAllTickets ? 'Thu gọn lịch sử' : 'Xem tất cả phiếu',
-                  ),
-                ),
-              if (items.length > 3)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    showAllTickets
-                        ? 'Đang hiển thị ${items.length} phiếu.'
-                        : 'Đang hiển thị 3 trên ${items.length} phiếu.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                            const SizedBox(width: 8),
+                            Switch(
+                              key: const ValueKey(
+                                'recognition-show-cancelled-switch',
+                              ),
+                              value: showCancelled,
+                              onChanged: (val) {
+                                setState(() {
+                                  showCancelled = val;
+                                  reload();
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-            ],
+                  const SizedBox(height: 8),
+                  if (items.isEmpty)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text('Chưa có phiếu nhận dạng nào.'),
+                      ),
+                    )
+                  else ...[
+                    for (final item in items.take(
+                      showAllTickets ? items.length : 3,
+                    ))
+                      Card(
+                        key: ValueKey(
+                          'recognition-ticket-card-${item.ticketId}',
+                        ),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        elevation: 0,
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: item.status.value == 'CHO_DOI_CHIEU'
+                                ? Colors.orange.shade300
+                                : item.status.value == 'DA_HUY'
+                                ? Colors.grey.shade300
+                                : colorScheme.outlineVariant.withAlpha(120),
+                          ),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 4,
+                          ),
+                          title: Text(
+                            'Phiếu #${item.ticketId} · ${item.componentName}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          subtitle: _buildTicketSubtitle(
+                            theme,
+                            colorScheme,
+                            item,
+                          ),
+                          leading: item.status.value == 'DANG_XU_LY'
+                              ? const SizedBox.square(
+                                  dimension: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(
+                                  _statusIcon(item.status.value),
+                                  color: _statusColor(item.status.value),
+                                ),
+                          trailing: SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: PopupMenuButton<String>(
+                              key: ValueKey('ticket-menu-${item.ticketId}'),
+                              icon: const Icon(Icons.more_vert_rounded),
+                              tooltip: 'Thao tác phiếu #${item.ticketId}',
+                              onSelected: (action) {
+                                if (action == 'view') {
+                                  showDetail(item.ticketId);
+                                } else if (action == 'cancel') {
+                                  _handleCancelTicket(item);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'view',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.visibility_outlined, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Xem phiếu'),
+                                    ],
+                                  ),
+                                ),
+                                if (_canCancelTicket(item))
+                                  PopupMenuItem(
+                                    value: 'cancel',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.cancel_outlined,
+                                          size: 18,
+                                          color: colorScheme.error,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Hủy phiếu',
+                                          style: TextStyle(
+                                            color: colorScheme.error,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          onTap: () => showDetail(item.ticketId),
+                        ),
+                      ),
+                    if (items.length > 3)
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => showAllTickets = !showAllTickets),
+                        child: Text(
+                          showAllTickets
+                              ? 'Thu gọn lịch sử'
+                              : 'Xem tất cả phiếu',
+                        ),
+                      ),
+                    if (items.length > 3)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          showAllTickets
+                              ? 'Đang hiển thị ${items.length} phiếu.'
+                              : 'Đang hiển thị 3 trên ${items.length} phiếu.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
+                ],
+              );
+            },
           );
         },
       ),
@@ -756,11 +941,98 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     );
   }
 
+  String _formatDateTime(DateTime dt) {
+    final local = dt.toLocal();
+    final h = local.hour.toString().padLeft(2, '0');
+    final m = local.minute.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    final mo = local.month.toString().padLeft(2, '0');
+    final y = local.year;
+    return '$h:$m $d/$mo/$y';
+  }
+
   Widget _buildTicketSubtitle(
     ThemeData theme,
     ColorScheme colorScheme,
     RecognitionTicketDto item,
   ) {
+    if (item.status.value == 'DA_HUY') {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _miniStatusBadge(
+                  label: 'Đã hủy',
+                  fg: Colors.grey.shade800,
+                  bg: Colors.grey.shade200,
+                  borderColor: Colors.grey.shade400,
+                ),
+                if (item.cancelledAt != null)
+                  Text(
+                    _formatDateTime(item.cancelledAt!),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
+            ),
+            if (item.cancelReason != null && item.cancelReason!.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Lý do: ${item.cancelReason}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+    if (item.status.value == 'DANG_XU_LY') {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              'Đang xử lý · tự động cập nhật sau 3 giây',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+            if (_canCancelTicket(item))
+              OutlinedButton.icon(
+                key: ValueKey('ticket-cancel-quick-${item.ticketId}'),
+                onPressed: () => _handleCancelTicket(item),
+                icon: const Icon(Icons.close, size: 14),
+                label: const Text('Hủy', style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  foregroundColor: colorScheme.error,
+                  side: BorderSide(color: colorScheme.error),
+                  minimumSize: const Size(0, 32),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
     if (item.status.value == 'CHO_DOI_CHIEU') {
       return Padding(
         padding: const EdgeInsets.only(top: 4),
@@ -836,6 +1108,7 @@ String _statusText(RecognitionTicketDto item) => switch (item.status.value) {
     'Chờ đối chiếu · ${item.detectedRows ?? 0} dòng · ${item.greenRows} Xanh · ${item.yellowRows} Vàng · ${item.redRows} Đỏ',
   'DA_DUYET' => 'Đã duyệt và ghi điểm chính thức',
   'LOI' => recognitionFailureMessage(item.errorCode),
+  'DA_HUY' => 'Đã hủy',
   _ => item.status.value,
 };
 
@@ -843,6 +1116,7 @@ IconData _statusIcon(String status) => switch (status) {
   'CHO_DOI_CHIEU' => Icons.fact_check_rounded,
   'DA_DUYET' => Icons.check_circle_rounded,
   'LOI' => Icons.error_rounded,
+  'DA_HUY' => Icons.cancel_outlined,
   _ => Icons.hourglass_empty_rounded,
 };
 
@@ -850,5 +1124,6 @@ Color _statusColor(String status) => switch (status) {
   'CHO_DOI_CHIEU' => Colors.orange.shade700,
   'DA_DUYET' => Colors.green.shade700,
   'LOI' => Colors.red.shade700,
+  'DA_HUY' => Colors.grey.shade600,
   _ => Colors.grey.shade600,
 };

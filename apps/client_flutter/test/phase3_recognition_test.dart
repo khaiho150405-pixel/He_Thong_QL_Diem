@@ -159,6 +159,8 @@ class RecognitionFakeServer implements HttpClientAdapter {
     'greenRows': greenRows,
     'yellowRows': yellowRows,
     'redRows': redRows,
+    'cancelReason': null,
+    'cancelledAt': null,
   };
 
   Map<String, Object?> _cell(String id, int studentId, String name) => {

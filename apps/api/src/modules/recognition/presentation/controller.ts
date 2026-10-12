@@ -9,6 +9,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseInterceptors,
@@ -20,6 +21,7 @@ import {
   ApiHeader,
   ApiParam,
   ApiProperty,
+  ApiQuery,
   ApiResponse,
   ApiTags,
   ApiOkResponse,
@@ -42,6 +44,7 @@ const ticketStatuses = [
   "CHO_DOI_CHIEU",
   "DA_DUYET",
   "LOI",
+  "DA_HUY",
 ] as const;
 
 export class RecognitionTicketDto {
@@ -56,6 +59,19 @@ export class RecognitionTicketDto {
   @ApiProperty({ type: String, nullable: true }) modelVersion!: string | null;
   @ApiProperty({ type: Number }) version!: number;
   @ApiProperty({ type: String, format: "date-time" }) createdAt!: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Lý do hủy phiếu; null khi phiếu chưa hủy",
+  })
+  cancelReason!: string | null;
+  @ApiProperty({
+    type: String,
+    format: "date-time",
+    nullable: true,
+    description: "Thời điểm hủy phiếu; null khi phiếu chưa hủy",
+  })
+  cancelledAt!: string | null;
   @ApiProperty({ type: Number, description: "Số dòng mức Xanh (mức cuối)" })
   greenRows!: number;
   @ApiProperty({ type: Number, description: "Số dòng mức Vàng (mức cuối)" })
@@ -151,8 +167,18 @@ export class RecognitionEvidenceRowDto {
   nameCropUrl!: string | null;
 }
 
+export class CancelTicketInput {
+  @ApiProperty({ type: Number, minimum: 0 }) expectedVersion!: number;
+  @ApiProperty({ type: String, minLength: 1, maxLength: 200 }) reason!: string;
+}
+
 export class RecognitionTicketDetailDto extends RecognitionTicketDto {
-  @ApiProperty({ type: String }) sourceImageUrl!: string;
+  @ApiProperty({
+    type: String,
+    description:
+      "URL ký 300 giây của ảnh gốc; chuỗi rỗng khi phiếu đã hủy (ảnh đã bị xóa khỏi kho lưu trữ)",
+  })
+  sourceImageUrl!: string;
   @ApiProperty({ type: Number, example: 300 })
   imageUrlExpiresInSeconds!: number;
   @ApiProperty({ type: [RecognitionEvidenceRowDto] })
@@ -168,12 +194,19 @@ export class RecognitionController {
 
   @Get()
   @ApiParam({ name: "gradebookId", type: Number })
+  @ApiQuery({
+    name: "includeCancelled",
+    required: false,
+    type: Boolean,
+    description: "true: hiện cả phiếu đã hủy (DA_HUY); mặc định ẩn",
+  })
   @ApiOkResponse({ type: [RecognitionTicketDto] })
   list(
     @Req() req: Request & { actor: Actor },
     @Param("gradebookId", ParseIntPipe) gradebookId: number,
+    @Query("includeCancelled") includeCancelled?: string,
   ) {
-    return this.service.list(req.actor, gradebookId);
+    return this.service.list(req.actor, gradebookId, includeCancelled);
   }
 
   @Get(":ticketId")
@@ -186,6 +219,33 @@ export class RecognitionController {
     @Param("ticketId") ticketId: string,
   ) {
     return this.service.detail(req.actor, gradebookId, ticketId);
+  }
+
+  @Post(":ticketId/cancel")
+  @HttpCode(HttpStatus.OK)
+  @ApiParam({ name: "gradebookId", type: Number })
+  @ApiParam({ name: "ticketId", type: String })
+  @ApiHeader({ name: "x-idempotency-key", required: true })
+  @ApiBody({ type: CancelTicketInput })
+  @ApiOkResponse({
+    type: RecognitionTicketDetailDto,
+    description:
+      "Hủy mềm phiếu DANG_XU_LY/CHO_DOI_CHIEU/LOI (phiếu DA_DUYET trả 409, phiếu đã DA_HUY trả lại chính nó)",
+  })
+  cancel(
+    @Req() req: Request & { actor: Actor },
+    @Param("gradebookId", ParseIntPipe) gradebookId: number,
+    @Param("ticketId") ticketId: string,
+    @Headers("x-idempotency-key") idempotencyKey: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.cancel(
+      req.actor,
+      gradebookId,
+      ticketId,
+      idempotencyKey,
+      body,
+    );
   }
 
   @Post()

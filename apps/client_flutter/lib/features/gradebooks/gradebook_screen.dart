@@ -397,12 +397,15 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             color: isLocked ? Colors.green.shade800 : Colors.amber.shade900,
           ),
           const SizedBox(width: 4),
-          Text(
-            isLocked ? 'Đã chốt' : 'Đang nhập liệu',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isLocked ? Colors.green.shade800 : Colors.amber.shade900,
+          Flexible(
+            child: Text(
+              isLocked ? 'Đã chốt' : 'Đang nhập liệu',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isLocked ? Colors.green.shade800 : Colors.amber.shade900,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -510,7 +513,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               children: [
                 Row(
                   children: [
-                    Flexible(
+                    Expanded(
                       child: Text(
                         '${widget.data.book.className} · ${widget.data.book.subjectName}',
                         style: const TextStyle(
@@ -521,7 +524,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    _buildStatusBadge(),
+                    Flexible(child: _buildStatusBadge()),
                   ],
                 ),
                 Row(
