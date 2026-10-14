@@ -127,7 +127,7 @@ async function setupDb(): Promise<void> {
         [subjectName],
       )
     ).rows[0].ma_mon as number;
-    const componentName = "Điểm thử nhận dạng";
+    const componentName = "Kiểm tra cuối kỳ";
     const componentId = (
       await db.query(
         "INSERT INTO thanh_phan_diem(ma_mon,ten_thanh_phan,loai_he_so,bat_buoc,thu_tu_hien_thi) VALUES($1,$2,'CK',true,1) RETURNING ma_thanh_phan",
@@ -248,9 +248,9 @@ async function setupMore(): Promise<void> {
   const pilot = JSON.parse(readFileSync(`${DIR}/pilot.json`, "utf8")) as Pilot;
   if (!pilot.gradebookId) throw new Error("Run `book` first");
   const names = [
-    "Điểm thử nhận dạng 2",
-    "Điểm thử nhận dạng 3",
-    "Điểm thử nhận dạng 4",
+    "Kiểm tra thường xuyên 1",
+    "Kiểm tra thường xuyên 2",
+    "Kiểm tra thường xuyên 3",
   ];
   const pool = new Pool({ connectionString: url });
   const extra: Array<{ id: number; name: string }> = [];

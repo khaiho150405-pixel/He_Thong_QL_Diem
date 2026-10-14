@@ -68,6 +68,8 @@ class ReviewRowContent extends StatelessWidget {
         row.sttOnPaper != null &&
         row.stt != null &&
         row.sttOnPaper!.toInt() != row.stt;
+    // Dòng Xanh chỉ lệch STT: ảnh họ tên thu nhỏ nằm chung hàng với ảnh điểm và điểm cuối.
+    final compactInfo = showPaperStt && row.matchLevel?.value == 'XANH';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,13 +102,15 @@ class ReviewRowContent extends StatelessWidget {
           _buildDesktopContent(
             context,
             shortReason,
-            showNameCrop && !showPaperStt,
+            (showNameCrop && !showPaperStt) || compactInfo,
+            compact: compactInfo,
           )
         else
           _buildMobileContent(
             context,
             shortReason,
-            showNameCrop && !showPaperStt,
+            (showNameCrop && !showPaperStt) || compactInfo,
+            compact: compactInfo,
           ),
       ],
     );
@@ -182,14 +186,16 @@ class ReviewRowContent extends StatelessWidget {
   Widget _buildDesktopContent(
     BuildContext context,
     String shortReason,
-    bool showNameCrop,
-  ) {
+    bool showNameCrop, {
+    bool compact = false,
+  }) {
+    final cropHeight = compact ? 96.0 : 136.0;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Cột 1: Mức & Lý do + ảnh họ tên nếu có (flex: 3)
+        // Cột 1: Mức & Lý do + ảnh họ tên nếu có (flex: 2)
         Expanded(
-          flex: 3,
+          flex: 2,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -239,21 +245,22 @@ class ReviewRowContent extends StatelessWidget {
             label: 'Điểm số',
             imageUrl: row.numericCropUrl,
             nullPlaceholder: 'Không có ảnh',
-            height: 64,
+            height: cropHeight,
             onRefresh: onRefresh,
             isCancelled: isCancelled,
           ),
         ),
         const SizedBox(width: 10),
 
-        // Cột 3: Ảnh ô Điểm chữ (flex: 2)
+        // Cột 3: Ảnh ô Điểm chữ (flex: 4) — ảnh dạng ngang, cần rộng hơn Điểm số
+        // để chữ viết tay không bị thu nhỏ (ảnh bị giới hạn bởi chiều rộng cột).
         Expanded(
-          flex: 2,
+          flex: 4,
           child: ReviewCropImage(
             label: 'Điểm chữ',
             imageUrl: row.writtenCropUrl,
             nullPlaceholder: 'Không có ảnh',
-            height: 64,
+            height: cropHeight,
             onRefresh: onRefresh,
             isCancelled: isCancelled,
           ),
@@ -269,8 +276,9 @@ class ReviewRowContent extends StatelessWidget {
   Widget _buildMobileContent(
     BuildContext context,
     String shortReason,
-    bool showNameCrop,
-  ) {
+    bool showNameCrop, {
+    bool compact = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -303,33 +311,65 @@ class ReviewRowContent extends StatelessWidget {
             label: 'Họ tên trên giấy',
             imageUrl: row.nameCropUrl,
             nullPlaceholder: 'Không có ảnh họ tên',
-            height: 68,
+            height: compact ? 44 : 68,
             onRefresh: onRefresh,
             isCancelled: isCancelled,
           ),
           const SizedBox(height: 10),
         ],
 
-        // Ảnh ô Điểm số (full width)
-        ReviewCropImage(
-          label: 'Điểm số',
-          imageUrl: row.numericCropUrl,
-          nullPlaceholder: 'Không có ảnh',
-          height: 72,
-          onRefresh: onRefresh,
-          isCancelled: isCancelled,
-        ),
-        const SizedBox(height: 10),
+        if (compact)
+          // Dòng Xanh: ảnh điểm số và điểm chữ cạnh nhau để tiết kiệm chiều cao.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: ReviewCropImage(
+                  label: 'Điểm số',
+                  imageUrl: row.numericCropUrl,
+                  nullPlaceholder: 'Không có ảnh',
+                  height: 88,
+                  onRefresh: onRefresh,
+                  isCancelled: isCancelled,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 3,
+                child: ReviewCropImage(
+                  label: 'Điểm chữ',
+                  imageUrl: row.writtenCropUrl,
+                  nullPlaceholder: 'Không có ảnh',
+                  height: 88,
+                  onRefresh: onRefresh,
+                  isCancelled: isCancelled,
+                ),
+              ),
+            ],
+          )
+        else ...[
+          // Ảnh ô Điểm số (full width)
+          ReviewCropImage(
+            label: 'Điểm số',
+            imageUrl: row.numericCropUrl,
+            nullPlaceholder: 'Không có ảnh',
+            height: 128,
+            onRefresh: onRefresh,
+            isCancelled: isCancelled,
+          ),
+          const SizedBox(height: 10),
 
-        // Ảnh ô Điểm chữ (full width)
-        ReviewCropImage(
-          label: 'Điểm chữ',
-          imageUrl: row.writtenCropUrl,
-          nullPlaceholder: 'Không có ảnh',
-          height: 72,
-          onRefresh: onRefresh,
-          isCancelled: isCancelled,
-        ),
+          // Ảnh ô Điểm chữ (full width, cao hơn vì chữ viết tay dài hơn điểm số)
+          ReviewCropImage(
+            label: 'Điểm chữ',
+            imageUrl: row.writtenCropUrl,
+            nullPlaceholder: 'Không có ảnh',
+            height: 160,
+            onRefresh: onRefresh,
+            isCancelled: isCancelled,
+          ),
+        ],
         const SizedBox(height: 12),
 
         // Nhập điểm cuối / không ghi điểm / chỉ xem (full width)

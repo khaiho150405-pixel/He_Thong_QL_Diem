@@ -152,7 +152,7 @@ Các lệnh khác:
    ```powershell
    pnpm exec tsx scripts/recognition/pilot/setup.ts db      # tạo lớp, học sinh, giáo viên thử, phân công
    pnpm exec tsx scripts/recognition/pilot/setup.ts book    # tạo bảng điểm + mở lịch nhập (API phải đang chạy)
-   pnpm exec tsx scripts/recognition/pilot/setup.ts more    # thêm 3 thành phần "Điểm thử nhận dạng 2–4"
+   pnpm exec tsx scripts/recognition/pilot/setup.ts more    # thêm 3 thành phần "Kiểm tra thường xuyên 1–3"
    ```
 
    `book` và `more` đăng nhập bằng admin, dùng `SEED_PASSWORD` trong `.env`.

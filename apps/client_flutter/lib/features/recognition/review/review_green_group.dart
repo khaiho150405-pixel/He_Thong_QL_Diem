@@ -70,126 +70,164 @@ class ReviewGreenGroup extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               itemCount: rows.length,
               separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final row = rows[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      // STT & Tên học sinh
-                      SizedBox(
-                        width: 26,
-                        child: Text(
-                          '${row.stt ?? index + 1}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          row.studentName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-
-                      // Ảnh ô Điểm số (nhỏ, bấm phóng to)
-                      _cropThumb(context, label: 'Số', url: row.numericCropUrl),
-                      const SizedBox(width: 6),
-
-                      // Ảnh ô Điểm chữ (nhỏ, bấm phóng to)
-                      _cropThumb(
-                        context,
-                        label: 'Chữ',
-                        url: row.writtenCropUrl,
-                      ),
-                      const SizedBox(width: 6),
-
-                      // Điểm cuối (sửa được hoặc chỉ xem)
-                      SizedBox(
-                        width: 74,
-                        child: readOnly
-                            ? Container(
-                                alignment: Alignment.center,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade50.withAlpha(80),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: Colors.green.shade200,
-                                  ),
-                                ),
-                                child: Text(
-                                  row.finalValue != null
-                                      ? '${row.finalValue}'
-                                      : (values[row.rowId]?.text.isNotEmpty ==
-                                                true
-                                            ? values[row.rowId]!.text
-                                            : '—'),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                    color: Colors.green.shade900,
-                                  ),
-                                ),
-                              )
-                            : TextFormField(
-                                key: ValueKey('review-value-${row.rowId}'),
-                                controller: values[row.rowId],
-                                enabled: enabled,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
-                                textInputAction: TextInputAction.next,
-                                onChanged: (text) =>
-                                    onGradeChanged(row.rowId, text),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: colorScheme.onSurface,
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 8,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                                validator: (value) {
-                                  final text = value?.trim() ?? '';
-                                  if (text.isEmpty) return 'Thiếu điểm';
-                                  if (RegExp(
-                                    r'^(10[.]0|[0-9][.][0-9])$',
-                                  ).hasMatch(text)) {
-                                    return null;
-                                  }
-                                  if (RegExp(r'^(10|[0-9])$').hasMatch(text)) {
-                                    return 'Dạng $text.0';
-                                  }
-                                  return 'Sai định dạng';
-                                },
-                              ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              itemBuilder: (context, index) =>
+                  _buildRow(context, rows[index], index, colorScheme),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRow(
+    BuildContext context,
+    RecognitionEvidenceRowDto row,
+    int index,
+    ColorScheme colorScheme,
+  ) {
+    final gradeField = SizedBox(
+      width: 74,
+      child: readOnly
+          ? Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50.withAlpha(80),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Text(
+                row.finalValue != null
+                    ? '${row.finalValue}'
+                    : (values[row.rowId]?.text.isNotEmpty == true
+                          ? values[row.rowId]!.text
+                          : '—'),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  color: Colors.green.shade900,
+                ),
+              ),
+            )
+          : TextFormField(
+              key: ValueKey('review-value-${row.rowId}'),
+              controller: values[row.rowId],
+              enabled: enabled,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              textInputAction: TextInputAction.next,
+              onChanged: (text) => onGradeChanged(row.rowId, text),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurface,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 8,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return 'Thiếu điểm';
+                if (RegExp(r'^(10[.]0|[0-9][.][0-9])$').hasMatch(text)) {
+                  return null;
+                }
+                if (RegExp(r'^(10|[0-9])$').hasMatch(text)) {
+                  return 'Dạng $text.0';
+                }
+                return 'Sai định dạng';
+              },
+            ),
+    );
+
+    final stt = SizedBox(
+      width: 26,
+      child: Text(
+        '${row.stt ?? index + 1}',
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+      ),
+    );
+    final name = Text(
+      row.studentName,
+      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+      overflow: TextOverflow.ellipsis,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Màn rộng: một hàng, ảnh số 96px và ảnh chữ 220px (cao 56px).
+          if (constraints.maxWidth >= 560) {
+            return Row(
+              children: [
+                stt,
+                const SizedBox(width: 6),
+                Expanded(child: name),
+                const SizedBox(width: 8),
+                _cropThumb(
+                  context,
+                  label: 'Số',
+                  url: row.numericCropUrl,
+                  width: 96,
+                ),
+                const SizedBox(width: 8),
+                _cropThumb(
+                  context,
+                  label: 'Chữ',
+                  url: row.writtenCropUrl,
+                  width: 220,
+                ),
+                const SizedBox(width: 8),
+                gradeField,
+              ],
+            );
+          }
+          // Màn hẹp: dòng 1 là STT, tên, điểm cuối; dòng 2 là hai ảnh trải rộng.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  stt,
+                  const SizedBox(width: 6),
+                  Expanded(child: name),
+                  const SizedBox(width: 8),
+                  gradeField,
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _cropThumb(
+                      context,
+                      label: 'Số',
+                      url: row.numericCropUrl,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: _cropThumb(
+                      context,
+                      label: 'Chữ',
+                      url: row.writtenCropUrl,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -198,11 +236,12 @@ class ReviewGreenGroup extends StatelessWidget {
     BuildContext context, {
     required String label,
     required String? url,
+    double? width,
   }) {
     if (url == null) {
       return Container(
-        width: 46,
-        height: 32,
+        width: width,
+        height: 56,
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(4),
@@ -211,7 +250,7 @@ class ReviewGreenGroup extends StatelessWidget {
         child: Center(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
           ),
         ),
       );
@@ -228,8 +267,8 @@ class ReviewGreenGroup extends StatelessWidget {
         ),
       ),
       child: Container(
-        width: 46,
-        height: 32,
+        width: width,
+        height: 56,
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(4),
@@ -243,7 +282,7 @@ class ReviewGreenGroup extends StatelessWidget {
             errorBuilder: (_, _, _) => Center(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
               ),
             ),
           ),

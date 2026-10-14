@@ -120,6 +120,52 @@ class ReviewSttMismatchBox extends StatelessWidget {
         ? 'Tờ giấy xếp tên khác hệ thống; đã ghép theo họ tên.'
         : 'Hãy kiểm tra ảnh họ tên có đúng là ${row.studentName} không.';
 
+    // Dòng Xanh chỉ cần ghi chú gọn một khối; ảnh họ tên nằm chung hàng với
+    // ảnh điểm số/điểm chữ/điểm cuối trong [ReviewRowContent].
+    if (isInfo) {
+      return Container(
+        key: ValueKey('review-stt-box-${row.rowId}'),
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 4, bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.swap_horiz_rounded, size: 18, color: iconColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 2,
+                children: [
+                  Text(
+                    titleText,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: primaryColor,
+                    ),
+                  ),
+                  Text(
+                    subtitleText,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: primaryColor.withAlpha(220),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       key: ValueKey('review-stt-box-${row.rowId}'),
       width: double.infinity,
