@@ -64,3 +64,16 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Topbar màn rộng đổi từ `AppBar` sang `AppTopBar` (không phải `PreferredSizeWidget`, cao tối thiểu 68, tự giãn khi tiêu đề nhiều dòng). Dòng nhỏ vai trò viết hoa ("GIÁO VIÊN"). Tiêu đề trang chủ web đổi từ "EduScore · THPT Bà Điểm" thành "Tổng quan" (theo prototype; thương hiệu nằm ở đầu sidebar). AppBar mobile của trang chủ vẫn giữ "EduScore · THPT Bà Điểm".
 - Nav đáy: tab đang chọn dùng `priLink` (bằng `pri` ở chế độ sáng, sáng hơn ở chế độ tối để đủ tương phản), bỏ nền "viên thuốc" của Material 3, nhãn 12px. Mục giữa nổi (`.tabbar .mid`) của prototype không làm.
 - Mục con trong nhóm gập cao 40 (mục cấp một cao 44) để phân biệt cấp; prototype không có nhóm gập.
+
+
+### Bước 6 - dashboard
+
+- Không làm (backend chưa hỗ trợ hoặc cần nguồn dữ liệu mới, mục 2 của kế hoạch): đường điểm TB toàn trường theo tháng; ô "Điểm TB toàn trường"; nút "Xuất báo cáo"; alert "bảng điểm sắp quá hạn nhập"; khối "Việc cần làm" và "Lịch dạy hôm nay" của giáo viên; chuông thông báo. `AppLineChart` đã có từ bước 2 nhưng chưa gắn vào dashboard vì chưa có dữ liệu thật.
+- KPI giữ đúng nguồn cũ: QTV 4 ô (Bảng điểm, Tỷ lệ hoàn thành, Đối chiếu OCR, Học sinh) từ `adminOverviewProvider`; GV 3 ô (Phụ trách, Tiến độ nhập, OCR chờ duyệt) từ `teacherOverviewProvider`; HS 3 ô (ĐTB học kỳ, Môn đã chốt, Xếp hạng lớp) từ `studentResultsList`. Prototype của GV có 4 ô (Bảng điểm phụ trách, Đã chốt, Chờ đối chiếu, Tiến độ) và của QTV là Học sinh/Giáo viên/Bảng điểm đã chốt/Điểm TB; không đổi bộ ô theo prototype vì sẽ phải đổi nguồn dữ liệu.
+- Dưới 720 px, QTV vẫn dùng nhãn rút gọn như bản cũ ("Tỷ lệ", "OCR", "Đã chốt sổ", "Chờ GV duyệt"); từ 720 px trở lên dùng nhãn đầy đủ. Bố cục dưới 720 px đổi từ dải cuộn ngang sang lưới 2 cột (`StatCardGrid`); ô lẻ cuối (GV, HS có 3 ô) chiếm nửa hàng.
+- Vẫn còn chuỗi cứng "HỌC KỲ I, 2024–2025 · THPT BÀ ĐIỂM · ..." ở dòng nhỏ đầu trang chủ (bước 5 đã bỏ chuỗi này ở sidebar vì không có dữ liệu học kỳ hiện hành). Giữ nguyên ở bước này theo quy tắc "giữ chuỗi"; nên thay bằng tên học kỳ thật khi có nguồn.
+- Biểu đồ phân bố học lực: màu cột lấy từ token theo mã (`GIOI` = pri, `KHA` = xanh nhạt hơn pri ở chế độ sáng và `priLink` ở chế độ tối, `DAT` = neu, `CHUA_DAT`/`YEU` = bad); trường `color` (mã hex) backend trả về không còn được dùng để vẽ. Chuyển từ cột đứng sang `AppHBars` (cột ngang); mỗi dòng hiện "N HS · P%".
+- Tiến độ theo khối: màu thanh vẫn phân 3 mức như bản cũ (>= 80% `ok`, >= 40% `pri`, còn lại `acc`), nhưng prototype dùng một màu `pri` cho cả ba.
+- Độ chính xác OCR: bỏ thanh xếp chồng vẽ tay; thay bằng ba dòng (AppBadge Xanh/Vàng/Đỏ + mô tả + phần trăm + `AppProgress`). Bản cũ khi chưa có ô nào (`totalCells == 0`) vẫn vẽ thanh với tỷ lệ cố định 75/18/7, đó là số giả; bản mới để thanh rỗng và hiện số đếm. Thêm tông `bad` vào `AppProgressTone` (chỉ thêm giá trị enum, không đổi tông cũ).
+- Hoạt động gần đây: trạng thái "Đã chốt" dùng AppBadge ok, "Đang nhập" dùng AppBadge info (bản cũ dùng vàng) cho khớp prototype; chuỗi lấy nguyên từ API.
+- Chuỗi bỏ đi trong bước này: không có. Thẻ biểu đồ không còn nhãn nhỏ "X HS" dưới mỗi cột và nhãn "%" trên cột (gộp vào giá trị bên phải của mỗi dòng).

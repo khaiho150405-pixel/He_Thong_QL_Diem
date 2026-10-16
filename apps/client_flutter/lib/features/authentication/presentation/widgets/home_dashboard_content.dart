@@ -3,8 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../app/theme.dart';
+import '../../../../app/design_tokens.dart';
 import '../../../../app/widgets/role_badge.dart';
+import '../../../../app/widgets/stat_card.dart';
 import '../../../academic_catalog/fields.dart';
 import '../../../reports/repository.dart';
 import '../../admin_charts.dart';
@@ -74,136 +75,42 @@ class HomeDashboardContent extends ConsumerWidget {
   final String role;
   final bool isDesktop;
 
-  Widget _buildStatCard({
-    required BuildContext context,
-    required String label,
-    required String value,
-    required String subtitle,
-    Color? accentColor,
-    IconData? icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                    color: AppTheme.textSubtle,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (icon != null) ...[
-                const SizedBox(width: 4),
-                Icon(
-                  icon,
-                  size: 14,
-                  color: accentColor ?? AppTheme.primarySeed,
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.4,
-              color: accentColor ?? AppTheme.primaryDark,
-            ),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 10.5, color: AppTheme.textMuted),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildStudentStatistics(
     BuildContext context,
     StudentResultSummaryDto summary,
   ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 720;
-        final width = wide ? (constraints.maxWidth - 20) / 3 : 150.0;
-        final average = summary.averageScore == null
-            ? '—'
-            : double.parse(summary.averageScore!).toStringAsFixed(1);
-        final rank = summary.classRank == null ? '—' : '${summary.classRank}';
-        final cards = [
-          _buildStatCard(
-            context: context,
-            label: 'ĐTB học kỳ',
-            value: average,
-            subtitle: summary.termName ?? 'Chưa có học kỳ đã chốt',
-            accentColor: AppTheme.goldAccent,
-            icon: Icons.star_rounded,
-          ),
-          _buildStatCard(
-            context: context,
-            label: 'Môn đã chốt',
-            value: '${summary.publishedSubjects} / ${summary.totalSubjects}',
-            subtitle: 'Chỉ tính bảng điểm đã chốt',
-            icon: Icons.menu_book_outlined,
-          ),
-          _buildStatCard(
-            context: context,
-            label: 'Xếp hạng lớp',
-            value: '$rank / ${summary.classSize}',
-            subtitle: 'Lớp ${summary.className}',
-            accentColor: const Color(0xFF276E68),
-            icon: Icons.emoji_events_outlined,
-          ),
-        ];
-        if (wide) {
-          return Row(
-            children: [
-              for (var index = 0; index < cards.length; index++) ...[
-                Expanded(child: cards[index]),
-                if (index < cards.length - 1) const SizedBox(width: 10),
-              ],
-            ],
-          );
-        }
-        return SizedBox(
-          height: 105,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: cards.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (_, index) =>
-                SizedBox(width: width, child: cards[index]),
-          ),
-        );
-      },
+    final average = summary.averageScore == null
+        ? '—'
+        : double.parse(summary.averageScore!).toStringAsFixed(1);
+    final rank = summary.classRank == null ? '—' : '${summary.classRank}';
+    return StatCardGrid(
+      children: [
+        StatCard(
+          title: 'ĐTB học kỳ',
+          value: average,
+          subtitle: summary.termName ?? 'Chưa có học kỳ đã chốt',
+          icon: Icons.star_rounded,
+        ),
+        StatCard(
+          title: 'Môn đã chốt',
+          value: '${summary.publishedSubjects} / ${summary.totalSubjects}',
+          subtitle: 'Chỉ tính bảng điểm đã chốt',
+          icon: Icons.menu_book_outlined,
+        ),
+        StatCard(
+          title: 'Xếp hạng lớp',
+          value: '$rank / ${summary.classSize}',
+          subtitle: 'Lớp ${summary.className}',
+          icon: Icons.emoji_events_outlined,
+          tone: StatTone.ok,
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.tokens;
     String roleEyebrow;
     String roleDesc;
     if (role == 'QUAN_TRI_VIEN') {
@@ -222,68 +129,70 @@ class HomeDashboardContent extends ConsumerWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       children: [
-        // Hero Banner matching UI/src/App.tsx PageHeader
-        Container(
-          padding: const EdgeInsets.all(14),
+        // Tiêu đề trang (pagehead): vai trò, lời chào, mô tả.
+        DecoratedBox(
           decoration: BoxDecoration(
-            color: AppTheme.cardBg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.borderSubtle),
+            color: t.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: t.line),
+            boxShadow: t.shadow,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          roleEyebrow,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                            color: AppTheme.goldAccent,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            roleEyebrow,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                              color: t.priLink,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Xin chào, ${user.username}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
-                            color: AppTheme.primaryDark,
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Xin chào, ${user.username}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.5,
+                              color: t.heading,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  RoleBadge(role: role),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                roleDesc,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textMuted,
-                  height: 1.3,
+                    RoleBadge(role: role),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  roleDesc,
+                  style: TextStyle(fontSize: 13, color: t.ink2, height: 1.4),
+                ),
+              ],
+            ),
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
 
-        // Role-Specific Stat Cards
+        // Các ô chỉ số theo vai trò.
         if (role == 'QUAN_TRI_VIEN')
           Builder(
             builder: (context) {
@@ -309,114 +218,37 @@ class HomeDashboardContent extends ConsumerWidget {
 
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  if (constraints.maxWidth >= 720) {
-                    const cols = 4;
-                    final w = (constraints.maxWidth - (cols - 1) * 10) / cols;
-                    return Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        SizedBox(
-                          width: w,
-                          height: 96,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'Bảng điểm',
-                            value: bookVal,
-                            subtitle: bookSub,
-                            icon: Icons.table_chart_outlined,
-                          ),
-                        ),
-                        SizedBox(
-                          width: w,
-                          height: 96,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'Tỷ lệ hoàn thành',
-                            value: rateVal,
-                            subtitle: 'Đã chốt sổ điểm',
-                            accentColor: const Color(0xFF276E68),
-                            icon: Icons.trending_up_rounded,
-                          ),
-                        ),
-                        SizedBox(
-                          width: w,
-                          height: 96,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'Đối chiếu OCR',
-                            value: ocrVal,
-                            subtitle: 'Bảng chờ GV duyệt',
-                            accentColor: AppTheme.goldAccent,
-                            icon: Icons.document_scanner_outlined,
-                          ),
-                        ),
-                        SizedBox(
-                          width: w,
-                          height: 96,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'Học sinh',
-                            value: stuVal,
-                            subtitle: stuSub,
-                            icon: Icons.school_outlined,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                  return SizedBox(
-                    height: 105,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        SizedBox(
-                          width: 140,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'Bảng điểm',
-                            value: bookVal,
-                            subtitle: bookSub,
-                            icon: Icons.table_chart_outlined,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 140,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'Tỷ lệ',
-                            value: rateVal,
-                            subtitle: 'Đã chốt sổ',
-                            accentColor: const Color(0xFF276E68),
-                            icon: Icons.trending_up_rounded,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 140,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'OCR',
-                            value: ocrVal,
-                            subtitle: 'Chờ GV duyệt',
-                            accentColor: AppTheme.goldAccent,
-                            icon: Icons.document_scanner_outlined,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 140,
-                          child: _buildStatCard(
-                            context: context,
-                            label: 'Học sinh',
-                            value: stuVal,
-                            subtitle: stuSub,
-                            icon: Icons.school_outlined,
-                          ),
-                        ),
-                      ],
-                    ),
+                  // Dưới 720: nhãn rút gọn như bản cũ.
+                  final wide = constraints.maxWidth >= 720;
+                  return StatCardGrid(
+                    children: [
+                      StatCard(
+                        title: 'Bảng điểm',
+                        value: bookVal,
+                        subtitle: bookSub,
+                        icon: Icons.table_chart_outlined,
+                      ),
+                      StatCard(
+                        title: wide ? 'Tỷ lệ hoàn thành' : 'Tỷ lệ',
+                        value: rateVal,
+                        subtitle: wide ? 'Đã chốt sổ điểm' : 'Đã chốt sổ',
+                        icon: Icons.trending_up_rounded,
+                        tone: StatTone.ok,
+                      ),
+                      StatCard(
+                        title: wide ? 'Đối chiếu OCR' : 'OCR',
+                        value: ocrVal,
+                        subtitle: wide ? 'Bảng chờ GV duyệt' : 'Chờ GV duyệt',
+                        icon: Icons.document_scanner_outlined,
+                        tone: StatTone.warn,
+                      ),
+                      StatCard(
+                        title: 'Học sinh',
+                        value: stuVal,
+                        subtitle: stuSub,
+                        icon: Icons.school_outlined,
+                      ),
+                    ],
                   );
                 },
               );
@@ -450,56 +282,29 @@ class HomeDashboardContent extends ConsumerWidget {
                   ? 'Cần xác nhận kết quả'
                   : 'Đã duyệt toàn bộ';
 
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= 720;
-                  final cards = [
-                    _buildStatCard(
-                      context: context,
-                      label: 'Phụ trách',
-                      value: classCountText,
-                      subtitle: classSub,
-                      icon: Icons.assignment_outlined,
-                    ),
-                    _buildStatCard(
-                      context: context,
-                      label: 'Tiến độ nhập',
-                      value: rateText,
-                      subtitle: rateSub,
-                      accentColor: const Color(0xFF276E68),
-                      icon: Icons.check_circle_outline,
-                    ),
-                    _buildStatCard(
-                      context: context,
-                      label: 'OCR chờ duyệt',
-                      value: ocrText,
-                      subtitle: ocrSub,
-                      accentColor: AppTheme.goldAccent,
-                      icon: Icons.document_scanner_outlined,
-                    ),
-                  ];
-
-                  if (wide) {
-                    return Row(
-                      children: [
-                        for (var i = 0; i < cards.length; i++) ...[
-                          Expanded(child: cards[i]),
-                          if (i < cards.length - 1) const SizedBox(width: 10),
-                        ],
-                      ],
-                    );
-                  }
-                  return SizedBox(
-                    height: 105,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: cards.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (_, index) =>
-                          SizedBox(width: 150, child: cards[index]),
-                    ),
-                  );
-                },
+              return StatCardGrid(
+                children: [
+                  StatCard(
+                    title: 'Phụ trách',
+                    value: classCountText,
+                    subtitle: classSub,
+                    icon: Icons.assignment_outlined,
+                  ),
+                  StatCard(
+                    title: 'Tiến độ nhập',
+                    value: rateText,
+                    subtitle: rateSub,
+                    icon: Icons.check_circle_outline,
+                    tone: StatTone.ok,
+                  ),
+                  StatCard(
+                    title: 'OCR chờ duyệt',
+                    value: ocrText,
+                    subtitle: ocrSub,
+                    icon: Icons.document_scanner_outlined,
+                    tone: StatTone.warn,
+                  ),
+                ],
               );
             },
           ),
@@ -518,21 +323,22 @@ class HomeDashboardContent extends ConsumerWidget {
               if (snapshot.hasError) {
                 return Text(
                   'Không tải được thống kê: ${errorMessage(snapshot.error!)}',
+                  style: TextStyle(color: t.bad),
                 );
               }
               return _buildStudentStatistics(context, snapshot.data!.summary);
             },
           ),
 
-        // Admin Statistical Charts (Shown on both Web and Mobile)
+        // Biểu đồ thống kê của quản trị (web và mobile).
         if (role == 'QUAN_TRI_VIEN') ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.xl),
           const AdminChartsSection(),
         ],
 
-        // Native app mobile catalog fallback (hidden on responsive Web and desktop)
+        // Danh mục trên app mobile native (ẩn trên web và desktop).
         if (!isDesktop && !kIsWeb && role == 'QUAN_TRI_VIEN') ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           for (final r in resources)
             Card(
               child: ListTile(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../app/theme.dart';
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_badge.dart';
+import '../../app/widgets/app_charts.dart';
+import '../../app/widgets/app_progress.dart';
 import '../reports/repository.dart';
 
 const double kAdminChartCardHeight = 310.0;
@@ -10,6 +13,7 @@ class AdminChartsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.tokens;
     final overviewAsync = ref.watch(adminOverviewProvider);
 
     return LayoutBuilder(
@@ -21,63 +25,26 @@ class AdminChartsSection extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.insights_rounded,
-                  size: 16,
-                  color: AppTheme.primarySeed,
-                ),
+                Icon(Icons.insights_rounded, size: 16, color: t.priLink),
                 const SizedBox(width: 6),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'BIỂU ĐỒ SỐ LIỆU THỐNG KÊ TOÀN TRƯỜNG',
                     style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 1.1,
-                      color: AppTheme.textSubtle,
+                      color: t.ink3,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD5EDE5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF256848).withAlpha(60),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF256848),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      const Text(
-                        'Trực tiếp (10s)',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF256848),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
+                const AppBadge.ok('Trực tiếp (10s)'),
+                const SizedBox(width: AppSpacing.xs),
                 IconButton(
                   icon: const Icon(Icons.refresh_rounded, size: 16),
+                  color: t.ink2,
                   tooltip: 'Làm mới dữ liệu ngay',
                   visualDensity: VisualDensity.compact,
                   onPressed: () =>
@@ -86,139 +53,95 @@ class AdminChartsSection extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 2),
-            const Text(
+            Text(
               'Số liệu thực tế từ cơ sở dữ liệu hệ thống: phổ điểm, độ chính xác AI hai kênh và tiến độ nộp điểm',
-              style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              style: TextStyle(fontSize: 12, color: t.ink2),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
 
             overviewAsync.when(
               loading: () => const _AdminChartsLoadingSkeleton(),
-              error: (err, _) => Container(
-                padding: const EdgeInsets.all(16),
+              error: (err, _) => DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppTheme.widgetBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.borderSubtle),
+                  color: t.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: t.line),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.orange,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Không thể tải thống kê thời gian thực: $err',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textMuted,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: t.warn, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Không thể tải thống kê thời gian thực: $err',
+                          style: TextStyle(fontSize: 12, color: t.ink2),
                         ),
                       ),
-                    ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.refresh, size: 14),
-                      label: const Text('Thử lại'),
-                      onPressed: () =>
-                          ref.read(adminOverviewProvider.notifier).refresh(),
-                    ),
-                  ],
+                      TextButton.icon(
+                        icon: const Icon(Icons.refresh, size: 14),
+                        label: const Text('Thử lại'),
+                        onPressed: () =>
+                            ref.read(adminOverviewProvider.notifier).refresh(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               data: (data) {
+                final distribution = _GradeDistributionCard(
+                  items: data.gradeDistribution,
+                  totalStudents: data.kpi.totalStudents,
+                );
+                final ocr = _OcrAccuracyCard(data: data.ocrAccuracy);
+                final progress = _GradeLevelProgressCard(
+                  items: data.gradeLevelProgress,
+                  lockedBooks: data.kpi.lockedGradebooks,
+                  totalBooks: data.kpi.totalGradebooks,
+                  completionRate: data.kpi.completionRate,
+                );
+                final activity = _RecentGradebookActivityCard(
+                  activities: data.recentActivities,
+                  totalTeachers: data.kpi.totalTeachers,
+                  totalClasses: data.kpi.totalClasses,
+                );
+                Widget sized(Widget card) =>
+                    SizedBox(height: kAdminChartCardHeight, child: card);
                 if (isWide) {
                   return Column(
                     children: [
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: kAdminChartCardHeight,
-                              child: _GradeDistributionCard(
-                                items: data.gradeDistribution,
-                                totalStudents: data.kpi.totalStudents,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: kAdminChartCardHeight,
-                              child: _OcrAccuracyCard(data: data.ocrAccuracy),
-                            ),
-                          ),
+                          Expanded(child: sized(distribution)),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(child: sized(ocr)),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: kAdminChartCardHeight,
-                              child: _GradeLevelProgressCard(
-                                items: data.gradeLevelProgress,
-                                lockedBooks: data.kpi.lockedGradebooks,
-                                totalBooks: data.kpi.totalGradebooks,
-                                completionRate: data.kpi.completionRate,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: kAdminChartCardHeight,
-                              child: _RecentGradebookActivityCard(
-                                activities: data.recentActivities,
-                                totalTeachers: data.kpi.totalTeachers,
-                                totalClasses: data.kpi.totalClasses,
-                              ),
-                            ),
-                          ),
+                          Expanded(child: sized(progress)),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(child: sized(activity)),
                         ],
-                      ),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      SizedBox(
-                        height: kAdminChartCardHeight,
-                        child: _GradeDistributionCard(
-                          items: data.gradeDistribution,
-                          totalStudents: data.kpi.totalStudents,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: kAdminChartCardHeight,
-                        child: _OcrAccuracyCard(data: data.ocrAccuracy),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: kAdminChartCardHeight,
-                        child: _GradeLevelProgressCard(
-                          items: data.gradeLevelProgress,
-                          lockedBooks: data.kpi.lockedGradebooks,
-                          totalBooks: data.kpi.totalGradebooks,
-                          completionRate: data.kpi.completionRate,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: kAdminChartCardHeight,
-                        child: _RecentGradebookActivityCard(
-                          activities: data.recentActivities,
-                          totalTeachers: data.kpi.totalTeachers,
-                          totalClasses: data.kpi.totalClasses,
-                        ),
                       ),
                     ],
                   );
                 }
+                return Column(
+                  children: [
+                    sized(distribution),
+                    const SizedBox(height: AppSpacing.md),
+                    sized(ocr),
+                    const SizedBox(height: AppSpacing.md),
+                    sized(progress),
+                    const SizedBox(height: AppSpacing.md),
+                    sized(activity),
+                  ],
+                );
               },
             ),
           ],
@@ -228,107 +151,123 @@ class AdminChartsSection extends ConsumerWidget {
   }
 }
 
-// ── Shared Standard Card Header & Footer ──────────────────────────────────────
-Widget _buildChartHeader({
-  required String eyebrow,
-  required String title,
-  required String badge,
-  Color? badgeBg,
-  Color? badgeColor,
-}) {
-  return SizedBox(
-    height: 38,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                eyebrow,
-                style: const TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                  color: AppTheme.textSubtle,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+// ── Khung thẻ biểu đồ dùng chung ─────────────────────────────────────────────
+class _ChartCard extends StatelessWidget {
+  const _ChartCard({
+    required this.eyebrow,
+    required this.title,
+    required this.badge,
+    required this.body,
+    required this.footerIcon,
+    required this.footerText,
+  });
+
+  final String eyebrow;
+  final String title;
+  final Widget badge;
+  final Widget body;
+  final IconData footerIcon;
+  final String footerText;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: t.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: t.line),
+        boxShadow: t.shadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 38,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          eyebrow,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: t.ink3,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: t.heading,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  badge,
+                ],
               ),
-              const SizedBox(height: 1),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryDark,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-          decoration: BoxDecoration(
-            color: badgeBg ?? AppTheme.widgetBg,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppTheme.borderSubtle),
-          ),
-          child: Text(
-            badge,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: badgeColor ?? AppTheme.textSubtle,
             ),
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            Expanded(child: body),
+            const SizedBox(height: AppSpacing.sm),
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 34),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: t.subtle,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: t.line),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(footerIcon, size: 14, color: t.ok),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          footerText,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: t.ink2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
-Widget _buildChartFooter({
-  required IconData icon,
-  required String text,
-  Color? bg,
-  Color? iconColor,
-  Color? textColor,
-}) {
-  return Container(
-    height: 34,
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: bg ?? const Color(0xFFE8F2EC),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, size: 14, color: iconColor ?? const Color(0xFF276E68)),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: textColor ?? const Color(0xFF1E544F),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-// ── Chart 1: Grade Distribution ──────────────────────────────────────────────
+// ── Biểu đồ 1: phân bố học lực ───────────────────────────────────────────────
 class _GradeDistributionCard extends StatelessWidget {
   const _GradeDistributionCard({
     required this.items,
@@ -338,17 +277,28 @@ class _GradeDistributionCard extends StatelessWidget {
   final List<AdminGradeDistributionItem> items;
   final int totalStudents;
 
-  Color _parseColor(String hex) {
-    try {
-      final clean = hex.replaceAll('#', '');
-      return Color(int.parse('FF$clean', radix: 16));
-    } catch (_) {
-      return const Color(0xFF276E68);
+  /// Màu cột theo mã xếp loại, lấy từ token thay cho mã hex backend trả về:
+  /// Giỏi `pri`, Khá xanh nhạt hơn, Đạt `neu`, Chưa đạt `bad`.
+  static Color colorOf(AppTokens t, String code) {
+    switch (code) {
+      case 'GIOI':
+        return t.pri;
+      case 'KHA':
+        return t.brightness == Brightness.dark
+            ? t.priLink
+            : Color.lerp(t.pri, t.priLine, 0.45)!;
+      case 'CHUA_DAT':
+      case 'YEU':
+        return t.bad;
+      case 'DAT':
+      default:
+        return t.neu;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     final totalRated = items.fold<int>(0, (sum, item) => sum + item.count);
     final goodCount = items
         .where((i) => i.code == 'GIOI' || i.code == 'KHA')
@@ -357,100 +307,35 @@ class _GradeDistributionCard extends StatelessWidget {
         ? ((goodCount / totalRated) * 100).toStringAsFixed(1)
         : '100.0';
 
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppTheme.borderSubtle),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildChartHeader(
-              eyebrow: 'PHÂN BỐ HỌC LỰC',
-              title: 'Mức điểm toàn trường',
-              badge: 'DB Thực tế',
-            ),
-            const SizedBox(height: 8),
-
-            // Bar Chart Visualization with Expanded
-            Expanded(
-              child: Center(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: items.map((item) {
-                    final color = _parseColor(item.color);
-
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${item.percentage}%',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: color,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              height: (item.percentage * 1.6).clamp(14.0, 78.0),
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(5),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              item.label,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryDark,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              '${item.count} HS',
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: AppTheme.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
+    return _ChartCard(
+      eyebrow: 'PHÂN BỐ HỌC LỰC',
+      title: 'Mức điểm toàn trường',
+      badge: const AppBadge('DB Thực tế', dot: false),
+      body: Center(
+        child: SingleChildScrollView(
+          child: AppHBars(
+            labelWidth: 64,
+            valueWidth: 96,
+            items: [
+              for (final item in items)
+                AppHBarItem(
+                  label: item.label,
+                  value: item.count.toDouble(),
+                  valueText: '${item.count} HS · ${item.percentage}%',
+                  color: colorOf(t, item.code),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            _buildChartFooter(
-              icon: Icons.check_circle_rounded,
-              text:
-                  'Đã tổng kết $totalRated / $totalStudents HS · Tỷ lệ Giỏi & Khá: $passRate%',
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+      footerIcon: Icons.check_circle_rounded,
+      footerText:
+          'Đã tổng kết $totalRated / $totalStudents HS · Tỷ lệ Giỏi & Khá: $passRate%',
     );
   }
 }
 
-// ── Chart 2: OCR 2-Channel Accuracy Spectrum ─────────────────────────────────
+// ── Biểu đồ 2: độ chính xác OCR hai kênh ─────────────────────────────────────
 class _OcrAccuracyCard extends StatelessWidget {
   const _OcrAccuracyCard({required this.data});
 
@@ -458,190 +343,117 @@ class _OcrAccuracyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     final hasCells = data.totalCells > 0;
-    final greenFlex = hasCells
-        ? ((data.greenCount / data.totalCells) * 100).round().clamp(1, 98)
-        : 75;
-    final yellowFlex = hasCells
-        ? ((data.yellowCount / data.totalCells) * 100).round().clamp(1, 98)
-        : 18;
-    final redFlex = hasCells
-        ? ((data.redCount / data.totalCells) * 100).round().clamp(1, 98)
-        : 7;
+    String pct(int count) =>
+        hasCells ? '${((count / data.totalCells) * 100).round()}%' : '$count';
+    double ratio(int count) => hasCells ? count / data.totalCells : 0;
 
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppTheme.borderSubtle),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
+    return _ChartCard(
+      eyebrow: 'NHẬN DẠNG AI (UC11–UC13)',
+      title: 'Đối chiếu 2 kênh Số & Chữ',
+      badge: hasCells
+          ? AppBadge.ok('${data.accuracyRate}% Khớp')
+          : const AppBadge.ok('Sẵn sàng'),
+      body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildChartHeader(
-              eyebrow: 'NHẬN DẠNG AI (UC11–UC13)',
-              title: 'Đối chiếu 2 kênh Số & Chữ',
-              badge: hasCells ? '${data.accuracyRate}% Khớp' : 'Sẵn sàng',
-              badgeBg: const Color(0xFFD5EDE5),
-              badgeColor: const Color(0xFF256848),
+            Text(
+              'Máy chỉ đề xuất — Giáo viên so sánh ô cắt cạnh kết quả và bấm Duyệt chính thức.',
+              style: TextStyle(fontSize: 12, color: t.ink2),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
-
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Máy chỉ đề xuất — Giáo viên so sánh ô cắt cạnh kết quả và bấm Duyệt chính thức.',
-                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  // Stacked Horizontal Bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: SizedBox(
-                      height: 14,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: greenFlex,
-                            child: Container(color: const Color(0xFF256848)),
-                          ),
-                          Expanded(
-                            flex: yellowFlex,
-                            child: Container(color: const Color(0xFFC69C3C)),
-                          ),
-                          Expanded(
-                            flex: redFlex,
-                            child: Container(color: const Color(0xFFC87858)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // 3 Color Breakdown Details
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildOcrStatItem(
-                          label: 'Xanh (Khớp)',
-                          pct: hasCells
-                              ? '${((data.greenCount / data.totalCells) * 100).round()}%'
-                              : '${data.greenCount}',
-                          desc: '2 kênh khớp nhau',
-                          color: const Color(0xFF256848),
-                          bg: const Color(0xFFD5EDE5),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: _buildOcrStatItem(
-                          label: 'Vàng (Lệch)',
-                          pct: hasCells
-                              ? '${((data.yellowCount / data.totalCells) * 100).round()}%'
-                              : '${data.yellowCount}',
-                          desc: 'GV đã chỉnh sửa',
-                          color: const Color(0xFF9A7222),
-                          bg: const Color(0xFFF5E8C9),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: _buildOcrStatItem(
-                          label: 'Đỏ (Ô trống)',
-                          pct: hasCells
-                              ? '${((data.redCount / data.totalCells) * 100).round()}%'
-                              : '${data.redCount}',
-                          desc: 'GV nhập tay lại',
-                          color: const Color(0xFF9B4430),
-                          bg: const Color(0xFFFBE4DC),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            const SizedBox(height: AppSpacing.md),
+            _OcrRow(
+              badge: const AppBadge.ok('Xanh (Khớp)'),
+              desc: '2 kênh khớp nhau',
+              pct: pct(data.greenCount),
+              value: ratio(data.greenCount),
+              tone: AppProgressTone.ok,
             ),
-            const SizedBox(height: 8),
-
-            _buildChartFooter(
-              icon: Icons.verified_outlined,
-              text: hasCells
-                  ? 'Đã đối chiếu ${data.totalCells} ô điểm · Độ chính xác 2 kênh: ${data.accuracyRate}%'
-                  : 'Hệ thống sẵn sàng tiếp nhận ảnh phiếu điểm viết tay',
+            const SizedBox(height: AppSpacing.sm),
+            _OcrRow(
+              badge: const AppBadge.warn('Vàng (Lệch)'),
+              desc: 'GV đã chỉnh sửa',
+              pct: pct(data.yellowCount),
+              value: ratio(data.yellowCount),
+              tone: AppProgressTone.warn,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _OcrRow(
+              badge: const AppBadge.bad('Đỏ (Ô trống)'),
+              desc: 'GV nhập tay lại',
+              pct: pct(data.redCount),
+              value: ratio(data.redCount),
+              tone: AppProgressTone.bad,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildOcrStatItem({
-    required String label,
-    required String pct,
-    required String desc,
-    required Color color,
-    required Color bg,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                pct,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: color,
-                ),
-              ),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            desc,
-            style: TextStyle(fontSize: 8.5, color: color.withAlpha(200)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+      footerIcon: Icons.verified_outlined,
+      footerText: hasCells
+          ? 'Đã đối chiếu ${data.totalCells} ô điểm · Độ chính xác 2 kênh: ${data.accuracyRate}%'
+          : 'Hệ thống sẵn sàng tiếp nhận ảnh phiếu điểm viết tay',
     );
   }
 }
 
-// ── Chart 3: Grade Level Progress ────────────────────────────────────────────
+/// Một dòng Xanh/Vàng/Đỏ: nhãn, mô tả, phần trăm và thanh [AppProgress].
+class _OcrRow extends StatelessWidget {
+  const _OcrRow({
+    required this.badge,
+    required this.desc,
+    required this.pct,
+    required this.value,
+    required this.tone,
+  });
+
+  final AppBadge badge;
+  final String desc;
+  final String pct;
+  final double value;
+  final AppProgressTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            badge,
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                desc,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11, color: t.ink3),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              pct,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: t.ink,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        AppProgress(value: value, tone: tone, minWidth: 0),
+      ],
+    );
+  }
+}
+
+// ── Biểu đồ 3: tiến độ theo khối ─────────────────────────────────────────────
 class _GradeLevelProgressCard extends StatelessWidget {
   const _GradeLevelProgressCard({
     required this.items,
@@ -657,105 +469,43 @@ class _GradeLevelProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppTheme.borderSubtle),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildChartHeader(
-              eyebrow: 'TIẾN ĐỘ THEO KHỐI',
-              title: 'Tỷ lệ chốt sổ của giáo viên',
-              badge: '$totalBooks Sổ điểm',
-            ),
-            const SizedBox(height: 8),
-
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: items.map((item) {
+    final t = context.tokens;
+    return _ChartCard(
+      eyebrow: 'TIẾN ĐỘ THEO KHỐI',
+      title: 'Tỷ lệ chốt sổ của giáo viên',
+      badge: AppBadge('$totalBooks Sổ điểm', dot: false),
+      body: Center(
+        child: SingleChildScrollView(
+          child: AppHBars(
+            max: 1,
+            labelWidth: 64,
+            valueWidth: 118,
+            items: [
+              for (final item in items)
+                () {
                   final percent = (item.percentage / 100.0).clamp(0.0, 1.0);
-                  final color = percent >= 0.8
-                      ? const Color(0xFF276E68)
-                      : (percent >= 0.4
-                            ? const Color(0xFF2D7D75)
-                            : const Color(0xFFC69C3C));
-
-                  return _buildProgressRow(
-                    title: item.title,
-                    ratio: '${item.lockedClasses} / ${item.totalClasses} lớp',
-                    percent: percent,
-                    color: color,
+                  return AppHBarItem(
+                    label: item.title,
+                    value: percent,
+                    valueText:
+                        '${item.lockedClasses} / ${item.totalClasses} lớp (${(percent * 100).toInt()}%)',
+                    color: percent >= 0.8
+                        ? t.ok
+                        : (percent >= 0.4 ? t.pri : t.acc),
                   );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            _buildChartFooter(
-              icon: Icons.task_alt_rounded,
-              text:
-                  'Tiến độ toàn trường: $lockedBooks / $totalBooks bảng điểm đã chốt ($completionRate%)',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressRow({
-    required String title,
-    required String ratio,
-    required double percent,
-    required Color color,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.primaryDark,
-              ),
-            ),
-            Text(
-              '$ratio (${(percent * 100).toInt()}%)',
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: percent,
-            minHeight: 7,
-            backgroundColor: const Color(0xFFE8E5DD),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+                }(),
+            ],
           ),
         ),
-      ],
+      ),
+      footerIcon: Icons.task_alt_rounded,
+      footerText:
+          'Tiến độ toàn trường: $lockedBooks / $totalBooks bảng điểm đã chốt ($completionRate%)',
     );
   }
 }
 
-// ── Chart 4: Recent Activity Table ───────────────────────────────────────────
+// ── Biểu đồ 4: hoạt động nộp điểm gần đây ────────────────────────────────────
 class _RecentGradebookActivityCard extends StatelessWidget {
   const _RecentGradebookActivityCard({
     required this.activities,
@@ -769,126 +519,84 @@ class _RecentGradebookActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppTheme.borderSubtle),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildChartHeader(
-              eyebrow: 'NHẬT KÝ HỌC VỤ',
-              title: 'Hoạt động nộp điểm gần đây',
-              badge: 'DB Thực tế',
-            ),
-            const SizedBox(height: 8),
-
-            Expanded(
-              child: activities.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Chưa có hoạt động cập nhật bảng điểm nào',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textMuted,
+    final t = context.tokens;
+    return _ChartCard(
+      eyebrow: 'NHẬT KÝ HỌC VỤ',
+      title: 'Hoạt động nộp điểm gần đây',
+      badge: const AppBadge('DB Thực tế', dot: false),
+      body: activities.isEmpty
+          ? Center(
+              child: Text(
+                'Chưa có hoạt động cập nhật bảng điểm nào',
+                style: TextStyle(fontSize: 12, color: t.ink2),
+                textAlign: TextAlign.center,
+              ),
+            )
+          : ListView.separated(
+              padding: EdgeInsets.zero,
+              itemCount: activities.length,
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
+              itemBuilder: (_, index) {
+                final act = activities[index];
+                final isLocked = act.status == 'Đã chốt';
+                return Row(
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: t.hover,
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        child: Text(
+                          act.className,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: t.ink,
+                          ),
                         ),
                       ),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: activities.map((act) {
-                        final isLocked = act.status == 'Đã chốt';
-                        final color = isLocked
-                            ? const Color(0xFF276E68)
-                            : const Color(0xFFC69C3C);
-
-                        return Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE8E5DD),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                act.className,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryDark,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    act.subjectName,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.primaryDark,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    act.teacherName,
-                                    style: const TextStyle(
-                                      fontSize: 9.5,
-                                      color: AppTheme.textMuted,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color.withAlpha(25),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: color.withAlpha(80)),
-                              ),
-                              child: Text(
-                                act.status,
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: color,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
                     ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            act.subjectName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: t.ink,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            act.teacherName,
+                            style: TextStyle(fontSize: 11, color: t.ink3),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    isLocked
+                        ? AppBadge.ok(act.status)
+                        : AppBadge.info(act.status),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 8),
-
-            _buildChartFooter(
-              icon: Icons.history_rounded,
-              text:
-                  '$totalTeachers Giáo viên bộ môn · $totalClasses Lớp học THPT Bà Điểm',
-            ),
-          ],
-        ),
-      ),
+      footerIcon: Icons.history_rounded,
+      footerText:
+          '$totalTeachers Giáo viên bộ môn · $totalClasses Lớp học THPT Bà Điểm',
     );
   }
 }
@@ -898,22 +606,23 @@ class _AdminChartsLoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     return Container(
       height: 200,
       decoration: BoxDecoration(
-        color: AppTheme.widgetBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.borderSubtle),
+        color: t.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: t.line),
       ),
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(strokeWidth: 2.5),
-            SizedBox(height: 12),
+            const CircularProgressIndicator(strokeWidth: 2.5),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'Đang tải số liệu thống kê từ cơ sở dữ liệu...',
-              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              style: TextStyle(fontSize: 12, color: t.ink2),
             ),
           ],
         ),

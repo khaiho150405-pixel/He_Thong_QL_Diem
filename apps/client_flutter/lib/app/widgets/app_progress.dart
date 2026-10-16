@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens.dart';
 
-enum AppProgressTone { primary, ok, warn }
+enum AppProgressTone { primary, ok, warn, bad }
 
 /// Thanh tiến độ (`.progress`): cao 8, pill, nền `hover`.
 class AppProgress extends StatelessWidget {
@@ -26,6 +26,7 @@ class AppProgress extends StatelessWidget {
       AppProgressTone.ok => t.ok,
       // Prototype dùng #D99A00 (không có token); lấy amber `acc` gần nhất.
       AppProgressTone.warn => t.acc,
+      AppProgressTone.bad => t.bad,
     };
     return _Bar(
       height: 8,
