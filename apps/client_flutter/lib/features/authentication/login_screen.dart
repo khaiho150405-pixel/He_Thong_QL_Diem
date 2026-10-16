@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_edge_scrollbar.dart';
+import '../../app/widgets/theme_mode_button.dart';
 import 'session.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -71,8 +72,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     minHeight: constraints.maxHeight,
                     minWidth: constraints.maxWidth,
                   ),
-                  child: wide
-                      ? IntrinsicHeight(
+                  // Nút đổi sáng/tối nằm góc trên phải, cuộn cùng nội dung.
+                  child: Stack(
+                    fit: StackFit.passthrough,
+                    children: [
+                      if (wide)
+                        IntrinsicHeight(
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -84,7 +89,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
                           ),
                         )
-                      : _formSide(context, wide),
+                      else
+                        _formSide(context, wide),
+                      const Positioned(
+                        top: AppSpacing.sm,
+                        right: AppSpacing.sm,
+                        child: ThemeModeButton(),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

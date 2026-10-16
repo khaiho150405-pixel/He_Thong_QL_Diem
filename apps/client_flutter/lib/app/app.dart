@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
+import 'theme_mode.dart';
 import '../features/connection/connection.dart';
 import '../features/authentication/session.dart';
 import '../features/authentication/login_screen.dart';
@@ -142,7 +143,7 @@ class GradebookApp extends ConsumerWidget {
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light(),
     darkTheme: AppTheme.dark(),
-    themeMode: ThemeMode.system,
+    themeMode: ref.watch(themeModeProvider),
     scrollBehavior: const AppScrollBehavior(),
     routerConfig: ref.watch(routerProvider(initialLocation)),
   );

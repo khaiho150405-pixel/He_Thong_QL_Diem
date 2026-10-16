@@ -9,12 +9,21 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 ## Quyết định đã áp dụng
 
 - Bước điểm 0,25 của prototype: bỏ qua, giữ validate hiện có (bước 0,1 theo AGENTS.md).
-- Không có nút đổi sáng/tối và không lưu lựa chọn: giao diện theo hệ điều hành (`ThemeMode.system`).
+- ~~Không có nút đổi sáng/tối, giao diện theo hệ điều hành (`ThemeMode.system`)~~ **Thay đổi ngày 2026-10-16 theo yêu cầu của chủ dự án**: mặc định SÁNG, có nút đổi sáng/tối (`themeModeProvider`, `ThemeModeButton`); vẫn KHÔNG lưu lựa chọn (mở lại ứng dụng thì về sáng), không thêm package.
+- Chuyển trang nhẹ nhàng (theo yêu cầu 2026-10-16): bỏ hiệu ứng zoom mặc định của Material, chỉ mờ dần vào (`GentleFadePageTransitionsBuilder`) cho mọi nền tảng, tôn trọng "giảm chuyển động" của hệ điều hành.
 - Chữ viết tay (Caveat) không đóng gói: dùng Be Vietnam Pro nghiêng.
 
 ## Phát sinh trong lúc làm
 
 (Các bước ghi thêm bên dưới.)
+
+### Yêu cầu bổ sung 2026-10-16 - chuyển trang nhẹ và nút đổi theme
+
+- **Nguyên nhân zoom**: trong `lib/` không có `ScaleTransition`, `AnimatedScale`, `Transform.scale` hay `PageRouteBuilder` nào do người bấm tab gây ra. Hiệu ứng zoom là `ZoomPageTransitionsBuilder` mặc định của Material cho Android, web và desktop (iOS/macOS mặc định là trượt) mỗi khi go_router đổi trang qua sidebar/nav. Đã thay bằng `GentleFadePageTransitionsBuilder` (`lib/app/page_transitions.dart`) cho mọi `TargetPlatform` trong `AppTheme._build`: chỉ mờ dần trang mới (easeOut, 220 ms), không scale, không trượt, trang cũ không có hiệu ứng; `MediaQuery.disableAnimationsOf` là true thì không có hiệu ứng. Không đổi hộp thoại, `TabBarView`, bottom sheet.
+- **Nút đổi theme**: `ThemeModeButton` (key `theme-mode-toggle`, tooltip "Chuyển sang giao diện tối" / "Chuyển sang giao diện sáng", vùng chạm tối thiểu 48x48) đặt ở: topbar màn rộng (`AppScaffold`, trang chủ web), AppBar màn hẹp (`AppScaffold`, trang chủ mobile, đứng trước nút đăng xuất) và góc trên phải màn đăng nhập (cuộn cùng nội dung). Mỗi màn có đúng một nút.
+- **Chưa lưu lựa chọn**: mở lại ứng dụng thì về sáng. Muốn nhớ lựa chọn cần lưu trữ cục bộ (ví dụ `localStorage` trên web, hoặc `shared_preferences` trên mobile); việc này cần chủ dự án duyệt vì trái quy tắc "không thêm package" hiện hành.
+- **Tiêu đề chi tiết bảng điểm trên màn hẹp**: thêm nút theme làm AppBar chật hơn (mất 48 px), nên chuỗi "Phiên bản N" trong tiêu đề được bọc `Flexible` + `overflow: ellipsis` để không tràn; ở 320 px phần tên học kỳ/phiên bản bị cắt bớt bằng dấu "…".
+- **Phát hiện, chưa sửa (có từ trước)**: màn đăng nhập 1440x900 với chữ 1.5x tràn dọc 288 px ở nửa trái trang trí; hàng trong `home_dashboard_content.dart` (dòng khoảng 150) tràn 26 px ở 320 px với chữ 1.5x; `EmptyState` tràn dọc ở 320 px với chữ 1.5x khi màn lỗi. Không liên quan tới nút theme.
 
 ### Bước 2 - widget dùng chung
 

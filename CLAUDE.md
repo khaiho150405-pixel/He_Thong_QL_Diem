@@ -15,7 +15,7 @@ Tài liệu cần đọc trước khi làm:
 - Chỉ sửa lớp hiển thị (widget, theme, layout). Không đổi provider, repository, model, API, `packages/api_client_dart`, quyền truy cập, công thức tính điểm, validate nhập điểm.
 - Không đổi hay xóa route cũ. Chỉ được thêm route mới theo mục 4.1 của kế hoạch, guard phân quyền giống màn tương ứng đang có.
 - Giữ nguyên chuỗi tiếng Việt, `ValueKey`, loại widget, chiều cao control 48 và breakpoint 600/960/1024 mà test đang ghim. Nếu bắt buộc đổi assertion của test thì chỉ sửa đúng assertion đó và ghi vào `docs/design/ui-progress.md`.
-- Dùng màu, bo góc, khoảng cách từ `context.tokens`, `AppRadius`, `AppSpacing`. Trong file đang sửa, gom hết màu cứng (`Color(0x..)`, `Colors.xxx`) về token để đúng ở chế độ tối. Dark mode theo `ThemeMode.system`, không có nút đổi, không lưu lựa chọn.
+- Dùng màu, bo góc, khoảng cách từ `context.tokens`, `AppRadius`, `AppSpacing`. Trong file đang sửa, gom hết màu cứng (`Color(0x..)`, `Colors.xxx`) về token để đúng ở chế độ tối. Giao diện mặc định SÁNG, có nút đổi sáng/tối (`themeModeProvider` trong `lib/app/theme_mode.dart`, nút `ThemeModeButton`), không lưu lựa chọn.
 - Không thêm package (không `google_fonts`, không `shared_preferences`). `pubspec.yaml` chỉ được thêm khai báo `fonts`. Không cài gì lên ổ C.
 - Không thêm nút "Chốt bảng điểm" và không gọi `lock()` / `lockColumn()` từ giao diện. Dùng nhãn "Đang nhập liệu" / "Đã khóa" (mục 0.1 của kế hoạch).
 - Hạng mục trong thiết kế mà backend chưa hỗ trợ (mục 2 của kế hoạch): không làm giả, không tạo dữ liệu giả; ghi vào `docs/design/open-questions.md`.

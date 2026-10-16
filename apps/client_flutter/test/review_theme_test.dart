@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:client_flutter/app/app.dart';
+import 'package:client_flutter/app/theme_mode.dart';
 import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/app/widgets/app_badge.dart';
 import 'package:client_flutter/app/widgets/app_progress.dart';
@@ -109,7 +110,12 @@ Future<void> _open(
   addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
   final api = ApiClientDart(dio: Dio()..httpClientAdapter = server);
   final container = ProviderContainer(
-    overrides: [apiProvider.overrideWithValue(api)],
+    overrides: [
+      themeModeProvider.overrideWith(
+        (ref) => dark ? ThemeMode.dark : ThemeMode.light,
+      ),
+      apiProvider.overrideWithValue(api),
+    ],
   );
   addTearDown(container.dispose);
   await tester.runAsync(

@@ -7,6 +7,7 @@ import '../design_tokens.dart';
 import 'app_edge_scrollbar.dart';
 import 'app_shell.dart';
 import 'app_sidebar.dart';
+import 'theme_mode_button.dart';
 
 class AppScaffold extends ConsumerWidget {
   const AppScaffold({
@@ -137,7 +138,7 @@ class AppScaffold extends ConsumerWidget {
                       title: title,
                       titleWidget: titleWidget,
                       leading: leading ?? _backButton(context),
-                      actions: actions,
+                      actions: [...?actions, const ThemeModeButton()],
                       bottom: bottom,
                     ),
                     Expanded(child: AppEdgeScrollbar(child: body)),
@@ -175,6 +176,7 @@ class AppScaffold extends ConsumerWidget {
         bottom: bottom,
         actions: [
           ...?actions,
+          const ThemeModeButton(),
           if (!showBackButton) ...[
             IconButton(
               tooltip: 'Đăng xuất',

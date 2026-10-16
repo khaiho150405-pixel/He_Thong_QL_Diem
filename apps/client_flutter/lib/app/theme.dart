@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'design_tokens.dart';
+import 'page_transitions.dart';
 
 class AppTheme {
   AppTheme._();
@@ -149,6 +150,7 @@ class AppTheme {
       fontFamily: kAppFontFamily,
       fontFamilyFallback: kAppFontFallback,
       scaffoldBackgroundColor: t.bg,
+      pageTransitionsTheme: gentlePageTransitionsTheme(),
       extensions: <ThemeExtension<dynamic>>[t],
       appBarTheme: AppBarTheme(
         centerTitle: false,

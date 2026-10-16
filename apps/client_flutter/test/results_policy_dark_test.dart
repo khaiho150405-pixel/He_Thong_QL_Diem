@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:client_flutter/app/app.dart';
+import 'package:client_flutter/app/theme_mode.dart';
 import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/app/widgets/app_badge.dart';
 import 'package:client_flutter/features/authentication/session.dart';
@@ -143,6 +144,9 @@ Future<ProviderContainer> _pump(
   );
   final container = ProviderContainer(
     overrides: [
+      themeModeProvider.overrideWith(
+        (ref) => mode == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+      ),
       apiProvider.overrideWithValue(api),
       connectionProvider.overrideWith((ref) async {}),
     ],

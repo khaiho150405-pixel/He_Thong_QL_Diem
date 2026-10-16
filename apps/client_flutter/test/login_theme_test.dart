@@ -1,4 +1,5 @@
 import 'package:client_flutter/app/app.dart';
+import 'package:client_flutter/app/theme_mode.dart';
 import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/features/authentication/login_screen.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,15 @@ void main() {
         addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
         await tester.pumpWidget(
-          const ProviderScope(child: GradebookApp(initialLocation: '/login')),
+          ProviderScope(
+            overrides: [
+              themeModeProvider.overrideWith(
+                (ref) =>
+                    mode == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+              ),
+            ],
+            child: const GradebookApp(initialLocation: '/login'),
+          ),
         );
         await tester.pumpAndSettle();
 

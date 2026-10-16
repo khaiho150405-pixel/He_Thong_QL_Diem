@@ -6,6 +6,7 @@ import '../../../../app/design_tokens.dart';
 import '../../../../app/widgets/app_edge_scrollbar.dart';
 import '../../../../app/widgets/app_shell.dart';
 import '../../../../app/widgets/app_sidebar.dart';
+import '../../../../app/widgets/theme_mode_button.dart';
 import '../../profile_dialog.dart';
 import '../../session.dart';
 import '../widgets/home_dashboard_content.dart';
@@ -51,6 +52,7 @@ class HomeMobileView extends ConsumerWidget {
               onPressed: () => onChangePassword(context, ref),
               icon: const Icon(Icons.password),
             ),
+          const ThemeModeButton(),
           IconButton(
             tooltip: 'Đăng xuất',
             onPressed: () async {

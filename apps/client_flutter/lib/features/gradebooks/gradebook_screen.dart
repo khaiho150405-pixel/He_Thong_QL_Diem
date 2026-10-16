@@ -549,10 +549,13 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         color: context.tokens.ink2,
                       ),
                     ),
-                    Text(
-                      'Phiên bản ${widget.data.book.version}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.tokens.ink2,
+                    Flexible(
+                      child: Text(
+                        'Phiên bản ${widget.data.book.version}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: context.tokens.ink2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

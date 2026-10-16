@@ -11,7 +11,7 @@ Các quyết định của chủ dự án cho mục 6 bản trước, cộng quy
 | # | Quyết định | Cách áp dụng |
 |---|---|---|
 | 1 | **Font**: đóng gói **Be Vietnam Pro** thành asset trong `assets/fonts/`, khai báo trong `pubspec.yaml`, không tải font khi ứng dụng chạy | Xem 3.2. File font đã có sẵn trong `assets/fonts/`. Không dùng `google_fonts`. Caveat **không** đóng gói, trang đăng nhập dùng kiểu chữ thay thế (đã chấp nhận) |
-| 2 | **Dark mode** theo `ThemeMode.system`; **không lưu** lựa chọn; **không** thêm `shared_preferences` hay package nào | Xem 3.1 và bước 1. Không có nút đổi sáng/tối (prototype có, ở đây bỏ vì không lưu được); giao diện theo hệ điều hành |
+| 2 | **Dark mode** theo `ThemeMode.system`; **không lưu** lựa chọn; **không** thêm `shared_preferences` hay package nào | Xem 3.1 và bước 1. Không có nút đổi sáng/tối (prototype có, ở đây bỏ vì không lưu được); giao diện theo hệ điều hành. **Thay đổi ngày 2026-10-16 theo yêu cầu của chủ dự án: mặc định SÁNG (không còn theo hệ điều hành), có nút đổi sáng/tối (`themeModeProvider`, `ThemeModeButton`); vẫn không lưu lựa chọn, không thêm package.** |
 | 3 | **Route**: thêm route mới cho các màn gộp và trang Tổng kết riêng; **giữ nguyên toàn bộ route cũ**; guard phân quyền giống màn tương ứng | Xem 4.1 |
 | 4 | **Điểm 0,25**: bỏ qua, giữ validate hiện có | Không động vào validate trong lưới điểm |
 | 5 | **KHÔNG thêm nút "Chốt bảng điểm"**. Thay bằng **nhãn trạng thái bảng điểm** (Đang nhập liệu / Đã khóa, kèm hạn khóa nếu có dữ liệu). Giao diện **không gọi** `lock()` hay `lockColumn()` (quyết định bổ sung, thay cho phiên bản trước yêu cầu giữ nút) | Xem 0.1 |

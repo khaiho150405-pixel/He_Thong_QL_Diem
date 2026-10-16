@@ -109,7 +109,7 @@ void main() {
 
   group('GradebookApp', () {
     for (final brightness in Brightness.values) {
-      testWidgets('theo hệ thống: $brightness', (tester) async {
+      testWidgets('mặc định sáng dù hệ thống: $brightness', (tester) async {
         tester.platformDispatcher.platformBrightnessTestValue = brightness;
         addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
         await tester.pumpWidget(
@@ -121,13 +121,13 @@ void main() {
         await tester.pumpAndSettle();
 
         final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
-        expect(app.themeMode, ThemeMode.system);
+        expect(app.themeMode, ThemeMode.light);
         expect(app.theme?.brightness, Brightness.light);
         expect(app.darkTheme?.brightness, Brightness.dark);
 
         final context = tester.element(find.text('Kết nối thành công'));
-        expect(Theme.of(context).brightness, brightness);
-        expect(context.tokens.brightness, brightness);
+        expect(Theme.of(context).brightness, Brightness.light);
+        expect(context.tokens.brightness, Brightness.light);
         expect(tester.takeException(), isNull);
       });
     }
