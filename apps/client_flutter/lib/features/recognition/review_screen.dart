@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/design_tokens.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../authentication/session.dart';
 import '../gradebooks/repository.dart';
@@ -341,13 +342,17 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   Future<bool> _confirmDiscardChanges() async {
     final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final t = context.tokens;
     if (isMobile) {
       final result = await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         useSafeArea: true,
+        backgroundColor: t.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         builder: (ctx) => SafeArea(
           key: const ValueKey('discard-changes-bottom-sheet'),
@@ -359,27 +364,24 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: Colors.orange.shade800,
-                      size: 24,
-                    ),
+                    Icon(Icons.warning_amber_rounded, color: t.warn, size: 24),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Bỏ các thay đổi chưa duyệt?',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: t.ink,
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Bạn đã chỉnh sửa điểm hoặc thông tin đối chiếu nhưng chưa duyệt phiếu. Các thay đổi này sẽ bị mất nếu rời đi.',
-                  style: TextStyle(fontSize: 14),
+                  style: TextStyle(fontSize: 14, color: t.ink2),
                 ),
                 const SizedBox(height: 24),
                 FilledButton(
@@ -396,10 +398,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   onPressed: () => Navigator.of(ctx).pop(true),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    foregroundColor: t.bad,
+                    side: BorderSide(color: t.bad),
                   ),
                   child: const Text('Rời đi'),
                 ),
@@ -413,11 +413,11 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       final result = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange),
-              SizedBox(width: 8),
-              Expanded(child: Text('Bỏ các thay đổi chưa duyệt?')),
+              Icon(Icons.warning_amber_rounded, color: t.warn),
+              const SizedBox(width: 8),
+              const Expanded(child: Text('Bỏ các thay đổi chưa duyệt?')),
             ],
           ),
           content: const Text(
@@ -433,8 +433,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               key: const ValueKey('discard-leave-button'),
               onPressed: () => Navigator.of(ctx).pop(true),
               style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
+                backgroundColor: t.bad,
+                foregroundColor: reviewOnOk(t),
               ),
               child: const Text('Rời đi'),
             ),
@@ -464,13 +464,12 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   }
 
   Widget _buildBreadcrumb(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
           onTap: _handleBack,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -479,7 +478,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: colorScheme.primary,
+                color: t.priLink,
                 decoration: TextDecoration.underline,
               ),
             ),
@@ -490,7 +489,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: theme.textTheme.titleMedium?.color ?? colorScheme.onSurface,
+            color: t.ink,
           ),
         ),
       ],
@@ -507,28 +506,24 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           _showCancelTicket(ticket);
         }
       },
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'cancel',
-          child: Row(
-            children: [
-              Icon(
-                Icons.cancel_outlined,
-                size: 18,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Hủy phiếu',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontWeight: FontWeight.w600,
+      itemBuilder: (context) {
+        final t = context.tokens;
+        return [
+          PopupMenuItem(
+            value: 'cancel',
+            child: Row(
+              children: [
+                Icon(Icons.cancel_outlined, size: 18, color: t.bad),
+                const SizedBox(width: 8),
+                Text(
+                  'Hủy phiếu',
+                  style: TextStyle(color: t.bad, fontWeight: FontWeight.w600),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ];
+      },
     );
   }
 
@@ -548,8 +543,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isDesktop = screenWidth >= 1024;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
@@ -594,13 +588,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           future: detail,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Đang tải dữ liệu phiếu và ảnh ô cắt…'),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Đang tải dữ liệu phiếu và ảnh ô cắt…',
+                      style: TextStyle(color: t.ink2),
+                    ),
                   ],
                 ),
               );
@@ -610,7 +607,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(errorMessage(snapshot.error!)),
+                    Text(
+                      errorMessage(snapshot.error!),
+                      style: TextStyle(color: t.ink2),
+                    ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
                       key: const ValueKey('review-retry-detail'),
@@ -694,12 +694,15 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                         horizontal: 16,
                         vertical: 10,
                       ),
-                      color: colorScheme.errorContainer,
+                      decoration: BoxDecoration(
+                        color: t.badSoft,
+                        border: Border(bottom: BorderSide(color: t.badLine)),
+                      ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.error_outline_rounded,
-                            color: colorScheme.onErrorContainer,
+                            color: t.bad,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -707,7 +710,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                             child: Text(
                               '$_versionError. Chưa thể duyệt phiếu.',
                               style: TextStyle(
-                                color: colorScheme.onErrorContainer,
+                                color: t.bad,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -804,6 +807,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                       allSttWarningsConfirmed: allSttWarningsConfirmed,
                       hasGradebookVersion: _gradebookVersion != null,
                       busy: busy,
+                      processedCount: reviewedCount,
+                      processedTotal: totalNeedReview,
                     ),
                 ],
               ),
@@ -928,10 +933,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
+  /// Banner trạng thái khi phiếu không còn ở CHO_DOI_CHIEU (chế độ chỉ xem),
+  /// màu lấy từ token: DA_DUYET ok, DANG_XU_LY warn, LOI bad, DA_HUY trung
+  /// tính, còn lại thông tin.
   Widget _buildStatusBanner(
     BuildContext context,
     RecognitionTicketDetailDto ticket,
   ) {
+    final t = context.tokens;
     final status = ticket.status.value;
     final (
       icon,
@@ -943,17 +952,17 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     ) = switch (status) {
       'DA_DUYET' => (
         Icons.verified_rounded,
-        Colors.green.shade50,
-        Colors.green.shade300,
-        Colors.green.shade900,
+        t.okSoft,
+        t.okLine,
+        t.ok,
         'Phiếu đã duyệt — chỉ xem',
         'Điểm số đã được ghi chính thức vào hệ thống.',
       ),
       'DA_HUY' => (
         Icons.cancel_outlined,
-        Colors.grey.shade100,
-        Colors.grey.shade400,
-        Colors.grey.shade900,
+        t.neuSoft,
+        t.line2,
+        t.ink,
         'Phiếu đã hủy — ${ticket.cancelReason ?? 'Không có lý do'}',
         ticket.cancelledAt != null
             ? 'Đã hủy lúc ${ticket.cancelledAt!.toLocal().hour.toString().padLeft(2, '0')}:${ticket.cancelledAt!.toLocal().minute.toString().padLeft(2, '0')} ngày ${ticket.cancelledAt!.toLocal().day}/${ticket.cancelledAt!.toLocal().month}/${ticket.cancelledAt!.toLocal().year}. Ảnh và dữ liệu đã bị xóa.'
@@ -961,71 +970,65 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       ),
       'LOI' => (
         Icons.error_outline_rounded,
-        Colors.red.shade50,
-        Colors.red.shade300,
-        Colors.red.shade900,
+        t.badSoft,
+        t.badLine,
+        t.bad,
         'Phiếu xử lý thất bại — chỉ xem',
         'Đã xảy ra lỗi trong quá trình nhận dạng. Vui lòng kiểm tra lại ảnh.',
       ),
       'DANG_XU_LY' => (
         Icons.pending_outlined,
-        Colors.amber.shade50,
-        Colors.amber.shade300,
-        Colors.amber.shade900,
+        t.warnSoft,
+        t.warnLine,
+        t.warn,
         'Phiếu đang xử lý — chỉ xem',
         'Hệ thống đang tiến hành nhận dạng ảnh.',
       ),
       _ => (
         Icons.info_outline_rounded,
-        Colors.blue.shade50,
-        Colors.blue.shade300,
-        Colors.blue.shade900,
+        t.priSoft,
+        t.priLine,
+        t.priLink,
         'Phiếu ở trạng thái $status — chỉ xem',
         'Chỉ xem, không thể chỉnh sửa giá trị.',
       ),
     };
 
-    return Card(
+    return Container(
       key: const ValueKey('review-status-banner'),
-      margin: const EdgeInsets.only(bottom: 12),
-      color: bgColor,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: borderColor),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: borderColor),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Icon(icon, color: textColor, size: 22),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
-                      color: textColor,
-                    ),
+      child: Row(
+        children: [
+          Icon(icon, color: textColor, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: textColor,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textColor.withAlpha(210),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: textColor),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

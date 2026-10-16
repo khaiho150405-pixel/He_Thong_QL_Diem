@@ -1,6 +1,9 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design_tokens.dart';
+import '../../../app/widgets/app_badge.dart';
+
 /// Lý do ngắn, KHÔNG chứa con số (chỉ cho dòng Vàng/Đỏ).
 /// - matchLevel == DO → "Nghi lệch học sinh"
 /// - ngược lại theo comparison:
@@ -96,60 +99,64 @@ bool isYellowRowHandled({
   return false;
 }
 
-/// Huy hiệu mức (màu + biểu tượng + chữ "Đỏ" / "Vàng" / "Xanh").
-Widget buildReviewLevelBadge(BuildContext context, String level) {
-  Color bg;
-  Color fg;
-  Color border;
-  String label;
-  IconData icon;
+/// Bộ màu của một mức Xanh / Vàng / Đỏ, lấy từ token (đúng cả chế độ tối).
+@immutable
+class ReviewLevelColors {
+  const ReviewLevelColors({
+    required this.fg,
+    required this.soft,
+    required this.line,
+  });
 
+  final Color fg;
+  final Color soft;
+  final Color line;
+}
+
+/// Màu theo mức: `XANH` là ok, `VANG` là warn, còn lại (`DO`) là bad.
+ReviewLevelColors reviewLevelColors(AppTokens t, String level) {
   switch (level) {
     case 'XANH':
-      bg = Colors.green.shade50;
-      fg = Colors.green.shade800;
-      border = Colors.green.shade300;
-      label = 'Xanh';
-      icon = Icons.check_circle_rounded;
-      break;
+      return ReviewLevelColors(fg: t.ok, soft: t.okSoft, line: t.okLine);
     case 'VANG':
-      bg = Colors.amber.shade50;
-      fg = Colors.amber.shade900;
-      border = Colors.amber.shade300;
-      label = 'Vàng';
-      icon = Icons.warning_amber_rounded;
-      break;
+      return ReviewLevelColors(fg: t.warn, soft: t.warnSoft, line: t.warnLine);
     case 'DO':
     default:
-      bg = Colors.red.shade50;
-      fg = Colors.red.shade900;
-      border = Colors.red.shade300;
-      label = 'Đỏ';
-      icon = Icons.error_outline_rounded;
-      break;
+      return ReviewLevelColors(fg: t.bad, soft: t.badSoft, line: t.badLine);
   }
+}
 
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(6),
-      border: Border.all(color: border),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: fg),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: fg,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    ),
-  );
+/// Chữ trên nền màu đặc `ok` (nút "Đã xem").
+Color reviewOnOk(AppTokens t) =>
+    t.brightness == Brightness.light ? t.onPri : t.onAcc;
+
+/// Độ tin cậy 0..1 từ chuỗi số của API (vd. '0.9600'); null nếu không có.
+double? parseConfidence(String? raw) {
+  if (raw == null) return null;
+  final value = double.tryParse(raw.trim());
+  if (value == null || value.isNaN) return null;
+  return value.clamp(0.0, 1.0);
+}
+
+/// Nhãn mức: "Xanh" / "Vàng" / "Đỏ".
+String reviewLevelLabel(String level) {
+  switch (level) {
+    case 'XANH':
+      return 'Xanh';
+    case 'VANG':
+      return 'Vàng';
+    case 'DO':
+    default:
+      return 'Đỏ';
+  }
+}
+
+/// Huy hiệu mức ([AppBadge] ok / warn / bad, chữ "Xanh" / "Vàng" / "Đỏ").
+Widget buildReviewLevelBadge(BuildContext context, String level) {
+  final tone = switch (level) {
+    'XANH' => AppBadgeTone.ok,
+    'VANG' => AppBadgeTone.warn,
+    _ => AppBadgeTone.bad,
+  };
+  return AppBadge(reviewLevelLabel(level), tone: tone);
 }

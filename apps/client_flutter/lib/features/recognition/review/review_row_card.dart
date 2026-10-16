@@ -1,6 +1,7 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design_tokens.dart';
 import 'review_row_content.dart';
 
 /// Thẻ hiển thị một dòng cần đối chiếu (Đỏ / Vàng) trên Web hoặc Mobile.
@@ -50,55 +51,36 @@ class ReviewRowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isRed = row.reviewLevel.value == 'DO';
-    final isYellow = row.reviewLevel.value == 'VANG';
-
-    final borderColor = isRed
-        ? Colors.red.shade200
-        : (isYellow
-              ? Colors.amber.shade200
-              : colorScheme.outlineVariant.withAlpha(100));
-
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: borderColor, width: isRed ? 1.5 : 1.0),
-      ),
-      color: isRed
-          ? Colors.red.shade50.withAlpha(30)
-          : (isYellow ? Colors.amber.shade50.withAlpha(20) : Colors.white),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = isDesktop && constraints.maxWidth >= 760;
-            return ReviewRowContent(
-              row: row,
-              valueController: valueController,
-              reasonController: reasonController,
-              isLeavingEmpty: isLeavingEmpty,
-              isAgreedYellow: isAgreedYellow,
-              enabled: enabled,
-              onGradeChanged: onGradeChanged,
-              onReasonChanged: onReasonChanged,
-              onLeaveEmpty: onLeaveEmpty,
-              onCancelLeaveEmpty: onCancelLeaveEmpty,
-              onAgreeYellow: onAgreeYellow,
-              focusNode: focusNode,
-              onFocusNext: onFocusNext,
-              onRefresh: onRefresh,
-              readOnly: readOnly,
-              isSttConfirmed: isSttConfirmed,
-              onSttConfirmedChanged: onSttConfirmedChanged,
-              layout: isWide ? ReviewRowLayout.wide : ReviewRowLayout.narrow,
-              showInlineAgreeButton: true,
-              isCancelled: isCancelled,
-            );
-          },
-        ),
+    // Thẻ `.rv`: viền, bo góc và thanh tiêu đề đổi màu theo mức nằm trong
+    // [ReviewRowContent]; ở đây chỉ chọn bố cục theo bề rộng và chừa khoảng cách.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = isDesktop && constraints.maxWidth >= 760;
+          return ReviewRowContent(
+            row: row,
+            valueController: valueController,
+            reasonController: reasonController,
+            isLeavingEmpty: isLeavingEmpty,
+            isAgreedYellow: isAgreedYellow,
+            enabled: enabled,
+            onGradeChanged: onGradeChanged,
+            onReasonChanged: onReasonChanged,
+            onLeaveEmpty: onLeaveEmpty,
+            onCancelLeaveEmpty: onCancelLeaveEmpty,
+            onAgreeYellow: onAgreeYellow,
+            focusNode: focusNode,
+            onFocusNext: onFocusNext,
+            onRefresh: onRefresh,
+            readOnly: readOnly,
+            isSttConfirmed: isSttConfirmed,
+            onSttConfirmedChanged: onSttConfirmedChanged,
+            layout: isWide ? ReviewRowLayout.wide : ReviewRowLayout.narrow,
+            showInlineAgreeButton: true,
+            isCancelled: isCancelled,
+          );
+        },
       ),
     );
   }

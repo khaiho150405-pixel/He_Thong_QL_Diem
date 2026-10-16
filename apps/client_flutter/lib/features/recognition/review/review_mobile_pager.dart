@@ -1,10 +1,12 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design_tokens.dart';
 import '../../../app/widgets/app_controls.dart';
 import 'review_bottom_bar.dart';
 import 'review_green_group.dart';
 import 'review_header.dart';
+import 'review_models.dart';
 import 'review_row_content.dart';
 
 /// Chế độ xem từng dòng (PageView) trên Mobile cho các dòng Đỏ/Vàng/STT-khác.
@@ -138,6 +140,7 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: ReviewHeader(
               ticket: widget.ticket!,
+              showSummary: false,
               currentFilter: widget.currentFilter ?? 'ALL',
               onFilterChanged: (filter) {
                 widget.onFilterChanged?.call(filter);
@@ -180,17 +183,17 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
   }
 
   Widget _buildReadOnlyBanner(BuildContext context, String status) {
+    final t = context.tokens;
     final isApproved = status == 'DA_DUYET';
+    final fg = isApproved ? t.ok : t.warn;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isApproved ? Colors.green.shade50 : Colors.amber.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isApproved ? Colors.green.shade200 : Colors.amber.shade200,
-        ),
+        color: isApproved ? t.okSoft : t.warnSoft,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: isApproved ? t.okLine : t.warnLine),
       ),
       child: Row(
         children: [
@@ -199,7 +202,7 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
                 ? Icons.lock_outline_rounded
                 : Icons.info_outline_rounded,
             size: 18,
-            color: isApproved ? Colors.green.shade800 : Colors.amber.shade900,
+            color: fg,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -210,9 +213,7 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isApproved
-                    ? Colors.green.shade900
-                    : Colors.amber.shade900,
+                color: fg,
               ),
             ),
           ),
@@ -223,45 +224,82 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
 
   Widget _buildTopStepper(BuildContext context, int totalRows) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
     final isSummary = _currentPage >= totalRows;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh.withAlpha(80),
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant.withAlpha(100)),
-        ),
+        color: t.subtle,
+        border: Border(bottom: BorderSide(color: t.line)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Text(
-              isSummary
-                  ? 'Trang tổng kết & Duyệt'
-                  : 'Dòng ${_currentPage + 1} / $totalRows cần xem',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: isSummary ? Colors.green.shade800 : colorScheme.primary,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  isSummary
+                      ? 'Trang tổng kết & Duyệt'
+                      : 'Dòng ${_currentPage + 1} / $totalRows cần xem',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: isSummary ? t.ok : t.priLink,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: widget.onToggleMode,
+                icon: const Icon(Icons.list_alt_rounded, size: 16),
+                label: const Text('Danh sách', style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  minimumSize: const Size(44, 32),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: widget.onToggleMode,
-            icon: const Icon(Icons.list_alt_rounded, size: 16),
-            label: const Text('Danh sách', style: TextStyle(fontSize: 12)),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: const Size(44, 32),
+          // Chấm tiến độ từng dòng (`.mdots`): màu theo mức, dòng đang xem
+          // có viền đậm. Chỉ trình bày, không bấm được.
+          if (totalRows > 1 && totalRows <= 30) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Wrap(
+              key: const ValueKey('review-pager-dots'),
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (var i = 0; i < totalRows; i++)
+                  _levelDot(
+                    t,
+                    widget.needReviewRows[i].reviewLevel.value,
+                    current: !isSummary && i == _currentPage,
+                  ),
+              ],
             ),
-          ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _levelDot(AppTokens t, String level, {required bool current}) {
+    final colors = reviewLevelColors(t, level);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.fg,
+        shape: BoxShape.circle,
+        border: Border.all(color: current ? t.ink : t.surface, width: 2),
+      ),
+      child: const SizedBox(width: 12, height: 12),
     );
   }
 
@@ -298,47 +336,40 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
 
   Widget _buildSummaryPage(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Card(
-            color: Colors.green.shade50.withAlpha(50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.green.shade300),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: t.okSoft,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: t.okLine),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.check_circle_rounded,
-                    size: 44,
-                    color: Colors.green.shade700,
+            child: Column(
+              children: [
+                Icon(Icons.check_circle_rounded, size: 44, color: t.ok),
+                const SizedBox(height: 8),
+                Text(
+                  'Đã đối chiếu hết các dòng cần xem!',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: t.ok,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Đã đối chiếu hết các dòng cần xem!',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Colors.green.shade900,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Bạn có thể kiểm tra danh sách dòng Xanh bên dưới, xác nhận và duyệt phiếu.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Bạn có thể kiểm tra danh sách dòng Xanh bên dưới, xác nhận và duyệt phiếu.',
+                  style: theme.textTheme.bodySmall?.copyWith(color: t.ink2),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -361,6 +392,8 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
               hasGradebookVersion: widget.hasGradebookVersion,
               busy: widget.busy,
               allSttWarningsConfirmed: widget.allSttWarningsConfirmed,
+              processedCount: widget.reviewedCount,
+              processedTotal: widget.totalNeedReview,
             ),
         ],
       ),
@@ -368,17 +401,15 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
   }
 
   Widget _buildPagerNavigation(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final t = context.tokens;
     final row = widget.needReviewRows[_currentPage];
     final isYellow = row.reviewLevel.value == 'VANG';
     final isAgreedYellow = widget.agreedYellow[row.rowId] == true;
 
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: colorScheme.outlineVariant.withAlpha(120)),
-        ),
+        color: t.surface,
+        border: Border(top: BorderSide(color: t.line)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: SafeArea(
@@ -431,11 +462,11 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
                   ),
                   style: FilledButton.styleFrom(
                     backgroundColor: isYellow
-                        ? (isAgreedYellow
-                              ? Colors.green.shade700
-                              : Colors.amber.shade800)
+                        ? (isAgreedYellow ? t.ok : t.acc)
                         : null,
-                    foregroundColor: isYellow ? Colors.white : null,
+                    foregroundColor: isYellow
+                        ? (isAgreedYellow ? reviewOnOk(t) : t.onAcc)
+                        : null,
                     minimumSize: const Size(48, AppControlMetrics.height),
                   ),
                 ),

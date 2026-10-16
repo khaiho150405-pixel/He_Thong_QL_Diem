@@ -1,19 +1,21 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design_tokens.dart';
 import 'review_crop_image.dart';
 import 'review_models.dart';
 import 'review_stt_mismatch_box.dart';
 
 /// Kiểu bố cục hiển thị một dòng:
-/// - [wide]: Web/Tablet ngang (4 cột trong Row)
+/// - [wide]: Web/Tablet ngang (các cột trong Row)
 /// - [narrow]: Mobile / Danh sách hẹp (xếp dọc, ảnh và nút full-width)
 enum ReviewRowLayout { wide, narrow }
 
-/// Widget dùng chung hiển thị toàn bộ nội dung của một dòng đối chiếu:
-/// Tiêu đề + chip STT, khung STT khác, huy hiệu mức & lý do, ảnh họ tên,
-/// ảnh ô Điểm số, ảnh ô Điểm chữ, ô nhập Điểm cuối / Không ghi điểm / Chỉ xem,
-/// nút Đồng ý và menu ⋮.
+/// Widget dùng chung hiển thị toàn bộ nội dung của một dòng đối chiếu theo thẻ
+/// `.rv` của prototype: thanh tiêu đề đổi màu theo mức (STT hệ thống, họ tên,
+/// chip STT khác, huy hiệu mức, menu ⋮), khung STT khác, ảnh họ tên, ảnh ô
+/// Điểm số và Điểm chữ (kèm độ tin cậy và giá trị máy đọc), vùng "Điểm ghi vào
+/// bảng" (lý do, ô nhập Điểm cuối / Không ghi điểm / Chỉ xem, nút Đồng ý).
 class ReviewRowContent extends StatelessWidget {
   final RecognitionEvidenceRowDto row;
   final TextEditingController valueController;
@@ -62,6 +64,9 @@ class ReviewRowContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
+    final level = row.reviewLevel.value;
+    final colors = reviewLevelColors(t, level);
     final shortReason = getRowShortReason(row);
     final showNameCrop = shouldShowNameCrop(row);
     final showPaperStt =
@@ -70,95 +75,114 @@ class ReviewRowContent extends StatelessWidget {
         row.sttOnPaper!.toInt() != row.stt;
     // Dòng Xanh chỉ lệch STT: ảnh họ tên thu nhỏ nằm chung hàng với ảnh điểm và điểm cuối.
     final compactInfo = showPaperStt && row.matchLevel?.value == 'XANH';
+    final nameCropShown = (showNameCrop && !showPaperStt) || compactInfo;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Tiêu đề dòng + Menu ⋮
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _buildTitle(context, showPaperStt)),
-            if (!readOnly) _buildMenu(context),
-          ],
-        ),
+    return Material(
+      color: t.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: BorderSide(color: colors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Thanh tiêu đề đổi màu theo mức (`.rv-h`)
+          _buildHeader(context, colors, level, showPaperStt),
 
-        // Khung ghi chú riêng khi STT khác nhau (full width)
-        if (showPaperStt)
-          ReviewSttMismatchBox(
-            row: row,
-            isConfirmed: isSttConfirmed,
-            onConfirmedChanged: onSttConfirmedChanged,
-            readOnly: readOnly,
-            onRefresh: onRefresh,
-            isCancelled: isCancelled,
+          // Khung ghi chú riêng khi STT khác nhau (full width)
+          if (showPaperStt)
+            ReviewSttMismatchBox(
+              row: row,
+              isConfirmed: isSttConfirmed,
+              onConfirmedChanged: onSttConfirmedChanged,
+              readOnly: readOnly,
+              onRefresh: onRefresh,
+              isCancelled: isCancelled,
+            ),
+
+          // Nội dung theo bố cục ngang (wide) hoặc dọc (narrow)
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: layout == ReviewRowLayout.wide
+                ? _buildDesktopContent(
+                    context,
+                    colors,
+                    shortReason,
+                    nameCropShown,
+                    compact: compactInfo,
+                  )
+                : _buildMobileContent(
+                    context,
+                    colors,
+                    shortReason,
+                    nameCropShown,
+                    compact: compactInfo,
+                  ),
           ),
-
-        const SizedBox(height: 6),
-
-        // Nội dung theo bố cục ngang (wide) hoặc dọc (narrow)
-        if (layout == ReviewRowLayout.wide)
-          _buildDesktopContent(
-            context,
-            shortReason,
-            (showNameCrop && !showPaperStt) || compactInfo,
-            compact: compactInfo,
-          )
-        else
-          _buildMobileContent(
-            context,
-            shortReason,
-            (showNameCrop && !showPaperStt) || compactInfo,
-            compact: compactInfo,
-          ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildTitle(BuildContext context, bool showPaperStt) {
+  Widget _buildHeader(
+    BuildContext context,
+    ReviewLevelColors colors,
+    String level,
+    bool showPaperStt,
+  ) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    if (layout == ReviewRowLayout.narrow) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'STT hệ thống ${row.stt ?? '—'} · ${row.studentName}',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          if (showPaperStt) ...[
-            const SizedBox(height: 4),
-            buildSttMismatchChip(row),
-          ],
-        ],
-      );
-    }
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        Text(
-          'STT hệ thống ${row.stt ?? '—'} · ${row.studentName}',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
+    final t = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.soft,
+        border: Border(bottom: BorderSide(color: colors.line)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xs,
+          readOnly ? AppSpacing.lg : AppSpacing.xs,
+          AppSpacing.xs,
         ),
-        if (showPaperStt) buildSttMismatchChip(row),
-      ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
+                  children: [
+                    Text(
+                      'STT hệ thống ${row.stt ?? '—'} · ${row.studentName}',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: t.ink,
+                      ),
+                    ),
+                    if (showPaperStt) buildSttMismatchChip(context, row),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            buildReviewLevelBadge(context, level),
+            if (!readOnly) _buildMenu(context),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildMenu(BuildContext context) {
+    final t = context.tokens;
     return PopupMenuButton<String>(
       key: ValueKey('review-menu-${row.rowId}'),
-      icon: const Icon(Icons.more_vert_rounded, size: 22),
+      icon: Icon(Icons.more_vert_rounded, size: 22, color: t.ink2),
       padding: EdgeInsets.zero,
       tooltip: 'Tùy chọn dòng',
       onSelected: (val) {
@@ -183,8 +207,72 @@ class ReviewRowContent extends StatelessWidget {
     );
   }
 
+  /// Ảnh ô Điểm số + độ tin cậy + giá trị máy đọc.
+  Widget _numericCrop(double height) => ReviewCropImage(
+    label: 'Điểm số',
+    imageUrl: row.numericCropUrl,
+    nullPlaceholder: 'Không có ảnh',
+    height: height,
+    onRefresh: onRefresh,
+    isCancelled: isCancelled,
+    confidence: parseConfidence(row.numericConfidence),
+    readValue: row.numericValue,
+    showRead: true,
+  );
+
+  /// Ảnh ô Điểm chữ + độ tin cậy + giá trị máy đọc.
+  Widget _writtenCrop(double height) => ReviewCropImage(
+    label: 'Điểm chữ',
+    imageUrl: row.writtenCropUrl,
+    nullPlaceholder: 'Không có ảnh',
+    height: height,
+    onRefresh: onRefresh,
+    isCancelled: isCancelled,
+    confidence: parseConfidence(row.writtenConfidence),
+    readValue: row.writtenValue,
+    showRead: true,
+  );
+
+  Widget _nameCrop(double height) => ReviewCropImage(
+    label: 'Họ tên trên giấy',
+    imageUrl: row.nameCropUrl,
+    nullPlaceholder: 'Không có ảnh họ tên',
+    height: height,
+    onRefresh: onRefresh,
+    isCancelled: isCancelled,
+    confidence: parseConfidence(row.matchConfidence),
+  );
+
+  /// Lý do ngắn (`.why`): chỉ có chữ khi dòng Vàng/Đỏ.
+  Widget? _buildWhy(
+    BuildContext context,
+    ReviewLevelColors colors,
+    String shortReason,
+  ) {
+    if (shortReason.isEmpty) return null;
+    final t = context.tokens;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: t.subtle,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: t.line),
+      ),
+      child: Text(
+        shortReason,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: colors.fg,
+        ),
+      ),
+    );
+  }
+
   Widget _buildDesktopContent(
     BuildContext context,
+    ReviewLevelColors colors,
     String shortReason,
     bool showNameCrop, {
     bool compact = false,
@@ -193,129 +281,48 @@ class ReviewRowContent extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Cột 1: Mức & Lý do + ảnh họ tên nếu có (flex: 2)
-        Expanded(
-          flex: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  buildReviewLevelBadge(context, row.reviewLevel.value),
-                  if (shortReason.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        shortReason,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: row.reviewLevel.value == 'DO'
-                              ? Colors.red.shade900
-                              : Colors.amber.shade900,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if (showNameCrop) ...[
-                const SizedBox(height: 6),
-                ReviewCropImage(
-                  label: 'Họ tên trên giấy',
-                  imageUrl: row.nameCropUrl,
-                  nullPlaceholder: 'Không có ảnh họ tên',
-                  height: 48,
-                  onRefresh: onRefresh,
-                  isCancelled: isCancelled,
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
+        // Ảnh họ tên nếu có (chỉ khi cần kiểm tra đúng học sinh)
+        if (showNameCrop) ...[
+          Expanded(flex: 2, child: _nameCrop(48)),
+          const SizedBox(width: AppSpacing.md),
+        ],
 
-        // Cột 2: Ảnh ô Điểm số (flex: 2)
-        Expanded(
-          flex: 2,
-          child: ReviewCropImage(
-            label: 'Điểm số',
-            imageUrl: row.numericCropUrl,
-            nullPlaceholder: 'Không có ảnh',
-            height: cropHeight,
-            onRefresh: onRefresh,
-            isCancelled: isCancelled,
-          ),
-        ),
-        const SizedBox(width: 10),
+        // Ảnh ô Điểm số
+        Expanded(flex: 2, child: _numericCrop(cropHeight)),
+        const SizedBox(width: AppSpacing.md),
 
-        // Cột 3: Ảnh ô Điểm chữ (flex: 4) — ảnh dạng ngang, cần rộng hơn Điểm số
-        // để chữ viết tay không bị thu nhỏ (ảnh bị giới hạn bởi chiều rộng cột).
-        Expanded(
-          flex: 4,
-          child: ReviewCropImage(
-            label: 'Điểm chữ',
-            imageUrl: row.writtenCropUrl,
-            nullPlaceholder: 'Không có ảnh',
-            height: cropHeight,
-            onRefresh: onRefresh,
-            isCancelled: isCancelled,
-          ),
-        ),
-        const SizedBox(width: 12),
+        // Ảnh ô Điểm chữ — dạng ngang, cần rộng hơn Điểm số để chữ viết tay
+        // không bị thu nhỏ (ảnh bị giới hạn bởi chiều rộng cột).
+        Expanded(flex: 3, child: _writtenCrop(cropHeight)),
+        const SizedBox(width: AppSpacing.lg),
 
-        // Cột 4: Nhập điểm cuối & thao tác (flex: 3)
-        Expanded(flex: 3, child: _buildGradeInputColumn(context)),
+        // Điểm ghi vào bảng: lý do, ô nhập và thao tác
+        Expanded(
+          flex: 3,
+          child: _buildFinalColumn(context, colors, shortReason),
+        ),
       ],
     );
   }
 
   Widget _buildMobileContent(
     BuildContext context,
+    ReviewLevelColors colors,
     String shortReason,
     bool showNameCrop, {
     bool compact = false,
   }) {
+    final why = _buildWhy(context, colors, shortReason);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Huy hiệu mức & lý do
-        Row(
-          children: [
-            buildReviewLevelBadge(context, row.reviewLevel.value),
-            if (shortReason.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  shortReason,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: row.reviewLevel.value == 'DO'
-                        ? Colors.red.shade900
-                        : Colors.amber.shade900,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 10),
+        // Lý do ngắn nằm trên cùng để thấy ngay việc cần làm
+        if (why != null) ...[why, const SizedBox(height: AppSpacing.md)],
 
         // Ảnh họ tên nếu có (chỉ hiện khi chưa có khung STT)
         if (showNameCrop) ...[
-          ReviewCropImage(
-            label: 'Họ tên trên giấy',
-            imageUrl: row.nameCropUrl,
-            nullPlaceholder: 'Không có ảnh họ tên',
-            height: compact ? 44 : 68,
-            onRefresh: onRefresh,
-            isCancelled: isCancelled,
-          ),
-          const SizedBox(height: 10),
+          _nameCrop(compact ? 44 : 68),
+          const SizedBox(height: AppSpacing.md),
         ],
 
         if (compact)
@@ -323,63 +330,60 @@ class ReviewRowContent extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 2,
-                child: ReviewCropImage(
-                  label: 'Điểm số',
-                  imageUrl: row.numericCropUrl,
-                  nullPlaceholder: 'Không có ảnh',
-                  height: 88,
-                  onRefresh: onRefresh,
-                  isCancelled: isCancelled,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 3,
-                child: ReviewCropImage(
-                  label: 'Điểm chữ',
-                  imageUrl: row.writtenCropUrl,
-                  nullPlaceholder: 'Không có ảnh',
-                  height: 88,
-                  onRefresh: onRefresh,
-                  isCancelled: isCancelled,
-                ),
-              ),
+              Expanded(flex: 2, child: _numericCrop(88)),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(flex: 3, child: _writtenCrop(88)),
             ],
           )
         else ...[
           // Ảnh ô Điểm số (full width)
-          ReviewCropImage(
-            label: 'Điểm số',
-            imageUrl: row.numericCropUrl,
-            nullPlaceholder: 'Không có ảnh',
-            height: 128,
-            onRefresh: onRefresh,
-            isCancelled: isCancelled,
-          ),
-          const SizedBox(height: 10),
+          _numericCrop(128),
+          const SizedBox(height: AppSpacing.md),
 
           // Ảnh ô Điểm chữ (full width, cao hơn vì chữ viết tay dài hơn điểm số)
-          ReviewCropImage(
-            label: 'Điểm chữ',
-            imageUrl: row.writtenCropUrl,
-            nullPlaceholder: 'Không có ảnh',
-            height: 160,
-            onRefresh: onRefresh,
-            isCancelled: isCancelled,
-          ),
+          _writtenCrop(160),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.lg),
 
-        // Nhập điểm cuối / không ghi điểm / chỉ xem (full width)
-        _buildGradeInputColumn(context, isMobile: true),
+        // Điểm ghi vào bảng (full width); lý do đã hiện phía trên
+        _buildFinalColumn(context, colors, '', isMobile: true),
+      ],
+    );
+  }
+
+  /// Vùng "Điểm ghi vào bảng" (`.rv-f`): nhãn, lý do (bố cục ngang), rồi ô
+  /// nhập / Không ghi điểm / Chỉ xem.
+  Widget _buildFinalColumn(
+    BuildContext context,
+    ReviewLevelColors colors,
+    String shortReason, {
+    bool isMobile = false,
+  }) {
+    final t = context.tokens;
+    final why = _buildWhy(context, colors, shortReason);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!readOnly) ...[
+          Text(
+            'Điểm ghi vào bảng',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: t.ink3,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
+        if (why != null) ...[why, const SizedBox(height: AppSpacing.sm)],
+        _buildGradeInputColumn(context, isMobile: isMobile),
       ],
     );
   }
 
   Widget _buildGradeInputColumn(BuildContext context, {bool isMobile = false}) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final t = context.tokens;
     final isYellow = row.reviewLevel.value == 'VANG';
 
     // Chế độ CHỈ XEM
@@ -394,9 +398,9 @@ class ReviewRowContent extends StatelessWidget {
         width: isMobile ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withAlpha(120),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outlineVariant),
+          color: t.subtle,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: t.line),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,7 +411,7 @@ class ReviewRowContent extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: colorScheme.onSurfaceVariant,
+                color: t.ink3,
               ),
             ),
             const SizedBox(height: 2),
@@ -416,7 +420,7 @@ class ReviewRowContent extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: isMobile ? 18 : 16,
-                color: colorScheme.onSurface,
+                color: t.ink,
               ),
             ),
           ],
@@ -430,9 +434,9 @@ class ReviewRowContent extends StatelessWidget {
         width: isMobile ? double.infinity : null,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.red.shade50.withAlpha(30),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.red.shade200),
+          color: t.badSoft,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: t.badLine),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,7 +450,7 @@ class ReviewRowContent extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: colorScheme.error,
+                      color: t.bad,
                     ),
                   ),
                 ),
@@ -552,8 +556,9 @@ class ReviewRowContent extends StatelessWidget {
           onChanged: onGradeChanged,
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: isMobile ? 16 : 14,
-            color: colorScheme.onSurface,
+            fontSize: isMobile ? 18 : 16,
+            color: t.ink,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
           decoration: InputDecoration(
             labelText: 'Điểm cuối',
@@ -603,10 +608,8 @@ class ReviewRowContent extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: isAgreedYellow
-                    ? Colors.green.shade700
-                    : Colors.amber.shade800,
-                foregroundColor: Colors.white,
+                backgroundColor: isAgreedYellow ? t.ok : t.acc,
+                foregroundColor: isAgreedYellow ? reviewOnOk(t) : t.onAcc,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,

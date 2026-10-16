@@ -1,11 +1,14 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design_tokens.dart';
+import '../../../app/widgets/app_progress.dart';
 import '../image_preview.dart';
+import 'review_models.dart';
 
 /// Mục thu gọn gom các dòng Xanh: "N dòng Xanh — điểm cuối đã điền".
 /// Khi mở ra: danh sách gọn mỗi học sinh một hàng gồm STT, họ tên,
-/// ảnh ô số, ảnh ô chữ (nhỏ, bấm phóng to), điểm cuối (sửa được).
+/// ảnh ô số, ảnh ô chữ (nhỏ, bấm phóng to, kèm độ tin cậy), điểm cuối (sửa được).
 class ReviewGreenGroup extends StatelessWidget {
   const ReviewGreenGroup({
     super.key,
@@ -29,49 +32,52 @@ class ReviewGreenGroup extends StatelessWidget {
     if (rows.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
     final count = rows.length;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.green.shade200),
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: t.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: t.okLine),
+        boxShadow: t.shadow,
       ),
-      color: Colors.green.shade50.withAlpha(25),
+      clipBehavior: Clip.antiAlias,
       child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           key: const ValueKey('review-green-group'),
           initiallyExpanded: initiallyExpanded,
-          leading: Icon(
-            Icons.check_circle_rounded,
-            color: Colors.green.shade700,
-            size: 22,
-          ),
+          backgroundColor: t.surface,
+          collapsedBackgroundColor: t.okSoft,
+          iconColor: t.ok,
+          collapsedIconColor: t.ok,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          leading: Icon(Icons.check_circle_rounded, color: t.ok, size: 22),
           title: Text(
             '$count dòng Xanh — điểm cuối đã điền',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 14,
-              color: Colors.green.shade900,
+              color: t.ok,
             ),
           ),
           subtitle: Text(
             'Hai kênh đồng thuận tin cậy. Nhấn để xem hoặc sửa điểm nếu cần.',
-            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 12, color: t.ink2),
           ),
           children: [
-            const Divider(height: 1),
+            Divider(height: 1, color: t.line),
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               itemCount: rows.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
+              separatorBuilder: (_, _) => Divider(height: 1, color: t.line),
               itemBuilder: (context, index) =>
-                  _buildRow(context, rows[index], index, colorScheme),
+                  _buildRow(context, rows[index], index),
             ),
           ],
         ),
@@ -83,8 +89,8 @@ class ReviewGreenGroup extends StatelessWidget {
     BuildContext context,
     RecognitionEvidenceRowDto row,
     int index,
-    ColorScheme colorScheme,
   ) {
+    final t = context.tokens;
     final gradeField = SizedBox(
       width: 74,
       child: readOnly
@@ -92,9 +98,9 @@ class ReviewGreenGroup extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green.shade50.withAlpha(80),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.green.shade200),
+                color: t.okSoft,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+                border: Border.all(color: t.okLine),
               ),
               child: Text(
                 row.finalValue != null
@@ -105,7 +111,7 @@ class ReviewGreenGroup extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 14,
-                  color: Colors.green.shade900,
+                  color: t.ok,
                 ),
               ),
             )
@@ -119,10 +125,7 @@ class ReviewGreenGroup extends StatelessWidget {
               textInputAction: TextInputAction.next,
               onChanged: (text) => onGradeChanged(row.rowId, text),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: colorScheme.onSurface,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700, color: t.ink),
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
@@ -130,7 +133,7 @@ class ReviewGreenGroup extends StatelessWidget {
                   vertical: 8,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
               ),
               validator: (value) {
@@ -151,12 +154,16 @@ class ReviewGreenGroup extends StatelessWidget {
       width: 26,
       child: Text(
         '${row.stt ?? index + 1}',
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+          color: t.ink2,
+        ),
       ),
     );
     final name = Text(
       row.studentName,
-      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: t.ink),
       overflow: TextOverflow.ellipsis,
     );
 
@@ -167,6 +174,7 @@ class ReviewGreenGroup extends StatelessWidget {
           // Màn rộng: một hàng, ảnh số 96px và ảnh chữ 220px (cao 56px).
           if (constraints.maxWidth >= 560) {
             return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 stt,
                 const SizedBox(width: 6),
@@ -176,6 +184,7 @@ class ReviewGreenGroup extends StatelessWidget {
                   context,
                   label: 'Số',
                   url: row.numericCropUrl,
+                  confidence: parseConfidence(row.numericConfidence),
                   width: 96,
                 ),
                 const SizedBox(width: 8),
@@ -183,6 +192,7 @@ class ReviewGreenGroup extends StatelessWidget {
                   context,
                   label: 'Chữ',
                   url: row.writtenCropUrl,
+                  confidence: parseConfidence(row.writtenConfidence),
                   width: 220,
                 ),
                 const SizedBox(width: 8),
@@ -205,6 +215,7 @@ class ReviewGreenGroup extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     flex: 2,
@@ -212,6 +223,7 @@ class ReviewGreenGroup extends StatelessWidget {
                       context,
                       label: 'Số',
                       url: row.numericCropUrl,
+                      confidence: parseConfidence(row.numericConfidence),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -221,6 +233,7 @@ class ReviewGreenGroup extends StatelessWidget {
                       context,
                       label: 'Chữ',
                       url: row.writtenCropUrl,
+                      confidence: parseConfidence(row.writtenConfidence),
                     ),
                   ),
                 ],
@@ -232,61 +245,69 @@ class ReviewGreenGroup extends StatelessWidget {
     );
   }
 
+  /// Ảnh ô cắt nhỏ (cao 56) kèm thanh độ tin cậy của kênh.
   Widget _cropThumb(
     BuildContext context, {
     required String label,
     required String? url,
+    required double? confidence,
     double? width,
   }) {
+    final t = context.tokens;
+    final decoration = BoxDecoration(
+      color: t.paper,
+      borderRadius: BorderRadius.circular(AppRadius.xs),
+      border: Border.all(color: t.paperLine),
+    );
+    final labelStyle = TextStyle(fontSize: 11, color: t.ink3);
+
+    final Widget thumb;
     if (url == null) {
-      return Container(
+      thumb = Container(
         width: width,
         height: 56,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.grey.shade300),
+        decoration: decoration,
+        child: Center(child: Text(label, style: labelStyle)),
+      );
+    } else {
+      thumb = InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        onTap: () => showRecognitionImage(
+          context,
+          image: Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const Center(child: Text('Lỗi ảnh')),
+          ),
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
+        child: Container(
+          width: width,
+          height: 56,
+          decoration: decoration,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) =>
+                  Center(child: Text(label, style: labelStyle)),
+            ),
           ),
         ),
       );
     }
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(4),
-      onTap: () => showRecognitionImage(
-        context,
-        image: Image.network(
-          url,
-          fit: BoxFit.contain,
-          errorBuilder: (_, _, _) => const Center(child: Text('Lỗi ảnh')),
-        ),
-      ),
-      child: Container(
-        width: width,
-        height: 56,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Image.network(
-            url,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => Center(
-              child: Text(
-                label,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-              ),
-            ),
-          ),
-        ),
+    if (confidence == null) return thumb;
+    return SizedBox(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          thumb,
+          const SizedBox(height: AppSpacing.xs),
+          AppConfidenceBar(value: confidence),
+        ],
       ),
     );
   }

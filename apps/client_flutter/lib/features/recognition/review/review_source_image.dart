@@ -1,6 +1,7 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design_tokens.dart';
 import '../image_preview.dart';
 
 /// Widget hiển thị ảnh gốc của phiếu nhận dạng (ở cột phải trên Web hoặc đầu trang trên Mobile).
@@ -19,34 +20,31 @@ class ReviewSourceImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
 
-    final content = Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: colorScheme.outlineVariant.withAlpha(80)),
+    final content = Container(
+      decoration: BoxDecoration(
+        color: t.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: t.line),
+        boxShadow: t.shadow,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.image_outlined,
-                  size: 18,
-                  color: colorScheme.primary,
-                ),
+                Icon(Icons.image_outlined, size: 18, color: t.pri),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Ảnh gốc bảng điểm',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: t.ink,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -54,17 +52,17 @@ class ReviewSourceImage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Container(
               width: double.infinity,
-              constraints: BoxConstraints(maxHeight: isColumn ? 320 : 160),
+              constraints: BoxConstraints(maxHeight: isColumn ? 320 : 200),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+                color: t.paper,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: t.paperLine),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 child:
                     (ticket.sourceImageUrl.trim().isEmpty ||
                         ticket.status.value == 'DA_HUY')
@@ -120,23 +118,20 @@ class ReviewSourceImage extends StatelessWidget {
   }
 
   Widget _deletedImage(BuildContext context) {
-    return const Center(
+    final t = context.tokens;
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.image_not_supported_outlined,
-              size: 28,
-              color: Colors.grey,
-            ),
-            SizedBox(height: 6),
+            Icon(Icons.image_not_supported_outlined, size: 28, color: t.ink3),
+            const SizedBox(height: 6),
             Text(
               'Ảnh đã xóa',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey,
+                color: t.ink3,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -147,16 +142,17 @@ class ReviewSourceImage extends StatelessWidget {
   }
 
   Widget _expiredImage(BuildContext context) {
+    final t = context.tokens;
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Không tải được ảnh gốc. URL có thể đã hết hạn.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: 12, color: t.ink2),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(

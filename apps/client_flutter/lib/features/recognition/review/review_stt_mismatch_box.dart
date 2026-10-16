@@ -1,40 +1,47 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design_tokens.dart';
 import 'review_crop_image.dart';
+import 'review_models.dart';
+
+/// Bộ màu của chip/khung STT khác: xanh dương (thông tin) khi ghép họ tên đã
+/// chắc chắn, đỏ khi nghi lệch học sinh, vàng cảnh báo còn lại.
+({Color bg, Color line, Color fg}) _sttColors(
+  AppTokens t,
+  RecognitionEvidenceRowDto row,
+) {
+  final isInfo = row.matchLevel?.value == 'XANH';
+  final isRed = row.matchLevel?.value == 'DO';
+  if (isInfo) return (bg: t.priSoft, line: t.priLine, fg: t.priLink);
+  if (isRed) return (bg: t.badSoft, line: t.badLine, fg: t.bad);
+  return (bg: t.warnSoft, line: t.warnLine, fg: t.warn);
+}
 
 /// Chip hiển thị trên tiêu đề dòng: "STT giấy {sttOnPaper} ≠ hệ thống {stt}" với icon swap_horiz.
-Widget buildSttMismatchChip(RecognitionEvidenceRowDto row) {
+Widget buildSttMismatchChip(
+  BuildContext context,
+  RecognitionEvidenceRowDto row,
+) {
   if (row.sttOnPaper == null ||
       row.stt == null ||
       row.sttOnPaper!.toInt() == row.stt) {
     return const SizedBox.shrink();
   }
 
-  final isInfo = row.matchLevel?.value == 'XANH';
-  final isRed = row.matchLevel?.value == 'DO';
-
-  final Color bg = isInfo
-      ? Colors.blue.shade50
-      : (isRed ? Colors.red.shade50 : Colors.orange.shade50);
-  final Color border = isInfo
-      ? Colors.blue.shade200
-      : (isRed ? Colors.red.shade200 : Colors.orange.shade300);
-  final Color textCol = isInfo
-      ? Colors.blue.shade800
-      : (isRed ? Colors.red.shade900 : Colors.orange.shade900);
+  final c = _sttColors(context.tokens, row);
 
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
     decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(6),
-      border: Border.all(color: border),
+      color: c.bg,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      border: Border.all(color: c.line),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.swap_horiz_rounded, size: 14, color: textCol),
+        Icon(Icons.swap_horiz_rounded, size: 14, color: c.fg),
         const SizedBox(width: 4),
         Flexible(
           child: Text(
@@ -42,7 +49,7 @@ Widget buildSttMismatchChip(RecognitionEvidenceRowDto row) {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: textCol,
+              color: c.fg,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -59,7 +66,7 @@ Widget buildSttMismatchChip(RecognitionEvidenceRowDto row) {
 /// - matchLevel == XANH: màu thông tin (xanh dương nhạt).
 ///   Dòng 1 in đậm: "STT khác nhau: trên giấy là {N}, trong hệ thống là {M}".
 ///   Dòng 2: "Tờ giấy xếp tên khác hệ thống; đã ghép theo họ tên." (không có checkbox).
-/// - matchLevel == VANG/DO/null: màu cảnh báo (cam; DO thì đỏ).
+/// - matchLevel == VANG/DO/null: màu cảnh báo (vàng; DO thì đỏ).
 ///   Dòng 1 in đậm: "STT không khớp: trên giấy là {N}, trong hệ thống là {M}".
 ///   Dòng 2: "Hãy kiểm tra ảnh họ tên có đúng là {studentName} không." + checkbox "Đúng học sinh này".
 /// - Chữ >= 14sp, responsive không tràn trên mobile 320px.
@@ -89,28 +96,12 @@ class ReviewSttMismatchBox extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final t = context.tokens;
     final sttPaper = row.sttOnPaper!.toInt();
     final sttSystem = row.stt;
     final isInfo = row.matchLevel?.value == 'XANH';
     final isRed = row.matchLevel?.value == 'DO';
-
-    final Color bgColor = isInfo
-        ? Colors.blue.shade50.withAlpha(220)
-        : (isRed
-              ? Colors.red.shade50.withAlpha(220)
-              : Colors.orange.shade50.withAlpha(220));
-
-    final Color borderColor = isInfo
-        ? Colors.blue.shade300
-        : (isRed ? Colors.red.shade300 : Colors.orange.shade300);
-
-    final Color primaryColor = isInfo
-        ? Colors.blue.shade900
-        : (isRed ? Colors.red.shade900 : Colors.orange.shade900);
-
-    final Color iconColor = isInfo
-        ? Colors.blue.shade800
-        : (isRed ? Colors.red.shade800 : Colors.orange.shade900);
+    final c = _sttColors(t, row);
 
     final String titleText = isInfo
         ? 'STT khác nhau: trên giấy là $sttPaper, trong hệ thống là $sttSystem'
@@ -126,16 +117,16 @@ class ReviewSttMismatchBox extends StatelessWidget {
       return Container(
         key: ValueKey('review-stt-box-${row.rowId}'),
         width: double.infinity,
-        margin: const EdgeInsets.only(top: 4, bottom: 2),
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: borderColor),
+          color: c.bg,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: c.line),
         ),
         child: Row(
           children: [
-            Icon(Icons.swap_horiz_rounded, size: 18, color: iconColor),
+            Icon(Icons.swap_horiz_rounded, size: 18, color: c.fg),
             const SizedBox(width: 8),
             Expanded(
               child: Wrap(
@@ -147,7 +138,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: primaryColor,
+                      color: c.fg,
                     ),
                   ),
                   Text(
@@ -155,7 +146,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: primaryColor.withAlpha(220),
+                      color: c.fg,
                     ),
                   ),
                 ],
@@ -169,12 +160,12 @@ class ReviewSttMismatchBox extends StatelessWidget {
     return Container(
       key: ValueKey('review-stt-box-${row.rowId}'),
       width: double.infinity,
-      margin: const EdgeInsets.only(top: 8, bottom: 10),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor, width: 1.5),
+        color: c.bg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: c.line, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +175,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.swap_horiz_rounded, size: 22, color: iconColor),
+              Icon(Icons.swap_horiz_rounded, size: 22, color: c.fg),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -192,7 +183,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w700,
-                    color: primaryColor,
+                    color: c.fg,
                     height: 1.3,
                   ),
                 ),
@@ -209,7 +200,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: primaryColor.withAlpha(220),
+                color: c.fg,
                 height: 1.3,
               ),
             ),
@@ -224,6 +215,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
             height: 56,
             onRefresh: onRefresh,
             isCancelled: isCancelled,
+            confidence: parseConfidence(row.matchConfidence),
           ),
 
           // Checkbox xác nhận cho trường hợp cảnh báo (VANG/DO/null), không hiện ở chế độ chỉ xem
@@ -232,7 +224,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
             InkWell(
               key: ValueKey('review-stt-confirm-${row.rowId}'),
               onTap: () => onConfirmedChanged?.call(!isConfirmed),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
@@ -241,9 +233,8 @@ class ReviewSttMismatchBox extends StatelessWidget {
                       value: isConfirmed,
                       onChanged: (val) =>
                           onConfirmedChanged?.call(val ?? false),
-                      activeColor: isRed
-                          ? Colors.red.shade700
-                          : Colors.orange.shade800,
+                      activeColor: isRed ? t.bad : t.pri,
+                      checkColor: isRed ? reviewOnOk(t) : t.onPri,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -252,9 +243,7 @@ class ReviewSttMismatchBox extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: isConfirmed
-                              ? Colors.green.shade900
-                              : primaryColor,
+                          color: isConfirmed ? t.ok : c.fg,
                         ),
                       ),
                     ),
