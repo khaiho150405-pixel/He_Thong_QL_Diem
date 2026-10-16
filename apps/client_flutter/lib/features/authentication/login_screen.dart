@@ -130,16 +130,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       key: form,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: wide
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.stretch,
+        // Kéo giãn hết cột form (tối đa 380) ở mọi breakpoint để ô nhập và
+        // hai nút luôn rộng bằng nhau; tiêu đề màn rộng vẫn căn trái.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (wide) ...[
-            Text('Đăng nhập', style: theme.textTheme.headlineSmall),
+            Text(
+              'Đăng nhập',
+              style: theme.textTheme.headlineSmall,
+              textAlign: TextAlign.start,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Dùng tài khoản do nhà trường cấp.',
               style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.start,
             ),
           ] else
             _CompactBrand(tokens: t),
@@ -559,9 +564,9 @@ class _PaperMini extends StatelessWidget {
   const _PaperMini();
 
   static const _rows = [
-    ('1', 'Nguyễn Văn An', '8.5', 'tám phẩy năm'),
-    ('2', 'Trần Thị Bích', '7', 'bảy'),
-    ('3', 'Lê Hoàng Cường', '6.5', 'sáu phẩy năm'),
+    ('1', 'Nguyễn Văn An', '8.5', 'tám năm'),
+    ('2', 'Trần Thị Bích', '7.0', 'bảy không'),
+    ('3', 'Lê Hoàng Cường', '6.5', 'sáu năm'),
   ];
 
   @override
@@ -625,7 +630,16 @@ class _PaperMini extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: AppSpacing.sm),
-                          SizedBox(width: 40, child: Text(r.$3, style: hand)),
+                          SizedBox(
+                            width: 44,
+                            child: Text(
+                              r.$3,
+                              style: hand,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.visible,
+                            ),
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             flex: 13,

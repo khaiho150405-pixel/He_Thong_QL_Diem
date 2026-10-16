@@ -1194,6 +1194,25 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     Map<num, FinalResultDto> results,
   ) {
     final t = context.tokens;
+    return LayoutBuilder(
+      builder: (context, box) {
+        final sizes = _GridColumnSizes.fit(
+          available: box.maxWidth - 32,
+          components: components.length,
+          withResults: locked,
+        );
+        return _wideGridTable(students, components, results, sizes, t);
+      },
+    );
+  }
+
+  Widget _wideGridTable(
+    Map<num, List<GradeCellDto>> students,
+    List<GradeCellDto> components,
+    Map<num, FinalResultDto> results,
+    _GridColumnSizes sizes,
+    AppTokens t,
+  ) {
     return Scrollbar(
       controller: horizontalGridController,
       thumbVisibility: true,
@@ -1207,36 +1226,53 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             controller: verticalGridController,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
             child: DataTable(
+              horizontalMargin: _GridColumnSizes.horizontalMargin,
+              columnSpacing: _GridColumnSizes.columnSpacing,
               columns: [
                 const DataColumn(label: Text('STT')),
                 const DataColumn(label: Text('Học sinh')),
                 for (final component in components)
                   DataColumn(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${component.componentName}\nHệ số ${component.coefficient}'
-                          '${component.required_ ? ' · bắt buộc' : ''}',
-                        ),
-                        if (component.openForInput == false) ...[
-                          const SizedBox(width: 4),
-                          Tooltip(
-                            message:
-                                'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
-                            child: Icon(
-                              Icons.lock_outline_rounded,
-                              size: 14,
-                              color: t.warn,
-                            ),
+                    label: ConstrainedBox(
+                      constraints: BoxConstraints(minWidth: sizes.component),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${component.componentName}\nHệ số ${component.coefficient}'
+                            '${component.required_ ? ' · bắt buộc' : ''}',
                           ),
+                          if (component.openForInput == false) ...[
+                            const SizedBox(width: 4),
+                            Tooltip(
+                              message:
+                                  'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
+                              child: Icon(
+                                Icons.lock_outline_rounded,
+                                size: 14,
+                                color: t.warn,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 if (locked) ...[
-                  const DataColumn(label: Text('Điểm tổng kết')),
-                  const DataColumn(label: Text('Xếp loại')),
+                  DataColumn(
+                    label: ConstrainedBox(
+                      constraints: BoxConstraints(minWidth: sizes.total),
+                      child: const Text('Điểm tổng kết'),
+                    ),
+                  ),
+                  DataColumn(
+                    label: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: sizes.classification,
+                      ),
+                      child: const Text('Xếp loại'),
+                    ),
+                  ),
                 ],
               ],
               rows: [
@@ -1244,15 +1280,18 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   DataRow(
                     cells: [
                       DataCell(
-                        Text(
-                          entry.value.first.stt != null
-                              ? '${entry.value.first.stt}'
-                              : '—',
+                        SizedBox(
+                          width: _GridColumnSizes.stt,
+                          child: Text(
+                            entry.value.first.stt != null
+                                ? '${entry.value.first.stt}'
+                                : '—',
+                          ),
                         ),
                       ),
                       DataCell(
                         SizedBox(
-                          width: 190,
+                          width: sizes.student,
                           child: Text(
                             entry.value.first.active
                                 ? entry.value.first.studentName
@@ -1271,27 +1310,46 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                                         c?.componentId == component.componentId,
                                     orElse: () => null,
                                   );
-                              return cell != null
-                                  ? _gradeField(cell)
-                                  : const Text('—');
+                              return SizedBox(
+                                width: sizes.component,
+                                child: cell != null
+                                    ? Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: _gradeField(
+                                          cell,
+                                          width: sizes.field,
+                                        ),
+                                      )
+                                    : const Text('—'),
+                              );
                             },
                           ),
                         ),
                       if (locked) ...[
                         DataCell(
-                          Text(
-                            resultScore(
-                              results[entry.value.first.studentId]?.finalScore,
+                          SizedBox(
+                            width: sizes.total,
+                            child: Text(
+                              resultScore(
+                                results[entry.value.first.studentId]
+                                    ?.finalScore,
+                              ),
                             ),
                           ),
                         ),
                         DataCell(
-                          results[entry.value.first.studentId] == null
-                              ? const Text('—')
-                              : _classificationBadge(
-                                  results[entry.value.first.studentId]!
-                                      .classification,
-                                ),
+                          SizedBox(
+                            width: sizes.classification,
+                            child: results[entry.value.first.studentId] == null
+                                ? const Text('—')
+                                : Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: _classificationBadge(
+                                      results[entry.value.first.studentId]!
+                                          .classification,
+                                    ),
+                                  ),
+                          ),
                         ),
                       ],
                     ],
@@ -1639,4 +1697,58 @@ class _GradebookLoadError extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Độ rộng các cột của lưới nhập điểm màn rộng. Phần dư của khung (sau khi trừ
+/// lề) được chia cho cột "Học sinh" (gấp đôi) và các cột điểm/tổng kết; cột STT
+/// giữ hẹp. Khi nhiều cột không còn phần dư, giữ độ rộng gốc và cuộn ngang.
+class _GridColumnSizes {
+  const _GridColumnSizes({
+    required this.student,
+    required this.component,
+    required this.total,
+    required this.classification,
+  });
+
+  static const horizontalMargin = 16.0;
+  static const columnSpacing = 20.0;
+  static const stt = 40.0;
+  static const _baseStudent = 190.0;
+  static const _baseComponent = 170.0;
+  static const _baseTotal = 110.0;
+  static const _baseClassification = 100.0;
+  static const _maxField = 190.0;
+
+  final double student;
+  final double component;
+  final double total;
+  final double classification;
+
+  /// Ô nhập giữ vừa phải (dưới 200) để nhãn "● AI" vẫn hiện cạnh ô.
+  double get field => component < _maxField ? component : _maxField;
+
+  factory _GridColumnSizes.fit({
+    required double available,
+    required int components,
+    required bool withResults,
+  }) {
+    final columns = 2 + components + (withResults ? 2 : 0);
+    final natural =
+        horizontalMargin * 2 +
+        columnSpacing * (columns - 1) +
+        stt +
+        _baseStudent +
+        _baseComponent * components +
+        (withResults ? _baseTotal + _baseClassification : 0);
+    // Trừ 1 px dự phòng sai số làm tròn để không sinh thanh cuộn ngang thừa.
+    final extra = available - natural - 1;
+    final weights = 2 + components + (withResults ? 2 : 0);
+    final unit = extra > 0 ? extra / weights : 0.0;
+    return _GridColumnSizes(
+      student: _baseStudent + 2 * unit,
+      component: _baseComponent + unit,
+      total: _baseTotal + unit,
+      classification: _baseClassification + unit,
+    );
+  }
 }
