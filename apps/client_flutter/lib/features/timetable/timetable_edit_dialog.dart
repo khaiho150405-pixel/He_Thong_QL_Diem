@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_dialog.dart';
 import '../academic_catalog/repository.dart';
 import '../authentication/session.dart';
 import 'timetable_model.dart';
@@ -123,200 +125,192 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      icon: const Icon(Icons.edit_calendar_outlined),
-      title: Text(
-        widget.moving
-            ? 'Chuyển ngày / tiết học'
-            : widget.item == null
-            ? 'Xếp tiết học'
-            : 'Cập nhật tiết học',
-      ),
-      content: SizedBox(
-        width: 520,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.info_outline, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Mỗi ngày từ 3 tiết phải có ít nhất 3 môn. Mỗi buổi '
-                          'tối đa 4 tiết; hai tiết cùng môn phải liền nhau.',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<num>(
-                  initialValue: _assignmentId,
-                  isExpanded: true,
-                  itemHeight: null,
-                  decoration: const InputDecoration(
-                    labelText: 'Lớp · môn · giáo viên · học kỳ',
-                    helperText: 'Chỉ hiển thị các phân công giảng dạy hợp lệ',
-                  ),
-                  items: widget.assignments
-                      .map(
-                        (row) => DropdownMenuItem<num>(
-                          value: row['ma_phan_cong'] as num?,
-                          child: Text(row['label']?.toString() ?? 'Phân công'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: _saving || widget.moving
-                      ? null
-                      : (value) => setState(() => _assignmentId = value),
-                  validator: (value) => value == null ? 'Chọn phân công' : null,
-                ),
-                const SizedBox(height: 12),
-                Row(
+    final t = context.tokens;
+    final confirmLabel = widget.item == null ? 'Thêm vào lịch' : 'Lưu thay đổi';
+    return AppDialog(
+      title: widget.moving
+          ? 'Chuyển ngày / tiết học'
+          : widget.item == null
+          ? 'Xếp tiết học'
+          : 'Cập nhật tiết học',
+      confirmLabel: _saving ? 'Đang lưu…' : confirmLabel,
+      confirmEnabled: !_saving,
+      onConfirm: _save,
+      // Đang lưu thì Hủy / X không đóng hộp thoại (như nút Hủy bị tắt trước đây).
+      onCancel: _saving ? () {} : null,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: t.priSoft,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: t.priLine),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Icon(Icons.info_outline, size: 20, color: t.priLink),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
-                      child: DropdownButtonFormField<int>(
-                        initialValue: _day,
-                        isExpanded: true,
-                        itemHeight: null,
-                        decoration: const InputDecoration(labelText: 'Thứ'),
-                        items: const [
-                          DropdownMenuItem(value: 2, child: Text('Thứ Hai')),
-                          DropdownMenuItem(value: 3, child: Text('Thứ Ba')),
-                          DropdownMenuItem(value: 4, child: Text('Thứ Tư')),
-                          DropdownMenuItem(value: 5, child: Text('Thứ Năm')),
-                          DropdownMenuItem(value: 6, child: Text('Thứ Sáu')),
-                          DropdownMenuItem(value: 7, child: Text('Thứ Bảy')),
-                          DropdownMenuItem(value: 8, child: Text('Chủ nhật')),
-                        ],
-                        onChanged: _saving
-                            ? null
-                            : (value) => setState(() => _day = value!),
+                      child: Text(
+                        'Mỗi ngày từ 3 tiết phải có ít nhất 3 môn. Mỗi buổi '
+                        'tối đa 4 tiết; hai tiết cùng môn phải liền nhau.',
+                        style: TextStyle(fontSize: 13, color: t.ink),
                       ),
                     ),
-                    const SizedBox(width: 12),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Buổi học',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  width: double.infinity,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => SegmentedButton<bool>(
-                      direction: constraints.maxWidth < 340
-                          ? Axis.vertical
-                          : Axis.horizontal,
-                      segments: const [
-                        ButtonSegment(
-                          value: false,
-                          icon: Icon(Icons.wb_sunny_outlined),
-                          label: Text('Buổi sáng'),
-                        ),
-                        ButtonSegment(
-                          value: true,
-                          icon: Icon(Icons.wb_twilight_outlined),
-                          label: Text('Buổi chiều'),
-                        ),
-                      ],
-                      selected: {_afternoon},
-                      onSelectionChanged: _saving
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _afternoon = value.first;
-                                _period = _afternoon
-                                    ? (_period > 5 ? _period : 6)
-                                    : (_period <= 5 ? _period : 1);
-                              });
-                            },
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            DropdownButtonFormField<num>(
+              initialValue: _assignmentId,
+              isExpanded: true,
+              itemHeight: null,
+              decoration: const InputDecoration(
+                labelText: 'Lớp · môn · giáo viên · học kỳ',
+                helperText: 'Chỉ hiển thị các phân công giảng dạy hợp lệ',
+              ),
+              items: widget.assignments
+                  .map(
+                    (row) => DropdownMenuItem<num>(
+                      value: row['ma_phan_cong'] as num?,
+                      child: Text(row['label']?.toString() ?? 'Phân công'),
                     ),
+                  )
+                  .toList(),
+              onChanged: _saving || widget.moving
+                  ? null
+                  : (value) => setState(() => _assignmentId = value),
+              validator: (value) => value == null ? 'Chọn phân công' : null,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    initialValue: _day,
+                    isExpanded: true,
+                    itemHeight: null,
+                    decoration: const InputDecoration(labelText: 'Thứ'),
+                    items: const [
+                      DropdownMenuItem(value: 2, child: Text('Thứ Hai')),
+                      DropdownMenuItem(value: 3, child: Text('Thứ Ba')),
+                      DropdownMenuItem(value: 4, child: Text('Thứ Tư')),
+                      DropdownMenuItem(value: 5, child: Text('Thứ Năm')),
+                      DropdownMenuItem(value: 6, child: Text('Thứ Sáu')),
+                      DropdownMenuItem(value: 7, child: Text('Thứ Bảy')),
+                      DropdownMenuItem(value: 8, child: Text('Chủ nhật')),
+                    ],
+                    onChanged: _saving
+                        ? null
+                        : (value) => setState(() => _day = value!),
                   ),
                 ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<int>(
-                  key: ValueKey(_afternoon),
-                  initialValue: _period,
-                  isExpanded: true,
-                  itemHeight: null,
-                  decoration: const InputDecoration(
-                    labelText: 'Tiết học và khung giờ',
-                    prefixIcon: Icon(Icons.schedule_outlined),
-                  ),
-                  items: [
-                    for (
-                      var period = _afternoon ? 6 : 1;
-                      period <= (_afternoon ? 10 : 5);
-                      period++
-                    )
-                      DropdownMenuItem(
-                        value: period,
-                        child: Text('Tiết $period · ${_timeOf(period)}'),
-                      ),
-                  ],
-                  onChanged: _saving
-                      ? null
-                      : (value) => setState(() => _period = value!),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _room,
-                  maxLength: 30,
-                  decoration: const InputDecoration(labelText: 'Phòng học'),
-                ),
-                TextFormField(
-                  controller: _note,
-                  maxLength: 200,
-                  decoration: const InputDecoration(labelText: 'Ghi chú'),
-                ),
-                if (_error != null)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      _error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
+                const SizedBox(width: AppSpacing.md),
               ],
             ),
-          ),
+            const SizedBox(height: AppSpacing.md),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Buổi học',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(color: t.ink2),
+              ),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: LayoutBuilder(
+                builder: (context, constraints) => SegmentedButton<bool>(
+                  direction: constraints.maxWidth < 340
+                      ? Axis.vertical
+                      : Axis.horizontal,
+                  style: SegmentedButton.styleFrom(
+                    foregroundColor: t.ink2,
+                    selectedForegroundColor: t.priLink,
+                    selectedBackgroundColor: t.priSoft,
+                    side: BorderSide(color: t.line2),
+                    minimumSize: const Size(0, 48),
+                  ),
+                  segments: const [
+                    ButtonSegment(
+                      value: false,
+                      icon: Icon(Icons.wb_sunny_outlined),
+                      label: Text('Buổi sáng'),
+                    ),
+                    ButtonSegment(
+                      value: true,
+                      icon: Icon(Icons.wb_twilight_outlined),
+                      label: Text('Buổi chiều'),
+                    ),
+                  ],
+                  selected: {_afternoon},
+                  onSelectionChanged: _saving
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _afternoon = value.first;
+                            _period = _afternoon
+                                ? (_period > 5 ? _period : 6)
+                                : (_period <= 5 ? _period : 1);
+                          });
+                        },
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            DropdownButtonFormField<int>(
+              key: ValueKey(_afternoon),
+              initialValue: _period,
+              isExpanded: true,
+              itemHeight: null,
+              decoration: const InputDecoration(
+                labelText: 'Tiết học và khung giờ',
+                prefixIcon: Icon(Icons.schedule_outlined),
+              ),
+              items: [
+                for (
+                  var period = _afternoon ? 6 : 1;
+                  period <= (_afternoon ? 10 : 5);
+                  period++
+                )
+                  DropdownMenuItem(
+                    value: period,
+                    child: Text('Tiết $period · ${_timeOf(period)}'),
+                  ),
+              ],
+              onChanged: _saving
+                  ? null
+                  : (value) => setState(() => _period = value!),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextFormField(
+              controller: _room,
+              maxLength: 30,
+              decoration: const InputDecoration(labelText: 'Phòng học'),
+            ),
+            TextFormField(
+              controller: _note,
+              maxLength: 200,
+              decoration: const InputDecoration(labelText: 'Ghi chú'),
+            ),
+            if (_error != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(_error!, style: TextStyle(color: t.bad)),
+              ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.pop(context, false),
-          child: const Text('Hủy'),
-        ),
-        FilledButton(
-          onPressed: _saving ? null : _save,
-          child: _saving
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(widget.item == null ? 'Thêm vào lịch' : 'Lưu thay đổi'),
-        ),
-      ],
     );
   }
 

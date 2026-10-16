@@ -88,3 +88,15 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Hộp thoại "Tính kết quả tổng kết" đổi từ `AlertDialog` sang `AppDialog`: giữ nguyên chuỗi, luồng và `ValueKey`; nút Hủy là `OutlinedButton` (trước là `TextButton`), thêm nút X; bỏ `SizedBox(width: 500)` cố định để vừa màn hẹp.
 - Báo cáo: sáu số liệu sang `StatCard` (3 cột từ 720 px, 2 cột dưới đó). "Đạt yêu cầu"/"Chưa đạt" vẫn luôn hiện như bản cũ: client không có cờ nào để biết khi nào backend ẩn số liệu này. Phân bố xếp loại đổi từ các chip "MÃ: N HS" sang `AppHBars` với nhãn tiếng Việt theo mã và giá trị "N HS" (màu cột theo mã, cùng quy ước dashboard); tiêu đề "Phân bố xếp loại:" giữ nguyên.
 - Chưa làm trang "Tổng kết" riêng (route mới, mục 4.1 của kế hoạch): thuộc bước sau.
+
+
+### Bước 8 - thời khóa biểu
+
+- Giữ nguyên dải tiết 1-10 và Thứ Hai đến Chủ nhật (prototype chỉ có tiết 1-6 và Thứ 2-7); chỉ đổi cách trình bày. Hàng phân cách "BUỔI SÁNG" / "BUỔI CHIỀU" thêm trước tiết 1 và tiết 6.
+- Giờ bắt đầu từng tiết: backend không có; KHÔNG thêm giờ vào lưới tuần (prototype có "bắt đầu 07:00"). Lưu ý: khung giờ cố định ở client đã có sẵn từ trước (`TimetableItem.timeSlotLabel` trong chế độ "Theo ngày" và `_timeOf` trong hộp thoại xếp tiết) vẫn được giữ nguyên; đó là hằng số trong mã, không phải dữ liệu từ backend, cần xác nhận nguồn thật.
+- Màu theo môn (Toán xanh dương, Văn hồng, ...) bị bỏ vì là màu cứng; chip tiết dùng một tông: giáo viên/quản trị nền `priSoft`, học sinh nền `hover` (như `.tc` và `.tc.sub`). Các môn khác nhau chỉ phân biệt bằng tên.
+- Tiêu đề cột đổi sang chữ hoa 12 ("THỨ HAI", "TIẾT"); nhãn cột "Sáng/Chiều" dưới số tiết trong lưới được thay bằng hàng phân cách buổi (chế độ "Theo ngày" vẫn hiện Sáng/Chiều).
+- Nút chuyển "Lưới tuần" / "Theo ngày" đổi từ `SegmentedButton` sang `AppTabs` (chuỗi giữ nguyên, mất icon nhỏ). Thanh lọc trên màn rộng xuống dòng (`Wrap`) thay vì cuộn ngang; trên màn hẹp vẫn cuộn ngang.
+- Hàng dữ liệu của lưới giờ co theo nội dung (trước cố định tối đa 104/120 px), nên bảng gọn hơn.
+- Hộp thoại xóa tiết và hộp thoại xếp/chuyển tiết đổi sang `AppDialog` (giữ chuỗi, `DropdownButtonFormField<num>/<int>`, luồng). Khác: không còn icon đầu hộp thoại; khi đang lưu nút chính hiện chữ "Đang lưu…" thay vì vòng xoay, nút Hủy/X không đóng hộp thoại; nút Hủy là `OutlinedButton`.
+- Không làm: chuông thông báo, chú giải theo môn, xuất lịch (backend chưa hỗ trợ). `TimetableFilter` (sheet có tìm kiếm) vẫn chưa được màn hình dùng, chỉ đổi token.

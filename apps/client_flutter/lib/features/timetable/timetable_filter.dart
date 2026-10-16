@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../app/design_tokens.dart';
 import '../../app/widgets/app_controls.dart';
 
 typedef TimetableFilterOption = ({num? value, String label});
@@ -34,6 +35,7 @@ class TimetableFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     final selected = options
         .where((option) => option.value == value)
         .firstOrNull;
@@ -58,10 +60,10 @@ class TimetableFilter extends StatelessWidget {
                     selected?.label ?? label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 13, color: t.ink),
                   ),
                 ),
-                const Icon(Icons.expand_more, size: 20),
+                Icon(Icons.expand_more, size: 20, color: t.ink3),
               ],
             ),
           ),
@@ -89,6 +91,7 @@ class _FilterSheetState extends State<_FilterSheet> {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
+    final t = context.tokens;
     final items = widget.options
         .where(
           (option) =>
@@ -118,12 +121,16 @@ class _FilterSheetState extends State<_FilterSheet> {
                   Expanded(
                     child: Text(
                       'Lọc ${widget.label.toLowerCase()}',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: t.heading,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   IconButton(
                     tooltip: 'Đóng',
                     onPressed: () => Navigator.pop(context),
+                    color: t.ink2,
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -134,8 +141,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               child: TextField(
                 decoration: InputDecoration(
                   labelText: 'Tìm ${widget.label.toLowerCase()}',
-                  prefixIcon: const Icon(Icons.search),
-                  border: const OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.search, color: t.ink3),
                 ),
                 onChanged: (text) => setState(() => query = text),
               ),
@@ -147,17 +153,23 @@ class _FilterSheetState extends State<_FilterSheet> {
                   for (final option in items)
                     ListTile(
                       title: Text(option.label),
+                      textColor: t.ink,
+                      selectedColor: t.priLink,
+                      selectedTileColor: t.priSoft,
                       selected: option.value == widget.value,
                       trailing: option.value == widget.value
-                          ? const Icon(Icons.check)
+                          ? Icon(Icons.check, color: t.priLink)
                           : null,
                       onTap: () => Navigator.pop(context, option),
                     ),
                   if (!items.any((option) => option.value != null) &&
                       query.trim().isNotEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Không có kết quả phù hợp.'),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Không có kết quả phù hợp.',
+                        style: TextStyle(color: t.ink2),
+                      ),
                     ),
                 ],
               ),
