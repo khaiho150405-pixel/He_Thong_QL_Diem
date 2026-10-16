@@ -77,3 +77,14 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Độ chính xác OCR: bỏ thanh xếp chồng vẽ tay; thay bằng ba dòng (AppBadge Xanh/Vàng/Đỏ + mô tả + phần trăm + `AppProgress`). Bản cũ khi chưa có ô nào (`totalCells == 0`) vẫn vẽ thanh với tỷ lệ cố định 75/18/7, đó là số giả; bản mới để thanh rỗng và hiện số đếm. Thêm tông `bad` vào `AppProgressTone` (chỉ thêm giá trị enum, không đổi tông cũ).
 - Hoạt động gần đây: trạng thái "Đã chốt" dùng AppBadge ok, "Đang nhập" dùng AppBadge info (bản cũ dùng vàng) cho khớp prototype; chuỗi lấy nguyên từ API.
 - Chuỗi bỏ đi trong bước này: không có. Thẻ biểu đồ không còn nhãn nhỏ "X HS" dưới mỗi cột và nhãn "%" trên cột (gộp vào giá trị bên phải của mỗi dòng).
+
+
+### Bước 7 - tổng kết và báo cáo
+
+- Không làm cột TB nhóm TX/GK/CK, cột Giữa kỳ/Cuối kỳ và dòng công thức "(tổng TX + 2 × GK + 3 × CK) / tổng hệ số" của prototype (backend không có, hạng mục 14 mục 2 của kế hoạch). Bảng chỉ có STT, Học sinh, Điểm tổng kết, Xếp loại, Chi tiết.
+- Bảng tổng kết: dưới tên học sinh thêm hai dòng nhỏ lấy từ `FinalResultDto` (`weightVersion`, `policyVersion`, `calculatedAt`); trước đây các trường này chỉ có trong DTO, không hiện ở bảng. Cột "Xếp loại" đổi từ `Chip` hiện mã thô ("YEU") sang `AppBadge` hiện nhãn tiếng Việt ("Yếu") theo `classificationBadgeOf` (ánh xạ theo MÃ, không so ngưỡng). Mã ngoài danh sách (mã tùy cấu hình chính sách) hiện nguyên mã, tông trung tính, nên mã "chưa đạt" tùy cấu hình không được tô đỏ. Cần cờ `passing` trong `FinalResultDto` để tô đúng.
+- Lịch sử tổng kết: chuỗi tiêu đề và nội dung giữ nguyên; thời điểm tính hiện `dd/MM/yyyy HH:mm` (trước là chuỗi `DateTime.toLocal()` thô). Nút "Đóng" đặt cuối nội dung (hộp thoại không có footer).
+- Panel "Kết quả tổng kết và xếp loại": bỏ `ExpansionTile` (luôn mở trong hộp thoại), bỏ `Card` bên trong `Dialog` (tránh viền đôi); thêm nút X "Đóng" ở header khi panel nằm trong hộp thoại (`PopupRoute`). Vùng bảng cao 320 và cuộn dọc + ngang (bản cũ chỉ cuộn ngang nên danh sách dài bị cắt). Trên 390 px nút "Lịch sử tính" nằm ngoài khung nhìn, phải cuộn ngang.
+- Hộp thoại "Tính kết quả tổng kết" đổi từ `AlertDialog` sang `AppDialog`: giữ nguyên chuỗi, luồng và `ValueKey`; nút Hủy là `OutlinedButton` (trước là `TextButton`), thêm nút X; bỏ `SizedBox(width: 500)` cố định để vừa màn hẹp.
+- Báo cáo: sáu số liệu sang `StatCard` (3 cột từ 720 px, 2 cột dưới đó). "Đạt yêu cầu"/"Chưa đạt" vẫn luôn hiện như bản cũ: client không có cờ nào để biết khi nào backend ẩn số liệu này. Phân bố xếp loại đổi từ các chip "MÃ: N HS" sang `AppHBars` với nhãn tiếng Việt theo mã và giá trị "N HS" (màu cột theo mã, cùng quy ước dashboard); tiêu đề "Phân bố xếp loại:" giữ nguyên.
+- Chưa làm trang "Tổng kết" riêng (route mới, mục 4.1 của kế hoạch): thuộc bước sau.
