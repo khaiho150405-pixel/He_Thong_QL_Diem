@@ -5,6 +5,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_badge.dart';
+import '../../app/widgets/app_dialog.dart';
+
 class ExcelImportDialog extends StatefulWidget {
   const ExcelImportDialog({
     super.key,
@@ -361,266 +365,209 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
 
-    return AlertDialog(
-      title: Row(
+    return AppDialog(
+      title: 'Nhập điểm từ file Excel',
+      maxWidth: 650,
+      cancelLabel: 'Đóng',
+      confirmLabel: _parsedScores.isEmpty
+          ? 'Áp dụng'
+          : 'Áp dụng ${_parsedScores.length} điểm',
+      confirmEnabled: _parsedScores.isNotEmpty,
+      onConfirm: _applyImport,
+      onCancel: () => Navigator.of(context).pop(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.table_chart_rounded,
-              color: Colors.green.shade700,
-              size: 22,
-            ),
+          Text(
+            'Tải file mẫu Excel có sẵn danh sách học sinh của lớp, nhập điểm vào các cột tương ứng và tải lên lại để cập nhật tự động.',
+            style: theme.textTheme.bodyMedium?.copyWith(color: t.ink2),
           ),
-          const SizedBox(width: 12),
-          const Text('Nhập điểm từ file Excel'),
-        ],
-      ),
-      content: SizedBox(
-        width: 650,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 16),
+
+          // Action buttons: Download template & Upload file
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              Text(
-                'Tải file mẫu Excel có sẵn danh sách học sinh của lớp, nhập điểm vào các cột tương ứng và tải lên lại để cập nhật tự động.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
+              OutlinedButton.icon(
+                onPressed: _downloadTemplate,
+                icon: const Icon(Icons.download_rounded),
+                label: const Text('Tải file mẫu (.xlsx)'),
+              ),
+              FilledButton.icon(
+                onPressed: _isProcessing ? null : _pickAndParseFile,
+                icon: _isProcessing
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: t.onPri,
+                        ),
+                      )
+                    : const Icon(Icons.upload_file_rounded),
+                label: Text(
+                  _selectedFileName != null
+                      ? 'Chọn file khác'
+                      : 'Chọn file tải lên',
                 ),
               ),
-              const SizedBox(height: 16),
+            ],
+          ),
 
-              // Action buttons: Download template & Upload file
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _downloadTemplate,
-                      icon: const Icon(Icons.download_rounded),
-                      label: const Text('Tải file mẫu (.xlsx)'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _isProcessing ? null : _pickAndParseFile,
-                      icon: _isProcessing
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.upload_file_rounded),
-                      label: Text(
-                        _selectedFileName != null
-                            ? 'Chọn file khác'
-                            : 'Chọn file tải lên',
-                      ),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 14),
+            _notice(
+              icon: Icons.error_outline_rounded,
+              text: _errorMessage!,
+              background: t.badSoft,
+              border: t.badLine,
+              foreground: t.bad,
+              fontSize: 13,
+            ),
+          ],
+
+          if (_skippedLockedColumns.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            _notice(
+              icon: Icons.lock_clock_rounded,
+              text:
+                  'Cột điểm [${_skippedLockedColumns.join(', ')}] hiện đang bị Admin khóa (chưa mở cổng nhập) nên các điểm trong cột này sẽ được bỏ qua.',
+              background: t.warnSoft,
+              border: t.warnLine,
+              foreground: t.warn,
+              fontSize: 12.5,
+            ),
+          ],
+
+          // Preview Section
+          if (_parsedScores.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: t.subtle,
+                borderRadius: BorderRadius.circular(AppRadius.sm + 2),
+                border: Border.all(color: t.line),
               ),
-
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.errorContainer.withAlpha(120),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: colorScheme.error.withAlpha(80)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: colorScheme.error,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _errorMessage!,
-                          style: TextStyle(
-                            color: colorScheme.error,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
                 ),
-              ],
-
-              if (_skippedLockedColumns.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.amber.shade300),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.lock_clock_rounded,
-                        color: Colors.amber.shade900,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Cột điểm [${_skippedLockedColumns.join(', ')}] hiện đang bị Admin khóa (chưa mở cổng nhập) nên các điểm trong cột này sẽ được bỏ qua.',
-                          style: TextStyle(
-                            color: Colors.amber.shade900,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Preview Section
-              if (_parsedScores.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withAlpha(100),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
                         'Khớp $_matchedStudentsCount học sinh · ${_parsedScores.length} con điểm hợp lệ',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: colorScheme.primary,
+                          color: t.priLink,
                           fontSize: 13,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade100,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'Sẵn sàng nạp',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.green.shade900,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 240),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: colorScheme.outlineVariant.withAlpha(80),
-                      ),
-                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: _previewRows.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, idx) {
-                        final item = _previewRows[idx];
-                        final scores = item['scores'] as Map<String, String>;
-                        return ListTile(
-                          dense: true,
-                          title: Text(
-                            item['name'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          trailing: Wrap(
-                            spacing: 8,
-                            children: [
-                              for (final entry in scores.entries)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primaryContainer
-                                        .withAlpha(140),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    '${entry.key}: ${entry.value}',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: colorScheme.onPrimaryContainer,
-                                    ),
+                    const SizedBox(width: 8),
+                    const AppBadge.ok('Sẵn sàng nạp', dot: false),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 240),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: t.line),
+                  borderRadius: BorderRadius.circular(AppRadius.sm + 2),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _previewRows.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, idx) {
+                    final item = _previewRows[idx];
+                    final scores = item['scores'] as Map<String, String>;
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        item['name'] as String,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      trailing: Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final entry in scores.entries)
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: t.priSoft,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.xs,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                child: Text(
+                                  '${entry.key}: ${entry.value}',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: t.priLink,
                                   ),
                                 ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ],
-          ),
-        ),
+              ),
+            ),
+          ],
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Đóng'),
-        ),
-        if (_parsedScores.isNotEmpty)
-          FilledButton.icon(
-            onPressed: _applyImport,
-            icon: const Icon(Icons.check_circle_outline_rounded),
-            label: Text('Áp dụng ${_parsedScores.length} điểm'),
-          ),
-      ],
     );
   }
+
+  /// Khung báo lỗi / cảnh báo trong hộp thoại (nền, viền, chữ theo token).
+  Widget _notice({
+    required IconData icon,
+    required String text,
+    required Color background,
+    required Color border,
+    required Color foreground,
+    required double fontSize,
+  }) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: background,
+      borderRadius: BorderRadius.circular(AppRadius.sm + 2),
+      border: Border.all(color: border),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Icon(icon, color: foreground, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: foreground,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -337,7 +337,7 @@ void main() {
     await tester.tap(find.byTooltip('Tải lại').first);
     await tester.pumpAndSettle();
     expect(server.locked, true);
-    expect(find.text('Đã chốt'), findsWidgets);
+    expect(find.text('Đã khóa'), findsWidgets);
     expect(find.text('Lưu thay đổi'), findsNothing);
     expect(tester.takeException(), isNull);
   });

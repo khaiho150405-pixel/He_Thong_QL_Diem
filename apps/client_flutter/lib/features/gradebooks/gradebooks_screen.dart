@@ -1,5 +1,7 @@
-import '../../app/widgets/app_scaffold.dart';
+import '../../app/design_tokens.dart';
 import '../../app/widgets/app_controls.dart';
+import '../../app/widgets/app_dialog.dart';
+import '../../app/widgets/app_scaffold.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import '../../app/widgets/shimmer_loading.dart';
 import '../academic_catalog/fields.dart';
 import '../academic_catalog/repository.dart';
 import '../authentication/session.dart';
+import 'gradebook_status.dart';
 import 'repository.dart';
 
 class GradebooksScreen extends ConsumerStatefulWidget {
@@ -119,7 +122,17 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
     if (book != null && mounted) context.go('/gradebooks/${book.id}');
   }
 
-  Widget _buildFilterBar(ColorScheme colorScheme, ThemeData theme) {
+  void _clearFilters() => setState(() {
+    _searchController.clear();
+    _searchQuery = '';
+    _filterClassId = null;
+    _filterSubjectId = null;
+    _filterStatus = null;
+  });
+
+  Widget _buildFilterBar(BuildContext context) {
+    final t = context.tokens;
+    final theme = Theme.of(context);
     if (_loadingCatalog) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
@@ -132,27 +145,20 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
         SearchBar(
           controller: _searchController,
           elevation: const WidgetStatePropertyAll(0),
-          backgroundColor: WidgetStatePropertyAll(
-            colorScheme.surfaceContainerHighest.withAlpha(120),
-          ),
+          backgroundColor: WidgetStatePropertyAll(t.surface),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: colorScheme.outlineVariant.withAlpha(90)),
+              borderRadius: BorderRadius.circular(AppRadius.sm + 2),
+              side: BorderSide(color: t.line2),
             ),
           ),
           padding: const WidgetStatePropertyAll(
             EdgeInsets.symmetric(horizontal: 14),
           ),
-          leading: Icon(
-            Icons.search_rounded,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          leading: Icon(Icons.search_rounded, color: t.ink3),
           hintText: 'Tìm kiếm lớp, môn học, học kỳ…',
           hintStyle: WidgetStatePropertyAll(
-            theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant.withAlpha(180),
-            ),
+            theme.textTheme.bodyMedium?.copyWith(color: t.ink3),
           ),
           trailing: [
             if (_searchQuery.isNotEmpty)
@@ -184,7 +190,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                   value: 'DANG_NHAP_LIEU',
                   child: Text('Đang nhập liệu'),
                 ),
-                DropdownMenuItem(value: 'DA_CHOT', child: Text('Đã chốt sổ')),
+                DropdownMenuItem(value: 'DA_CHOT', child: Text('Đã khóa')),
               ],
               onChanged: (val) => setState(() => _filterStatus = val),
             ),
@@ -234,18 +240,12 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                   minimumSize: const Size(0, 48),
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm + 2),
                   ),
                 ),
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('Đặt lại'),
-                onPressed: () => setState(() {
-                  _searchController.clear();
-                  _searchQuery = '';
-                  _filterClassId = null;
-                  _filterSubjectId = null;
-                  _filterStatus = null;
-                }),
+                onPressed: _clearFilters,
               ),
           ],
         ),
@@ -256,7 +256,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
 
     return AppScaffold(
       title: teacher ? 'Bảng điểm' : 'Bảng điểm toàn trường',
@@ -284,7 +284,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildFilterBar(colorScheme, theme),
+                _buildFilterBar(context),
                 const SizedBox(height: 16),
                 Expanded(
                   child: FutureBuilder<GradebookListDto>(
@@ -355,10 +355,10 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.filter_alt_off_rounded,
                                 size: 48,
-                                color: Colors.grey,
+                                color: t.ink3,
                               ),
                               const SizedBox(height: 12),
                               const Text(
@@ -366,13 +366,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                               ),
                               const SizedBox(height: 8),
                               TextButton.icon(
-                                onPressed: () => setState(() {
-                                  _searchController.clear();
-                                  _searchQuery = '';
-                                  _filterClassId = null;
-                                  _filterSubjectId = null;
-                                  _filterStatus = null;
-                                }),
+                                onPressed: _clearFilters,
                                 icon: const Icon(Icons.refresh_rounded),
                                 label: const Text('Xóa bộ lọc'),
                               ),
@@ -387,34 +381,16 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                             child: LayoutBuilder(
                               builder: (context, box) {
                                 if (box.maxWidth >= 768) {
-                                  return GridView.builder(
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisExtent: 130,
-                                          crossAxisSpacing: 14,
-                                          mainAxisSpacing: 12,
-                                        ),
-                                    itemCount: filteredItems.length,
-                                    itemBuilder: (context, index) =>
-                                        _buildGradebookCard(
-                                          context,
-                                          filteredItems[index],
-                                          colorScheme,
-                                          theme,
-                                        ),
-                                  );
+                                  return _buildTable(context, filteredItems);
                                 }
                                 return ListView.separated(
                                   itemCount: filteredItems.length,
-                                  separatorBuilder: (_, __) =>
+                                  separatorBuilder: (_, _) =>
                                       const SizedBox(height: 10),
                                   itemBuilder: (context, index) =>
                                       _buildGradebookCard(
                                         context,
                                         filteredItems[index],
-                                        colorScheme,
-                                        theme,
                                       ),
                                 );
                               },
@@ -440,24 +416,26 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                                       : null,
                                   icon: const Icon(Icons.chevron_left),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 6,
-                                  ),
+                                DecoratedBox(
                                   decoration: BoxDecoration(
-                                    color: colorScheme.surfaceContainerHigh,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: colorScheme.outlineVariant
-                                          .withAlpha(80),
+                                    color: t.priSoft,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
                                     ),
+                                    border: Border.all(color: t.priLine),
                                   ),
-                                  child: Text(
-                                    'Trang ${cursors.length}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: colorScheme.primary,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 6,
+                                    ),
+                                    child: Text(
+                                      'Trang ${cursors.length}',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: t.priLink,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -487,199 +465,207 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
     );
   }
 
-  Widget _buildGradebookCard(
-    BuildContext context,
-    GradebookDto book,
-    ColorScheme colorScheme,
-    ThemeData theme,
-  ) {
-    final locked = book.status.value == 'DA_CHOT';
-    final classDisplay = book.className;
-    final subjectDisplay = book.subjectName;
-    final termDisplay = book.termName;
+  /// Bảng (từ 768 px) theo `gv-sheets`: chỉ những cột có dữ liệu trong
+  /// `GradebookDto`. Tiến độ, sĩ số, hạn nhập và ngày cập nhật của prototype
+  /// không có trong DTO nên không vẽ (xem docs/design/open-questions.md).
+  Widget _buildTable(BuildContext context, List<GradebookDto> items) {
+    final t = context.tokens;
+    final radius = BorderRadius.circular(AppRadius.md);
+    return ListView(
+      children: [
+        DecoratedBox(
+          key: const ValueKey('gradebooks-table'),
+          decoration: BoxDecoration(
+            color: t.surface,
+            borderRadius: radius,
+            border: Border.all(color: t.line),
+            boxShadow: t.shadow,
+          ),
+          child: ClipRRect(
+            borderRadius: radius,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _tableHeader(context),
+                for (final book in items) ...[
+                  Divider(height: 1, thickness: 1, color: t.line),
+                  _tableRow(context, book),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outlineVariant.withAlpha(90)),
+  static const double _versionColumnWidth = 96;
+  static const double _statusColumnWidth = 160;
+  static const double _actionColumnWidth = 132;
+
+  Widget _tableHeader(BuildContext context) {
+    final t = context.tokens;
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.4,
+      color: t.ink3,
+    );
+    Widget cell(String label, {int flex = 0, double? width}) {
+      final text = Text(label.toUpperCase(), style: style, maxLines: 1);
+      return width != null
+          ? SizedBox(width: width, child: text)
+          : Expanded(flex: flex, child: text);
+    }
+
+    return ColoredBox(
+      color: t.subtle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          children: [
+            cell('Lớp', flex: 2),
+            cell('Môn học', flex: 3),
+            cell('Học kỳ', flex: 3),
+            cell('Phiên bản', width: _versionColumnWidth),
+            cell('Trạng thái', width: _statusColumnWidth),
+            const SizedBox(width: _actionColumnWidth),
+          ],
+        ),
       ),
-      color: colorScheme.surface,
+    );
+  }
+
+  Widget _tableRow(BuildContext context, GradebookDto book) {
+    final t = context.tokens;
+    final theme = Theme.of(context);
+    final locked = book.status.value == 'DA_CHOT';
+    final canEnter = teacher && !locked;
+    void open() => context.go('/gradebooks/${book.id}');
+    return InkWell(
+      onTap: open,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                book.className,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: t.heading,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                book.subjectName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(color: t.ink),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                book.termName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(color: t.ink2),
+              ),
+            ),
+            SizedBox(
+              width: _versionColumnWidth,
+              child: Text(
+                'v${book.version}',
+                style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
+              ),
+            ),
+            SizedBox(
+              width: _statusColumnWidth,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: GradebookStatusBadge(book.status.value),
+              ),
+            ),
+            SizedBox(
+              width: _actionColumnWidth,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: canEnter
+                    ? FilledButton(
+                        onPressed: open,
+                        child: const Text('Nhập điểm'),
+                      )
+                    : OutlinedButton(onPressed: open, child: const Text('Xem')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Thẻ cho màn hẹp theo `m-sheets` (`.msheet`): tiêu đề lớp · môn, nhãn
+  /// trạng thái, dòng phụ là học kỳ và phiên bản.
+  Widget _buildGradebookCard(BuildContext context, GradebookDto book) {
+    final t = context.tokens;
+    final theme = Theme.of(context);
+    return Material(
+      color: t.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: BorderSide(color: t.line),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.go('/gradebooks/${book.id}'),
-        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Dòng 1: Tên lớp in đậm cỡ lớn, Tên môn học, và Chip trạng thái màu sắc nổi bật
               Row(
                 children: [
-                  Text(
-                    classDisplay,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text(
-                      '·',
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
                   Expanded(
                     child: Text(
-                      subjectDisplay,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
+                      '${book.className} · ${book.subjectName}',
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: t.heading,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: locked
-                          ? (theme.brightness == Brightness.dark
-                                ? Colors.green.shade900.withAlpha(80)
-                                : Colors.green.shade50)
-                          : (theme.brightness == Brightness.dark
-                                ? Colors.orange.shade900.withAlpha(80)
-                                : Colors.orange.shade50),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: locked
-                            ? Colors.green.withAlpha(120)
-                            : Colors.orange.withAlpha(120),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          locked
-                              ? Icons.lock_outline_rounded
-                              : Icons.edit_note_rounded,
-                          size: 13,
-                          color: locked
-                              ? Colors.green.shade700
-                              : Colors.orange.shade800,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          locked ? 'Đã chốt sổ' : 'Đang nhập liệu',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: locked
-                                ? Colors.green.shade700
-                                : Colors.orange.shade800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  GradebookStatusBadge(book.status.value),
                 ],
               ),
               const SizedBox(height: 8),
-              // Dòng 2: Học kỳ & Năm học, Phiên bản bảng điểm
               Row(
                 children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 14,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 5),
+                  Icon(Icons.calendar_today_outlined, size: 14, color: t.ink3),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      termDisplay,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      book.termName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(color: t.ink2),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'v${book.version}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Dòng 3: Sĩ số / thông tin lớp và icon tiến độ trực quan
-              Row(
-                children: [
-                  Icon(
-                    Icons.people_outline_rounded,
-                    size: 15,
-                    color: colorScheme.primary.withAlpha(180),
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Text(
-                      'Sĩ số học sinh',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Icon(
-                    locked
-                        ? Icons.check_circle_outline_rounded
-                        : Icons.pending_actions_rounded,
-                    size: 14,
-                    color: locked
-                        ? Colors.green.shade600
-                        : Colors.orange.shade700,
-                  ),
-                  const SizedBox(width: 4),
                   Text(
-                    locked ? 'Hoàn tất' : 'Đang xử lý',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: locked
-                          ? Colors.green.shade600
-                          : Colors.orange.shade700,
-                    ),
+                    'v${book.version}',
+                    style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 16,
-                    color: colorScheme.outline,
-                  ),
+                  Icon(Icons.chevron_right_rounded, size: 18, color: t.ink3),
                 ],
               ),
             ],
@@ -759,102 +745,90 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final t = context.tokens;
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text('Tạo bảng điểm'),
-      content: SizedBox(
-        width: 480,
-        child: FutureBuilder<List<List<Json>>>(
-          future: options,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const SizedBox(
-                height: 120,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 12),
-                      Text('Đang tải danh mục…'),
-                    ],
+    return AppDialog(
+      title: 'Tạo bảng điểm',
+      confirmLabel: 'Tạo',
+      confirmEnabled: !busy,
+      onConfirm: submit,
+      onCancel: () {
+        if (!busy) Navigator.pop(context);
+      },
+      child: FutureBuilder<List<List<Json>>>(
+        future: options,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const SizedBox(
+              height: 120,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text('Đang tải danh mục…'),
+                  ],
+                ),
+              ),
+            );
+          }
+          if (snapshot.hasError) {
+            return Text(errorMessage(snapshot.error!));
+          }
+          final values = snapshot.data!;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ReferenceDropdown(
+                label: 'Lớp',
+                items: values[0],
+                idKey: 'ma_lop',
+                onChanged: (value) => classId = value,
+              ),
+              const SizedBox(height: 14),
+              _ReferenceDropdown(
+                label: 'Môn học',
+                items: values[1],
+                idKey: 'ma_mon',
+                onChanged: (value) => subjectId = value,
+              ),
+              const SizedBox(height: 14),
+              _ReferenceDropdown(
+                label: 'Học kỳ',
+                items: values[2],
+                idKey: 'ma_hoc_ky',
+                onChanged: (value) => termId = value,
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 14),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: t.badSoft,
+                    borderRadius: BorderRadius.circular(AppRadius.sm + 2),
+                    border: Border.all(color: t.badLine),
                   ),
-                ),
-              );
-            }
-            if (snapshot.hasError) {
-              return Text(errorMessage(snapshot.error!));
-            }
-            final values = snapshot.data!;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _ReferenceDropdown(
-                  label: 'Lớp',
-                  items: values[0],
-                  idKey: 'ma_lop',
-                  onChanged: (value) => classId = value,
-                ),
-                const SizedBox(height: 14),
-                _ReferenceDropdown(
-                  label: 'Môn học',
-                  items: values[1],
-                  idKey: 'ma_mon',
-                  onChanged: (value) => subjectId = value,
-                ),
-                const SizedBox(height: 14),
-                _ReferenceDropdown(
-                  label: 'Học kỳ',
-                  items: values[2],
-                  idKey: 'ma_hoc_ky',
-                  onChanged: (value) => termId = value,
-                ),
-                if (error != null) ...[
-                  const SizedBox(height: 14),
-                  Container(
+                  child: Padding(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: colorScheme.errorContainer.withAlpha(120),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: colorScheme.error.withAlpha(80),
-                      ),
-                    ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: colorScheme.error,
-                          size: 18,
-                        ),
+                        Icon(Icons.error_outline, color: t.bad, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             error!,
-                            style: TextStyle(
-                              color: colorScheme.error,
-                              fontSize: 13,
-                            ),
+                            style: TextStyle(color: t.bad, fontSize: 13),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ],
-            );
-          },
-        ),
+            ],
+          );
+        },
       ),
-      actions: [
-        TextButton(
-          onPressed: busy ? null : () => Navigator.pop(context),
-          child: const Text('Hủy'),
-        ),
-        FilledButton(onPressed: busy ? null : submit, child: const Text('Tạo')),
-      ],
     );
   }
 }

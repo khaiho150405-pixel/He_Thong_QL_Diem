@@ -1,6 +1,9 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_badge.dart';
+import '../../app/widgets/app_dialog.dart';
 import '../authentication/session.dart';
 
 String deadlineLabel(BuildContext context, String? value) {
@@ -101,9 +104,10 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
   );
 
   Widget _buildDeadlineCard(BuildContext context, GradeCellDto column) {
+    final t = context.tokens;
     return Card(
       margin: EdgeInsets.zero,
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      color: t.subtle,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -117,11 +121,16 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
             const SizedBox(height: 6),
             Text(
               'Mở: ${deadlineLabel(context, column.opensAt)}\nHạn: ${deadlineLabel(context, column.closesAt)}',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: t.ink2),
             ),
             const SizedBox(height: 8),
             if (column.columnLocked == true)
-              const Text('Đã khóa')
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: AppBadge.ok('Đã khóa'),
+              )
             else if (widget.isAdmin && !widget.locked)
               OutlinedButton.icon(
                 icon: const Icon(Icons.event_outlined),
@@ -220,56 +229,47 @@ class _DeadlineDialogState extends ConsumerState<_DeadlineDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text('Lịch nhập · ${widget.column.componentName}'),
-    content: SizedBox(
-      width: 420,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Giờ hiển thị theo thiết bị hiện tại. Đến hạn, điểm thiếu/chưa duyệt được ghi 0 và không thể mở lại cột đã khóa.',
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return AppDialog(
+      title: 'Lịch nhập · ${widget.column.componentName}',
+      confirmLabel: 'Lưu lịch nhập',
+      confirmEnabled: !busy,
+      onConfirm: save,
+      onCancel: () {
+        if (!busy) Navigator.pop(context, false);
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Giờ hiển thị theo thiết bị hiện tại. Đến hạn, điểm thiếu/chưa duyệt được ghi 0 và không thể mở lại cột đã khóa.',
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: busy ? null : () => pick(true),
+            icon: const Icon(Icons.calendar_today),
+            label: Text(
+              'Mở nhập: ${deadlineLabel(context, opens.toUtc().toIso8601String())}',
             ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: busy ? null : () => pick(true),
-              icon: const Icon(Icons.calendar_today),
-              label: Text(
-                'Mở nhập: ${deadlineLabel(context, opens.toUtc().toIso8601String())}',
-              ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: busy ? null : () => pick(false),
+            icon: const Icon(Icons.timer_outlined),
+            label: Text(
+              'Hạn nhập: ${deadlineLabel(context, closes.toUtc().toIso8601String())}',
             ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: busy ? null : () => pick(false),
-              icon: const Icon(Icons.timer_outlined),
-              label: Text(
-                'Hạn nhập: ${deadlineLabel(context, closes.toUtc().toIso8601String())}',
-              ),
+          ),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(error!, style: TextStyle(color: t.bad)),
             ),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
-            if (busy) const LinearProgressIndicator(),
-          ],
-        ),
+          if (busy) const LinearProgressIndicator(),
+        ],
       ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: busy ? null : () => Navigator.pop(context, false),
-        child: const Text('Hủy'),
-      ),
-      FilledButton(
-        onPressed: busy ? null : save,
-        child: const Text('Lưu lịch nhập'),
-      ),
-    ],
-  );
+    );
+  }
 }

@@ -236,6 +236,76 @@ void main() {
     expect(overallClassificationCodeOf(6.49), 'DAT');
   });
 
+  test('ngưỡng xếp loại chung: đủ biên 7.99, 8.0, 6.49, 6.5, 4.99, 5.0', () {
+    // Hành vi HIỆN TẠI của mã (không sửa): chỉ có 3 nhánh Giỏi/Khá/Đạt, không
+    // có nhánh "Chưa đạt"; điểm dưới 5.0 vẫn ra 'DAT'. Xem open-questions.md.
+    final expected = <double, String>{
+      10.0: 'GIOI',
+      8.0: 'GIOI',
+      7.99: 'KHA',
+      6.5: 'KHA',
+      6.49: 'DAT',
+      5.0: 'DAT',
+      4.99: 'DAT',
+      0.0: 'DAT',
+    };
+    expected.forEach((gpa, code) {
+      expect(overallClassificationCodeOf(gpa), code, reason: 'ĐTB $gpa');
+    });
+    final codes = expected.values.toSet();
+    expect(codes, {'GIOI', 'KHA', 'DAT'});
+    expect(codes.contains('CHUA_DAT'), isFalse);
+  });
+
+  group('semesterOverviewOf (ĐTB chung tính ở client, giữ nguyên bản cũ)', () {
+    StudentSubjectResultDto dto(
+      String name,
+      String? score,
+      String? code, {
+      bool? passFail,
+    }) => StudentSubjectResultDto.fromJson({
+      ..._FakeServer.subject(name, score, code),
+      'passFail': ?passFail,
+    });
+
+    test('chỉ tính khi mọi môn đã có xếp loại, bằng trung bình cộng', () {
+      final all = semesterOverviewOf([
+        dto('Toán', '8.0', 'GIOI'),
+        dto('Văn', '6.0', 'DAT'),
+      ]);
+      expect(all.allLocked, isTrue);
+      expect(all.lockedSubjects, 2);
+      expect(all.gpa, closeTo(7.0, 1e-9));
+
+      final partial = semesterOverviewOf([
+        dto('Toán', '8.0', 'GIOI'),
+        dto('Văn', null, null),
+      ]);
+      expect(partial.allLocked, isFalse);
+      expect(partial.lockedSubjects, 1);
+      expect(partial.gpa, isNull);
+
+      final empty = semesterOverviewOf(const []);
+      expect(empty.allLocked, isFalse);
+      expect(empty.gpa, isNull);
+    });
+
+    test('môn Đạt/Không đạt không tính vào ĐTB chung', () {
+      final result = semesterOverviewOf([
+        dto('Toán', '9.0', 'GIOI'),
+        dto('Thể dục', '10.0', 'DAT', passFail: true),
+      ]);
+      expect(result.allLocked, isTrue);
+      expect(result.gpa, closeTo(9.0, 1e-9));
+
+      final onlyPassFail = semesterOverviewOf([
+        dto('Thể dục', '10.0', 'DAT', passFail: true),
+      ]);
+      expect(onlyPassFail.allLocked, isTrue);
+      expect(onlyPassFail.gpa, isNull);
+    });
+  });
+
   for (final mode in Brightness.values) {
     for (final width in [390.0, 1280.0]) {
       final tag = '${mode.name} ${width.toInt()}px';
