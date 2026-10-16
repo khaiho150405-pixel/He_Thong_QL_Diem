@@ -215,7 +215,6 @@ class ReviewSttMismatchBox extends StatelessWidget {
             height: 56,
             onRefresh: onRefresh,
             isCancelled: isCancelled,
-            confidence: parseConfidence(row.matchConfidence),
           ),
 
           // Checkbox xác nhận cho trường hợp cảnh báo (VANG/DO/null), không hiện ở chế độ chỉ xem

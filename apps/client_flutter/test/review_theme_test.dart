@@ -143,7 +143,9 @@ void main() {
 
     for (final width in [1280.0, 1440.0]) {
       testWidgets('đối chiếu $mode ${width.toInt()} px: đủ dòng Xanh/Vàng/Đỏ/'
-          'STT khác, không tràn, ảnh ô cắt có độ tin cậy', (tester) async {
+          'STT khác, không tràn, ảnh ô cắt không lộ độ tin cậy', (
+        tester,
+      ) async {
         await _open(
           tester,
           ReviewTestServer(rowsOverride: _allKinds()),
@@ -179,21 +181,17 @@ void main() {
         expect(_boxWithColor(tokens.warnSoft), findsWidgets);
         expect(find.byType(AppBadge), findsWidgets);
 
-        // Bất biến 3: ảnh ô cắt Điểm số/Điểm chữ + giá trị máy đọc + độ tin cậy.
+        // Ảnh ô cắt Điểm số/Điểm chữ vẫn hiện; không hiện độ tin cậy, ký tự thô, tên đọc được.
         expect(find.text('Điểm số'), findsWidgets);
         expect(find.text('Điểm chữ'), findsWidgets);
-        expect(find.byType(AppConfidenceBar), findsWidgets);
-        expect(find.text('91%'), findsOneWidget);
-        expect(find.text('88%'), findsOneWidget);
-        expect(find.text('90%'), findsOneWidget);
-        expect(find.text('40%'), findsOneWidget);
-        expect(find.text('Máy đọc: 9.0'), findsOneWidget);
-        expect(find.text('Máy đọc: 8.0'), findsOneWidget);
-        expect(find.text('Máy không đọc được'), findsOneWidget);
+        expect(find.byType(AppConfidenceBar), findsNothing);
+        expect(find.textContaining('%'), findsNothing);
+        expect(find.textContaining('Máy đọc'), findsNothing);
 
         // Vẫn không lộ nhãn bị cấm.
         expect(find.textContaining('Độ tin cậy'), findsNothing);
         expect(find.textContaining('Ký tự thô'), findsNothing);
+        expect(find.textContaining('Tên đọc được'), findsNothing);
         expect(find.textContaining('Lấy theo'), findsNothing);
 
         // Thanh dính đáy: tiến độ + ô xác nhận + nút Duyệt giữ key và chuỗi.
@@ -237,7 +235,7 @@ void main() {
     for (final width in [320.0, 390.0]) {
       testWidgets(
         'đối chiếu $mode ${width.toInt()} px: PageView, chấm tiến độ, '
-        'ảnh ô cắt có độ tin cậy, không tràn',
+        'ảnh ô cắt không lộ độ tin cậy, không tràn',
         (tester) async {
           await _open(
             tester,
@@ -257,14 +255,11 @@ void main() {
           );
           expect(find.textContaining('Dòng 1 / 4'), findsOneWidget);
 
-          // Trang đầu là dòng Đỏ: ảnh Điểm số/Điểm chữ + độ tin cậy từng kênh.
+          // Trang đầu là dòng Đỏ: ảnh Điểm số/Điểm chữ, không hiện độ tin cậy.
           expect(find.text('Điểm số'), findsOneWidget);
           expect(find.text('Điểm chữ'), findsOneWidget);
-          expect(find.text('91%'), findsOneWidget);
-          expect(find.text('88%'), findsOneWidget);
-          expect(find.text('Máy đọc: 9.0'), findsOneWidget);
-          expect(find.text('Máy đọc: 8.0'), findsOneWidget);
-          expect(find.byType(AppConfidenceBar), findsNWidgets(2));
+          expect(find.textContaining('Độ tin cậy'), findsNothing);
+          expect(find.byType(AppConfidenceBar), findsNothing);
           expect(_boxWithColor(tokens.badSoft), findsWidgets);
           expect(find.text('Tiếp ›'), findsOneWidget);
 
@@ -305,12 +300,12 @@ void main() {
       expect(find.byKey(const ValueKey('review-approve')), findsNothing);
       expect(find.byType(AppProgress), findsNothing);
 
-      // Bất biến 3 vẫn đúng khi chỉ xem.
+      // Chế độ chỉ xem vẫn hiện ảnh ô cắt; vẫn không lộ độ tin cậy (quyết định giữ hành vi hiện tại).
       expect(find.text('Điểm số'), findsWidgets);
       expect(find.text('Điểm chữ'), findsWidgets);
-      expect(find.byType(AppConfidenceBar), findsWidgets);
-      expect(find.text('91%'), findsOneWidget);
       expect(find.text('Điểm đã ghi'), findsWidgets);
+      expect(find.byType(AppConfidenceBar), findsNothing);
+      expect(find.textContaining('Độ tin cậy'), findsNothing);
     });
 
     testWidgets('đối chiếu $mode: nhập điểm dòng Đỏ cập nhật tiến độ và mở '

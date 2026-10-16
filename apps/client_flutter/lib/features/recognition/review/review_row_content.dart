@@ -215,9 +215,6 @@ class ReviewRowContent extends StatelessWidget {
     height: height,
     onRefresh: onRefresh,
     isCancelled: isCancelled,
-    confidence: parseConfidence(row.numericConfidence),
-    readValue: row.numericValue,
-    showRead: true,
   );
 
   /// Ảnh ô Điểm chữ + độ tin cậy + giá trị máy đọc.
@@ -228,9 +225,6 @@ class ReviewRowContent extends StatelessWidget {
     height: height,
     onRefresh: onRefresh,
     isCancelled: isCancelled,
-    confidence: parseConfidence(row.writtenConfidence),
-    readValue: row.writtenValue,
-    showRead: true,
   );
 
   Widget _nameCrop(double height) => ReviewCropImage(
@@ -240,7 +234,6 @@ class ReviewRowContent extends StatelessWidget {
     height: height,
     onRefresh: onRefresh,
     isCancelled: isCancelled,
-    confidence: parseConfidence(row.matchConfidence),
   );
 
   /// Lý do ngắn (`.why`): chỉ có chữ khi dòng Vàng/Đỏ.

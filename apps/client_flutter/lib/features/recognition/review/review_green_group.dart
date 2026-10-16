@@ -2,9 +2,7 @@ import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/design_tokens.dart';
-import '../../../app/widgets/app_progress.dart';
 import '../image_preview.dart';
-import 'review_models.dart';
 
 /// Mục thu gọn gom các dòng Xanh: "N dòng Xanh — điểm cuối đã điền".
 /// Khi mở ra: danh sách gọn mỗi học sinh một hàng gồm STT, họ tên,
@@ -184,7 +182,6 @@ class ReviewGreenGroup extends StatelessWidget {
                   context,
                   label: 'Số',
                   url: row.numericCropUrl,
-                  confidence: parseConfidence(row.numericConfidence),
                   width: 96,
                 ),
                 const SizedBox(width: 8),
@@ -192,7 +189,6 @@ class ReviewGreenGroup extends StatelessWidget {
                   context,
                   label: 'Chữ',
                   url: row.writtenCropUrl,
-                  confidence: parseConfidence(row.writtenConfidence),
                   width: 220,
                 ),
                 const SizedBox(width: 8),
@@ -223,7 +219,6 @@ class ReviewGreenGroup extends StatelessWidget {
                       context,
                       label: 'Số',
                       url: row.numericCropUrl,
-                      confidence: parseConfidence(row.numericConfidence),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -233,7 +228,6 @@ class ReviewGreenGroup extends StatelessWidget {
                       context,
                       label: 'Chữ',
                       url: row.writtenCropUrl,
-                      confidence: parseConfidence(row.writtenConfidence),
                     ),
                   ),
                 ],
@@ -250,7 +244,6 @@ class ReviewGreenGroup extends StatelessWidget {
     BuildContext context, {
     required String label,
     required String? url,
-    required double? confidence,
     double? width,
   }) {
     final t = context.tokens;
@@ -297,18 +290,6 @@ class ReviewGreenGroup extends StatelessWidget {
       );
     }
 
-    if (confidence == null) return thumb;
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          thumb,
-          const SizedBox(height: AppSpacing.xs),
-          AppConfidenceBar(value: confidence),
-        ],
-      ),
-    );
+    return thumb;
   }
 }

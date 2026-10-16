@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/design_tokens.dart';
-import '../../../app/widgets/app_progress.dart';
 import '../image_preview.dart';
 
 /// Widget hiển thị ảnh ô cắt nhận dạng (Điểm số, Điểm chữ, Họ tên).
 /// Bấm / chạm vào ảnh sẽ phóng to bằng [showRecognitionImage].
-///
-/// Khi có [confidence] (0..1) hiện thanh [AppConfidenceBar] kèm phần trăm dưới
-/// ảnh; khi có [readValue] hiện giá trị máy đọc được của kênh đó (bất biến 3:
-/// ảnh ô cắt luôn đi cùng kết quả và độ tin cậy của từng kênh).
 class ReviewCropImage extends StatelessWidget {
   const ReviewCropImage({
     super.key,
@@ -21,9 +16,6 @@ class ReviewCropImage extends StatelessWidget {
     this.subtitle,
     this.onRefresh,
     this.isCancelled = false,
-    this.confidence,
-    this.readValue,
-    this.showRead = false,
   });
 
   final String label;
@@ -34,15 +26,6 @@ class ReviewCropImage extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onRefresh;
   final bool isCancelled;
-
-  /// Độ tin cậy 0..1 của kênh; null thì không vẽ thanh.
-  final double? confidence;
-
-  /// Giá trị máy đọc của kênh (đã chuẩn hóa); chỉ hiện khi [showRead] bật.
-  final String? readValue;
-
-  /// Bật dòng "Máy đọc: …" (kênh Điểm số / Điểm chữ). Ảnh họ tên không dùng.
-  final bool showRead;
 
   @override
   Widget build(BuildContext context) {
@@ -140,33 +123,6 @@ class ReviewCropImage extends StatelessWidget {
                     ),
                   ),
           ),
-          if (confidence != null) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(child: AppConfidenceBar(value: confidence!)),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  '${(confidence! * 100).round()}%',
-                  style: base?.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: t.ink2,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ],
-            ),
-          ],
-          if (showRead) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              readValue == null || readValue!.trim().isEmpty
-                  ? 'Máy không đọc được'
-                  : 'Máy đọc: ${readValue!.trim()}',
-              style: base?.copyWith(fontSize: 12.5, color: t.ink2),
-            ),
-          ],
           if (subtitle != null && subtitle!.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text(

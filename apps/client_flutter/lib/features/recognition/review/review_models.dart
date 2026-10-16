@@ -130,14 +130,6 @@ ReviewLevelColors reviewLevelColors(AppTokens t, String level) {
 Color reviewOnOk(AppTokens t) =>
     t.brightness == Brightness.light ? t.onPri : t.onAcc;
 
-/// Độ tin cậy 0..1 từ chuỗi số của API (vd. '0.9600'); null nếu không có.
-double? parseConfidence(String? raw) {
-  if (raw == null) return null;
-  final value = double.tryParse(raw.trim());
-  if (value == null || value.isNaN) return null;
-  return value.clamp(0.0, 1.0);
-}
-
 /// Nhãn mức: "Xanh" / "Vàng" / "Đỏ".
 String reviewLevelLabel(String level) {
   switch (level) {
