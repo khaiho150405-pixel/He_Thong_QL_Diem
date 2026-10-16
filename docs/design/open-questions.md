@@ -185,3 +185,7 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - **Không làm**: "Trang 1/2" (mỗi phiếu một ảnh, mục 2 hạng mục 18), nút đèn flash (`image_picker` không có; chỗ đó để trống cân đối với nút đóng), đổi sang plugin `camera`. Hình tờ giấy chỉ có thanh xám và tên cột "Họ tên / Điểm số / Điểm chữ", không có điểm viết tay giả như prototype (tránh dữ liệu giả); cỡ chữ tên cột trong hình không co theo cỡ chữ hệ thống để vừa khung.
 - **Trên web**: màn vẫn mở được nhưng chỉ là hướng dẫn; ghi chú đổi thành "Trên trình duyệt, nút chụp mở hộp chọn tệp của trình duyệt" (theo mục 4.2 của kế hoạch; hành vi cụ thể do trình duyệt quyết định, chưa kiểm). Nút phụ chỉ hiện khi `defaultTargetPlatform` là Android/iOS và rộng < 600, nên trình duyệt desktop không thấy nút; trình duyệt trên điện thoại thấy nút (và cũng chỉ là hướng dẫn).
 - **Chưa kiểm trên thiết bị thật**: test dùng picker giả; chưa chạy trên Android/iOS thật để xem màn tối thay camera hệ điều hành (hành vi quay về sau khi camera đóng, Android bị hủy activity: `recoverImage` vẫn xử lý như cũ ở panel).
+
+### Bước 15 - rà soát cuối
+
+- Tổng hợp điểm còn lệch, mâu thuẫn cần quyết định, kết quả grep và kiểm tra diff: xem `docs/design/ui-final-report.md`. Chuỗi cứng học kỳ ở đầu trang chủ vẫn giữ vì bỏ nó làm `phase1_test.dart` (cuộn tới "Năm học" ở 390 px) trượt; chi tiết ở mục 7 của báo cáo.

@@ -1,6 +1,7 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/design_tokens.dart';
 import '../../app/widgets/role_badge.dart';
 import 'session.dart';
 
@@ -211,12 +212,12 @@ class _ProfileDialogState extends ConsumerState<ProfileDialog> {
           FilledButton.icon(
             onPressed: loading || busy ? null : save,
             icon: busy
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: context.tokens.onPri,
                     ),
                   )
                 : const Icon(Icons.check_rounded, size: 18),
