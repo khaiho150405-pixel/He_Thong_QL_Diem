@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/authentication/profile_dialog.dart';
 import '../../features/authentication/session.dart';
-import '../theme.dart';
+import '../design_tokens.dart';
 import 'app_edge_scrollbar.dart';
+import 'app_shell.dart';
 import 'app_sidebar.dart';
 
 class AppScaffold extends ConsumerWidget {
@@ -77,174 +77,24 @@ class AppScaffold extends ConsumerWidget {
     }
   }
 
-  Widget? _buildMobileBottomNav(
-    BuildContext context,
-    String role,
-    String? currentPath,
-  ) {
-    int selectedIndex = 0;
-    final destinations =
-        <({IconData icon, IconData activeIcon, String label, String route})>[];
-
-    if (role == 'GIAO_VIEN') {
-      destinations.addAll([
-        (
-          icon: Icons.grid_view_outlined,
-          activeIcon: Icons.grid_view_rounded,
-          label: 'Tổng quan',
-          route: '/',
-        ),
-        (
-          icon: Icons.table_chart_outlined,
-          activeIcon: Icons.table_chart_rounded,
-          label: 'Bảng điểm',
-          route: '/gradebooks',
-        ),
-        (
-          icon: Icons.calendar_month_outlined,
-          activeIcon: Icons.calendar_month_rounded,
-          label: 'Lịch dạy',
-          route: '/timetable',
-        ),
-        (
-          icon: Icons.person_outline_rounded,
-          activeIcon: Icons.person_rounded,
-          label: 'Cá nhân',
-          route: '__profile__',
-        ),
-      ]);
-      if (currentPath == '/gradebooks' ||
-          (currentPath?.startsWith('/gradebooks') ?? false)) {
-        selectedIndex = 1;
-      } else if (currentPath == '/timetable') {
-        selectedIndex = 2;
-      } else {
-        selectedIndex = 0;
-      }
-    } else if (role == 'HOC_SINH') {
-      destinations.addAll([
-        (
-          icon: Icons.grid_view_outlined,
-          activeIcon: Icons.grid_view_rounded,
-          label: 'Tổng quan',
-          route: '/',
-        ),
-        (
-          icon: Icons.fact_check_outlined,
-          activeIcon: Icons.fact_check_rounded,
-          label: 'Điểm số',
-          route: '/my-results',
-        ),
-        (
-          icon: Icons.calendar_month_outlined,
-          activeIcon: Icons.calendar_month_rounded,
-          label: 'Lịch học',
-          route: '/timetable',
-        ),
-        (
-          icon: Icons.person_outline_rounded,
-          activeIcon: Icons.person_rounded,
-          label: 'Cá nhân',
-          route: '__profile__',
-        ),
-      ]);
-      if (currentPath == '/my-results') {
-        selectedIndex = 1;
-      } else if (currentPath == '/timetable') {
-        selectedIndex = 2;
-      } else {
-        selectedIndex = 0;
-      }
-    } else {
-      // QUAN_TRI_VIEN
-      destinations.addAll([
-        (
-          icon: Icons.grid_view_outlined,
-          activeIcon: Icons.grid_view_rounded,
-          label: 'Tổng quan',
-          route: '/',
-        ),
-        (
-          icon: Icons.table_chart_outlined,
-          activeIcon: Icons.table_chart_rounded,
-          label: 'Bảng điểm',
-          route: '/gradebooks',
-        ),
-        (
-          icon: Icons.calendar_month_outlined,
-          activeIcon: Icons.calendar_month_rounded,
-          label: 'TKB',
-          route: '/timetable',
-        ),
-        (
-          icon: Icons.folder_outlined,
-          activeIcon: Icons.folder_rounded,
-          label: 'Danh mục',
-          route: '/catalog/classes',
-        ),
-        (
-          icon: Icons.rule_outlined,
-          activeIcon: Icons.rule_rounded,
-          label: 'Chính sách',
-          route: '/classification-policy',
-        ),
-      ]);
-      if (currentPath == '/gradebooks' ||
-          (currentPath?.startsWith('/gradebooks') ?? false)) {
-        selectedIndex = 1;
-      } else if (currentPath == '/timetable') {
-        selectedIndex = 2;
-      } else if (currentPath?.startsWith('/catalog') ?? false) {
-        selectedIndex = 3;
-      } else if (currentPath == '/classification-policy') {
-        selectedIndex = 4;
-      } else {
-        selectedIndex = 0;
-      }
-    }
-
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: AppTheme.borderSidebar, width: 1),
-        ),
-      ),
-      child: NavigationBar(
-        selectedIndex: selectedIndex,
-        height: 64,
-        onDestinationSelected: (idx) async {
-          if (onBeforeLeave != null) {
-            final allow = await onBeforeLeave!();
-            if (!allow) return;
-          }
-          if (!context.mounted) return;
-          final dest = destinations[idx];
-          if (dest.route == '__profile__') {
-            showDialog<void>(
-              context: context,
-              builder: (_) => const ProfileDialog(),
-            );
-            return;
-          }
-          if (dest.route != currentPath) {
-            try {
-              context.go(dest.route);
-            } catch (_) {
-              if (context.mounted) {
-                Navigator.of(context).pushNamed(dest.route);
-              }
+  Widget? _backButton(BuildContext context) {
+    if (kIsWeb || !showBackButton) return null;
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed:
+          onBack ??
+          () async {
+            if (onBeforeLeave != null) {
+              final allow = await onBeforeLeave!();
+              if (!allow) return;
             }
-          }
-        },
-        destinations: [
-          for (final d in destinations)
-            NavigationDestination(
-              icon: Icon(d.icon),
-              selectedIcon: Icon(d.activeIcon, color: AppTheme.primarySeed),
-              label: d.label,
-            ),
-        ],
-      ),
+            if (!context.mounted) return;
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              context.go('/');
+            }
+          },
     );
   }
 
@@ -253,6 +103,7 @@ class AppScaffold extends ConsumerWidget {
     final user = ref.watch(sessionProvider);
     final width = MediaQuery.sizeOf(context).width;
     final isDesktop = width >= 960;
+    final t = context.tokens;
 
     if (user == null) {
       return Scaffold(body: body);
@@ -260,103 +111,38 @@ class AppScaffold extends ConsumerWidget {
 
     final role = user.role.value;
     final isCollapsed = ref.watch(sidebarCollapsedProvider);
-    final double sidebarWidth = isCollapsed
-        ? 70.0
-        : (role == 'QUAN_TRI_VIEN'
-              ? 258.0
-              : (role == 'GIAO_VIEN' ? 242.0 : 236.0));
 
     if (isDesktop) {
       return Scaffold(
+        backgroundColor: t.bg,
         body: Row(
           children: [
-            // Sidebar with dynamic collapsible width
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOutCubic,
-              width: sidebarWidth,
-              child: Material(
-                color: AppTheme.sidebarBg,
-                elevation: 0,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      right: BorderSide(
-                        color: AppTheme.borderSidebar,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: AppSidebar(
-                    currentPath: currentPath,
-                    isCollapsed: isCollapsed,
-                    onBeforeNavigate: onBeforeLeave,
-                  ),
-                ),
+            AppSidebarFrame(
+              role: role,
+              collapsed: isCollapsed,
+              child: AppSidebar(
+                currentPath: currentPath,
+                isCollapsed: isCollapsed,
+                onBeforeNavigate: onBeforeLeave,
+                onLogout: () => _logout(context, ref),
               ),
             ),
-
-            // Main Content Screen
             Expanded(
               child: Scaffold(
-                backgroundColor: AppTheme.warmIvoryBg,
-                appBar: PreferredSize(
-                  preferredSize: Size.fromHeight(
-                    bottom != null ? (bottom!.preferredSize.height + 64) : 64,
-                  ),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppTheme.sidebarBg,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppTheme.borderSidebar,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: AppBar(
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      leading:
-                          leading ??
-                          ((!kIsWeb && showBackButton)
-                              ? IconButton(
-                                  icon: const Icon(Icons.arrow_back),
-                                  onPressed:
-                                      onBack ??
-                                      () async {
-                                        if (onBeforeLeave != null) {
-                                          final allow = await onBeforeLeave!();
-                                          if (!allow) return;
-                                        }
-                                        if (!context.mounted) return;
-                                        if (Navigator.canPop(context)) {
-                                          Navigator.pop(context);
-                                        } else {
-                                          context.go('/');
-                                        }
-                                      },
-                                )
-                              : null),
-                      automaticallyImplyLeading:
-                          automaticallyImplyLeading ?? false,
-                      title:
-                          titleWidget ??
-                          Text(title, overflow: TextOverflow.ellipsis),
+                backgroundColor: t.bg,
+                body: Column(
+                  children: [
+                    AppTopBar(
+                      role: role,
+                      title: title,
+                      titleWidget: titleWidget,
+                      leading: leading ?? _backButton(context),
+                      actions: actions,
                       bottom: bottom,
-                      actions: [
-                        ...?actions,
-                        IconButton(
-                          tooltip: 'Đăng xuất',
-                          icon: const Icon(Icons.logout_rounded, size: 20),
-                          onPressed: () => _logout(context, ref),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
                     ),
-                  ),
+                    Expanded(child: AppEdgeScrollbar(child: body)),
+                  ],
                 ),
-                body: AppEdgeScrollbar(child: body),
                 bottomNavigationBar: bottomBar,
                 floatingActionButton: floatingActionButton,
               ),
@@ -366,34 +152,25 @@ class AppScaffold extends ConsumerWidget {
       );
     }
 
-    // Mobile / Tablet layout
+    // Mobile / tablet: AppBar + Drawer navy + thanh điều hướng đáy theo vai.
+    final mobileNav = AppBottomNav(
+      role: role,
+      currentPath: currentPath,
+      onBeforeLeave: onBeforeLeave,
+    );
     return Scaffold(
-      backgroundColor: AppTheme.warmIvoryBg,
+      backgroundColor: t.bg,
       appBar: AppBar(
-        leading:
-            leading ??
-            ((!kIsWeb && showBackButton)
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed:
-                        onBack ??
-                        () async {
-                          if (onBeforeLeave != null) {
-                            final allow = await onBeforeLeave!();
-                            if (!allow) return;
-                          }
-                          if (!context.mounted) return;
-                          if (Navigator.canPop(context)) {
-                            Navigator.pop(context);
-                          } else {
-                            context.go('/');
-                          }
-                        },
-                  )
-                : null),
+        shape: Border(bottom: BorderSide(color: t.line)),
+        leading: leading ?? _backButton(context),
         automaticallyImplyLeading:
             automaticallyImplyLeading ??
             (!kIsWeb && showBackButton ? false : true),
+        titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: t.heading,
+        ),
         title: titleWidget ?? Text(title, overflow: TextOverflow.ellipsis),
         bottom: bottom,
         actions: [
@@ -409,24 +186,22 @@ class AppScaffold extends ConsumerWidget {
         ],
       ),
       drawer: Drawer(
+        backgroundColor: t.navy,
         child: SafeArea(
           child: AppSidebar(
             inDrawer: true,
             currentPath: currentPath,
             onBeforeNavigate: onBeforeLeave,
+            onLogout: () => _logout(context, ref),
           ),
         ),
       ),
-      bottomNavigationBar: () {
-        final mobileNav = _buildMobileBottomNav(context, role, currentPath);
-        if (bottomBar != null) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [bottomBar!, if (mobileNav != null) mobileNav],
-          );
-        }
-        return mobileNav;
-      }(),
+      bottomNavigationBar: bottomBar != null
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [bottomBar!, mobileNav],
+            )
+          : mobileNav,
       body: AppEdgeScrollbar(child: body),
       floatingActionButton: floatingActionButton,
     );

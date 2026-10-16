@@ -1,11 +1,11 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../app/theme.dart';
+import '../../../../app/design_tokens.dart';
 import '../../../../app/widgets/app_edge_scrollbar.dart';
+import '../../../../app/widgets/app_shell.dart';
 import '../../../../app/widgets/app_sidebar.dart';
 import '../../profile_dialog.dart';
-import '../../session.dart';
 import '../widgets/home_dashboard_content.dart';
 
 class HomeWebView extends ConsumerWidget {
@@ -22,64 +22,29 @@ class HomeWebView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.tokens;
     final isCollapsed = ref.watch(sidebarCollapsedProvider);
-    final double sidebarWidth = isCollapsed
-        ? 70.0
-        : (role == 'QUAN_TRI_VIEN'
-              ? 258.0
-              : (role == 'GIAO_VIEN' ? 242.0 : 236.0));
 
     return Scaffold(
-      backgroundColor: AppTheme.warmIvoryBg,
+      backgroundColor: t.bg,
       body: AppEdgeScrollbar(
         child: Row(
           children: [
-            // 1. Persistent Left Sidebar (Collapsible)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOutCubic,
-              width: sidebarWidth,
-              child: Material(
-                color: AppTheme.sidebarBg,
-                elevation: 0,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      right: BorderSide(
-                        color: AppTheme.borderSidebar,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: AppSidebar(currentPath: '/', isCollapsed: isCollapsed),
-                ),
-              ),
+            // Sidebar navy cố định bên trái (thu gọn được); đăng xuất nằm ở
+            // cuối sidebar.
+            AppSidebarFrame(
+              role: role,
+              collapsed: isCollapsed,
+              child: AppSidebar(currentPath: '/', isCollapsed: isCollapsed),
             ),
-
-            // 2. Main Dashboard Content on the right
             Expanded(
               child: Scaffold(
-                backgroundColor: AppTheme.warmIvoryBg,
-                appBar: PreferredSize(
-                  preferredSize: const Size.fromHeight(64),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppTheme.sidebarBg,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppTheme.borderSidebar,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: AppBar(
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      automaticallyImplyLeading: false,
-                      title: const Text(
-                        'EduScore · THPT Bà Điểm',
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                backgroundColor: t.bg,
+                body: Column(
+                  children: [
+                    AppTopBar(
+                      role: role,
+                      title: 'Tổng quan',
                       actions: [
                         if (role != 'QUAN_TRI_VIEN')
                           IconButton(
@@ -96,35 +61,21 @@ class HomeWebView extends ConsumerWidget {
                             onPressed: () => onChangePassword(context, ref),
                             icon: const Icon(Icons.password),
                           ),
-                        IconButton(
-                          tooltip: 'Đăng xuất',
-                          onPressed: () async {
-                            try {
-                              await ref.read(sessionProvider.notifier).logout();
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(errorMessage(e))),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.logout),
-                        ),
-                        const SizedBox(width: 8),
                       ],
                     ),
-                  ),
-                ),
-                body: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1140),
-                    child: HomeDashboardContent(
-                      user: user,
-                      role: role,
-                      isDesktop: true,
+                    Expanded(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1140),
+                          child: HomeDashboardContent(
+                            user: user,
+                            role: role,
+                            isDesktop: true,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),

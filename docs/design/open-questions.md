@@ -53,3 +53,14 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - AGENTS.md cấm đặt quy tắc tính điểm/xếp loại ở widget, nhưng bản cũ đã có sẵn việc này. Đã GIỮ NGUYÊN hành vi theo quy tắc "không đổi công thức". Đề xuất ở lần sau: backend trả ĐTB chung và xếp loại chung trong `summary`, client chỉ hiển thị.
 - Hero vẫn dùng `summary.averageScore` do backend tính (dữ liệu API), còn hàng tổng kết dùng trung bình cộng ở client. Hai số có thể khác nhau (backend có thể tính theo hệ số/làm tròn khác). Bản cũ cũng có hai nguồn: ô "ĐTB HỌC KỲ" của banner và hàng tổng kết đều tính ở client, còn thanh bên dùng số của backend. Cần quyết định sau nguồn nào là chuẩn.
 - Chip trạng thái ở hero ("Đã công bố ĐTB" / "Đang cập nhật (x/y)") dùng `publishedSubjects`/`totalSubjects` của `summary`; bản cũ đếm số môn có `classification` ở client. Giữ hero theo dữ liệu API như yêu cầu.
+
+
+### Bước 5 - khung điều hướng
+
+- Đã bỏ badge cứng `'08'` ở mục "Bảng điểm" và chuỗi cứng "Học kỳ I · 2024–2025" (cùng khối "HỌC KỲ HIỆN TẠI / HẠN NỘP ĐIỂM / TIẾN ĐỘ HỌC KỲ" ở đáy sidebar, vì khối chỉ chứa chuỗi cứng; không có dữ liệu học kỳ hiện hành để thay). Trường `countBadge` của mục sidebar vẫn còn, hiện đang `null` ở mọi mục; muốn có badge đếm (ví dụ số phiếu chờ đối chiếu) cần backend/provider có số thật.
+- Không thêm vào topbar: ô tìm kiếm toàn cục, chip học kỳ, chuông thông báo (backend chưa hỗ trợ, mục 2 của kế hoạch).
+- Sidebar: khối thẻ hồ sơ ở đầu sidebar (bản cũ) chuyển xuống cuối theo prototype (`.s-user`): avatar chữ cái đầu `username`, tên (`username`; DTO phiên không có họ tên), vai trò. Giáo viên giữ dòng "Giáo viên bộ môn"; quản trị hiện "Quản trị viên" (trước không có); học sinh giữ "Lớp X · học kỳ" từ `studentResultsList` và dải ĐTB / Xếp hạng / Sĩ số (dữ liệu thật, trước gọi API hai lần mỗi lần build, nay gọi một lần).
+- Nút "Đăng xuất" trên màn rộng chuyển từ topbar xuống chân sidebar (giữ tooltip 'Đăng xuất' và hộp thoại xác nhận khi vào từ `AppScaffold`; trang chủ vẫn đăng xuất ngay như trước). Trên màn hẹp, AppBar vẫn có nút đăng xuất như cũ; Drawer có thêm nút ở chân.
+- Topbar màn rộng đổi từ `AppBar` sang `AppTopBar` (không phải `PreferredSizeWidget`, cao tối thiểu 68, tự giãn khi tiêu đề nhiều dòng). Dòng nhỏ vai trò viết hoa ("GIÁO VIÊN"). Tiêu đề trang chủ web đổi từ "EduScore · THPT Bà Điểm" thành "Tổng quan" (theo prototype; thương hiệu nằm ở đầu sidebar). AppBar mobile của trang chủ vẫn giữ "EduScore · THPT Bà Điểm".
+- Nav đáy: tab đang chọn dùng `priLink` (bằng `pri` ở chế độ sáng, sáng hơn ở chế độ tối để đủ tương phản), bỏ nền "viên thuốc" của Material 3, nhãn 12px. Mục giữa nổi (`.tabbar .mid`) của prototype không làm.
+- Mục con trong nhóm gập cao 40 (mục cấp một cao 44) để phân biệt cấp; prototype không có nhóm gập.
