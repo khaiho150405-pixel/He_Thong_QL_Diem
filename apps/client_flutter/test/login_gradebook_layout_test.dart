@@ -44,14 +44,15 @@ void main() {
       await pumpLogin(tester, 1440);
 
       expect(find.textContaining('phẩy'), findsNothing);
-      expect(find.text('8.5'), findsOneWidget);
-      expect(find.text('7.0'), findsOneWidget);
-      expect(find.text('6.5'), findsOneWidget);
+      // Tờ giấy + thẻ "Đã số hóa" (mỗi điểm hiện ở giấy và hai lần ở thẻ).
+      expect(find.text('8.5'), findsNWidgets(3));
+      expect(find.text('7.0'), findsNWidgets(3));
+      expect(find.text('6.5'), findsNWidgets(3));
       expect(find.text('tám năm'), findsOneWidget);
       expect(find.text('bảy không'), findsOneWidget);
       expect(find.text('sáu năm'), findsOneWidget);
       // Cột điểm số đủ rộng cho "7.0": không xuống dòng, không tràn.
-      final seven = tester.getSize(find.text('7.0'));
+      final seven = tester.getSize(find.text('7.0').first);
       expect(seven.height, lessThan(30));
       expect(tester.takeException(), isNull);
     });

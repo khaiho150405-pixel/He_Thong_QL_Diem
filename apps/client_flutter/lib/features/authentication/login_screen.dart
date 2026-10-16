@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_edge_scrollbar.dart';
 import '../../app/widgets/theme_mode_button.dart';
+import 'login_art_panel.dart';
 import 'session.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -81,7 +82,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Expanded(flex: 11, child: _LoginArtPanel()),
+                              Expanded(
+                                flex: 11,
+                                child: LoginArtPanel(
+                                  horizontalMockup:
+                                      constraints.maxWidth * 11 / 21 -
+                                          LoginArtPanel.horizontalPadding >=
+                                      LoginArtPanel.horizontalMinWidth,
+                                ),
+                              ),
                               Expanded(
                                 flex: 10,
                                 child: _formSide(context, wide),
@@ -411,253 +420,6 @@ class _CompactBrand extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ],
-    );
-  }
-}
-
-/// Nửa trái nền navy (chỉ hiện từ 960): thương hiệu, tiêu đề, 3 ý tính năng
-/// và tờ giấy trang trí. Toàn bộ là nội dung tĩnh, không có chức năng.
-class _LoginArtPanel extends StatelessWidget {
-  const _LoginArtPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tokens;
-    final theme = Theme.of(context);
-    return Container(
-      color: t.navy,
-      padding: const EdgeInsets.all(36),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: t.onPri.withAlpha(36),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Icon(Icons.school_rounded, size: 22, color: t.onPri),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'EduScore',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: t.onPri,
-                      ),
-                    ),
-                    Text(
-                      'Trường THPT Bà Điểm · Quản lý điểm',
-                      style: TextStyle(fontSize: 13, color: t.onNavy),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          const SizedBox(height: AppSpacing.xxl),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Text(
-              'Nhập điểm nhanh hơn, đối chiếu rõ ràng hơn.',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontSize: 34,
-                height: 44 / 34,
-                color: t.onPri,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          const _Feature(
-            icon: Icons.photo_camera_outlined,
-            title: 'Chụp bảng điểm viết tay',
-            body:
-                'Hệ thống đọc điểm số và điểm chữ, giáo viên chỉ cần xem lại.',
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const _Feature(
-            icon: Icons.checklist_rounded,
-            title: 'Đối chiếu trước khi duyệt',
-            body:
-                'Ô nào chắc chắn hiện màu Xanh, ô cần xem lại hiện Vàng hoặc Đỏ.',
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const _Feature(
-            icon: Icons.history_rounded,
-            title: 'Lưu lịch sử mọi thay đổi',
-            body: 'Biết ai sửa điểm nào, khi nào, từ giá trị nào.',
-          ),
-          const SizedBox(height: AppSpacing.xxl),
-          const _PaperMini(),
-        ],
-      ),
-    );
-  }
-}
-
-class _Feature extends StatelessWidget {
-  const _Feature({required this.icon, required this.title, required this.body});
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tokens;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: t.onPri.withAlpha(31),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 20, color: t.acc),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  color: t.onPri,
-                ),
-              ),
-              const SizedBox(height: 2),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 360),
-                child: Text(
-                  body,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    height: 20 / 13.5,
-                    color: t.onNavy,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Tờ giấy nghiêng -1,2 độ (prototype `.paper-mini`). Chữ "viết tay" dùng
-/// Be Vietnam Pro nghiêng vì Caveat không được đóng gói.
-class _PaperMini extends StatelessWidget {
-  const _PaperMini();
-
-  static const _rows = [
-    ('1', 'Nguyễn Văn An', '8.5', 'tám năm'),
-    ('2', 'Trần Thị Bích', '7.0', 'bảy không'),
-    ('3', 'Lê Hoàng Cường', '6.5', 'sáu năm'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tokens;
-    final printed = TextStyle(fontSize: 12, color: t.onAcc);
-    final hand = TextStyle(
-      fontSize: 16,
-      height: 1.2,
-      fontWeight: FontWeight.w600,
-      fontStyle: FontStyle.italic,
-      color: t.pen,
-    );
-    return ExcludeSemantics(
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Transform.rotate(
-          angle: -1.2 * math.pi / 180,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: t.paper,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: t.pop,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      'DANH SÁCH GHI ĐIỂM',
-                      style: printed.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.66,
-                      ),
-                    ),
-                  ),
-                  for (final r in _rows)
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: t.paperLine)),
-                      ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            child: Text(r.$1, style: printed),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            flex: 10,
-                            child: Text(
-                              r.$2,
-                              style: printed,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          SizedBox(
-                            width: 44,
-                            child: Text(
-                              r.$3,
-                              style: hand,
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.visible,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            flex: 13,
-                            child: Text(
-                              r.$4,
-                              style: hand,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
