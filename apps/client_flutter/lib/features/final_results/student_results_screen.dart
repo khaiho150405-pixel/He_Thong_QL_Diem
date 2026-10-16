@@ -41,6 +41,44 @@ import '../authentication/session.dart';
   }
 }
 
+/// ĐTB chung và trạng thái tổng kết học kỳ, tính ở client từ danh sách môn.
+/// GIỮ NGUYÊN hành vi của màn cũ (quy tắc "không đổi công thức"): chỉ tính khi
+/// MỌI môn đã có xếp loại (`allLocked`); ĐTB là trung bình cộng `finalScore`
+/// của các môn không phải Đạt/Không đạt. Xem docs/design/open-questions.md
+/// (Bước 4b): nên chuyển cho backend ở lần sau.
+({int totalSubjects, int lockedSubjects, bool allLocked, double? gpa})
+semesterOverviewOf(List<StudentSubjectResultDto> items) {
+  final totalSubjects = items.length;
+  final lockedSubjects = items.where((i) => i.classification != null).length;
+  final allLocked = totalSubjects > 0 && lockedSubjects == totalSubjects;
+
+  double? gpa;
+  if (allLocked) {
+    final scores = items
+        .where((i) => i.passFail != true)
+        .map((i) => double.tryParse(i.finalScore ?? ''))
+        .whereType<double>()
+        .toList();
+    if (scores.isNotEmpty) {
+      gpa = scores.reduce((a, b) => a + b) / scores.length;
+    }
+  }
+  return (
+    totalSubjects: totalSubjects,
+    lockedSubjects: lockedSubjects,
+    allLocked: allLocked,
+    gpa: gpa,
+  );
+}
+
+/// Mã xếp loại chung theo ngưỡng cũ (>= 8.0 Giỏi, >= 6.5 Khá, còn lại Đạt);
+/// giữ nguyên hành vi màn cũ, xem ghi chú ở [semesterOverviewOf].
+String overallClassificationCodeOf(double gpa) => gpa >= 8.0
+    ? 'GIOI'
+    : gpa >= 6.5
+    ? 'KHA'
+    : 'DAT';
+
 class StudentResultsScreen extends ConsumerStatefulWidget {
   const StudentResultsScreen({super.key});
 
@@ -120,6 +158,9 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
               final allPublished =
                   totalSubjects > 0 && publishedSubjects >= totalSubjects;
               final average = _formatAverage(summary.averageScore);
+              // Hàng tổng kết của bảng dùng phép tính cũ ở client (xem
+              // semesterOverviewOf); hero dùng summary.averageScore của API.
+              final overview = semesterOverviewOf(items);
 
               // Danh sách các cột điểm thành phần duy nhất.
               final componentNames = <String>[];
@@ -167,7 +208,8 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                       context: context,
                       items: items,
                       componentNames: componentNames,
-                      average: average,
+                      allLocked: overview.allLocked,
+                      gpa: overview.gpa,
                     )
                   else
                     _buildSubjectCards(context: context, items: items),
@@ -192,7 +234,8 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
     required BuildContext context,
     required List<StudentSubjectResultDto> items,
     required List<String> componentNames,
-    required String? average,
+    required bool allLocked,
+    required double? gpa,
   }) {
     final theme = Theme.of(context);
     final t = context.tokens;
@@ -294,8 +337,8 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                   ],
                 ),
 
-              // Hàng tổng kết học kỳ: ĐTB do backend tính; backend chưa trả
-              // xếp loại chung nên không tự xếp loại ở client.
+              // Hàng tổng kết học kỳ: giữ nguyên hành vi màn cũ (ĐTB chung và
+              // xếp loại chung tính ở client, chỉ khi mọi môn đã có xếp loại).
               DataRow(
                 color: WidgetStateProperty.all(t.subtle),
                 cells: [
@@ -311,11 +354,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                   for (var i = 0; i < componentNames.length; i++)
                     const DataCell(Text('')),
                   DataCell(
-                    average != null
+                    allLocked && gpa != null
                         ? _Chip(
                             background: t.pri,
                             child: Text(
-                              average,
+                              gpa.toStringAsFixed(1),
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: t.onPri,
@@ -331,7 +374,18 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                             ),
                           ),
                   ),
-                  DataCell(dash()),
+                  DataCell(
+                    allLocked && gpa != null
+                        ? _classificationBadge(overallClassificationCodeOf(gpa))
+                        : Text(
+                            'Chờ công bố',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: t.warn,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
                 ],
               ),
             ],

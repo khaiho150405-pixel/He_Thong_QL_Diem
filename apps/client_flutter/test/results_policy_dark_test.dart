@@ -15,9 +15,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Máy chủ giả cho bước 4: điểm của học sinh, chính sách xếp loại.
 class _FakeServer implements HttpClientAdapter {
-  _FakeServer(this.role);
+  _FakeServer(this.role, {this.subjects});
 
   final String role;
+
+  /// Danh sách môn thay thế cho dữ liệu mặc định (dùng cho test ĐTB chung).
+  final List<Map<String, dynamic>>? subjects;
 
   @override
   void close({bool force = false}) {}
@@ -41,18 +44,20 @@ class _FakeServer implements HttpClientAdapter {
       };
     } else if (options.path.endsWith('/students/me/results')) {
       body = {
-        'items': [
-          _subject('Toán', '8.4', 'GIOI'),
-          _subject('Ngữ văn', '6.8', 'KHA'),
-          _subject('Vật lý', '5.2', 'DAT'),
-          _subject('Hóa học', '3.1', 'YEU'),
-          _subject('Sinh học', '7.0', 'XUAT_SAC_LA'),
-          {
-            ..._subject('Lịch sử', null, null),
-            'components': <Object>[],
-            'calculatedAt': null,
-          },
-        ],
+        'items':
+            subjects ??
+            [
+              _subject('Toán', '8.4', 'GIOI'),
+              _subject('Ngữ văn', '6.8', 'KHA'),
+              _subject('Vật lý', '5.2', 'DAT'),
+              _subject('Hóa học', '3.1', 'YEU'),
+              _subject('Sinh học', '7.0', 'XUAT_SAC_LA'),
+              {
+                ..._subject('Lịch sử', null, null),
+                'components': <Object>[],
+                'calculatedAt': null,
+              },
+            ],
         'summary': {
           'termId': 30,
           'termName': 'Học kỳ I',
@@ -88,7 +93,17 @@ class _FakeServer implements HttpClientAdapter {
     );
   }
 
-  Map<String, dynamic> _subject(String name, String? score, String? code) => {
+  static Map<String, dynamic> subject(
+    String name,
+    String? score,
+    String? code,
+  ) => _subject(name, score, code);
+
+  static Map<String, dynamic> _subject(
+    String name,
+    String? score,
+    String? code,
+  ) => {
     'gradebookId': 7,
     'subjectId': name.hashCode.abs() % 1000,
     'subjectName': name,
@@ -115,6 +130,7 @@ Future<ProviderContainer> _pump(
   required double width,
   required Brightness mode,
   double height = 900,
+  List<Map<String, dynamic>>? subjects,
 }) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
@@ -122,7 +138,9 @@ Future<ProviderContainer> _pump(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
-  final api = ApiClientDart(dio: Dio()..httpClientAdapter = _FakeServer(role));
+  final api = ApiClientDart(
+    dio: Dio()..httpClientAdapter = _FakeServer(role, subjects: subjects),
+  );
   final container = ProviderContainer(
     overrides: [
       apiProvider.overrideWithValue(api),
@@ -156,6 +174,66 @@ void main() {
     final unknown = classificationBadgeOf('XUAT_SAC_LA');
     expect(unknown.tone, AppBadgeTone.neutral);
     expect(unknown.label, 'XUAT_SAC_LA');
+  });
+
+  group('Hàng ĐTB chung giữ nguyên phép tính cũ ở client (bước 4b)', () {
+    Map<String, dynamic> subj(String name, String score) =>
+        // Mã lạ -> huy hiệu trung tính giữ nguyên chuỗi, không trùng nhãn
+        // Giỏi/Khá/Đạt của xếp loại chung.
+        _FakeServer.subject(name, score, 'MA_MON');
+
+    Future<void> openTable(
+      WidgetTester tester,
+      List<Map<String, dynamic>> subjects,
+    ) async {
+      await _pump(
+        tester,
+        role: 'HOC_SINH',
+        location: '/my-results',
+        width: 1280,
+        mode: Brightness.light,
+        subjects: subjects,
+      );
+      await tester.tap(find.text('Bảng tổng hợp'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('trung bình 8.2 -> Giỏi', (tester) async {
+      await openTable(tester, [subj('Toán', '8.0'), subj('Văn', '8.4')]);
+      expect(find.text('8.2'), findsOneWidget);
+      expect(find.text('Giỏi'), findsOneWidget);
+      expect(find.text('Chờ công bố'), findsNothing);
+    });
+
+    testWidgets('trung bình 7.0 -> Khá', (tester) async {
+      await openTable(tester, [subj('Toán', '6.0'), subj('Văn', '8.0')]);
+      expect(find.text('7.0'), findsOneWidget);
+      expect(find.text('Khá'), findsOneWidget);
+    });
+
+    testWidgets('trung bình 5.5 -> Đạt', (tester) async {
+      await openTable(tester, [subj('Toán', '5.0'), subj('Văn', '6.0')]);
+      expect(find.text('5.5'), findsOneWidget);
+      expect(find.text('Đạt'), findsOneWidget);
+    });
+
+    testWidgets('còn môn chưa có xếp loại -> Chờ công bố ở cả hai ô', (
+      tester,
+    ) async {
+      await openTable(tester, [
+        subj('Toán', '8.0'),
+        _FakeServer.subject('Văn', null, null),
+      ]);
+      expect(find.text('Chờ công bố'), findsNWidgets(2));
+      expect(find.text('Giỏi'), findsNothing);
+    });
+  });
+
+  test('semesterOverviewOf và ngưỡng xếp loại chung giữ nguyên bản cũ', () {
+    expect(overallClassificationCodeOf(8.0), 'GIOI');
+    expect(overallClassificationCodeOf(7.99), 'KHA');
+    expect(overallClassificationCodeOf(6.5), 'KHA');
+    expect(overallClassificationCodeOf(6.49), 'DAT');
   });
 
   for (final mode in Brightness.values) {
