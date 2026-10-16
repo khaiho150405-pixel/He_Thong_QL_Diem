@@ -1,7 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../app/theme.dart';
+import '../../app/design_tokens.dart';
 import '../../app/widgets/app_edge_scrollbar.dart';
 import 'session.dart';
 
@@ -53,15 +55,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: AppTheme.warmIvoryBg,
+      backgroundColor: t.surface,
       body: SafeArea(
         child: AppEdgeScrollbar(
           child: LayoutBuilder(
             builder: (context, constraints) {
+              // Breakpoint 960 giống màn Trang chủ: từ 960 trở lên có nửa trái.
+              final wide = constraints.maxWidth >= 960;
               return SingleChildScrollView(
                 primary: true,
                 child: ConstrainedBox(
@@ -69,468 +71,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     minHeight: constraints.maxHeight,
                     minWidth: constraints.maxWidth,
                   ),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 32,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 450),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Top Brand Header
-                            Container(
-                              width: 58,
-                              height: 58,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primarySeed,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppTheme.primarySeed.withAlpha(55),
-                                    blurRadius: 18,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
+                  child: wide
+                      ? IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Expanded(flex: 11, child: _LoginArtPanel()),
+                              Expanded(
+                                flex: 10,
+                                child: _formSide(context, wide),
                               ),
-                              child: const Center(
-                                child: Text(
-                                  'E',
-                                  style: TextStyle(
-                                    color: Color(0xFFF2D775),
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'EduScore',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.5,
-                                color: AppTheme.primaryDark,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'HỌC ĐƯỜNG SỐ · THPT BÀ ĐIỂM',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.6,
-                                color: Color(0xFF9B9588),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Hệ thống Quản lý Điểm & Đánh giá Học sinh Đa nền tảng',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textMuted,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 28),
-
-                            // Login Form Card
-                            Card(
-                              elevation: 1.5,
-                              color: AppTheme.cardBg,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                side: const BorderSide(
-                                  color: AppTheme.borderSubtle,
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 26,
-                                  vertical: 30,
-                                ),
-                                child: Form(
-                                  key: form,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.navActiveBg,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: const Icon(
-                                              Icons.lock_outline_rounded,
-                                              size: 18,
-                                              color: AppTheme.primarySeed,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          const Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Đăng nhập tài khoản',
-                                                  style: TextStyle(
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: AppTheme.primaryDark,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 2),
-                                                Text(
-                                                  'Nhập thông tin được cấp để truy cập',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: AppTheme.textMuted,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 24),
-
-                                      // Username input
-                                      TextFormField(
-                                        controller: username,
-                                        enabled: !busy,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Tên đăng nhập',
-                                          prefixIcon: Icon(
-                                            Icons.person_outline_rounded,
-                                            color: AppTheme.primarySeed,
-                                          ),
-                                        ),
-                                        autofillHints: const [
-                                          AutofillHints.username,
-                                        ],
-                                        validator: (v) =>
-                                            v == null || v.trim().isEmpty
-                                            ? 'Nhập tên đăng nhập'
-                                            : null,
-                                        textInputAction: TextInputAction.next,
-                                      ),
-                                      const SizedBox(height: 16),
-
-                                      // Password input
-                                      TextFormField(
-                                        controller: password,
-                                        enabled: !busy,
-                                        obscureText: obscurePassword,
-                                        decoration: InputDecoration(
-                                          labelText: 'Mật khẩu',
-                                          prefixIcon: const Icon(
-                                            Icons.lock_outline_rounded,
-                                            color: AppTheme.primarySeed,
-                                          ),
-                                          suffixIcon: IconButton(
-                                            icon: Icon(
-                                              obscurePassword
-                                                  ? Icons.visibility_outlined
-                                                  : Icons
-                                                        .visibility_off_outlined,
-                                              size: 20,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                obscurePassword =
-                                                    !obscurePassword;
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                        autofillHints: const [
-                                          AutofillHints.password,
-                                        ],
-                                        validator: (v) => v == null || v.isEmpty
-                                            ? 'Nhập mật khẩu'
-                                            : null,
-                                        onFieldSubmitted: (_) => submit(),
-                                      ),
-
-                                      // Error alert
-                                      if (error != null) ...[
-                                        const SizedBox(height: 16),
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.redBadgeBg,
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                            border: Border.all(
-                                              color: const Color(0xFFF0B8AA),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.error_outline_rounded,
-                                                size: 18,
-                                                color: AppTheme.redBadgeText,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  error!,
-                                                  style: const TextStyle(
-                                                    color:
-                                                        AppTheme.redBadgeText,
-                                                    fontSize: 12.5,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(height: 22),
-
-                                      // Submit button
-                                      FilledButton(
-                                        onPressed: busy ? null : submit,
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: AppTheme.primarySeed,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 15,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                        ),
-                                        child: busy
-                                            ? const SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2.2,
-                                                      color: Colors.white,
-                                                    ),
-                                              )
-                                            : const Text(
-                                                'Đăng nhập',
-                                                style: TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                      ),
-                                      const SizedBox(height: 12),
-
-                                      // Connection check button
-                                      OutlinedButton(
-                                        onPressed: () =>
-                                            context.push('/connection'),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 11,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                        ),
-                                        child: const Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.wifi_tethering_rounded,
-                                              size: 16,
-                                            ),
-                                            SizedBox(width: 8),
-                                            Flexible(
-                                              child: Text(
-                                                'Kiểm tra kết nối hệ thống',
-                                                style: TextStyle(fontSize: 13),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-
-                                      // Subtle popup for demo autofill (discreet & professional)
-                                      Center(
-                                        child: PopupMenuButton<String>(
-                                          tooltip: 'Gợi ý tài khoản demo',
-                                          onSelected: (role) {
-                                            switch (role) {
-                                              case 'admin':
-                                                _autofillDemo(
-                                                  'admin',
-                                                  'Password123!',
-                                                );
-                                                break;
-                                              case 'teacher':
-                                                _autofillDemo(
-                                                  'giaovien_toan',
-                                                  'Password123!',
-                                                );
-                                                break;
-                                              case 'student':
-                                                _autofillDemo(
-                                                  'hocsinh_a',
-                                                  'Password123!',
-                                                );
-                                                break;
-                                            }
-                                          },
-                                          itemBuilder: (context) => [
-                                            const PopupMenuItem(
-                                              value: 'admin',
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons
-                                                        .admin_panel_settings_outlined,
-                                                    size: 18,
-                                                    color: AppTheme.primarySeed,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Quản trị viên (admin)',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 'teacher',
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.school_outlined,
-                                                    size: 18,
-                                                    color: AppTheme.primarySeed,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Giáo viên (giaovien_toan)',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 'student',
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.person_outline,
-                                                    size: 18,
-                                                    color: AppTheme.primarySeed,
-                                                  ),
-                                                  SizedBox(width: 8),
-                                                  Text(
-                                                    'Học sinh (hocsinh_a)',
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 4,
-                                              horizontal: 8,
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons
-                                                      .lightbulb_outline_rounded,
-                                                  size: 14,
-                                                  color: colorScheme
-                                                      .onSurfaceVariant
-                                                      .withAlpha(150),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Flexible(
-                                                  child: Text(
-                                                    'Gợi ý tài khoản demo ▼',
-                                                    style: TextStyle(
-                                                      fontSize: 11.5,
-                                                      color: colorScheme
-                                                          .onSurfaceVariant
-                                                          .withAlpha(170),
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      decorationStyle:
-                                                          TextDecorationStyle
-                                                              .dotted,
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-
-                                      // Help footer
-                                      Text(
-                                        'Quên mật khẩu hoặc cần cấp tài khoản? Vui lòng liên hệ quản trị viên nhà trường.',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: colorScheme
-                                                  .onSurfaceVariant
-                                                  .withAlpha(160),
-                                              fontSize: 11,
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-
-                            const Text(
-                              'THPT Bà Điểm · Hệ thống Quản lý Điểm EduScore · Đa nền tảng',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFFA0A49E),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                            ],
+                          ),
+                        )
+                      : _formSide(context, wide),
                 ),
               );
             },
@@ -539,4 +93,570 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
+
+  Widget _formSide(BuildContext context, bool wide) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: wide ? AppSpacing.xxxl : AppSpacing.xxl,
+          vertical: AppSpacing.xxxl,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: _buildForm(context, wide),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, bool wide) {
+    final t = context.tokens;
+    final theme = Theme.of(context);
+
+    return Form(
+      key: form,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: wide
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.stretch,
+        children: [
+          if (wide) ...[
+            Text('Đăng nhập', style: theme.textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Dùng tài khoản do nhà trường cấp.',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ] else
+            _CompactBrand(tokens: t),
+          SizedBox(height: wide ? AppSpacing.xxl : AppSpacing.xl),
+          TextFormField(
+            controller: username,
+            enabled: !busy,
+            decoration: InputDecoration(
+              labelText: 'Tên đăng nhập',
+              prefixIcon: Icon(Icons.person_outline_rounded, color: t.pri),
+            ),
+            autofillHints: const [AutofillHints.username],
+            validator: (v) =>
+                v == null || v.trim().isEmpty ? 'Nhập tên đăng nhập' : null,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          TextFormField(
+            controller: password,
+            enabled: !busy,
+            obscureText: obscurePassword,
+            decoration: InputDecoration(
+              labelText: 'Mật khẩu',
+              prefixIcon: Icon(Icons.lock_outline_rounded, color: t.pri),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 20,
+                  color: t.ink3,
+                ),
+                onPressed: () {
+                  setState(() {
+                    obscurePassword = !obscurePassword;
+                  });
+                },
+              ),
+            ),
+            autofillHints: const [AutofillHints.password],
+            validator: (v) => v == null || v.isEmpty ? 'Nhập mật khẩu' : null,
+            onFieldSubmitted: (_) => submit(),
+          ),
+          if (error != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: t.badSoft,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: t.badLine),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline_rounded, size: 18, color: t.bad),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      error!,
+                      style: TextStyle(
+                        color: t.bad,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.xl),
+          FilledButton(
+            onPressed: busy ? null : submit,
+            child: busy
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: t.onPri,
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(child: Text('Đăng nhập')),
+                      SizedBox(width: AppSpacing.sm),
+                      Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton(
+            onPressed: () => context.push('/connection'),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.wifi_tethering_rounded, size: 16),
+                SizedBox(width: AppSpacing.sm),
+                Flexible(
+                  child: Text(
+                    'Kiểm tra kết nối hệ thống',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'Quên mật khẩu? Liên hệ quản trị viên của trường.',
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          CustomPaint(
+            painter: _DashedLinePainter(t.line2),
+            child: const SizedBox(height: 1, width: double.infinity),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'XEM THỬ VỚI VAI TRÒ',
+            style: theme.textTheme.labelSmall?.copyWith(fontSize: 11),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: PopupMenuButton<String>(
+              tooltip: 'Gợi ý tài khoản demo',
+              onSelected: (role) {
+                switch (role) {
+                  case 'admin':
+                    _autofillDemo('admin', 'Password123!');
+                    break;
+                  case 'teacher':
+                    _autofillDemo('giaovien_toan', 'Password123!');
+                    break;
+                  case 'student':
+                    _autofillDemo('hocsinh_a', 'Password123!');
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                _demoItem(
+                  t,
+                  'admin',
+                  Icons.admin_panel_settings_outlined,
+                  'Quản trị viên (admin)',
+                ),
+                _demoItem(
+                  t,
+                  'teacher',
+                  Icons.school_outlined,
+                  'Giáo viên (giaovien_toan)',
+                ),
+                _demoItem(
+                  t,
+                  'student',
+                  Icons.person_outline,
+                  'Học sinh (hocsinh_a)',
+                ),
+              ],
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: t.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: t.line2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 16,
+                      color: t.ink2,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Flexible(
+                      child: Text(
+                        'Gợi ý tài khoản demo',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: t.ink,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_drop_down_rounded,
+                      size: 20,
+                      color: t.ink2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _demoItem(
+    AppTokens t,
+    String value,
+    IconData icon,
+    String label,
+  ) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: t.pri),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(child: Text(label, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    );
+  }
+}
+
+/// Đầu trang rút gọn khi màn hẹp (prototype `.m-login`): logo, tên, trường.
+class _CompactBrand extends StatelessWidget {
+  const _CompactBrand({required this.tokens});
+  final AppTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = tokens;
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: t.navy,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: t.navyLine),
+          ),
+          child: Icon(Icons.school_rounded, size: 32, color: t.onPri),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          'EduScore',
+          style: theme.textTheme.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Hệ thống quản lý điểm',
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        Text(
+          'Trường THPT Bà Điểm',
+          style: theme.textTheme.bodySmall,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+/// Nửa trái nền navy (chỉ hiện từ 960): thương hiệu, tiêu đề, 3 ý tính năng
+/// và tờ giấy trang trí. Toàn bộ là nội dung tĩnh, không có chức năng.
+class _LoginArtPanel extends StatelessWidget {
+  const _LoginArtPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    final theme = Theme.of(context);
+    return Container(
+      color: t.navy,
+      padding: const EdgeInsets.all(36),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: t.onPri.withAlpha(36),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(Icons.school_rounded, size: 22, color: t.onPri),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'EduScore',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: t.onPri,
+                      ),
+                    ),
+                    Text(
+                      'Trường THPT Bà Điểm · Quản lý điểm',
+                      style: TextStyle(fontSize: 13, color: t.onNavy),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          const SizedBox(height: AppSpacing.xxl),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Text(
+              'Nhập điểm nhanh hơn, đối chiếu rõ ràng hơn.',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontSize: 34,
+                height: 44 / 34,
+                color: t.onPri,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          const _Feature(
+            icon: Icons.photo_camera_outlined,
+            title: 'Chụp bảng điểm viết tay',
+            body:
+                'Hệ thống đọc điểm số và điểm chữ, giáo viên chỉ cần xem lại.',
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const _Feature(
+            icon: Icons.checklist_rounded,
+            title: 'Đối chiếu trước khi duyệt',
+            body:
+                'Ô nào chắc chắn hiện màu Xanh, ô cần xem lại hiện Vàng hoặc Đỏ.',
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const _Feature(
+            icon: Icons.history_rounded,
+            title: 'Lưu lịch sử mọi thay đổi',
+            body: 'Biết ai sửa điểm nào, khi nào, từ giá trị nào.',
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          const _PaperMini(),
+        ],
+      ),
+    );
+  }
+}
+
+class _Feature extends StatelessWidget {
+  const _Feature({required this.icon, required this.title, required this.body});
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: t.onPri.withAlpha(31),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 20, color: t.acc),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: t.onPri,
+                ),
+              ),
+              const SizedBox(height: 2),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: Text(
+                  body,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 20 / 13.5,
+                    color: t.onNavy,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Tờ giấy nghiêng -1,2 độ (prototype `.paper-mini`). Chữ "viết tay" dùng
+/// Be Vietnam Pro nghiêng vì Caveat không được đóng gói.
+class _PaperMini extends StatelessWidget {
+  const _PaperMini();
+
+  static const _rows = [
+    ('1', 'Nguyễn Văn An', '8.5', 'tám phẩy năm'),
+    ('2', 'Trần Thị Bích', '7', 'bảy'),
+    ('3', 'Lê Hoàng Cường', '6.5', 'sáu phẩy năm'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    final printed = TextStyle(fontSize: 12, color: t.onAcc);
+    final hand = TextStyle(
+      fontSize: 16,
+      height: 1.2,
+      fontWeight: FontWeight.w600,
+      fontStyle: FontStyle.italic,
+      color: t.pen,
+    );
+    return ExcludeSemantics(
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Transform.rotate(
+          angle: -1.2 * math.pi / 180,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: t.paper,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: t.pop,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      'DANH SÁCH GHI ĐIỂM',
+                      style: printed.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.66,
+                      ),
+                    ),
+                  ),
+                  for (final r in _rows)
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: t.paperLine)),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            child: Text(r.$1, style: printed),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            flex: 10,
+                            child: Text(
+                              r.$2,
+                              style: printed,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          SizedBox(width: 40, child: Text(r.$3, style: hand)),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            flex: 13,
+                            child: Text(
+                              r.$4,
+                              style: hand,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  _DashedLinePainter(this.color);
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+    const dash = 4.0;
+    const gap = 3.0;
+    var x = 0.0;
+    while (x < size.width) {
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(math.min(x + dash, size.width), 0),
+        paint,
+      );
+      x += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedLinePainter old) => old.color != color;
 }
