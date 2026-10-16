@@ -8,11 +8,14 @@ import '../features/authentication/login_screen.dart';
 import '../features/authentication/home_screen.dart';
 import '../features/academic_catalog/catalog_screen.dart';
 import '../features/academic_catalog/fields.dart';
+import '../features/academic_catalog/subjects_weights_screen.dart';
+import '../features/academic_catalog/teaching_assignments_screen.dart';
 import '../features/gradebooks/gradebook_screen.dart';
 import '../features/gradebooks/gradebooks_screen.dart';
 import '../features/recognition/review_screen.dart';
 import '../features/final_results/student_results_screen.dart';
 import '../features/final_results/classification_policy_screen.dart';
+import '../features/final_results/final_results_screen.dart';
 import '../features/timetable/timetable_screen.dart';
 
 final routerProvider = Provider.family<GoRouter, String>((
@@ -44,6 +47,18 @@ final routerProvider = Provider.family<GoRouter, String>((
         path: '/catalog/:resource',
         builder: (_, state) =>
             CatalogScreen(resource: state.pathParameters['resource']!),
+      ),
+      GoRoute(
+        path: '/admin/teaching-assignments',
+        builder: (_, state) => const TeachingAssignmentsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/subjects-weights',
+        builder: (_, state) => const SubjectsWeightsScreen(),
+      ),
+      GoRoute(
+        path: '/final-results',
+        builder: (_, state) => const FinalResultsScreen(),
       ),
       GoRoute(
         path: '/gradebooks',
@@ -87,6 +102,15 @@ final routerProvider = Provider.family<GoRouter, String>((
       }
       if (state.uri.path == '/classification-policy' &&
           user.role.value != 'QUAN_TRI_VIEN') {
+        return '/';
+      }
+      // Route mới (bước 13): chỉ thêm điều kiện, không sửa điều kiện cũ.
+      if ((state.uri.path == '/admin/teaching-assignments' ||
+              state.uri.path == '/admin/subjects-weights') &&
+          user.role.value != 'QUAN_TRI_VIEN') {
+        return '/';
+      }
+      if (state.uri.path == '/final-results' && user.role.value == 'HOC_SINH') {
         return '/';
       }
       final resource = state.pathParameters['resource'];

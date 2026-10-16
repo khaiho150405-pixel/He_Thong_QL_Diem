@@ -687,6 +687,12 @@ class AppSidebar extends ConsumerWidget {
                         route: '/classification-policy',
                         countBadge: null,
                       ),
+                      (
+                        icon: Icons.workspace_premium_outlined,
+                        title: 'Tổng kết & xếp loại',
+                        route: '/final-results',
+                        countBadge: null,
+                      ),
                     ],
                   ),
                   buildNavGroup(
@@ -737,6 +743,12 @@ class AppSidebar extends ConsumerWidget {
                         route: '/catalog/components',
                         countBadge: null,
                       ),
+                      (
+                        icon: Icons.account_tree_outlined,
+                        title: 'Môn học & hệ số',
+                        route: '/admin/subjects-weights',
+                        countBadge: null,
+                      ),
                     ],
                   ),
                   buildNavGroup(
@@ -763,6 +775,12 @@ class AppSidebar extends ConsumerWidget {
                         countBadge: null,
                       ),
                       (
+                        icon: Icons.groups_outlined,
+                        title: 'Giáo viên & phân công',
+                        route: '/admin/teaching-assignments',
+                        countBadge: null,
+                      ),
+                      (
                         icon: Icons.manage_accounts_outlined,
                         title: 'Tài khoản',
                         route: '/catalog/accounts',
@@ -771,12 +789,18 @@ class AppSidebar extends ConsumerWidget {
                     ],
                   ),
                 ],
-                if (role == 'GIAO_VIEN')
+                if (role == 'GIAO_VIEN') ...[
                   buildNavTile(
                     icon: Icons.table_chart_outlined,
                     title: 'Bảng điểm',
                     route: '/gradebooks',
                   ),
+                  buildNavTile(
+                    icon: Icons.workspace_premium_outlined,
+                    title: 'Tổng kết & xếp loại',
+                    route: '/final-results',
+                  ),
+                ],
                 if (role == 'HOC_SINH')
                   buildNavTile(
                     icon: Icons.fact_check_outlined,
