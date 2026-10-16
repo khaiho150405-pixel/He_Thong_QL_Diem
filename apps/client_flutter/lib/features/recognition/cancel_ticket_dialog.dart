@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/design_tokens.dart';
 import '../../app/widgets/app_controls.dart';
 import '../authentication/session.dart';
 import 'repository.dart';
@@ -21,13 +22,18 @@ Future<bool?> showCancelTicketDialog({
   VoidCallback? onSuccess,
 }) async {
   final isMobile = MediaQuery.sizeOf(context).width < 600;
+  final t = context.tokens;
   if (isMobile) {
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      backgroundColor: t.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
+        side: BorderSide(color: t.line),
       ),
       builder: (ctx) => CancelTicketSheetContent(
         key: const ValueKey('cancel-ticket-bottom-sheet'),
@@ -43,7 +49,11 @@ Future<bool?> showCancelTicketDialog({
       context: context,
       builder: (ctx) => Dialog(
         key: const ValueKey('cancel-ticket-dialog'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: t.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: t.line),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: CancelTicketSheetContent(
@@ -135,6 +145,7 @@ class _CancelTicketSheetContentState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final t = context.tokens;
     final canSubmit = !busy && resolvedReason != null;
 
     final insets = MediaQuery.viewInsetsOf(context);
@@ -152,7 +163,7 @@ class _CancelTicketSheetContentState
         children: [
           Row(
             children: [
-              Icon(Icons.cancel_outlined, color: colorScheme.error, size: 24),
+              Icon(Icons.cancel_outlined, color: t.bad, size: 24),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -167,9 +178,7 @@ class _CancelTicketSheetContentState
           const SizedBox(height: 12),
           Text(
             'Kết quả nhận dạng sẽ bị bỏ, không ghi điểm. Có thể tải lại ảnh đúng sau khi hủy.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: t.ink2),
           ),
           const SizedBox(height: 16),
           Text(
@@ -187,6 +196,20 @@ class _CancelTicketSheetContentState
                 ChoiceChip(
                   key: ValueKey('cancel-reason-$preset'),
                   label: Text(preset),
+                  selectedColor: t.priSoft,
+                  backgroundColor: t.surface,
+                  side: BorderSide(
+                    color: selectedPreset == preset ? t.pri : t.line2,
+                  ),
+                  shape: const StadiumBorder(),
+                  labelStyle: TextStyle(
+                    fontSize: 13,
+                    fontWeight: selectedPreset == preset
+                        ? FontWeight.w600
+                        : FontWeight.w500,
+                    color: selectedPreset == preset ? t.priLink : t.ink2,
+                  ),
+                  checkmarkColor: t.priLink,
                   selected: selectedPreset == preset,
                   onSelected: busy
                       ? null
@@ -228,17 +251,17 @@ class _CancelTicketSheetContentState
                 key: const ValueKey('confirm-cancel-ticket-button'),
                 onPressed: canSubmit ? _submit : null,
                 icon: busy
-                    ? const SizedBox.square(
+                    ? SizedBox.square(
                         dimension: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colorScheme.onError,
                         ),
                       )
                     : const Icon(Icons.cancel_outlined, size: 20),
                 label: const Text('Hủy phiếu'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.error,
+                  backgroundColor: t.bad,
                   foregroundColor: colorScheme.onError,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
@@ -288,17 +311,17 @@ class _CancelTicketSheetContentState
                   key: const ValueKey('confirm-cancel-ticket-button'),
                   onPressed: canSubmit ? _submit : null,
                   icon: busy
-                      ? const SizedBox.square(
+                      ? SizedBox.square(
                           dimension: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: colorScheme.onError,
                           ),
                         )
                       : const Icon(Icons.cancel_outlined, size: 20),
                   label: const Text('Hủy phiếu'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.error,
+                    backgroundColor: t.bad,
                     foregroundColor: colorScheme.onError,
                     minimumSize: const Size(120, AppControlMetrics.height),
                     shape: RoundedRectangleBorder(

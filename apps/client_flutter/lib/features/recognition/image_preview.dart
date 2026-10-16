@@ -1,39 +1,52 @@
 import 'package:flutter/material.dart';
 
+import '../../app/design_tokens.dart';
+
 Future<void> showRecognitionImage(
   BuildContext context, {
   required Widget image,
 }) => showDialog<void>(
   context: context,
-  builder: (context) => Dialog.fullscreen(
-    child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Xem ảnh bảng điểm'),
-        leading: IconButton(
-          tooltip: 'Đóng ảnh',
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
+  builder: (context) {
+    final t = context.tokens;
+    return Dialog.fullscreen(
+      backgroundColor: t.bg,
+      child: Scaffold(
+        backgroundColor: t.bg,
+        appBar: AppBar(
+          title: const Text('Xem ảnh bảng điểm'),
+          leading: IconButton(
+            tooltip: 'Đóng ảnh',
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Text(
+                'Dùng hai ngón tay hoặc con lăn để phóng to, kéo để xem các ô điểm.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: t.ink2),
+              ),
+            ),
+            Expanded(
+              child: ColoredBox(
+                color: t.subtle,
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 8,
+                  child: SizedBox.expand(child: image),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(12),
-            child: Text(
-              'Dùng hai ngón tay hoặc con lăn để phóng to, kéo để xem các ô điểm.',
-            ),
-          ),
-          Expanded(
-            child: InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 8,
-              child: SizedBox.expand(child: image),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
+    );
+  },
 );
 
 String recognitionFailureMessage(String? code) => switch (code) {
