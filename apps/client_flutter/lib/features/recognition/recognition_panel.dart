@@ -10,6 +10,7 @@ import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_progress.dart';
 import 'cancel_ticket_dialog.dart';
+import 'capture_guide_screen.dart';
 import 'image_preview.dart';
 import 'review_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +35,7 @@ class RecognitionPanel extends ConsumerStatefulWidget {
     required this.enabled,
     required this.onApproved,
     this.embedded = false,
+    this.classSubjectLabel,
   });
 
   final num gradebookId;
@@ -42,6 +44,10 @@ class RecognitionPanel extends ConsumerStatefulWidget {
   final bool enabled;
   final VoidCallback onApproved;
   final bool embedded;
+
+  /// Nhãn "Lớp · Môn" (ví dụ `10A1 · Toán`) cho màn hướng dẫn chụp; chỉ để
+  /// hiển thị, `null` thì pill chỉ có tên cột điểm.
+  final String? classSubjectLabel;
 
   @override
   ConsumerState<RecognitionPanel> createState() => _RecognitionPanelState();
@@ -208,6 +214,34 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     } finally {
       if (mounted) setState(() => picking = false);
     }
+  }
+
+  /// Chọn ảnh từ màn hướng dẫn chụp bằng đúng `pickImage`. Trả `true` khi có
+  /// ảnh mới hoặc thông báo lỗi để panel hiển thị (màn hướng dẫn tự đóng);
+  /// `false` khi bị chặn hoặc người dùng hủy (màn ở lại).
+  Future<bool> _pickFromGuide({required bool camera}) async {
+    final before = image;
+    await pickImage(camera: camera);
+    return mounted && (!identical(image, before) || imageError != null);
+  }
+
+  Future<void> _openCaptureGuide(bool enabled) {
+    String? componentName;
+    for (final item in widget.components) {
+      if (item.id == componentId) componentName = item.name;
+    }
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => CaptureGuideScreen(
+          classSubjectLabel: widget.classSubjectLabel,
+          componentLabel: componentName,
+          enabled: enabled,
+          onCapture: () => _pickFromGuide(camera: true),
+          onPickFromLibrary: () => _pickFromGuide(camera: false),
+        ),
+      ),
+    );
   }
 
   Future<void> upload() async {
@@ -702,6 +736,22 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                                         : null,
                                     icon: Icons.camera_alt_outlined,
                                     label: 'Chụp bảng điểm',
+                                  ),
+                                ),
+                              if (camera &&
+                                  MediaQuery.sizeOf(context).width < 600)
+                                SizedBox(
+                                  width: buttonWidth,
+                                  height: 48,
+                                  child: TextButton.icon(
+                                    key: const ValueKey(
+                                      'recognition-capture-guide',
+                                    ),
+                                    onPressed: () => _openCaptureGuide(enabled),
+                                    icon: const Icon(
+                                      Icons.center_focus_strong_outlined,
+                                    ),
+                                    label: const Text('Hướng dẫn chụp'),
                                   ),
                                 ),
                               SizedBox(

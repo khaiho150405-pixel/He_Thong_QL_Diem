@@ -1070,6 +1070,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         enabled: !locked && !busy && !conflict,
         onApproved: widget.onReload,
         embedded: true,
+        classSubjectLabel:
+            '${widget.data.book.className} · ${widget.data.book.subjectName}',
       ),
     );
   }
