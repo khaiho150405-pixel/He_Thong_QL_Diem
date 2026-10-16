@@ -5,6 +5,8 @@ import 'package:excel/excel.dart' hide Border;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_dialog.dart';
 import '../authentication/session.dart';
 import 'repository.dart';
 
@@ -204,18 +206,26 @@ class _CatalogImportDialogState extends State<CatalogImportDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    icon: const Icon(Icons.upload_file_outlined),
-    title: Text(_title),
-    content: SizedBox(
-      width: 620,
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return AppDialog(
+      title: _title,
+      maxWidth: 620,
+      cancelLabel: 'Đóng',
+      confirmLabel: 'Nhập ${_rows.length} dòng',
+      confirmEnabled: !(_busy || _rows.isEmpty),
+      onCancel: _busy ? () {} : () => Navigator.pop(context),
+      onConfirm: _import,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(_hint),
+          Text(_hint, style: TextStyle(color: t.ink2)),
           const SizedBox(height: 8),
-          Text('Các cột bắt buộc: ${_headers.join(', ')}'),
+          Text(
+            'Các cột bắt buộc: ${_headers.join(', ')}',
+            style: TextStyle(color: t.ink2),
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
@@ -237,27 +247,26 @@ class _CatalogImportDialogState extends State<CatalogImportDialog> {
             const SizedBox(height: 16),
             Text(
               '$_fileName · ${_rows.length} dòng hợp lệ',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(fontWeight: FontWeight.w700, color: t.ink),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(8),
+                color: t.subtle,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: t.line),
               ),
               child: Text(
                 _rows.take(3).map((row) => row.values.join(' · ')).join('\n'),
                 maxLines: 4,
+                style: TextStyle(color: t.ink2),
               ),
             ),
           ],
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
+            Text(_error!, style: TextStyle(color: t.bad)),
           ],
           if (_busy)
             const Padding(
@@ -266,17 +275,6 @@ class _CatalogImportDialogState extends State<CatalogImportDialog> {
             ),
         ],
       ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: _busy ? null : () => Navigator.pop(context),
-        child: const Text('Đóng'),
-      ),
-      FilledButton.icon(
-        onPressed: _busy || _rows.isEmpty ? null : _import,
-        icon: const Icon(Icons.cloud_upload_outlined),
-        label: Text('Nhập ${_rows.length} dòng'),
-      ),
-    ],
-  );
+    );
+  }
 }

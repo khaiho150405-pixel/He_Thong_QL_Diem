@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../app/widgets/role_badge.dart';
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_badge.dart';
+import '../../app/widgets/app_dialog.dart';
 import '../authentication/session.dart';
 import 'repository.dart';
 import 'fields.dart';
@@ -117,11 +119,17 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     final username = TextEditingController();
     final password = TextEditingController();
     final accountForm = GlobalKey<FormState>();
-    final submitted = await showDialog<bool>(
+    final submitted = await showAppDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Tạo tài khoản giáo viên'),
-        content: Form(
+      builder: (dialogContext) => AppDialog(
+        title: 'Tạo tài khoản giáo viên',
+        confirmLabel: 'Tạo và liên kết',
+        onConfirm: () {
+          if (accountForm.currentState!.validate()) {
+            Navigator.pop(dialogContext, true);
+          }
+        },
+        child: Form(
           key: accountForm,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -151,20 +159,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (accountForm.currentState!.validate()) {
-                Navigator.pop(dialogContext, true);
-              }
-            },
-            child: const Text('Tạo và liên kết'),
-          ),
-        ],
       ),
     );
     if (submitted != true || !mounted) {
@@ -282,21 +276,24 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             widget.row != null &&
             f.key == 'ma_giao_vien');
     if (f.kind == 'boolean') {
+      final t = context.tokens;
       return Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant.withAlpha(80),
-          ),
+          color: t.subtle,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: t.line),
         ),
         child: SwitchListTile(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           title: Text(
             f.label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: t.ink,
+            ),
           ),
           value: values[f.key] as bool? ?? false,
           onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
@@ -327,12 +324,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             .map(
               (r) => DropdownMenuItem(
                 value: r,
-                child: Row(
-                  children: [
-                    RoleBadge(role: r, compact: true),
-                    const SizedBox(width: 8),
-                    Text(roleLabel(r)),
-                  ],
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: roleAppBadge(r),
                 ),
               ),
             )
@@ -414,10 +408,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           if (rows.isEmpty)
             Text(
               'Không còn tài khoản giáo viên chưa liên kết.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 12, color: context.tokens.ink3),
             ),
           Align(
             alignment: Alignment.centerRight,
@@ -467,150 +458,129 @@ class _EditDialogState extends ConsumerState<EditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tokens;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final isNew = widget.row == null;
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withAlpha(25),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              isNew
-                  ? Icons.add_circle_outline_rounded
-                  : editable
-                  ? Icons.edit_note_rounded
-                  : Icons.visibility_outlined,
-              color: colorScheme.primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${isNew
-                      ? 'Thêm mới'
-                      : editable
-                      ? 'Chỉnh sửa'
-                      : 'Thông tin'} ${widget.spec.label.toLowerCase()}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (!isNew && widget.row != null)
-                  Text(
-                    rowLabel(widget.row!),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+    return AppDialog(
+      title:
+          '${isNew
+              ? 'Thêm mới'
+              : editable
+              ? 'Chỉnh sửa'
+              : 'Thông tin'} ${widget.spec.label.toLowerCase()}',
+      cancelLabel: 'Đóng',
+      confirmLabel: busy ? 'Đang lưu…' : 'Lưu',
+      confirmEnabled: !(busy || loading),
+      showFooter: editable,
+      onCancel: busy ? () {} : () => Navigator.pop(context),
+      onConfirm: save,
+      child: loading
+          ? SizedBox(
+              height: 120,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Đang tải danh mục liên kết…',
+                      style: TextStyle(color: t.ink2),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: loading
-            ? const SizedBox(
-                height: 120,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 12),
-                      Text('Đang tải danh mục liên kết…'),
-                    ],
-                  ),
-                ),
-              )
-            : SingleChildScrollView(
-                child: Form(
-                  key: form,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (widget.spec.key == 'semester-weights')
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 16),
-                          child: Text(
-                            'Hệ số này thay thế hệ số mặc định của thành phần '
-                            'trong học kỳ đã chọn. Nhập từ 0.01 đến 9.99 '
-                            '(ví dụ 2.00). Khi môn học đã có bảng điểm chốt '
-                            'trong học kỳ, hệ số không thể sửa hoặc xóa.',
-                          ),
-                        ),
-                      if (error != null)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer.withAlpha(120),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: colorScheme.error.withAlpha(80),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                size: 18,
-                                color: colorScheme.error,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  error!,
-                                  style: TextStyle(
-                                    color: colorScheme.error,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      for (final f in fields.where(
-                        (f) => editable || f.reference == null,
-                      ))
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: field(f),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: busy ? null : () => Navigator.pop(context),
-          child: const Text('Đóng'),
-        ),
-        if (error != null)
-          TextButton(
-            onPressed: busy ? null : loadChoices,
-            child: const Text('Tải lại'),
-          ),
-        if (editable)
-          FilledButton(
-            onPressed: busy || loading ? null : save,
-            child: Text(busy ? 'Đang lưu…' : 'Lưu'),
-          ),
-      ],
+            )
+          : Form(
+              key: form,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!isNew && widget.row != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        rowLabel(widget.row!),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: t.ink3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  if (widget.spec.key == 'semester-weights')
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'Hệ số này thay thế hệ số mặc định của thành phần '
+                        'trong học kỳ đã chọn. Nhập từ 0.01 đến 9.99 '
+                        '(ví dụ 2.00). Khi môn học đã có bảng điểm chốt '
+                        'trong học kỳ, hệ số không thể sửa hoặc xóa.',
+                        style: TextStyle(color: t.ink2),
+                      ),
+                    ),
+                  if (error != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: t.badSoft,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(color: t.badLine),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            size: 18,
+                            color: t.bad,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              error!,
+                              style: TextStyle(color: t.bad, fontSize: 13),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: busy ? null : loadChoices,
+                            child: const Text('Tải lại'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  for (final f in fields.where(
+                    (f) => editable || f.reference == null,
+                  ))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: field(f),
+                    ),
+                  if (!editable)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Đóng'),
+                      ),
+                    ),
+                ],
+              ),
+            ),
     );
   }
 }
+
+/// Nhãn vai trò dạng [AppBadge]: quản trị viên đỏ, giáo viên xanh, học sinh
+/// trung tính (theo bảng tài khoản của prototype).
+AppBadge roleAppBadge(String role) => AppBadge(
+  roleLabel(role),
+  tone: switch (role) {
+    'QUAN_TRI_VIEN' => AppBadgeTone.bad,
+    'GIAO_VIEN' => AppBadgeTone.info,
+    _ => AppBadgeTone.neutral,
+  },
+  dot: false,
+);

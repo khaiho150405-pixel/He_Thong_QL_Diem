@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_avatar.dart';
+import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_controls.dart';
+import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../../app/widgets/empty_state.dart';
-import '../../app/widgets/role_badge.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../authentication/session.dart';
 import '../../core/vietnamese_sort.dart';
@@ -395,23 +398,15 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   }
 
   Future<void> remove(Json row) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Xóa bản ghi chưa sử dụng?'),
-        content: Text(
+      builder: (ctx) => AppDialog(
+        title: 'Xóa bản ghi chưa sử dụng?',
+        confirmLabel: 'Xóa',
+        danger: true,
+        child: Text(
           'Xóa ${rowLabel(row)}? Dữ liệu đã được tham chiếu sẽ được giữ lại.',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xóa'),
-          ),
-        ],
       ),
     );
     if (confirmed != true) return;
@@ -457,7 +452,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return AppScaffold(
       title: spec.label,
@@ -504,12 +498,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               children: [
                 // Học sinh chỉ nhận đúng hồ sơ của mình từ backend, nên không
                 // hiển thị bộ lọc/tìm kiếm không có ý nghĩa cho một bản ghi.
-                if (!studentViewer) _buildFilterBar(colorScheme, theme),
+                if (!studentViewer) _buildFilterBar(theme),
 
                 // Student Sort Toolbar
                 if (spec.key == 'students' && !studentViewer) ...[
                   const SizedBox(height: 8),
-                  _buildStudentSortToolbar(colorScheme, theme),
+                  _buildStudentSortToolbar(theme),
                 ],
 
                 const SizedBox(height: 16),
@@ -577,154 +571,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         });
                       }
 
-                      if (rows.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.search_off_rounded,
-                                size: 48,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(height: 12),
-                              const Text('Chưa có dữ liệu phù hợp.'),
-                              if (_hasActiveFilter) ...[
-                                const SizedBox(height: 8),
-                                TextButton.icon(
-                                  onPressed: _resetFilters,
-                                  icon: const Icon(Icons.refresh_rounded),
-                                  label: const Text('Xóa bộ lọc'),
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      }
-
-                      final isClientPaged = data.nextCursor == null;
-                      const pageSize = 50;
-                      final totalClientPages = (rows.length / pageSize).ceil();
-                      final safeClientPage = _clientPage.clamp(
-                        0,
-                        (totalClientPages - 1).clamp(0, 9999),
-                      );
-                      final displayRows =
-                          isClientPaged && rows.length > pageSize
-                          ? rows
-                                .skip(safeClientPage * pageSize)
-                                .take(pageSize)
-                                .toList()
-                          : rows;
-
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: LayoutBuilder(
-                              builder: (context, box) {
-                                if (box.maxWidth >= 768) {
-                                  return GridView.builder(
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisExtent: 94,
-                                          crossAxisSpacing: 12,
-                                          mainAxisSpacing: 10,
-                                        ),
-                                    itemCount: displayRows.length,
-                                    itemBuilder: (context, index) =>
-                                        _buildRowCard(
-                                          context,
-                                          displayRows[index],
-                                          colorScheme,
-                                          theme,
-                                        ),
-                                  );
-                                }
-                                return ListView.separated(
-                                  itemCount: displayRows.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 10),
-                                  itemBuilder: (context, index) =>
-                                      _buildRowCard(
-                                        context,
-                                        displayRows[index],
-                                        colorScheme,
-                                        theme,
-                                      ),
-                                );
-                              },
-                            ),
-                          ),
-
-                          // Pagination Controls
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                if (isClientPaged && totalClientPages > 1) ...[
-                                  TextButton(
-                                    onPressed: safeClientPage > 0
-                                        ? () => setState(
-                                            () => _clientPage =
-                                                safeClientPage - 1,
-                                          )
-                                        : null,
-                                    child: const Text('Trang trước'),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    child: Text(
-                                      'Trang ${safeClientPage + 1} / $totalClientPages (${rows.length} mục)',
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed:
-                                        safeClientPage < totalClientPages - 1
-                                        ? () => setState(
-                                            () => _clientPage =
-                                                safeClientPage + 1,
-                                          )
-                                        : null,
-                                    child: const Text('Trang sau'),
-                                  ),
-                                ] else ...[
-                                  TextButton(
-                                    onPressed: cursors.length > 1
-                                        ? () => setState(() {
-                                            cursors.removeLast();
-                                            reload();
-                                          })
-                                        : null,
-                                    child: const Text('Trang trước'),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    child: Text(
-                                      'Trang ${cursors.length} (${rows.length} mục)',
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: data.nextCursor != null
-                                        ? () => setState(() {
-                                            cursors.add(data.nextCursor);
-                                            reload();
-                                          })
-                                        : null,
-                                    child: const Text('Trang sau'),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
+                      if (rows.isEmpty) return _buildEmptyResult();
+                      return _buildResults(data, rows);
                     },
                   ),
                 ),
@@ -736,7 +584,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  Widget _buildFilterBar(ColorScheme colorScheme, ThemeData theme) {
+  Widget _buildFilterBar(ThemeData theme) {
+    final t = context.tokens;
     if (_loadingReferences) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
@@ -761,11 +610,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     ].where((b) => b).length;
 
     return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: colorScheme.outlineVariant.withAlpha(80)),
-      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Column(
@@ -780,35 +624,34 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.filter_alt_rounded,
-                      size: 18,
-                      color: colorScheme.primary,
-                    ),
+                    Icon(Icons.filter_alt_rounded, size: 18, color: t.priLink),
                     const SizedBox(width: 8),
                     Text(
                       'Bộ lọc hệ thống',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: t.ink,
                       ),
                     ),
                     if (activeCount > 0) ...[
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
+                      DecoratedBox(
                         decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          borderRadius: BorderRadius.circular(12),
+                          color: t.pri,
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
-                        child: Text(
-                          '$activeCount đang chọn',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onPrimary,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          child: Text(
+                            '$activeCount đang chọn',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: t.onPri,
+                            ),
                           ),
                         ),
                       ),
@@ -832,7 +675,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               runSpacing: 10,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                ..._buildResourceDropdowns(colorScheme),
+                ..._buildResourceDropdowns(),
                 SizedBox(
                   width: AppControlMetrics.responsiveFieldWidth(context),
                   height: AppControlMetrics.height,
@@ -853,26 +696,41 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     },
                     optionsViewBuilder: (context, onSelected, options) => Align(
                       alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 6,
-                        borderRadius: BorderRadius.circular(10),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 360,
-                            maxHeight: 280,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          boxShadow: t.pop,
+                        ),
+                        child: Material(
+                          color: t.surface,
+                          clipBehavior: Clip.antiAlias,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            side: BorderSide(color: t.line),
                           ),
-                          child: ListView(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            shrinkWrap: true,
-                            children: [
-                              for (final option in options)
-                                ListTile(
-                                  dense: true,
-                                  leading: const Icon(Icons.search, size: 18),
-                                  title: Text(option, maxLines: 2),
-                                  onTap: () => onSelected(option),
-                                ),
-                            ],
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: 360,
+                              maxHeight: 280,
+                            ),
+                            child: ListView(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              shrinkWrap: true,
+                              children: [
+                                for (final option in options)
+                                  ListTile(
+                                    dense: true,
+                                    hoverColor: t.hover,
+                                    leading: Icon(
+                                      Icons.search,
+                                      size: 18,
+                                      color: t.ink3,
+                                    ),
+                                    title: Text(option, maxLines: 2),
+                                    onTap: () => onSelected(option),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -883,10 +741,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                               controller: controller,
                               focusNode: focusNode,
                               textAlignVertical: TextAlignVertical.center,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: theme.colorScheme.onSurface,
-                              ),
+                              style: TextStyle(fontSize: 13, color: t.ink),
                               decoration: AppControlMetrics.decoration(
                                 context,
                                 label: 'Tìm kiếm',
@@ -920,7 +775,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  List<Widget> _buildResourceDropdowns(ColorScheme colorScheme) {
+  List<Widget> _buildResourceDropdowns() {
     switch (widget.resource) {
       case 'students':
         final classes = _references['classes'] ?? [];
@@ -1308,13 +1163,14 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  Widget _buildStudentSortToolbar(ColorScheme colorScheme, ThemeData theme) {
+  Widget _buildStudentSortToolbar(ThemeData theme) {
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outlineVariant.withAlpha(80)),
+        color: t.subtle,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: t.line),
       ),
       child: Wrap(
         alignment: WrapAlignment.spaceBetween,
@@ -1327,47 +1183,34 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Icon(Icons.sort_rounded, size: 16, color: colorScheme.primary),
+              Icon(Icons.sort_rounded, size: 16, color: t.priLink),
               const SizedBox(width: 4),
               Text(
                 'Sắp xếp:',
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
+                  color: t.ink,
                 ),
               ),
               const SizedBox(width: 4),
-              _buildSortChip(
-                'name',
-                'Tên học sinh',
-                Icons.person_outline,
-                colorScheme,
-              ),
-              _buildSortChip(
-                'class',
-                'Lớp',
-                Icons.meeting_room_outlined,
-                colorScheme,
-              ),
+              _buildSortChip('name', 'Tên học sinh', Icons.person_outline),
+              _buildSortChip('class', 'Lớp', Icons.meeting_room_outlined),
               _buildSortChip(
                 'status',
                 'Tình trạng',
                 Icons.check_circle_outline,
-                colorScheme,
               ),
             ],
           ),
           InkWell(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             onTap: () => setState(() => _sortAscending = !_sortAscending),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withAlpha(120),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: colorScheme.outlineVariant.withAlpha(100),
-                ),
+                color: t.surface,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: t.line),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1377,15 +1220,15 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         ? Icons.arrow_upward_rounded
                         : Icons.arrow_downward_rounded,
                     size: 14,
-                    color: colorScheme.primary,
+                    color: t.priLink,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     _sortAscending ? 'Tăng dần (A–Z)' : 'Giảm dần (Z–A)',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
+                      color: t.ink,
                     ),
                   ),
                 ],
@@ -1397,15 +1240,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  Widget _buildSortChip(
-    String key,
-    String label,
-    IconData icon,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildSortChip(String key, String label, IconData icon) {
+    final t = context.tokens;
     final isSelected = _studentSortBy == key;
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       onTap: () {
         setState(() {
           if (_studentSortBy == key) {
@@ -1420,33 +1259,21 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.outlineVariant.withAlpha(120),
-          ),
+          color: isSelected ? t.priSoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: isSelected ? t.priLine : t.line),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 13,
-              color: isSelected
-                  ? colorScheme.onPrimaryContainer
-                  : colorScheme.onSurfaceVariant,
-            ),
+            Icon(icon, size: 14, color: isSelected ? t.priLink : t.ink2),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.onSurfaceVariant,
+                color: isSelected ? t.priLink : t.ink2,
               ),
             ),
           ],
@@ -1455,36 +1282,509 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  Widget _buildRowCard(
-    BuildContext context,
-    Json row,
-    ColorScheme colorScheme,
-    ThemeData theme,
-  ) {
-    final isAccount = spec.key == 'accounts';
-    final isStudent = spec.key == 'students';
-    final studentId = isStudent ? (row['ma_hoc_sinh'] as num?) : null;
+  Widget _buildEmptyResult() {
+    final t = context.tokens;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.search_off_rounded, size: 48, color: t.ink3),
+          const SizedBox(height: 12),
+          Text('Chưa có dữ liệu phù hợp.', style: TextStyle(color: t.ink2)),
+          if (_hasActiveFilter) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _resetFilters,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Xóa bộ lọc'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Học sinh, giáo viên và tài khoản hiển thị dạng bảng khi đủ rộng; các tài
+  /// nguyên còn lại giữ dạng thẻ.
+  bool get _usesTable =>
+      const {'students', 'teachers', 'accounts'}.contains(spec.key);
+
+  Widget _buildResults(CatalogPageData data, List<Json> rows) {
+    final isClientPaged = data.nextCursor == null;
+    const pageSize = 50;
+    final totalClientPages = (rows.length / pageSize).ceil();
+    final safeClientPage = _clientPage.clamp(
+      0,
+      (totalClientPages - 1).clamp(0, 9999),
+    );
+    final displayRows = isClientPaged && rows.length > pageSize
+        ? rows.skip(safeClientPage * pageSize).take(pageSize).toList()
+        : rows;
+
+    Widget pagination(EdgeInsets padding) => _buildPagination(
+      data: data,
+      rowCount: rows.length,
+      isClientPaged: isClientPaged,
+      totalClientPages: totalClientPages,
+      safeClientPage: safeClientPage,
+      padding: padding,
+    );
+
+    return LayoutBuilder(
+      builder: (context, box) {
+        final wide = box.maxWidth >= 768;
+        if (wide && _usesTable) {
+          return _buildTable(
+            displayRows,
+            pagination(const EdgeInsets.symmetric(vertical: AppSpacing.sm)),
+          );
+        }
+        final theme = Theme.of(context);
+        return Column(
+          children: [
+            Expanded(
+              child: wide
+                  ? GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisExtent: 94,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 10,
+                          ),
+                      itemCount: displayRows.length,
+                      itemBuilder: (context, index) =>
+                          _buildRowCard(context, displayRows[index], theme),
+                    )
+                  : ListView.separated(
+                      itemCount: displayRows.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) =>
+                          _buildRowCard(context, displayRows[index], theme),
+                    ),
+            ),
+            pagination(const EdgeInsets.only(bottom: 24)),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPagination({
+    required CatalogPageData data,
+    required int rowCount,
+    required bool isClientPaged,
+    required int totalClientPages,
+    required int safeClientPage,
+    required EdgeInsets padding,
+  }) {
+    final t = context.tokens;
+    return Padding(
+      padding: padding,
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: t.ink2),
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            if (isClientPaged && totalClientPages > 1) ...[
+              TextButton(
+                onPressed: safeClientPage > 0
+                    ? () => setState(() => _clientPage = safeClientPage - 1)
+                    : null,
+                child: const Text('Trang trước'),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'Trang ${safeClientPage + 1} / $totalClientPages ($rowCount mục)',
+                ),
+              ),
+              TextButton(
+                onPressed: safeClientPage < totalClientPages - 1
+                    ? () => setState(() => _clientPage = safeClientPage + 1)
+                    : null,
+                child: const Text('Trang sau'),
+              ),
+            ] else ...[
+              TextButton(
+                onPressed: cursors.length > 1
+                    ? () => setState(() {
+                        cursors.removeLast();
+                        reload();
+                      })
+                    : null,
+                child: const Text('Trang trước'),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('Trang ${cursors.length} ($rowCount mục)'),
+              ),
+              TextButton(
+                onPressed: data.nextCursor != null
+                    ? () => setState(() {
+                        cursors.add(data.nextCursor);
+                        reload();
+                      })
+                    : null,
+                child: const Text('Trang sau'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------- Bảng
+
+  Widget _buildTable(List<Json> rows, Widget pagination) {
+    final t = context.tokens;
+    final columns = _tableColumns(t);
+    final radius = BorderRadius.circular(AppRadius.md);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Flexible(
+          child: DecoratedBox(
+            key: ValueKey('catalog-table-${spec.key}'),
+            decoration: BoxDecoration(
+              color: t.surface,
+              borderRadius: radius,
+              border: Border.all(color: t.line),
+            ),
+            child: ClipRRect(
+              borderRadius: radius,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildTableHeader(t, columns),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: rows.length,
+                      itemBuilder: (context, index) => _buildTableRow(
+                        t,
+                        columns,
+                        rows[index],
+                        isLast: index == rows.length - 1,
+                      ),
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: t.line)),
+                    ),
+                    child: pagination,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xxl),
+      ],
+    );
+  }
+
+  static const _cellPadding = EdgeInsets.symmetric(horizontal: 14);
+  static const _cellGap = 12.0;
+
+  Widget _tableCellFrame(_CatalogColumn column, Widget child) {
+    final aligned = Align(alignment: Alignment.centerLeft, child: child);
+    return column.width != null
+        ? SizedBox(width: column.width, child: aligned)
+        : Expanded(flex: column.flex, child: aligned);
+  }
+
+  List<Widget> _spaced(List<Widget> cells) => [
+    for (var i = 0; i < cells.length; i++) ...[
+      if (i > 0) const SizedBox(width: _cellGap),
+      cells[i],
+    ],
+  ];
+
+  Widget _buildTableHeader(AppTokens t, List<_CatalogColumn> columns) {
+    final style = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.36,
+      color: t.ink3,
+    );
+    return DecoratedBox(
+      key: const ValueKey('catalog-table-header'),
+      decoration: BoxDecoration(
+        color: t.subtle,
+        border: Border(bottom: BorderSide(color: t.line)),
+      ),
+      child: Padding(
+        padding: _cellPadding.add(const EdgeInsets.symmetric(vertical: 10)),
+        child: Row(
+          children: _spaced([
+            for (final column in columns)
+              _tableCellFrame(
+                column,
+                Text(
+                  column.label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: style,
+                ),
+              ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableRow(
+    AppTokens t,
+    List<_CatalogColumn> columns,
+    Json row, {
+    required bool isLast,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        hoverColor: t.hover,
+        onTap: () => edit(row),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: isLast ? null : Border(bottom: BorderSide(color: t.line)),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 56),
+            child: Padding(
+              padding: _cellPadding.add(
+                const EdgeInsets.symmetric(vertical: 8),
+              ),
+              child: Row(
+                children: _spaced([
+                  for (final column in columns)
+                    _tableCellFrame(column, column.builder(row)),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _nameCell(AppTokens t, String name) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      AppAvatar(name: name, size: AppAvatarSize.sm),
+      const SizedBox(width: 10),
+      Flexible(
+        child: Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontWeight: FontWeight.w500, color: t.ink),
+        ),
+      ),
+    ],
+  );
+
+  Widget _textCell(AppTokens t, Object? value) {
+    final text = value?.toString() ?? '';
+    return Text(
+      text.isEmpty ? '—' : text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(color: text.isEmpty ? t.ink3 : t.ink2),
+    );
+  }
+
+  Widget _actionsCell(AppTokens t, Json row) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (admin && !['accounts', 'students'].contains(spec.key))
+        IconButton(
+          tooltip: 'Xóa',
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          icon: Icon(Icons.delete_outline, size: 20, color: t.bad),
+          onPressed: () => remove(row),
+        ),
+      Icon(Icons.chevron_right, color: t.ink3),
+    ],
+  );
+
+  double get _actionsWidth =>
+      admin && !['accounts', 'students'].contains(spec.key) ? 84 : 24;
+
+  List<_CatalogColumn> _tableColumns(AppTokens t) {
+    switch (spec.key) {
+      case 'students':
+        return [
+          if (studentViewer || _showsStudentStt)
+            _CatalogColumn('STT', (row) => _studentSttCell(t, row), width: 112),
+          _CatalogColumn(
+            'Học sinh',
+            (row) => _nameCell(t, row['ho_ten']?.toString() ?? rowLabel(row)),
+            flex: 4,
+          ),
+          _CatalogColumn(
+            'Lớp',
+            (row) => _textCell(t, _extractClassName(row)),
+            flex: 2,
+          ),
+          _CatalogColumn(
+            'Ngày sinh',
+            (row) => _textCell(t, row['ngay_sinh']),
+            flex: 2,
+          ),
+          _CatalogColumn(
+            'Tình trạng',
+            (row) => row['dang_theo_hoc'] == true
+                ? const AppBadge.ok('Đang theo học')
+                : const AppBadge('Ngừng theo dõi'),
+            width: 140,
+          ),
+          _CatalogColumn(
+            'Tài khoản',
+            (row) => row['ma_nguoi_dung'] != null
+                ? const AppBadge.ok('Đã liên kết')
+                : const AppBadge('Chưa liên kết'),
+            width: 130,
+          ),
+          _CatalogColumn('', (row) => _actionsCell(t, row), width: 24),
+        ];
+      case 'teachers':
+        return [
+          _CatalogColumn(
+            'Giáo viên',
+            (row) => _nameCell(t, row['ho_ten']?.toString() ?? rowLabel(row)),
+            flex: 4,
+          ),
+          _CatalogColumn(
+            'Tổ chuyên môn',
+            (row) => _textCell(t, row['to_chuyen_mon']),
+            flex: 3,
+          ),
+          _CatalogColumn('Email', (row) => _textCell(t, row['email']), flex: 4),
+          _CatalogColumn(
+            'Điện thoại',
+            (row) => _textCell(t, row['dien_thoai']),
+            width: 120,
+          ),
+          _CatalogColumn(
+            '',
+            (row) => _actionsCell(t, row),
+            width: _actionsWidth,
+          ),
+        ];
+      default:
+        return [
+          _CatalogColumn(
+            'Tài khoản',
+            (row) => Text(
+              rowLabel(row),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontWeight: FontWeight.w600, color: t.ink),
+            ),
+            flex: 4,
+          ),
+          _CatalogColumn('Vai trò', (row) {
+            final role = row['role'] as String?;
+            return role == null ? _textCell(t, null) : _roleBadge(role);
+          }, flex: 3),
+          _CatalogColumn(
+            'Trạng thái',
+            (row) => row['active'] == true
+                ? const AppBadge.ok('Hoạt động')
+                : const AppBadge('Đã khóa'),
+            width: 140,
+          ),
+          _CatalogColumn('', (row) => _actionsCell(t, row), width: 24),
+        ];
+    }
+  }
+
+  Widget _roleBadge(String role) => roleAppBadge(role);
+
+  // ----------------------------------------------------------------- Thẻ
+
+  _Stt _sttOf(Json row) {
+    final studentId = row['ma_hoc_sinh'] as num?;
     final classStt =
         (row['stt_lop'] as num?)?.toInt() ??
         (studentId != null ? _studentClassStt[studentId] : null);
     final schoolStt =
         (row['stt_toan_truong'] as num?)?.toInt() ??
         (studentId != null ? _studentSchoolStt[studentId] : null);
-    final studentViewer = ref.read(sessionProvider)?.role.value == 'HOC_SINH';
-    final showStt = isStudent && (studentViewer || _showsStudentStt);
+    final show = studentViewer || _showsStudentStt;
     final classScope = _showsClassStudentStt;
-    final visibleStt = showStt ? (classScope ? classStt : schoolStt) : null;
+    return (
+      visible: show ? (classScope ? classStt : schoolStt) : null,
+      classStt: classStt,
+      classScope: classScope,
+      show: show,
+    );
+  }
+
+  (Color, Color, Color) _sttColors(AppTokens t, bool classScope) => classScope
+      ? (t.priSoft, t.priLine, t.priLink)
+      : (t.okSoft, t.okLine, t.ok);
+
+  Widget _sttPill(String text, (Color, Color, Color) colors) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+    decoration: BoxDecoration(
+      color: colors.$1,
+      borderRadius: BorderRadius.circular(AppRadius.xs),
+      border: Border.all(color: colors.$2),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: colors.$3,
+      ),
+    ),
+  );
+
+  /// Ô STT của bảng học sinh: số thứ tự đang hiển thị cùng phạm vi (LỚP hoặc
+  /// TRƯỜNG). Học sinh xem hồ sơ của mình còn thấy thêm STT lớp.
+  Widget _studentSttCell(AppTokens t, Json row) {
+    final stt = _sttOf(row);
+    if (stt.visible == null && !(studentViewer && stt.classStt != null)) {
+      return _textCell(t, null);
+    }
+    final colors = _sttColors(t, stt.classScope);
+    final scopeLabel = stt.classScope ? 'LỚP' : 'TRƯỜNG';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (stt.visible != null)
+          _sttPill('#${stt.visible} $scopeLabel', colors),
+        if (studentViewer && stt.classStt != null && !stt.classScope) ...[
+          if (stt.visible != null) const SizedBox(height: 4),
+          _sttPill('#${stt.classStt} LỚP', _sttColors(t, true)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRowCard(BuildContext context, Json row, ThemeData theme) {
+    final t = context.tokens;
+    final isAccount = spec.key == 'accounts';
+    final isStudent = spec.key == 'students';
+    final isTeacher = spec.key == 'teachers';
+    final _Stt stt = isStudent
+        ? _sttOf(row)
+        : (visible: null, classStt: null, classScope: false, show: false);
+    final visibleStt = stt.visible;
+    final classScope = stt.classScope;
+    final classStt = stt.classStt;
     final visibleSttLabel = classScope ? 'STT lớp' : 'STT toàn trường';
     final visibleSttShortLabel = classScope ? 'LỚP' : 'TRƯỜNG';
-    final sttBackground = classScope
-        ? const Color(0xFFE8EAF6)
-        : const Color(0xFFE0F2F1);
-    final sttBorder = classScope
-        ? const Color(0xFF9FA8DA)
-        : const Color(0xFF80CBC4);
-    final sttForeground = classScope
-        ? const Color(0xFF1A237E)
-        : const Color(0xFF004D40);
+    final sttColors = _sttColors(t, classScope);
 
     Widget? badgeWidget;
     if (isAccount) {
@@ -1495,15 +1795,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          if (roleVal != null) RoleBadge(role: roleVal, compact: true),
-          Text(
-            isActive ? 'Hoạt động' : 'Đã khóa',
-            style: TextStyle(
-              color: isActive ? Colors.green.shade800 : Colors.red.shade800,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          if (roleVal != null) _roleBadge(roleVal),
+          isActive ? const AppBadge.ok('Hoạt động') : const AppBadge('Đã khóa'),
         ],
       );
     } else if (isStudent) {
@@ -1517,94 +1810,21 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           if (visibleStt != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: sttBackground,
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: sttBorder),
-              ),
-              child: Text(
-                '$visibleSttLabel: #$visibleStt',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: sttForeground,
-                ),
-              ),
-            ),
+            _sttPill('$visibleSttLabel: #$visibleStt', sttColors),
           if (studentViewer && classStt != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8EAF6),
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: const Color(0xFF9FA8DA)),
-              ),
-              child: Text(
-                'STT lớp: #$classStt',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A237E),
-                ),
-              ),
-            ),
-          if (className.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: colorScheme.outlineVariant.withAlpha(80),
-                ),
-              ),
-              child: Text(
-                className,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.primary,
-                ),
-              ),
-            ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: attending
-                  ? const Color(0xFFD5EDE5)
-                  : const Color(0xFFFBE4DC),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              attending ? 'Đang theo học' : 'Ngừng theo dõi',
-              style: TextStyle(
-                color: attending
-                    ? const Color(0xFF256848)
-                    : const Color(0xFF9B4430),
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
+            _sttPill('STT lớp: #$classStt', _sttColors(t, true)),
+          if (className.isNotEmpty) AppBadge(className, dot: false),
+          attending
+              ? const AppBadge.ok('Đang theo học')
+              : const AppBadge('Ngừng theo dõi'),
           if (dob != null && dob.isNotEmpty)
-            Text(
-              '· NS: $dob',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 11,
-              ),
-            ),
+            Text('· NS: $dob', style: TextStyle(color: t.ink3, fontSize: 12)),
         ],
       );
     } else if (spec.key == 'semester-weights') {
       badgeWidget = Text(
         'Hệ số: ${row['he_so']}',
-        style: TextStyle(
-          color: colorScheme.primary,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: t.priLink, fontWeight: FontWeight.w700),
       );
     } else if (spec.key == 'components') {
       final isOpen = row['cho_phep_nhap'] != false;
@@ -1614,54 +1834,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withAlpha(80),
-              ),
-            ),
-            child: Text(
-              'Nhóm $weight · hệ số theo học kỳ',
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: colorScheme.primary,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-            decoration: BoxDecoration(
-              color: isOpen ? const Color(0xFFD5EDE5) : const Color(0xFFFBE4DC),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isOpen ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
-                  size: 11,
-                  color: isOpen
-                      ? const Color(0xFF256848)
-                      : const Color(0xFF9B4430),
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  isOpen ? 'Đang mở nhập' : 'Đang khóa nhập',
-                  style: TextStyle(
-                    color: isOpen
-                        ? const Color(0xFF256848)
-                        : const Color(0xFF9B4430),
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          AppBadge('Nhóm $weight · hệ số theo học kỳ', dot: false),
+          isOpen
+              ? const AppBadge.ok('Đang mở nhập')
+              : const AppBadge.warn('Đang khóa nhập'),
         ],
       );
     }
@@ -1669,59 +1845,67 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final studentName = row['ho_ten']?.toString() ?? rowLabel(row);
     final titleText = isStudent ? studentName : rowLabel(row);
 
+    Widget leading;
+    if (isStudent && visibleStt != null) {
+      leading = Container(
+        width: 48,
+        height: 48,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: sttColors.$1,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: sttColors.$2),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '#$visibleStt',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.2,
+                fontWeight: FontWeight.w800,
+                color: sttColors.$3,
+              ),
+            ),
+            Text(
+              visibleSttShortLabel,
+              textScaler: TextScaler.noScaling,
+              style: TextStyle(
+                fontSize: 8,
+                height: 1.2,
+                fontWeight: FontWeight.w800,
+                color: sttColors.$3,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (isStudent || isTeacher) {
+      leading = AppAvatar(name: titleText);
+    } else {
+      leading = Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: t.subtle,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: t.line),
+        ),
+        child: Icon(_iconForResource(spec.key), size: 20, color: t.priLink),
+      );
+    }
+
     return Card(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: isStudent && visibleStt != null
-            ? Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: sttBackground,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: sttBorder),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '#$visibleStt',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: sttForeground,
-                      ),
-                    ),
-                    Text(
-                      visibleSttShortLabel,
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w800,
-                        color: sttForeground,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withAlpha(140),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  _iconForResource(spec.key),
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
-              ),
-
+        hoverColor: t.hover,
+        leading: leading,
         title: Text(
           titleText,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
+            color: t.ink,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -1732,9 +1916,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               badgeWidget ??
               Text(
                 'Mã: ${row[spec.id]}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1746,20 +1928,26 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             if (admin && !['accounts', 'students'].contains(spec.key))
               IconButton(
                 tooltip: 'Xóa',
-                icon: Icon(
-                  Icons.delete_outline,
-                  size: 20,
-                  color: colorScheme.error,
-                ),
+                icon: Icon(Icons.delete_outline, size: 20, color: t.bad),
                 onPressed: () => remove(row),
               ),
-            Icon(
-              Icons.chevron_right,
-              color: colorScheme.onSurfaceVariant.withAlpha(140),
-            ),
+            Icon(Icons.chevron_right, color: t.ink3),
           ],
         ),
       ),
     );
   }
 }
+
+/// Một cột của bảng danh mục: nhãn tiêu đề, độ rộng (cố định hoặc theo `flex`)
+/// và hàm dựng ô từ một dòng dữ liệu.
+class _CatalogColumn {
+  const _CatalogColumn(this.label, this.builder, {this.flex = 1, this.width});
+
+  final String label;
+  final Widget Function(Json row) builder;
+  final int flex;
+  final double? width;
+}
+
+typedef _Stt = ({int? visible, int? classStt, bool classScope, bool show});
