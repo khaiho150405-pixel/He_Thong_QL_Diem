@@ -125,7 +125,6 @@ class HomeDashboardContent extends ConsumerWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              fontFamily: 'serif',
               letterSpacing: -0.4,
               color: accentColor ?? AppTheme.primaryDark,
             ),
@@ -259,7 +258,6 @@ class HomeDashboardContent extends ConsumerWidget {
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
-                            fontFamily: 'serif',
                             letterSpacing: -0.5,
                             color: AppTheme.primaryDark,
                           ),

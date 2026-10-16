@@ -103,7 +103,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     color: Color(0xFFF2D775),
                                     fontSize: 30,
                                     fontWeight: FontWeight.w700,
-                                    fontFamily: 'serif',
                                   ),
                                 ),
                               ),
@@ -114,7 +113,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
-                                fontFamily: 'serif',
                                 letterSpacing: -0.5,
                                 color: AppTheme.primaryDark,
                               ),
@@ -188,7 +186,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                   style: TextStyle(
                                                     fontSize: 18,
                                                     fontWeight: FontWeight.w700,
-                                                    fontFamily: 'serif',
                                                     color: AppTheme.primaryDark,
                                                   ),
                                                 ),
