@@ -2,6 +2,8 @@ import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../app/design_tokens.dart';
+import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../authentication/session.dart';
 
@@ -22,6 +24,10 @@ class _ClassificationPolicyScreenState
   bool loading = true;
   bool saving = false;
   String? loadError;
+
+  /// Phiên bản đang áp dụng do backend trả về (chỉ để hiển thị badge).
+  String? activeVersion;
+  bool activeFlag = false;
 
   @override
   void initState() {
@@ -49,6 +55,8 @@ class _ClassificationPolicyScreenState
         ..addAll(active.criteria.map(_CriterionDraft.fromDto));
       version.text = '';
       name.text = active.name;
+      activeVersion = active.version;
+      activeFlag = active.active;
       if (mounted) setState(() => loading = false);
     } catch (error) {
       if (mounted) {
@@ -128,7 +136,7 @@ class _ClassificationPolicyScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
 
     return AppScaffold(
       title: 'Chính sách xếp loại',
@@ -139,147 +147,195 @@ class _ClassificationPolicyScreenState
           ? const Center(child: CircularProgressIndicator())
           : loadError != null
           ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(loadError!),
-                  const SizedBox(height: 12),
-                  FilledButton(onPressed: load, child: const Text('Thử lại')),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xxl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline, size: 40, color: t.bad),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      loadError!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    FilledButton(onPressed: load, child: const Text('Thử lại')),
+                  ],
+                ),
               ),
             )
           : Form(
               key: formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text(
-                        'Mỗi lần lưu tạo một phiên bản mới. Kết quả đã tính giữ '
-                        'snapshot policy cũ để có thể giải thích về sau.',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    key: const ValueKey('policy-version'),
-                    controller: version,
-                    maxLength: 20,
-                    decoration: const InputDecoration(
-                      labelText: 'Phiên bản mới',
-                      hintText: 'Ví dụ: SCHOOL-2026-01',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) =>
-                        RegExp(r'^[A-Za-z0-9._-]{1,20}$').hasMatch(value ?? '')
-                        ? null
-                        : 'Chỉ dùng chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.',
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: name,
-                    maxLength: 100,
-                    decoration: const InputDecoration(
-                      labelText: 'Tên chính sách',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: requiredText,
-                  ),
-                  const SizedBox(height: 12),
-                  Text('Các mức xếp loại', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  for (var index = 0; index < criteria.length; index++)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 190,
-                              child: TextFormField(
-                                controller: criteria[index].code,
-                                decoration: const InputDecoration(
-                                  labelText: 'Mã xếp loại',
-                                  border: OutlineInputBorder(),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 880),
+                  child: ListView(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    children: [
+                      Card(
+                        child: Padding(
+                          padding: AppSpacing.cardBody,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (activeVersion != null) ...[
+                                AppBadge(
+                                  activeFlag
+                                      ? 'Phiên bản $activeVersion · đang áp dụng'
+                                      : 'Phiên bản $activeVersion',
+                                  tone: activeFlag
+                                      ? AppBadgeTone.info
+                                      : AppBadgeTone.neutral,
                                 ),
-                                validator: (value) =>
-                                    RegExp(
-                                      r'^[A-Z][A-Z0-9_]{0,19}$',
-                                    ).hasMatch(value ?? '')
-                                    ? null
-                                    : 'Ví dụ: GIOI',
+                                const SizedBox(height: AppSpacing.md),
+                              ],
+                              Text(
+                                'Mỗi lần lưu tạo một phiên bản mới. Kết quả đã tính giữ '
+                                'snapshot policy cũ để có thể giải thích về sau.',
+                                style: theme.textTheme.bodyMedium,
                               ),
-                            ),
-                            SizedBox(
-                              width: 150,
-                              child: TextFormField(
-                                controller: criteria[index].minimum,
-                                decoration: const InputDecoration(
-                                  labelText: 'Điểm tối thiểu',
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) =>
-                                    RegExp(
-                                      r'^(?:[0-9]\.[0-9]|10\.0)$',
-                                    ).hasMatch(value ?? '')
-                                    ? null
-                                    : 'Dùng 0.0–10.0',
-                              ),
-                            ),
-                            FilterChip(
-                              selected: criteria[index].passing,
-                              label: Text(
-                                criteria[index].passing ? 'Đạt' : 'Chưa đạt',
-                                style: TextStyle(
-                                  color: criteria[index].passing
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              onSelected: (value) => setState(
-                                () => criteria[index].passing = value,
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: 'Xóa mức',
-                              onPressed: criteria.length <= 2
-                                  ? null
-                                  : () => setState(() {
-                                      criteria.removeAt(index).dispose();
-                                    }),
-                              icon: const Icon(Icons.delete_outline),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  OutlinedButton.icon(
-                    onPressed: criteria.length >= 20
-                        ? null
-                        : () => setState(() {
-                            criteria.add(_CriterionDraft('', '0.0', false));
-                          }),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Thêm mức'),
+                      const SizedBox(height: AppSpacing.md),
+                      TextFormField(
+                        key: const ValueKey('policy-version'),
+                        controller: version,
+                        maxLength: 20,
+                        decoration: const InputDecoration(
+                          labelText: 'Phiên bản mới',
+                          hintText: 'Ví dụ: SCHOOL-2026-01',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            RegExp(
+                              r'^[A-Za-z0-9._-]{1,20}$',
+                            ).hasMatch(value ?? '')
+                            ? null
+                            : 'Chỉ dùng chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.',
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      TextFormField(
+                        controller: name,
+                        maxLength: 100,
+                        decoration: const InputDecoration(
+                          labelText: 'Tên chính sách',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: requiredText,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'Các mức xếp loại',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      for (var index = 0; index < criteria.length; index++)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              child: Wrap(
+                                spacing: AppSpacing.md,
+                                runSpacing: AppSpacing.sm,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 190,
+                                    child: TextFormField(
+                                      controller: criteria[index].code,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Mã xếp loại',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (value) =>
+                                          RegExp(
+                                            r'^[A-Z][A-Z0-9_]{0,19}$',
+                                          ).hasMatch(value ?? '')
+                                          ? null
+                                          : 'Ví dụ: GIOI',
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 150,
+                                    child: TextFormField(
+                                      controller: criteria[index].minimum,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Điểm tối thiểu',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (value) =>
+                                          RegExp(
+                                            r'^(?:[0-9]\.[0-9]|10\.0)$',
+                                          ).hasMatch(value ?? '')
+                                          ? null
+                                          : 'Dùng 0.0–10.0',
+                                    ),
+                                  ),
+                                  FilterChip(
+                                    selected: criteria[index].passing,
+                                    selectedColor: t.okSoft,
+                                    checkmarkColor: t.ok,
+                                    side: BorderSide(
+                                      color: criteria[index].passing
+                                          ? t.okLine
+                                          : t.line2,
+                                    ),
+                                    label: Text(
+                                      criteria[index].passing
+                                          ? 'Đạt'
+                                          : 'Chưa đạt',
+                                      style: TextStyle(
+                                        color: criteria[index].passing
+                                            ? t.ok
+                                            : t.ink2,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    onSelected: (value) => setState(
+                                      () => criteria[index].passing = value,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Xóa mức',
+                                    onPressed: criteria.length <= 2
+                                        ? null
+                                        : () => setState(() {
+                                            criteria.removeAt(index).dispose();
+                                          }),
+                                    icon: const Icon(Icons.delete_outline),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      OutlinedButton.icon(
+                        onPressed: criteria.length >= 20
+                            ? null
+                            : () => setState(() {
+                                criteria.add(_CriterionDraft('', '0.0', false));
+                              }),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Thêm mức'),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      FilledButton.icon(
+                        key: const ValueKey('activate-policy'),
+                        onPressed: saving ? null : save,
+                        icon: const Icon(Icons.check_circle_outline),
+                        label: const Text('Kích hoạt phiên bản mới'),
+                      ),
+                      if (saving) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        const LinearProgressIndicator(),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    key: const ValueKey('activate-policy'),
-                    onPressed: saving ? null : save,
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('Kích hoạt phiên bản mới'),
-                  ),
-                  if (saving) ...[
-                    const SizedBox(height: 12),
-                    const LinearProgressIndicator(),
-                  ],
-                ],
+                ),
               ),
             ),
     );

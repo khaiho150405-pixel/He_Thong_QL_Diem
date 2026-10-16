@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../app/design_tokens.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../../core/config.dart';
 import '../authentication/session.dart';
@@ -29,76 +30,62 @@ class ConnectionScreen extends ConsumerWidget {
     final connection = ref.watch(connectionProvider);
     final session = ref.watch(sessionProvider);
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.tokens;
 
-    final content = Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [colorScheme.primary.withAlpha(15), colorScheme.surface],
-        ),
-      ),
+    final content = ColoredBox(
+      color: t.bg,
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xxl,
+            vertical: AppSpacing.xxxl,
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
-            child: Card(
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: BorderSide(
-                  color: colorScheme.outlineVariant.withAlpha(120),
-                ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: t.surface,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(color: t.line),
+                boxShadow: t.shadow,
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
+                  horizontal: AppSpacing.xxxl,
                   vertical: 36,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 72,
-                      height: 72,
+                    DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            colorScheme.primary,
-                            colorScheme.primary.withAlpha(200),
-                          ],
+                          colors: [t.pri, t.priHover],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withAlpha(60),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                        boxShadow: t.shadow,
                       ),
-                      child: const Icon(
-                        Icons.wifi_tethering_rounded,
-                        size: 36,
-                        color: Colors.white,
+                      child: SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: Icon(
+                          Icons.wifi_tethering_rounded,
+                          size: 36,
+                          color: t.onPri,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xxl),
                     Text(
                       'Kết nối máy chủ API',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: theme.textTheme.headlineSmall,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Địa chỉ: ${AppConfig.apiBaseUrl}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
                         fontFamily: 'monospace',
                       ),
                       textAlign: TextAlign.center,
@@ -112,86 +99,91 @@ class ConnectionScreen extends ConsumerWidget {
                             height: 36,
                             child: CircularProgressIndicator(strokeWidth: 3),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           Text(
                             'Đang kiểm tra tín hiệu tới máy chủ…',
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
+                              color: t.ink2,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
-                      error: (err, _) => Container(
-                        padding: const EdgeInsets.all(16),
+                      error: (err, _) => DecoratedBox(
                         decoration: BoxDecoration(
-                          color: colorScheme.errorContainer.withAlpha(100),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: colorScheme.error.withAlpha(70),
+                          color: t.badSoft,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: t.badLine),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                color: t.bad,
+                                size: 32,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Không thể kết nối',
+                                style: TextStyle(
+                                  color: t.bad,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              FilledButton.icon(
+                                onPressed: () =>
+                                    ref.invalidate(connectionProvider),
+                                icon: const Icon(Icons.refresh, size: 18),
+                                label: const Text('Thử lại'),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.error_outline_rounded,
-                              color: colorScheme.error,
-                              size: 32,
-                            ),
-                            const SizedBox(height: 10),
-                            const Text('Không thể kết nối'),
-                            const SizedBox(height: 12),
-                            FilledButton.icon(
-                              onPressed: () =>
-                                  ref.invalidate(connectionProvider),
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Thử lại'),
-                            ),
-                          ],
-                        ),
                       ),
-                      data: (_) => Container(
-                        padding: const EdgeInsets.all(16),
+                      data: (_) => DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.green.shade300),
+                          color: t.okSoft,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: t.okLine),
                         ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.green.shade700,
-                              size: 36,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Kết nối thành công',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.green.shade900,
-                                fontSize: 15,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: t.ok,
+                                size: 36,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Hệ thống sẵn sàng phục vụ yêu cầu.',
-                              style: TextStyle(
-                                color: Colors.green.shade800,
-                                fontSize: 12.5,
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                'Kết nối thành công',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: t.ok,
+                                  fontSize: 15,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                            OutlinedButton(
-                              onPressed: () =>
-                                  ref.invalidate(connectionProvider),
-                              child: const Text('Kiểm tra lại'),
-                            ),
-                          ],
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'Hệ thống sẵn sàng phục vụ yêu cầu.',
+                                style: TextStyle(color: t.ink2, fontSize: 12.5),
+                              ),
+                              const SizedBox(height: 14),
+                              OutlinedButton(
+                                onPressed: () =>
+                                    ref.invalidate(connectionProvider),
+                                child: const Text('Kiểm tra lại'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xxl),
                     TextButton.icon(
                       onPressed: () {
                         if (Navigator.canPop(context)) {
