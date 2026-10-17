@@ -4,11 +4,11 @@ Phạm vi: toàn bộ thiết kế lại UI Flutter (`apps/client_flutter`), cá
 
 ## 1. Kết quả lệnh (chạy trong `apps/client_flutter`)
 
-| Lệnh | Kết quả |
-|---|---|
-| `dart format --output=none --set-exit-if-changed lib test` | Sạch lúc đầu (109 file, 0 thay đổi). Sau khi sửa `profile_dialog.dart` cũng 0 thay đổi |
-| `flutter analyze` | No issues found |
-| `flutter test` | 379 test pass, 0 lỗi (105 baseline + 274 test mới của các bước) |
+| Lệnh                                                                                                                             | Kết quả                                                                                    |
+| -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `dart format --output=none --set-exit-if-changed lib test`                                                                       | Sạch lúc đầu (109 file, 0 thay đổi). Sau khi sửa `profile_dialog.dart` cũng 0 thay đổi     |
+| `flutter analyze`                                                                                                                | No issues found                                                                            |
+| `flutter test`                                                                                                                   | 379 test pass, 0 lỗi (105 baseline + 274 test mới của các bước)                            |
 | `flutter build web --dart-define-from-file=config/development.json` (xuất ra thư mục tạm, không vào `apps/client_flutter/build`) | Thành công (`Built ...webbuild_final`). Có cảnh báo "Wasm dry run" chỉ mang tính thông tin |
 
 ## 2. Các commit bước (git log ba2cbf1..HEAD)
@@ -17,23 +17,23 @@ Phạm vi: toàn bộ thiết kế lại UI Flutter (`apps/client_flutter`), cá
 
 ## 3. Điểm còn lệch so với prototype, theo màn
 
-| Màn | Còn lệch / không làm (lý do) |
-|---|---|
-| Đăng nhập | Popup "Xem thử với vai trò" thay cho 3 chip; mobile dùng chung 3 vai trò; chữ viết tay là Be Vietnam Pro nghiêng thay Caveat; còn nút "Kiểm tra kết nối hệ thống" (chức năng có sẵn) |
-| Khung điều hướng | Không có ô tìm kiếm toàn cục, chip học kỳ, chuông thông báo; không có badge đếm ở sidebar (`countBadge` đều null); không có khối "học kỳ hiện tại / hạn nộp / tiến độ" ở đáy sidebar; mục giữa nổi của nav đáy không làm; nav đáy không thêm mục mới |
-| Dashboard | Không có đường điểm TB toàn trường, ô "Điểm TB toàn trường", nút "Xuất báo cáo", alert sắp quá hạn, "Việc cần làm", "Lịch dạy hôm nay"; bộ KPI giữ nguồn cũ, khác bộ ô của prototype; còn chuỗi cứng "HỌC KỲ I, 2024–2025 · THPT BÀ ĐIỂM · ..." (xem mục 7) |
-| Điểm của tôi (HS) | Không có tên giáo viên, GVCN, mã HS, tải bảng điểm, đường điểm qua kỳ, môn mạnh nhất, chọn học kỳ; avatar hiện "HS" vì DTO không có họ tên |
-| Chính sách xếp loại | Giữ form tiêu chí tùy cấu hình; không có "Xem trước kết quả" và lịch sử phiên bản |
-| Tổng kết và báo cáo | Không có TB nhóm TX/GK/CK, công thức "(TX + 2 GK + 3 CK) / tổng hệ số"; mã xếp loại tùy cấu hình hiện trung tính vì không có cờ `passing`; panel tổng kết ở `/final-results` còn tiêu đề phụ "Hiển thị dưới bảng điểm" |
-| Thời khóa biểu | Dải 10 tiết và 7 ngày (prototype 6 tiết, 6 ngày); không giờ bắt đầu từng tiết (backend không có); bỏ màu theo môn; không xuất lịch; `TimetableFilter` chưa được màn nào dùng |
-| Danh mục quản trị | Bảng chỉ cho học sinh, giáo viên, tài khoản (>= 768 px); thiếu Giới tính, Mã HS, "Đăng nhập gần nhất", họ tên tài khoản, tab theo vai trò; cột Tài khoản chỉ "Đã liên kết / Chưa liên kết"; phân trang giữ nút Trước/Sau cũ |
-| Giáo viên & phân công, Môn học & hệ số (màn mới) | Chỉ đọc, sửa ở `/catalog/...`; không có "Thêm giáo viên", "Nhập Excel"; không có "Tổng hệ số", công thức chia 9; hệ số hiện theo một học kỳ được chọn |
-| Danh sách bảng điểm | Thiếu cột Sĩ số, Tiến độ, Hạn nhập, Cập nhật; không hiện hạn khóa ở danh sách |
-| Chi tiết bảng điểm / lưới điểm | Không dùng `AppGradeCell` (test đọc `TextFormField`); ô vẫn cao hơn 64x36; không cột "TB môn", hàng "TB lớp", ô tìm học sinh, "Sĩ số", "Hạn nhập" ở tiêu đề, lịch sử cuối trang, phím tắt kiểu bảng tính; không breadcrumb; còn chữ "Cột đã chốt" |
-| Nhận dạng ảnh | Không OCR nhiều trang; không chọn bảng điểm trong màn; không kéo-thả; không thanh % cho phiếu đang xử lý; không nút "Thử lại" trên thẻ phiếu lỗi; hộp hủy phiếu chưa dùng `AppDialog` |
-| Đối chiếu & duyệt | Không hiện độ tin cậy (xem mục 5); không tô sáng dòng trên ảnh gốc; không "Xác nhận tất cả gợi ý Vàng"; nhãn mức là "Xanh/Vàng/Đỏ"; bộ lọc vẫn là `FilterChip` (key test ghim); không tab "Cần xem"; không chấm bấm nhảy dòng |
-| Màn chuẩn bị chụp | Khung 4 góc chỉ là minh họa, không phải overlay trên camera hệ điều hành (`image_picker`); không flash, không "Trang 1/2"; gắn bằng nút phụ "Hướng dẫn chụp", không chèn bước trung gian |
-| Chung | Bước điểm 0,25 bỏ qua (giữ 0,1); không nút đổi sáng/tối (theo hệ điều hành); không đóng gói Caveat |
+| Màn                                              | Còn lệch / không làm (lý do)                                                                                                                                                                                                                                |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Đăng nhập                                        | Popup "Xem thử với vai trò" thay cho 3 chip; mobile dùng chung 3 vai trò; chữ viết tay là Be Vietnam Pro nghiêng thay Caveat; còn nút "Kiểm tra kết nối hệ thống" (chức năng có sẵn)                                                                        |
+| Khung điều hướng                                 | Không có ô tìm kiếm toàn cục, chip học kỳ, chuông thông báo; không có badge đếm ở sidebar (`countBadge` đều null); không có khối "học kỳ hiện tại / hạn nộp / tiến độ" ở đáy sidebar; mục giữa nổi của nav đáy không làm; nav đáy không thêm mục mới        |
+| Dashboard                                        | Không có đường điểm TB toàn trường, ô "Điểm TB toàn trường", nút "Xuất báo cáo", alert sắp quá hạn, "Việc cần làm", "Lịch dạy hôm nay"; bộ KPI giữ nguồn cũ, khác bộ ô của prototype; còn chuỗi cứng "HỌC KỲ I, 2024–2025 · THPT BÀ ĐIỂM · ..." (xem mục 7) |
+| Điểm của tôi (HS)                                | Không có tên giáo viên, GVCN, mã HS, tải bảng điểm, đường điểm qua kỳ, môn mạnh nhất, chọn học kỳ; avatar hiện "HS" vì DTO không có họ tên                                                                                                                  |
+| Chính sách xếp loại                              | Giữ form tiêu chí tùy cấu hình; không có "Xem trước kết quả" và lịch sử phiên bản                                                                                                                                                                           |
+| Tổng kết và báo cáo                              | Không có TB nhóm TX/GK/CK, công thức "(TX + 2 GK + 3 CK) / tổng hệ số"; mã xếp loại tùy cấu hình hiện trung tính vì không có cờ `passing`; panel tổng kết ở `/final-results` còn tiêu đề phụ "Hiển thị dưới bảng điểm"                                      |
+| Thời khóa biểu                                   | Dải 10 tiết và 7 ngày (prototype 6 tiết, 6 ngày); không giờ bắt đầu từng tiết (backend không có); bỏ màu theo môn; không xuất lịch; `TimetableFilter` chưa được màn nào dùng                                                                                |
+| Danh mục quản trị                                | Bảng chỉ cho học sinh, giáo viên, tài khoản (>= 768 px); thiếu Giới tính, Mã HS, "Đăng nhập gần nhất", họ tên tài khoản, tab theo vai trò; cột Tài khoản chỉ "Đã liên kết / Chưa liên kết"; phân trang giữ nút Trước/Sau cũ                                 |
+| Giáo viên & phân công, Môn học & hệ số (màn mới) | Chỉ đọc, sửa ở `/catalog/...`; không có "Thêm giáo viên", "Nhập Excel"; không có "Tổng hệ số", công thức chia 9; hệ số hiện theo một học kỳ được chọn                                                                                                       |
+| Danh sách bảng điểm                              | Thiếu cột Sĩ số, Tiến độ, Hạn nhập, Cập nhật; không hiện hạn khóa ở danh sách                                                                                                                                                                               |
+| Chi tiết bảng điểm / lưới điểm                   | Không dùng `AppGradeCell` (test đọc `TextFormField`); ô vẫn cao hơn 64x36; không cột "TB môn", hàng "TB lớp", ô tìm học sinh, "Sĩ số", "Hạn nhập" ở tiêu đề, lịch sử cuối trang, phím tắt kiểu bảng tính; không breadcrumb; còn chữ "Cột đã chốt"           |
+| Nhận dạng ảnh                                    | Không OCR nhiều trang; không chọn bảng điểm trong màn; không kéo-thả; không thanh % cho phiếu đang xử lý; không nút "Thử lại" trên thẻ phiếu lỗi; hộp hủy phiếu chưa dùng `AppDialog`                                                                       |
+| Đối chiếu & duyệt                                | Không hiện độ tin cậy (xem mục 5); không tô sáng dòng trên ảnh gốc; không "Xác nhận tất cả gợi ý Vàng"; nhãn mức là "Xanh/Vàng/Đỏ"; bộ lọc vẫn là `FilterChip` (key test ghim); không tab "Cần xem"; không chấm bấm nhảy dòng                               |
+| Màn chuẩn bị chụp                                | Khung 4 góc chỉ là minh họa, không phải overlay trên camera hệ điều hành (`image_picker`); không flash, không "Trang 1/2"; gắn bằng nút phụ "Hướng dẫn chụp", không chèn bước trung gian                                                                    |
+| Chung                                            | Bước điểm 0,25 bỏ qua (giữ 0,1); không nút đổi sáng/tối (theo hệ điều hành); không đóng gói Caveat                                                                                                                                                          |
 
 ## 4. Hạng mục backend chưa hỗ trợ (không làm giả)
 

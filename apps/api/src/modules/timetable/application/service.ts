@@ -13,6 +13,10 @@ import type {
   TimetableItemDto,
   TimetableListDto,
 } from "../presentation/dto.js";
+import {
+  pickDefaultSemester,
+  vietnamToday,
+} from "../domain/default-semester.js";
 import { validateClassDaySchedule } from "../domain/schedule-policy.js";
 
 @Injectable()
@@ -91,7 +95,10 @@ export class TimetableService {
         include: { hoc_ky_rows: { orderBy: { thu_tu: "asc" } } },
       });
       if (activeYear && activeYear.hoc_ky_rows.length > 0) {
-        semesterId = activeYear.hoc_ky_rows[0]?.ma_hoc_ky;
+        semesterId = pickDefaultSemester(
+          activeYear.hoc_ky_rows,
+          vietnamToday(),
+        );
       }
     }
 

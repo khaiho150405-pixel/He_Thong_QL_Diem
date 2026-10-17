@@ -6,6 +6,53 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md` (FE-01 → FE-05 đã hoàn tất 100%).
 
+### FE — Autocomplete cho mọi ô Select bằng AppSelectField (xong; chưa commit)
+
+- File: `apps/client_flutter/lib/app/widgets/app_select_field.dart`, `apps/client_flutter/lib/app/widgets/app_controls.dart`, `apps/client_flutter/lib/features/academic_catalog/edit_dialog.dart`, `apps/client_flutter/lib/features/timetable/timetable_screen.dart`, `apps/client_flutter/lib/features/gradebooks/gradebook_screen.dart`, `apps/client_flutter/test/app_select_field_test.dart` (15 tests).
+- Đã hoàn tất:
+  - Bỏ ngưỡng `items.length > 8`, thêm tham số `searchable` (mặc định `true`). Chỉ các ô <= 3 lựa chọn cố định (`_groupByRoom` ở Thời khóa biểu, `coefficient` và `role` ở Edit dialog, `passFail` ở Bảng điểm) cấu hình `searchable: false`.
+  - Mở menu luôn hiển thị đầy đủ danh sách, bôi đen sẵn toàn bộ text đang có trong ô để người dùng gõ là thay thế ngay.
+  - Quản lý `_query` riêng biệt theo dõi thao tác gõ thật sự của người dùng, không để label đang chọn làm bộ lọc rút gọn danh sách còn 1 mục.
+  - Lọc thông minh: hàm `_stripDiacritics` hỗ trợ toàn bộ nguyên âm tiếng Việt (chữ thường và hoa) cùng `đ/Đ`; tìm kiếm "chứa" xếp thứ tự ưu tiên (khớp đầu chuỗi -> khớp đầu từ -> khớp chuỗi con) giữ nguyên thứ tự gốc trong từng nhóm.
+  - Tô đậm (`FontWeight.w700`) chuỗi khớp tìm kiếm trong từng mục bằng `Text.rich`.
+  - Trạng thái rỗng: khi không có kết quả, hiển thị dòng mờ không chọn được `"Không tìm thấy “<từ khóa>”"`, không gọi `onChanged`.
+  - Điều hướng bàn phím (Desktop/Web): Phím Mũi tên Lên/Xuống di chuyển, Enter chọn mục, phím Esc đóng menu và khôi phục nhãn cũ.
+  - Bỏ focus (blur) khi đang gõ dở tự động khôi phục label của giá trị hiện tại, không gọi `onChanged`.
+  - Nút xóa nhanh (×) ở trailing widget khi đang gõ (`_query.isNotEmpty`), bấm xóa sạch query mà không đổi giá trị đã chọn.
+  - Giữ nguyên hiển thị đúng nhãn của giá trị `null` có nghĩa ("Tất cả các năm", "Không liên kết", ...).
+  - Bỏ `key: ValueKey(value)` ở `AppFilterDropdown` và các dropdown để tránh rebuild làm mất focus khi gõ.
+  - Responsive mobile: menu giới hạn tối đa 50% chiều cao màn hình trừ đi `MediaQuery.viewInsetsOf(context).bottom` để không bị bàn phím ảo che khuất; ô `searchable: false` không kích hoạt bàn phím.
+- Kiểm tra: `flutter analyze` 0 lỗi; `flutter test` toàn bộ 462/462 tests passed (100%).
+
+### FE — Dropdown mở danh sách BÊN DƯỚI ô chọn bằng AppSelectField (xong; chưa commit)
+
+- File: `apps/client_flutter/lib/app/widgets/app_select_field.dart` (mới), `apps/client_flutter/lib/app/widgets/app_controls.dart`, `apps/client_flutter/lib/features/academic_catalog/edit_dialog.dart`, `apps/client_flutter/lib/features/gradebooks/gradebooks_screen.dart`, `apps/client_flutter/lib/features/gradebooks/gradebook_screen.dart`, `apps/client_flutter/lib/features/timetable/timetable_edit_dialog.dart`, `apps/client_flutter/test/app_select_field_test.dart` (mới, 7 tests), `apps/client_flutter/test/timetable_admin_ux_test.dart`, `apps/client_flutter/test/recognition_panel_theme_test.dart`.
+- Đã hoàn tất:
+  - `AppSelectField<T>` kế thừa `FormField<T>`, bọc Material 3 `DropdownMenu<T?>`, menu mở BÊN DƯỚI ô chọn (không đè lên ô), độ cao tối đa 320px (mobile <= 50% màn hình), rộng khớp ô, tự lật lên trên nếu phía dưới không đủ chỗ.
+  - Tự động bật tìm kiếm không phân biệt dấu tiếng Việt (`_stripDiacritics`) khi số mục > 8 (`enableFilter: true`, `enableSearch: true`, `requestFocusOnTap: true`), không bật bàn phím ảo trên mobile khi <= 8 mục.
+  - Hỗ trợ `value: null` có nhãn ("Tất cả các năm", "Không liên kết", ...) qua `TextEditingController` đồng bộ và `initialSelection`.
+  - Hỗ trợ validation trong `Form`, báo `errorText` tương đồng `TextFormField`, hỗ trợ `dense: true` (chiều cao 48px chuẩn `AppControlMetrics.height`).
+  - Đồng bộ kích hoạt mở menu trên cả chạm vào ô nhập và chạm vào icon mũi tên (`Listener.onPointerDown`).
+  - Viết lại `AppFilterDropdown<T>` dùng `AppSelectField<T>(dense: true)` giữ nguyên public signature, tự động cập nhật 15 vị trí lọc trên toàn app.
+  - Thay thế toàn bộ 8 vị trí dùng `DropdownButtonFormField` trực tiếp trong dialog/form sang `AppSelectField`.
+- Kiểm tra: `flutter analyze` 0 lỗi; `flutter test` toàn bộ 454/454 tests passed (100%).
+
+### FE — Năm học hiện hành làm phạm vi mặc định (xong; chưa commit)
+
+- File: `apps/client_flutter/lib/features/academic_catalog/academic_year_scope.dart` (mới), `repository.dart`, `catalog_screen.dart`, `edit_dialog.dart`, `apps/client_flutter/lib/features/gradebooks/gradebooks_screen.dart`, `repository.dart`, `app_scaffold.dart`, `app_shell.dart`, `apps/client_flutter/test/academic_year_scope_test.dart` (mới, 11 tests).
+- Đã hoàn tất:
+  - `academic_year_scope.dart`: Quản lý phạm vi năm học đang xem (`ViewingYear`, `viewingYearProvider`, `AcademicYearFilterControl` Material 3, nhãn/badge "Năm lưu trữ" khi xem năm cũ, tùy chọn "Tất cả các năm").
+  - `AppTopBar` và `AppScaffold`: Hiển thị nhãn năm học đang xem cạnh vai trò trên desktop và dưới tiêu đề màn hình trên mobile.
+  - Lọc server-side: truyền `yearId` cho các danh mục (lớp học, học kỳ, học sinh, phân công, trọng số học kỳ) và bảng điểm; `activeInYearId` ("Có phân công trong năm đang xem") cho giáo viên. Tự động reset phân trang khi đổi năm. Bỏ lọc client-side cũ trên lớp/học kỳ.
+  - Form thêm/sửa (`edit_dialog.dart` & `CreateGradebookDialog`): ưu tiên và chọn trước năm học, học kỳ, lớp học thuộc năm đang xem cho bản ghi mới.
+  - Cảnh báo chuyển năm hiện hành (`_confirmSwitchCurrentYear`): lấy tóm tắt từ `GET /api/v1/catalog/years/{id}/pending-summary`, hiển thị số lượng bảng điểm đang mở, phiếu nhận dạng chờ duyệt, học kỳ chưa công bố (ẩn số lượng khi bằng 0; xử lý lỗi mạng an toàn). Cập nhật provider khi chuyển thành công; hiển thị lỗi 409 từ server.
+  - Xóa năm học: vô hiệu hóa và reset năm đang xem nếu năm hiện hành bị xóa.
+  - Tối ưu mobile: layout responsive chuẩn Material 3, không bị tràn màn hình ở 360x800 và 320px.
+- Kiểm tra:
+  - `dart run melos run check`: 442/442 tests pass, analyze sạch 0 issues, format chuẩn.
+  - `flutter build web --dart-define-from-file=config/development.json`: build thành công ra `build/web`.
+  - Khởi động lại `scripts/serve-web.mjs` và kiểm thử tự động bằng browser trên `http://localhost:8080`: đăng nhập admin thành công, thanh topbar, danh mục (lớp, kỳ, học sinh, phân công, trọng số), bảng điểm và chi tiết hoạt động mượt mà.
+
 ### FE-05 — Hiển thị thông tin ghép học sinh (xong)
 
 - File: `apps/client_flutter/lib/features/recognition/review_screen.dart`, `apps/client_flutter/test/recognition_review_screen_test.dart` (mới, 7 test), `docs/ux/recognition-capture.md`.
@@ -62,6 +109,15 @@ Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính 
 ## Giai đoạn 7 — Phần A Backend: nhật ký từng bước (mới nhất ở đầu)
 
 Nhánh `codex/recognition-row-matching` (tạo từ nhánh `dang` ở BE-00). Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md`. Không sửa `apps/client_flutter`; chỗ Flutter cần xử lý ghi dưới mục "Việc cho FE".
+
+### Năm học hiện hành làm phạm vi mặc định cho màn hình quản lý (xong; chưa commit)
+
+- Không có migration mới. Lọc ở server trước khi phân trang bằng query tùy chọn `yearId` cho `GET` classes, semesters, students, assignments, semester-weights, gradebooks (ánh xạ trong `YEAR_SCOPES` của `common/catalog.ts`; bảng điểm lọc trong SQL `h.ma_nam_hoc`), và `activeInYearId` cho teachers (chỉ giáo viên có phân công trong năm). Vắng tham số = như cũ; giá trị không phải số nguyên dương int32 → 400; năm không tồn tại → danh sách rỗng.
+- Chuyển năm hiện hành (`academic-years/application/rules.ts`): lưu năm với `hien_hanh=true` tắt năm đang hiện hành trong cùng giao dịch (audit `ACADEMIC_YEAR_SWITCHED`); tắt năm hiện hành duy nhất → 409 "Phải có một năm học hiện hành; hãy bật năm khác để chuyển.". `CatalogSpec.validate` nhận thêm `actorId` tùy chọn.
+- `GET /api/v1/catalog/years/{id}/pending-summary` (QTV): `{openGradebooks, pendingRecognitionTickets (DANG_XU_LY/CHO_DOI_CHIEU), unpublishedSemesters}`; 404 nếu năm không tồn tại.
+- Thời khóa biểu không truyền `semesterId`: học kỳ của năm hiện hành có `ngay_bat_dau <= hôm nay <= ngay_ket_thuc` (ngày theo giờ Việt Nam, `timetable/domain/default-semester.ts`), không có thì học kỳ đầu như cũ.
+- Bổ sung: xóa năm đang `hien_hanh` → 409 "Không thể xóa năm học hiện hành; hãy chuyển năm hiện hành sang năm khác trước." (hook `guardRemove` trong `CatalogService.remove`, cùng giao dịch). CLAUDE.md và `docs/design/*.md` đã prettier; `docs/design/*.html` thêm vào `.prettierignore` (tệp mockup tham chiếu). `pnpm check` xanh.
+- Kiểm tra: `pnpm lint`/`typecheck`/`test` (120)/`build` đạt, `pnpm test:db` (16), `pnpm test:integration` 22/22 (mới `academic-year-scope.test.ts`: 2 test, DB tạm dựng từ rỗng rồi xóa), `contracts:check` exit 0, `flutter analyze` sạch. `pnpm check` dừng ở `format:check` vì CLAUDE.md và `docs/design/*` (việc UI, không phải của lượt này) chưa format; các tệp đã đổi đều đúng Prettier. Đã khởi động lại api (và bật lại dispatcher/worker).
 
 ### Hủy mềm phiếu nhận dạng — `DA_HUY` (xong; chưa commit)
 

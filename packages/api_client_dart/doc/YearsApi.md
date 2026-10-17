@@ -11,6 +11,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**yearsCreate**](YearsApi.md#yearscreate) | **POST** /api/v1/catalog/years |
 [**yearsList**](YearsApi.md#yearslist) | **GET** /api/v1/catalog/years |
+[**yearsPendingSummary**](YearsApi.md#yearspendingsummary) | **GET** /api/v1/catalog/years/{id}/pending-summary |
 [**yearsRemove**](YearsApi.md#yearsremove) | **DELETE** /api/v1/catalog/years/{id} |
 [**yearsUpdate**](YearsApi.md#yearsupdate) | **PUT** /api/v1/catalog/years/{id} |
 
@@ -99,6 +100,51 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**YearsPage**](YearsPage.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **yearsPendingSummary**
+> YearPendingSummaryDto yearsPendingSummary(id)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getYearsApi();
+final num id = 8.14; // num |
+
+try {
+    final response = api.yearsPendingSummary(id);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling YearsApi->yearsPendingSummary: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **num**|  |
+
+### Return type
+
+[**YearPendingSummaryDto**](YearPendingSummaryDto.md)
 
 ### Authorization
 

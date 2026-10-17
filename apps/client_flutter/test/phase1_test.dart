@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:client_flutter/app/app.dart';
+import 'package:client_flutter/app/widgets/app_date_field.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -130,14 +131,40 @@ void registerPhaseOneTests({bool resize = true}) {
         find.widgetWithText(TextFormField, 'Tên'),
         '2026-2027',
       );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Ngày bắt đầu'),
-        '2026-09-01',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Ngày kết thúc'),
-        '2027-06-01',
-      );
+      Future<void> pickDate(String label, String vnDate) async {
+        await tester.tap(find.widgetWithText(AppDateField, label));
+        await tester.pumpAndSettle();
+        final pencilFinder = find.descendant(
+          of: find.byType(DatePickerDialog),
+          matching: find.byIcon(Icons.edit_outlined),
+        );
+        if (pencilFinder.evaluate().isNotEmpty) {
+          await tester.tap(pencilFinder);
+        } else {
+          await tester.tap(
+            find.descendant(
+              of: find.byType(DatePickerDialog),
+              matching: find.byIcon(Icons.edit),
+            ),
+          );
+        }
+        await tester.pumpAndSettle();
+        final input = find.descendant(
+          of: find.byType(DatePickerDialog),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(input, vnDate);
+        await tester.pumpAndSettle();
+        final confirmBtn = find.descendant(
+          of: find.byType(DatePickerDialog),
+          matching: find.text('Chọn'),
+        );
+        await tester.tap(confirmBtn);
+        await tester.pumpAndSettle();
+      }
+
+      await pickDate('Ngày bắt đầu', '01/09/2026');
+      await pickDate('Ngày kết thúc', '01/06/2027');
       await tester.tap(find.text('Lưu'));
       await tester.pumpAndSettle();
       expect(find.text('2026-2027'), findsOneWidget);

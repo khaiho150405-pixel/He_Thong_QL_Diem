@@ -109,6 +109,7 @@ doc/TimetableApi.md
 doc/TimetableItemDto.md
 doc/TimetableListDto.md
 doc/UpdatedCellDto.md
+doc/YearPendingSummaryDto.md
 doc/YearsApi.md
 doc/YearsDto.md
 doc/YearsInput.md
@@ -229,6 +230,7 @@ lib/src/model/teachers_page.dart
 lib/src/model/timetable_item_dto.dart
 lib/src/model/timetable_list_dto.dart
 lib/src/model/updated_cell_dto.dart
+lib/src/model/year_pending_summary_dto.dart
 lib/src/model/years_dto.dart
 lib/src/model/years_input.dart
 lib/src/model/years_page.dart

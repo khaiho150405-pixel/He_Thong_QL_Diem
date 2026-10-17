@@ -267,7 +267,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **gradebooksList**
-> GradebookListDto gradebooksList(cursor)
+> GradebookListDto gradebooksList(yearId, cursor)
 
 
 
@@ -280,10 +280,11 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getGradebooksApi();
+final num yearId = 8.14; // num | Chỉ bảng điểm thuộc học kỳ của năm học này; vắng = tất cả
 final num cursor = 8.14; // num |
 
 try {
-    final response = api.gradebooksList(cursor);
+    final response = api.gradebooksList(yearId, cursor);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling GradebooksApi->gradebooksList: $e\n');
@@ -294,6 +295,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **yearId** | **num**| Chỉ bảng điểm thuộc học kỳ của năm học này; vắng = tất cả | [optional]
  **cursor** | **num**|  | [optional]
 
 ### Return type

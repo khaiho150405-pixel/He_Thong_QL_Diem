@@ -383,15 +383,17 @@ class _PaperSheet extends StatelessWidget {
   static const _cell = 16.0;
   static const _rowHeight = 2 * _cell;
 
+  // Góc nghiêng nhẹ cố định theo từng dòng (~±0.6° - 0.8°) tạo nét viết tay tự nhiên.
+  static const _rowRotations = [-0.012, 0.014, -0.010];
+
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
     final printed = TextStyle(fontSize: 11.5, color: t.onAcc);
     final hand = TextStyle(
-      fontSize: 15,
-      height: 1.2,
-      fontWeight: FontWeight.w600,
-      fontStyle: FontStyle.italic,
+      fontFamily: 'Handwriting',
+      fontSize: 18,
+      height: 1.1,
       color: t.pen,
     );
     return CustomPaint(
@@ -417,46 +419,58 @@ class _PaperSheet extends StatelessWidget {
                 ),
               ),
             ),
-            for (final r in _sample)
-              SizedBox(
-                height: _rowHeight,
-                child: Row(
-                  children: [
-                    SizedBox(width: 14, child: Text(r.stt, style: printed)),
-                    const SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      flex: 10,
-                      child: Text(
-                        r.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: printed,
+            for (var i = 0; i < _sample.length; i++)
+              () {
+                final r = _sample[i];
+                final rot = _rowRotations[i % _rowRotations.length];
+                return SizedBox(
+                  height: _rowHeight,
+                  child: Row(
+                    children: [
+                      SizedBox(width: 14, child: Text(r.stt, style: printed)),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        flex: 10,
+                        child: Text(
+                          r.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: printed,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    SizedBox(
-                      width: 30,
-                      child: Text(
-                        r.score,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: hand.copyWith(fontSize: 17),
+                      const SizedBox(width: AppSpacing.xs),
+                      Transform.rotate(
+                        angle: rot,
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: 38,
+                          child: Text(
+                            r.score,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.visible,
+                            style: hand.copyWith(fontSize: 20),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      flex: 9,
-                      child: Text(
-                        r.words,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: hand,
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        flex: 9,
+                        child: Transform.rotate(
+                          angle: rot,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            r.words,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: hand,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
+                    ],
+                  ),
+                );
+              }(),
           ],
         ),
       ),

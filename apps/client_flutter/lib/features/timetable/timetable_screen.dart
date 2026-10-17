@@ -392,6 +392,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             icon: Icons.layers_outlined,
             value: _groupByRoom,
             width: 180,
+            searchable: false,
             items: const [
               DropdownMenuItem(value: false, child: Text('Lớp học')),
               DropdownMenuItem(value: true, child: Text('Phòng học')),

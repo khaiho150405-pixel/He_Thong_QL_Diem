@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/academic_catalog/academic_year_scope.dart';
 import '../../features/authentication/session.dart';
 import '../design_tokens.dart';
 import 'app_edge_scrollbar.dart';
@@ -112,6 +113,19 @@ class AppScaffold extends ConsumerWidget {
 
     final role = user.role.value;
     final isCollapsed = ref.watch(sidebarCollapsedProvider);
+    final viewingYear = ref.watch(viewingYearProvider);
+    final yearLabel = viewingYear == null
+        ? null
+        : (viewingYear.isAll
+              ? 'Tất cả các năm'
+              : 'Năm học ${viewingYear.name}');
+    final mobileYearLabel = viewingYear == null
+        ? null
+        : (viewingYear.isAll
+              ? 'Tất cả các năm'
+              : (width < 340
+                    ? 'NH ${viewingYear.name}'
+                    : 'Năm học ${viewingYear.name}'));
 
     if (isDesktop) {
       return Scaffold(
@@ -137,6 +151,7 @@ class AppScaffold extends ConsumerWidget {
                       role: role,
                       title: title,
                       titleWidget: titleWidget,
+                      yearLabel: yearLabel,
                       leading: leading ?? _backButton(context),
                       actions: [...?actions, const ThemeModeButton()],
                       bottom: bottom,
@@ -172,7 +187,26 @@ class AppScaffold extends ConsumerWidget {
           fontWeight: FontWeight.w700,
           color: t.heading,
         ),
-        title: titleWidget ?? Text(title, overflow: TextOverflow.ellipsis),
+        title:
+            titleWidget ??
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title, overflow: TextOverflow.ellipsis),
+                if (mobileYearLabel != null)
+                  Text(
+                    mobileYearLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: t.ink3,
+                    ),
+                  ),
+              ],
+            ),
         bottom: bottom,
         actions: [
           ...?actions,

@@ -127,6 +127,7 @@ class AssignmentsApi {
   ///
   ///
   /// Parameters:
+  /// * [yearId] - Chỉ phân công thuộc học kỳ của năm học này; vắng = tất cả
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -139,6 +140,7 @@ class AssignmentsApi {
   /// Returns a [Future] containing a [Response] with a [AssignmentsPage] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<AssignmentsPage>> assignmentsList({
+    num? yearId,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -168,6 +170,7 @@ class AssignmentsApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (yearId != null) r'yearId': yearId,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

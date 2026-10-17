@@ -23,7 +23,46 @@ export interface CatalogSpec {
   table: Table;
   id: string;
   fields: Record<string, Field>;
-  validate(tx: Unit, data: Row, previous: Row | null): Promise<void>;
+  validate(
+    tx: Unit,
+    data: Row,
+    previous: Row | null,
+    actorId?: number,
+  ): Promise<void>;
+}
+
+/**
+ * Điều kiện lọc danh sách theo năm học (query `yearId`; giáo viên: `activeInYearId`), áp dụng ở server trước khi phân trang.
+ * Bảng không có trong danh sách thì bỏ qua tham số năm.
+ */
+const YEAR_SCOPES: Partial<Record<Table, (yearId: number) => Row>> = {
+  lop: (yearId) => ({ ma_nam_hoc: yearId }),
+  hoc_ky: (yearId) => ({ ma_nam_hoc: yearId }),
+  hoc_sinh: (yearId) => ({ ma_lop_ref: { ma_nam_hoc: yearId } }),
+  phan_cong_giang_day: (yearId) => ({
+    ma_hoc_ky_ref: { ma_nam_hoc: yearId },
+  }),
+  he_so_hoc_ky_chung: (yearId) => ({
+    ma_hoc_ky_ref: { ma_nam_hoc: yearId },
+  }),
+  // Chỉ giáo viên có phân công trong năm đó.
+  giao_vien: (yearId) => ({
+    phan_cong_giang_day_rows: {
+      some: { ma_hoc_ky_ref: { ma_nam_hoc: yearId } },
+    },
+  }),
+};
+
+/** Tham số năm học của query: vắng → null (không lọc); không phải số nguyên dương hợp lệ → 400. */
+export function parseYearId(value: unknown): number | null {
+  if (value === undefined) return null;
+  if (
+    typeof value !== "string" ||
+    !/^[1-9]\d{0,9}$/.test(value) ||
+    Number(value) > 2147483647
+  )
+    throw new BadRequestException("Mã năm học không hợp lệ.");
+  return Number(value);
 }
 
 export interface StudentOrderNumbers {
@@ -105,7 +144,7 @@ export function validateInput(
 }
 export class CatalogService {
   constructor(
-    private readonly store: Store,
+    protected readonly store: Store,
     private readonly spec: CatalogSpec,
   ) {}
   private async output(
@@ -197,8 +236,9 @@ export class CatalogService {
     );
     return buildStudentOrderNumbers(students);
   }
-  async list(actor: Actor, cursor?: string, q?: string) {
+  async list(actor: Actor, cursor?: string, q?: string, yearIdInput?: unknown) {
     if (q && q.length > 100) throw new BadRequestException();
+    const yearId = parseYearId(yearIdInput);
     if (
       cursor &&
       (!/^[1-9]\d{0,9}$/.test(cursor) || Number(cursor) > 2147483647)
@@ -212,6 +252,9 @@ export class CatalogService {
           AND: [
             scope,
             { [this.spec.id]: { gt: Number(cursor ?? 0) } },
+            ...(yearId !== null && YEAR_SCOPES[this.spec.table]
+              ? [YEAR_SCOPES[this.spec.table]!(yearId)]
+              : []),
             ...(q
               ? [
                   {
@@ -264,7 +307,7 @@ export class CatalogService {
         : null;
       await currentActor(tx, actor);
       if (id && !previous) throw new NotFoundException();
-      await this.spec.validate(tx, data, previous);
+      await this.spec.validate(tx, data, previous, actor.id);
       const row = id
         ? await tx.update(this.spec.table, { [this.spec.id]: id }, data)
         : await tx.create(this.spec.table, data);
@@ -286,7 +329,7 @@ export class CatalogService {
       await currentActor(tx, actor);
       const created: Row[] = [];
       for (const data of rows) {
-        await this.spec.validate(tx, data, null);
+        await this.spec.validate(tx, data, null, actor.id);
         const row = await tx.create(this.spec.table, data);
         await audit(
           tx,
@@ -309,6 +352,7 @@ export class CatalogService {
       if (!(await tx.find(this.spec.table, { [this.spec.id]: id })))
         throw new NotFoundException();
       const row = await tx.find(this.spec.table, { [this.spec.id]: id });
+      await this.guardRemove(tx, row!);
       const used = await this.isUsed(tx, row!);
       if (used)
         throw new ConflictException(
@@ -318,6 +362,10 @@ export class CatalogService {
       await audit(tx, actor.id, "CATALOG_DELETE", `${this.spec.table}:${id}`);
     });
   }
+
+  /** Điều kiện xóa riêng của từng danh mục (ném ngoại lệ nếu không được xóa); mặc định không có. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async guardRemove(_tx: Unit, _row: Row): Promise<void> {}
 
   private async isUsed(tx: Unit, row: Row): Promise<string | null> {
     const any = async (checks: Array<[Table, Record<string, unknown>]>) => {

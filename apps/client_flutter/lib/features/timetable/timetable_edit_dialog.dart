@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_dialog.dart';
+import '../../app/widgets/app_select_field.dart';
 import '../academic_catalog/repository.dart';
 import '../authentication/session.dart';
 import 'timetable_model.dart';
@@ -169,14 +170,10 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            DropdownButtonFormField<num>(
-              initialValue: _assignmentId,
-              isExpanded: true,
-              itemHeight: null,
-              decoration: const InputDecoration(
-                labelText: 'Lớp · môn · giáo viên · học kỳ',
-                helperText: 'Chỉ hiển thị các phân công giảng dạy hợp lệ',
-              ),
+            AppSelectField<num>(
+              value: _assignmentId,
+              label: 'Lớp · môn · giáo viên · học kỳ',
+              helperText: 'Chỉ hiển thị các phân công giảng dạy hợp lệ',
               items: widget.assignments
                   .map(
                     (row) => DropdownMenuItem<num>(
@@ -194,11 +191,9 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
             Row(
               children: [
                 Expanded(
-                  child: DropdownButtonFormField<int>(
-                    initialValue: _day,
-                    isExpanded: true,
-                    itemHeight: null,
-                    decoration: const InputDecoration(labelText: 'Thứ'),
+                  child: AppSelectField<int>(
+                    value: _day,
+                    label: 'Thứ',
                     items: const [
                       DropdownMenuItem(value: 2, child: Text('Thứ Hai')),
                       DropdownMenuItem(value: 3, child: Text('Thứ Ba')),
@@ -268,15 +263,11 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            DropdownButtonFormField<int>(
+            AppSelectField<int>(
               key: ValueKey(_afternoon),
-              initialValue: _period,
-              isExpanded: true,
-              itemHeight: null,
-              decoration: const InputDecoration(
-                labelText: 'Tiết học và khung giờ',
-                prefixIcon: Icon(Icons.schedule_outlined),
-              ),
+              value: _period,
+              label: 'Tiết học và khung giờ',
+              prefixIcon: const Icon(Icons.schedule_outlined),
               items: [
                 for (
                   var period = _afternoon ? 6 : 1;

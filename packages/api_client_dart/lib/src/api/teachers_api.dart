@@ -233,6 +233,7 @@ class TeachersApi {
   ///
   ///
   /// Parameters:
+  /// * [activeInYearId] - Chỉ giáo viên có phân công trong năm học này; vắng = tất cả
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -245,6 +246,7 @@ class TeachersApi {
   /// Returns a [Future] containing a [Response] with a [TeachersPage] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<TeachersPage>> teachersList({
+    num? activeInYearId,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -274,6 +276,7 @@ class TeachersApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (activeInYearId != null) r'activeInYearId': activeInYearId,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

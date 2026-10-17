@@ -11,6 +11,7 @@ import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../authentication/session.dart';
 import '../../core/vietnamese_sort.dart';
+import 'academic_year_scope.dart';
 import 'repository.dart';
 import 'fields.dart';
 import 'edit_dialog.dart';
@@ -24,6 +25,14 @@ class CatalogScreen extends ConsumerStatefulWidget {
 }
 
 class _CatalogScreenState extends ConsumerState<CatalogScreen> {
+  static const _yearScopedResources = {
+    'classes',
+    'semesters',
+    'students',
+    'assignments',
+    'semester-weights',
+  };
+
   late Future<CatalogPageData> page;
   final cursors = <String?>[null];
   final searchController = TextEditingController();
@@ -53,6 +62,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   int? _filterPeriods; // null | 1 | 2 | 3 | 4
   bool? _filterRequired; // null | true | false
   bool? _filterCurrentYear; // null | true | false
+  bool _filterActiveInYear = false;
 
   ResourceSpec get spec =>
       resources.firstWhere((r) => r.key == widget.resource);
@@ -73,7 +83,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       _filterDepartment != null ||
       _filterPeriods != null ||
       _filterRequired != null ||
-      _filterCurrentYear != null;
+      _filterCurrentYear != null ||
+      _filterActiveInYear;
 
   final Map<num, int> _studentSchoolStt = {};
   final Map<num, int> _studentClassStt = {};
@@ -186,14 +197,23 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
   }
 
-  Future<List<Json>> _fetchAll(String resource) async {
+  Future<List<Json>> _fetchAll(
+    String resource, {
+    num? yearId,
+    num? activeInYearId,
+  }) async {
     final items = <Json>[];
     String? cursor;
     final seen = <String>{};
     do {
       final res = await ref
           .read(catalogRepositoryProvider)
-          .list(resource, cursor: cursor);
+          .list(
+            resource,
+            cursor: cursor,
+            yearId: yearId,
+            activeInYearId: activeInYearId,
+          );
       items.addAll(res.items);
       cursor = res.nextCursor;
       if (cursor != null && !seen.add(cursor)) break;
@@ -246,17 +266,60 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   }
 
   void reload() {
-    if (widget.resource == 'students' || _hasActiveFilter) {
-      page = _fetchAll(widget.resource).then((items) {
-        if (widget.resource == 'students') {
-          _calculateStudentOrders(items);
+    page = _loadPage();
+  }
+
+  Future<CatalogPageData> _loadPage() async {
+    num? scopedYearId;
+    if (_yearScopedResources.contains(widget.resource)) {
+      var viewingYear = ref.read(viewingYearProvider);
+      if (viewingYear == null) {
+        final current = await ref.read(currentYearProvider.future);
+        if (current != null &&
+            ref.read(viewingYearProvider) == null &&
+            mounted) {
+          ref.read(viewingYearProvider.notifier).setYear(current);
         }
-        return CatalogPageData(items, null);
-      });
+        viewingYear = ref.read(viewingYearProvider);
+      }
+      scopedYearId = viewingYear?.id;
+    }
+
+    num? activeInYearId;
+    if (widget.resource == 'teachers' && _filterActiveInYear) {
+      var viewingYear = ref.read(viewingYearProvider);
+      if (viewingYear == null) {
+        final current = await ref.read(currentYearProvider.future);
+        if (current != null &&
+            ref.read(viewingYearProvider) == null &&
+            mounted) {
+          ref.read(viewingYearProvider.notifier).setYear(current);
+        }
+        viewingYear = ref.read(viewingYearProvider);
+      }
+      activeInYearId = viewingYear?.id;
+    }
+
+    if (widget.resource == 'students' || _hasActiveFilter) {
+      final items = await _fetchAll(
+        widget.resource,
+        yearId: scopedYearId,
+        activeInYearId: activeInYearId,
+      );
+      if (widget.resource == 'students') {
+        _calculateStudentOrders(items);
+      }
+      return CatalogPageData(items, null);
     } else {
-      page = ref
+      return ref
           .read(catalogRepositoryProvider)
-          .list(widget.resource, cursor: cursors.last, q: filter);
+          .list(
+            widget.resource,
+            cursor: cursors.last,
+            q: filter,
+            yearId: scopedYearId,
+            activeInYearId: activeInYearId,
+          );
     }
   }
 
@@ -276,6 +339,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     _filterPeriods = null;
     _filterRequired = null;
     _filterCurrentYear = null;
+    _filterActiveInYear = false;
     _clientPage = 0;
     cursors.clear();
     cursors.add(null);
@@ -301,9 +365,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         break;
       case 'classes':
         if (_filterGrade != null && row['khoi'] != _filterGrade) {
-          return false;
-        }
-        if (_filterYearId != null && row['ma_nam_hoc'] != _filterYearId) {
           return false;
         }
         if (_filterTeacherId != null &&
@@ -351,9 +412,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         }
         break;
       case 'semesters':
-        if (_filterYearId != null && row['ma_nam_hoc'] != _filterYearId) {
-          return false;
-        }
         break;
       case 'subjects':
         if (_filterPeriods != null && row['so_tiet_tuan'] != _filterPeriods) {
@@ -376,7 +434,15 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       barrierDismissible: false,
       builder: (_) => EditDialog(spec: spec, row: row),
     );
-    if (changed == true && mounted) setState(reload);
+    if (changed == true && mounted) {
+      if (spec.key == 'years') {
+        ref.invalidate(academicYearsProvider);
+        ref.invalidate(currentYearProvider);
+        _references.clear();
+        await _loadReferences();
+      }
+      setState(reload);
+    }
   }
 
   bool get _supportsImport =>
@@ -414,6 +480,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       await ref
           .read(catalogRepositoryProvider)
           .remove(spec.key, row[spec.id] as num);
+      if (spec.key == 'years') {
+        ref.invalidate(academicYearsProvider);
+        ref.invalidate(currentYearProvider);
+        final currentViewing = ref.read(viewingYearProvider);
+        if (currentViewing?.id == row['ma_nam_hoc']) {
+          ref.read(viewingYearProvider.notifier).resetToCurrent();
+        }
+        _references.clear();
+        await _loadReferences();
+      }
       if (mounted) setState(reload);
     } catch (e) {
       if (mounted) {
@@ -492,7 +568,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1140),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: MediaQuery.sizeOf(context).width < 600 ? 8 : 20,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -502,11 +581,13 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
                 // Student Sort Toolbar
                 if (spec.key == 'students' && !studentViewer) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _buildStudentSortToolbar(theme),
                 ],
 
-                const SizedBox(height: 16),
+                SizedBox(
+                  height: MediaQuery.sizeOf(context).width < 600 ? 8 : 16,
+                ),
 
                 // Main Content
                 Expanded(
@@ -611,7 +692,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: MediaQuery.sizeOf(context).width < 600 ? 8 : 12,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -660,7 +744,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
                 if (_hasActiveFilter)
                   TextButton.icon(
-                    onPressed: _resetFilters,
+                    onPressed: () => setState(_resetFilters),
                     icon: const Icon(Icons.refresh_rounded, size: 16),
                     label: const Text('Đặt lại bộ lọc'),
                     style: TextButton.styleFrom(
@@ -669,7 +753,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: MediaQuery.sizeOf(context).width < 600 ? 6 : 12),
             Wrap(
               spacing: 12,
               runSpacing: 10,
@@ -775,11 +859,30 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
+  Widget _buildYearScopeControl(List<Json> years) {
+    return AcademicYearFilterControl(
+      years: years,
+      width: 170,
+      onChanged: () {
+        // setState để FutureBuilder nhận future mới; thiếu setState thì danh sách giữ dữ liệu năm cũ.
+        setState(() {
+          cursors
+            ..clear()
+            ..add(null);
+          _clientPage = 0;
+          reload();
+        });
+      },
+    );
+  }
+
   List<Widget> _buildResourceDropdowns() {
+    final years = _references['years'] ?? [];
     switch (widget.resource) {
       case 'students':
         final classes = _references['classes'] ?? [];
         return [
+          _buildYearScopeControl(years),
           _buildDropdown<num>(
             label: 'Lớp học',
             icon: Icons.meeting_room_outlined,
@@ -819,9 +922,28 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         ];
 
       case 'classes':
-        final years = _references['years'] ?? [];
         final teachers = _references['teachers'] ?? [];
+        final classes = _references['classes'] ?? [];
+        final gvcnIds = classes
+            .map((c) => c['ma_gv_chu_nhiem'])
+            .whereType<num>()
+            .toSet();
+        final gvcnTeachers = teachers
+            .where((t) => gvcnIds.contains(t['ma_giao_vien']))
+            .toList();
+        final candidateTeachers = gvcnTeachers.isNotEmpty
+            ? gvcnTeachers
+            : teachers;
+        final seenTeacherNames = <String>{};
+        final uniqueTeachers = <Json>[];
+        for (final t in candidateTeachers) {
+          final name = t['ho_ten']?.toString() ?? 'GV ${t['ma_giao_vien']}';
+          if (seenTeacherNames.add(name)) {
+            uniqueTeachers.add(t);
+          }
+        }
         return [
+          _buildYearScopeControl(years),
           _buildDropdown<int>(
             label: 'Khối lớp',
             icon: Icons.filter_list_rounded,
@@ -839,33 +961,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             }),
           ),
           _buildDropdown<num>(
-            label: 'Năm học',
-            icon: Icons.calendar_month_outlined,
-            value: _filterYearId,
-            items: [
-              const DropdownMenuItem(
-                value: null,
-                child: Text('Tất cả năm học'),
-              ),
-              for (final y in years)
-                DropdownMenuItem(
-                  value: y['ma_nam_hoc'] as num?,
-                  child: Text(y['ten']?.toString() ?? 'Năm ${y['ma_nam_hoc']}'),
-                ),
-            ],
-            onChanged: (val) => setState(() {
-              _filterYearId = val;
-              _clientPage = 0;
-              reload();
-            }),
-          ),
-          _buildDropdown<num>(
             label: 'Giáo viên chủ nhiệm',
             icon: Icons.person_pin_outlined,
             value: _filterTeacherId,
             items: [
               const DropdownMenuItem(value: null, child: Text('Tất cả GVCN')),
-              for (final t in teachers)
+              for (final t in uniqueTeachers)
                 DropdownMenuItem(
                   value: t['ma_giao_vien'] as num?,
                   child: Text(
@@ -886,7 +987,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         final subjects = _references['subjects'] ?? [];
         final teachers = _references['teachers'] ?? [];
         final semesters = _references['semesters'] ?? [];
+        final seenTeacherNames = <String>{};
+        final uniqueTeachers = <Json>[];
+        for (final t in teachers) {
+          final name = t['ho_ten']?.toString() ?? 'GV ${t['ma_giao_vien']}';
+          if (seenTeacherNames.add(name)) {
+            uniqueTeachers.add(t);
+          }
+        }
         return [
+          _buildYearScopeControl(years),
           _buildDropdown<num>(
             label: 'Lớp học',
             icon: Icons.meeting_room_outlined,
@@ -932,7 +1042,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 value: null,
                 child: Text('Tất cả giáo viên'),
               ),
-              for (final t in teachers)
+              for (final t in uniqueTeachers)
                 DropdownMenuItem(
                   value: t['ma_giao_vien'] as num?,
                   child: Text(
@@ -1055,6 +1165,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             .where((s) => s.isNotEmpty)
             .toSet()
             .toList();
+        final viewingYear = ref.watch(viewingYearProvider);
         return [
           _buildDropdown<String>(
             label: 'Tổ chuyên môn',
@@ -1070,33 +1181,40 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               reload();
             }),
           ),
-        ];
-
-      case 'semesters':
-        final years = _references['years'] ?? [];
-        return [
-          _buildDropdown<num>(
-            label: 'Năm học',
-            icon: Icons.calendar_month_outlined,
-            value: _filterYearId,
+          _buildDropdown<bool>(
+            label: 'Phân công',
+            icon: Icons.assignment_ind_outlined,
+            value: _filterActiveInYear ? true : null,
             items: [
               const DropdownMenuItem(
                 value: null,
-                child: Text('Tất cả năm học'),
+                child: Text('Tất cả giáo viên'),
               ),
-              for (final y in years)
-                DropdownMenuItem(
-                  value: y['ma_nam_hoc'] as num?,
-                  child: Text(y['ten']?.toString() ?? 'Năm ${y['ma_nam_hoc']}'),
+              DropdownMenuItem(
+                value: true,
+                child: Text(
+                  viewingYear?.name != null && !viewingYear!.isAll
+                      ? 'Có phân công năm ${viewingYear.name}'
+                      : 'Có phân công trong năm đang xem',
                 ),
+              ),
             ],
             onChanged: (val) => setState(() {
-              _filterYearId = val;
+              _filterActiveInYear = val == true;
               _clientPage = 0;
+              cursors
+                ..clear()
+                ..add(null);
               reload();
             }),
           ),
         ];
+
+      case 'semesters':
+        return [_buildYearScopeControl(years)];
+
+      case 'semester-weights':
+        return [_buildYearScopeControl(years)];
 
       case 'subjects':
         return [
@@ -1166,7 +1284,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   Widget _buildStudentSortToolbar(ThemeData theme) {
     final t = context.tokens;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: MediaQuery.sizeOf(context).width < 600 ? 4 : 8,
+      ),
       decoration: BoxDecoration(
         color: t.subtle,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1294,7 +1415,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           if (_hasActiveFilter) ...[
             const SizedBox(height: 8),
             TextButton.icon(
-              onPressed: _resetFilters,
+              onPressed: () => setState(_resetFilters),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Xóa bộ lọc'),
             ),

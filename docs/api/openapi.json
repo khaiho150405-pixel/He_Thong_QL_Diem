@@ -210,6 +210,89 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/catalog/years/{id}/pending-summary": {
+      "get": {
+        "operationId": "yearsPendingSummary",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YearPendingSummaryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["years"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
     "/api/v1/catalog/years/{id}": {
       "put": {
         "operationId": "yearsUpdate",
@@ -375,6 +458,13 @@
       "get": {
         "operationId": "semestersList",
         "parameters": [
+          {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ học kỳ thuộc năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
           {
             "name": "q",
             "required": false,
@@ -703,6 +793,13 @@
       "get": {
         "operationId": "classesList",
         "parameters": [
+          {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ lớp thuộc năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
           {
             "name": "q",
             "required": false,
@@ -1562,6 +1659,13 @@
       "get": {
         "operationId": "gradebooksList",
         "parameters": [
+          {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ bảng điểm thuộc học kỳ của năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
           {
             "name": "cursor",
             "required": false,
@@ -3998,6 +4102,13 @@
         "operationId": "studentsList",
         "parameters": [
           {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ học sinh của các lớp thuộc năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -4409,6 +4520,13 @@
       "get": {
         "operationId": "semesterWeightsList",
         "parameters": [
+          {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ hệ số thuộc học kỳ của năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
           {
             "name": "q",
             "required": false,
@@ -5394,6 +5512,13 @@
         "operationId": "teachersList",
         "parameters": [
           {
+            "name": "activeInYearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ giáo viên có phân công trong năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -5805,6 +5930,13 @@
       "get": {
         "operationId": "assignmentsList",
         "parameters": [
+          {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ phân công thuộc học kỳ của năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
           {
             "name": "q",
             "required": false,
@@ -6541,6 +6673,28 @@
           "nextCursor": { "type": "string", "nullable": true }
         },
         "required": ["items", "nextCursor"]
+      },
+      "YearPendingSummaryDto": {
+        "type": "object",
+        "properties": {
+          "openGradebooks": {
+            "type": "number",
+            "description": "Bảng điểm chưa chốt"
+          },
+          "pendingRecognitionTickets": {
+            "type": "number",
+            "description": "Phiếu nhận dạng đang xử lý hoặc chờ đối chiếu"
+          },
+          "unpublishedSemesters": {
+            "type": "number",
+            "description": "Học kỳ chưa công bố"
+          }
+        },
+        "required": [
+          "openGradebooks",
+          "pendingRecognitionTickets",
+          "unpublishedSemesters"
+        ]
       },
       "YearsInput": {
         "type": "object",

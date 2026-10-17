@@ -35,8 +35,11 @@ class GradebooksRepository {
     }
   }
 
-  Future<GradebookListDto> list({num? cursor}) async =>
-      (await api.getGradebooksApi().gradebooksList(cursor: cursor)).data!;
+  Future<GradebookListDto> list({num? cursor, num? yearId}) async =>
+      (await api.getGradebooksApi().gradebooksList(
+        cursor: cursor,
+        yearId: yearId,
+      )).data!;
 
   Future<GradebookDto> create({
     required num classId,

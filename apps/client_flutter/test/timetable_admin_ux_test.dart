@@ -6,6 +6,7 @@ import 'package:client_flutter/features/timetable/timetable_screen.dart';
 import 'package:client_flutter/features/timetable/timetable_edit_dialog.dart';
 import 'package:client_flutter/features/timetable/timetable_model.dart';
 import 'package:client_flutter/features/timetable/timetable_repository.dart';
+import 'package:client_flutter/app/widgets/app_select_field.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -103,9 +104,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Xếp tiết học'), findsOneWidget);
       final fields = tester
-          .widgetList<DropdownButtonFormField<int>>(
-            find.byType(DropdownButtonFormField<int>),
-          )
+          .widgetList<AppSelectField<int>>(find.byType(AppSelectField<int>))
           .toList();
       expect(fields[0].initialValue, 2);
       expect(fields[1].initialValue, 2);
@@ -198,15 +197,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-            .widget<DropdownButtonFormField<num>>(
-              find.byType(DropdownButtonFormField<num>),
-            )
+            .widget<AppSelectField<num>>(find.byType(AppSelectField<num>))
             .onChanged,
         isNull,
       );
-      await tester.tap(find.text('Thứ Hai').last);
+      await tester.tap(find.widgetWithText(AppSelectField<int>, 'Thứ'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Chủ nhật').last);
+      await tester.tap(find.widgetWithText(MenuItemButton, 'Chủ nhật'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Lưu thay đổi'));
       await tester.pumpAndSettle();

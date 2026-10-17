@@ -117,6 +117,7 @@ export 'package:api_client_dart/src/model/teachers_page.dart';
 export 'package:api_client_dart/src/model/timetable_item_dto.dart';
 export 'package:api_client_dart/src/model/timetable_list_dto.dart';
 export 'package:api_client_dart/src/model/updated_cell_dto.dart';
+export 'package:api_client_dart/src/model/year_pending_summary_dto.dart';
 export 'package:api_client_dart/src/model/years_dto.dart';
 export 'package:api_client_dart/src/model/years_input.dart';
 export 'package:api_client_dart/src/model/years_page.dart';

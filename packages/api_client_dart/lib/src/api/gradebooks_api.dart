@@ -544,6 +544,7 @@ class GradebooksApi {
   ///
   ///
   /// Parameters:
+  /// * [yearId] - Chỉ bảng điểm thuộc học kỳ của năm học này; vắng = tất cả
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -555,6 +556,7 @@ class GradebooksApi {
   /// Returns a [Future] containing a [Response] with a [GradebookListDto] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<GradebookListDto>> gradebooksList({
+    num? yearId,
     num? cursor,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -583,6 +585,7 @@ class GradebooksApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (yearId != null) r'yearId': yearId,
       if (cursor != null) r'cursor': cursor,
     };
 

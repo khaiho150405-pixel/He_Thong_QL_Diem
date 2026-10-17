@@ -203,7 +203,7 @@ void main() {
         }
 
         // Chip chọn cột điểm thay cho dropdown.
-        expect(find.byType(DropdownButtonFormField<num>), findsNothing);
+        expect(find.byType(AppSelectField<num>), findsNothing);
         for (final c in _components) {
           expect(find.text(c.name), findsOneWidget);
         }

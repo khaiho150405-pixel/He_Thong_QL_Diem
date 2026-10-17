@@ -35,6 +35,17 @@ export class YearsDto extends YearsInput {
   @ApiProperty({ type: String }) label!: string;
   @ApiProperty({ type: Number }) ma_nam_hoc!: number;
 }
+export class YearPendingSummaryDto {
+  @ApiProperty({ type: Number, description: "Bảng điểm chưa chốt" })
+  openGradebooks!: number;
+  @ApiProperty({
+    type: Number,
+    description: "Phiếu nhận dạng đang xử lý hoặc chờ đối chiếu",
+  })
+  pendingRecognitionTickets!: number;
+  @ApiProperty({ type: Number, description: "Học kỳ chưa công bố" })
+  unpublishedSemesters!: number;
+}
 export class YearsPage {
   @ApiProperty({ type: [YearsDto] }) items!: YearsDto[];
   @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
@@ -53,6 +64,15 @@ export class YearsController {
     @Query("q") q?: string,
   ) {
     return this.service.list(req.actor, cursor, q);
+  }
+  @Get(":id/pending-summary")
+  @ApiParam({ name: "id", type: Number })
+  @ApiOkResponse({ type: YearPendingSummaryDto })
+  pendingSummary(
+    @Req() req: Request & { actor: Actor },
+    @Param("id", ParseIntPipe) id: number,
+  ) {
+    return this.service.pendingSummary(req.actor, id);
   }
   @Post()
   @HttpCode(200)

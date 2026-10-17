@@ -32,17 +32,12 @@ try {
     // Quản trị viên
     ["admin", "QUAN_TRI_VIEN"],
 
-    // 5 Giáo viên bộ môn cốt lõi (hỗ trợ cả định dạng _ và . để thuận tiện đăng nhập)
+    // 5 Giáo viên bộ môn cốt lõi
     ["giaovien_toan", "GIAO_VIEN"],
-    ["giaovien.toan", "GIAO_VIEN"],
     ["giaovien_van", "GIAO_VIEN"],
-    ["giaovien.van", "GIAO_VIEN"],
     ["giaovien_anh", "GIAO_VIEN"],
-    ["giaovien.anh", "GIAO_VIEN"],
     ["giaovien_ly", "GIAO_VIEN"],
-    ["giaovien.ly", "GIAO_VIEN"],
     ["giaovien_hoa", "GIAO_VIEN"],
-    ["giaovien.hoa", "GIAO_VIEN"],
 
     // Học sinh thật của các khối (đại diện học sinh tra cứu kết quả)
     ["hocsinh_a", "HOC_SINH"],
@@ -82,25 +77,11 @@ try {
       phone: "0903112233",
     },
     {
-      userId: userMap.get("giaovien.toan")!,
-      name: "Phạm Thu Hà",
-      dept: "Toán - Tin",
-      email: "phamthuha.toan@thptbadiem.edu.vn",
-      phone: "0903112234",
-    },
-    {
       userId: userMap.get("giaovien_van")!,
       name: "Trần Minh Anh",
       dept: "Ngữ văn",
       email: "tranminhanh@thptbadiem.edu.vn",
       phone: "0903223344",
-    },
-    {
-      userId: userMap.get("giaovien.van")!,
-      name: "Trần Minh Anh",
-      dept: "Ngữ văn",
-      email: "tranminhanh.van@thptbadiem.edu.vn",
-      phone: "0903223345",
     },
     {
       userId: userMap.get("giaovien_anh")!,
@@ -110,13 +91,6 @@ try {
       phone: "0903334455",
     },
     {
-      userId: userMap.get("giaovien.anh")!,
-      name: "Nguyễn Mai Linh",
-      dept: "Ngoại ngữ",
-      email: "nguyenmailinh.anh@thptbadiem.edu.vn",
-      phone: "0903334456",
-    },
-    {
       userId: userMap.get("giaovien_ly")!,
       name: "Lê Quốc Bảo",
       dept: "Vật lý - KHTN",
@@ -124,25 +98,11 @@ try {
       phone: "0903445566",
     },
     {
-      userId: userMap.get("giaovien.ly")!,
-      name: "Lê Quốc Bảo",
-      dept: "Vật lý - KHTN",
-      email: "lequocbao.ly@thptbadiem.edu.vn",
-      phone: "0903445567",
-    },
-    {
       userId: userMap.get("giaovien_hoa")!,
       name: "Đinh Văn Thắng",
       dept: "Hóa - Sinh",
       email: "dinhvanthang@thptbadiem.edu.vn",
       phone: "0903556677",
-    },
-    {
-      userId: userMap.get("giaovien.hoa")!,
-      name: "Đinh Văn Thắng",
-      dept: "Hóa - Sinh",
-      email: "dinhvanthang.hoa@thptbadiem.edu.vn",
-      phone: "0903556678",
     },
   ];
 

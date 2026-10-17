@@ -54,13 +54,20 @@ export class TeachersController {
   @Get()
   @ApiQuery({ name: "cursor", required: false, type: String })
   @ApiQuery({ name: "q", required: false, type: String })
+  @ApiQuery({
+    name: "activeInYearId",
+    required: false,
+    type: Number,
+    description: "Chỉ giáo viên có phân công trong năm học này; vắng = tất cả",
+  })
   @ApiOkResponse({ type: TeachersPage })
   list(
     @Req() req: Request & { actor: Actor },
     @Query("cursor") cursor?: string,
     @Query("q") q?: string,
+    @Query("activeInYearId") activeInYearId?: string,
   ) {
-    return this.service.list(req.actor, cursor, q);
+    return this.service.list(req.actor, cursor, q, activeInYearId);
   }
   @Post()
   @HttpCode(200)

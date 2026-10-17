@@ -142,6 +142,7 @@ Class | Method | HTTP request | Description
 [*TimetableApi*](doc/TimetableApi.md) | [**timetableUpdate**](doc/TimetableApi.md#timetableupdate) | **PUT** /api/v1/timetable/{id} |
 [*YearsApi*](doc/YearsApi.md) | [**yearsCreate**](doc/YearsApi.md#yearscreate) | **POST** /api/v1/catalog/years |
 [*YearsApi*](doc/YearsApi.md) | [**yearsList**](doc/YearsApi.md#yearslist) | **GET** /api/v1/catalog/years |
+[*YearsApi*](doc/YearsApi.md) | [**yearsPendingSummary**](doc/YearsApi.md#yearspendingsummary) | **GET** /api/v1/catalog/years/{id}/pending-summary |
 [*YearsApi*](doc/YearsApi.md) | [**yearsRemove**](doc/YearsApi.md#yearsremove) | **DELETE** /api/v1/catalog/years/{id} |
 [*YearsApi*](doc/YearsApi.md) | [**yearsUpdate**](doc/YearsApi.md#yearsupdate) | **PUT** /api/v1/catalog/years/{id} |
 
@@ -237,6 +238,7 @@ Class | Method | HTTP request | Description
  - [TimetableItemDto](doc/TimetableItemDto.md)
  - [TimetableListDto](doc/TimetableListDto.md)
  - [UpdatedCellDto](doc/UpdatedCellDto.md)
+ - [YearPendingSummaryDto](doc/YearPendingSummaryDto.md)
  - [YearsDto](doc/YearsDto.md)
  - [YearsInput](doc/YearsInput.md)
  - [YearsPage](doc/YearsPage.md)

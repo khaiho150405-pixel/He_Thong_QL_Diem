@@ -171,11 +171,18 @@ export class GradebooksController {
   @Get()
   @ApiOkResponse({ type: GradebookListDto })
   @ApiQuery({ name: "cursor", type: Number, required: false })
+  @ApiQuery({
+    name: "yearId",
+    type: Number,
+    required: false,
+    description: "Chỉ bảng điểm thuộc học kỳ của năm học này; vắng = tất cả",
+  })
   list(
     @Req() req: Request & { actor: Actor },
     @Query("cursor") cursor?: string,
+    @Query("yearId") yearId?: string,
   ) {
-    return this.service.list(req.actor, cursor ? Number(cursor) : 0);
+    return this.service.list(req.actor, cursor ? Number(cursor) : 0, yearId);
   }
 
   @Post()

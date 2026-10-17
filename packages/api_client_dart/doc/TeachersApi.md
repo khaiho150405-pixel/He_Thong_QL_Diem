@@ -115,7 +115,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **teachersList**
-> TeachersPage teachersList(q, cursor)
+> TeachersPage teachersList(activeInYearId, q, cursor)
 
 
 
@@ -128,11 +128,12 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getTeachersApi();
+final num activeInYearId = 8.14; // num | Chỉ giáo viên có phân công trong năm học này; vắng = tất cả
 final String q = q_example; // String |
 final String cursor = cursor_example; // String |
 
 try {
-    final response = api.teachersList(q, cursor);
+    final response = api.teachersList(activeInYearId, q, cursor);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling TeachersApi->teachersList: $e\n');
@@ -143,6 +144,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **activeInYearId** | **num**| Chỉ giáo viên có phân công trong năm học này; vắng = tất cả | [optional]
  **q** | **String**|  | [optional]
  **cursor** | **String**|  | [optional]
 

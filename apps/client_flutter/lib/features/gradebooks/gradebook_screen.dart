@@ -8,6 +8,7 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
+import '../../app/widgets/app_select_field.dart';
 import '../authentication/session.dart';
 import '../final_results/final_results_panel.dart';
 import '../final_results/repository.dart';
@@ -1529,28 +1530,24 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             Padding(padding: const EdgeInsets.only(right: 6), child: _aiTag()),
           Expanded(
             child: cell.passFail == true
-                ? DropdownButtonFormField<String>(
+                ? AppSelectField<String>(
                     key: ValueKey('grade-pf-${cell.id}'),
-                    initialValue: controllers[cell.id]!.text.isEmpty
+                    value: controllers[cell.id]!.text.isEmpty
                         ? 'EMPTY'
                         : controllers[cell.id]!.text,
-                    isExpanded: true,
-                    decoration: _gradeDecoration(
-                      enabled: isEnabled,
-                      invalid: false,
-                      changed: isChanged,
-                      labelText: 'Đánh giá',
-                      prefixIcon: isLocked
-                          ? Tooltip(
-                              message: 'Cột đang khóa hoặc ngoài lịch nhập',
-                              child: Icon(
-                                Icons.lock_outline_rounded,
-                                size: 14,
-                                color: t.warn,
-                              ),
-                            )
-                          : null,
-                    ),
+                    label: 'Đánh giá',
+                    dense: true,
+                    searchable: false,
+                    prefixIcon: isLocked
+                        ? Tooltip(
+                            message: 'Cột đang khóa hoặc ngoài lịch nhập',
+                            child: Icon(
+                              Icons.lock_outline_rounded,
+                              size: 14,
+                              color: t.warn,
+                            ),
+                          )
+                        : null,
                     items: const [
                       DropdownMenuItem(
                         value: 'EMPTY',

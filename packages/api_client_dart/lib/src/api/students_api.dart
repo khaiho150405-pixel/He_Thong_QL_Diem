@@ -233,6 +233,7 @@ class StudentsApi {
   ///
   ///
   /// Parameters:
+  /// * [yearId] - Chỉ học sinh của các lớp thuộc năm học này; vắng = tất cả
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -245,6 +246,7 @@ class StudentsApi {
   /// Returns a [Future] containing a [Response] with a [StudentsPage] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<StudentsPage>> studentsList({
+    num? yearId,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -274,6 +276,7 @@ class StudentsApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (yearId != null) r'yearId': yearId,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

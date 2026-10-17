@@ -1,9 +1,13 @@
+import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
+import '../../app/widgets/app_date_field.dart';
 import '../../app/widgets/app_dialog.dart';
+import '../../app/widgets/app_select_field.dart';
 import '../authentication/session.dart';
+import 'academic_year_scope.dart';
 import 'repository.dart';
 import 'fields.dart';
 
@@ -48,9 +52,14 @@ class _EditDialogState extends ConsumerState<EditDialog> {
               : f.kind == 'role'
               ? 'HOC_SINH'
               : null);
-      controllers[f.key] = TextEditingController(
-        text: widget.row?[f.key]?.toString() ?? '',
-      );
+      var initialText = widget.row?[f.key]?.toString() ?? '';
+      if (f.kind == 'date' && initialText.isNotEmpty) {
+        final parsed = AppDateField.parseIsoDate(initialText);
+        if (parsed != null) {
+          initialText = AppDateField.formatIso(parsed);
+        }
+      }
+      controllers[f.key] = TextEditingController(text: initialText);
     }
     loadChoices();
   }
@@ -107,6 +116,70 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           } while (cursor != null);
           _existingAssignments.clear();
           _existingAssignments.addAll(aRows);
+        }
+
+        var viewingYear = ref.read(viewingYearProvider);
+        if (viewingYear == null) {
+          final current = await ref.read(currentYearProvider.future);
+          if (current != null && ref.read(viewingYearProvider) == null) {
+            ref.read(viewingYearProvider.notifier).setYear(current);
+          }
+          viewingYear = ref.read(viewingYearProvider);
+        }
+        final viewingYearId = viewingYear?.id;
+
+        // Prioritize items of the viewing year in choices
+        if (viewingYearId != null) {
+          if (choices['years'] != null) {
+            choices['years']!.sort((a, b) {
+              final aInYear = a['ma_nam_hoc'] == viewingYearId;
+              final bInYear = b['ma_nam_hoc'] == viewingYearId;
+              if (aInYear && !bInYear) return -1;
+              if (!aInYear && bInYear) return 1;
+              return 0;
+            });
+          }
+          if (choices['semesters'] != null) {
+            choices['semesters']!.sort((a, b) {
+              final aInYear = a['ma_nam_hoc'] == viewingYearId;
+              final bInYear = b['ma_nam_hoc'] == viewingYearId;
+              if (aInYear && !bInYear) return -1;
+              if (!aInYear && bInYear) return 1;
+              return 0;
+            });
+          }
+          if (choices['classes'] != null) {
+            choices['classes']!.sort((a, b) {
+              final aInYear = a['ma_nam_hoc'] == viewingYearId;
+              final bInYear = b['ma_nam_hoc'] == viewingYearId;
+              if (aInYear && !bInYear) return -1;
+              if (!aInYear && bInYear) return 1;
+              return 0;
+            });
+          }
+        }
+
+        // Pre-select for new record according to viewing year
+        if (widget.row == null && viewingYearId != null) {
+          if (values['ma_nam_hoc'] == null &&
+              choices['years']?.any((y) => y['ma_nam_hoc'] == viewingYearId) ==
+                  true) {
+            values['ma_nam_hoc'] = viewingYearId;
+          }
+          if (values['ma_hoc_ky'] == null && choices['semesters'] != null) {
+            final sem = choices['semesters']!.cast<Json?>().firstWhere(
+              (s) => s?['ma_nam_hoc'] == viewingYearId,
+              orElse: () => null,
+            );
+            if (sem != null) values['ma_hoc_ky'] = sem['ma_hoc_ky'];
+          }
+          if (values['ma_lop'] == null && choices['classes'] != null) {
+            final cls = choices['classes']!.cast<Json?>().firstWhere(
+              (c) => c?['ma_nam_hoc'] == viewingYearId,
+              orElse: () => null,
+            );
+            if (cls != null) values['ma_lop'] = cls['ma_lop'];
+          }
         }
       }
     } catch (e) {
@@ -212,6 +285,108 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     super.dispose();
   }
 
+  Future<bool> _confirmSwitchCurrentYear() async {
+    ViewingYear? currentYear;
+    try {
+      currentYear = await ref.read(currentYearProvider.future);
+    } catch (_) {
+      currentYear = null;
+    }
+
+    final currentId = currentYear?.id;
+    final thisId = widget.row?['ma_nam_hoc'] as num?;
+    if (currentYear == null || (thisId != null && currentId == thisId)) {
+      return true;
+    }
+
+    final yearAName = currentYear.name;
+    final textName = controllers['ten']?.text.trim();
+    final yearBName = textName != null && textName.isNotEmpty
+        ? textName
+        : (widget.row?['ten']?.toString() ?? 'Năm mới');
+
+    YearPendingSummaryDto? summary;
+    try {
+      summary = await ref
+          .read(catalogRepositoryProvider)
+          .getYearPendingSummary(currentId!);
+    } catch (_) {
+      // Lỗi tải pending-summary thì vẫn hiện hộp xác nhận không kèm số liệu
+      summary = null;
+    }
+
+    final warnings = <String>[];
+    if (summary != null) {
+      if (summary.openGradebooks > 0) {
+        warnings.add('${summary.openGradebooks} bảng điểm chưa chốt');
+      }
+      if (summary.pendingRecognitionTickets > 0) {
+        warnings.add(
+          '${summary.pendingRecognitionTickets} phiếu chờ đối chiếu',
+        );
+      }
+      if (summary.unpublishedSemesters > 0) {
+        warnings.add('${summary.unpublishedSemesters} học kỳ chưa công bố');
+      }
+    }
+
+    final warningText = warnings.isNotEmpty
+        ? '$yearAName còn ${warnings.join(', ')}.'
+        : null;
+
+    if (!mounted) return false;
+
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final t = ctx.tokens;
+        return AppDialog(
+          title: 'Chuyển năm hiện hành từ $yearAName sang $yearBName?',
+          confirmLabel: 'Chuyển năm',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (warningText != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: t.badSoft,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: t.badLine),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, size: 18, color: t.bad),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          warningText,
+                          style: TextStyle(
+                            color: t.bad,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              Text(
+                'Bạn có chắc chắn muốn chuyển năm học hiện hành sang $yearBName?',
+                style: TextStyle(color: t.ink),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    return confirmed == true;
+  }
+
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
     final input = <String, dynamic>{};
@@ -260,6 +435,26 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             input,
             id: widget.row?[widget.spec.id] as num?,
           );
+
+      if (widget.spec.key == 'years') {
+        ref.invalidate(academicYearsProvider);
+        ref.invalidate(currentYearProvider);
+        if (input['hien_hanh'] == true) {
+          final id = widget.row?[widget.spec.id] as num?;
+          final name = input['ten']?.toString() ?? '';
+          if (id != null) {
+            ref
+                .read(viewingYearProvider.notifier)
+                .setYear(ViewingYear(id: id, name: name, isCurrent: true));
+          } else {
+            final curr = await ref.read(currentYearProvider.future);
+            if (curr != null) {
+              ref.read(viewingYearProvider.notifier).setYear(curr);
+            }
+          }
+        }
+      }
+
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) setState(() => error = errorMessage(e));
@@ -277,6 +472,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             f.key == 'ma_giao_vien');
     if (f.kind == 'boolean') {
       final t = context.tokens;
+      final isYearHienHanh = widget.spec.key == 'years' && f.key == 'hien_hanh';
       return Container(
         decoration: BoxDecoration(
           color: t.subtle,
@@ -296,15 +492,26 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             ),
           ),
           value: values[f.key] as bool? ?? false,
-          onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
+          onChanged: locked
+              ? null
+              : (v) async {
+                  if (isYearHienHanh && v == true) {
+                    final shouldProceed = await _confirmSwitchCurrentYear();
+                    if (shouldProceed && mounted) {
+                      setState(() => values[f.key] = true);
+                    }
+                  } else {
+                    setState(() => values[f.key] = v);
+                  }
+                },
         ),
       );
     }
     if (f.kind == 'coefficient') {
-      return DropdownButtonFormField<String>(
-        initialValue: values[f.key]?.toString() ?? 'TX',
-        isExpanded: true,
-        decoration: InputDecoration(labelText: f.label),
+      return AppSelectField<String>(
+        value: values[f.key]?.toString() ?? 'TX',
+        label: f.label,
+        searchable: false,
         items: const [
           DropdownMenuItem(value: 'TX', child: Text('Thường xuyên')),
           DropdownMenuItem(value: 'GK', child: Text('Giữa kỳ')),
@@ -314,12 +521,11 @@ class _EditDialogState extends ConsumerState<EditDialog> {
       );
     }
     if (f.kind == 'role') {
-      return DropdownButtonFormField<String>(
-        initialValue: values[f.key] as String?,
-        decoration: InputDecoration(
-          labelText: f.label,
-          prefixIcon: const Icon(Icons.security_rounded, size: 20),
-        ),
+      return AppSelectField<String>(
+        value: values[f.key] as String?,
+        label: f.label,
+        searchable: false,
+        prefixIcon: const Icon(Icons.security_rounded, size: 20),
         items: ['QUAN_TRI_VIEN', 'GIAO_VIEN', 'HOC_SINH']
             .map(
               (r) => DropdownMenuItem(
@@ -379,17 +585,13 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           ),
         );
       }
-      final dropdown = DropdownButtonFormField<num>(
-        key: ValueKey(selected),
-        initialValue: selected as num?,
-        isExpanded: true,
-        decoration: InputDecoration(
-          labelText: '${f.label}${f.optional ? ' (không bắt buộc)' : ''}',
-          helperText: widget.spec.key == 'teachers' && widget.row != null
-              ? 'Liên kết tài khoản không thể đổi sau khi tạo hồ sơ.'
-              : null,
-          prefixIcon: const Icon(Icons.link_rounded, size: 20),
-        ),
+      final dropdown = AppSelectField<num>(
+        value: selected as num?,
+        label: '${f.label}${f.optional ? ' (không bắt buộc)' : ''}',
+        helperText: widget.spec.key == 'teachers' && widget.row != null
+            ? 'Liên kết tài khoản không thể đổi sau khi tạo hồ sơ.'
+            : null,
+        prefixIcon: const Icon(Icons.link_rounded, size: 20),
         items: items,
         onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
         validator: (v) =>
@@ -421,6 +623,119 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         ],
       );
     }
+    if (f.kind == 'date') {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      DateTime? firstDate;
+      DateTime? lastDate;
+      DateTime? initialDateWhenEmpty;
+      FormFieldValidator<String>? crossValidator;
+
+      if (widget.spec.key == 'students' && f.key == 'ngay_sinh') {
+        firstDate = DateTime(1990, 1, 1);
+        lastDate = today;
+        initialDateWhenEmpty = DateTime(now.year - 16, 1, 1);
+      } else if (widget.spec.key == 'years') {
+        if (f.key == 'ngay_bat_dau') {
+          firstDate = DateTime(2000, 1, 1);
+          lastDate = DateTime(2100, 12, 31);
+          initialDateWhenEmpty = today;
+        } else if (f.key == 'ngay_ket_thuc') {
+          final start = AppDateField.parseIsoDate(
+            controllers['ngay_bat_dau']?.text,
+          );
+          firstDate = start != null
+              ? start.add(const Duration(days: 1))
+              : DateTime(2000, 1, 1);
+          lastDate = DateTime(2100, 12, 31);
+          initialDateWhenEmpty = start != null
+              ? DateTime(start.year, start.month + 9, start.day)
+              : today;
+          crossValidator = (value) {
+            if (!editable) return null;
+            final s = AppDateField.parseIsoDate(
+              controllers['ngay_bat_dau']?.text,
+            );
+            final e = AppDateField.parseIsoDate(value);
+            if (s != null && e != null && !e.isAfter(s)) {
+              return 'Ngày kết thúc phải sau ngày bắt đầu';
+            }
+            return null;
+          };
+        }
+      } else if (widget.spec.key == 'semesters') {
+        final selectedYearId = values['ma_nam_hoc'];
+        final yearRows = choices['years'];
+        Json? yearRow;
+        if (selectedYearId != null && yearRows != null) {
+          for (final r in yearRows) {
+            if (r['ma_nam_hoc'] == selectedYearId) {
+              yearRow = r;
+              break;
+            }
+          }
+        }
+        final yearStart = AppDateField.parseIsoDate(
+          yearRow?['ngay_bat_dau']?.toString(),
+        );
+        final yearEnd = AppDateField.parseIsoDate(
+          yearRow?['ngay_ket_thuc']?.toString(),
+        );
+
+        if (f.key == 'ngay_bat_dau') {
+          firstDate = yearStart ?? DateTime(2000, 1, 1);
+          lastDate = yearEnd ?? DateTime(2100, 12, 31);
+          initialDateWhenEmpty = today;
+        } else if (f.key == 'ngay_ket_thuc') {
+          final semStart = AppDateField.parseIsoDate(
+            controllers['ngay_bat_dau']?.text,
+          );
+          firstDate = semStart != null
+              ? semStart.add(const Duration(days: 1))
+              : (yearStart ?? DateTime(2000, 1, 1));
+          lastDate = yearEnd ?? DateTime(2100, 12, 31);
+          initialDateWhenEmpty = semStart != null
+              ? DateTime(semStart.year, semStart.month + 9, semStart.day)
+              : (yearEnd ?? today);
+          crossValidator = (value) {
+            if (!editable) return null;
+            final s = AppDateField.parseIsoDate(
+              controllers['ngay_bat_dau']?.text,
+            );
+            final e = AppDateField.parseIsoDate(value);
+            if (s != null && e != null && !e.isAfter(s)) {
+              return 'Ngày kết thúc phải sau ngày bắt đầu';
+            }
+            return null;
+          };
+        }
+      } else if (widget.spec.key == 'assignments' &&
+          f.key == 'ngay_phan_cong') {
+        firstDate = DateTime(2000, 1, 1);
+        lastDate = DateTime(2100, 12, 31);
+        initialDateWhenEmpty = today;
+      } else {
+        firstDate = DateTime(1900, 1, 1);
+        lastDate = DateTime(2100, 12, 31);
+        initialDateWhenEmpty = today;
+      }
+
+      return AppDateField(
+        label: f.label,
+        value: controllers[f.key]?.text,
+        enabled: editable && !locked,
+        optional: f.optional,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        initialDateWhenEmpty: initialDateWhenEmpty,
+        validator: crossValidator,
+        onChanged: (isoDate) {
+          setState(() {
+            controllers[f.key]?.text = isoDate ?? '';
+          });
+        },
+      );
+    }
     return TextFormField(
       controller: controllers[f.key],
       enabled: !locked,
@@ -428,9 +743,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
       keyboardType: f.kind == 'int' ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
         labelText: f.label,
-        helperText: f.kind == 'date'
-            ? 'Định dạng: YYYY-MM-DD'
-            : f.kind == 'decimal'
+        helperText: f.kind == 'decimal'
             ? 'Ví dụ: 1.00'
             : f.optional
             ? 'Không bắt buộc'

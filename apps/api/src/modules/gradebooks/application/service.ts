@@ -7,7 +7,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { validateInput } from "../../../common/catalog.js";
+import { parseYearId, validateInput } from "../../../common/catalog.js";
 import {
   administrator,
   currentActor,
@@ -136,12 +136,17 @@ export class GradebooksService {
       return tx.createBlankGrid(actor.sessionHash, data);
     });
   }
-  list(actor: Actor, after = 0) {
+  list(actor: Actor, after = 0, yearIdInput?: unknown) {
     id(after, true);
+    const yearId = parseYearId(yearIdInput);
     return this.run(actor, async (tx) => {
       await gradebookActor(tx.authorization, actor);
       return page(
-        await tx.list(actor.role === "QUAN_TRI_VIEN" ? null : actor.id, after),
+        await tx.list(
+          actor.role === "QUAN_TRI_VIEN" ? null : actor.id,
+          after,
+          yearId,
+        ),
       );
     });
   }

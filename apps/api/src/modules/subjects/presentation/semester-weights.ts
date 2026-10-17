@@ -46,13 +46,20 @@ export class SemesterWeightsController {
   @Get()
   @ApiQuery({ name: "cursor", required: false, type: String })
   @ApiQuery({ name: "q", required: false, type: String })
+  @ApiQuery({
+    name: "yearId",
+    required: false,
+    type: Number,
+    description: "Chỉ hệ số thuộc học kỳ của năm học này; vắng = tất cả",
+  })
   @ApiOkResponse({ type: SemesterWeightsPage })
   list(
     @Req() req: Request & { actor: Actor },
     @Query("cursor") cursor?: string,
     @Query("q") q?: string,
+    @Query("yearId") yearId?: string,
   ) {
-    return this.service.list(req.actor, cursor, q);
+    return this.service.list(req.actor, cursor, q, yearId);
   }
   @Post()
   @HttpCode(200)

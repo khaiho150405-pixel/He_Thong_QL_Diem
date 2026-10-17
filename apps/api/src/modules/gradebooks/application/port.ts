@@ -76,7 +76,11 @@ export interface GradebookUnit {
     scope: GradebookScope,
   ): Promise<Gradebook>;
   find(id: number): Promise<Gradebook | null>;
-  list(teacherId: number | null, after: number): Promise<Gradebook[]>;
+  list(
+    teacherId: number | null,
+    after: number,
+    yearId: number | null,
+  ): Promise<Gradebook[]>;
   cells(bookId: number, after: string): Promise<GradeCell[]>;
   updateGrades(
     sessionHash: string,

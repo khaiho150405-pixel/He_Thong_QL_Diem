@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
@@ -146,5 +147,8 @@ class GradebookApp extends ConsumerWidget {
     themeMode: ref.watch(themeModeProvider),
     scrollBehavior: const AppScrollBehavior(),
     routerConfig: ref.watch(routerProvider(initialLocation)),
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    supportedLocales: const [Locale('vi'), Locale('en')],
+    locale: const Locale('vi'),
   );
 }

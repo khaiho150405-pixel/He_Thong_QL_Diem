@@ -87,6 +87,7 @@ import 'package:api_client_dart/src/model/teachers_page.dart';
 import 'package:api_client_dart/src/model/timetable_item_dto.dart';
 import 'package:api_client_dart/src/model/timetable_list_dto.dart';
 import 'package:api_client_dart/src/model/updated_cell_dto.dart';
+import 'package:api_client_dart/src/model/year_pending_summary_dto.dart';
 import 'package:api_client_dart/src/model/years_dto.dart';
 import 'package:api_client_dart/src/model/years_input.dart';
 import 'package:api_client_dart/src/model/years_page.dart';
@@ -359,6 +360,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'UpdatedCellDto':
       return UpdatedCellDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'YearPendingSummaryDto':
+      return YearPendingSummaryDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'YearsDto':
       return YearsDto.fromJson(value as Map<String, dynamic>) as ReturnType;

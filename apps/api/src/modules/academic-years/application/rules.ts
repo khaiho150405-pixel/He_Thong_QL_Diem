@@ -1,6 +1,12 @@
 import { BadRequestException, ConflictException } from "@nestjs/common";
 import type { Row, Unit } from "../../../common/store.js";
-export async function validateYear(tx: Unit, data: Row, previous: Row | null) {
+import { audit } from "../../audit/application/write.js";
+export async function validateYear(
+  tx: Unit,
+  data: Row,
+  previous: Row | null,
+  actorId?: number,
+) {
   if (+(data.ngay_bat_dau as Date) >= +(data.ngay_ket_thuc as Date))
     throw new BadRequestException();
   if (
@@ -14,14 +20,36 @@ export async function validateYear(tx: Unit, data: Row, previous: Row | null) {
     }))
   )
     throw new ConflictException();
-  if (
-    data.hien_hanh &&
-    (await tx.count("nam_hoc", {
-      hien_hanh: true,
-      ...(previous ? { ma_nam_hoc: { not: previous.ma_nam_hoc } } : {}),
-    }))
-  )
-    throw new ConflictException();
+  // Luôn phải có một năm học hiện hành: không tắt trực tiếp năm hiện hành duy nhất, chỉ chuyển bằng cách bật năm khác.
+  if (previous?.hien_hanh && !data.hien_hanh)
+    throw new ConflictException(
+      "Phải có một năm học hiện hành; hãy bật năm khác để chuyển.",
+    );
+  if (data.hien_hanh) {
+    // Chuyển năm hiện hành: tắt năm đang hiện hành rồi bật năm này trong cùng giao dịch (validate chạy trong giao dịch lưu;
+    // chỉ mục duy nhất một phần nam_hoc_mot_hien_hanh không bao giờ thấy hai năm cùng hiện hành).
+    const others = await tx.list(
+      "nam_hoc",
+      {
+        hien_hanh: true,
+        ...(previous ? { ma_nam_hoc: { not: previous.ma_nam_hoc } } : {}),
+      },
+      "ma_nam_hoc",
+    );
+    for (const other of others) {
+      await tx.update(
+        "nam_hoc",
+        { ma_nam_hoc: other.ma_nam_hoc },
+        { hien_hanh: false },
+      );
+      await audit(
+        tx,
+        actorId ?? null,
+        "ACADEMIC_YEAR_SWITCHED",
+        `nam_hoc:${other.ma_nam_hoc}`,
+      );
+    }
+  }
 }
 export async function validateSemester(
   tx: Unit,

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
+import '../academic_catalog/academic_year_scope.dart';
 import '../academic_catalog/fields.dart';
 import '../academic_catalog/repository.dart';
 import '../authentication/session.dart';
@@ -25,6 +26,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   late Future<GradebookListDto> page;
   final cursors = <num?>[null];
 
+  List<Json> _years = [];
   List<Json> _classes = [];
   List<Json> _subjects = [];
   bool _loadingCatalog = false;
@@ -58,6 +60,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   Future<void> _loadCatalog() async {
     setState(() => _loadingCatalog = true);
     try {
+      final years = await _allCatalogItems('years').catchError((_) => <Json>[]);
       final classes = await _allCatalogItems(
         'classes',
       ).catchError((_) => <Json>[]);
@@ -66,6 +69,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       ).catchError((_) => <Json>[]);
       if (!mounted) return;
       setState(() {
+        _years = years;
         _classes = classes;
         _subjects = subjects;
         _loadingCatalog = false;
@@ -91,19 +95,36 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   }
 
   void reload() {
-    page = teacher
-        ? ref.read(gradebooksRepositoryProvider).list(cursor: cursors.last)
-        : _allBooks();
+    page = _loadPage();
   }
 
-  Future<GradebookListDto> _allBooks() async {
+  Future<GradebookListDto> _loadPage() async {
+    var viewingYear = ref.read(viewingYearProvider);
+    if (viewingYear == null) {
+      viewingYear = await ref.read(currentYearProvider.future);
+      if (viewingYear != null &&
+          mounted &&
+          ref.read(viewingYearProvider) == null) {
+        ref.read(viewingYearProvider.notifier).setYear(viewingYear);
+      }
+    }
+    final yearId = viewingYear?.id;
+    if (teacher) {
+      return ref
+          .read(gradebooksRepositoryProvider)
+          .list(cursor: cursors.last, yearId: yearId);
+    }
+    return _allBooks(yearId: yearId);
+  }
+
+  Future<GradebookListDto> _allBooks({num? yearId}) async {
     num? cursor;
     final items = <GradebookDto>[];
     final seen = <num>{};
     do {
       final result = await ref
           .read(gradebooksRepositoryProvider)
-          .list(cursor: cursor);
+          .list(cursor: cursor, yearId: yearId);
       items.addAll(result.items);
       cursor = result.nextCursor;
       if (cursor != null && !seen.add(cursor)) {
@@ -179,6 +200,15 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
           runSpacing: 10,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            AcademicYearFilterControl(
+              years: _years,
+              width: 170,
+              onChanged: () {
+                cursors.clear();
+                cursors.add(null);
+                setState(reload);
+              },
+            ),
             AppFilterDropdown<String>(
               label: 'Trạng thái',
               icon: Icons.tune_rounded,
@@ -691,15 +721,51 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
   num? termId;
   bool busy = false;
   String? error;
+  bool _initializedDefaults = false;
 
   @override
   void initState() {
     super.initState();
-    options = Future.wait([
+    options = _loadOptions();
+  }
+
+  Future<List<List<Json>>> _loadOptions() async {
+    final results = await Future.wait([
       _allCatalogItems('classes'),
       _allCatalogItems('subjects'),
       _allCatalogItems('semesters'),
     ]);
+    final viewingYear = ref.read(viewingYearProvider);
+    if (viewingYear != null && viewingYear.id != null) {
+      final yId = viewingYear.id;
+      int compareWithYear(Json a, Json b) {
+        final aMatch = a['ma_nam_hoc'] == yId ? 0 : 1;
+        final bMatch = b['ma_nam_hoc'] == yId ? 0 : 1;
+        return aMatch.compareTo(bMatch);
+      }
+
+      results[0].sort(compareWithYear);
+      results[2].sort(compareWithYear);
+
+      if (!_initializedDefaults) {
+        _initializedDefaults = true;
+        final matchingClass = results[0].firstWhere(
+          (c) => c['ma_nam_hoc'] == yId,
+          orElse: () => <String, dynamic>{},
+        );
+        if (matchingClass.isNotEmpty) {
+          classId = matchingClass['ma_lop'] as num?;
+        }
+        final matchingTerm = results[2].firstWhere(
+          (s) => s['ma_nam_hoc'] == yId,
+          orElse: () => <String, dynamic>{},
+        );
+        if (matchingTerm.isNotEmpty) {
+          termId = matchingTerm['ma_hoc_ky'] as num?;
+        }
+      }
+    }
+    return results;
   }
 
   Future<List<Json>> _allCatalogItems(String resource) async {
@@ -784,6 +850,7 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
                 label: 'Lớp',
                 items: values[0],
                 idKey: 'ma_lop',
+                initialValue: classId,
                 onChanged: (value) => classId = value,
               ),
               const SizedBox(height: 14),
@@ -791,6 +858,7 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
                 label: 'Môn học',
                 items: values[1],
                 idKey: 'ma_mon',
+                initialValue: subjectId,
                 onChanged: (value) => subjectId = value,
               ),
               const SizedBox(height: 14),
@@ -798,6 +866,7 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
                 label: 'Học kỳ',
                 items: values[2],
                 idKey: 'ma_hoc_ky',
+                initialValue: termId,
                 onChanged: (value) => termId = value,
               ),
               if (error != null) ...[
@@ -839,20 +908,21 @@ class _ReferenceDropdown extends StatelessWidget {
     required this.items,
     required this.idKey,
     required this.onChanged,
+    this.initialValue,
   });
 
   final String label;
   final List<Json> items;
   final String idKey;
   final ValueChanged<num?> onChanged;
+  final num? initialValue;
 
   @override
-  Widget build(BuildContext context) => DropdownButtonFormField<num>(
-    isExpanded: true,
-    decoration: InputDecoration(
-      labelText: label,
-      border: const OutlineInputBorder(),
-    ),
+  Widget build(BuildContext context) => AppSelectField<num>(
+    value: initialValue != null && items.any((i) => i[idKey] == initialValue)
+        ? initialValue
+        : null,
+    label: label,
     items: items
         .map(
           (item) => DropdownMenuItem<num>(

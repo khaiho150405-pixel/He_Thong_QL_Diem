@@ -127,6 +127,7 @@ class ClassesApi {
   ///
   ///
   /// Parameters:
+  /// * [yearId] - Chỉ lớp thuộc năm học này; vắng = tất cả
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -139,6 +140,7 @@ class ClassesApi {
   /// Returns a [Future] containing a [Response] with a [ClassesPage] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<ClassesPage>> classesList({
+    num? yearId,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -168,6 +170,7 @@ class ClassesApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (yearId != null) r'yearId': yearId,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

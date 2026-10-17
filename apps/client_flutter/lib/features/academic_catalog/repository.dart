@@ -21,6 +21,8 @@ class CatalogRepository {
     String resource, {
     String? cursor,
     String? q,
+    num? yearId,
+    num? activeInYearId,
   }) async {
     switch (resource) {
       case 'years':
@@ -36,6 +38,7 @@ class CatalogRepository {
         final result = (await api.getSemestersApi().semestersList(
           q: q,
           cursor: cursor,
+          yearId: yearId,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -45,6 +48,7 @@ class CatalogRepository {
         final result = (await api.getClassesApi().classesList(
           q: q,
           cursor: cursor,
+          yearId: yearId,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -54,6 +58,7 @@ class CatalogRepository {
         final result = (await api.getStudentsApi().studentsList(
           q: q,
           cursor: cursor,
+          yearId: yearId,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -81,6 +86,7 @@ class CatalogRepository {
         final result = (await api.getSemesterWeightsApi().semesterWeightsList(
           q: q,
           cursor: cursor,
+          yearId: yearId,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -90,6 +96,7 @@ class CatalogRepository {
         final result = (await api.getTeachersApi().teachersList(
           q: q,
           cursor: cursor,
+          activeInYearId: activeInYearId,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -99,6 +106,7 @@ class CatalogRepository {
         final result = (await api.getAssignmentsApi().assignmentsList(
           q: q,
           cursor: cursor,
+          yearId: yearId,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -116,6 +124,11 @@ class CatalogRepository {
       default:
         throw ArgumentError.value(resource);
     }
+  }
+
+  Future<YearPendingSummaryDto> getYearPendingSummary(num id) async {
+    final result = await api.getYearsApi().yearsPendingSummary(id: id);
+    return result.data!;
   }
 
   Future<void> save(String resource, Json input, {num? id}) async {

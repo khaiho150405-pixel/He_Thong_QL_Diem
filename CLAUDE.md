@@ -5,6 +5,7 @@
 Flutter client nằm ở `apps/client_flutter`. Chạy mọi lệnh `flutter` (analyze, test, build) trong thư mục đó.
 
 Tài liệu cần đọc trước khi làm:
+
 - Thiết kế tham chiếu: `docs/design/Hệ thống quản lý điểm.html` (token, bố cục, component).
 - Kế hoạch: `docs/design/ui-migration-plan.md` (mục 0 đến 4.2).
 - Token và theme đã có (bước 1): `lib/app/design_tokens.dart`, `lib/app/theme.dart`.

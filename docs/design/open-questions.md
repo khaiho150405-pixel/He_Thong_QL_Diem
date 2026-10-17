@@ -35,7 +35,6 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - `AppDialog`: nút Hủy/X mặc định đóng với kết quả `false`, nút chính đóng với `true` khi không truyền callback; nút chính vẫn là `FilledButton` cao 48 theo theme (prototype cao 40).
 - `AppGradeCell` không tự validate: màn gắn vào phải truyền `isInvalid` từ quy tắc validate hiện có và `isChanged` từ trạng thái sửa chưa lưu.
 
-
 ### Bước 3 - đăng nhập
 
 - Chữ "EduScore" chỉ xuất hiện đúng một lần (test ghim `findsOneWidget`): màn rộng đặt ở đầu nửa trái navy, màn hẹp đặt ở đầu form. Prototype dùng tên trường làm tiêu đề; ở đây dòng phụ là "Trường THPT Bà Điểm · Quản lý điểm".
@@ -55,14 +54,12 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Chính sách xếp loại: giữ form `criteria` tùy cấu hình (không thay bằng 3 ô ngưỡng cố định). Thêm badge "Phiên bản X · đang áp dụng" từ `version`/`active`. Không làm "Xem trước kết quả" (sẽ phải tính xếp loại trong widget) và lịch sử phiên bản (backend chỉ có `active`/`activate`). Form giới hạn rộng tối đa 880 px và canh giữa.
 - Kết nối: chỉ đổi sang token; thẻ bỏ `elevation`, dùng viền `line` và `t.shadow`.
 
-
 ### Bước 4b - khôi phục ĐTB chung và xếp loại chung ở client
 
 - Hàng "ĐIỂM TRUNG BÌNH CHUNG" của bảng tổng hợp lại tính ở client y như màn cũ: `allLocked` khi mọi môn có `classification`; ĐTB là trung bình cộng `finalScore` các môn không phải Đạt/Không đạt; xếp loại chung theo ngưỡng >= 8.0 Giỏi, >= 6.5 Khá, còn lại Đạt; chưa đủ điều kiện thì hiện "Chờ công bố" ở cả hai ô. Nằm trong hai hàm thuần `semesterOverviewOf` và `overallClassificationCodeOf` (`student_results_screen.dart`).
 - AGENTS.md cấm đặt quy tắc tính điểm/xếp loại ở widget, nhưng bản cũ đã có sẵn việc này. Đã GIỮ NGUYÊN hành vi theo quy tắc "không đổi công thức". Đề xuất ở lần sau: backend trả ĐTB chung và xếp loại chung trong `summary`, client chỉ hiển thị.
 - Hero vẫn dùng `summary.averageScore` do backend tính (dữ liệu API), còn hàng tổng kết dùng trung bình cộng ở client. Hai số có thể khác nhau (backend có thể tính theo hệ số/làm tròn khác). Bản cũ cũng có hai nguồn: ô "ĐTB HỌC KỲ" của banner và hàng tổng kết đều tính ở client, còn thanh bên dùng số của backend. Cần quyết định sau nguồn nào là chuẩn.
 - Chip trạng thái ở hero ("Đã công bố ĐTB" / "Đang cập nhật (x/y)") dùng `publishedSubjects`/`totalSubjects` của `summary`; bản cũ đếm số môn có `classification` ở client. Giữ hero theo dữ liệu API như yêu cầu.
-
 
 ### Bước 5 - khung điều hướng
 
@@ -73,7 +70,6 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Topbar màn rộng đổi từ `AppBar` sang `AppTopBar` (không phải `PreferredSizeWidget`, cao tối thiểu 68, tự giãn khi tiêu đề nhiều dòng). Dòng nhỏ vai trò viết hoa ("GIÁO VIÊN"). Tiêu đề trang chủ web đổi từ "EduScore · THPT Bà Điểm" thành "Tổng quan" (theo prototype; thương hiệu nằm ở đầu sidebar). AppBar mobile của trang chủ vẫn giữ "EduScore · THPT Bà Điểm".
 - Nav đáy: tab đang chọn dùng `priLink` (bằng `pri` ở chế độ sáng, sáng hơn ở chế độ tối để đủ tương phản), bỏ nền "viên thuốc" của Material 3, nhãn 12px. Mục giữa nổi (`.tabbar .mid`) của prototype không làm.
 - Mục con trong nhóm gập cao 40 (mục cấp một cao 44) để phân biệt cấp; prototype không có nhóm gập.
-
 
 ### Bước 6 - dashboard
 
@@ -87,7 +83,6 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Hoạt động gần đây: trạng thái "Đã chốt" dùng AppBadge ok, "Đang nhập" dùng AppBadge info (bản cũ dùng vàng) cho khớp prototype; chuỗi lấy nguyên từ API.
 - Chuỗi bỏ đi trong bước này: không có. Thẻ biểu đồ không còn nhãn nhỏ "X HS" dưới mỗi cột và nhãn "%" trên cột (gộp vào giá trị bên phải của mỗi dòng).
 
-
 ### Bước 7 - tổng kết và báo cáo
 
 - Không làm cột TB nhóm TX/GK/CK, cột Giữa kỳ/Cuối kỳ và dòng công thức "(tổng TX + 2 × GK + 3 × CK) / tổng hệ số" của prototype (backend không có, hạng mục 14 mục 2 của kế hoạch). Bảng chỉ có STT, Học sinh, Điểm tổng kết, Xếp loại, Chi tiết.
@@ -97,7 +92,6 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Hộp thoại "Tính kết quả tổng kết" đổi từ `AlertDialog` sang `AppDialog`: giữ nguyên chuỗi, luồng và `ValueKey`; nút Hủy là `OutlinedButton` (trước là `TextButton`), thêm nút X; bỏ `SizedBox(width: 500)` cố định để vừa màn hẹp.
 - Báo cáo: sáu số liệu sang `StatCard` (3 cột từ 720 px, 2 cột dưới đó). "Đạt yêu cầu"/"Chưa đạt" vẫn luôn hiện như bản cũ: client không có cờ nào để biết khi nào backend ẩn số liệu này. Phân bố xếp loại đổi từ các chip "MÃ: N HS" sang `AppHBars` với nhãn tiếng Việt theo mã và giá trị "N HS" (màu cột theo mã, cùng quy ước dashboard); tiêu đề "Phân bố xếp loại:" giữ nguyên.
 - Chưa làm trang "Tổng kết" riêng (route mới, mục 4.1 của kế hoạch): thuộc bước sau.
-
 
 ### Bước 8 - thời khóa biểu
 
@@ -109,7 +103,6 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Hàng dữ liệu của lưới giờ co theo nội dung (trước cố định tối đa 104/120 px), nên bảng gọn hơn.
 - Hộp thoại xóa tiết và hộp thoại xếp/chuyển tiết đổi sang `AppDialog` (giữ chuỗi, `DropdownButtonFormField<num>/<int>`, luồng). Khác: không còn icon đầu hộp thoại; khi đang lưu nút chính hiện chữ "Đang lưu…" thay vì vòng xoay, nút Hủy/X không đóng hộp thoại; nút Hủy là `OutlinedButton`.
 - Không làm: chuông thông báo, chú giải theo môn, xuất lịch (backend chưa hỗ trợ). `TimetableFilter` (sheet có tìm kiếm) vẫn chưa được màn hình dùng, chỉ đổi token.
-
 
 ### Bước 9 - danh mục quản trị
 
@@ -123,7 +116,6 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Hộp STT 44x44 ở thẻ học sinh tràn 1 px khi dùng font Be Vietnam Pro; đổi thành 48x48 và `height: 1.2` cho chữ.
 - Chuỗi chip STT dạng "STT toàn trường: #N" / "STT lớp: #N" vẫn dùng ở thẻ; ở bảng thay bằng cột 'STT' với '#N TRƯỜNG' / '#N LỚP'. Trong bảng, STT lớp của học sinh xem hồ sơ mình không lặp khi đã là phạm vi lớp.
 - Chưa đổi (ngoài phạm vi bước, dùng chung): `EmptyState`, `ShimmerLoading` và `AppControlMetrics.decoration`/`AppFilterDropdown` vẫn lấy màu từ `colorScheme` (vẫn đúng chế độ tối vì theme sinh từ token).
-
 
 ### Bước 10 - bảng điểm và lưới nhập điểm
 
@@ -144,12 +136,11 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - Cột đã khóa trong "Lịch nhập điểm của nhà trường" đổi chữ trơn "Đã khóa" thành `AppBadge` ok (cùng chuỗi). Panel vẫn là `Card` + `ExpansionTile`.
 - Hộp "Tổng kết" (`FinalResultsPanel`) vẫn bọc trong `Dialog` thường như bước 7 (không đổi ở bước này).
 
-
 ### Bước 11 - nhận dạng ảnh
 
 - Không làm (backend chưa hỗ trợ, mục 2 hạng mục 18): OCR nhiều trang "Trang 1/2" trong một phiếu và dòng "N ảnh" trên thẻ phiếu (mỗi phiếu một ảnh); chọn bảng điểm ngay trong màn này (panel nằm trong trang bảng điểm nên bước 1 "Chọn bảng điểm" luôn là bước đã qua); kéo-thả ảnh vào dropzone (không thêm package; vùng nét đứt chỉ là khung, thao tác vẫn qua nút "Chọn ảnh bảng điểm" / "Chụp bảng điểm"); thanh tiến độ phần trăm cho phiếu "Đang xử lý" (DTO phiếu không có tiến độ, chỉ có nhãn "Đang xử lý" và vòng xoay; thanh `AppProgress` chỉ dùng cho tiến độ tải ảnh lên có thật từ `onSendProgress`); nút "Thử lại" riêng trên thẻ phiếu LỖI (bản cũ cũng không có; phiếu lỗi vẫn có thông báo theo `errorCode`, còn "Chụp lại" / "Chọn ảnh khác" chỉ hiện ngay sau lần tải lên bị lỗi như cũ).
 - Chỉ báo 4 bước chỉ trình bày, suy ra từ trạng thái đã có: đang tải lên hoặc không có phiếu hoặc phiếu mới nhất (theo `createdAt`, danh sách đang hiển thị) là `DA_DUYET`/`LOI` thì ở bước 2; `DANG_XU_LY` bước 3; `CHO_DOI_CHIEU` bước 4. Phiếu đã hủy không ảnh hưởng khi công tắc "Hiện phiếu đã hủy" tắt (API không trả); khi bật, phiếu hủy mới nhất cũng quay về bước 2. Bước đã qua hiện dấu tích.
-- Chip chọn thành phần điểm thay `DropdownButtonFormField`: chọn một chip, cao tối thiểu 44 (không phải 48 như nút); key mỗi chip là `recognition-component-<id>` (key cũ `recognition-component-<componentId>` nằm trên dropdown, không test nào dùng). Khi chỉ có một cột mở nhập, chip đó vẫn tự chọn sẵn như cũ. Hint "Chọn cột điểm (đang mở nhập)" chuyển thành dòng phụ cạnh nhãn "Thành phần điểm (bắt buộc)*".
+- Chip chọn thành phần điểm thay `DropdownButtonFormField`: chọn một chip, cao tối thiểu 44 (không phải 48 như nút); key mỗi chip là `recognition-component-<id>` (key cũ `recognition-component-<componentId>` nằm trên dropdown, không test nào dùng). Khi chỉ có một cột mở nhập, chip đó vẫn tự chọn sẵn như cũ. Hint "Chọn cột điểm (đang mở nhập)" chuyển thành dòng phụ cạnh nhãn "Thành phần điểm (bắt buộc)\*".
 - Nhãn "Định dạng hợp lệ" (`AppBadge.ok`) ở phần xem trước thay cho "Ảnh đạt" của prototype: client chỉ kiểm nội dung PNG/JPEG, dung lượng, kích thước và giải mã được; không có kiểm tra độ rõ, nên không dùng chữ "đạt". Dòng "Kiểm tra độ rõ trước khi gửi" vẫn giữ.
 - Chuỗi đổi trên thẻ phiếu: "Đang xử lý · tự động cập nhật sau 3 giây" tách thành nhãn "Đang xử lý" + "Tự động cập nhật sau 3 giây"; "Chờ đối chiếu · N dòng" thành nhãn "Chờ đối chiếu" + "N dòng"; "Đã duyệt và ghi điểm chính thức" giữ, thêm nhãn "Đã duyệt"; phiếu lỗi thêm nhãn "Lỗi" trước thông báo theo mã lỗi; chip "N Xanh / N Vàng / N Đỏ" thành `AppBadge` không chấm. Thẻ phiếu thêm dòng "Gửi lúc <giờ> <ngày>" từ `createdAt` (đã có trong DTO). Bỏ biểu tượng trạng thái bên trái thẻ (nhãn thay thế); phiếu đang xử lý vẫn có vòng xoay nhỏ cạnh dòng "Tự động cập nhật…". Thẻ phiếu không còn là `Card` + `ListTile` mà là `Container` + `InkWell` (key `recognition-ticket-card-<id>`, menu ⋮, bấm vào thẻ mở phiếu đều giữ nguyên).
 - Thêm vùng dropzone nét đứt với tiêu đề mới "Chọn hoặc chụp ảnh bảng điểm" và dòng "PNG hoặc JPEG, tối đa 10 MB. Hệ thống tự xác định học sinh theo họ tên."; nút "Tải ảnh & Nhận dạng" đặt ngay dưới dropzone (không dưới phần xem trước như prototype) vì test hiện có bấm nút này mà không cuộn tới.

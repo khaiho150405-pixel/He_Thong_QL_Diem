@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'app_select_field.dart';
+
+export 'app_select_field.dart';
 
 /// Kích thước chuẩn cho control trong thanh lọc và thanh thao tác.
 abstract final class AppControlMetrics {
@@ -70,6 +73,7 @@ class AppFilterDropdown<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.width,
+    this.searchable = true,
   });
 
   final String label;
@@ -78,50 +82,21 @@ class AppFilterDropdown<T> extends StatelessWidget {
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?>? onChanged;
   final double? width;
+  final bool searchable;
 
   @override
   Widget build(BuildContext context) {
     final resolvedWidth =
         width ?? AppControlMetrics.responsiveFieldWidth(context);
-    return SizedBox(
+    return AppSelectField<T>(
+      value: value,
+      label: label,
+      icon: icon,
       width: resolvedWidth,
-      height: AppControlMetrics.height,
-      child: DropdownButtonFormField<T>(
-        key: ValueKey(value),
-        initialValue: value,
-        isDense: true,
-        isExpanded: true,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-        decoration: AppControlMetrics.decoration(
-          context,
-          label: label,
-          icon: icon,
-        ),
-        items: items
-            .map(
-              (item) => DropdownMenuItem<T>(
-                value: item.value,
-                enabled: item.enabled,
-                alignment: item.alignment,
-                child: item.child is Text
-                    ? Text(
-                        (item.child as Text).data ?? '',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        maxLines: 1,
-                      )
-                    : item.child,
-              ),
-            )
-            .toList(),
-        onChanged: onChanged,
-      ),
+      dense: true,
+      items: items,
+      onChanged: onChanged,
+      searchable: searchable,
     );
   }
 }

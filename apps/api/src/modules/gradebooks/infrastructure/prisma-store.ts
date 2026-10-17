@@ -88,7 +88,7 @@ export class PrismaGradebookStore implements GradebookStore {
               WHERE b.ma_bang_diem = ${id}::integer`;
             return rows[0] ? book(rows[0]) : null;
           },
-          list: async (teacherId, after) => {
+          list: async (teacherId, after, yearId) => {
             const rows = await tx.$queryRaw<BookRow[]>`
             SELECT b.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
             FROM public.bang_diem b
@@ -96,6 +96,7 @@ export class PrismaGradebookStore implements GradebookStore {
             JOIN public.mon_hoc m USING(ma_mon)
             JOIN public.hoc_ky h USING(ma_hoc_ky)
             WHERE b.ma_bang_diem > ${after}::integer
+              AND (${yearId}::integer IS NULL OR h.ma_nam_hoc = ${yearId}::integer)
               AND (${teacherId}::integer IS NULL OR EXISTS (
                 SELECT 1 FROM public.phan_cong_giang_day pc
                 WHERE pc.ma_giao_vien = ${teacherId}::integer AND pc.ma_lop = b.ma_lop

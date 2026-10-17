@@ -54,6 +54,7 @@ class AppTopBar extends StatelessWidget {
     this.leading,
     this.actions,
     this.bottom,
+    this.yearLabel,
   });
 
   final String role;
@@ -62,6 +63,7 @@ class AppTopBar extends StatelessWidget {
   final Widget? leading;
   final List<Widget>? actions;
   final PreferredSizeWidget? bottom;
+  final String? yearLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +97,11 @@ class AppTopBar extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            appRoleLabel(role).toUpperCase(),
+                            [
+                              appRoleLabel(role).toUpperCase(),
+                              if (yearLabel != null && yearLabel!.isNotEmpty)
+                                yearLabel!,
+                            ].join(' · '),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
