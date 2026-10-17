@@ -44,6 +44,26 @@ function book(row: BookRow): Gradebook {
   };
 }
 
+/**
+ * Lỗi nghiệp vụ của tao_luoi_diem_trong → thông báo tiếng Việt cụ thể (chỉ cho luồng tạo bảng điểm).
+ * Không lộ chi tiết SQL/phiên; lỗi khác trả null để giữ cách xử lý chung.
+ */
+export function createGridFailure(error: unknown): Error | null {
+  const diagnostic =
+    String(error) + JSON.stringify((error as { meta?: unknown }).meta ?? {});
+  if (diagnostic.includes("GRADEBOOK_FORBIDDEN"))
+    return new ForbiddenException(
+      "Bạn chưa được phân công dạy môn này cho lớp và học kỳ đã chọn.",
+    );
+  if (diagnostic.includes("GRADEBOOK_YEAR_MISMATCH"))
+    return new ConflictException("Học kỳ đã chọn không thuộc năm học của lớp.");
+  if (diagnostic.includes("GRADEBOOK_EMPTY_ROSTER_OR_COMPONENTS"))
+    return new ConflictException(
+      "Lớp chưa có học sinh đang theo học hoặc môn học chưa có thành phần điểm.",
+    );
+  return null;
+}
+
 @Injectable()
 export class PrismaGradebookStore implements GradebookStore {
   constructor(@Inject("DATABASE") private readonly db: PrismaClient) {}
@@ -69,14 +89,18 @@ export class PrismaGradebookStore implements GradebookStore {
             await tx.$queryRaw`SELECT public.dat_lich_nhap_diem(${sessionHash}::text,${bookId}::integer,${componentId}::integer,${opensAt}::timestamptz,${closesAt}::timestamptz,${version}::integer)::text`;
           },
           createBlankGrid: async (sessionHash, scope) => {
-            const rows = await tx.$queryRaw<BookRow[]>`
+            try {
+              const rows = await tx.$queryRaw<BookRow[]>`
             SELECT created.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
             FROM public.tao_luoi_diem_trong(${sessionHash}::text,
               ${scope.classId}::integer, ${scope.subjectId}::integer, ${scope.termId}::integer) created
             JOIN public.lop l ON l.ma_lop = created.ma_lop
             JOIN public.mon_hoc m ON m.ma_mon = created.ma_mon
             JOIN public.hoc_ky h ON h.ma_hoc_ky = created.ma_hoc_ky`;
-            return book(rows[0]!);
+              return book(rows[0]!);
+            } catch (error) {
+              throw createGridFailure(error) ?? error;
+            }
           },
           find: async (id) => {
             const rows = await tx.$queryRaw<BookRow[]>`

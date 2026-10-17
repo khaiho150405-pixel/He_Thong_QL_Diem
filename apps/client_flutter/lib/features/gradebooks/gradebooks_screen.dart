@@ -135,6 +135,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   }
 
   Future<void> create() async {
+    if (!teacher) return;
     final book = await showDialog<GradebookDto>(
       context: context,
       barrierDismissible: false,
@@ -723,6 +724,11 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
   String? error;
   bool _initializedDefaults = false;
 
+  List<Json> _allClasses = [];
+  List<Json> _allSubjects = [];
+  List<Json> _allSemesters = [];
+  List<Json> _assignments = [];
+
   @override
   void initState() {
     super.initState();
@@ -730,52 +736,83 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
   }
 
   Future<List<List<Json>>> _loadOptions() async {
+    final viewingYear = ref.read(viewingYearProvider);
+    final yId = viewingYear?.id;
+
     final results = await Future.wait([
       _allCatalogItems('classes'),
       _allCatalogItems('subjects'),
       _allCatalogItems('semesters'),
+      _allCatalogItems('assignments', yearId: yId),
     ]);
-    final viewingYear = ref.read(viewingYearProvider);
-    if (viewingYear != null && viewingYear.id != null) {
-      final yId = viewingYear.id;
+
+    _allClasses = results[0];
+    _allSubjects = results[1];
+    _allSemesters = results[2];
+    _assignments = results[3];
+
+    if (yId != null) {
       int compareWithYear(Json a, Json b) {
         final aMatch = a['ma_nam_hoc'] == yId ? 0 : 1;
         final bMatch = b['ma_nam_hoc'] == yId ? 0 : 1;
         return aMatch.compareTo(bMatch);
       }
 
-      results[0].sort(compareWithYear);
-      results[2].sort(compareWithYear);
+      _allClasses.sort(compareWithYear);
+      _allSemesters.sort(compareWithYear);
+    }
 
-      if (!_initializedDefaults) {
-        _initializedDefaults = true;
-        final matchingClass = results[0].firstWhere(
-          (c) => c['ma_nam_hoc'] == yId,
-          orElse: () => <String, dynamic>{},
-        );
-        if (matchingClass.isNotEmpty) {
-          classId = matchingClass['ma_lop'] as num?;
+    if (!_initializedDefaults) {
+      _initializedDefaults = true;
+      final validClasses = _availableClasses;
+      if (validClasses.isNotEmpty) {
+        if (validClasses.length == 1) {
+          classId = validClasses.first['ma_lop'] as num?;
+        } else if (yId != null) {
+          final matchingClass = validClasses.firstWhere(
+            (c) => c['ma_nam_hoc'] == yId,
+            orElse: () => <String, dynamic>{},
+          );
+          if (matchingClass.isNotEmpty) {
+            classId = matchingClass['ma_lop'] as num?;
+          }
         }
-        final matchingTerm = results[2].firstWhere(
-          (s) => s['ma_nam_hoc'] == yId,
-          orElse: () => <String, dynamic>{},
-        );
-        if (matchingTerm.isNotEmpty) {
-          termId = matchingTerm['ma_hoc_ky'] as num?;
+
+        if (classId != null) {
+          final validSubjects = _availableSubjects;
+          if (validSubjects.length == 1) {
+            subjectId = validSubjects.first['ma_mon'] as num?;
+          }
+
+          if (subjectId != null) {
+            final validTerms = _availableSemesters;
+            if (validTerms.length == 1) {
+              termId = validTerms.first['ma_hoc_ky'] as num?;
+            } else if (yId != null) {
+              final matchingTerm = validTerms.firstWhere(
+                (s) => s['ma_nam_hoc'] == yId,
+                orElse: () => <String, dynamic>{},
+              );
+              if (matchingTerm.isNotEmpty) {
+                termId = matchingTerm['ma_hoc_ky'] as num?;
+              }
+            }
+          }
         }
       }
     }
+
     return results;
   }
 
-  Future<List<Json>> _allCatalogItems(String resource) async {
+  Future<List<Json>> _allCatalogItems(String resource, {num? yearId}) async {
     String? cursor;
     final items = <Json>[];
     final seen = <String>{};
     do {
       final page = await ref
           .read(catalogRepositoryProvider)
-          .list(resource, cursor: cursor);
+          .list(resource, cursor: cursor, yearId: yearId);
       items.addAll(page.items);
       cursor = page.nextCursor;
       if (cursor != null && !seen.add(cursor)) {
@@ -783,6 +820,86 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
       }
     } while (cursor != null);
     return items;
+  }
+
+  List<Json> get _availableClasses {
+    final assignedClassIds = _assignments
+        .map((a) => a['ma_lop'])
+        .whereType<num>()
+        .toSet();
+    return _allClasses
+        .where((c) => assignedClassIds.contains(c['ma_lop']))
+        .toList();
+  }
+
+  List<Json> get _availableSubjects {
+    if (classId == null) return const [];
+    final assignedSubjectIds = _assignments
+        .where((a) => a['ma_lop'] == classId)
+        .map((a) => a['ma_mon'])
+        .whereType<num>()
+        .toSet();
+    return _allSubjects
+        .where((s) => assignedSubjectIds.contains(s['ma_mon']))
+        .toList();
+  }
+
+  List<Json> get _availableSemesters {
+    if (classId == null || subjectId == null) return const [];
+    final assignedTermIds = _assignments
+        .where((a) => a['ma_lop'] == classId && a['ma_mon'] == subjectId)
+        .map((a) => a['ma_hoc_ky'])
+        .whereType<num>()
+        .toSet();
+    return _allSemesters
+        .where((s) => assignedTermIds.contains(s['ma_hoc_ky']))
+        .toList();
+  }
+
+  void _onClassChanged(num? value) {
+    setState(() {
+      classId = value;
+      error = null;
+
+      final validSubjects = _availableSubjects;
+      if (subjectId != null &&
+          !validSubjects.any((s) => s['ma_mon'] == subjectId)) {
+        subjectId = null;
+      }
+      if (subjectId == null && validSubjects.length == 1) {
+        subjectId = validSubjects.first['ma_mon'] as num?;
+      }
+
+      final validTerms = _availableSemesters;
+      if (termId != null && !validTerms.any((t) => t['ma_hoc_ky'] == termId)) {
+        termId = null;
+      }
+      if (termId == null && validTerms.length == 1) {
+        termId = validTerms.first['ma_hoc_ky'] as num?;
+      }
+    });
+  }
+
+  void _onSubjectChanged(num? value) {
+    setState(() {
+      subjectId = value;
+      error = null;
+
+      final validTerms = _availableSemesters;
+      if (termId != null && !validTerms.any((t) => t['ma_hoc_ky'] == termId)) {
+        termId = null;
+      }
+      if (termId == null && validTerms.length == 1) {
+        termId = validTerms.first['ma_hoc_ky'] as num?;
+      }
+    });
+  }
+
+  void _onTermChanged(num? value) {
+    setState(() {
+      termId = value;
+      error = null;
+    });
   }
 
   Future<void> submit() async {
@@ -812,11 +929,17 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
+    final canSubmit =
+        !busy &&
+        _availableClasses.isNotEmpty &&
+        classId != null &&
+        subjectId != null &&
+        termId != null;
 
     return AppDialog(
       title: 'Tạo bảng điểm',
       confirmLabel: 'Tạo',
-      confirmEnabled: !busy,
+      confirmEnabled: canSubmit,
       onConfirm: submit,
       onCancel: () {
         if (!busy) Navigator.pop(context);
@@ -842,32 +965,75 @@ class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
           if (snapshot.hasError) {
             return Text(errorMessage(snapshot.error!));
           }
-          final values = snapshot.data!;
+
+          final hasNoAssignments = _availableClasses.isEmpty;
+
           return Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (hasNoAssignments) ...[
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: t.badSoft,
+                    borderRadius: BorderRadius.circular(AppRadius.sm + 2),
+                    border: Border.all(color: t.badLine),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: t.bad, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Bạn chưa được phân công giảng dạy lớp nào trong năm học này.',
+                            style: TextStyle(
+                              color: t.bad,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
               _ReferenceDropdown(
                 label: 'Lớp',
-                items: values[0],
+                items: _availableClasses,
                 idKey: 'ma_lop',
                 initialValue: classId,
-                onChanged: (value) => classId = value,
+                enabled: !hasNoAssignments,
+                onChanged: _onClassChanged,
               ),
               const SizedBox(height: 14),
               _ReferenceDropdown(
                 label: 'Môn học',
-                items: values[1],
+                items: _availableSubjects,
                 idKey: 'ma_mon',
                 initialValue: subjectId,
-                onChanged: (value) => subjectId = value,
+                enabled: classId != null,
+                hintText: classId == null ? 'Chọn lớp trước' : null,
+                helperText: classId == null ? 'Chọn lớp trước' : null,
+                onChanged: _onSubjectChanged,
               ),
               const SizedBox(height: 14),
               _ReferenceDropdown(
                 label: 'Học kỳ',
-                items: values[2],
+                items: _availableSemesters,
                 idKey: 'ma_hoc_ky',
                 initialValue: termId,
-                onChanged: (value) => termId = value,
+                enabled: classId != null && subjectId != null,
+                hintText: classId == null
+                    ? 'Chọn lớp trước'
+                    : (subjectId == null ? 'Chọn môn học trước' : null),
+                helperText: classId == null
+                    ? 'Chọn lớp trước'
+                    : (subjectId == null ? 'Chọn môn học trước' : null),
+                onChanged: _onTermChanged,
               ),
               if (error != null) ...[
                 const SizedBox(height: 14),
@@ -909,6 +1075,9 @@ class _ReferenceDropdown extends StatelessWidget {
     required this.idKey,
     required this.onChanged,
     this.initialValue,
+    this.enabled = true,
+    this.hintText,
+    this.helperText,
   });
 
   final String label;
@@ -916,6 +1085,9 @@ class _ReferenceDropdown extends StatelessWidget {
   final String idKey;
   final ValueChanged<num?> onChanged;
   final num? initialValue;
+  final bool enabled;
+  final String? hintText;
+  final String? helperText;
 
   @override
   Widget build(BuildContext context) => AppSelectField<num>(
@@ -923,6 +1095,9 @@ class _ReferenceDropdown extends StatelessWidget {
         ? initialValue
         : null,
     label: label,
+    enabled: enabled,
+    hintText: hintText,
+    helperText: helperText,
     items: items
         .map(
           (item) => DropdownMenuItem<num>(

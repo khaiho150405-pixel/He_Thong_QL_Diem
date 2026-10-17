@@ -165,6 +165,7 @@ class AppSelectField<T> extends FormField<T> {
     super.validator,
     this.width,
     this.dense = false,
+    this.hintText,
     this.helperText,
     this.searchable = true,
     super.enabled = true,
@@ -181,6 +182,7 @@ class AppSelectField<T> extends FormField<T> {
              onChanged: enabled ? onChanged : null,
              width: width,
              dense: dense,
+             hintText: hintText,
              helperText: helperText,
              searchable: searchable,
              enabled: enabled && onChanged != null,
@@ -196,6 +198,7 @@ class AppSelectField<T> extends FormField<T> {
   final ValueChanged<T?>? onChanged;
   final double? width;
   final bool dense;
+  final String? hintText;
   final String? helperText;
   final bool searchable;
 }
@@ -212,6 +215,7 @@ class _AppSelectFieldWidget<T> extends StatefulWidget {
     required this.onChanged,
     required this.width,
     required this.dense,
+    this.hintText,
     required this.helperText,
     required this.searchable,
     required this.enabled,
@@ -226,6 +230,7 @@ class _AppSelectFieldWidget<T> extends StatefulWidget {
   final ValueChanged<T?>? onChanged;
   final double? width;
   final bool dense;
+  final String? hintText;
   final String? helperText;
   final bool searchable;
   final bool enabled;
@@ -394,17 +399,13 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
   @override
   void didUpdateWidget(covariant _AppSelectFieldWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value) {
+    if (oldWidget.value != widget.value || oldWidget.items != widget.items) {
       final expected = _getDisplayLabel(widget.value);
-      if (_controller.text != expected && !_focusNode.hasFocus) {
+      if (_controller.text != expected) {
         _hasUserTyped = false;
         _query = '';
         _highlightedIndex = -1;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _controller.text != expected) {
-            _controller.text = expected;
-          }
-        });
+        _controller.text = expected;
       }
     }
   }
@@ -427,19 +428,17 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         final item = indexed.value;
         final label = _extractLabel(item.child);
         final isHighlighted = i == _highlightedIndex;
-        final labelWidget = !_isOpen
-            ? const SizedBox.shrink()
-            : (item.child is Text
-                  ? Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: item.enabled ? t.ink : t.ink3,
-                      ),
-                    )
-                  : item.child);
+        final labelWidget = item.child is Text
+            ? Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: item.enabled ? t.ink : t.ink3,
+                ),
+              )
+            : item.child;
 
         return DropdownMenuEntry<T?>(
           value: item.value,
@@ -508,23 +507,21 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
       final label = _extractLabel(item.child);
       final isHighlighted = idx == _highlightedIndex;
 
-      final highlightedWidget = !_isOpen
-          ? const SizedBox.shrink()
-          : (item.child is Text
-                ? _buildHighlightedLabel(
-                    label: label,
-                    query: activeQuery,
-                    baseStyle: TextStyle(
-                      fontSize: 13,
-                      color: item.enabled ? t.ink : t.ink3,
-                    ),
-                    highlightStyle: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: item.enabled ? t.ink : t.ink3,
-                    ),
-                  )
-                : item.child);
+      final highlightedWidget = item.child is Text
+          ? _buildHighlightedLabel(
+              label: label,
+              query: activeQuery,
+              baseStyle: TextStyle(
+                fontSize: 13,
+                color: item.enabled ? t.ink : t.ink3,
+              ),
+              highlightStyle: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: item.enabled ? t.ink : t.ink3,
+              ),
+            )
+          : item.child;
 
       return DropdownMenuEntry<T?>(
         value: item.value,
@@ -639,6 +636,7 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
       controller: _controller,
       focusNode: _focusNode,
       width: widget.width,
+      hintText: widget.hintText,
       expandedInsets: widget.width == null ? EdgeInsets.zero : null,
       menuHeight: maxMenuHeight,
       enableFilter: widget.searchable,

@@ -300,8 +300,20 @@ void main() {
         final tokens = mode == Brightness.dark
             ? AppTokens.dark
             : AppTokens.light;
-        expect(find.text('Đang nhập liệu'), findsOneWidget);
-        expect(find.text('Đã khóa'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(AppBadge),
+            matching: find.text('Đang nhập liệu'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(AppBadge),
+            matching: find.text('Đã khóa'),
+          ),
+          findsOneWidget,
+        );
         expect(find.text('Đã chốt sổ'), findsNothing);
         expect(find.textContaining('Khóa lúc'), findsNothing);
         expect(_badge(tester, 'Đã khóa').tone, AppBadgeTone.ok);

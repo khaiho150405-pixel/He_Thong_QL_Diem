@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:client_flutter/app/app.dart';
 import 'package:client_flutter/features/authentication/session.dart';
+import 'package:client_flutter/features/gradebooks/gradebook_status.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -212,7 +213,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    expect(find.textContaining('Đang nhập liệu'), findsOneWidget);
+    expect(
+      find.widgetWithText(GradebookStatusBadge, 'Đang nhập liệu'),
+      findsOneWidget,
+    );
     await tester.tap(find.textContaining('10A1'));
     await tester.pumpAndSettle();
 

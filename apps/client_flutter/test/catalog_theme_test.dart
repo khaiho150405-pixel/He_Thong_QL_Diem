@@ -198,16 +198,19 @@ void main() {
           brightness: brightness,
         );
         expect(tester.takeException(), isNull);
-        expect(find.text('Nguyễn Văn An'), findsOneWidget);
-        expect(find.text('Trần Thị Bình'), findsOneWidget);
-        expect(find.text('Đang theo học'), findsOneWidget);
-        expect(find.text('Ngừng theo dõi'), findsOneWidget);
+        final table = find.byKey(const ValueKey('catalog-table-students'));
+        final content = wide ? table : find.byType(ListView);
+        Finder inContent(String text) =>
+            find.descendant(of: content, matching: find.text(text));
+        expect(inContent('Nguyễn Văn An'), findsOneWidget);
+        expect(inContent('Trần Thị Bình'), findsOneWidget);
+        expect(inContent('Đang theo học'), findsOneWidget);
+        expect(inContent('Ngừng theo dõi'), findsOneWidget);
         // Phân trang hiện có giữ nguyên.
         expect(find.text('Trang trước'), findsOneWidget);
         expect(find.text('Trang sau'), findsOneWidget);
         // Thanh lọc và sắp xếp hiện có vẫn còn.
         expect(find.text('Sắp xếp:'), findsOneWidget);
-        final table = find.byKey(const ValueKey('catalog-table-students'));
         if (wide) {
           expect(table, findsOneWidget);
           expect(find.text('STT'), findsOneWidget);
@@ -240,13 +243,16 @@ void main() {
           brightness: brightness,
         );
         expect(tester.takeException(), isNull);
-        expect(find.text('Lê Hoàng Cúc'), findsOneWidget);
-        expect(find.text('Phạm Minh Đức'), findsOneWidget);
         final table = find.byKey(const ValueKey('catalog-table-teachers'));
+        final content = wide ? table : find.byType(ListView);
+        Finder inContent(String text) =>
+            find.descendant(of: content, matching: find.text(text));
+        expect(inContent('Lê Hoàng Cúc'), findsOneWidget);
+        expect(inContent('Phạm Minh Đức'), findsOneWidget);
         if (wide) {
           expect(table, findsOneWidget);
           expect(find.text('TỔ CHUYÊN MÔN'), findsOneWidget);
-          expect(find.text('Tổ Toán'), findsOneWidget);
+          expect(inContent('Tổ Toán'), findsOneWidget);
           expect(find.text('cuc.le@truong.test'), findsOneWidget);
           expect(find.text('0901234567'), findsOneWidget);
           // Thiếu dữ liệu thì hiện dấu gạch, không bịa.

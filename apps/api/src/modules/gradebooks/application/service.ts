@@ -132,6 +132,23 @@ export class GradebooksService {
       termId: { kind: "int" },
     }) as unknown as GradebookScope;
     return this.run(actor, async (tx) => {
+      // Thông báo rõ cho riêng luồng tạo bảng điểm; gradebookActor/gradebookAccess dùng chung giữ nguyên hành vi.
+      await currentActor(tx.authorization, actor);
+      if (actor.role !== "GIAO_VIEN")
+        throw new ForbiddenException(
+          "Chỉ giáo viên được phân công mới tạo được bảng điểm.",
+        );
+      if (
+        !(await tx.authorization.find("phan_cong_giang_day", {
+          ma_giao_vien: actor.id,
+          ma_lop: data.classId,
+          ma_mon: data.subjectId,
+          ma_hoc_ky: data.termId,
+        }))
+      )
+        throw new ForbiddenException(
+          "Bạn chưa được phân công dạy môn này cho lớp và học kỳ đã chọn.",
+        );
       await gradebookAccess(tx.authorization, actor, data, true);
       return tx.createBlankGrid(actor.sessionHash, data);
     });
