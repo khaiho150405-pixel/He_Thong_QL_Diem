@@ -528,6 +528,12 @@ class InvalidLayoutTest(V2TestBase):
             "bad signature version": {**base, "signature": {**self.signature, "version": 2}},
             "non numeric widths": {**base, "signature": {**self.signature, "columnWidths": ["a", 1]}},
             "zero width": {**base, "signature": {**self.signature, "columnWidths": [0.5, 0.0, 0.5]}},
+            "huge integer width": {**base, "signature": {**self.signature, "columnWidths": [10**400, 1]}},
+            "widths overflowing when summed": {
+                **base,
+                "signature": {**self.signature, "columnWidths": [1e308, 1e308]},
+            },
+            "infinite width": '{"signature":{"version":1,"columnWidths":[1e999,1]},"columns":[]}',
             "no columns": with_columns(),
             "no HO_TEN": without("HO_TEN"),
             "two HO_TEN": with_columns(*base["columns"], {"index": 8, "role": "HO_TEN"}),

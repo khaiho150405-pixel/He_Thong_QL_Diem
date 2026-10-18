@@ -63,20 +63,25 @@ def _signature(raw: Any) -> dict[str, Any]:
     widths = raw.get("columnWidths")
     if not isinstance(widths, list) or not 2 <= len(widths) <= MAX_COLUMNS:
         raise InvalidLayoutError(f"signature.columnWidths phải có từ 2 đến {MAX_COLUMNS} phần tử.")
+    converted: list[float] = []
     for width in widths:
-        if (
-            isinstance(width, bool)
-            or not isinstance(width, (int, float))
-            or not math.isfinite(width)
-            or width <= 0
-        ):
+        if isinstance(width, bool) or not isinstance(width, (int, float)):
             raise InvalidLayoutError("signature.columnWidths chỉ gồm số dương.")
+        try:
+            value = float(width)  # số nguyên quá lớn không đổi được sang float → OverflowError
+        except OverflowError as error:
+            raise InvalidLayoutError("signature.columnWidths chỉ gồm số dương.") from error
+        if not math.isfinite(value) or value <= 0:
+            raise InvalidLayoutError("signature.columnWidths chỉ gồm số dương.")
+        converted.append(value)
+    if not math.isfinite(sum(converted)):
+        raise InvalidLayoutError("signature.columnWidths quá lớn.")
     texts = raw.get("headerTexts", [])
     if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
         raise InvalidLayoutError("signature.headerTexts phải là danh sách chuỗi.")
     if texts and len(texts) != len(widths):
         raise InvalidLayoutError("signature.headerTexts phải cùng độ dài columnWidths.")
-    return {**raw, "columnWidths": [float(w) for w in widths], "headerTexts": list(texts)}
+    return {**raw, "columnWidths": converted, "headerTexts": list(texts)}
 
 
 def parse_layout(text: str) -> Layout:
