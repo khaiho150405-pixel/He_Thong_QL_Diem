@@ -616,19 +616,22 @@ export class HttpRecognitionV2Client implements RecognitionV2Client {
     timeoutMs: number,
     parse: (body: unknown) => T,
   ): Promise<T> {
+    const signal = AbortSignal.timeout(timeoutMs);
+    // Hết hạn có thể xảy ra khi chờ header lẫn khi đọc body: cả hai đều là RECOGNITION_TIMEOUT.
+    const timedOut = (error: unknown) =>
+      signal.aborted ||
+      (error instanceof Error &&
+        (error.name === "TimeoutError" || error.name === "AbortError"));
     let response: Response;
     try {
       response = await this.request(`${this.url}${path}`, {
         method: "POST",
         body: form,
-        signal: AbortSignal.timeout(timeoutMs),
+        signal,
       });
     } catch (error) {
-      const timedOut =
-        error instanceof Error &&
-        (error.name === "TimeoutError" || error.name === "AbortError");
       throw new RecognitionV2Error(
-        timedOut ? "RECOGNITION_TIMEOUT" : "MODEL_UNAVAILABLE",
+        timedOut(error) ? "RECOGNITION_TIMEOUT" : "MODEL_UNAVAILABLE",
       );
     }
     if (response.status === 503)
@@ -646,7 +649,9 @@ export class HttpRecognitionV2Client implements RecognitionV2Client {
         ).detail;
         code = detail?.code;
         details = detail?.details;
-      } catch {
+      } catch (error) {
+        if (timedOut(error))
+          throw new RecognitionV2Error("RECOGNITION_TIMEOUT");
         code = undefined;
       }
       if (typeof code !== "string" || !V2_ERROR_CODES.has(code))
@@ -666,7 +671,8 @@ export class HttpRecognitionV2Client implements RecognitionV2Client {
       const body = await response.text();
       if (body.length > 25 * 1024 * 1024) return malformed();
       return parse(JSON.parse(body));
-    } catch {
+    } catch (error) {
+      if (timedOut(error)) throw new RecognitionV2Error("RECOGNITION_TIMEOUT");
       throw new RecognitionV2Error(MALFORMED);
     }
   }

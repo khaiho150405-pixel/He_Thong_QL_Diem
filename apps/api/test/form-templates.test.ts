@@ -903,6 +903,31 @@ test("v2 client maps unavailable, timeout, 422 and server errors", async () => {
   await assert.rejects(client(timeout).recognize(png(), layout()), {
     code: "RECOGNITION_TIMEOUT",
   });
+  // Header tới rồi body mới bị treo đến khi hết hạn: vẫn là RECOGNITION_TIMEOUT, cả HTTP 200 lẫn 422.
+  for (const status of [200, 422]) {
+    const stalledBody = (async (_url: unknown, init?: RequestInit) =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            init?.signal?.addEventListener(
+              "abort",
+              () => controller.error(init.signal?.reason),
+              { once: true },
+            );
+          },
+        }),
+        { status },
+      )) as unknown as typeof fetch;
+    await assert.rejects(
+      new HttpRecognitionV2Client(
+        "http://recognition.test",
+        stalledBody,
+        20,
+        20,
+      ).recognize(png(), layout()),
+      { code: "RECOGNITION_TIMEOUT" },
+    );
+  }
   const down = (async () => {
     throw new TypeError("fetch failed");
   }) as unknown as typeof fetch;
