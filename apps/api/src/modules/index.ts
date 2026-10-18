@@ -13,3 +13,4 @@ export { ReportsModule } from "./reports/module.js";
 export { AuditModule } from "./audit/module.js";
 export { FilesModule } from "./files/module.js";
 export { TimetableModule } from "./timetable/module.js";
+export { FormTemplatesModule } from "./form-templates/module.js";

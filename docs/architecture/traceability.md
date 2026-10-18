@@ -52,4 +52,14 @@ Mở rộng thời khóa biểu: `timetable_admin_ux_test.dart` kiểm thao tác
 
 UC11–UC13 (nút 3.2, 4.1–4.9, 5.1–5.8; sơ đồ phân cấp chức năng không đổi): một hàm STT chung ở API (`common/student-order.ts`); phiếu nhận dạng chốt danh sách lớp STT → học sinh vào `danh_sach_phieu` (append-only); bỏ số dòng khai báo; ghép dòng theo STT + họ tên đọc trên giấy (`recognition/domain/row-matching.ts`); mức dòng là mức thấp hơn giữa mức điểm và mức ghép; ghép thất bại → phiếu `LOI` (`ROW_MATCH_FAILED`); màn hình kiểm tra riêng. Bất biến 5 trong AGENTS.md được diễn giải lại. Trạng thái triển khai theo `docs/development/phase-7-prompts.md`; test tương ứng được liệt kê khi từng bước BE/FE hoàn tất.
 
+## Mẫu bảng điểm (ADR-0016, P2)
+
+UC11–UC12 (chuẩn bị nhận dạng nhiều cột, chưa đổi luồng tải ảnh của giáo viên): QTV khai báo mẫu qua `catalog/form-templates*` (module `form-templates`: `domain/definition.ts` luật hợp lệ và ánh xạ (nhóm, thứ tự) → thành phần; `application/service.ts`; `infrastructure/prisma-store.ts` gọi `luu_mau_bang_diem` / `doi_trang_thai_mau_bang_diem`). Server phân tích lại ảnh qua `/v2/layout/analyze` (client `HttpRecognitionV2Client`, `recognition/public.ts`), không tin chữ ký/số cột của client (`TEMPLATE_COLUMN_COUNT_MISMATCH`). Mẫu đã có phiếu tham chiếu không sửa tại chỗ (`TEMPLATE_IN_USE`), "sửa" là `versions`; khóa lạc quan `expectedVersion` (`VERSION_CONFLICT`). `try` gọi `/v2/recognize` đồng bộ, không ghép học sinh, không tạo phiếu/kết quả dòng, chỉ audit `FORM_TEMPLATE_TRIED` (bất biến 1 và 2 không bị đụng: không ghi vào `diem_thanh_phan`). Giáo viên chỉ đọc mẫu `DANG_DUNG`, học sinh 403 (bất biến 9, 10).
+
+Kiểm thử: `apps/api/test/form-template-definition.test.ts` (luật hợp lệ, ánh xạ), `apps/api/test/form-templates.test.ts` (service với fake store/model/storage, phân quyền âm tính, mã lỗi `try`, dịch lỗi SQL, client v2 với fetch giả), `database/tests/form-templates.test.ts` (CHECK/UNIQUE/FK, quyền runtime, hàm SQL, trigger, hạn mức). `/mapping` và `/recognition-batches` thuộc P3.
+
+Cấu hình: thời gian chờ `try` đặt bằng biến môi trường `FORM_TEMPLATE_TRY_TIMEOUT_MS` (mặc định 90000, 1000–600000, đọc trong `app.ts`); `analyze`/tạo mẫu dùng `RECOGNITION_TIMEOUT_MS` hiện có; hạn mức `analyze`/`try` dùng chung `UPLOAD_RATE_LIMIT_PER_MINUTE`.
+
+## Ghép dòng nhận dạng (ADR-0015) — luật phân loại
+
 Luật phân loại hai kênh (BE-21/22, bất biến 4): hai kênh độc lập đồng thuận → Xanh; chỉ một kênh ≥ τ → Vàng kèm gợi ý và nguồn (`suggestedSource`); mâu thuẫn/cùng yếu/không hợp lệ → Đỏ không gợi ý. Mã: `apps/recognition-service/src/domain/classification.py`; kiểm thử: `tests/test_classification.py`, `apps/api/test/recognition-worker.test.ts`; đo: `scripts/recognition/evaluate_pages.py` (số liệu trong ADR-0015).

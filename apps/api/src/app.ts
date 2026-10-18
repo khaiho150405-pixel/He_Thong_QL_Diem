@@ -29,13 +29,41 @@ import type { AppConfig } from "./common/config.js";
 import * as domainModules from "./modules/index.js";
 import { DatabaseModule } from "./common/database.js";
 import { FilesModule } from "./modules/files/module.js";
+import { FormTemplatesModule } from "./modules/form-templates/module.js";
 import type { ObjectStorage } from "./modules/files/application/port.js";
+import {
+  HttpRecognitionV2Client,
+  type RecognitionV2Client,
+} from "./modules/recognition/public.js";
+
+const DEFAULT_TRY_TIMEOUT_MS = 90_000;
+
+/** Thời gian chờ "thử nhận dạng" đồng bộ (mặc định 90 s); đặt bằng FORM_TEMPLATE_TRY_TIMEOUT_MS, 1 s–10 phút. */
+function tryTimeoutMs(env: NodeJS.ProcessEnv): number {
+  const value = Number(
+    env.FORM_TEMPLATE_TRY_TIMEOUT_MS ?? DEFAULT_TRY_TIMEOUT_MS,
+  );
+  if (!Number.isInteger(value) || value < 1_000 || value > 600_000)
+    throw new Error("Invalid FORM_TEMPLATE_TRY_TIMEOUT_MS");
+  return value;
+}
 
 export async function createApp(
   config: Pick<AppConfig, "origins" | "environment"> &
-    Partial<Pick<AppConfig, "databaseUrl" | "uploadRateLimitPerMinute">>,
+    Partial<
+      Pick<
+        AppConfig,
+        | "databaseUrl"
+        | "uploadRateLimitPerMinute"
+        | "recognitionServiceUrl"
+        | "recognitionTimeoutMs"
+      >
+    >,
   probe: DependencyProbe,
-  overrides: { objectStorage?: ObjectStorage } = {},
+  overrides: {
+    objectStorage?: ObjectStorage;
+    recognitionV2?: RecognitionV2Client;
+  } = {},
 ): Promise<INestApplication> {
   @ApiExcludeController()
   @Controller()
@@ -55,8 +83,21 @@ export async function createApp(
         config,
       ),
       FilesModule.configure(overrides.objectStorage),
+      FormTemplatesModule.configure(
+        overrides.recognitionV2 ??
+          (config.recognitionServiceUrl
+            ? new HttpRecognitionV2Client(
+                config.recognitionServiceUrl,
+                fetch,
+                config.recognitionTimeoutMs,
+                tryTimeoutMs(process.env),
+              )
+            : undefined),
+      ),
       ...Object.values(domainModules).filter(
-        (module) => module !== domainModules.FilesModule,
+        (module) =>
+          module !== domainModules.FilesModule &&
+          module !== domainModules.FormTemplatesModule,
       ),
       NotFoundModule,
     ],

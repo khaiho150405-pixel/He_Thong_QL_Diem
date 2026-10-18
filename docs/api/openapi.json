@@ -43,6 +43,808 @@
         "tags": ["health"]
       }
     },
+    "/api/v1/catalog/form-templates/analyze": {
+      "post": {
+        "operationId": "formTemplatesAnalyze",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image"],
+                "properties": {
+                  "image": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AnalyzeResultDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/form-templates": {
+      "post": {
+        "operationId": "formTemplatesCreate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image", "definition"],
+                "properties": {
+                  "image": { "type": "string", "format": "binary" },
+                  "definition": {
+                    "type": "string",
+                    "description": "JSON của TemplateDefinitionInput (name, description, columns)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TemplateDetailDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      },
+      "get": {
+        "operationId": "formTemplatesList",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": ["NHAP", "DANG_DUNG", "NGUNG"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TemplatePageDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/catalog/form-templates/{id}": {
+      "get": {
+        "operationId": "formTemplatesDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TemplateDetailDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      },
+      "put": {
+        "operationId": "formTemplatesUpdate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionedDefinitionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sửa tại chỗ khi chưa có phiếu tham chiếu; ngược lại 409 TEMPLATE_IN_USE (tạo phiên bản mới)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TemplateDetailDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/form-templates/{id}/versions": {
+      "post": {
+        "operationId": "formTemplatesCreateVersion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionedDefinitionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Phiên bản mới (NHAP); bản cũ chuyển NGUNG",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TemplateDetailDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/form-templates/{id}/activate": {
+      "post": {
+        "operationId": "formTemplatesActivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExpectedVersionInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TemplateDetailDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/form-templates/{id}/retire": {
+      "post": {
+        "operationId": "formTemplatesRetire",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExpectedVersionInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TemplateDetailDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/form-templates/{id}/try": {
+      "post": {
+        "operationId": "formTemplatesTryTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image"],
+                "properties": {
+                  "image": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kết quả đọc thử đồng bộ; không ghép học sinh, không lưu phiếu hay ảnh",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TryResultDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/years": {
       "get": {
         "operationId": "yearsList",
@@ -6637,6 +7439,289 @@
           "requestId": { "type": "string" }
         },
         "required": ["code", "message", "details", "requestId"]
+      },
+      "AnalyzedColumnDto": {
+        "type": "object",
+        "properties": {
+          "index": { "type": "number" },
+          "x0": {
+            "type": "number",
+            "description": "Tỉ lệ 0–1 theo bề rộng bảng"
+          },
+          "x1": { "type": "number" },
+          "widthMm": { "type": "number" },
+          "headerText": { "type": "string" },
+          "suggestedRole": {
+            "type": "string",
+            "enum": ["STT", "HO_TEN", "DIEM", "DIEM_CHU", "BO_QUA"],
+            "nullable": true
+          },
+          "suggestedGroup": {
+            "type": "string",
+            "enum": ["TX", "GK", "CK"],
+            "nullable": true
+          },
+          "suggestedOrder": { "type": "number", "nullable": true }
+        },
+        "required": [
+          "index",
+          "x0",
+          "x1",
+          "widthMm",
+          "headerText",
+          "suggestedRole",
+          "suggestedGroup",
+          "suggestedOrder"
+        ]
+      },
+      "AnalyzeResultDto": {
+        "type": "object",
+        "properties": {
+          "columnCount": { "type": "number" },
+          "columns": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AnalyzedColumnDto" }
+          },
+          "previewPngBase64": {
+            "type": "string",
+            "description": "Ảnh PNG (base64) đã nắn, vẽ lưới và số thứ tự cột từ 0"
+          }
+        },
+        "required": ["columnCount", "columns", "previewPngBase64"]
+      },
+      "TemplateColumnDto": {
+        "type": "object",
+        "properties": {
+          "index": { "type": "number", "minimum": 0, "maximum": 63 },
+          "role": {
+            "type": "string",
+            "enum": ["STT", "HO_TEN", "DIEM", "DIEM_CHU", "BO_QUA"]
+          },
+          "group": {
+            "type": "string",
+            "enum": ["TX", "GK", "CK"],
+            "nullable": true
+          },
+          "order": {
+            "type": "number",
+            "nullable": true,
+            "description": "Thứ tự trong nhóm hệ số, từ 1 (chỉ cột DIEM)"
+          },
+          "pairedWith": {
+            "type": "number",
+            "nullable": true,
+            "description": "Chỉ số cột DIEM đi kèm (chỉ cột DIEM_CHU)"
+          },
+          "headerText": { "type": "string", "nullable": true }
+        },
+        "required": [
+          "index",
+          "role",
+          "group",
+          "order",
+          "pairedWith",
+          "headerText"
+        ]
+      },
+      "TemplateDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["NHAP", "DANG_DUNG", "NGUNG"]
+          },
+          "revision": {
+            "type": "number",
+            "description": "Số phiên bản của chuỗi mẫu"
+          },
+          "rootTemplateId": { "type": "number", "nullable": true },
+          "columnCount": { "type": "number" },
+          "gradeColumnCount": { "type": "number" },
+          "version": {
+            "type": "number",
+            "description": "Dùng làm expectedVersion khi sửa/kích hoạt/ngừng"
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "columns": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TemplateColumnDto" }
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL ký 300 giây của ảnh mẫu (kho lưu trữ private)"
+          },
+          "imageUrlExpiresInSeconds": { "type": "number", "example": 300 }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "status",
+          "revision",
+          "rootTemplateId",
+          "columnCount",
+          "gradeColumnCount",
+          "version",
+          "createdAt",
+          "columns",
+          "imageUrl",
+          "imageUrlExpiresInSeconds"
+        ]
+      },
+      "TemplateSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["NHAP", "DANG_DUNG", "NGUNG"]
+          },
+          "revision": {
+            "type": "number",
+            "description": "Số phiên bản của chuỗi mẫu"
+          },
+          "rootTemplateId": { "type": "number", "nullable": true },
+          "columnCount": { "type": "number" },
+          "gradeColumnCount": { "type": "number" },
+          "version": {
+            "type": "number",
+            "description": "Dùng làm expectedVersion khi sửa/kích hoạt/ngừng"
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "status",
+          "revision",
+          "rootTemplateId",
+          "columnCount",
+          "gradeColumnCount",
+          "version",
+          "createdAt"
+        ]
+      },
+      "TemplatePageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TemplateSummaryDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "VersionedDefinitionInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "columns": {
+            "description": "Mọi cột 0..n-1 của tờ mẫu (cột không đọc dùng BO_QUA). Đúng một HO_TEN, tối đa một STT, ít nhất một DIEM; cặp (group, order) không trùng; mỗi DIEM_CHU trỏ tới một DIEM bằng pairedWith.",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TemplateColumnDto" }
+          },
+          "expectedVersion": { "type": "number", "minimum": 0 }
+        },
+        "required": ["name", "columns", "expectedVersion"]
+      },
+      "ExpectedVersionInput": {
+        "type": "object",
+        "properties": { "expectedVersion": { "type": "number", "minimum": 0 } },
+        "required": ["expectedVersion"]
+      },
+      "TryGradeDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Định danh cột điểm, ví dụ TX1"
+          },
+          "numericValue": { "type": "string", "nullable": true },
+          "numericConfidence": { "type": "string", "nullable": true },
+          "writtenValue": {
+            "type": "string",
+            "nullable": true,
+            "description": "null với cột chỉ có kênh điểm số"
+          },
+          "writtenConfidence": { "type": "string", "nullable": true },
+          "comparison": {
+            "type": "string",
+            "enum": ["KHOP", "LECH", "MOT_KENH", "KHONG_DOC_DUOC"]
+          },
+          "reviewLevel": { "type": "string", "enum": ["XANH", "VANG", "DO"] },
+          "suggestedSource": {
+            "type": "string",
+            "enum": ["SO", "CHU"],
+            "nullable": true
+          }
+        },
+        "required": [
+          "key",
+          "numericValue",
+          "numericConfidence",
+          "writtenValue",
+          "writtenConfidence",
+          "comparison",
+          "reviewLevel",
+          "suggestedSource"
+        ]
+      },
+      "TryRowDto": {
+        "type": "object",
+        "properties": {
+          "rowIndex": { "type": "number" },
+          "struck": { "type": "boolean" },
+          "sttRead": {
+            "type": "number",
+            "nullable": true,
+            "description": "STT đọc được"
+          },
+          "nameRead": {
+            "type": "string",
+            "nullable": true,
+            "description": "Họ tên máy đọc được (không ghép với học sinh hệ thống)"
+          },
+          "grades": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TryGradeDto" }
+          }
+        },
+        "required": ["rowIndex", "struck", "sttRead", "nameRead", "grades"]
+      },
+      "TryResultDto": {
+        "type": "object",
+        "properties": {
+          "templateId": { "type": "number" },
+          "modelVersion": { "type": "string" },
+          "templateMatchScore": {
+            "type": "number",
+            "description": "Điểm khớp mẫu 0–1"
+          },
+          "pageStartStt": { "type": "number", "nullable": true },
+          "rows": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TryRowDto" }
+          }
+        },
+        "required": [
+          "templateId",
+          "modelVersion",
+          "templateMatchScore",
+          "pageStartStt",
+          "rows"
+        ]
       },
       "YearsDto": {
         "type": "object",

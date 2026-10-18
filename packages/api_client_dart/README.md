@@ -83,6 +83,15 @@ Class | Method | HTTP request | Description
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsCalculate**](doc/FinalResultsApi.md#finalresultscalculate) | **POST** /api/v1/gradebooks/{gradebookId}/final-results/calculate |
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsHistory**](doc/FinalResultsApi.md#finalresultshistory) | **GET** /api/v1/gradebooks/{gradebookId}/final-results/{resultId}/history |
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsList**](doc/FinalResultsApi.md#finalresultslist) | **GET** /api/v1/gradebooks/{gradebookId}/final-results |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesActivate**](doc/FormTemplatesApi.md#formtemplatesactivate) | **POST** /api/v1/catalog/form-templates/{id}/activate |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesAnalyze**](doc/FormTemplatesApi.md#formtemplatesanalyze) | **POST** /api/v1/catalog/form-templates/analyze |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesCreate**](doc/FormTemplatesApi.md#formtemplatescreate) | **POST** /api/v1/catalog/form-templates |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesCreateVersion**](doc/FormTemplatesApi.md#formtemplatescreateversion) | **POST** /api/v1/catalog/form-templates/{id}/versions |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesDetail**](doc/FormTemplatesApi.md#formtemplatesdetail) | **GET** /api/v1/catalog/form-templates/{id} |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesList**](doc/FormTemplatesApi.md#formtemplateslist) | **GET** /api/v1/catalog/form-templates |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesRetire**](doc/FormTemplatesApi.md#formtemplatesretire) | **POST** /api/v1/catalog/form-templates/{id}/retire |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesTryTemplate**](doc/FormTemplatesApi.md#formtemplatestrytemplate) | **POST** /api/v1/catalog/form-templates/{id}/try |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesUpdate**](doc/FormTemplatesApi.md#formtemplatesupdate) | **PUT** /api/v1/catalog/form-templates/{id} |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksBatchUpdate**](doc/GradebooksApi.md#gradebooksbatchupdate) | **PUT** /api/v1/gradebooks/{id}/grades |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCells**](doc/GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCreate**](doc/GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
@@ -162,6 +171,8 @@ Class | Method | HTTP request | Description
  - [AdminOcrAccuracyDto](doc/AdminOcrAccuracyDto.md)
  - [AdminOverviewDto](doc/AdminOverviewDto.md)
  - [AdminRecentActivityDto](doc/AdminRecentActivityDto.md)
+ - [AnalyzeResultDto](doc/AnalyzeResultDto.md)
+ - [AnalyzedColumnDto](doc/AnalyzedColumnDto.md)
  - [AssignmentsDto](doc/AssignmentsDto.md)
  - [AssignmentsInput](doc/AssignmentsInput.md)
  - [AssignmentsPage](doc/AssignmentsPage.md)
@@ -185,6 +196,7 @@ Class | Method | HTTP request | Description
  - [CreateTimetableItemInput](doc/CreateTimetableItemInput.md)
  - [DistributionItemDto](doc/DistributionItemDto.md)
  - [ErrorDto](doc/ErrorDto.md)
+ - [ExpectedVersionInput](doc/ExpectedVersionInput.md)
  - [FinalResultDto](doc/FinalResultDto.md)
  - [FinalResultListDto](doc/FinalResultListDto.md)
  - [GradeCellDto](doc/GradeCellDto.md)
@@ -235,9 +247,17 @@ Class | Method | HTTP request | Description
  - [TeachersImportResult](doc/TeachersImportResult.md)
  - [TeachersInput](doc/TeachersInput.md)
  - [TeachersPage](doc/TeachersPage.md)
+ - [TemplateColumnDto](doc/TemplateColumnDto.md)
+ - [TemplateDetailDto](doc/TemplateDetailDto.md)
+ - [TemplatePageDto](doc/TemplatePageDto.md)
+ - [TemplateSummaryDto](doc/TemplateSummaryDto.md)
  - [TimetableItemDto](doc/TimetableItemDto.md)
  - [TimetableListDto](doc/TimetableListDto.md)
+ - [TryGradeDto](doc/TryGradeDto.md)
+ - [TryResultDto](doc/TryResultDto.md)
+ - [TryRowDto](doc/TryRowDto.md)
  - [UpdatedCellDto](doc/UpdatedCellDto.md)
+ - [VersionedDefinitionInput](doc/VersionedDefinitionInput.md)
  - [YearPendingSummaryDto](doc/YearPendingSummaryDto.md)
  - [YearsDto](doc/YearsDto.md)
  - [YearsInput](doc/YearsInput.md)

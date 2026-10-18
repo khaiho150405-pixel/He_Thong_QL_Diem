@@ -11,6 +11,8 @@ import 'package:api_client_dart/src/model/admin_kpi_dto.dart';
 import 'package:api_client_dart/src/model/admin_ocr_accuracy_dto.dart';
 import 'package:api_client_dart/src/model/admin_overview_dto.dart';
 import 'package:api_client_dart/src/model/admin_recent_activity_dto.dart';
+import 'package:api_client_dart/src/model/analyze_result_dto.dart';
+import 'package:api_client_dart/src/model/analyzed_column_dto.dart';
 import 'package:api_client_dart/src/model/assignments_dto.dart';
 import 'package:api_client_dart/src/model/assignments_input.dart';
 import 'package:api_client_dart/src/model/assignments_page.dart';
@@ -34,6 +36,7 @@ import 'package:api_client_dart/src/model/create_gradebook_input.dart';
 import 'package:api_client_dart/src/model/create_timetable_item_input.dart';
 import 'package:api_client_dart/src/model/distribution_item_dto.dart';
 import 'package:api_client_dart/src/model/error_dto.dart';
+import 'package:api_client_dart/src/model/expected_version_input.dart';
 import 'package:api_client_dart/src/model/final_result_dto.dart';
 import 'package:api_client_dart/src/model/final_result_list_dto.dart';
 import 'package:api_client_dart/src/model/grade_cell_dto.dart';
@@ -84,9 +87,17 @@ import 'package:api_client_dart/src/model/teachers_import_input.dart';
 import 'package:api_client_dart/src/model/teachers_import_result.dart';
 import 'package:api_client_dart/src/model/teachers_input.dart';
 import 'package:api_client_dart/src/model/teachers_page.dart';
+import 'package:api_client_dart/src/model/template_column_dto.dart';
+import 'package:api_client_dart/src/model/template_detail_dto.dart';
+import 'package:api_client_dart/src/model/template_page_dto.dart';
+import 'package:api_client_dart/src/model/template_summary_dto.dart';
 import 'package:api_client_dart/src/model/timetable_item_dto.dart';
 import 'package:api_client_dart/src/model/timetable_list_dto.dart';
+import 'package:api_client_dart/src/model/try_grade_dto.dart';
+import 'package:api_client_dart/src/model/try_result_dto.dart';
+import 'package:api_client_dart/src/model/try_row_dto.dart';
 import 'package:api_client_dart/src/model/updated_cell_dto.dart';
+import 'package:api_client_dart/src/model/versioned_definition_input.dart';
 import 'package:api_client_dart/src/model/year_pending_summary_dto.dart';
 import 'package:api_client_dart/src/model/years_dto.dart';
 import 'package:api_client_dart/src/model/years_input.dart';
@@ -150,6 +161,12 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'AdminRecentActivityDto':
       return AdminRecentActivityDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AnalyzeResultDto':
+      return AnalyzeResultDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AnalyzedColumnDto':
+      return AnalyzedColumnDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'AssignmentsDto':
       return AssignmentsDto.fromJson(value as Map<String, dynamic>)
@@ -216,6 +233,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'ErrorDto':
       return ErrorDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'ExpectedVersionInput':
+      return ExpectedVersionInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'FinalResultDto':
       return FinalResultDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -352,14 +372,35 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'TeachersPage':
       return TeachersPage.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TemplateColumnDto':
+      return TemplateColumnDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'TemplateDetailDto':
+      return TemplateDetailDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'TemplatePageDto':
+      return TemplatePageDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'TemplateSummaryDto':
+      return TemplateSummaryDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'TimetableItemDto':
       return TimetableItemDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'TimetableListDto':
       return TimetableListDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'TryGradeDto':
+      return TryGradeDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TryResultDto':
+      return TryResultDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'TryRowDto':
+      return TryRowDto.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'UpdatedCellDto':
       return UpdatedCellDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'VersionedDefinitionInput':
+      return VersionedDefinitionInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'YearPendingSummaryDto':
       return YearPendingSummaryDto.fromJson(value as Map<String, dynamic>)

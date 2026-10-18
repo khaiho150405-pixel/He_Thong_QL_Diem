@@ -110,10 +110,19 @@ function cropBase64(value: unknown): string {
   return value;
 }
 
-function row(value: unknown): RecognitionRowResult {
-  const input = record(value);
-  const numeric = channel(input.numeric);
-  const written = channel(input.written);
+/**
+ * Kiểm phân loại của một ô khớp luật hợp nhất hai kênh (ADR-0015) với giá trị hai kênh; dùng chung cho v1 (`row`) và v2
+ * (`gradeCell`). Ném MALFORMED_RESPONSE khi không khớp. Kênh chữ vắng (cột một kênh v2) truyền vào là kênh trống.
+ */
+function checkedClassification(
+  input: Record<string, unknown>,
+  numeric: ChannelResult,
+  written: ChannelResult,
+): {
+  comparison: RecognitionRowResult["comparison"];
+  reviewLevel: RecognitionRowResult["reviewLevel"];
+  suggestedSource: SuggestedSource | null;
+} {
   const comparison = input.comparison;
   const reviewLevel = input.reviewLevel;
   if (
@@ -159,6 +168,22 @@ function row(value: unknown): RecognitionRowResult {
   if (!classificationConsistent || !levelConsistent || !suggestionConsistent)
     return malformed();
   return {
+    comparison: comparison as RecognitionRowResult["comparison"],
+    reviewLevel: reviewLevel as RecognitionRowResult["reviewLevel"],
+    suggestedSource,
+  };
+}
+
+function row(value: unknown): RecognitionRowResult {
+  const input = record(value);
+  const numeric = channel(input.numeric);
+  const written = channel(input.written);
+  const { comparison, reviewLevel, suggestedSource } = checkedClassification(
+    input,
+    numeric,
+    written,
+  );
+  return {
     rowIndex: integer(input.rowIndex, 1, MAX_ROW_INDEX),
     struck: flag(input.struck),
     stt: stt(input.stt),
@@ -168,8 +193,8 @@ function row(value: unknown): RecognitionRowResult {
     numericCropBase64: cropBase64(input.numericCropBase64),
     writtenCropBase64: cropBase64(input.writtenCropBase64),
     nameCropBase64: cropBase64(input.nameCropBase64),
-    comparison: comparison as RecognitionRowResult["comparison"],
-    reviewLevel: reviewLevel as RecognitionRowResult["reviewLevel"],
+    comparison,
+    reviewLevel,
     suggestedSource,
   };
 }
@@ -245,6 +270,404 @@ export class HttpRecognitionModel implements RecognitionModelClient {
     } catch (error) {
       if (error instanceof Error && error.message === MALFORMED) throw error;
       throw new Error(MALFORMED);
+    }
+  }
+}
+
+// ── Contract v2 (ADR-0016): phân tích bố cục và đọc nhiều cột theo mẫu. v1 ở trên không đổi. ──
+
+export type LayoutSignature = {
+  version: 1;
+  columnWidths: number[];
+  headerTexts: string[];
+  headerRows: number;
+  rowHeightMm: number;
+  tableWidthMm: number;
+};
+
+export type SuggestedRole = "STT" | "HO_TEN" | "DIEM" | "DIEM_CHU" | "BO_QUA";
+export type GradeGroup = "TX" | "GK" | "CK";
+
+export type AnalyzedColumn = {
+  index: number;
+  /** Tỉ lệ 0–1 theo bề rộng bảng. */
+  x0: number;
+  x1: number;
+  widthMm: number;
+  headerText: string;
+  /** null khi không đọc được tiêu đề. */
+  suggestedRole: SuggestedRole | null;
+  suggestedGroup: GradeGroup | null;
+  suggestedOrder: number | null;
+};
+
+export type LayoutAnalysis = {
+  signature: LayoutSignature;
+  columns: AnalyzedColumn[];
+  previewPngBase64: string;
+};
+
+/** `layout` gửi tới POST /v2/recognize: `index` là chỉ số cột của MẪU, chỉ gồm cột cần đọc. */
+export type V2Layout = {
+  signature: LayoutSignature;
+  columns: Array<{
+    index: number;
+    role: "STT" | "HO_TEN" | "DIEM" | "DIEM_CHU";
+    key?: string;
+    writtenIndex?: number | null;
+  }>;
+};
+
+export type V2Grade = {
+  key: string;
+  numeric: ChannelResult;
+  /** null với cột chỉ có kênh số (tối đa Vàng, D-01). */
+  written: ChannelResult | null;
+  numericCropBase64: string;
+  writtenCropBase64: string | null;
+  comparison: RecognitionRowResult["comparison"];
+  reviewLevel: RecognitionRowResult["reviewLevel"];
+  suggestedSource: SuggestedSource | null;
+};
+
+export type V2Row = {
+  rowIndex: number;
+  struck: boolean;
+  stt: SttResult;
+  name: NameResult;
+  nameCropBase64: string;
+  sttRead: number | null;
+  sttFromPosition: number | null;
+  grades: V2Grade[];
+};
+
+export type V2Result = {
+  modelVersion: string;
+  pageStartStt: number | null;
+  templateMatch: { score: number; columnMap: Record<number, number> };
+  rows: V2Row[];
+};
+
+/** Mã lỗi 422 của contract v2: mã v1 cộng TEMPLATE_MISMATCH (kèm details) và INVALID_LAYOUT. */
+const V2_ERROR_CODES = new Set<string>([
+  "IMAGE_UNREADABLE",
+  "IMAGE_QUALITY_LOW",
+  "GRID_NOT_FOUND",
+  "NOT_A_GRADEBOOK",
+  "SCORE_COLUMN_NOT_FOUND",
+  "TEMPLATE_MISMATCH",
+  "INVALID_LAYOUT",
+]);
+
+/** Lỗi của dịch vụ nhận dạng v2. `code` ổn định; `details` chỉ có ở TEMPLATE_MISMATCH. */
+export class RecognitionV2Error extends Error {
+  constructor(
+    readonly code: string,
+    readonly details: Record<string, unknown> | null = null,
+  ) {
+    super(code);
+  }
+}
+
+function finiteNumber(value: unknown, min: number, max: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return malformed();
+  if (value < min || value > max) return malformed();
+  return value;
+}
+
+function optionalInteger(
+  value: unknown,
+  min: number,
+  max: number,
+): number | null {
+  return value === null || value === undefined
+    ? null
+    : integer(value, min, max);
+}
+
+function layoutSignature(value: unknown): LayoutSignature {
+  const input = record(value);
+  if (input.version !== 1) return malformed();
+  if (
+    !Array.isArray(input.columnWidths) ||
+    input.columnWidths.length < 2 ||
+    input.columnWidths.length > 64 ||
+    !Array.isArray(input.headerTexts) ||
+    input.headerTexts.length > 64
+  )
+    return malformed();
+  return {
+    version: 1,
+    columnWidths: input.columnWidths.map((item) =>
+      finiteNumber(item, Number.MIN_VALUE, 1_000_000),
+    ),
+    headerTexts: input.headerTexts.map((item) => {
+      if (typeof item !== "string" || item.length > 200) return malformed();
+      return item;
+    }),
+    headerRows: integer(input.headerRows, 0, 100),
+    rowHeightMm: finiteNumber(input.rowHeightMm, 0, 10_000),
+    tableWidthMm: finiteNumber(input.tableWidthMm, 0, 100_000),
+  };
+}
+
+const SUGGESTED_ROLES = ["STT", "HO_TEN", "DIEM", "DIEM_CHU", "BO_QUA"];
+const GRADE_GROUPS = ["TX", "GK", "CK"];
+
+function analyzedColumn(value: unknown): AnalyzedColumn {
+  const input = record(value);
+  const suggestedRole = input.suggestedRole ?? null;
+  const suggestedGroup = input.suggestedGroup ?? null;
+  if (
+    suggestedRole !== null &&
+    (typeof suggestedRole !== "string" ||
+      !SUGGESTED_ROLES.includes(suggestedRole))
+  )
+    return malformed();
+  if (
+    suggestedGroup !== null &&
+    (typeof suggestedGroup !== "string" ||
+      !GRADE_GROUPS.includes(suggestedGroup))
+  )
+    return malformed();
+  const headerText = input.headerText;
+  if (typeof headerText !== "string" || headerText.length > 200)
+    return malformed();
+  return {
+    index: integer(input.index, 0, 63),
+    x0: finiteNumber(input.x0, 0, 1),
+    x1: finiteNumber(input.x1, 0, 1),
+    widthMm: finiteNumber(input.widthMm, 0, 100_000),
+    headerText,
+    suggestedRole: suggestedRole as SuggestedRole | null,
+    suggestedGroup: suggestedGroup as GradeGroup | null,
+    suggestedOrder: optionalInteger(input.suggestedOrder, 1, 99),
+  };
+}
+
+export function parseLayoutAnalysis(body: unknown): LayoutAnalysis {
+  const input = record(body);
+  if (!Array.isArray(input.columns) || input.columns.length > 64)
+    return malformed();
+  const signature = layoutSignature(input.signature);
+  const columns = input.columns.map(analyzedColumn);
+  if (
+    columns.length !== signature.columnWidths.length ||
+    columns.some((column, position) => column.index !== position)
+  )
+    return malformed();
+  return {
+    signature,
+    columns,
+    previewPngBase64: cropBase64(input.previewPngBase64),
+  };
+}
+
+function gradeCell(value: unknown): V2Grade {
+  const input = record(value);
+  if (typeof input.key !== "string" || !/^[A-Za-z0-9_-]{1,32}$/.test(input.key))
+    return malformed();
+  const numeric = channel(input.numeric);
+  const written = input.written === null ? null : channel(input.written);
+  const writtenCrop =
+    input.writtenCropBase64 === null
+      ? null
+      : cropBase64(input.writtenCropBase64);
+  // Ô một kênh: không có kênh chữ lẫn ảnh cắt chữ; ô hai kênh có cả hai.
+  if ((written === null) !== (writtenCrop === null)) return malformed();
+  const { comparison, reviewLevel, suggestedSource } = checkedClassification(
+    input,
+    numeric,
+    written ?? {
+      rawOutput: null,
+      value: null,
+      confidence: null,
+      isBlank: true,
+    },
+  );
+  // Cột một kênh không bao giờ Xanh và chỉ gợi ý từ kênh số (D-01).
+  if (written === null && (reviewLevel === "XANH" || suggestedSource === "CHU"))
+    return malformed();
+  return {
+    key: input.key,
+    numeric,
+    written,
+    numericCropBase64: cropBase64(input.numericCropBase64),
+    writtenCropBase64: writtenCrop,
+    comparison,
+    reviewLevel,
+    suggestedSource,
+  };
+}
+
+function rowV2(value: unknown): V2Row {
+  const input = record(value);
+  if (!Array.isArray(input.grades) || input.grades.length > 64)
+    return malformed();
+  const grades = input.grades.map(gradeCell);
+  if (new Set(grades.map((item) => item.key)).size !== grades.length)
+    return malformed();
+  return {
+    rowIndex: integer(input.rowIndex, 1, MAX_ROW_INDEX),
+    struck: flag(input.struck),
+    stt: stt(input.stt),
+    name: name(input.name),
+    nameCropBase64: cropBase64(input.nameCropBase64),
+    sttRead: optionalInteger(input.sttRead, 1, 999_999_999),
+    sttFromPosition: optionalInteger(input.sttFromPosition, 1, 999_999_999),
+    grades,
+  };
+}
+
+export function parseRecognitionV2Response(body: unknown): V2Result {
+  const input = record(body);
+  if (
+    typeof input.modelVersion !== "string" ||
+    !input.modelVersion ||
+    input.modelVersion.length > 80 ||
+    !Array.isArray(input.rows) ||
+    input.rows.length > MAX_ROWS
+  )
+    return malformed();
+  const match = record(input.templateMatch);
+  const columnMap = record(match.columnMap);
+  const rows = input.rows.map(rowV2);
+  if (new Set(rows.map((item) => item.rowIndex)).size !== rows.length)
+    return malformed();
+  return {
+    modelVersion: input.modelVersion,
+    pageStartStt: optionalInteger(input.pageStartStt, 1, 999_999_999),
+    templateMatch: {
+      score: finiteNumber(match.score, 0, 1),
+      columnMap: Object.fromEntries(
+        Object.entries(columnMap).map(([from, to]) => {
+          if (!/^[0-9]{1,2}$/.test(from)) return malformed();
+          return [Number(from), integer(to, 0, 63)];
+        }),
+      ),
+    },
+    rows,
+  };
+}
+
+export interface RecognitionV2Client {
+  /** POST /v2/layout/analyze: không lưu gì, không đọc điểm. */
+  analyzeLayout(image: Uint8Array): Promise<LayoutAnalysis>;
+  /** POST /v2/recognize đồng bộ với `layout` dựng từ cột mẫu. */
+  recognize(image: Uint8Array, layout: V2Layout): Promise<V2Result>;
+}
+
+/** Client v2 chưa cấu hình dịch vụ nhận dạng (export OpenAPI, test): mọi lời gọi báo MODEL_UNAVAILABLE. */
+export class UnconfiguredRecognitionV2Client implements RecognitionV2Client {
+  async analyzeLayout(): Promise<LayoutAnalysis> {
+    throw new RecognitionV2Error("MODEL_UNAVAILABLE");
+  }
+  async recognize(): Promise<V2Result> {
+    throw new RecognitionV2Error("MODEL_UNAVAILABLE");
+  }
+}
+
+export class HttpRecognitionV2Client implements RecognitionV2Client {
+  /**
+   * @param analyzeTimeoutMs chờ `/v2/layout/analyze` (cấu hình chung của dịch vụ nhận dạng)
+   * @param recognizeTimeoutMs chờ `/v2/recognize` đồng bộ của "thử mẫu" (mặc định 90 s, cấu hình được)
+   */
+  constructor(
+    private readonly url: string,
+    private readonly request: Fetch = fetch,
+    private readonly analyzeTimeoutMs = DEFAULT_TIMEOUT_MS,
+    private readonly recognizeTimeoutMs = 90_000,
+  ) {}
+
+  analyzeLayout(image: Uint8Array): Promise<LayoutAnalysis> {
+    const form = new FormData();
+    form.set(
+      "image",
+      new Blob([image as Uint8Array<ArrayBuffer>]),
+      "template.png",
+    );
+    return this.post(
+      "/v2/layout/analyze",
+      form,
+      this.analyzeTimeoutMs,
+      parseLayoutAnalysis,
+    );
+  }
+
+  recognize(image: Uint8Array, layout: V2Layout): Promise<V2Result> {
+    const form = new FormData();
+    form.set(
+      "image",
+      new Blob([image as Uint8Array<ArrayBuffer>]),
+      "sheet.png",
+    );
+    form.set("layout", JSON.stringify(layout));
+    return this.post(
+      "/v2/recognize",
+      form,
+      this.recognizeTimeoutMs,
+      parseRecognitionV2Response,
+    );
+  }
+
+  private async post<T>(
+    path: string,
+    form: FormData,
+    timeoutMs: number,
+    parse: (body: unknown) => T,
+  ): Promise<T> {
+    let response: Response;
+    try {
+      response = await this.request(`${this.url}${path}`, {
+        method: "POST",
+        body: form,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (error) {
+      const timedOut =
+        error instanceof Error &&
+        (error.name === "TimeoutError" || error.name === "AbortError");
+      throw new RecognitionV2Error(
+        timedOut ? "RECOGNITION_TIMEOUT" : "MODEL_UNAVAILABLE",
+      );
+    }
+    if (response.status === 503)
+      throw new RecognitionV2Error("MODEL_UNAVAILABLE");
+    if (response.status === 422) {
+      // {"detail": {"code": "...", "message": "...", "details": {...}}}: chỉ chuyển tiếp mã đã biết và `details` của
+      // TEMPLATE_MISMATCH; bỏ message tự do.
+      let code: unknown;
+      let details: unknown;
+      try {
+        const detail = (
+          JSON.parse(await response.text()) as {
+            detail?: { code?: unknown; details?: unknown };
+          }
+        ).detail;
+        code = detail?.code;
+        details = detail?.details;
+      } catch {
+        code = undefined;
+      }
+      if (typeof code !== "string" || !V2_ERROR_CODES.has(code))
+        throw new RecognitionV2Error("RECOGNITION_SERVICE_ERROR");
+      throw new RecognitionV2Error(
+        code,
+        code === "TEMPLATE_MISMATCH" &&
+        details &&
+        typeof details === "object" &&
+        !Array.isArray(details)
+          ? (details as Record<string, unknown>)
+          : null,
+      );
+    }
+    if (!response.ok) throw new RecognitionV2Error("RECOGNITION_SERVICE_ERROR");
+    try {
+      const body = await response.text();
+      if (body.length > 25 * 1024 * 1024) return malformed();
+      return parse(JSON.parse(body));
+    } catch {
+      throw new RecognitionV2Error(MALFORMED);
     }
   }
 }

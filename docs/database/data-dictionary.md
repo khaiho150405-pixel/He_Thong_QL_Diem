@@ -199,6 +199,41 @@ FK: `ma_hoc_sinh` → `hoc_sinh.ma_hoc_sinh`; `ma_mon` → `mon_hoc.ma_mon`; `ma
 
 FK: `ma_bang_diem` → `bang_diem.ma_bang_diem`; `ma_thanh_phan` → `thanh_phan_diem.ma_thanh_phan`; `nguoi_tai` → `nguoi_dung.ma_nguoi_dung`.
 
+Cột bổ sung theo ADR-0016 (migration 202610190001, P2): `ma_mau Int?` → `mau_bang_diem.ma_mau` (FK RESTRICT, chỉ mục một phần `WHERE ma_mau IS NOT NULL`). P2 chưa ghi cột này; chỉ dùng để biết mẫu đã được phiếu tham chiếu hay chưa (`TEMPLATE_IN_USE`).
+
+## mau_bang_diem (ADR-0016, bảng danh mục — không thuộc 16 bảng nghiệp vụ baseline)
+
+| Cột (DB = code)   | Kiểu, nullable, default và ràng buộc                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| ma_mau            | `Int @id @default(autoincrement())`                                                                          |
+| ten_mau           | `String @db.VarChar(100)`; CHECK không rỗng                                                                  |
+| mo_ta             | `String? @db.VarChar(500)`                                                                                   |
+| trang_thai        | `TrangThaiMau @default(NHAP)` (`NHAP`, `DANG_DUNG`, `NGUNG`)                                                 |
+| phien_ban         | `Int @default(1)`; CHECK ≥ 1                                                                                 |
+| ma_mau_goc        | `Int?`; CHECK: null khi và chỉ khi `phien_ban = 1`, khác chính nó                                            |
+| chu_ky_luoi       | `Json`; CHECK: object, `version = 1`, `columnWidths` là mảng 2–64 phần tử (dịch vụ nhận dạng tính, ADR-0016) |
+| duong_dan_anh_mau | `String @db.VarChar(512)`; CHECK `^form-templates/<uuid>.(png\|jpg)$` (khóa object private)                  |
+| ma_bam_anh_mau    | `String @db.Char(64)`; CHECK SHA-256 hex                                                                     |
+| nguoi_tao         | `Int` → `nguoi_dung.ma_nguoi_dung`                                                                           |
+| ngay_tao          | `DateTime @default(now()) @db.Timestamptz(6)`                                                                |
+| version           | `Int @default(0)`; khóa lạc quan (`expectedVersion`), tăng khi sửa/đổi trạng thái                            |
+
+Duy nhất: `(coalesce(ma_mau_goc, ma_mau), phien_ban)` (chỉ mục biểu thức, Prisma không biểu diễn được). Trigger `mau_bang_diem_khong_xoa` chặn DELETE: không hard-delete mẫu. Runtime chỉ `SELECT`; mọi ghi qua hàm `SECURITY DEFINER` `luu_mau_bang_diem` (chế độ `TAO` / `SUA` / `PHIEN_BAN`) và `doi_trang_thai_mau_bang_diem` (`NHAP→DANG_DUNG`, `NHAP|DANG_DUNG→NGUNG`): kiểm phiên QTV, `SERIALIZABLE`, version, ghi `nhat_ky_bao_mat` trong cùng giao dịch. Luật nhiều dòng (đủ cột 0..n-1, đúng một `HO_TEN`, tối đa một `STT`, ít nhất một `DIEM`, `(nhóm, thứ tự)` không trùng, `DIEM_CHU` trỏ tới `DIEM` có thật, mỗi `DIEM` tối đa một cột chữ) kiểm trong `kiem_tra_dinh_nghia_mau`, lặp lại luật của `form-templates/domain/definition.ts`.
+
+## cot_mau (ADR-0016)
+
+| Cột (DB = code)   | Kiểu, nullable, default và ràng buộc                               |
+| ----------------- | ------------------------------------------------------------------ |
+| ma_mau            | `Int` → `mau_bang_diem.ma_mau` (RESTRICT)                          |
+| chi_so_cot        | `Int`; CHECK 0..63; cột dữ liệu trái → phải                        |
+| vai_tro           | `VaiTroCot` (`STT`, `HO_TEN`, `DIEM`, `DIEM_CHU`, `BO_QUA`)        |
+| loai_he_so        | `String? @db.VarChar(2)`; chỉ `DIEM`: `TX`/`GK`/`CK`               |
+| thu_tu_trong_nhom | `Int?`; chỉ `DIEM`: 1..20                                          |
+| cot_diem_di_kem   | `Int?`; chỉ `DIEM_CHU`: `chi_so_cot` của cột `DIEM`, khác chính nó |
+| nhan_tieu_de      | `String? @db.VarChar(100)`; CHECK không rỗng                       |
+
+Khóa chính `(ma_mau, chi_so_cot)`. CHECK `cot_mau_theo_vai_tro` ràng buộc các trường theo vai trò. Duy nhất `(ma_mau, loai_he_so, thu_tu_trong_nhom)` và `(ma_mau, cot_diem_di_kem)`. FK tự tham chiếu `(ma_mau, cot_diem_di_kem)` → `(ma_mau, chi_so_cot)` hoãn tới COMMIT. Trigger `cot_mau_da_dung_khong_sua` chặn INSERT/UPDATE/DELETE cột của mẫu đã có phiếu tham chiếu. Kiểu đọc (một hay hai kênh) suy từ có hay không cột `DIEM_CHU` đi kèm, không lưu riêng. Hạn mức thao tác: `tieu_thu_han_muc_tac_vu` nhận thêm `FORM_TEMPLATE_TRY` và `FORM_TEMPLATE_ANALYZE` (chỉ QTV); `RECOGNITION_UPLOAD` vẫn chỉ giáo viên.
+
 ## ket_qua_dong
 
 | Cột (DB = code)     | Kiểu, nullable, default và ràng buộc   |

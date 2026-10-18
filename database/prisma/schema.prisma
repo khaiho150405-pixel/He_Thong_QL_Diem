@@ -50,6 +50,20 @@ enum MucPhanLoai {
   DO
 }
 
+enum TrangThaiMau {
+  NHAP
+  DANG_DUNG
+  NGUNG
+}
+
+enum VaiTroCot {
+  STT
+  HO_TEN
+  DIEM
+  DIEM_CHU
+  BO_QUA
+}
+
 model nguoi_dung {
   lich_nhap_diem_rows   lich_nhap_diem[]
   chot_cot_rows         chot_cot_diem[]
@@ -65,6 +79,7 @@ model nguoi_dung {
   lich_su_sua_diem_rows lich_su_sua_diem[]
   phieu_nhan_dien_rows  phieu_nhan_dien[] @relation("PhieuTai")
   phieu_huy_rows        phieu_nhan_dien[] @relation("PhieuHuy")
+  mau_bang_diem_rows    mau_bang_diem[]
   ket_qua_dong_rows     ket_qua_dong[]
   phien_rows            phien_lam_viec[]
   idempotency_rows      khoa_idempotency[]
@@ -378,6 +393,9 @@ model phieu_nhan_dien {
   ly_do_huy         String?             @db.VarChar(200)
   nguoi_huy         Int?
   thoi_diem_huy     DateTime?           @db.Timestamptz(6)
+  // Mẫu bảng điểm (ADR-0016). P2 chưa ghi cột này; chỉ dùng để biết mẫu đã được phiếu tham chiếu hay chưa.
+  ma_mau            Int?
+  ma_mau_ref        mau_bang_diem?      @relation(fields: [ma_mau], references: [ma_mau], onDelete: Restrict, onUpdate: Restrict)
   ma_bang_diem_ref  bang_diem           @relation(fields: [ma_bang_diem], references: [ma_bang_diem], onDelete: Restrict, onUpdate: Restrict)
   ma_thanh_phan_ref thanh_phan_diem     @relation(fields: [ma_thanh_phan], references: [ma_thanh_phan], onDelete: Restrict, onUpdate: Restrict)
   nguoi_tai_ref     nguoi_dung          @relation("PhieuTai", fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
@@ -390,6 +408,48 @@ model phieu_nhan_dien {
   @@index([ma_thanh_phan])
   @@index([nguoi_tai])
   @@index([nguoi_huy])
+  @@index([ma_mau])
+}
+
+// Mẫu bảng điểm do QTV khai báo (ADR-0016 mục 1). Runtime chỉ SELECT; ghi qua luu_mau_bang_diem / doi_trang_thai_mau_bang_diem.
+// UNIQUE theo chuỗi phiên bản (coalesce(ma_mau_goc, ma_mau), phien_ban) là chỉ mục biểu thức trong migration 202610190001.
+model mau_bang_diem {
+  ma_mau            Int            @id @default(autoincrement())
+  ten_mau           String         @db.VarChar(100)
+  mo_ta             String?        @db.VarChar(500)
+  trang_thai        TrangThaiMau   @default(NHAP)
+  phien_ban         Int            @default(1)
+  ma_mau_goc        Int?
+  chu_ky_luoi       Json
+  duong_dan_anh_mau String         @db.VarChar(512)
+  ma_bam_anh_mau    String         @db.Char(64)
+  nguoi_tao         Int
+  ngay_tao          DateTime       @default(now()) @db.Timestamptz(6)
+  version           Int            @default(0)
+  mau_goc_ref       mau_bang_diem? @relation("PhienBanMau", fields: [ma_mau_goc], references: [ma_mau], onDelete: Restrict, onUpdate: Restrict)
+  phien_ban_rows    mau_bang_diem[] @relation("PhienBanMau")
+  nguoi_tao_ref     nguoi_dung     @relation(fields: [nguoi_tao], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  cot_rows          cot_mau[]
+  phieu_rows        phieu_nhan_dien[]
+
+  @@index([ma_mau_goc])
+  @@index([nguoi_tao])
+  @@index([trang_thai, ma_mau])
+}
+
+model cot_mau {
+  ma_mau            Int
+  chi_so_cot        Int
+  vai_tro           VaiTroCot
+  loai_he_so        String?       @db.VarChar(2)
+  thu_tu_trong_nhom Int?
+  cot_diem_di_kem   Int?
+  nhan_tieu_de      String?       @db.VarChar(100)
+  ma_mau_ref        mau_bang_diem @relation(fields: [ma_mau], references: [ma_mau], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([ma_mau, chi_so_cot])
+  @@unique([ma_mau, loai_he_so, thu_tu_trong_nhom])
+  @@unique([ma_mau, cot_diem_di_kem])
 }
 
 // Technical table, not part of the sixteen business tables.
