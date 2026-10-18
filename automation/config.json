@@ -1,0 +1,118 @@
+{
+  "_ghi_chu": "Sửa file này cho khớp máy bạn. Placeholder do run.py điền: {short_prompt} (câu lệnh ngắn trỏ tới file prompt), {last_message_file}, {schema_file}, {model}, {venv_python} (.local/venv-ml của repo).",
+  "phases": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6"
+  ],
+  "data_dir": "F:/HK1_Nam04/KLCN/data",
+  "limits": {
+    "max_review_rounds": 3,
+    "max_total_rounds": 5,
+    "max_same_finding_reopen": 2,
+    "implement_timeout_min": 120,
+    "fix_timeout_min": 60,
+    "review_timeout_min": 45,
+    "gate_timeout_min": 40,
+    "unblock_extra_rounds": 2
+  },
+  "implementer": {
+    "name": "claude",
+    "command": [
+      "claude",
+      "-p",
+      "{short_prompt}",
+      "--permission-mode",
+      "acceptEdits",
+      "--allowedTools",
+      "Read,Edit,Write,Glob,Grep,Bash(pnpm:*),Bash(node:*),Bash(npx:*),Bash(python:*),Bash(py:*),Bash(dart:*),Bash(flutter:*),Bash(cd:*),Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(.local/venv-ml/Scripts/python.exe:*)",
+      "--max-turns",
+      "250",
+      "--output-format",
+      "json"
+    ]
+  },
+  "reviewers": {
+    "codex": {
+      "command": [
+        "codex",
+        "exec",
+        "--sandbox",
+        "workspace-write",
+        "--output-schema",
+        "{schema_file}",
+        "--output-last-message",
+        "{last_message_file}",
+        "{short_prompt}"
+      ]
+    },
+    "gemini": {
+      "model": "gemini-3.8-flash",
+      "command": [
+        "gemini",
+        "-m",
+        "{model}",
+        "--approval-mode",
+        "yolo",
+        "-p",
+        "{short_prompt}"
+      ]
+    }
+  },
+  "gates": {
+    "py": {
+      "cwd": "apps/recognition-service",
+      "commands": [
+        "{venv_python} -m unittest discover -s tests"
+      ]
+    },
+    "api": {
+      "cwd": ".",
+      "commands": [
+        "pnpm check"
+      ]
+    },
+    "contracts": {
+      "cwd": ".",
+      "commands": [
+        "pnpm contracts:check"
+      ]
+    },
+    "db": {
+      "cwd": ".",
+      "require_env": "TEST_RUNTIME_URL",
+      "on_missing": "skip",
+      "commands": [
+        "pnpm test:db"
+      ]
+    },
+    "integration": {
+      "cwd": ".",
+      "require_env": "TEST_RUNTIME_URL",
+      "on_missing": "skip",
+      "commands": [
+        "pnpm test:integration"
+      ]
+    },
+    "flutter": {
+      "cwd": ".",
+      "commands": [
+        "dart run melos run check"
+      ]
+    }
+  },
+  "protected_paths": [
+    "automation/run.py",
+    "automation/config.json",
+    "automation/decisions.md",
+    "automation/prompts/",
+    "automation/phases/",
+    "automation/schemas/"
+  ],
+  "protect_existing_under": [
+    "database/migrations/"
+  ]
+}

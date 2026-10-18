@@ -1,30 +1,28 @@
 @AGENTS.md
 
-# Thiết kế lại UI Flutter
+# Đợt hiện tại: Mẫu bảng điểm (ADR-0016)
 
-Flutter client nằm ở `apps/client_flutter`. Chạy mọi lệnh `flutter` (analyze, test, build) trong thư mục đó.
+Đợt này thêm tính năng "Mẫu bảng điểm" để nhận dạng được nhiều loại tờ, nhiều cột, nhiều trang. Công việc chia thành phase P1–P6 trong `automation/phases/`, và thường được chạy tự động bằng `automation/run.py`.
 
-Tài liệu cần đọc trước khi làm:
+Trước khi làm, đọc theo thứ tự:
 
-- Thiết kế tham chiếu: `docs/design/Hệ thống quản lý điểm.html` (token, bố cục, component).
-- Kế hoạch: `docs/design/ui-migration-plan.md` (mục 0 đến 4.2).
-- Token và theme đã có (bước 1): `lib/app/design_tokens.dart`, `lib/app/theme.dart`.
-- Nhật ký: `docs/design/ui-progress.md` (bước đã xong), `docs/design/open-questions.md` (điểm chưa rõ, hạng mục backend chưa hỗ trợ).
+1. `AGENTS.md`: bất biến mục 7 luôn thắng mọi tài liệu khác.
+2. `automation/decisions.md`: quyết định của chủ dự án cho đợt này.
+3. `docs/adr/0016-form-templates.md`: thiết kế.
+4. File phase đang làm, đặc biệt các mục "Phạm vi được sửa", "Không được đụng" và "Tiêu chí nghiệm thu".
+5. Khi sửa Flutter: `docs/design/ui-rules.md`.
 
-## Quy tắc
+## Quy tắc chung
 
-- Chỉ sửa lớp hiển thị (widget, theme, layout). Không đổi provider, repository, model, API, `packages/api_client_dart`, quyền truy cập, công thức tính điểm, validate nhập điểm.
-- Không đổi hay xóa route cũ. Chỉ được thêm route mới theo mục 4.1 của kế hoạch, guard phân quyền giống màn tương ứng đang có.
-- Giữ nguyên chuỗi tiếng Việt, `ValueKey`, loại widget, chiều cao control 48 và breakpoint 600/960/1024 mà test đang ghim. Nếu bắt buộc đổi assertion của test thì chỉ sửa đúng assertion đó và ghi vào `docs/design/ui-progress.md`.
-- Dùng màu, bo góc, khoảng cách từ `context.tokens`, `AppRadius`, `AppSpacing`. Trong file đang sửa, gom hết màu cứng (`Color(0x..)`, `Colors.xxx`) về token để đúng ở chế độ tối. Giao diện mặc định SÁNG, có nút đổi sáng/tối (`themeModeProvider` trong `lib/app/theme_mode.dart`, nút `ThemeModeButton`), không lưu lựa chọn.
-- Không thêm package (không `google_fonts`, không `shared_preferences`). `pubspec.yaml` chỉ được thêm khai báo `fonts`. Không cài gì lên ổ C.
-- Không thêm nút "Chốt bảng điểm" và không gọi `lock()` / `lockColumn()` từ giao diện. Dùng nhãn "Đang nhập liệu" / "Đã khóa" (mục 0.1 của kế hoạch).
-- Hạng mục trong thiết kế mà backend chưa hỗ trợ (mục 2 của kế hoạch): không làm giả, không tạo dữ liệu giả; ghi vào `docs/design/open-questions.md`.
-- Cần quyết định mà tài liệu chưa nêu: chọn phương án giữ nguyên hành vi hiện tại và ghi vào `docs/design/open-questions.md`.
+- Phase cho phép sửa backend, migration mới, dịch vụ Python, client sinh lại hoặc Flutter ở đâu thì chỉ sửa ở đó. Không sửa ngoài phạm vi phase.
+- Không sửa migration đã có. Không sửa tay `packages/api_client_dart` (dùng `pnpm client:generate`).
+- Không thêm dependency (npm, pub, pip) nếu phase không cho phép rõ ràng. Không cài gì lên ổ C.
+- Không sửa thư mục `automation/` ngoài file báo cáo trong `automation/runs/`.
+- Khi chạy qua `automation/run.py`: **không** `git commit` / `git push` / `git reset` / `git stash`. Script tự commit.
+- Thiếu thông tin thì chọn phương án theo ADR-0016 và `decisions.md`, giữ hành vi cũ ở những chỗ không thuộc phase, rồi ghi giả định vào báo cáo. Không dừng lại để hỏi.
 
-## Quy trình mỗi bước
+## Lệnh kiểm tra
 
-1. Làm đúng bước được giao, trong `apps/client_flutter`: `dart format`, `flutter analyze`, `flutter test`.
-2. Lỗi thì sửa tối đa 3 lần; không nới lỏng test ngoài mức cho phép, không đổi logic nghiệp vụ để qua test.
-3. Qua thì thêm một dòng vào `docs/design/ui-progress.md` (bước, file đã đổi, kết quả), rồi `git add -A` và `git commit -m "ui: buoc N - <tên ngắn>"`.
-4. Không `git push`, không `git reset`, không xóa nhánh. Không commit mã hỏng.
+- API/DB: `pnpm check`, `pnpm contracts:check`; `pnpm test:db` và `pnpm test:integration` khi đã cấu hình DB test (`TEST_RUNTIME_URL`).
+- Dịch vụ nhận dạng: `.local/venv-ml/Scripts/python.exe -m unittest discover -s tests`, chạy trong `apps/recognition-service`.
+- Flutter: `dart run melos run check`.

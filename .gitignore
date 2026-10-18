@@ -31,3 +31,6 @@ apps/api/src/generated/
 
 # Local model checkpoints; never publish training artifacts.
 /weights/
+
+# Log của bộ tự động hóa (automation/run.py)
+automation/runs/
