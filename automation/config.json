@@ -60,6 +60,24 @@
         "-p",
         "{short_prompt}"
       ]
+    },
+    "antigravity": {
+      "model": "gemini-3.8-flash-medium",
+      "command": [
+        "agy",
+        "-p",
+        "{short_prompt}",
+        "--model",
+        "{model}",
+        "--dangerously-skip-permissions",
+        "--print-timeout",
+        "45m",
+        "--disable-slash-commands",
+        "--json-schema",
+        "{schema_file}",
+        "--output-format",
+        "json"
+      ]
     }
   },
   "gates": {
