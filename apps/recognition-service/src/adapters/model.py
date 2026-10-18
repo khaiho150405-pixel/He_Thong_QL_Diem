@@ -8,7 +8,7 @@ import threading
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 import cv2
 import numpy as np
@@ -16,6 +16,10 @@ import numpy as np
 from src.domain import ChannelPrediction
 
 from .errors import ModelUnavailableError
+
+if TYPE_CHECKING:
+    from src.domain.layout import Layout
+    from src.pipeline.layout import BoCuc
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,8 +65,57 @@ class ModelResult:
     rows: tuple[ModelRow, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class LayoutResult:
+    """Kết quả ``/v2/layout/analyze``: bố cục đã phân tích và ảnh xem trước (PNG) có lưới và số cột."""
+
+    layout: "BoCuc"
+    preview_png: bytes
+
+
+@dataclass(frozen=True, slots=True)
+class GradeRead:
+    """Một cột điểm của một dòng (v2). ``written`` None khi cột chỉ có kênh số (không có cột điểm chữ đi kèm)."""
+
+    key: str
+    numeric: ChannelPrediction
+    written: ChannelPrediction | None
+    numeric_crop: bytes
+    written_crop: bytes | None
+
+
+@dataclass(frozen=True, slots=True)
+class ModelRowV2:
+    row_index: int
+    struck: bool
+    stt: SttPrediction
+    name: NamePrediction
+    name_crop: bytes
+    grades: tuple[GradeRead, ...]
+    stt_read: int | None = None
+    stt_from_position: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ModelResultV2:
+    model_version: str
+    page_start_stt: int | None
+    template_score: float
+    # {chỉ số cột mẫu: chỉ số cột ảnh} của các cột được căn 1–1.
+    column_map: dict[int, int]
+    rows: tuple[ModelRowV2, ...]
+
+
 class RecognitionModel:
     def recognize(self, image: bytes) -> ModelResult:
+        raise NotImplementedError
+
+    def analyze_layout(self, image: bytes) -> LayoutResult:
+        """Contract v2: phân tích bố cục một tờ có kẻ ô (không đọc điểm)."""
+        raise NotImplementedError
+
+    def recognize_v2(self, image: bytes, layout: "Layout", min_score: float) -> ModelResultV2:
+        """Contract v2: khớp ảnh với mẫu của ``layout`` rồi đọc các cột được yêu cầu."""
         raise NotImplementedError
 
 
@@ -124,6 +177,78 @@ class FakeRecognitionModel(RecognitionModel):
             for index in range(1, count + 1)
         )
         return ModelResult("fake-dev-v1", start, rows)
+
+    def analyze_layout(self, image: bytes) -> LayoutResult:
+        """Contract v2 với hình học THẬT (nắn trang, dò lưới) nhưng không có OCR tiêu đề: ``suggestedRole`` đều null."""
+        from src.pipeline.layout import phan_tich_bo_cuc, ve_xem_truoc
+
+        if not image:
+            raise ValueError("Image is empty")
+        layout = phan_tich_bo_cuc(image, None)
+        return LayoutResult(layout, ve_xem_truoc(layout))
+
+    def recognize_v2(self, image: bytes, layout: "Layout", min_score: float) -> ModelResultV2:
+        """Khớp mẫu và cắt ô THẬT trên ảnh; chỉ phần đọc chữ/số là giả, tất định theo (dòng, thứ tự cột điểm).
+
+        Cấu hình (chỉ development/test, như fake v1): ``FAKE_START_STT`` (mặc định 1) là STT của dòng đầu,
+        ``FAKE_DETECTED_ROWS`` (tùy chọn) giới hạn số dòng trả về. Dòng gạch bỏ nhận biết từ ảnh. Mọi dòng khác có điểm
+        ở mọi cột; cột có cột chữ đi kèm trả cả hai kênh đồng thuận, cột một kênh trả ``written=None``.
+        """
+        from src.pipeline.layout import chuan_bi_doc
+
+        if not image:
+            raise ValueError("Image is empty")
+        start = int(os.getenv("FAKE_START_STT", "1"))
+        limit_text = os.getenv("FAKE_DETECTED_ROWS")
+        limit = int(limit_text) if limit_text else None
+        if start < 1 or (limit is not None and limit < 1):
+            raise ValueError("FAKE_DETECTED_ROWS and FAKE_START_STT must be >= 1")
+        page = chuan_bi_doc(image, layout, None, min_score)
+        rows = page.rows if limit is None else page.rows[:limit]
+        out = []
+        for row in rows:
+            stt = start + row.row_index - 1
+            grades = []
+            for ordinal, cell in enumerate(row.grades):
+                if row.struck:
+                    numeric, written = BLANK_CHANNEL, BLANK_CHANNEL if cell.has_written_column else None
+                else:
+                    value = (Decimal((row.row_index * 7 + ordinal * 3) % 101) / 10).quantize(Decimal("0.1"))
+                    numeric = ChannelPrediction(str(value), value, Decimal("0.95"))
+                    written = (
+                        ChannelPrediction(_written(value), value, Decimal("0.93"))
+                        if cell.has_written_column
+                        else None
+                    )
+                grades.append(
+                    GradeRead(
+                        cell.key,
+                        numeric,
+                        written,
+                        self._pixel,
+                        self._pixel if cell.has_written_column else None,
+                    )
+                )
+            if row.struck:
+                stt_pred, name_pred = SttPrediction(None, None, None, is_blank=True), NamePrediction(None, None, True)
+            else:
+                stt_pred = (
+                    SttPrediction(str(stt), stt, Decimal("0.97")) if page.has_stt else STT_NOT_READ
+                )
+                name_pred = NamePrediction(f"Học sinh {stt:02d}", Decimal("0.90"))
+            out.append(
+                ModelRowV2(
+                    row_index=row.row_index,
+                    struck=row.struck,
+                    stt=stt_pred,
+                    name=name_pred,
+                    name_crop=self._pixel,
+                    grades=tuple(grades),
+                )
+            )
+        return ModelResultV2(
+            "fake-dev-v2", start if page.has_stt else None, page.score, dict(page.column_map), tuple(out)
+        )
 
     def _row(self, index: int, start: int, struck: bool) -> ModelRow:
         stt = start + index - 1
@@ -319,6 +444,145 @@ class WeightsRecognitionModel(RecognitionModel):
                 )
             )
         return ModelResult(self._version, None, tuple(out))
+
+    # ── Contract v2 (ADR-0016): chỉ luồng này đọc tiêu đề cột; luồng v1 ở trên vẫn gọi analyze_page(image, None). ──
+
+    def ocr_ham(self, anh: Any) -> str:
+        """Đọc một ô tiêu đề (ảnh xám đã phóng to) bằng VietOCR gốc, cùng ``name_reader`` với cột họ tên."""
+        reads = self._name_reader.read_cells([anh])
+        return reads[0].text if reads else ""
+
+    def analyze_layout(self, image: bytes) -> LayoutResult:
+        from src.pipeline.layout import phan_tich_bo_cuc, ve_xem_truoc
+
+        if not image:
+            raise ValueError("Image is empty")
+        layout = phan_tich_bo_cuc(image, self.ocr_ham)
+        return LayoutResult(layout, ve_xem_truoc(layout))
+
+    def recognize_v2(self, image: bytes, layout: "Layout", min_score: float) -> ModelResultV2:
+        """Khớp mẫu rồi đọc mỗi dòng: STT/họ tên một lần, mỗi cột điểm kênh số bằng CRNN, kênh chữ (nếu có) bằng VietOCR."""
+        from src.domain.written_grade import (
+            grade_decimal,
+            nan_diem_chu,
+            so_tu_chuoi_chu,
+            so_tu_chuoi_so,
+        )
+        from src.pipeline.errors import PipelineError
+        from src.pipeline.layout import chuan_bi_doc
+        from src.pipeline.rows import NGUONG_TEN_TRONG, NGUONG_TRONG, do_dam_muc, suy_stt_bat_dau
+
+        if not image:
+            raise ValueError("Image is empty")
+        page = chuan_bi_doc(image, layout, self.ocr_ham, min_score)
+        rows = page.rows
+        if not rows:
+            raise PipelineError("GRID_NOT_FOUND", "Bảng không có dòng dữ liệu nào.")
+        active = [r for r in rows if not r.struck]
+
+        numeric_cells = [
+            ((r.row_index, g.key), g.numeric_cell)
+            for r in active
+            for g in r.grades
+            if g.numeric_cell is not None and g.numeric_ink >= NGUONG_TRONG
+        ]
+        numeric_reads = dict(
+            zip((k for k, _ in numeric_cells), self._crnn.read_cells([c for _, c in numeric_cells]))
+        )
+        written_cells = [
+            ((r.row_index, g.key), g.written_cell)
+            for r in active
+            for g in r.grades
+            if g.has_written_column and g.written_cell is not None and g.written_ink >= NGUONG_TRONG
+        ]
+        written_reads = dict(
+            zip((k for k, _ in written_cells), self._vietocr.read_cells([c for _, c in written_cells]))
+        )
+        name_rows = [r for r in active if r.has_name_ink and r.name_cell is not None]
+        name_reads = dict(
+            zip((r.row_index for r in name_rows), self._name_reader.read_cells([r.name_cell for r in name_rows]))
+        )
+
+        # Đối chiếu STT như v1 (VietOCR gốc, KHÔNG dùng CRNN); chỉ khi mẫu có cột STT.
+        stt_reads: dict[int, tuple[int | None, str, float]] = {}
+        stt_start: int | None = None
+        use_stt = self._stt_check and page.has_stt
+        if use_stt:
+            stt_rows = [
+                r for r in active if r.stt_cell is not None and do_dam_muc(r.stt_cell) >= NGUONG_TEN_TRONG
+            ]
+            for r, read in zip(stt_rows, self._name_reader.read_cells([r.stt_cell for r in stt_rows])):
+                stt_reads[r.row_index] = (parse_stt(read.text), read.text, read.prob)
+            stt_start = suy_stt_bat_dau({i: v[0] for i, v in stt_reads.items() if v[0] is not None}, len(rows))
+
+        out: list[ModelRowV2] = []
+        for row in rows:
+            i = row.row_index
+            stt_pred = STT_NOT_READ
+            stt_read_value: int | None = None
+            stt_position: int | None = None
+            if use_stt:
+                stt_position = stt_start + i - 1 if stt_start is not None else None
+                read = stt_reads.get(i)
+                if read is not None:
+                    stt_read_value = read[0]
+                    agreed = stt_read_value is not None and stt_read_value == stt_position
+                    stt_pred = SttPrediction(
+                        read[1] or None,
+                        stt_read_value if agreed else None,
+                        _confidence(read[2]) if read[1] else None,
+                    )
+                elif not row.struck:
+                    stt_pred = SttPrediction(None, None, None, is_blank=True)
+            name = name_reads.get(i)
+            name_pred = (
+                NamePrediction(None, None, is_blank=True)
+                if name is None
+                else NamePrediction(name.text or None, _confidence(name.prob) if name.text else None)
+            )
+            grades: list[GradeRead] = []
+            for cell in row.grades:
+                numeric = BLANK_CHANNEL
+                read_numeric = numeric_reads.get((i, cell.key))
+                if read_numeric is not None:
+                    numeric = ChannelPrediction(
+                        read_numeric.text or None,
+                        grade_decimal(so_tu_chuoi_so(read_numeric.text)),
+                        _confidence(read_numeric.conf_mean) if read_numeric.text else None,
+                    )
+                written: ChannelPrediction | None = None
+                if cell.has_written_column:
+                    written = BLANK_CHANNEL
+                    read_written = written_reads.get((i, cell.key))
+                    if read_written is not None:
+                        snapped = nan_diem_chu(read_written.text)
+                        written = ChannelPrediction(
+                            read_written.text or None,
+                            grade_decimal(so_tu_chuoi_chu(snapped)),
+                            _confidence(read_written.prob) if read_written.text else None,
+                        )
+                grades.append(
+                    GradeRead(
+                        key=cell.key,
+                        numeric=numeric,
+                        written=written,
+                        numeric_crop=_png(cell.numeric_cell),
+                        written_crop=_png(cell.written_cell) if cell.has_written_column else None,
+                    )
+                )
+            out.append(
+                ModelRowV2(
+                    row_index=i,
+                    struck=row.struck,
+                    stt=stt_pred,
+                    name=name_pred,
+                    name_crop=_png(row.name_cell),
+                    grades=tuple(grades),
+                    stt_read=stt_read_value,
+                    stt_from_position=stt_position,
+                )
+            )
+        return ModelResultV2(self._version, stt_start, page.score, dict(page.column_map), tuple(out))
 
 
 _WEIGHTS_LOCK = threading.Lock()

@@ -32,8 +32,12 @@ def make_page(
     first_stt: int = 1,
     ink_cells: tuple[tuple[int, int], ...] = (),
     line_gaps: float = 0.0,
+    missing_lines: tuple[int, ...] = (),
 ) -> tuple[np.ndarray, dict]:
-    """Return ``(page, layout)``; ``layout`` has the x lines and y lines of the ruled table."""
+    """Return ``(page, layout)``; ``layout`` has the x lines and y lines of the ruled table.
+
+    ``missing_lines`` are indexes into ``layout["xs"]`` of vertical rules that are not drawn (a rule lost to a faded scan).
+    """
     page = np.full((A4_H, A4_W, 3), PAPER, np.uint8)
     xs = [left]
     for width in columns:
@@ -41,7 +45,8 @@ def make_page(
     ys = [top, top + header_height]
     for _ in range(rows):
         ys.append(ys[-1] + row_height)
-    for x in xs:
+    drawn = [x for k, x in enumerate(xs) if k not in missing_lines]
+    for x in drawn:
         cv2.line(page, (x, ys[0]), (x, ys[-1]), INK, line)
     for y in ys:
         cv2.line(page, (xs[0], y), (xs[-1], y), INK, line)
@@ -53,7 +58,7 @@ def make_page(
                 x0 = int(xs[0] + start * width)
                 x1 = int(x0 + line_gaps / 2 * width)
                 cv2.rectangle(page, (x0, y - line - 1), (x1, y + line + 1), PAPER, -1)
-        for x in xs:  # the column rules stay intact; only the row rules are broken
+        for x in drawn:  # the column rules stay intact; only the row rules are broken
             cv2.line(page, (x, ys[0]), (x, ys[-1]), INK, line)
     if headers:
         for index, text in enumerate(headers):
@@ -98,6 +103,44 @@ def make_page(
             cv2.LINE_AA,
         )
     return page, {"xs": xs, "ys": ys, "rows": rows}
+
+
+# High-school sheet (cấp 3): STT | Họ tên | TX1 | TX2 | TX3 | TX4 | GK | CK | Ghi chú. One-channel (no written-grade
+# column), printed headers. Widths in px on the 1654 px wide page.
+THPT_COLUMNS = (60, 380, 105, 105, 105, 105, 116, 128, 326)
+THPT_HEADERS = ("STT", "Ho va ten", "TX1", "TX2", "TX3", "TX4", "GK", "CK", "Ghi chu")
+THPT_OCR = ("STT", "Họ và tên", "TX1", "TX2", "TX3", "TX4", "GK", "CK", "Ghi chú")
+THPT_SCORE_COLUMNS = (2, 3, 4, 5, 6, 7)
+# A different printed form: STT | Mã HS | Họ tên | Miệng | 15 phút | 1 tiết | Học kỳ | Ghi chú (other column count and widths).
+OTHER_COLUMNS = (70, 140, 360, 130, 130, 130, 130, 340)
+OTHER_HEADERS = ("STT", "Ma HS", "Ho va ten", "Mieng", "15 phut", "1 tiet", "Hoc ky", "Ghi chu")
+OTHER_OCR = ("STT", "Mã HS", "Họ và tên", "Miệng", "15 phút", "1 tiết", "Học kỳ", "Ghi chú")
+
+
+def make_thpt_page(
+    rows: int = 20,
+    filled_rows: tuple[int, ...] | None = None,
+    columns: tuple[int, ...] = THPT_COLUMNS,
+    headers: tuple[str, ...] | None = THPT_HEADERS,
+    score_columns: tuple[int, ...] = THPT_SCORE_COLUMNS,
+    name_column: int = 1,
+    **kwargs,
+) -> tuple[np.ndarray, dict]:
+    """A one-channel high-school sheet: every filled row has a printed name and a grade in each score column.
+
+    ``filled_rows`` are zero-based row positions with ink (default: all rows). Extra keyword arguments go to ``make_page``.
+    """
+    filled = tuple(range(rows)) if filled_rows is None else filled_rows
+    cell_text = {(row, name_column): f"Hoc sinh {row + 1:02d}" for row in filled}
+    ink = tuple((row, col) for row in filled for col in score_columns)
+    return make_page(
+        rows=rows,
+        columns=columns,
+        headers=headers,
+        cell_text=cell_text,
+        ink_cells=ink,
+        **kwargs,
+    )
 
 
 def photograph(
