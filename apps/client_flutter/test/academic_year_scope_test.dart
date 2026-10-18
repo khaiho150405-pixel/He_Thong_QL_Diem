@@ -307,8 +307,9 @@ void main() {
       );
 
       // Open the "Phân công" dropdown (currently displaying "Tất cả giáo viên")
-      final assignmentDropdown = find.text('Tất cả giáo viên');
-      expect(assignmentDropdown, findsOneWidget);
+      // AppSelectField (DropdownMenu) hiển thị nhãn ở cả ô chọn lẫn menu ẩn.
+      final assignmentDropdown = find.text('Tất cả giáo viên').first;
+      expect(find.text('Tất cả giáo viên'), findsWidgets);
       await tester.tap(assignmentDropdown);
       await tester.pumpAndSettle();
 
@@ -596,7 +597,7 @@ void main() {
       expect(find.textContaining('2025-2026'), findsWidgets);
 
       // Year filter control exists
-      expect(find.text('2025-2026 (hiện hành)'), findsOneWidget);
+      expect(find.text('2025-2026 (hiện hành)'), findsWidgets);
     });
   });
 }
