@@ -2,6 +2,16 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Thực nghiệm Qwen local ngày 18 tháng 10 năm 2026
+
+- Đã hoàn tất pilot Instruct 8B Q4_K_M trên đúng 20 ảnh của lượt Thinking, giữ prompt/schema/options/parser. Không sửa mã nhận dạng nghiệp vụ, chưa tích hợp hệ kết hợp.
+- Instruct: JSON hợp lệ 20/20, cột số 9/10, cột chữ 4/10; p50 sau ảnh đầu 6,38 giây (Thinking 58,45 giây). Đây là pilot validation nhỏ, chưa phải TEST.
+- [Báo cáo so sánh](../reports/recognition/So_sanh_Qwen3_VL_Instruct_Thinking_2026-10-18.md). Model: `qwen3-vl:instruct-8b-q4km-20261018` trong kho `F:\HK1_Nam04\KLCN\local-ai\models`.
+- Dữ liệu gốc: `F:\HK1_Nam04\KLCN\local-ai\benchmark\results\2026-10-18-instruct-01`. Script và cách chạy: `local-ai/benchmark/README.md` trong workspace cha.
+- Đã hoàn tất bước mở rộng: audit tự động 1.170 cặp VALID (manifest/ảnh/nhãn đầy đủ, không lệch giá trị); chạy lại 60 trang DEV bằng pipeline hiện hành `crnn-dot5+vietocr-tang4+name-vgg:1f230266bd93`; benchmark Qwen Instruct trên 200 cặp phân tầng (400 ảnh); mô phỏng fallback theo confidence nền và quy tắc hai kênh Qwen đồng thuận.
+- Kết quả toàn DEV: CRNN dot5 đúng 1.160/1.170 (99,1%), VietOCR Tầng 4 đúng 1.156/1.170 (98,8%), giá trị cuối đúng 99,2%, 0 Xanh sai. Trên cùng mẫu 200 cặp: baseline 99,0% số / 99,5% chữ; Qwen 90,0% / 42,5%. Fallback không tăng số đúng; Qwen không sửa được lỗi chữ baseline nào trong mẫu. Quyết định: không tích hợp Qwen, không chạy TEST/HOLDOUT vì không có ứng viên tốt hơn trên VALID.
+- [Báo cáo đánh giá Qwen fallback](../reports/recognition/Danh_gia_Qwen_fallback_validation_200_2026-10-18.md). Audit, dữ liệu từng ảnh, phản hồi gốc và giao thức nằm ở `F:\HK1_Nam04\KLCN\local-ai\benchmark\results`; cache toàn trang trong `He_Thong_QL_Diem/.local/eval/dev_qwenfollowup_20261018.json`.
+
 ## Giai đoạn 7 — Phần B Frontend: nhật ký từng bước (mới nhất ở đầu)
 
 Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md` (FE-01 → FE-05 đã hoàn tất 100%).

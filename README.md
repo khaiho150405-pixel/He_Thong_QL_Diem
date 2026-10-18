@@ -2,6 +2,12 @@
 
 Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. [Phase 3](docs/development/phase-3.md) đã merge qua PR #5, gồm upload private, outbox/worker BullMQ, contract FastAPI hai kênh, chặn lệch lưới, signed URL và giao diện theo dõi phiếu. [Phase 4](docs/development/phase-4.md) đã merge qua PR #6 với đối chiếu và duyệt nguyên tử có con người quyết định. [Phase 5](docs/development/phase-5.md) đã merge qua PR #7 với tổng kết, xếp loại có phiên bản, thống kê, Excel và tra cứu cá nhân. [Phase 6](docs/development/phase-6.md) đang hardening và chuẩn bị phát hành. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Mô hình OCR thật vẫn chờ file trọng số.
 
+## Báo cáo thực nghiệm
+
+- [Báo cáo Word thử nghiệm Qwen3-VL ngày 18/10/2026](docs/reports/recognition/Bao_cao_thu_nghiem_Qwen3_VL_2026-10-18.docx): điều kiện chạy local, metrics, biểu đồ và kết quả pilot trên 20 ảnh validation.
+- [Danh mục báo cáo](docs/reports/README.md).
+- [So sánh Qwen3-VL Instruct và Thinking ngày 18/10/2026](docs/reports/recognition/So_sanh_Qwen3_VL_Instruct_Thinking_2026-10-18.md): cùng 20 ảnh validation, đối chiếu chất lượng và thời gian.
+
 ## Cấu trúc
 
 - apps/api: NestJS modular monolith, 14 module ownership, error/request logging và health.
