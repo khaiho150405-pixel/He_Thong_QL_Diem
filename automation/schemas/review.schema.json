@@ -20,10 +20,7 @@
     },
     "verdict": {
       "type": "string",
-      "enum": [
-        "PASS",
-        "FAIL"
-      ]
+      "enum": ["PASS", "FAIL"]
     },
     "summary": {
       "type": "string"
@@ -33,22 +30,14 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "id",
-          "result",
-          "how"
-        ],
+        "required": ["id", "result", "how"],
         "properties": {
           "id": {
             "type": "string"
           },
           "result": {
             "type": "string",
-            "enum": [
-              "PASS",
-              "FAIL",
-              "NOT_VERIFIED"
-            ]
+            "enum": ["PASS", "FAIL", "NOT_VERIFIED"]
           },
           "how": {
             "type": "string"
@@ -77,22 +66,14 @@
           },
           "severity": {
             "type": "string",
-            "enum": [
-              "BLOCKER",
-              "MAJOR",
-              "MINOR"
-            ]
+            "enum": ["BLOCKER", "MAJOR", "MINOR"]
           },
           "criterion": {
             "type": "string"
           },
           "status": {
             "type": "string",
-            "enum": [
-              "NEW",
-              "STILL_OPEN",
-              "RESOLVED"
-            ]
+            "enum": ["NEW", "STILL_OPEN", "RESOLVED"]
           },
           "location": {
             "type": "string"

@@ -12,15 +12,15 @@ Bạn chỉ cần chạy một lệnh. Script dừng ở một trong ba tình hu
 
 ## Cấu trúc thư mục
 
-| File | Vai trò |
-|---|---|
-| `run.py` | Script điều phối. Chỉ dùng thư viện chuẩn Python |
-| `config.json` | Lệnh gọi Claude/Codex/Gemini, các gate, giới hạn vòng, timeout |
-| `phases/P1.md … P6.md` | Đề bài từng phase: phạm vi, việc cần làm, **tiêu chí nghiệm thu (AC)** |
-| `prompts/implement.md, fix.md, review.md` | Khuôn prompt cho từng vai |
-| `schemas/*.json` | Khung JSON bắt buộc cho kết quả review và phản hồi sửa |
-| `decisions.md` | **Quyết định của bạn.** Đưa vào mọi prompt |
-| `runs/` (git ignore) | Log, prompt đã điền, kết quả review, `SUMMARY.md`, `state.json` |
+| File                                      | Vai trò                                                                |
+| ----------------------------------------- | ---------------------------------------------------------------------- |
+| `run.py`                                  | Script điều phối. Chỉ dùng thư viện chuẩn Python                       |
+| `config.json`                             | Lệnh gọi Claude/Codex/Gemini, các gate, giới hạn vòng, timeout         |
+| `phases/P1.md … P6.md`                    | Đề bài từng phase: phạm vi, việc cần làm, **tiêu chí nghiệm thu (AC)** |
+| `prompts/implement.md, fix.md, review.md` | Khuôn prompt cho từng vai                                              |
+| `schemas/*.json`                          | Khung JSON bắt buộc cho kết quả review và phản hồi sửa                 |
+| `decisions.md`                            | **Quyết định của bạn.** Đưa vào mọi prompt                             |
+| `runs/` (git ignore)                      | Log, prompt đã điền, kết quả review, `SUMMARY.md`, `state.json`        |
 
 ## A. Chuẩn bị một lần
 
@@ -101,11 +101,11 @@ python automation/run.py --status            # xem tiến độ
 
 ## C. Khi script dừng
 
-| Thông báo | Ý nghĩa | Bạn làm gì |
-|---|---|---|
-| `Hoàn tất` | Mọi phase PASS | Xem `git log`, chạy thử app, rồi merge hoặc tạo PR như bình thường |
-| `AGENT_ERROR` | Claude thoát lỗi: hết hạn mức, hết giờ hoặc mất mạng | Đợi hạn mức hồi lại rồi chạy lại đúng lệnh cũ |
-| `BLOCKED` | Hai agent bất đồng, hết số vòng, hoặc cần quyết định nghiệp vụ | Xem bên dưới |
+| Thông báo     | Ý nghĩa                                                        | Bạn làm gì                                                         |
+| ------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `Hoàn tất`    | Mọi phase PASS                                                 | Xem `git log`, chạy thử app, rồi merge hoặc tạo PR như bình thường |
+| `AGENT_ERROR` | Claude thoát lỗi: hết hạn mức, hết giờ hoặc mất mạng           | Đợi hạn mức hồi lại rồi chạy lại đúng lệnh cũ                      |
+| `BLOCKED`     | Hai agent bất đồng, hết số vòng, hoặc cần quyết định nghiệp vụ | Xem bên dưới                                                       |
 
 **Xử lý BLOCKED:**
 

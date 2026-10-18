@@ -3,6 +3,7 @@
 Tài liệu này giữ nguyên các quy tắc của đợt "Thiết kế lại UI Flutter" (trước đây nằm trong `CLAUDE.md`). Mọi thay đổi giao diện vẫn phải theo các quy tắc này, kể cả trong đợt "Mẫu bảng điểm".
 
 **Ngoại lệ cho đợt "Mẫu bảng điểm":**
+
 - Phase P4/P5 được thêm màn và route mới đúng như mô tả trong phase.
 - Khi chạy bằng `automation/run.py`, **không tự commit**: script commit thay. Mục "Quy trình mỗi bước" bên dưới chỉ áp dụng khi làm tay.
 

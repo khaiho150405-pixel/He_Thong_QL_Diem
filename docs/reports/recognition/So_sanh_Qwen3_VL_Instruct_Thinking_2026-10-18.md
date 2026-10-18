@@ -10,22 +10,22 @@ Thinking: `qwen3-vl:snapshot-20261017`. Instruct: `qwen3-vl:instruct-8b-q4km-202
 
 ## Kết quả
 
-| Chỉ số | Thinking | Instruct |
-|---|---:|---:|
-| Đúng giá trị cột số | 9/10 | 9/10 |
-| Đúng giá trị cột chữ | 0/10 | 4/10 |
-| Đúng cả cặp | 0/10 | 4/10 |
-| JSON hợp lệ và hoàn tất | 14/20 | 20/20 |
-| Hết token trước đáp án cuối | 6 | 0 |
-| Phản hồi có thinking | 20 | 0 |
-| Tổng token sinh | 6254 | 424 |
-| Tổng thời gian yêu cầu (giây) | 1201,63 | 129,51 |
-| p50 sau lượt đầu (giây) | 58,45 | 6,38 |
-| p95 sau lượt đầu (giây) | 99,76 | 6,75 |
-| Trung bình ô số (giây) | 32,52 | 6,49 |
-| Trung bình ô chữ (giây) | 87,64 | 6,47 |
-| Đỉnh VRAM toàn GPU lấy mẫu (MiB) | 3153,00 | 3193,00 |
-| Đỉnh RAM toàn máy lấy mẫu (MiB) | 15920,93 | 15881,56 |
+| Chỉ số                           | Thinking | Instruct |
+| -------------------------------- | -------: | -------: |
+| Đúng giá trị cột số              |     9/10 |     9/10 |
+| Đúng giá trị cột chữ             |     0/10 |     4/10 |
+| Đúng cả cặp                      |     0/10 |     4/10 |
+| JSON hợp lệ và hoàn tất          |    14/20 |    20/20 |
+| Hết token trước đáp án cuối      |        6 |        0 |
+| Phản hồi có thinking             |       20 |        0 |
+| Tổng token sinh                  |     6254 |      424 |
+| Tổng thời gian yêu cầu (giây)    |  1201,63 |   129,51 |
+| p50 sau lượt đầu (giây)          |    58,45 |     6,38 |
+| p95 sau lượt đầu (giây)          |    99,76 |     6,75 |
+| Trung bình ô số (giây)           |    32,52 |     6,49 |
+| Trung bình ô chữ (giây)          |    87,64 |     6,47 |
+| Đỉnh VRAM toàn GPU lấy mẫu (MiB) |  3153,00 |  3193,00 |
+| Đỉnh RAM toàn máy lấy mẫu (MiB)  | 15920,93 | 15881,56 |
 
 Số ảnh đổi từ sai sang đúng: **4**; từ đúng thành sai: **0** (so theo giá trị qua cùng parser).
 
@@ -44,28 +44,28 @@ RAM/VRAM lấy mẫu toàn máy/toàn GPU, không phải riêng model. Tổng th
 
 ## Từng ảnh
 
-| Cặp | Cột | Nhãn | Thinking | Instruct |
-|---:|---|---|---|---|
-| 1 | num | 3.8 | 3.8 | 3.8 |
-| 1 | txt | ba tám | ba to' | ba ta'm |
-| 2 | num | 6.0 | Sáu | Sau |
-| 2 | txt | sáu chẵn | Lỗi đầu ra | Sau chén |
-| 3 | num | 7.0 | 7.0 | 7.0 |
-| 3 | txt | bảy không | Lỗi đầu ra | bài không |
-| 4 | num | 8.0 | 8.0 | 8,0 |
-| 4 | txt | tám chẵn | Lỗi đầu ra | tâm chấn |
-| 5 | num | 5.0 | 5.0 | 5.0 |
-| 5 | txt | năm chẵn | năm chăn | năm chẵn |
-| 6 | num | 3.1 | 3.1 | 3.1 |
-| 6 | txt | ba một | ba môt | ba một |
-| 7 | num | 3.1 | 3.1 | 3.1 |
-| 7 | txt | ba một | ba mặt | ba mặt |
-| 8 | num | 6.8 | 6.8 | 6.8 |
-| 8 | txt | sáu tám | Lỗi đầu ra | Sáu tám |
-| 9 | num | 7.9 | 7.9 | 7.9 |
-| 9 | txt | bảy chín | Lỗi đầu ra | bảy chín |
-| 10 | num | 6.1 | 6.1 | 6.1 |
-| 10 | txt | sáu một | Lỗi đầu ra | sau mỗi |
+| Cặp | Cột | Nhãn      | Thinking   | Instruct  |
+| --: | --- | --------- | ---------- | --------- |
+|   1 | num | 3.8       | 3.8        | 3.8       |
+|   1 | txt | ba tám    | ba to'     | ba ta'm   |
+|   2 | num | 6.0       | Sáu        | Sau       |
+|   2 | txt | sáu chẵn  | Lỗi đầu ra | Sau chén  |
+|   3 | num | 7.0       | 7.0        | 7.0       |
+|   3 | txt | bảy không | Lỗi đầu ra | bài không |
+|   4 | num | 8.0       | 8.0        | 8,0       |
+|   4 | txt | tám chẵn  | Lỗi đầu ra | tâm chấn  |
+|   5 | num | 5.0       | 5.0        | 5.0       |
+|   5 | txt | năm chẵn  | năm chăn   | năm chẵn  |
+|   6 | num | 3.1       | 3.1        | 3.1       |
+|   6 | txt | ba một    | ba môt     | ba một    |
+|   7 | num | 3.1       | 3.1        | 3.1       |
+|   7 | txt | ba một    | ba mặt     | ba mặt    |
+|   8 | num | 6.8       | 6.8        | 6.8       |
+|   8 | txt | sáu tám   | Lỗi đầu ra | Sáu tám   |
+|   9 | num | 7.9       | 7.9        | 7.9       |
+|   9 | txt | bảy chín  | Lỗi đầu ra | bảy chín  |
+|  10 | num | 6.1       | 6.1        | 6.1       |
+|  10 | txt | sáu một   | Lỗi đầu ra | sau mỗi   |
 
 ## Giới hạn và bước tiếp
 
@@ -75,6 +75,7 @@ Nếu Instruct cải thiện, bước tiếp là bộ validation lớn hơn có 
 ## Tệp đối chiếu
 
 Thư mục kết quả: `F:\HK1_Nam04\KLCN\local-ai\benchmark\results\2026-10-18-instruct-01`.
+
 - `metadata.json`, `selection.json`, `response_*.json`: điều kiện và phản hồi gốc.
 - `predictions.csv`, `summary.json`, `memory_samples.json`: dự đoán, metrics và tài nguyên.
 - `comparison_thinking_instruct.csv`, `variant_comparison.json`: so sánh theo đúng từng ảnh.

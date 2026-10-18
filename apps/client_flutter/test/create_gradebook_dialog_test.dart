@@ -174,11 +174,7 @@ Future<void> _pumpDialog(
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: const MaterialApp(
-        home: Scaffold(
-          body: CreateGradebookDialog(),
-        ),
-      ),
+      child: const MaterialApp(home: Scaffold(body: CreateGradebookDialog())),
     ),
   );
   await tester.pumpAndSettle();
@@ -223,10 +219,7 @@ void main() {
         makeClass(2, '10A2', 1),
         makeClass(3, '11B1', 1),
       ];
-      server.subjects = [
-        makeSubject(1, 'Toán'),
-        makeSubject(2, 'Văn'),
-      ];
+      server.subjects = [makeSubject(1, 'Toán'), makeSubject(2, 'Văn')];
       server.semesters = [
         makeSemester(1, 'Học kỳ 1', 1),
         makeSemester(2, 'Học kỳ 2', 1),
@@ -267,17 +260,9 @@ void main() {
     'Chuyển lớp thì lọc đúng môn học phân công, tự chọn khi chỉ có 1 lựa chọn',
     (tester) async {
       final server = _FakeDialogServer();
-      server.classes = [
-        makeClass(1, '10A1', 1),
-        makeClass(2, '10A2', 1),
-      ];
-      server.subjects = [
-        makeSubject(1, 'Toán'),
-        makeSubject(2, 'Văn'),
-      ];
-      server.semesters = [
-        makeSemester(1, 'Học kỳ 1', 1),
-      ];
+      server.classes = [makeClass(1, '10A1', 1), makeClass(2, '10A2', 1)];
+      server.subjects = [makeSubject(1, 'Toán'), makeSubject(2, 'Văn')];
+      server.semesters = [makeSemester(1, 'Học kỳ 1', 1)];
       // 10A1 -> Toán; 10A2 -> Văn
       server.assignments = [
         makeAssignment(1, 1, 1, 1),
@@ -318,28 +303,16 @@ void main() {
     'Chưa chọn lớp thì ô Môn học và Học kỳ bị tắt với hint "Chọn lớp trước"',
     (tester) async {
       final server = _FakeDialogServer();
-      server.classes = [
-        makeClass(1, '10A1', 1),
-        makeClass(2, '10A2', 2),
-      ];
-      server.subjects = [
-        makeSubject(1, 'Toán'),
-        makeSubject(2, 'Văn'),
-      ];
-      server.semesters = [
-        makeSemester(1, 'Học kỳ 1', 1),
-      ];
+      server.classes = [makeClass(1, '10A1', 1), makeClass(2, '10A2', 2)];
+      server.subjects = [makeSubject(1, 'Toán'), makeSubject(2, 'Văn')];
+      server.semesters = [makeSemester(1, 'Học kỳ 1', 1)];
       server.assignments = [
         makeAssignment(1, 1, 1, 1),
         makeAssignment(2, 2, 2, 1),
       ];
 
       // Khi viewingYear là "Tất cả các năm" (id == null), có nhiều lớp nên chưa auto-select lớp
-      await _pumpDialog(
-        tester,
-        server: server,
-        viewingYear: ViewingYear.all,
-      );
+      await _pumpDialog(tester, server: server, viewingYear: ViewingYear.all);
 
       // Ô Môn học có hint 'Chọn lớp trước'
       expect(find.text('Chọn lớp trước'), findsWidgets);

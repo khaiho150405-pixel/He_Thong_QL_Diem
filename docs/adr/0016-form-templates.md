@@ -80,20 +80,20 @@ Proposed (2026-10-18). Chủ dự án chốt hướng. Các phase P1–P6 trong 
 
 Đường dẫn danh mục theo quy ước hiện có `catalog/...` (quyền ghi chỉ QTV như các danh mục khác). Module mới phải đăng ký trong `apps/api/src/modules/index.ts` và qua `scripts/check-boundaries.mjs`.
 
-| Method | Đường dẫn | Quyền | Ghi chú |
-|---|---|---|---|
-| POST | `/api/v1/catalog/form-templates/analyze` | QTV | multipart `image`; proxy `/v2/layout/analyze`; không lưu gì |
-| POST | `/api/v1/catalog/form-templates` | QTV | multipart `image` + `definition` (JSON: tên, mô tả, cột). Server phân tích lại ảnh, kiểm số cột khớp, tính chữ ký, lưu `NHAP` |
-| GET | `/api/v1/catalog/form-templates` | QTV, GV | GV chỉ thấy `DANG_DUNG`; cursor pagination |
-| GET | `/api/v1/catalog/form-templates/:id` | QTV, GV | gồm cột và URL ảnh mẫu ký ngắn hạn |
-| PUT | `/api/v1/catalog/form-templates/:id` | QTV | chưa được dùng → sửa tại chỗ; đã dùng → `TEMPLATE_IN_USE` kèm gợi ý tạo phiên bản |
-| POST | `/api/v1/catalog/form-templates/:id/versions` | QTV | tạo phiên bản mới, bản cũ `NGUNG` |
-| POST | `/api/v1/catalog/form-templates/:id/activate` \| `/retire` | QTV | đổi trạng thái, có `expectedVersion` |
-| POST | `/api/v1/catalog/form-templates/:id/try` | QTV | multipart `image`; gọi `/v2/recognize` đồng bộ (timeout 90 s); trả kết quả đọc, **không** ghép học sinh, **không** lưu |
-| GET | `/api/v1/gradebooks/:id/form-templates/:templateId/mapping` | GV được phân công | gợi ý ánh xạ cột → thành phần, đánh dấu thành phần đang khóa/đang chờ |
-| POST | `/api/v1/gradebooks/:id/recognition-batches` | GV được phân công | multipart `images[]` (1–4) + `templateId` + `components` (JSON `[{templateColumnIndex, componentId}]`), idempotency key; trả `{batchId, tickets:[{ticketId, componentId}]}` 202 |
-| GET | `/api/v1/gradebooks/:id/recognition-batches/:batchId` | GV được phân công | trạng thái lô và các phiếu |
-| POST | `/api/v1/gradebooks/:id/recognition-batches/:batchId/cancel` | GV được phân công | hủy mềm mọi phiếu chưa duyệt |
+| Method | Đường dẫn                                                    | Quyền             | Ghi chú                                                                                                                                                                         |
+| ------ | ------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/v1/catalog/form-templates/analyze`                     | QTV               | multipart `image`; proxy `/v2/layout/analyze`; không lưu gì                                                                                                                     |
+| POST   | `/api/v1/catalog/form-templates`                             | QTV               | multipart `image` + `definition` (JSON: tên, mô tả, cột). Server phân tích lại ảnh, kiểm số cột khớp, tính chữ ký, lưu `NHAP`                                                   |
+| GET    | `/api/v1/catalog/form-templates`                             | QTV, GV           | GV chỉ thấy `DANG_DUNG`; cursor pagination                                                                                                                                      |
+| GET    | `/api/v1/catalog/form-templates/:id`                         | QTV, GV           | gồm cột và URL ảnh mẫu ký ngắn hạn                                                                                                                                              |
+| PUT    | `/api/v1/catalog/form-templates/:id`                         | QTV               | chưa được dùng → sửa tại chỗ; đã dùng → `TEMPLATE_IN_USE` kèm gợi ý tạo phiên bản                                                                                               |
+| POST   | `/api/v1/catalog/form-templates/:id/versions`                | QTV               | tạo phiên bản mới, bản cũ `NGUNG`                                                                                                                                               |
+| POST   | `/api/v1/catalog/form-templates/:id/activate` \| `/retire`   | QTV               | đổi trạng thái, có `expectedVersion`                                                                                                                                            |
+| POST   | `/api/v1/catalog/form-templates/:id/try`                     | QTV               | multipart `image`; gọi `/v2/recognize` đồng bộ (timeout 90 s); trả kết quả đọc, **không** ghép học sinh, **không** lưu                                                          |
+| GET    | `/api/v1/gradebooks/:id/form-templates/:templateId/mapping`  | GV được phân công | gợi ý ánh xạ cột → thành phần, đánh dấu thành phần đang khóa/đang chờ                                                                                                           |
+| POST   | `/api/v1/gradebooks/:id/recognition-batches`                 | GV được phân công | multipart `images[]` (1–4) + `templateId` + `components` (JSON `[{templateColumnIndex, componentId}]`), idempotency key; trả `{batchId, tickets:[{ticketId, componentId}]}` 202 |
+| GET    | `/api/v1/gradebooks/:id/recognition-batches/:batchId`        | GV được phân công | trạng thái lô và các phiếu                                                                                                                                                      |
+| POST   | `/api/v1/gradebooks/:id/recognition-batches/:batchId/cancel` | GV được phân công | hủy mềm mọi phiếu chưa duyệt                                                                                                                                                    |
 
 **Mã lỗi mới**: `TEMPLATE_MISMATCH`, `TEMPLATE_NOT_FOUND`, `TEMPLATE_INACTIVE`, `TEMPLATE_IN_USE`, `INVALID_TEMPLATE_DEFINITION`, `TEMPLATE_COLUMN_COUNT_MISMATCH`, `COMPONENT_NOT_MAPPABLE`, `TOO_MANY_PAGES`.
 

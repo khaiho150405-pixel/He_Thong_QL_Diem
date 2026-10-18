@@ -1,10 +1,7 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "round",
-    "responses"
-  ],
+  "required": ["round", "responses"],
   "properties": {
     "round": {
       "type": "integer"
@@ -14,23 +11,14 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "id",
-          "action",
-          "note",
-          "evidence"
-        ],
+        "required": ["id", "action", "note", "evidence"],
         "properties": {
           "id": {
             "type": "string"
           },
           "action": {
             "type": "string",
-            "enum": [
-              "FIXED",
-              "DISPUTED",
-              "ESCALATE"
-            ]
+            "enum": ["FIXED", "DISPUTED", "ESCALATE"]
           },
           "note": {
             "type": "string"

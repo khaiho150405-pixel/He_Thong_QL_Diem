@@ -1,13 +1,6 @@
 {
   "_ghi_chu": "Sửa file này cho khớp máy bạn. Placeholder do run.py điền: {short_prompt} (câu lệnh ngắn trỏ tới file prompt), {last_message_file}, {schema_file}, {model}, {venv_python} (.local/venv-ml của repo).",
-  "phases": [
-    "P1",
-    "P2",
-    "P3",
-    "P4",
-    "P5",
-    "P6"
-  ],
+  "phases": ["P1", "P2", "P3", "P4", "P5", "P6"],
   "data_dir": "F:/HK1_Nam04/KLCN/data",
   "limits": {
     "max_review_rounds": 3,
@@ -83,43 +76,31 @@
   "gates": {
     "py": {
       "cwd": "apps/recognition-service",
-      "commands": [
-        "{venv_python} -m unittest discover -s tests"
-      ]
+      "commands": ["{venv_python} -m unittest discover -s tests"]
     },
     "api": {
       "cwd": ".",
-      "commands": [
-        "pnpm check"
-      ]
+      "commands": ["pnpm check"]
     },
     "contracts": {
       "cwd": ".",
-      "commands": [
-        "pnpm contracts:check"
-      ]
+      "commands": ["pnpm contracts:check"]
     },
     "db": {
       "cwd": ".",
       "require_env": "TEST_RUNTIME_URL",
       "on_missing": "skip",
-      "commands": [
-        "pnpm test:db"
-      ]
+      "commands": ["pnpm test:db"]
     },
     "integration": {
       "cwd": ".",
       "require_env": "TEST_RUNTIME_URL",
       "on_missing": "skip",
-      "commands": [
-        "pnpm test:integration"
-      ]
+      "commands": ["pnpm test:integration"]
     },
     "flutter": {
       "cwd": ".",
-      "commands": [
-        "dart run melos run check"
-      ]
+      "commands": ["dart run melos run check"]
     }
   },
   "protected_paths": [
@@ -130,7 +111,5 @@
     "automation/phases/",
     "automation/schemas/"
   ],
-  "protect_existing_under": [
-    "database/migrations/"
-  ]
+  "protect_existing_under": ["database/migrations/"]
 }

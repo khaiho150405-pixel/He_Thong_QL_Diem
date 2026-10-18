@@ -85,19 +85,13 @@ def head() -> str:
 
 
 def dirty_paths() -> list[str]:
-    """Các file đã đổi/mới (không tính file bị .gitignore), dùng -z để giữ nguyên khoảng trắng đầu dòng."""
-    r = subprocess.run(["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=REPO,
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
-    entries = r.stdout.split("\0")
-    paths, i = [], 0
-    while i < len(entries):
-        e = entries[i]
-        if len(e) > 3:
-            paths.append(e[3:])
-            if e[0] in "RC":  # rename/copy: mục kế tiếp là đường dẫn cũ
-                i += 1
-        i += 1
-    return paths
+    """File khác HEAD về NỘI DUNG (bỏ qua khác biệt chỉ do CRLF/LF) + file mới chưa track (không tính .gitignore)."""
+    def z(*args: str) -> list[str]:
+        r = subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        return [x for x in r.stdout.split("\0") if x]
+    changed = z("diff", "--name-only", "-z", "HEAD")
+    untracked = z("ls-files", "--others", "--exclude-standard", "-z")
+    return sorted(set(changed) | set(untracked))
 
 
 def kill_tree(proc: subprocess.Popen) -> None:
