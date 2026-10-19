@@ -71,6 +71,19 @@ export class ErrorFilter implements ExceptionFilter {
   catch(error: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     const status = error instanceof HttpException ? error.getStatus() : 500;
+    if (status >= 500) {
+      // Ghi lý do lỗi 500 để vận hành tìm được nguyên nhân; không ghi body request (có thể chứa dữ liệu điểm).
+      const err = error instanceof Error ? error : new Error(String(error));
+      process.stderr.write(
+        JSON.stringify({
+          event: "http_error",
+          requestId: response.getHeader("x-request-id"),
+          name: err.name,
+          message: err.message.slice(0, 2000),
+          stack: err.stack?.split("\n").slice(0, 8).join(" | "),
+        }) + "\n",
+      );
+    }
     const codes: Record<number, string> = {
       400: "VALIDATION_ERROR",
       401: "UNAUTHENTICATED",

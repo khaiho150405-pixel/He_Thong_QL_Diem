@@ -97,7 +97,11 @@ function name(value: unknown): NameResult {
   };
 }
 
-function cropBase64(value: unknown): string {
+// Ảnh xem trước trang (/v2/layout/analyze) là cả trang rộng 1400 px; ảnh điện thoại có thể 4–5 MiB PNG,
+// nên có giới hạn riêng, lớn hơn giới hạn ảnh ô cắt.
+const MAX_PREVIEW_BYTES = 12 * 1024 * 1024;
+
+function cropBase64(value: unknown, maxBytes: number = MAX_CROP_BYTES): string {
   if (
     typeof value !== "string" ||
     !value ||
@@ -106,7 +110,7 @@ function cropBase64(value: unknown): string {
   )
     return malformed();
   const bytes = Buffer.from(value, "base64");
-  if (!bytes.length || bytes.byteLength > MAX_CROP_BYTES) return malformed();
+  if (!bytes.length || bytes.byteLength > maxBytes) return malformed();
   return value;
 }
 
@@ -459,7 +463,7 @@ export function parseLayoutAnalysis(body: unknown): LayoutAnalysis {
   return {
     signature,
     columns,
-    previewPngBase64: cropBase64(input.previewPngBase64),
+    previewPngBase64: cropBase64(input.previewPngBase64, MAX_PREVIEW_BYTES),
   };
 }
 
