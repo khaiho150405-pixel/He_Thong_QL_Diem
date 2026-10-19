@@ -31,6 +31,8 @@ Nhóm `all` (điện thoại + máy quét), 1.170 dòng có nhãn:
 
 **Nguyên nhân:** v2 từ chối 4/60 trang DEV (6,7% tổng; 13,3% trang điện thoại; 111 dòng, tức 9,5% số dòng có nhãn) mà v1 vẫn đọc được. Cả bốn đều là ảnh điện thoại mất hoặc dính vạch dọc (lưới chỉ còn 7–8 cột trên 9), khiến một cột cần đọc không ánh xạ 1–1 được; v2 không đoán nên trả `TEMPLATE_MISMATCH` (đúng thiết kế ADR-0016: từ chối chứ không đọc nhầm cột). Điểm khớp của bốn trang này là 0,4356 / 0,8049 / 0,8262 / 0,9080 nên đổi ngưỡng không cứu được (xem mục 3). Giáo viên phải chụp lại các ảnh đó. Muốn đạt AC-1 cần cải thiện thuật toán căn cột khi mất vạch hoặc nới luật "cột không ánh xạ → từ chối"; đó là thay đổi `template_match.py`/pipeline ngoài phạm vi P6 (chỉ được đổi ngưỡng) và cần chủ dự án quyết định. Đã ghi nhận, chưa sửa.
 
+**AC-1 chuyển sang P7 theo quyết định chủ dự án 2026-10-19** (`automation/decisions.md`, mục P6-F1): mở phase P7 để cải thiện căn cột khi mất/dính vạch; không đổi cách tính AC-1, không nới luật "cột không ánh xạ → từ chối". Với P6, P6-F1 coi là RESOLVED; yêu cầu không thụt lùi trên DEV được giữ nguyên ở AC-1 của P7.
+
 ## 3. Dò ngưỡng `RECOGNITION_TEMPLATE_MIN_SCORE` trên DEV (D-04, AC-2)
 
 Chỉ dùng DEV: 60 trang DEV là ảnh **đúng mẫu**; ảnh **mẫu khác** là 9 ảnh (8 ảnh tờ "Điểm quá trình / ĐTK" trong `Data_thayHa` + tờ THPT sinh bởi `make_thpt_form.py`). Nhãn "mẫu khác" lấy theo chữ in trên tờ (tiêu đề Đ.số + Điểm chữ = tờ E0330113), không lấy theo điểm khớp. Lưu ý `Data_thayHa` trộn hai loại tờ (6 ảnh là tờ E0330113) và `Data_coMai` là tờ E0330113; các ảnh đó **không** dùng để chọn ngưỡng.
