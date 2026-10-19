@@ -493,6 +493,22 @@ def num(c: collections.Counter, a: str, b: str) -> float | None:
     return None if not c[b] else 100 * c[a] / c[b]
 
 
+def regression_checks(a: collections.Counter, b: collections.Counter) -> dict[str, bool]:
+    """Điều kiện AC-1 (v1 = ``a``, v2 = ``b``). Độ đúng chấm trên MỌI dòng có nhãn của cùng tập: dòng thuộc trang bị
+    từ chối vẫn tính là chưa đọc đúng, nên không thể che sự thụt lùi bằng cách loại chúng khỏi mẫu số."""
+    checks = {
+        "gán sai học sinh = 0": b["match_wrong"] == 0,
+        "Xanh sai = 0": b["green_wrong"] == 0 and b["final_green_wrong"] == 0,
+    }
+    for field, label in (("num_ok", "Đ.số"), ("txt_ok", "Điểm chữ")):
+        v1, v2 = num(a, field, "labelled"), num(b, field, "labelled")
+        if v1 is None or v2 is None:
+            checks[f"độ đúng {label} trên mọi dòng có nhãn"] = False
+            continue
+        checks[f"độ đúng {label} trên mọi dòng có nhãn không thấp hơn v1 quá 0,5 điểm % (v1 {v1:.2f}, v2 {v2:.2f})"] = v2 >= v1 - 0.5
+    return checks
+
+
 def compare(split: str, tag_v2: str, floor: Decimal, struck_active: bool) -> bool:
     """Bảng so sánh đường v1 (hình học, không mẫu) với đường v2 (mẫu) trên cùng một tập; in Markdown. ``True`` khi đạt AC-1."""
     labels = load_labels(split)
@@ -528,15 +544,7 @@ def compare(split: str, tag_v2: str, floor: Decimal, struck_active: bool) -> boo
             print(f"| {label} | {left} | {right} |")
         if source != "all":
             continue
-        checks = {
-            "gán sai học sinh = 0": b["match_wrong"] == 0,
-            "Xanh sai = 0": b["green_wrong"] == 0 and b["final_green_wrong"] == 0,
-        }
-        for field, label in (("num_ok", "Đ.số"), ("txt_ok", "Điểm chữ")):
-            v1, v2 = num(a, field, "read"), num(b, field, "read")
-            checks[f"độ đúng {label} không thấp hơn v1 quá 0,5 điểm % (v1 {v1:.2f}, v2 {v2:.2f})" if v1 is not None and v2 is not None else f"độ đúng {label}"] = (
-                v1 is not None and v2 is not None and v2 >= v1 - 0.5
-            )
+        checks = regression_checks(a, b)
         print()
         for label, ok in checks.items():
             print(f"- {'ĐẠT' if ok else 'KHÔNG ĐẠT'}: {label}")

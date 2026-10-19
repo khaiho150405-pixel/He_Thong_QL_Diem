@@ -25,11 +25,11 @@ Nhóm `all` (điện thoại + máy quét), 1.170 dòng có nhãn:
 | Gán sai học sinh                               | 0 / 725       | 0 / 687       |
 | Trang `TEMPLATE_MISMATCH`                      | 0 / 60        | **4 / 60**    |
 
-Độ đúng chính xác hơn: Đ.số 99,15% → 99,15% (Δ 0,00), Điểm chữ 98,80% → 98,68% (Δ −0,12 điểm %, trong giới hạn 0,5). Máy quét: v1 và v2 giống hệt từng dòng (0/30 trang bị từ chối). Điện thoại: 4/30 trang bị từ chối.
+Độ đúng trên **cùng tập 1.170 dòng có nhãn** (dòng thuộc trang bị từ chối tính là chưa đọc đúng): Đ.số 99,15% → 89,74% (Δ −9,40 điểm %), Điểm chữ 98,80% → 89,32% (Δ −9,49 điểm %). Trên riêng dòng đọc được, v2 ngang v1 (Đ.số 99,2% so với 99,1%, Điểm chữ 98,7% so với 98,8%), nhưng đây chỉ là chỉ số phụ vì v2 không đọc 111 dòng mà v1 đọc. Máy quét: v1 và v2 giống hệt từng dòng (0/30 trang bị từ chối). Điện thoại: 4/30 trang (13,3%) bị từ chối; độ đúng trên mọi dòng có nhãn của nhóm này 99,3% → 80,5% (Đ.số), 99,0% → 80,0% (Điểm chữ).
 
-**AC-1: ĐẠT** (gán sai 0, Xanh sai 0, độ đúng mỗi kênh không thấp hơn v1 quá 0,5 điểm %).
+**AC-1: KHÔNG ĐẠT.** Gán sai học sinh 0 (ĐẠT) và Xanh sai 0 (ĐẠT), nhưng độ đúng mỗi kênh thấp hơn v1 hơn 0,5 điểm % trên cùng tập DEV (`evaluate_pages.py compare --split dev` in "KHÔNG ĐẠT" cho cả hai kênh). Bản đầu của báo cáo này kết luận ĐẠT vì chấm trên "dòng đọc được" (mẫu số riêng của từng đường, v2 loại 111 dòng); phép chấm đó đã sửa (`regression_checks`, có test `scripts/recognition/tests/test_evaluate_pages.py`).
 
-Giới hạn quan trọng: v2 từ chối 4/60 trang DEV (6,7%; 111 dòng, tức 9,5% số dòng có nhãn) mà v1 vẫn đọc được. Cả bốn đều là ảnh điện thoại mất hoặc dính vạch dọc (lưới chỉ còn 7–8 cột), khiến một cột cần đọc không ánh xạ 1–1 được; v2 không đoán nên trả `TEMPLATE_MISMATCH` (đúng thiết kế ADR-0016). Độ đúng "trên dòng đọc được" của v2 vì thế không tính các dòng này; giáo viên phải chụp lại. Đã ghi nhận, chưa sửa (ngoài phạm vi P6: chỉ được đổi ngưỡng).
+**Nguyên nhân:** v2 từ chối 4/60 trang DEV (6,7% tổng; 13,3% trang điện thoại; 111 dòng, tức 9,5% số dòng có nhãn) mà v1 vẫn đọc được. Cả bốn đều là ảnh điện thoại mất hoặc dính vạch dọc (lưới chỉ còn 7–8 cột trên 9), khiến một cột cần đọc không ánh xạ 1–1 được; v2 không đoán nên trả `TEMPLATE_MISMATCH` (đúng thiết kế ADR-0016: từ chối chứ không đọc nhầm cột). Điểm khớp của bốn trang này là 0,4356 / 0,8049 / 0,8262 / 0,9080 nên đổi ngưỡng không cứu được (xem mục 3). Giáo viên phải chụp lại các ảnh đó. Muốn đạt AC-1 cần cải thiện thuật toán căn cột khi mất vạch hoặc nới luật "cột không ánh xạ → từ chối"; đó là thay đổi `template_match.py`/pipeline ngoài phạm vi P6 (chỉ được đổi ngưỡng) và cần chủ dự án quyết định. Đã ghi nhận, chưa sửa.
 
 ## 3. Dò ngưỡng `RECOGNITION_TEMPLATE_MIN_SCORE` trên DEV (D-04, AC-2)
 
@@ -79,7 +79,7 @@ Phân tích (không sửa gì sau khi xem TEST):
 - **Xanh sai 2** có ở cả v1 và v2 với cùng số lượng (1 ở máy quét, giống hệt từng dòng giữa hai đường; 1 ở điện thoại): mô hình đọc sai nhưng hai kênh vẫn đồng thuận. Đây là sai số sẵn có của mô hình, không do đường theo mẫu (v2 không thêm Xanh sai nào so với v1). Chủ dự án nên xem xét riêng (mục rủi ro).
 - **Gán sai 2 ở v2** đều thuộc một trang: trang 2 của một tờ mà trang 1 bị v2 từ chối. Bộ đo ghép từng trang riêng và lấy các dòng gạch bỏ của trang 1 để loại học sinh đã nghỉ khỏi danh sách lớp; khi trang 1 vắng thì danh sách lớp lệch một chỗ nên hai dòng đầu trang 2 bị gán lệch một học sinh. Đây là hiện tượng của bộ đo, không xảy ra ở luồng thật: lô có một trang lỗi (`TEMPLATE_MISMATCH`) thì **cả lô** `LOI`, không ghi kết quả dòng nào (ADR-0016 mục 3). Nếu loại các tờ có trang bị từ chối khỏi phép đo thì gán sai của v2 = 0 trên các trang còn lại.
 - Độ đúng "trên dòng đọc được" cao hơn ở v2 (điện thoại 95,8% so với 90,6% Đ.số) chủ yếu vì các trang khó (mất vạch) bị từ chối, không phải vì đọc tốt hơn; chỉ số công bằng là "trên mọi dòng có nhãn" (v2 thấp hơn v1 do từ chối).
-- AC-1 chỉ đặt ra cho DEV; trên TEST, tiêu chí gán sai = 0 và Xanh sai = 0 của v2 **không đạt nguyên văn** theo bảng thô, với nguyên nhân như trên. Không chỉnh cấu hình để "đạt" TEST.
+- AC-1 chỉ đặt ra cho DEV (không đạt, mục 2); trên TEST, tiêu chí gán sai = 0 và Xanh sai = 0 của v2 cũng **không đạt nguyên văn** theo bảng thô, với nguyên nhân như trên. Không chỉnh cấu hình để "đạt" TEST.
 
 ## 5. Mẫu thứ hai: Data_thayHa (AC-3)
 
@@ -115,5 +115,6 @@ Tham khảo (ngoài DEV, không dùng chọn ngưỡng): layout E0330113 với 3
 
 - Mẫu THPT là **mô phỏng**, chưa có dữ liệu cấp 3 viết tay thật; chưa đo độ chính xác đọc của cột một kênh trên chữ viết tay cấp 3, và chưa thử `/v2/recognize` trên ảnh chụp thật của tờ in này.
 - Mẫu thứ hai chỉ có đánh giá định tính, không nhãn.
-- Khớp mẫu từ chối ảnh điện thoại mất hoặc dính vạch dọc (khoảng 7% số trang điện thoại DEV, 10% TEST) dù đường hình học vẫn đọc được; cần cải thiện chụp ảnh (thấy đủ vạch dọc) hoặc thuật toán căn cột ở phase sau.
+- Khớp mẫu từ chối ảnh điện thoại mất hoặc dính vạch dọc (4/30 = 13,3% trang điện thoại DEV, 4/60 = 6,7% mọi trang DEV; 5/50 = 10% trang điện thoại TEST) dù đường hình học vẫn đọc được; vì thế **AC-1 không đạt** trên DEV. Cần cải thiện chụp ảnh (thấy đủ vạch dọc) hoặc thuật toán căn cột ở phase sau, theo quyết định của chủ dự án.
+- Bộ test `scripts/recognition/tests` (13 test) không thuộc gate `py`; chạy riêng khi sửa `make_thpt_form.py`, `layouts/` hoặc phép chấm của `evaluate_pages.py`.
 - Tập TEST lệch so với manifest: người `T04` bị bỏ qua.
