@@ -17,6 +17,7 @@ import '../features/form_templates/template_detail_screen.dart';
 import '../features/form_templates/template_wizard_screen.dart';
 import '../features/gradebooks/gradebook_screen.dart';
 import '../features/gradebooks/gradebooks_screen.dart';
+import '../features/recognition/batch_result_screen.dart';
 import '../features/recognition/review_screen.dart';
 import '../features/final_results/student_results_screen.dart';
 import '../features/final_results/classification_policy_screen.dart';
@@ -105,7 +106,19 @@ final routerProvider = Provider.family<GoRouter, String>((
                   gradebookId: id,
                   ticketId: ticketId,
                   gradebookVersion: state.extra as num?,
+                  showPageLabels: state.uri.queryParameters['batch'] == '1',
                 );
+        },
+      ),
+      // Kết quả lô nhận dạng theo mẫu (ADR-0016 mục 5): tab theo thành phần.
+      GoRoute(
+        path: '/gradebooks/:id/recognition-batches/:batchId',
+        builder: (_, state) {
+          final id = num.tryParse(state.pathParameters['id'] ?? '');
+          final batchId = state.pathParameters['batchId'] ?? '';
+          return id == null || batchId.isEmpty
+              ? const GradebooksScreen()
+              : BatchResultScreen(gradebookId: id, batchId: batchId);
         },
       ),
     ],

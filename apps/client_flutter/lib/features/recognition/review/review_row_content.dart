@@ -2,8 +2,10 @@ import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/design_tokens.dart';
+import '../../../app/widgets/app_badge.dart';
 import 'review_crop_image.dart';
 import 'review_models.dart';
+import 'review_page_labels.dart';
 import 'review_stt_mismatch_box.dart';
 
 /// Kiểu bố cục hiển thị một dòng:
@@ -165,6 +167,13 @@ class ReviewRowContent extends StatelessWidget {
                       ),
                     ),
                     if (showPaperStt) buildSttMismatchChip(context, row),
+                    if (ReviewPageLabels.labelOf(context, row.order)
+                        case final pageLabel?)
+                      AppBadge.info(
+                        pageLabel,
+                        dot: false,
+                        key: ValueKey('review-page-${row.rowId}'),
+                      ),
                   ],
                 ),
               ),

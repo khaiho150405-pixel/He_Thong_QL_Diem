@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/design_tokens.dart';
 import '../image_preview.dart';
+import 'review_page_labels.dart';
 
 /// Mục thu gọn gom các dòng Xanh: "N dòng Xanh — điểm cuối đã điền".
 /// Khi mở ra: danh sách gọn mỗi học sinh một hàng gồm STT, họ tên,
@@ -159,8 +160,9 @@ class ReviewGreenGroup extends StatelessWidget {
         ),
       ),
     );
+    final pageLabel = ReviewPageLabels.labelOf(context, row.order);
     final name = Text(
-      row.studentName,
+      pageLabel == null ? row.studentName : '${row.studentName} · $pageLabel',
       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: t.ink),
       overflow: TextOverflow.ellipsis,
     );

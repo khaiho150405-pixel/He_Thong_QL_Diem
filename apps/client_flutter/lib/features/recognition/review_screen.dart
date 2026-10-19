@@ -14,6 +14,7 @@ import 'review/review_green_group.dart';
 import 'review/review_header.dart';
 import 'review/review_mobile_pager.dart';
 import 'review/review_models.dart';
+import 'review/review_page_labels.dart';
 import 'review/review_row_card.dart';
 import 'review/review_source_image.dart';
 
@@ -23,11 +24,15 @@ class ReviewScreen extends ConsumerStatefulWidget {
     required this.gradebookId,
     required this.ticketId,
     this.gradebookVersion,
+    this.showPageLabels = false,
   });
 
   final num gradebookId;
   final String ticketId;
   final num? gradebookVersion;
+
+  /// `true` khi phiếu thuộc lô nhiều trang: thẻ dòng hiện nhãn "Trang n".
+  final bool showPageLabels;
 
   @override
   ConsumerState<ReviewScreen> createState() => _ReviewScreenState();
@@ -681,136 +686,141 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 (_reviewLevelFilter == 'ALL' || _reviewLevelFilter == 'XANH') &&
                 _reviewLevelFilter != 'STT_DIFF';
 
-            return Form(
-              key: formKey,
-              child: Column(
-                children: [
-                  // Lỗi version nếu có
-                  if (_versionError != null)
-                    Container(
-                      key: const ValueKey('review-version-error'),
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: t.badSoft,
-                        border: Border(bottom: BorderSide(color: t.badLine)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.error_outline_rounded,
-                            color: t.bad,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '$_versionError. Chưa thể duyệt phiếu.',
-                              style: TextStyle(
-                                color: t.bad,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+            return ReviewPageLabels(
+              enabled:
+                  widget.showPageLabels ||
+                  ReviewPageLabels.looksBatched(data.rows.map((r) => r.order)),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: [
+                    // Lỗi version nếu có
+                    if (_versionError != null)
+                      Container(
+                        key: const ValueKey('review-version-error'),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: t.badSoft,
+                          border: Border(bottom: BorderSide(color: t.badLine)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              color: t.bad,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '$_versionError. Chưa thể duyệt phiếu.',
+                                style: TextStyle(
+                                  color: t.bad,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
-                          ),
-                          OutlinedButton.icon(
-                            key: const ValueKey('review-retry-version'),
-                            onPressed: busy ? null : refreshEvidence,
-                            icon: const Icon(Icons.refresh_rounded, size: 16),
-                            label: const Text('Tải lại'),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(48, 36),
+                            OutlinedButton.icon(
+                              key: const ValueKey('review-retry-version'),
+                              onPressed: busy ? null : refreshEvidence,
+                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              label: const Text('Tải lại'),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(48, 36),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+
+                    // Nội dung chính
+                    Expanded(
+                      child:
+                          isMobile &&
+                              !_mobileShowList &&
+                              totalNeedReview > 0 &&
+                              canApprove
+                          ? ReviewMobilePager(
+                              needReviewRows: filteredNeedReviewRows,
+                              greenRows: greenRows,
+                              values: values,
+                              reasons: reasons,
+                              leavingEmpty: leavingEmpty,
+                              agreedYellow: agreedYellow,
+                              enabled: canApprove && !busy,
+                              onGradeChanged: _onGradeChanged,
+                              onReasonChanged: (rowId, text) => setState(() {}),
+                              onLeaveEmpty: _onLeaveEmpty,
+                              onCancelLeaveEmpty: (rowId) {
+                                final row = needReviewRows.firstWhere(
+                                  (r) => r.rowId == rowId,
+                                );
+                                _onCancelLeaveEmpty(rowId, row);
+                              },
+                              onAgreeYellow: _onAgreeYellow,
+                              onToggleMode: () =>
+                                  setState(() => _mobileShowList = true),
+                              confirmed: confirmed,
+                              onConfirmedChanged: (val) =>
+                                  setState(() => confirmed = val),
+                              onApprove: approve,
+                              totalRows: data.rows.length,
+                              canApprove: canApprove,
+                              allRedHandled: allRedHandled,
+                              hasGradebookVersion: _gradebookVersion != null,
+                              busy: busy,
+                              onRefresh: refreshEvidence,
+                              readOnly: !canApprove,
+                              sttConfirmed: sttConfirmed,
+                              onSttConfirmedChanged: _onSttConfirmedChanged,
+                              allSttWarningsConfirmed: allSttWarningsConfirmed,
+                              ticket: data,
+                              currentFilter: _reviewLevelFilter,
+                              onFilterChanged: (filter) =>
+                                  setState(() => _reviewLevelFilter = filter),
+                              totalNeedReview: totalNeedReview,
+                              reviewedCount: reviewedCount,
+                            )
+                          : _buildStandardListLayout(
+                              context: context,
+                              ticket: data,
+                              needReviewRows: filteredNeedReviewRows,
+                              allNeedReviewRows: needReviewRows,
+                              greenRows: greenRows,
+                              totalNeedReview: totalNeedReview,
+                              reviewedCount: reviewedCount,
+                              canApprove: canApprove,
+                              allRedHandled: allRedHandled,
+                              isDesktop: isDesktop,
+                              isTablet: isTablet,
+                              isMobile: isMobile,
+                              showGreenCollapsible: showGreenCollapsible,
+                            ),
                     ),
 
-                  // Nội dung chính
-                  Expanded(
-                    child:
-                        isMobile &&
-                            !_mobileShowList &&
-                            totalNeedReview > 0 &&
-                            canApprove
-                        ? ReviewMobilePager(
-                            needReviewRows: filteredNeedReviewRows,
-                            greenRows: greenRows,
-                            values: values,
-                            reasons: reasons,
-                            leavingEmpty: leavingEmpty,
-                            agreedYellow: agreedYellow,
-                            enabled: canApprove && !busy,
-                            onGradeChanged: _onGradeChanged,
-                            onReasonChanged: (rowId, text) => setState(() {}),
-                            onLeaveEmpty: _onLeaveEmpty,
-                            onCancelLeaveEmpty: (rowId) {
-                              final row = needReviewRows.firstWhere(
-                                (r) => r.rowId == rowId,
-                              );
-                              _onCancelLeaveEmpty(rowId, row);
-                            },
-                            onAgreeYellow: _onAgreeYellow,
-                            onToggleMode: () =>
-                                setState(() => _mobileShowList = true),
-                            confirmed: confirmed,
-                            onConfirmedChanged: (val) =>
-                                setState(() => confirmed = val),
-                            onApprove: approve,
-                            totalRows: data.rows.length,
-                            canApprove: canApprove,
-                            allRedHandled: allRedHandled,
-                            hasGradebookVersion: _gradebookVersion != null,
-                            busy: busy,
-                            onRefresh: refreshEvidence,
-                            readOnly: !canApprove,
-                            sttConfirmed: sttConfirmed,
-                            onSttConfirmedChanged: _onSttConfirmedChanged,
-                            allSttWarningsConfirmed: allSttWarningsConfirmed,
-                            ticket: data,
-                            currentFilter: _reviewLevelFilter,
-                            onFilterChanged: (filter) =>
-                                setState(() => _reviewLevelFilter = filter),
-                            totalNeedReview: totalNeedReview,
-                            reviewedCount: reviewedCount,
-                          )
-                        : _buildStandardListLayout(
-                            context: context,
-                            ticket: data,
-                            needReviewRows: filteredNeedReviewRows,
-                            allNeedReviewRows: needReviewRows,
-                            greenRows: greenRows,
-                            totalNeedReview: totalNeedReview,
-                            reviewedCount: reviewedCount,
-                            canApprove: canApprove,
-                            allRedHandled: allRedHandled,
-                            isDesktop: isDesktop,
-                            isTablet: isTablet,
-                            isMobile: isMobile,
-                            showGreenCollapsible: showGreenCollapsible,
-                          ),
-                  ),
-
-                  // Sticky bottom bar khi ở chế độ danh sách
-                  if (!isMobile || _mobileShowList || totalNeedReview == 0)
-                    ReviewBottomBar(
-                      confirmed: confirmed,
-                      onConfirmedChanged: (val) =>
-                          setState(() => confirmed = val),
-                      onApprove: approve,
-                      totalRows: data.rows.length,
-                      canApprove: canApprove,
-                      allRedHandled: allRedHandled,
-                      allSttWarningsConfirmed: allSttWarningsConfirmed,
-                      hasGradebookVersion: _gradebookVersion != null,
-                      busy: busy,
-                      processedCount: reviewedCount,
-                      processedTotal: totalNeedReview,
-                    ),
-                ],
+                    // Sticky bottom bar khi ở chế độ danh sách
+                    if (!isMobile || _mobileShowList || totalNeedReview == 0)
+                      ReviewBottomBar(
+                        confirmed: confirmed,
+                        onConfirmedChanged: (val) =>
+                            setState(() => confirmed = val),
+                        onApprove: approve,
+                        totalRows: data.rows.length,
+                        canApprove: canApprove,
+                        allRedHandled: allRedHandled,
+                        allSttWarningsConfirmed: allSttWarningsConfirmed,
+                        hasGradebookVersion: _gradebookVersion != null,
+                        busy: busy,
+                        processedCount: reviewedCount,
+                        processedTotal: totalNeedReview,
+                      ),
+                  ],
+                ),
               ),
             );
           },

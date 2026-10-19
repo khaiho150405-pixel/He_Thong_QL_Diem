@@ -9,6 +9,8 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_progress.dart';
+import 'batch_repository.dart';
+import 'batch_section.dart';
 import 'cancel_ticket_dialog.dart';
 import 'capture_guide_screen.dart';
 import 'image_preview.dart';
@@ -68,6 +70,14 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   String? _uploadedTicketId;
   bool _navigating = false;
 
+  /// Phiếu thuộc lô biết được trong phiên này và danh sách mẫu đang dùng; đọc
+  /// bằng `ref.watch` ở đầu `build` để các hàm dựng thẻ phiếu dùng lại.
+  Map<String, BatchTicketInfo> _batchInfo = const {};
+  List<TemplateSummaryDto> _templates = const [];
+
+  /// Giá trị "Không dùng mẫu" trong ô chọn mẫu (id mẫu thật luôn > 0).
+  static const num _noTemplate = 0;
+
   @override
   void initState() {
     super.initState();
@@ -76,7 +86,12 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
         ? widget.components.first.id
         : null;
     reload();
-    WidgetsBinding.instance.addPostFrameCallback((_) => recoverImage());
+    // Danh sách mẫu đã tải ở lần mở trước: làm mới để thấy mẫu QTV vừa kích hoạt.
+    final templatesStale = ref.exists(activeTemplatesProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (templatesStale && mounted) ref.invalidate(activeTemplatesProvider);
+      recoverImage();
+    });
   }
 
   @override
@@ -330,9 +345,10 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   Future<void> showDetail(String ticketId) async {
     bool? approved;
     final router = GoRouter.maybeOf(context);
+    final inBatch = _batchInfo.containsKey(ticketId);
     if (router != null) {
       approved = await context.push<bool>(
-        '/gradebooks/${widget.gradebookId}/recognition/$ticketId',
+        '/gradebooks/${widget.gradebookId}/recognition/$ticketId${inBatch ? '?batch=1' : ''}',
         extra: widget.gradebookVersion,
       );
     } else {
@@ -342,6 +358,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
             gradebookId: widget.gradebookId,
             ticketId: ticketId,
             gradebookVersion: widget.gradebookVersion,
+            showPageLabels: inBatch,
           ),
         ),
       );
@@ -365,7 +382,47 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS);
 
-    final controls = _buildUploadControls(context, enabled, camera);
+    // Phiếu của lô nhiều trang được duyệt ở màn kết quả lô: tải lại bảng điểm.
+    ref.listen<int>(batchApprovalTickProvider(widget.gradebookId), (
+      previous,
+      next,
+    ) {
+      if (previous != next) widget.onApproved();
+    });
+    _batchInfo = ref.watch(batchTicketInfoProvider);
+    _templates = ref.watch(activeTemplatesProvider).valueOrNull ?? const [];
+    final selectedTemplateId = ref.watch(
+      selectedTemplateProvider(widget.gradebookId),
+    );
+    final template = _templates
+        .where((item) => item.id == selectedTemplateId)
+        .firstOrNull;
+
+    final legacyControls = _buildUploadControls(context, enabled, camera);
+    // Không có mẫu nào đang dùng (hoặc chưa tải được danh sách): panel y hệt
+    // luồng một ảnh cũ, không có ô chọn mẫu.
+    final controls = _templates.isEmpty
+        ? legacyControls
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildTemplateSelector(template, widget.enabled && !busy),
+              const SizedBox(height: AppSpacing.lg),
+              if (template == null)
+                legacyControls
+              else
+                BatchRecognitionSection(
+                  key: ValueKey('batch-section-${widget.gradebookId}'),
+                  gradebookId: widget.gradebookId,
+                  templateId: template.id,
+                  templateName: template.name,
+                  enabled: widget.enabled,
+                  onChanged: () {
+                    if (mounted) setState(reload);
+                  },
+                ),
+            ],
+          );
     final ticketSection = _buildTicketSection(context);
 
     if (widget.embedded) {
@@ -487,6 +544,53 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
       child: Icon(Icons.document_scanner_rounded, color: t.priLink, size: 22),
     ),
   );
+
+  /// Ô chọn mẫu ở đầu panel (ADR-0016 mục 5): các mẫu `DANG_DUNG` cùng mục
+  /// "Không dùng mẫu" (luồng một ảnh cũ). Lựa chọn nhớ theo bảng điểm trong
+  /// phiên chạy (`selectedTemplateProvider`), không lưu ra đĩa.
+  Widget _buildTemplateSelector(TemplateSummaryDto? chosen, bool enabled) {
+    final t = context.tokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Mẫu bảng điểm',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: t.ink,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        AppSelectField<num>(
+          key: ValueKey('recognition-template-select-${chosen?.id ?? 0}'),
+          value: chosen?.id ?? _noTemplate,
+          searchable: false,
+          helperText: chosen == null
+              ? 'Một ảnh, một cột điểm, theo mẫu E0330113 cũ.'
+              : 'Nhiều trang, nhiều cột điểm theo mẫu đã chọn.',
+          items: [
+            const DropdownMenuItem<num>(
+              value: _noTemplate,
+              child: Text('Không dùng mẫu (mẫu E0330113 cũ)'),
+            ),
+            for (final item in _templates)
+              DropdownMenuItem<num>(value: item.id, child: Text(item.name)),
+          ],
+          onChanged: enabled
+              ? (value) {
+                  ref
+                      .read(
+                        selectedTemplateProvider(widget.gradebookId).notifier,
+                      )
+                      .state = value == null || value == _noTemplate
+                      ? null
+                      : value;
+                }
+              : null,
+        ),
+      ],
+    );
+  }
 
   /// Chỉ báo 4 bước, suy ra từ trạng thái đã có: đang tải ảnh lên, hoặc phiếu
   /// mới nhất trong danh sách. Không thêm trạng thái nghiệp vụ nào.
@@ -1198,6 +1302,8 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                               'Gửi lúc ${_formatDateTime(item.createdAt)}',
                               style: theme.textTheme.bodySmall,
                             ),
+                            if (_batchInfo[item.ticketId] case final info?)
+                              _buildBatchInfoLine(context, item, info),
                           ],
                         ),
                       ),
@@ -1261,6 +1367,42 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// "N ảnh · tên mẫu" cho phiếu thuộc lô (chỉ phiên này biết; xem
+  /// `docs/design/open-questions.md`).
+  Widget _buildBatchInfoLine(
+    BuildContext context,
+    RecognitionTicketDto item,
+    BatchTicketInfo info,
+  ) {
+    final t = context.tokens;
+    final name =
+        info.templateName ??
+        _templates
+            .where((template) => template.id == info.templateId)
+            .firstOrNull
+            ?.name ??
+        'Mẫu #${info.templateId.toInt()}';
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        key: ValueKey('recognition-ticket-batch-${item.ticketId}'),
+        children: [
+          Icon(Icons.layers_outlined, size: 14, color: t.priLink),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              '${info.pageCount} ảnh · $name',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: t.priLink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

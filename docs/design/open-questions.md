@@ -200,3 +200,12 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 - **Độ tin cậy từng kênh không hiện** trong bảng "Thử nhận dạng", cùng quy ước với màn đối chiếu (bước 12b); chỉ hiện giá trị và mức Xanh/Vàng/Đỏ.
 - **Ảnh mẫu tải bằng URL ký ngắn hạn** (`Image.network`); trên Flutter Web cần storage cho phép CORS cho miền ứng dụng, chưa kiểm với MinIO thật.
 - **Chưa chạy thủ công với API thật** (AC-1 phần "API thật khi chạy thủ công"): môi trường tự động không có API, DB, dịch vụ nhận dạng.
+
+### P5 - nhận dạng theo mẫu (giáo viên)
+
+- **Danh sách phiếu chưa có thông tin lô.** `RecognitionTicketDto` (API cũ) không có `batchId`, số trang hay tên mẫu, nên thẻ phiếu "N ảnh · tên mẫu" và nhãn "Trang n" chỉ hiện với phiếu mà phiên chạy này đã gửi (`batchTicketInfoProvider`). Mở lại ứng dụng thì thẻ phiếu của lô hiện như phiếu thường; kết quả lô vẫn mở được khi theo dõi lô trong phiên. Cần backend thêm `batchId`, `pageCount`, `templateName` vào danh sách phiếu để hiện bền vững.
+- **Dòng đối chiếu chưa có `so_trang`.** API chi tiết phiếu không trả `so_trang`. Nhãn "Trang n" suy ra từ `order` theo quy ước P3 (`thu_tu_dong = (trang − 1) × 1000 + vị trí`): `order ≥ 1000` hoặc phiếu mở từ màn kết quả lô (`?batch=1`) thì bật nhãn; lô một trang mở từ nơi khác sẽ không có nhãn "Trang 1". Cần backend trả `pageNumber` trong dòng để bỏ suy diễn.
+- **Ánh xạ cột → thành phần chỉ xác nhận, không đổi.** Giáo viên tick/bỏ tick cột; không chọn lại thành phần khác cho cột (backend kiểm ánh xạ ở SQL). Cột `componentId = null` chỉ hiện lý do.
+- **Mẫu đã chọn không lưu qua lần mở lại ứng dụng.** Chỉ nhớ trong phiên chạy theo yêu cầu (không thêm `shared_preferences`).
+- **Lô đang xử lý bị mất theo dõi khi tải lại ứng dụng.** `trackedBatchProvider` chỉ sống trong phiên; phiếu `DANG_XU_LY` vẫn hiện ở danh sách phiếu cũ với polling cũ.
+- **Chưa chạy thủ công với API/worker thật.** Môi trường tự động không có API, DB, dịch vụ nhận dạng; luồng lô được kiểm bằng repository giả.

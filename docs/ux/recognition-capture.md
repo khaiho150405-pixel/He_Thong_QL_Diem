@@ -29,3 +29,17 @@ Mô hình thật chưa được bật: checkpoint đã có nhưng còn thiếu m
 - `phase3_recognition_test.dart` kiểm luồng upload, evidence, nhập/sửa và duyệt với adapter HTTP test; không dùng mô hình giả trong production.
 - Trên thiết bị thật: cấp/từ chối quyền camera; chụp ngang/dọc; hủy camera; Android activity bị hủy; chọn ảnh JPEG/PNG lớn; mạng chậm/mất mạng và thử lại; cuộn/phóng ảnh và duyệt khi lọc. iOS cần macOS/Xcode.
 - Widget profile không thay thế kiểm camera hoặc simulator thật. Build Android trên máy Windows hiện bị lỗi Gradle loopback (`Unable to establish loopback connection`); cần xử lý môi trường và build lại trước khi nghiệm thu Android.
+
+## Nhận dạng theo mẫu: nhiều trang, nhiều cột (ADR-0016 mục 5)
+
+Đầu panel nhận dạng có ô **Mẫu bảng điểm** (các mẫu `DANG_DUNG` cộng "Không dùng mẫu (mẫu E0330113 cũ)"). Lựa chọn được nhớ cho bảng điểm này trong phiên chạy, không lưu ra đĩa. Không chọn mẫu, hoặc chưa có mẫu nào đang dùng, thì panel hoạt động y hệt luồng một ảnh ở trên.
+
+Khi chọn mẫu:
+
+1. **Ảnh các trang:** thêm 1–4 ảnh theo đúng thứ tự trang của tờ. Mỗi ảnh có thẻ "Trang n", xóa được, đổi thứ tự bằng nút lên/xuống. Quá 4 ảnh thì hiện thông báo và không thêm. Ảnh qua cùng bước kiểm nội dung/dung lượng như luồng một ảnh.
+2. **Xác nhận cột:** danh sách từ `/mapping`, mỗi dòng "Cột TX1 → Kiểm tra thường xuyên 1 · số + chữ" (hoặc "chỉ số") với checkbox. Cột bị khóa, đang có phiếu chờ hoặc không có thành phần tương ứng thì không chọn được và ghi lý do. Nút **Tải ảnh & Nhận dạng** chỉ bật khi có ≥ 1 ảnh và ≥ 1 cột. Bảng một kênh (chỉ số) tối đa Vàng (D-01).
+3. **Gửi và theo dõi:** gửi lô với idempotency key, có tiến độ tải lên và nút hủy tải lên; sau đó polling 3 giây. Lỗi lô hiện thông báo theo `errorCode` kèm số trang (ví dụ `TEMPLATE_MISMATCH`: "Trang 2: Ảnh không khớp lưới của mẫu đã chọn…"). Có nút **Hủy lô** (hủy mềm mọi phiếu chưa duyệt, bắt buộc lý do).
+4. **Kết quả lô:** màn `/gradebooks/:id/recognition-batches/:batchId` có tab theo thành phần, mỗi tab hiện số Xanh/Vàng/Đỏ. Bấm tab mở **màn đối chiếu hiện có** của đúng phiếu đó; duyệt vẫn theo từng phiếu (bất biến 1 và 6). Dòng của phiếu thuộc lô hiện nhãn "Trang n".
+5. **Thẻ phiếu gần đây:** phiếu thuộc lô hiện "N ảnh · tên mẫu".
+
+Kiểm chứng: `test/recognition_batch_test.dart` (repository giả: luồng đầy đủ, cột khóa, quá 4 ảnh, `TEMPLATE_MISMATCH` và các lỗi gửi lô, hủy lô, "Không dùng mẫu", responsive 320/390/1280 với chữ 1,3×). Các test nhận dạng cũ giữ nguyên assertion.

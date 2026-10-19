@@ -72,6 +72,13 @@ String recognitionFailureMessage(String? code) => switch (code) {
     'Dịch vụ nhận dạng gặp lỗi. Thử lại sau hoặc liên hệ quản trị viên.',
   'GRID_ROW_COUNT_MISMATCH' =>
     'Số dòng trong ảnh không phù hợp. Kiểm tra và chụp lại ảnh đủ bảng.',
+  'TEMPLATE_MISMATCH' =>
+    'Ảnh không khớp lưới của mẫu đã chọn. Chọn đúng loại tờ hoặc đổi sang mẫu khác.',
+  'TOO_MANY_PAGES' => 'Mỗi lô chỉ có tối đa 4 trang. Bỏ bớt ảnh rồi gửi lại.',
+  'COMPONENT_NOT_MAPPABLE' =>
+    'Có cột không ánh xạ được tới thành phần điểm của môn này. Tải lại danh sách cột rồi chọn lại.',
+  'TEMPLATE_INACTIVE' =>
+    'Mẫu đã ngừng dùng hoặc chưa được kích hoạt. Chọn mẫu khác.',
   _ =>
     'Không hoàn tất nhận diện (${code ?? 'không xác định'}). Kiểm tra ảnh và liên hệ quản trị viên nếu lỗi lặp lại.',
 };
