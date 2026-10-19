@@ -693,6 +693,12 @@ class AppSidebar extends ConsumerWidget {
                         route: '/final-results',
                         countBadge: null,
                       ),
+                      (
+                        icon: Icons.grid_on_outlined,
+                        title: 'Mẫu bảng điểm',
+                        route: '/admin/form-templates',
+                        countBadge: null,
+                      ),
                     ],
                   ),
                   buildNavGroup(

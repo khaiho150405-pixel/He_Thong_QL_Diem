@@ -189,3 +189,14 @@ Danh sách đầy đủ ở `docs/design/ui-migration-plan.md` mục 2. Tóm t�
 ### Bước 15 - rà soát cuối
 
 - Tổng hợp điểm còn lệch, mâu thuẫn cần quyết định, kết quả grep và kiểm tra diff: xem `docs/design/ui-final-report.md`. Chuỗi cứng học kỳ ở đầu trang chủ vẫn giữ vì bỏ nó làm `phase1_test.dart` (cuộn tới "Năm học" ở 390 px) trượt; chi tiết ở mục 7 của báo cáo.
+
+### P4 - màn Mẫu bảng điểm (`/admin/form-templates`)
+
+- **Danh sách thiếu "số + chữ" / "chỉ số"**: `TemplateSummaryDto` không có cờ kiểu đọc nên mỗi dòng của danh sách đọc thêm `formTemplatesDetail` (có cache qua `templateDetailProvider`, hiện "Đang tải…" lúc chờ). Với vài mẫu thì chấp nhận được; nếu mẫu nhiều, đề xuất backend thêm `readMode` vào bản tóm tắt.
+- **Không biết trước mẫu đã được dùng hay chưa**: DTO không có cờ `inUse`, nên nút "Sửa" luôn hiện cho tới khi `PUT` trả `TEMPLATE_IN_USE`; lúc đó màn sửa giữ nguyên nội dung và chuyển sang "Lưu phiên bản mới", màn chi tiết ẩn "Sửa" kèm giải thích. Cờ này chỉ nhớ trong lúc màn còn mở (tải lại trang thì nút Sửa hiện lại).
+- **Client sinh bỏ trống thân multipart** (`formTemplatesAnalyze`, `formTemplatesCreate`, `formTemplatesTryTemplate`): đã kiểm trong `lib/src/api/form_templates_api.dart` (`try {} catch`). Không được sửa tay nên `ApiFormTemplatesRepository` gửi `FormData` bằng `api.dio` cho ba lệnh này (test `repository thật gửi multipart đúng`). Khi script `repair-generated-client.mjs` được mở rộng thì có thể đổi sang hàm sinh sẵn.
+- **Nút "Kích hoạt" chỉ cho mẫu Nháp, "Ngừng" chỉ cho mẫu Đang dùng** (theo vòng đời `NHAP → DANG_DUNG → NGUNG` của ADR-0016). Kích hoạt lại mẫu đã Ngừng chưa có trong thiết kế: muốn dùng lại thì "Tạo phiên bản mới".
+- **Số cột hiển thị bắt đầu từ 0** ("Cột 0", "Cột 1"…) để khớp số vẽ trên `previewPngBase64`; số dòng ở "Thử nhận dạng" là `rowIndex` của backend (bắt đầu từ 1).
+- **Độ tin cậy từng kênh không hiện** trong bảng "Thử nhận dạng", cùng quy ước với màn đối chiếu (bước 12b); chỉ hiện giá trị và mức Xanh/Vàng/Đỏ.
+- **Ảnh mẫu tải bằng URL ký ngắn hạn** (`Image.network`); trên Flutter Web cần storage cho phép CORS cho miền ứng dụng, chưa kiểm với MinIO thật.
+- **Chưa chạy thủ công với API thật** (AC-1 phần "API thật khi chạy thủ công"): môi trường tự động không có API, DB, dịch vụ nhận dạng.

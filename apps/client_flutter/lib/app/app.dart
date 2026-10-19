@@ -12,6 +12,9 @@ import '../features/academic_catalog/catalog_screen.dart';
 import '../features/academic_catalog/fields.dart';
 import '../features/academic_catalog/subjects_weights_screen.dart';
 import '../features/academic_catalog/teaching_assignments_screen.dart';
+import '../features/form_templates/form_templates_screen.dart';
+import '../features/form_templates/template_detail_screen.dart';
+import '../features/form_templates/template_wizard_screen.dart';
 import '../features/gradebooks/gradebook_screen.dart';
 import '../features/gradebooks/gradebooks_screen.dart';
 import '../features/recognition/review_screen.dart';
@@ -57,6 +60,22 @@ final routerProvider = Provider.family<GoRouter, String>((
       GoRoute(
         path: '/admin/subjects-weights',
         builder: (_, state) => const SubjectsWeightsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/form-templates',
+        builder: (_, state) => const FormTemplatesScreen(),
+      ),
+      // `new` = trình hướng dẫn tạo mẫu; còn lại là mã mẫu (màn chi tiết).
+      GoRoute(
+        path: '/admin/form-templates/:id',
+        builder: (_, state) {
+          final raw = state.pathParameters['id'] ?? '';
+          if (raw == 'new') return const TemplateWizardScreen();
+          final id = num.tryParse(raw);
+          return id == null
+              ? const FormTemplatesScreen()
+              : TemplateDetailScreen(templateId: id);
+        },
       ),
       GoRoute(
         path: '/final-results',
@@ -109,6 +128,11 @@ final routerProvider = Provider.family<GoRouter, String>((
       // Route mới (bước 13): chỉ thêm điều kiện, không sửa điều kiện cũ.
       if ((state.uri.path == '/admin/teaching-assignments' ||
               state.uri.path == '/admin/subjects-weights') &&
+          user.role.value != 'QUAN_TRI_VIEN') {
+        return '/';
+      }
+      // Mẫu bảng điểm (ADR-0016): chỉ QTV, cả màn danh sách lẫn chi tiết.
+      if (state.uri.path.startsWith('/admin/form-templates') &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }
