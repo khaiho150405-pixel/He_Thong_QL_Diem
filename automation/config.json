@@ -1,6 +1,6 @@
 {
   "_ghi_chu": "Sửa file này cho khớp máy bạn. Placeholder do run.py điền: {short_prompt} (câu lệnh ngắn trỏ tới file prompt), {last_message_file}, {schema_file}, {model}, {venv_python} (.local/venv-ml của repo).",
-  "phases": ["P1", "P2", "P3", "P4", "P5", "P6"],
+  "phases": ["P1", "P2", "P3", "P4", "P5", "P6", "P7"],
   "data_dir": "F:/HK1_Nam04/KLCN/data",
   "limits": {
     "max_review_rounds": 3,

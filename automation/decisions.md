@@ -24,3 +24,9 @@ Khi script dừng vì `BLOCKED`, ghi câu trả lời ở đây theo mẫu bên 
 Kết luận: Claude đúng / Reviewer đúng / Làm theo cách khác: ...
 Ghi chú: ...
 ```
+
+### P6-F1 (2026-10-19)
+
+Kết luận: Claude và reviewer đều đúng về phép đo (AC-1 trên DEV KHÔNG ĐẠT: Đ.số 99,15 → 89,74; Điểm chữ 98,80 → 89,32; do 4/60 trang điện thoại mất/dính vạch dọc bị `TEMPLATE_MISMATCH`, 111 dòng). Chủ dự án chọn **phương án 1: mở phạm vi riêng (phase P7)** để cải thiện căn cột khi mất/dính vạch. KHÔNG đổi cách tính AC-1 thành "chỉ dòng đọc được", KHÔNG nới luật "cột cần đọc không ánh xạ → từ chối" theo kiểu đoán.
+
+Với P6: **coi P6-F1 là RESOLVED cho phạm vi P6**. P6 đã làm đúng phần của mình (phép đo đúng, có test chống PASS giả, báo cáo trung thực, mẫu THPT, tài liệu). Yêu cầu không thụt lùi của AC-1 được **chuyển nguyên sang AC-1 của P7** (`automation/phases/P7.md`). Vòng sửa P6 chỉ cần: ghi trong báo cáo `Danh_gia_mau_bang_diem_2026-10-19.md`, ADR-0016 (Kết quả đánh giá) và `CONTINUE.md` một câu "AC-1 chuyển sang P7 theo quyết định chủ dự án 2026-10-19"; không sửa thuật toán, không chạy lại TEST. Reviewer chấm P6-F1 là RESOLVED khi thấy ghi chú này.
