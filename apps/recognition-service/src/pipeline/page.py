@@ -605,17 +605,36 @@ def _diem_luoi_tho(page):
 
 
 
-def nan_trang(img, nan_cong=True):
+def mo_rong_quad(quad, trai=0.0, phai=0.0):
+    """Dời cạnh trái/phải của quad giấy ra ngoài ``trai``/``phai`` lần bề rộng quad (dọc theo hai cạnh trên và dưới).
+
+    Dùng khi dò cạnh giấy cắt vào trong bảng (cạnh Hough bám nhầm mép chồng giấy hoặc bóng đổ): phần bảng bị cắt vẫn nằm
+    trong ảnh gốc nên nắn lại với quad rộng hơn sẽ thấy lại các vạch dọc THẬT. Không tự thêm vạch nào (P7).
+    """
+    q = np.asarray(quad, np.float32).reshape(4, 2).copy()
+    if trai:
+        q[0] = q[0] + (q[0] - q[1]) * trai
+        q[3] = q[3] + (q[3] - q[2]) * trai
+    if phai:
+        q[1] = q[1] + (q[1] - q[0]) * phai
+        q[2] = q[2] + (q[2] - q[3]) * phai
+    return q
+
+
+def nan_trang(img, nan_cong=True, mo_rong=(0.0, 0.0)):
     """Nắn ảnh về trang A4 chuẩn cho BẢNG ĐIỂM BẤT KỲ (không cần đúng mẫu E0330113).
 
     Dùng chung khâu dò giấy + nắn theo lưới + nắn cong của v3, nhưng chấm điểm
     phương án bằng chất lượng lưới chung (số vạch, độ thẳng) thay vì khớp kích
-    thước cột của biểu mẫu. Trả dict(page, H, nguon_quad, ty_le, cham_bien,
-    canh_thieu, goc_xien_bu, thong_so).
+    thước cột của biểu mẫu. ``mo_rong`` = (trái, phải): nới quad giấy (xem
+    ``mo_rong_quad``), mặc định không nới. Trả dict(page, H, nguon_quad, ty_le,
+    cham_bien, canh_thieu, goc_xien_bu, thong_so).
     """
     h, w = img.shape[:2]
     ung_vien = []
     gi = do_to_giay_chi_tiet(img)
+    if any(mo_rong):
+        gi = dict(gi, quad=mo_rong_quad(gi['quad'], *mo_rong))
     ung_vien.append((gi['nguon'], gi['quad'], gi))
     tot = None
     for nguon, quad, gi in ung_vien:

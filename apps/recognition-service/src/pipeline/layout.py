@@ -38,6 +38,9 @@ _SO_CHU_SO = 4
 DUNG_SAI_VACH = 0.3
 DUNG_SAI_VACH_TOI_THIEU_PX = 10.0
 DUNG_SAI_VACH_TOI_DA_PX = 40.0
+# Hệ số nhân phần bảng mẫu bị mất (so với phần thấy được) để nới quad giấy khi nắn lại (P7); thử lần lượt, nhận cái đầu tiên
+# cho lưới khớp mẫu. Đo trên ảnh điện thoại thật: vùng 0,05–0,30 lần bề rộng quad đều cho lưới đủ 9 cột.
+THU_MO_RONG = (1.0, 1.5)
 
 # Vai trò từ khóa tiêu đề (``grid.TU_KHOA``) → vai trò gợi ý của mẫu; cột còn lại là BO_QUA. Cột không đọc được tiêu đề
 # hoặc tiêu đề không khớp từ khóa nào thì KHÔNG gợi ý (None) — người khai báo mẫu tự chọn.
@@ -119,15 +122,16 @@ def goi_y_cot(dinh_danh: dict[str, Any]) -> list[tuple[str | None, str | None, i
 
 
 def phan_tich_bo_cuc(
-    image_bytes: bytes, ocr: Callable[[Any], str] | None = None
+    image_bytes: bytes, ocr: Callable[[Any], str] | None = None, mo_rong: tuple[float, float] = (0.0, 0.0)
 ) -> BoCuc:
     """Ảnh PNG/JPEG → trang nắn phẳng, lưới, cột (kèm tiêu đề/vai trò gợi ý) và chữ ký lưới.
 
     Ném ``PipelineError``: ``IMAGE_UNREADABLE``, ``IMAGE_QUALITY_LOW``, ``GRID_NOT_FOUND``. Không kiểm "có phải bảng
-    điểm" và không chọn cột điểm (mẫu do người khai báo quyết định).
+    điểm" và không chọn cột điểm (mẫu do người khai báo quyết định). ``mo_rong`` = (trái, phải): nới quad giấy khi trang
+    nắn bị cắt mất mép bảng (``page.mo_rong_quad``); chỉ ``chuan_bi_doc`` dùng và luôn kiểm lại bằng vạch thật.
     """
     original = doc_anh(image_bytes)
-    kq_nan = nan_trang(original)
+    kq_nan = nan_trang(original, mo_rong=mo_rong)
     page = kq_nan["page"]
     luoi = grid_module.trich_luoi(page)
     if luoi is not None:
@@ -393,6 +397,33 @@ def khoi_phuc_vach_thieu(
     return rebuilt, matched
 
 
+def nan_lai_mo_rong(
+    image_bytes: bytes, ocr: Callable[[Any], str] | None, ket_qua: KetQuaKhop, layout: Layout, min_score: float
+) -> tuple[BoCuc, KetQuaKhop] | None:
+    """Trang nắn bị cắt mất cột ở mép (``ket_qua.cat_trai``/``cat_phai``) mà cột cần đọc nằm ở đó → nắn lại với quad giấy
+    rộng hơn và dò lưới lại; chỉ nhận khi lưới mới có đủ vạch THẬT để ánh xạ MỌI cột cần đọc với điểm ≥ ``min_score``.
+
+    Dò cạnh giấy có thể cắt vào trong bảng (cạnh Hough bám mép chồng giấy hoặc bóng đổ) dù ảnh gốc còn đủ bảng. Mức nới
+    thử theo phần bảng mẫu bị mất (``THU_MO_RONG``); không nới được ra lưới khớp thì ``None`` và tầng trên từ chối.
+    """
+    widths = [float(w) for w in layout.signature["columnWidths"]]
+    count = len(widths)
+    visible = sum(widths[ket_qua.cat_trai : count - ket_qua.cat_phai])
+    if (not ket_qua.cat_trai and not ket_qua.cat_phai) or visible <= 0:
+        return None
+    lost_left, lost_right = sum(widths[: ket_qua.cat_trai]) / visible, sum(widths[count - ket_qua.cat_phai :]) / visible
+    needed = cot_can_doc(layout)
+    for factor in THU_MO_RONG:
+        try:
+            wide = phan_tich_bo_cuc(image_bytes, ocr, (factor * lost_left, factor * lost_right))
+        except PipelineError:
+            continue
+        matched = khop_mau_chi_tiet(wide.signature, layout.signature)
+        if matched.score >= min_score and all(i in matched.column_map for i in needed):
+            return wide, matched
+    return None
+
+
 def chuan_bi_doc(
     image_bytes: bytes,
     layout: Layout,
@@ -402,7 +433,8 @@ def chuan_bi_doc(
     """Phân tích ảnh, khớp với mẫu của ``layout`` và cắt ô; ``TEMPLATE_MISMATCH`` nếu không khớp (không trả dòng nào).
 
     Cột cần đọc không ánh xạ được vì lưới mất vạch dọc thì thử tìm lại vạch bằng bằng chứng mực
-    (``khoi_phuc_vach_thieu``); không tìm thấy nét kẻ thật thì từ chối như cũ, không đoán cột.
+    (``khoi_phuc_vach_thieu``), rồi (khi mất cột ở mép) nắn lại với quad giấy rộng hơn (``nan_lai_mo_rong``); không có
+    vạch thật thì từ chối như cũ, không đoán cột.
     """
     bo_cuc = phan_tich_bo_cuc(image_bytes, ocr)
     ket_qua = khop_mau_chi_tiet(bo_cuc.signature, layout.signature)
@@ -410,6 +442,8 @@ def chuan_bi_doc(
     unmapped = [i for i in cot_can_doc(layout) if i not in column_map]
     if unmapped and score >= min_score:
         recovered = khoi_phuc_vach_thieu(bo_cuc, ket_qua, layout, min_score)
+        if recovered is None:
+            recovered = nan_lai_mo_rong(image_bytes, ocr, ket_qua, layout, min_score)
         if recovered is not None:
             bo_cuc, ket_qua = recovered
             score, column_map = ket_qua.score, ket_qua.column_map
@@ -447,6 +481,7 @@ __all__ = [
     "cot_can_doc",
     "goi_y_cot",
     "khoi_phuc_vach_thieu",
+    "nan_lai_mo_rong",
     "phan_tich_bo_cuc",
     "ve_xem_truoc",
 ]

@@ -1,11 +1,14 @@
 """P7: khớp mẫu chịu được vạch dọc bị mất/đứt, nhưng chỉ khi có nét kẻ thật; không có thì vẫn TEMPLATE_MISMATCH."""
 import json
 import unittest
+from unittest import mock
 
 import cv2
 import numpy as np
 
 from src.domain.layout import parse_layout
+from src.pipeline import layout as layout_module
+from src.pipeline import page as page_module
 from src.pipeline import template_match as tm
 from src.pipeline.errors import PipelineError
 from src.pipeline.khoi_phuc_vach import tim_vach_doc
@@ -142,6 +145,75 @@ class EdgeRuleTest(RecoveryBase):
         self.assertEqual(sorted(recovered.column_map), list(range(9)))
         gone, _ = make_thpt_page(missing_lines=(9,))
         self.assertEqual(mismatch(self, photo(gone), with_last)["unmappedColumns"], [8])
+
+
+class PaperEdgeCutTest(RecoveryBase):
+    """Cạnh giấy dò sai cắt vào trong bảng dù ảnh còn đủ bảng: nắn lại với quad rộng hơn, chỉ nhận khi thấy vạch thật."""
+
+    @staticmethod
+    def wrong_edge(left: float = 0.0, right: float = 0.0):
+        """Patch ``page.do_to_giay_chi_tiet``: dời cạnh trái/phải của quad giấy VÀO TRONG ``left``/``right`` lần bề rộng quad,
+        chỉ ở lần nắn đầu; bản nới (``mo_rong`` ≠ 0) chạy trên cùng quad sai rồi mới nới."""
+        real = page_module.do_to_giay_chi_tiet
+
+        def cut(img):
+            found = real(img)
+            return dict(found, quad=page_module.mo_rong_quad(found["quad"], -left, -right))
+
+        return mock.patch.object(page_module, "do_to_giay_chi_tiet", cut)
+
+    def test_a_cut_through_the_stt_column_is_widened_back_to_the_real_rules(self) -> None:
+        image = photo(self.clean)
+        with self.wrong_edge(left=0.09):
+            cut = phan_tich_bo_cuc(image, None)
+            self.assertEqual(len(cut.columns), 8, "the cut page must have lost the STT rule")
+            result = chuan_bi_doc(image, self.stt_name_tx, None, MIN_SCORE)
+        self.assertEqual(sorted(result.column_map), list(range(9)))
+        self.assertGreaterEqual(result.score, 0.9)
+        self.assertEqual(len(result.bo_cuc.columns), 9)
+        self.assertEqual(len(result.rows), 20)
+        self.assertTrue(all(row.stt_cell is not None and row.stt_cell.size for row in result.rows))
+
+    def test_the_widened_page_reads_the_same_cells_as_the_intact_page(self) -> None:
+        image = photo(self.clean)
+        intact = chuan_bi_doc(image, self.stt_name_tx, None, MIN_SCORE)
+        with self.wrong_edge(left=0.09):
+            widened = chuan_bi_doc(image, self.stt_name_tx, None, MIN_SCORE)
+        for want, got in zip(intact.rows, widened.rows):
+            for a, b in zip(want.grades, got.grades):
+                self.assertAlmostEqual(a.numeric_ink, b.numeric_ink, delta=3.0)
+
+    def test_the_right_side_is_widened_too(self) -> None:
+        with_last = layout_for(self.template, (0, "STT"), (1, "HO_TEN"), (8, "DIEM", "GHICHU"))
+        image = photo(self.clean)
+        with self.wrong_edge(right=0.2):
+            self.assertLess(len(phan_tich_bo_cuc(image, None).columns), 9)
+            result = chuan_bi_doc(image, with_last, None, MIN_SCORE)
+        self.assertEqual(sorted(result.column_map), list(range(9)))
+
+    def test_a_page_really_cut_off_in_the_photo_is_still_rejected(self) -> None:
+        # The STT column is physically outside the picture: widening the paper quad finds only background, no rules.
+        cropped = self.clean[:, 150:]
+        details = mismatch(self, photo(cropped), self.stt_name_tx)
+        self.assertEqual(details["unmappedColumns"], [0])
+
+    def test_widening_never_rescues_another_form(self) -> None:
+        other = make_thpt_page(columns=OTHER_COLUMNS, headers=OTHER_HEADERS, score_columns=(3, 4, 5, 6), name_column=2)[0]
+        with self.wrong_edge(left=0.09):
+            mismatch(self, photo(other), self.stt_name_tx)
+
+    def test_an_intact_quad_is_not_widened(self) -> None:
+        self.assertTrue(np.array_equal(page_module.mo_rong_quad(np.eye(4, 2, dtype=np.float32) * 5), np.eye(4, 2) * 5))
+        calls = []
+        real = page_module.nan_trang
+
+        def spy(img, nan_cong=True, mo_rong=(0.0, 0.0)):
+            calls.append(mo_rong)
+            return real(img, nan_cong, mo_rong)
+
+        with mock.patch.object(layout_module, "nan_trang", spy):
+            chuan_bi_doc(photo(self.clean), self.stt_name_tx, None, MIN_SCORE)
+        self.assertEqual(calls, [(0.0, 0.0)])
 
 
 class OtherFormTest(RecoveryBase):
