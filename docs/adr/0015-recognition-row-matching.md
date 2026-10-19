@@ -148,3 +148,9 @@ Phần ô chưa thu khe (DEV: 35 ô phone) đều thuộc một trang mà cột 
 ## Kết quả dò ngưỡng
 
 Chưa có. Sẽ cập nhật ở BE-22 sau khi có ảnh bảng điểm cấp 3 có nhãn.
+
+## Đo theo mẫu bảng điểm (ADR-0016, phase P6)
+
+- Cách đo BE-21/BE-22 và BE-24c không đổi; `scripts/recognition/evaluate_pages.py` thêm đường v2: `run --layout <layout.json>` gọi `/v2/recognize` với layout của mẫu và lưu bộ nhớ đệm cùng định dạng với đường v1 (`dev_v2.json`), nên `report`, bộ ghép dòng `row-matching.ts` và luật phân loại dùng nguyên xi. `compare` in bảng v1 so với v2 (độ đúng từng kênh, Xanh/Vàng/Đỏ, Xanh sai, gán sai học sinh, tỉ lệ `TEMPLATE_MISMATCH`).
+- Cột chỉ có điểm số (mẫu không khai báo `DIEM_CHU` đi kèm) thực chất là nhánh "chỉ kênh số đủ tin cậy" của luật hợp nhất: tối đa Vàng, không bao giờ Xanh (D-01). Luật phân loại ở mục "Luật phân loại hai kênh" không đổi.
+- `TEMPLATE_MISMATCH` là lỗi từ chối chủ động (không đoán cột), không phải lỗi đọc: khi so v1 với v2 phải báo riêng số trang bị từ chối, vì v1 vẫn đọc các trang đó bằng hình học. Số liệu và giới hạn nằm ở ADR-0016 mục "Kết quả đánh giá".

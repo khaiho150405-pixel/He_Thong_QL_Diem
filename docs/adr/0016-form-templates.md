@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-Proposed (2026-10-18). Chủ dự án chốt hướng. Các phase P1–P6 trong `automation/phases/` hiện thực hóa ADR này. Mọi chỗ ghi "QUYẾT ĐỊNH MỞ" phải theo `automation/decisions.md`; chưa có quyết định thì giữ phương án mặc định ghi ở đây.
+Accepted (2026-10-19, sau phase P6; xem "Kết quả đánh giá"). Đề xuất 2026-10-18, chủ dự án chốt hướng. Các phase P1–P6 trong `automation/phases/` hiện thực hóa ADR này. Mọi chỗ ghi "QUYẾT ĐỊNH MỞ" phải theo `automation/decisions.md`; chưa có quyết định thì giữ phương án mặc định ghi ở đây.
 
 ## Vấn đề
 
@@ -161,3 +161,13 @@ Phạm vi: migration `202610200001_recognition_batches`, module `recognition` (l
 - **Hủy lô:** `huy_lo_nhan_dien` hủy mềm mọi phiếu chưa duyệt (`DANG_XU_LY`, `CHO_DOI_CHIEU`, `LOI`), giữ phiếu `DA_DUYET`; mọi phiếu đã duyệt → `TICKET_ALREADY_APPROVED` (API: `BATCH_ALREADY_APPROVED`). Hủy từng phiếu của lô bằng endpoint cũ chỉ xóa ảnh các trang khi phiếu cuối của lô đã hủy. `luu_ket_qua_lo` bỏ qua lô đã hủy (hủy giữa lúc worker chạy) và worker dọn ảnh ô mồ côi.
 - **API:** thẻ OpenAPI `recognition-batches` (client Dart `RecognitionBatchesApi`) và `form-templates` cho `/mapping`. Mã lỗi thêm: `TOO_MANY_PAGES`, `COMPONENT_NOT_MAPPABLE` (400), `BATCH_NOT_FOUND` (404), `BATCH_ALREADY_APPROVED`, `COLUMN_LOCKED`, `GRADE_ENTRY_WINDOW_CLOSED`, `GRADEBOOK_NOT_EDITABLE`, `IDEMPOTENCY_MISMATCH` (409). `/mapping` và các endpoint lô chỉ cho giáo viên được phân công (QTV và học sinh 403).
 - **Client sinh:** generator `dart-dio` bỏ trống thân multipart; `scripts/repair-generated-client.mjs` chỉ vá `recognition_api.dart`. Các hàm `recognitionBatchUpload` (và `formTemplates*` ở P2) sinh ra có thân rỗng cho tới khi script vá được mở rộng (ngoài phạm vi P3); P5 phải xử lý khi làm giao diện.
+
+## Kết quả đánh giá (P6, 2026-10-19)
+
+Báo cáo đầy đủ: `docs/reports/recognition/Danh_gia_mau_bang_diem_2026-10-19.md`. Mô hình `crnn-dot5+vietocr-tang4+name-vgg:1f230266bd93`, layout `scripts/recognition/layouts/e0330113.json`, ngưỡng khớp mẫu 0,80.
+
+- **Không kém đường cũ trên DEV (đạt):** 1.170 dòng; Đ.số đúng 99,15% (v1 99,15%), Điểm chữ đúng 98,68% (v1 98,80%); Xanh sai 0, gán sai học sinh 0. Máy quét giống hệt v1. Đánh đổi: v2 từ chối 4/60 trang (ảnh điện thoại mất/dính vạch dọc) bằng `TEMPLATE_MISMATCH` mà v1 vẫn đọc được.
+- **Ngưỡng D-04:** dò chỉ trên DEV; ảnh đúng mẫu đã ánh xạ đủ cột có điểm 0,9574–0,9981, ảnh mẫu khác 0,5885–0,7026. Giữ mặc định 0,80 (không đổi mã).
+- **TEST (chạy một lần, 2026-10-19 13:35–13:47):** 1.960 dòng; Đ.số 92,9% và Điểm chữ 91,6% trên dòng đọc được (v1 90,6% / 90,7%); 5/100 trang bị từ chối. Xanh sai 2 ở cả v1 và v2 (sẵn có của mô hình). Gán sai v2 = 2 dòng, đều do bộ đo ghép trang 2 khi trang 1 của tờ đó bị từ chối; ở luồng thật cả lô sẽ `LOI`, không ghi dòng nào. Không chỉnh cấu hình sau khi xem TEST.
+- **Mẫu thứ hai** (Data_thayHa, 14 cột) đọc được trên 4 ảnh (định tính); ảnh của mẫu khác với layout → `TEMPLATE_MISMATCH` ở mọi cặp thử. **Mẫu THPT mô phỏng** sinh bằng `make_thpt_form.py` khớp chính ảnh của nó với điểm 1,0 và đọc đủ 40 dòng.
+- **Chưa chứng minh:** đọc chữ viết tay cấp 3 thật (chưa có dữ liệu); chấp nhận ảnh điện thoại mất vạch dọc (hiện từ chối, ~7% DEV, ~10% TEST trang điện thoại).

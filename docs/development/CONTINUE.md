@@ -2,6 +2,13 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Mẫu bảng điểm (ADR-0016) — phase P6 xong (2026-10-19)
+
+- Nhánh `feat/form-templates`; P1–P5 đã có commit riêng, P6 do script điều phối commit. ADR-0016 đã chuyển "Accepted" kèm "Kết quả đánh giá".
+- P6 chỉ thêm công cụ đo, tờ mẫu và tài liệu: `scripts/recognition/evaluate_pages.py` (`run --layout`, `compare`, `scores`, `make-layout`, `make-second-layout`, `qualitative`), `make_thpt_form.py`, `layouts/{e0330113,thayha_dtk,thpt_tt22}.json`, test `scripts/recognition/tests/test_make_thpt_form.py` (chạy riêng, không thuộc gate `py`). Không đổi API, Flutter, DB hay ngưỡng mặc định (D-04 giữ 0,80).
+- Kết quả: DEV đạt AC-1 (gán sai 0, Xanh sai 0, độ đúng hai kênh không giảm quá 0,5 điểm %). TEST đã chạy một lần, không chạy lại: Xanh sai 2 ở cả v1 và v2; v2 gán sai 2 dòng do bộ đo (trang 1 bị từ chối, lô thật sẽ `LOI`). Báo cáo: `docs/reports/recognition/Danh_gia_mau_bang_diem_2026-10-19.md`.
+- Việc còn lại / rủi ro: v2 từ chối ảnh điện thoại mất vạch dọc (~7% DEV, ~10% TEST trang điện thoại) mà đường hình học vẫn đọc được; chưa có dữ liệu THPT viết tay thật; người `T04` có trong manifest `test/` nhưng chưa khai báo ở `SPLITS` của `evaluate_pages.py`. Hai việc đầu cần quyết định của chủ dự án (không thuộc P6).
+
 ## Thực nghiệm Qwen local ngày 18 tháng 10 năm 2026
 
 - Đã hoàn tất pilot Instruct 8B Q4_K_M trên đúng 20 ảnh của lượt Thinking, giữ prompt/schema/options/parser. Không sửa mã nhận dạng nghiệp vụ, chưa tích hợp hệ kết hợp.

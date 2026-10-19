@@ -257,7 +257,7 @@ Các enum nền tảng:
 1. **Máy chỉ đề xuất, người có thẩm quyền mới chốt.** Kết quả nhận dạng không được ghi thẳng vào `diem_thanh_phan`.
 2. Mỗi ô nhận dạng lưu riêng giá trị và độ tin cậy của kênh Điểm số và kênh Điểm chữ; không gộp mất dữ liệu gốc.
 3. Màn hình đối chiếu luôn hiển thị ảnh ô cắt cùng hai kết quả và độ tin cậy.
-4. Phân loại theo luật hợp nhất hai kênh (ADR-0015, BE-22). Xanh: hai kênh ĐỘC LẬP (Điểm số, Điểm chữ) đồng thuận cùng một giá trị hợp lệ (kèm mức sàn tin cậy mỗi kênh nếu được cấu hình; mặc định 0). Vàng: chỉ một kênh đủ tin cậy theo ngưỡng riêng (kênh kia yếu, không hợp lệ hoặc khác giá trị); gợi ý giá trị của kênh đó và ghi rõ "Lấy theo điểm số/chữ". Đỏ: ô trống, cả hai kênh mạnh nhưng mâu thuẫn, cả hai cùng yếu hoặc không kênh nào hợp lệ; không gợi ý giá trị. Mọi gợi ý chỉ là đề xuất, người duyệt chốt. Mức cuối của dòng là mức thấp hơn giữa mức điểm (luật này) và mức ghép học sinh (bất biến 5).
+4. Phân loại theo luật hợp nhất hai kênh (ADR-0015, BE-22). Xanh: hai kênh ĐỘC LẬP (Điểm số, Điểm chữ) đồng thuận cùng một giá trị hợp lệ (kèm mức sàn tin cậy mỗi kênh nếu được cấu hình; mặc định 0). Vàng: chỉ một kênh đủ tin cậy theo ngưỡng riêng (kênh kia yếu, không hợp lệ hoặc khác giá trị); gợi ý giá trị của kênh đó và ghi rõ "Lấy theo điểm số/chữ". Đỏ: ô trống, cả hai kênh mạnh nhưng mâu thuẫn, cả hai cùng yếu hoặc không kênh nào hợp lệ; không gợi ý giá trị. Mọi gợi ý chỉ là đề xuất, người duyệt chốt. Mức cuối của dòng là mức thấp hơn giữa mức điểm (luật này) và mức ghép học sinh (bất biến 5). Cột điểm của mẫu bảng điểm không có cột Điểm chữ đi kèm chỉ có một kênh nên không bao giờ đạt Xanh, tối đa Vàng (ADR-0016, D-01).
 5. Số dòng không do giáo viên khai báo. Mọi dòng có điểm phát hiện được phải ghép được với danh sách lớp đã chốt của phiếu; ghép thất bại thì dừng xử lý, yêu cầu ảnh khác, không đoán (ADR-0015). Gán học sinh theo họ tên; dòng chỉ được Xanh khi tên khớp mạnh VÀ STT in trên giấy khớp STT dự kiến (ADR-0015, BE-24b), STT không quyết định gán trừ trong nhóm trùng họ tên.
 6. Duyệt một phiếu là giao dịch nguyên tử gồm: ghi điểm chính thức, thêm lịch sử, đóng dấu người/thời điểm duyệt, đổi trạng thái phiếu. Lỗi ở bất kỳ bước nào phải rollback toàn bộ.
 7. Chỉ điểm `DA_DUYET` mới được tính tổng kết. Không xếp loại trước khi tính tổng kết thành công.
@@ -287,6 +287,8 @@ Thời khóa biểu là phần mở rộng được chủ dự án yêu cầu sa
 5. Worker nhận biết ô trống trước khi gọi mô hình.
 6. Với từng dòng, gọi riêng hai kênh, lưu ảnh ô cắt, raw output, giá trị chuẩn hóa và confidence.
 7. Đối chiếu chéo, phân loại Xanh/Vàng/Đỏ, rồi chuyển phiếu sang `CHO_DOI_CHIEU`.
+
+Khi giáo viên chọn một **mẫu bảng điểm** do QTV khai báo (ADR-0016), luồng trên chạy theo **lô**: tải 1–4 ảnh trang của cùng một tờ, chọn nhiều cột điểm, API tạo một phiếu cho mỗi thành phần, worker khớp lưới ảnh với mẫu (không khớp → `TEMPLATE_MISMATCH`, không đoán cột), ghép học sinh một lần cho cả lô, và duyệt vẫn theo từng phiếu như UC13.
 
 ### UC13: đối chiếu và duyệt
 

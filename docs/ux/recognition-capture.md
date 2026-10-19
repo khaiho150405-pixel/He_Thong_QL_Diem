@@ -43,3 +43,9 @@ Khi chọn mẫu:
 5. **Thẻ phiếu gần đây:** phiếu thuộc lô hiện "N ảnh · tên mẫu".
 
 Kiểm chứng: `test/recognition_batch_test.dart` (repository giả: luồng đầy đủ, cột khóa, quá 4 ảnh, `TEMPLATE_MISMATCH` và các lỗi gửi lô, hủy lô, "Không dùng mẫu", responsive 320/390/1280 với chữ 1,3×). Các test nhận dạng cũ giữ nguyên assertion.
+
+## Chụp ảnh theo mẫu và tờ THPT in được (P6)
+
+- **Chụp để khớp mẫu:** hệ thống so lưới ảnh với lưới của mẫu đã chọn. Chụp thẳng, thấy trọn bảng và **đủ mọi vạch dọc** (không để bóng, nếp gấp hay chữ đè làm mất vạch). Ảnh lệch lưới hoặc không đúng mẫu bị từ chối bằng `TEMPLATE_MISMATCH` và không có dòng nào được ghi; hãy chụp lại hoặc chọn đúng mẫu, không cố gửi lại ảnh cũ. Trên bộ DEV, khoảng 7% ảnh điện thoại bị từ chối vì mất vạch (báo cáo `docs/reports/recognition/Danh_gia_mau_bang_diem_2026-10-19.md`).
+- **Bảng một kênh** (chỉ cột điểm số, như tờ THPT TX1–TX4, GK, CK): mọi dòng tối đa Vàng, giáo viên xem và xác nhận từng dòng (D-01); không bao giờ Xanh.
+- **Tờ THPT in được:** `python scripts/recognition/make_thpt_form.py --out-dir .local/forms [--seed N] [--names-file ten_gia.txt] [--write-layout scripts/recognition/layouts/thpt_tt22.json]` sinh `so_diem_thpt_tt22.pdf` và `.png` (A4, 200 dpi, 40 dòng; tên in sẵn là dữ liệu giả). In ở tỉ lệ 100%, không chọn "vừa trang"; nếu không đọc được PDF thì in từ PNG ở 200 dpi. Khai báo mẫu từ ảnh của tờ này, hoặc dùng layout có sẵn `thpt_tt22.json` khi thử bằng `evaluate_pages.py`. Đây là mẫu **mô phỏng**, chưa đo trên chữ viết tay cấp 3 thật.

@@ -1,0 +1,42 @@
+{
+  "signature": {
+    "version": 1,
+    "columnWidths": [
+      0.0475, 0.1159, 0.2696, 0.0957, 0.1316, 0.0554, 0.1089, 0.0825, 0.0927
+    ],
+    "headerTexts": [
+      "stt",
+      "masv",
+      "hovaten",
+      "ngsinh",
+      "tenlop",
+      "dso",
+      "diemchu",
+      "kyten",
+      "ghichu"
+    ],
+    "headerRows": 1,
+    "rowHeightMm": 5.6386,
+    "tableWidthMm": 182.1739
+  },
+  "columns": [
+    {
+      "index": 0,
+      "role": "STT"
+    },
+    {
+      "index": 2,
+      "role": "HO_TEN"
+    },
+    {
+      "index": 5,
+      "role": "DIEM",
+      "key": "CK1",
+      "writtenIndex": 6
+    },
+    {
+      "index": 6,
+      "role": "DIEM_CHU"
+    }
+  ]
+}

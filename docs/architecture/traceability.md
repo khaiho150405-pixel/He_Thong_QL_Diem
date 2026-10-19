@@ -69,3 +69,7 @@ Cấu hình: thời gian chờ `try` đặt bằng biến môi trường `FORM_T
 ## Ghép dòng nhận dạng (ADR-0015) — luật phân loại
 
 Luật phân loại hai kênh (BE-21/22, bất biến 4): hai kênh độc lập đồng thuận → Xanh; chỉ một kênh ≥ τ → Vàng kèm gợi ý và nguồn (`suggestedSource`); mâu thuẫn/cùng yếu/không hợp lệ → Đỏ không gợi ý. Mã: `apps/recognition-service/src/domain/classification.py`; kiểm thử: `tests/test_classification.py`, `apps/api/test/recognition-worker.test.ts`; đo: `scripts/recognition/evaluate_pages.py` (số liệu trong ADR-0015).
+
+## Đánh giá mẫu bảng điểm và tờ THPT (ADR-0016, P6)
+
+UC11–UC12: không đổi API, DB hay giao diện. Đo đường nhận dạng theo mẫu so với đường hình học cũ: `scripts/recognition/evaluate_pages.py` (`run --layout`, `compare`, `scores`, `make-layout`, `qualitative`) và layout `scripts/recognition/layouts/{e0330113,thayha_dtk,thpt_tt22}.json`. Kết quả, ngưỡng khớp mẫu (D-04, giữ 0,80) và giới hạn ở `docs/reports/recognition/Danh_gia_mau_bang_diem_2026-10-19.md` và ADR-0016 mục "Kết quả đánh giá". Tờ mẫu THPT in được: `scripts/recognition/make_thpt_form.py`; kiểm thử `scripts/recognition/tests/test_make_thpt_form.py` (điểm khớp layout với chính ảnh sinh ra, 40 dòng, `TEMPLATE_MISMATCH` với mẫu khác). Bất biến 1 và 4 không đổi: bảng một kênh tối đa Vàng.

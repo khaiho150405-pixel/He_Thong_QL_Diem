@@ -1,0 +1,62 @@
+{
+  "signature": {
+    "version": 1,
+    "columnWidths": [
+      0.0539, 0.301, 0.0751, 0.0758, 0.0751, 0.0751, 0.086, 0.086, 0.172
+    ],
+    "headerTexts": [
+      "stt",
+      "hovaten",
+      "tx1",
+      "tx2",
+      "tx3",
+      "tx4",
+      "gk",
+      "ck",
+      "ghichu"
+    ],
+    "headerRows": 1,
+    "rowHeightMm": 5.5865,
+    "tableWidthMm": 186.0035
+  },
+  "columns": [
+    {
+      "index": 0,
+      "role": "STT"
+    },
+    {
+      "index": 1,
+      "role": "HO_TEN"
+    },
+    {
+      "index": 2,
+      "role": "DIEM",
+      "key": "TX1"
+    },
+    {
+      "index": 3,
+      "role": "DIEM",
+      "key": "TX2"
+    },
+    {
+      "index": 4,
+      "role": "DIEM",
+      "key": "TX3"
+    },
+    {
+      "index": 5,
+      "role": "DIEM",
+      "key": "TX4"
+    },
+    {
+      "index": 6,
+      "role": "DIEM",
+      "key": "GK1"
+    },
+    {
+      "index": 7,
+      "role": "DIEM",
+      "key": "CK1"
+    }
+  ]
+}
