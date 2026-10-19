@@ -14,6 +14,7 @@ Chạy pipeline + mô hình thật (như dịch vụ nhận dạng) trên từng
     python scripts/recognition/evaluate_pages.py run     --split dev --layout scripts/recognition/layouts/e0330113.json   # → dev_v2.json
     python scripts/recognition/evaluate_pages.py compare --split dev                    # bảng v1 (dev.json) so với v2 (dev_v2.json)
     python scripts/recognition/evaluate_pages.py scores  --split dev --layout <layout> --others <thư mục ảnh mẫu khác>  # D-04
+    python scripts/recognition/evaluate_pages.py diagnose --split dev --layout <layout> [--v2-tag _v2] [--recover]   # P7: trang bị TEMPLATE_MISMATCH
 Tập TEST chỉ chạy MỘT lần (tệp đệm ghi ``completedAt``; chạy lại bị từ chối).
 
 Tập dữ liệu (không dùng tập TRAIN): DEV = P05, R03, T03; TEST = P08, R04, R05, T06, T07.
@@ -684,6 +685,48 @@ def qualitative(layout_path: Path, images: list[Path], min_score: float | None) 
         print(f"- {label}: điểm khớp {result.template_score}, {len(rows)} dòng (gạch bỏ {struck}), {time.time() - started:.1f}s | " + "; ".join(parts))
 
 
+def diagnose(split: str, layout_path: Path, tag: str, recover: bool, min_score: float | None) -> None:
+    """Chẩn đoán các trang bị ``TEMPLATE_MISMATCH`` trong bộ nhớ đệm ``<split><tag>.json`` (P7): số cột ảnh, bề rộng chuẩn hóa
+    so với mẫu, phép căn, cột nào không ánh xạ được. Không in họ tên hay giá trị điểm. Chữ ký lấy từ ``signatures.json`` (chỉ
+    cần ảnh khi trang chưa có chữ ký); ``--recover`` chạy thêm bước khôi phục vạch trên ảnh thật và nói có tìm thấy nét kẻ không."""
+    from src.pipeline.layout import chuan_bi_doc, cot_can_doc
+    from src.pipeline.template_match import _can_chinh, _chuan_hoa, khop_mau_chi_tiet, nguong_khop_mau
+
+    layout = load_layout(layout_path)
+    needed = cot_can_doc(layout)
+    threshold = nguong_khop_mau(os.environ) if min_score is None else min_score
+    cache = load_cache(split, tag)
+    rejected = [k for k, v in cache["pages"].items() if str(v.get("error", "")).endswith("TEMPLATE_MISMATCH")]
+    print(f"{split.upper()}{tag}: {len(rejected)}/{len(cache['pages'])} trang TEMPLATE_MISMATCH; cột cần đọc {needed}; ngưỡng {threshold}")
+    template = _chuan_hoa(layout.signature["columnWidths"])
+    print(f"mẫu ({len(template)} cột): {[round(w, 3) for w in template]}")
+    ocr = eval_model()[0].ocr_ham if recover else None
+    for key in sorted(rejected):
+        path = page_image(*key.split("|"))
+        entry = image_signatures([path])[sig_key(path)]
+        label = key
+        if "signature" not in entry:
+            print(f"- {label}: không phân tích được ({entry['error']})")
+            continue
+        signature = entry["signature"]
+        image = _chuan_hoa(signature["columnWidths"])
+        found = khop_mau_chi_tiet(signature, layout.signature)
+        unmapped = [i for i in needed if i not in found.column_map]
+        full = _can_chinh(image, template)
+        print(
+            f"- {label}: {len(image)} cột ảnh, bề rộng {[round(w, 3) for w in image]}\n"
+            f"    điểm P6 (căn toàn bộ, chưa tính chữ tiêu đề) {None if full is None else round(1 - full[0], 4)}; "
+            f"căn hiện tại: điểm {found.score}, cắt mép (trái, phải) = ({found.cat_trai}, {found.cat_phai}), cột gộp {list(found.gop)}, "
+            f"cột cần đọc chưa ánh xạ {unmapped}"
+        )
+        if recover:
+            try:
+                result = chuan_bi_doc(path.read_bytes(), layout, ocr, threshold)
+                print(f"    khôi phục: ĐƯỢC — điểm {result.score}, {len(result.bo_cuc.columns)} cột sau khôi phục, {len(result.rows)} dòng")
+            except Exception as error:  # noqa: BLE001
+                print(f"    khôi phục: KHÔNG ({error_code(error)}; không có bằng chứng nét kẻ hoặc điểm thấp)")
+
+
 def image_files(directory: Path) -> list[Path]:
     return sorted(p for p in directory.rglob("*") if p.suffix.lower() in {".jpg", ".jpeg", ".png"})
 
@@ -758,7 +801,7 @@ def template_scores(layout_path: Path, others: list[Path], other_files: list[Pat
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")  # console Windows mặc định cp1252, không in được tiếng Việt
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["run", "report", "tune", "compare", "scores", "make-layout", "make-second-layout", "qualitative"])
+    parser.add_argument("command", choices=["run", "report", "tune", "compare", "scores", "make-layout", "make-second-layout", "qualitative", "diagnose"])
     parser.add_argument("--split", choices=list(SPLITS), default=None, help="bắt buộc, trừ make-second-layout và qualitative (ảnh không nhãn)")
     parser.add_argument("--images", type=Path, nargs="*", default=[], help="qualitative: ảnh không nhãn; make-second-layout: thư mục ảnh của mẫu thứ hai")
     parser.add_argument("--floor", default="0.00", help="mức sàn đồng thuận mỗi kênh (luật nghiên cứu = 0)")
@@ -769,7 +812,8 @@ def main() -> None:
     parser.add_argument("--no-match", action="store_true", help="không chạy bộ ghép học sinh")
     parser.add_argument("--layout", type=Path, default=None, help="run: chạy đường v2 với layout (JSON của /v2/recognize); mặc định tag bộ nhớ đệm là _v2; scores: layout để chấm điểm khớp mẫu")
     parser.add_argument("--min-score", type=float, default=None, help="run --layout: ngưỡng khớp mẫu (mặc định RECOGNITION_TEMPLATE_MIN_SCORE hoặc 0,80)")
-    parser.add_argument("--v2-tag", default="_v2", help="compare: hậu tố bộ nhớ đệm của đường v2")
+    parser.add_argument("--v2-tag", default="_v2", help="compare/diagnose: hậu tố bộ nhớ đệm của đường v2")
+    parser.add_argument("--recover", action="store_true", help="diagnose: chạy thêm bước khôi phục vạch (cần ảnh và mô hình)")
     parser.add_argument("--out", type=Path, default=None, help="make-layout: tệp layout đầu ra")
     parser.add_argument("--others", type=Path, nargs="*", default=[], help="scores: thư mục ảnh của MẪU KHÁC")
     parser.add_argument("--others-file", type=Path, nargs="*", default=[], help="scores: tệp ảnh riêng của mẫu khác")
@@ -787,8 +831,13 @@ def main() -> None:
         return
     if args.split is None:
         raise SystemExit("Thiếu --split.")
-    if args.command in ("tune", "scores", "make-layout") and args.split != "dev":
+    if args.command in ("tune", "scores", "make-layout", "diagnose") and args.split != "dev":
         raise SystemExit("Chỉ được dò tham số trên DEV.")
+    if args.command == "diagnose":
+        if args.layout is None:
+            raise SystemExit("diagnose cần --layout.")
+        diagnose(args.split, args.layout, args.v2_tag, args.recover, args.min_score)
+        return
     if args.command == "make-layout":
         if args.out is None:
             raise SystemExit("make-layout cần --out.")

@@ -12,6 +12,10 @@ A4_W, A4_H = 1654, 2338
 BACKGROUND = (55, 90, 135)  # BGR, a brown surface clearly different from white paper
 PAPER = (246, 246, 242)
 INK = (35, 35, 35)
+# A dashed rule: 26 px of ink then an 8 px gap; the gaps survive the "photograph" and the dashes are shorter than the
+# vertical opening kernel of the grid detector, so the grid loses the rule while 76% of its length is still ink.
+DASH_PERIOD = 34
+DASH_GAP = 8
 
 # Column widths in pixels on the 1654 px wide page: STT | Họ tên | Mã/ghi chú | Đ.số | Điểm chữ | Ký tên
 DEFAULT_COLUMNS = (90, 470, 150, 190, 330, 214)
@@ -33,10 +37,13 @@ def make_page(
     ink_cells: tuple[tuple[int, int], ...] = (),
     line_gaps: float = 0.0,
     missing_lines: tuple[int, ...] = (),
+    dashed_lines: tuple[int, ...] = (),
 ) -> tuple[np.ndarray, dict]:
     """Return ``(page, layout)``; ``layout`` has the x lines and y lines of the ruled table.
 
     ``missing_lines`` are indexes into ``layout["xs"]`` of vertical rules that are not drawn (a rule lost to a faded scan).
+    ``dashed_lines`` are rules drawn in short dashes with tiny gaps (a rule broken by a bad photo): the grid detector
+    drops them but the ink is still on the page.
     """
     page = np.full((A4_H, A4_W, 3), PAPER, np.uint8)
     xs = [left]
@@ -45,9 +52,12 @@ def make_page(
     ys = [top, top + header_height]
     for _ in range(rows):
         ys.append(ys[-1] + row_height)
-    drawn = [x for k, x in enumerate(xs) if k not in missing_lines]
+    drawn = [x for k, x in enumerate(xs) if k not in missing_lines and k not in dashed_lines]
     for x in drawn:
         cv2.line(page, (x, ys[0]), (x, ys[-1]), INK, line)
+    for k in dashed_lines:
+        for start in range(ys[0], ys[-1], DASH_PERIOD):
+            cv2.line(page, (xs[k], start), (xs[k], min(start + DASH_PERIOD - DASH_GAP, ys[-1])), INK, line)
     for y in ys:
         cv2.line(page, (xs[0], y), (xs[-1], y), INK, line)
     if line_gaps > 0:

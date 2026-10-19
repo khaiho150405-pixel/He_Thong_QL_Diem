@@ -4,15 +4,17 @@ Khác ``rows.analyze_page`` (v1: tự chọn MỘT cột điểm chính), mô-đ
 
 * ``phan_tich_bo_cuc``: nắn trang, dò lưới, đọc tiêu đề cột (``ocr`` tùy chọn), tính chữ ký và gợi ý vai trò từng cột.
   Dùng cho ``/v2/layout/analyze`` (tạo mẫu) và là bước đầu của ``/v2/recognize``;
-* ``chuan_bi_doc``: khớp chữ ký với mẫu (``template_match.khop_mau``), từ chối bằng ``TEMPLATE_MISMATCH`` khi điểm thấp
-  hoặc một cột cần đọc không ánh xạ được (KHÔNG đoán sang cột khác), rồi cắt ô từng dòng theo cột đã ánh xạ.
+* ``chuan_bi_doc``: khớp chữ ký với mẫu (``template_match.khop_mau_chi_tiet``), từ chối bằng ``TEMPLATE_MISMATCH`` khi
+  điểm thấp hoặc một cột cần đọc không ánh xạ được (KHÔNG đoán sang cột khác), rồi cắt ô từng dòng theo cột đã ánh xạ.
+  Cột cần đọc không ánh xạ được vì lưới mất vạch dọc thì ``khoi_phuc_vach_thieu`` tìm lại vạch bằng bằng chứng mực
+  (``khoi_phuc_vach.tim_vach_doc``) trước khi từ chối; không có nét kẻ thật thì vẫn từ chối (P7).
 
 Mô-đun chỉ dùng OpenCV + NumPy; việc đọc chữ do mô hình ở tầng adapter đảm nhiệm. Không đưa họ tên vào log.
 """
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable
 
 import cv2
@@ -22,15 +24,20 @@ from src.domain.layout import Layout, LayoutColumn
 
 from . import grid as grid_module
 from .errors import PipelineError
-from .page import doc_anh, nan_trang
+from .khoi_phuc_vach import tim_vach_doc
+from .page import PX_MM, doc_anh, nan_trang
 from .quality import QualityReport, assess_quality
 from .rows import NGUONG_TEN_TRONG, chuan_hoa_hang_y, compact_name_cell, do_dam_muc, la_gach_ngang
-from .template_match import khop_mau, tinh_chu_ky
+from .template_match import KetQuaKhop, khop_mau_chi_tiet, tinh_chu_ky
 
 PREVIEW_MAX_WIDTH = 1400
 _MAU_LUOI = (0, 0, 255)  # BGR
 _MAU_SO = (0, 90, 0)
 _SO_CHU_SO = 4
+# Khoảng tìm lại một vạch dọc quanh vị trí kỳ vọng: 30% bề rộng cột nhỏ hơn trong hai cột kề, chặn 10–40 px (P7).
+DUNG_SAI_VACH = 0.3
+DUNG_SAI_VACH_TOI_THIEU_PX = 10.0
+DUNG_SAI_VACH_TOI_DA_PX = 40.0
 
 # Vai trò từ khóa tiêu đề (``grid.TU_KHOA``) → vai trò gợi ý của mẫu; cột còn lại là BO_QUA. Cột không đọc được tiêu đề
 # hoặc tiêu đề không khớp từ khóa nào thì KHÔNG gợi ý (None) — người khai báo mẫu tự chọn.
@@ -278,16 +285,135 @@ def cat_dong_theo_mau(bo_cuc: BoCuc, layout: Layout, column_map: dict[int, int])
     return tuple(rows)
 
 
+def _khoang_tim_vach(rong_cot: float, ti_le_nho: float) -> float:
+    """Sai số cho phép (px) quanh vị trí kỳ vọng của một vạch: một phần ba cột nhỏ hơn trong hai cột kề, 10–40 px."""
+    return float(min(max(DUNG_SAI_VACH * rong_cot * ti_le_nho, DUNG_SAI_VACH_TOI_THIEU_PX), DUNG_SAI_VACH_TOI_DA_PX))
+
+
+def _bo_cuc_sau_khoi_phuc(bo_cuc: BoCuc, bounds: list[float]) -> BoCuc:
+    """``BoCuc`` với các ranh giới cột mới (đã gồm vạch tìm lại); cột nguyên vẹn giữ tiêu đề, cột mới/được tách để trống."""
+    old = {(round(c.px0, 1), round(c.px1, 1)): c for c in bo_cuc.columns}
+    left, right = bounds[0], bounds[-1]
+    width = max(right - left, 1.0)
+    columns, texts, cells = [], [], []
+    for i, (x0, x1) in enumerate(zip(bounds[:-1], bounds[1:])):
+        kept = old.get((round(x0, 1), round(x1, 1)))
+        text = kept.header_text if kept else ""
+        columns.append(
+            CotBoCuc(
+                index=i,
+                x0=round((x0 - left) / width, _SO_CHU_SO),
+                x1=round((x1 - left) / width, _SO_CHU_SO),
+                width_mm=round((x1 - x0) / PX_MM, 1),
+                header_text=text,
+                suggested_role=kept.suggested_role if kept else None,
+                suggested_group=kept.suggested_group if kept else None,
+                suggested_order=kept.suggested_order if kept else None,
+                px0=float(x0),
+                px1=float(x1),
+            )
+        )
+        texts.append(grid_module.bo_dau(text))
+        cells.append(
+            dict(x0=float(x0), x1=float(x1), vai_tro=None, nhan=text, diem=0.0, tu_o_gop=False, rong_mm=round((x1 - x0) / PX_MM, 1))
+        )
+    signature = {
+        **bo_cuc.signature,
+        "columnWidths": [round((x1 - x0) / width, _SO_CHU_SO) for x0, x1 in zip(bounds[:-1], bounds[1:])],
+        "headerTexts": texts,
+        "tableWidthMm": round(width / PX_MM, _SO_CHU_SO),
+    }
+    dinh_danh = {**bo_cuc.dinh_danh, "cot_du_lieu": [float(x) for x in bounds], "cot": cells}
+    return replace(bo_cuc, dinh_danh=dinh_danh, signature=signature, columns=tuple(columns))
+
+
+def khoi_phuc_vach_thieu(
+    bo_cuc: BoCuc, ket_qua: KetQuaKhop, layout: Layout, min_score: float
+) -> tuple[BoCuc, KetQuaKhop] | None:
+    """Tìm lại các vạch dọc mà lưới bỏ sót để ánh xạ được MỌI cột cần đọc, hoặc ``None`` (khi đó tầng trên từ chối).
+
+    Hai tình huống, đều chỉ nhận khi ``khoi_phuc_vach.tim_vach_doc`` thấy nét kẻ thật tại vị trí mẫu kỳ vọng:
+    * một cột ảnh bằng hai cột mẫu kề nhau (mất một vạch giữa) → tách tại vạch tìm được;
+    * lưới chỉ phủ một đoạn của mẫu (mất vạch mép) → thêm các cột ngoài mép, từng vạch một từ mép lưới ra ngoài; mỗi vạch
+      mới dựa trên vạch tìm được trước đó chứ không nội suy.
+    Cột cần đọc không thuộc hai tình huống (bị tách bởi vạch giả, mẫu khác...) hoặc thiếu bằng chứng → ``None``. Kết quả
+    được khớp lại với mẫu: điểm phải đạt ``min_score`` và mọi cột cần đọc phải ánh xạ được.
+    """
+    needed = cot_can_doc(layout)
+    missing = [i for i in needed if i not in ket_qua.column_map]
+    if not missing or not bo_cuc.columns:
+        return None
+    total = float(sum(layout.signature["columnWidths"]))
+    widths = [float(w) / total for w in layout.signature["columnWidths"]]
+    count = len(widths)
+    bounds = [bo_cuc.columns[0].px0] + [c.px1 for c in bo_cuc.columns]
+    added: list[float] = []
+    handled: set[int] = set()
+    hang_y, hang_dau, page = bo_cuc.grid["hang_y"], bo_cuc.dinh_danh["hang_du_lieu_dau"], bo_cuc.page
+
+    def find(expected: float, span: float, ratio: float) -> float | None:
+        return tim_vach_doc(page, hang_y, hang_dau, expected, _khoang_tim_vach(span, ratio), tranh=bounds + added)
+
+    for image_index, first in ket_qua.gop:  # một cột ảnh = hai cột mẫu kề nhau
+        pair = (first, first + 1)
+        if not any(j in missing for j in pair):
+            continue
+        x0, x1 = bo_cuc.columns[image_index].px0, bo_cuc.columns[image_index].px1
+        share = widths[first] / (widths[first] + widths[first + 1])
+        x = find(x0 + share * (x1 - x0), x1 - x0, min(share, 1.0 - share))
+        if x is None or not x0 < x < x1:
+            return None
+        added.append(x)
+        handled.update(pair)
+
+    scale = (bounds[-1] - bounds[0]) / max(sum(widths[ket_qua.cat_trai : count - ket_qua.cat_phai]), 1e-9)
+    for cut, direction in ((ket_qua.cat_trai, -1), (ket_qua.cat_phai, +1)):
+        edge = bounds[0] if direction < 0 else bounds[-1]
+        column_ids = (
+            list(range(ket_qua.cat_trai - 1, -1, -1)) if direction < 0 else list(range(count - ket_qua.cat_phai, count))
+        )
+        wanted = [j for j in column_ids if j in missing]  # column_ids đi từ mép lưới ra ngoài
+        if not cut or not wanted:
+            continue
+        for j in column_ids[: column_ids.index(wanted[-1]) + 1]:
+            span = scale * widths[j]
+            x = find(edge + direction * span, span, 1.0)
+            if x is None or (x - edge) * direction < 0.5 * span:
+                return None
+            added.append(x)
+            edge = x
+            handled.add(j)
+    if not set(missing) <= handled:
+        return None
+    ordered = sorted(set(bounds) | set(added))
+    rebuilt = _bo_cuc_sau_khoi_phuc(bo_cuc, ordered)
+    matched = khop_mau_chi_tiet(rebuilt.signature, layout.signature)
+    if matched.score < min_score or any(i not in matched.column_map for i in needed):
+        return None
+    return rebuilt, matched
+
+
 def chuan_bi_doc(
     image_bytes: bytes,
     layout: Layout,
     ocr: Callable[[Any], str] | None,
     min_score: float,
 ) -> TrangDoc:
-    """Phân tích ảnh, khớp với mẫu của ``layout`` và cắt ô; ``TEMPLATE_MISMATCH`` nếu không khớp (không trả dòng nào)."""
+    """Phân tích ảnh, khớp với mẫu của ``layout`` và cắt ô; ``TEMPLATE_MISMATCH`` nếu không khớp (không trả dòng nào).
+
+    Cột cần đọc không ánh xạ được vì lưới mất vạch dọc thì thử tìm lại vạch bằng bằng chứng mực
+    (``khoi_phuc_vach_thieu``); không tìm thấy nét kẻ thật thì từ chối như cũ, không đoán cột.
+    """
     bo_cuc = phan_tich_bo_cuc(image_bytes, ocr)
-    score, column_map = khop_mau(bo_cuc.signature, layout.signature)
+    ket_qua = khop_mau_chi_tiet(bo_cuc.signature, layout.signature)
+    score, column_map = ket_qua.score, ket_qua.column_map
     unmapped = [i for i in cot_can_doc(layout) if i not in column_map]
+    if unmapped and score >= min_score:
+        recovered = khoi_phuc_vach_thieu(bo_cuc, ket_qua, layout, min_score)
+        if recovered is not None:
+            bo_cuc, ket_qua = recovered
+            score, column_map = ket_qua.score, ket_qua.column_map
+            unmapped = []
     if score < min_score or unmapped:
         raise PipelineError(
             "TEMPLATE_MISMATCH",
@@ -320,6 +446,7 @@ __all__ = [
     "chuan_bi_doc",
     "cot_can_doc",
     "goi_y_cot",
+    "khoi_phuc_vach_thieu",
     "phan_tich_bo_cuc",
     "ve_xem_truoc",
 ]

@@ -2,6 +2,12 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Mẫu bảng điểm (ADR-0016) — phase P7 vòng 1: thuật toán xong, CHƯA đo DEV/TEST (2026-10-19)
+
+- P7 sửa căn cột khi lưới mất vạch dọc (xem ADR-0016 "Ghi chú hiện thực P7"). Chẩn đoán 4 trang DEV bị từ chối: hai trang mất cột cuối của mẫu, hai trang mất cột trái (STT). Mã: `pipeline/template_match.py` (`khop_mau_chi_tiet`, phép căn cắt mép), `pipeline/khoi_phuc_vach.py` (mới, tìm vạch thật bằng bằng chứng mực), `pipeline/layout.py` (`khoi_phuc_vach_thieu`); công cụ `evaluate_pages.py diagnose`; test `apps/recognition-service/tests/test_template_recovery.py` (28 test). Contract, API, DB, Flutter không đổi.
+- Gate đã chạy: `py` 259 test (3 bỏ qua như cũ) + `scripts/recognition/tests` 13 test + `pnpm check` + `pnpm contracts:check` đều pass. Đo offline từ chữ ký đã lưu: chỉ 4 trang đổi ánh xạ, 9 ảnh mẫu khác giữ nguyên điểm 0,5885–0,7026.
+- **Việc còn lại:** chạy các lệnh ở mục 5 của `docs/reports/recognition/Danh_gia_P7_2026-10-19.md` trên máy có `data_dir` (DEV `run --tag _v2p7` + `compare --v2-tag _v2p7` → AC-1; TEST đúng một lần, `--tag _v2p7`), điền bảng v1 / v2-P6 / v2-P7 và thời điểm chạy TEST. Hai trang mất STT (T03 S06 p2: 3 dòng; T03 S08 p1: 35 dòng) cần tìm lại vạch trong ảnh thật; nếu T03 S08 p1 không tìm được vạch thì AC-1 vẫn không đạt. Không chỉnh cấu hình sau khi xem TEST.
+
 ## Mẫu bảng điểm (ADR-0016) — phase P6 xong (2026-10-19)
 
 - Nhánh `feat/form-templates`; P1–P5 đã có commit riêng, P6 do script điều phối commit. ADR-0016 đã chuyển "Accepted" kèm "Kết quả đánh giá".
