@@ -268,19 +268,108 @@ export interface MatchOptions {
   sttCheck?: boolean;
 }
 
+/** Dòng phát hiện của một trang trong lô nhiều trang (ADR-0016 mục 3). */
+export interface BatchDetectedRow extends DetectedRow {
+  /** Số trang trong lô, bắt đầu từ 1. */
+  page: number;
+}
+
+export interface BatchRowMatch extends RowMatch {
+  page: number;
+}
+
+export interface BatchSkippedRow extends SkippedRow {
+  page: number;
+}
+
+/** Mô hình STT chọn riêng cho từng trang (BE-24c) và số dòng tên mạnh làm bằng chứng. */
+export interface BatchSttPage {
+  page: number;
+  model: SttModel | null;
+  evidence: number;
+}
+
+export type BatchMatchResult =
+  | {
+      ok: true;
+      matches: BatchRowMatch[];
+      skipped: BatchSkippedRow[];
+      stt: { enabled: boolean; pages: BatchSttPage[] };
+    }
+  | Extract<RowMatchResult, { ok: false }>;
+
+/**
+ * Ghép dòng của MỘT trang với danh sách lớp đã chốt (luồng phiếu một ảnh). Hành vi không đổi so với trước khi có lô nhiều
+ * trang: là trường hợp riêng của `matchBatchRows` với một trang.
+ */
 export function matchRows(
   detected: DetectedRow[],
   roster: RosterEntry[],
   options: MatchOptions = {},
 ): RowMatchResult {
-  const skipped: SkippedRow[] = [];
-  const rows: DetectedRow[] = [];
-  for (const row of [...detected].sort((a, b) => a.rowIndex - b.rowIndex)) {
-    if (row.struck) skipped.push({ rowIndex: row.rowIndex, reason: "STRUCK" });
+  const result = matchPaged(
+    detected.map((row) => ({ ...row, page: 1 })),
+    roster,
+    options,
+  );
+  if (!result.ok) return result;
+  const single = result.stt.pages[0];
+  return {
+    ok: true,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    matches: result.matches.map(({ page: _page, ...match }) => match),
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    skipped: result.skipped.map(({ page: _page, ...item }) => item),
+    stt: {
+      enabled: result.stt.enabled,
+      model: single?.model ?? null,
+      evidence: single?.evidence ?? 0,
+    },
+  };
+}
+
+/**
+ * Ghép dòng của MỌI trang trong lô với cùng một danh sách lớp, MỘT lần duy nhất (ADR-0016 mục 3): ghép một-một toàn cục
+ * nên một học sinh xuất hiện ở hai trang là lỗi `ROW_MATCH_FAILED` (DUPLICATE_STUDENT), không đoán. Học sinh không có dòng
+ * nào ở trang nào được bỏ trống. Độ lệch vị trí và mô hình STT được ước lượng riêng từng trang (BE-24c).
+ */
+export function matchBatchRows(
+  detected: BatchDetectedRow[],
+  roster: RosterEntry[],
+  options: MatchOptions = {},
+): BatchMatchResult {
+  return matchPaged(detected, roster, options);
+}
+
+function matchPaged(
+  detected: BatchDetectedRow[],
+  roster: RosterEntry[],
+  options: MatchOptions,
+): BatchMatchResult {
+  const skipped: BatchSkippedRow[] = [];
+  const rows: BatchDetectedRow[] = [];
+  const byPosition = (
+    a: { page: number; rowIndex: number },
+    b: { page: number; rowIndex: number },
+  ) => a.page - b.page || a.rowIndex - b.rowIndex;
+  for (const row of [...detected].sort(byPosition)) {
+    if (row.struck)
+      skipped.push({
+        page: row.page,
+        rowIndex: row.rowIndex,
+        reason: "STRUCK",
+      });
     else if (!row.hasGradeInk && !row.hasNameInk)
-      skipped.push({ rowIndex: row.rowIndex, reason: "EMPTY" });
+      skipped.push({ page: row.page, rowIndex: row.rowIndex, reason: "EMPTY" });
     else rows.push(row);
   }
+  const pageNumbers = [...new Set(detected.map((row) => row.page))].sort(
+    (a, b) => a - b,
+  );
+  const multiPage = pageNumbers.length > 1;
+  /** Mô tả vị trí dòng trong thông báo lỗi: thêm số trang khi lô có nhiều trang. */
+  const where = (row: BatchDetectedRow) =>
+    multiPage ? `${row.page}.${row.rowIndex}` : String(row.rowIndex);
   const entries = [...roster].sort((a, b) => a.stt - b.stt);
   if (!rows.length) return fail("NO_ROWS", "Không có dòng nào có dữ liệu.");
   if (!entries.length) return fail("ROW_UNMATCHED", "Danh sách lớp rỗng.");
@@ -326,33 +415,58 @@ export function matchRows(
     return result;
   };
   const first = solve(() => 0);
-  const offsets = [...first.entries()]
-    .filter(([i, j]) => (similarity[i]?.[j] ?? 0) >= NAME_STRONG)
-    .map(([i, j]) => j - (rows[i]!.rowIndex - 1))
-    .sort((a, b) => a - b);
-  const offset = offsets.length
-    ? offsets[Math.floor((offsets.length - 1) / 2)]!
-    : 0;
+  // Độ lệch vị trí (chỉ số học sinh − vị trí dòng trên trang) ước lượng riêng từng trang. Trang không có dòng tên mạnh nào
+  // làm bằng chứng được coi là nối tiếp trang trước (một trang đầu thì độ lệch 0, như luồng một ảnh).
+  const offsetByPage = new Map<number, number>();
+  let carry = 0;
+  for (const page of pageNumbers) {
+    const offsets = [...first.entries()]
+      .filter(
+        ([i, j]) =>
+          rows[i]!.page === page && (similarity[i]?.[j] ?? 0) >= NAME_STRONG,
+      )
+      .map(([i, j]) => j - (rows[i]!.rowIndex - 1))
+      .sort((a, b) => a - b);
+    const offset = offsets.length
+      ? offsets[Math.floor((offsets.length - 1) / 2)]!
+      : carry;
+    offsetByPage.set(page, offset);
+    carry =
+      offset +
+      Math.max(
+        0,
+        ...detected.filter((row) => row.page === page).map((r) => r.rowIndex),
+      );
+  }
   const assignment = solve(
     (i, j) =>
-      ORDER_BONUS / (1 + Math.abs(j - (rows[i]!.rowIndex - 1 + offset))),
+      ORDER_BONUS /
+      (1 +
+        Math.abs(
+          j - (rows[i]!.rowIndex - 1 + offsetByPage.get(rows[i]!.page)!),
+        )),
   );
   if (rows.some((_, i) => mandatory[i] && !assignment.has(i)))
     return fail(
       "ROW_UNMATCHED",
       "Có dòng có điểm không ghép được với danh sách lớp (nhiều dòng hơn sĩ số hoặc sai thứ tự).",
     );
-  const flagged = outOfOrderRows(
-    rows.map((_, i) => i),
-    assignment,
-  );
+  const rowsOfPage = (page: number): number[] =>
+    rows.flatMap((row, i) => (row.page === page ? [i] : []));
+  const flagged = new Set<number>();
+  for (const page of pageNumbers)
+    for (const i of outOfOrderRows(rowsOfPage(page), assignment))
+      flagged.add(i);
 
   // --- Ràng buộc STT (tùy chọn) ---
-  const struckIndexes = detected
-    .filter((row) => row.struck)
-    .map((row) => row.rowIndex);
   const struckBefore = rows.map(
-    (row) => struckIndexes.filter((index) => index < row.rowIndex).length,
+    (row) =>
+      detected.filter(
+        (other) =>
+          other.struck &&
+          other.page === row.page &&
+          other.rowIndex < row.rowIndex,
+      ).length,
   );
   const sttBy: Record<SttConvention, number[]> = {
     A: entries.map((entry) => entry.stt),
@@ -370,22 +484,32 @@ export function matchRows(
         !isDuplicatedName(j),
     )
     .map(([i, j]) => ({ i, j }));
-  const model = sttActive
-    ? chooseSttModel(
-        evidence,
-        rows,
-        sttBy,
-        struckBefore,
-        rows.length <= 5 ? 2 : 3,
-      )
-    : null;
-  /** STT in trên giấy dự kiến của học sinh j ở dòng i theo mô hình trang; null khi không có mô hình. */
-  const expectedPaper = (i: number, j: number): number | null =>
-    model === null
+  // Mô hình STT chọn riêng từng trang (BE-24c): mỗi trang có thể lệch STT khác nhau (học sinh nghỉ, dòng gạch...).
+  const models = new Map<number, SttModel | null>();
+  const sttPages: BatchSttPage[] = pageNumbers.map((page) => {
+    const pageRows = rowsOfPage(page);
+    const pageEvidence = evidence.filter(({ i }) => rows[i]!.page === page);
+    const model = sttActive
+      ? chooseSttModel(
+          pageEvidence,
+          rows,
+          sttBy,
+          struckBefore,
+          pageRows.length <= 5 ? 2 : 3,
+        )
+      : null;
+    models.set(page, model);
+    return { page, model, evidence: pageEvidence.length };
+  });
+  /** STT in trên giấy dự kiến của học sinh j ở dòng i theo mô hình của trang; null khi không có mô hình. */
+  const expectedPaper = (i: number, j: number): number | null => {
+    const model = models.get(rows[i]!.page) ?? null;
+    return model === null
       ? null
       : sttBy[model.convention][j]! +
-        model.k +
-        (model.strikeShift ? struckBefore[i]! : 0);
+          model.k +
+          (model.strikeShift ? struckBefore[i]! : 0);
+  };
   const duplicateState = new Map<number, "RESOLVED" | "AMBIGUOUS">();
   if (sttActive)
     resolveDuplicateNames(
@@ -412,27 +536,32 @@ export function matchRows(
       if (first.length === 1 && second.length === 1 && first[0] === second[0])
         return fail(
           "DUPLICATE_STUDENT",
-          `Dòng ${rows[a]!.rowIndex} và dòng ${rows[b]!.rowIndex} cùng khớp một học sinh (STT ${entries[first[0]!]!.stt}).`,
+          `Dòng ${where(rows[a]!)} và dòng ${where(rows[b]!)} cùng khớp một học sinh (STT ${entries[first[0]!]!.stt})${multiPage ? "; vị trí ghi theo dạng trang.dòng" : ""}.`,
         );
     }
 
-  const matches: RowMatch[] = [];
+  const matches: BatchRowMatch[] = [];
   for (let i = 0; i < n; i += 1) {
     const j = assignment.get(i);
     const row = rows[i]!;
     if (j === undefined) {
       // Dòng không điểm bị bỏ qua: không có học sinh nào đáng ghép.
-      skipped.push({ rowIndex: row.rowIndex, reason: "UNMATCHED_BLANK" });
+      skipped.push({
+        page: row.page,
+        rowIndex: row.rowIndex,
+        reason: "UNMATCHED_BLANK",
+      });
       continue;
     }
-    matches.push(
-      describe(row, i, j, entries, similarity, rosterNames, flagged.has(i), {
+    matches.push({
+      ...describe(row, i, j, entries, similarity, rosterNames, flagged.has(i), {
         active: sttActive,
-        hasModel: model !== null,
+        hasModel: models.get(row.page) != null,
         expected: expectedPaper(i, j),
         duplicate: duplicateState.get(i) ?? null,
       }),
-    );
+      page: row.page,
+    });
   }
   if (new Set(matches.map((match) => match.studentId)).size !== matches.length)
     return fail("DUPLICATE_STUDENT", "Hai dòng được ghép cùng một học sinh.");
@@ -442,13 +571,13 @@ export function matchRows(
       "TOO_MANY_LOW_CONFIDENCE",
       `${red}/${matches.length} dòng không ghép được chắc chắn với danh sách lớp.`,
     );
-  matches.sort((a, b) => a.rowIndex - b.rowIndex);
-  skipped.sort((a, b) => a.rowIndex - b.rowIndex);
+  matches.sort(byPosition);
+  skipped.sort(byPosition);
   return {
     ok: true,
     matches,
     skipped,
-    stt: { enabled: sttActive, model, evidence: evidence.length },
+    stt: { enabled: sttActive, pages: sttPages },
   };
 }
 
@@ -528,7 +657,7 @@ function chooseSttModel(
  * không phân biệt được (AMBIGUOUS → Đỏ).
  */
 function resolveDuplicateNames(
-  rows: DetectedRow[],
+  rows: BatchDetectedRow[],
   assignment: Map<number, number>,
   rosterNames: string[],
   expectedPaper: (i: number, j: number) => number | null,
@@ -545,7 +674,11 @@ function resolveDuplicateNames(
     const group = [...assignment.entries()]
       .filter(([, j]) => memberSet.has(j))
       .map(([i]) => i)
-      .sort((a, b) => rows[a]!.rowIndex - rows[b]!.rowIndex);
+      .sort(
+        (a, b) =>
+          rows[a]!.page - rows[b]!.page ||
+          rows[a]!.rowIndex - rows[b]!.rowIndex,
+      );
     if (!group.length) continue;
     const claims = new Map<number, number[]>();
     for (const i of group) {

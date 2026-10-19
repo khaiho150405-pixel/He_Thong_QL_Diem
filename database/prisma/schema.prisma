@@ -64,6 +64,13 @@ enum VaiTroCot {
   BO_QUA
 }
 
+enum TrangThaiLo {
+  DANG_XU_LY
+  XONG
+  LOI
+  DA_HUY
+}
+
 model nguoi_dung {
   lich_nhap_diem_rows   lich_nhap_diem[]
   chot_cot_rows         chot_cot_diem[]
@@ -79,6 +86,8 @@ model nguoi_dung {
   lich_su_sua_diem_rows lich_su_sua_diem[]
   phieu_nhan_dien_rows  phieu_nhan_dien[] @relation("PhieuTai")
   phieu_huy_rows        phieu_nhan_dien[] @relation("PhieuHuy")
+  lo_tai_rows           lo_nhan_dien[]    @relation("LoTai")
+  lo_huy_rows           lo_nhan_dien[]    @relation("LoHuy")
   mau_bang_diem_rows    mau_bang_diem[]
   ket_qua_dong_rows     ket_qua_dong[]
   phien_rows            phien_lam_viec[]
@@ -267,6 +276,7 @@ model bang_diem {
   ma_hoc_ky_ref        hoc_ky            @relation(fields: [ma_hoc_ky], references: [ma_hoc_ky], onDelete: Restrict, onUpdate: Restrict)
   diem_thanh_phan_rows diem_thanh_phan[]
   phieu_nhan_dien_rows phieu_nhan_dien[]
+  lo_nhan_dien_rows    lo_nhan_dien[]
 
   @@unique([ma_lop, ma_mon, ma_hoc_ky])
   @@index([ma_lop])
@@ -393,9 +403,13 @@ model phieu_nhan_dien {
   ly_do_huy         String?             @db.VarChar(200)
   nguoi_huy         Int?
   thoi_diem_huy     DateTime?           @db.Timestamptz(6)
-  // Mẫu bảng điểm (ADR-0016). P2 chưa ghi cột này; chỉ dùng để biết mẫu đã được phiếu tham chiếu hay chưa.
+  // Mẫu bảng điểm (ADR-0016). Chỉ phiếu thuộc lô (P3) ghi cột này; phiếu cũ (một ảnh, không mẫu) để NULL.
   ma_mau            Int?
   ma_mau_ref        mau_bang_diem?      @relation(fields: [ma_mau], references: [ma_mau], onDelete: Restrict, onUpdate: Restrict)
+  // Lô nhận dạng nhiều trang (migration 202610200001): ma_lo và chi_so_cot_mau cùng NULL hoặc cùng có giá trị.
+  ma_lo             BigInt?
+  chi_so_cot_mau    Int?
+  ma_lo_ref         lo_nhan_dien?       @relation(fields: [ma_lo], references: [ma_lo], onDelete: Restrict, onUpdate: Restrict)
   ma_bang_diem_ref  bang_diem           @relation(fields: [ma_bang_diem], references: [ma_bang_diem], onDelete: Restrict, onUpdate: Restrict)
   ma_thanh_phan_ref thanh_phan_diem     @relation(fields: [ma_thanh_phan], references: [ma_thanh_phan], onDelete: Restrict, onUpdate: Restrict)
   nguoi_tai_ref     nguoi_dung          @relation("PhieuTai", fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
@@ -407,8 +421,54 @@ model phieu_nhan_dien {
   @@index([ma_bang_diem])
   @@index([ma_thanh_phan])
   @@index([nguoi_tai])
+  @@unique([ma_lo, ma_thanh_phan], map: "phieu_lo_thanh_phan_key")
+  @@unique([ma_lo, chi_so_cot_mau], map: "phieu_lo_cot_mau_key")
   @@index([nguoi_huy])
   @@index([ma_mau])
+}
+
+// Lô nhận dạng: 1–4 ảnh trang cùng một mẫu, một phiếu cho mỗi thành phần được chọn (ADR-0016 mục 3). Technical table, not part of
+// the sixteen business tables. Runtime chỉ SELECT; ghi qua tao_lo_nhan_dien / luu_ket_qua_lo / danh_dau_lo_nhan_dien_loi /
+// huy_lo_nhan_dien. Không hard-delete.
+model lo_nhan_dien {
+  ma_lo             BigInt             @id @default(autoincrement())
+  ma_bang_diem      Int
+  ma_mau            Int
+  nguoi_tai         Int
+  so_trang          Int
+  trang_thai        TrangThaiLo        @default(DANG_XU_LY)
+  ma_loi            String?            @db.VarChar(80)
+  trang_loi         Int?
+  phien_ban_mo_hinh String?            @db.VarChar(80)
+  version           Int                @default(0)
+  ly_do_huy         String?            @db.VarChar(200)
+  nguoi_huy         Int?
+  thoi_diem_huy     DateTime?          @db.Timestamptz(6)
+  ngay_tao          DateTime           @default(now()) @db.Timestamptz(6)
+  ma_bang_diem_ref  bang_diem          @relation(fields: [ma_bang_diem], references: [ma_bang_diem], onDelete: Restrict, onUpdate: Restrict)
+  ma_mau_ref        mau_bang_diem      @relation(fields: [ma_mau], references: [ma_mau], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_tai_ref     nguoi_dung         @relation("LoTai", fields: [nguoi_tai], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  nguoi_huy_ref     nguoi_dung?        @relation("LoHuy", fields: [nguoi_huy], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  trang_rows        trang_lo_nhan_dien[]
+  phieu_rows        phieu_nhan_dien[]
+  outbox_row        recognition_outbox?
+
+  @@index([ma_bang_diem, ma_lo])
+  @@index([ma_mau])
+  @@index([nguoi_tai])
+  @@index([nguoi_huy])
+}
+
+// Technical table, not part of the sixteen business tables. Ảnh từng trang của lô, bất biến.
+model trang_lo_nhan_dien {
+  ma_lo         BigInt
+  so_trang      Int
+  ma_bam_tep    String       @db.Char(64)
+  duong_dan_anh String       @db.VarChar(512)
+  ma_lo_ref     lo_nhan_dien @relation(fields: [ma_lo], references: [ma_lo], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([ma_lo, so_trang])
+  @@unique([ma_lo, ma_bam_tep], map: "trang_lo_ma_bam_key")
 }
 
 // Mẫu bảng điểm do QTV khai báo (ADR-0016 mục 1). Runtime chỉ SELECT; ghi qua luu_mau_bang_diem / doi_trang_thai_mau_bang_diem.
@@ -431,6 +491,7 @@ model mau_bang_diem {
   nguoi_tao_ref     nguoi_dung     @relation(fields: [nguoi_tao], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
   cot_rows          cot_mau[]
   phieu_rows        phieu_nhan_dien[]
+  lo_rows           lo_nhan_dien[]
 
   @@index([ma_mau_goc])
   @@index([nguoi_tao])
@@ -454,17 +515,20 @@ model cot_mau {
 
 // Technical table, not part of the sixteen business tables.
 model recognition_outbox {
-  ma_su_kien   BigInt          @id @default(autoincrement())
-  loai_su_kien String          @db.VarChar(64)
-  ma_phieu     BigInt          @unique
+  ma_su_kien   BigInt           @id @default(autoincrement())
+  loai_su_kien String           @db.VarChar(64)
+  // Sự kiện RECOGNITION_REQUESTED có ma_phieu; RECOGNITION_BATCH_REQUESTED (một sự kiện cho cả lô) có ma_lo. Đúng một trong hai.
+  ma_phieu     BigInt?          @unique
+  ma_lo        BigInt?          @unique
   du_lieu      Json
-  so_lan_thu   Int             @default(0)
-  san_sang_luc DateTime        @default(now()) @db.Timestamptz(6)
-  khoa_den     DateTime?       @db.Timestamptz(6)
-  da_gui_luc   DateTime?       @db.Timestamptz(6)
-  loi_cuoi     String?         @db.VarChar(200)
-  ngay_tao     DateTime        @default(now()) @db.Timestamptz(6)
-  ma_phieu_ref phieu_nhan_dien @relation(fields: [ma_phieu], references: [ma_phieu], onDelete: Restrict, onUpdate: Restrict)
+  so_lan_thu   Int              @default(0)
+  san_sang_luc DateTime         @default(now()) @db.Timestamptz(6)
+  khoa_den     DateTime?        @db.Timestamptz(6)
+  da_gui_luc   DateTime?        @db.Timestamptz(6)
+  loi_cuoi     String?          @db.VarChar(200)
+  ngay_tao     DateTime         @default(now()) @db.Timestamptz(6)
+  ma_phieu_ref phieu_nhan_dien? @relation(fields: [ma_phieu], references: [ma_phieu], onDelete: Restrict, onUpdate: Restrict)
+  ma_lo_ref    lo_nhan_dien?    @relation(fields: [ma_lo], references: [ma_lo], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([da_gui_luc, san_sang_luc])
 }
@@ -496,6 +560,8 @@ model ket_qua_dong {
   duong_dan_anh_o_ten String?          @db.VarChar(512)
   ghi_chu_ghep        String?          @db.VarChar(200)
   ly_do_duyet         String?          @db.VarChar(500)
+  // Số trang trong lô (1..4); NULL với phiếu cũ không thuộc lô.
+  so_trang            Int?
   kenh_goi_y          String?          @db.VarChar(3)
   muc_ghep            MucPhanLoai?
   ma_diem_ref         diem_thanh_phan? @relation(fields: [ma_diem], references: [ma_diem], onDelete: Restrict, onUpdate: Restrict)

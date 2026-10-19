@@ -22,6 +22,7 @@ import 'package:api_client_dart/src/model/calculate_final_results_dto.dart';
 import 'package:api_client_dart/src/model/calculate_final_results_input.dart';
 import 'package:api_client_dart/src/model/calculation_history_dto.dart';
 import 'package:api_client_dart/src/model/calculation_history_list_dto.dart';
+import 'package:api_client_dart/src/model/cancel_batch_input.dart';
 import 'package:api_client_dart/src/model/cancel_ticket_input.dart';
 import 'package:api_client_dart/src/model/cells_response_dto.dart';
 import 'package:api_client_dart/src/model/classes_dto.dart';
@@ -52,9 +53,16 @@ import 'package:api_client_dart/src/model/gradebook_summary_dto.dart';
 import 'package:api_client_dart/src/model/health_dto.dart';
 import 'package:api_client_dart/src/model/lock_input.dart';
 import 'package:api_client_dart/src/model/login_input.dart';
+import 'package:api_client_dart/src/model/mapping_dto.dart';
+import 'package:api_client_dart/src/model/mapping_item_dto.dart';
 import 'package:api_client_dart/src/model/missing_component_dto.dart';
 import 'package:api_client_dart/src/model/password_input.dart';
 import 'package:api_client_dart/src/model/profile_dto.dart';
+import 'package:api_client_dart/src/model/recognition_batch_dto.dart';
+import 'package:api_client_dart/src/model/recognition_batch_page_dto.dart';
+import 'package:api_client_dart/src/model/recognition_batch_receipt_dto.dart';
+import 'package:api_client_dart/src/model/recognition_batch_ticket_dto.dart';
+import 'package:api_client_dart/src/model/recognition_batch_ticket_receipt_dto.dart';
 import 'package:api_client_dart/src/model/recognition_evidence_row_dto.dart';
 import 'package:api_client_dart/src/model/recognition_receipt_dto.dart';
 import 'package:api_client_dart/src/model/recognition_ticket_detail_dto.dart';
@@ -195,6 +203,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'CalculationHistoryListDto':
       return CalculationHistoryListDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'CancelBatchInput':
+      return CancelBatchInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'CancelTicketInput':
       return CancelTicketInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -276,6 +287,11 @@ ReturnType deserialize<ReturnType, BaseType>(
       return LockInput.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'LoginInput':
       return LoginInput.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'MappingDto':
+      return MappingDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'MappingItemDto':
+      return MappingItemDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'MissingComponentDto':
       return MissingComponentDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -284,6 +300,23 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'ProfileDto':
       return ProfileDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'RecognitionBatchDto':
+      return RecognitionBatchDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'RecognitionBatchPageDto':
+      return RecognitionBatchPageDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'RecognitionBatchReceiptDto':
+      return RecognitionBatchReceiptDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'RecognitionBatchTicketDto':
+      return RecognitionBatchTicketDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'RecognitionBatchTicketReceiptDto':
+      return RecognitionBatchTicketReceiptDto.fromJson(
+            value as Map<String, dynamic>,
+          )
+          as ReturnType;
     case 'RecognitionEvidenceRowDto':
       return RecognitionEvidenceRowDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;

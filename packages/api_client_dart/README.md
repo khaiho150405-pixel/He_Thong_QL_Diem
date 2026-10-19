@@ -83,6 +83,7 @@ Class | Method | HTTP request | Description
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsCalculate**](doc/FinalResultsApi.md#finalresultscalculate) | **POST** /api/v1/gradebooks/{gradebookId}/final-results/calculate |
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsHistory**](doc/FinalResultsApi.md#finalresultshistory) | **GET** /api/v1/gradebooks/{gradebookId}/final-results/{resultId}/history |
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsList**](doc/FinalResultsApi.md#finalresultslist) | **GET** /api/v1/gradebooks/{gradebookId}/final-results |
+[*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplateMappingMapping**](doc/FormTemplatesApi.md#formtemplatemappingmapping) | **GET** /api/v1/gradebooks/{gradebookId}/form-templates/{templateId}/mapping |
 [*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesActivate**](doc/FormTemplatesApi.md#formtemplatesactivate) | **POST** /api/v1/catalog/form-templates/{id}/activate |
 [*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesAnalyze**](doc/FormTemplatesApi.md#formtemplatesanalyze) | **POST** /api/v1/catalog/form-templates/analyze |
 [*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesCreate**](doc/FormTemplatesApi.md#formtemplatescreate) | **POST** /api/v1/catalog/form-templates |
@@ -118,6 +119,9 @@ Class | Method | HTTP request | Description
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionDetail**](doc/RecognitionApi.md#recognitiondetail) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId} |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionList**](doc/RecognitionApi.md#recognitionlist) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionUpload**](doc/RecognitionApi.md#recognitionupload) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets |
+[*RecognitionBatchesApi*](doc/RecognitionBatchesApi.md) | [**recognitionBatchCancel**](doc/RecognitionBatchesApi.md#recognitionbatchcancel) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-batches/{batchId}/cancel |
+[*RecognitionBatchesApi*](doc/RecognitionBatchesApi.md) | [**recognitionBatchDetail**](doc/RecognitionBatchesApi.md#recognitionbatchdetail) | **GET** /api/v1/gradebooks/{gradebookId}/recognition-batches/{batchId} |
+[*RecognitionBatchesApi*](doc/RecognitionBatchesApi.md) | [**recognitionBatchUpload**](doc/RecognitionBatchesApi.md#recognitionbatchupload) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-batches |
 [*ReportsApi*](doc/ReportsApi.md) | [**adminReportsOverview**](doc/ReportsApi.md#adminreportsoverview) | **GET** /api/v1/reports/admin/overview |
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsExport**](doc/ReportsApi.md#reportsexport) | **GET** /api/v1/reports/gradebooks/{gradebookId}/export.xlsx |
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsSummary**](doc/ReportsApi.md#reportssummary) | **GET** /api/v1/reports/gradebooks/{gradebookId}/summary |
@@ -182,6 +186,7 @@ Class | Method | HTTP request | Description
  - [CalculateFinalResultsInput](doc/CalculateFinalResultsInput.md)
  - [CalculationHistoryDto](doc/CalculationHistoryDto.md)
  - [CalculationHistoryListDto](doc/CalculationHistoryListDto.md)
+ - [CancelBatchInput](doc/CancelBatchInput.md)
  - [CancelTicketInput](doc/CancelTicketInput.md)
  - [CellsResponseDto](doc/CellsResponseDto.md)
  - [ClassesDto](doc/ClassesDto.md)
@@ -212,9 +217,16 @@ Class | Method | HTTP request | Description
  - [HealthDto](doc/HealthDto.md)
  - [LockInput](doc/LockInput.md)
  - [LoginInput](doc/LoginInput.md)
+ - [MappingDto](doc/MappingDto.md)
+ - [MappingItemDto](doc/MappingItemDto.md)
  - [MissingComponentDto](doc/MissingComponentDto.md)
  - [PasswordInput](doc/PasswordInput.md)
  - [ProfileDto](doc/ProfileDto.md)
+ - [RecognitionBatchDto](doc/RecognitionBatchDto.md)
+ - [RecognitionBatchPageDto](doc/RecognitionBatchPageDto.md)
+ - [RecognitionBatchReceiptDto](doc/RecognitionBatchReceiptDto.md)
+ - [RecognitionBatchTicketDto](doc/RecognitionBatchTicketDto.md)
+ - [RecognitionBatchTicketReceiptDto](doc/RecognitionBatchTicketReceiptDto.md)
  - [RecognitionEvidenceRowDto](doc/RecognitionEvidenceRowDto.md)
  - [RecognitionReceiptDto](doc/RecognitionReceiptDto.md)
  - [RecognitionTicketDetailDto](doc/RecognitionTicketDetailDto.md)

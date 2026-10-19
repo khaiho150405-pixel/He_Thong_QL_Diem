@@ -258,6 +258,35 @@ export function recognitionColumns(columns: readonly TemplateColumn[]): Array<{
   return result;
 }
 
+/**
+ * Cột gửi tới `/v2/recognize` cho một lô (ADR-0016 mục 3): chỉ STT, HO_TEN, các cột DIEM được chọn (theo `index` cột mẫu)
+ * và DIEM_CHU đi kèm các cột đó. Cột điểm không được chọn không được đọc.
+ */
+export function recognitionColumnsFor(
+  columns: readonly TemplateColumn[],
+  selectedGradeIndexes: readonly number[],
+): ReturnType<typeof recognitionColumns> {
+  const selected = new Set(selectedGradeIndexes);
+  const all = recognitionColumns(columns);
+  const writtenOfSelected = new Set(
+    all.flatMap((column) =>
+      column.role === "DIEM" &&
+      selected.has(column.index) &&
+      column.writtenIndex !== null &&
+      column.writtenIndex !== undefined
+        ? [column.writtenIndex]
+        : [],
+    ),
+  );
+  return all.filter(
+    (column) =>
+      column.role === "STT" ||
+      column.role === "HO_TEN" ||
+      (column.role === "DIEM" && selected.has(column.index)) ||
+      (column.role === "DIEM_CHU" && writtenOfSelected.has(column.index)),
+  );
+}
+
 /** Thành phần điểm của một môn, đủ thông tin để ánh xạ. */
 export interface MappableComponent {
   id: number;

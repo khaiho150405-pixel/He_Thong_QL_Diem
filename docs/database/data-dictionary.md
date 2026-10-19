@@ -199,7 +199,41 @@ FK: `ma_hoc_sinh` → `hoc_sinh.ma_hoc_sinh`; `ma_mon` → `mon_hoc.ma_mon`; `ma
 
 FK: `ma_bang_diem` → `bang_diem.ma_bang_diem`; `ma_thanh_phan` → `thanh_phan_diem.ma_thanh_phan`; `nguoi_tai` → `nguoi_dung.ma_nguoi_dung`.
 
-Cột bổ sung theo ADR-0016 (migration 202610190001, P2): `ma_mau Int?` → `mau_bang_diem.ma_mau` (FK RESTRICT, chỉ mục một phần `WHERE ma_mau IS NOT NULL`). P2 chưa ghi cột này; chỉ dùng để biết mẫu đã được phiếu tham chiếu hay chưa (`TEMPLATE_IN_USE`).
+Cột bổ sung theo ADR-0016 (migration 202610190001, P2): `ma_mau Int?` → `mau_bang_diem.ma_mau` (FK RESTRICT, chỉ mục một phần `WHERE ma_mau IS NOT NULL`). Từ P3 chỉ phiếu thuộc lô ghi cột này; cũng dùng để biết mẫu đã được phiếu tham chiếu hay chưa (`TEMPLATE_IN_USE`).
+
+Cột bổ sung cho lô (migration 202610200001, P3): `ma_lo BigInt?` → `lo_nhan_dien.ma_lo` (RESTRICT) và `chi_so_cot_mau Int?` (CHECK 0..63) — cùng NULL (phiếu một ảnh cũ) hoặc cùng có giá trị kèm `ma_mau` (CHECK `phieu_lo_day_du`). Duy nhất `(ma_lo, ma_thanh_phan)` và `(ma_lo, chi_so_cot_mau)`. `ma_bam_tep` của phiếu thuộc lô là SHA-256 của `checksum các trang theo thứ tự (nối bằng ',') + ':' + mã thành phần`, nên chỉ mục duy nhất một phần `WHERE trang_thai <> 'DA_HUY'` vẫn phát hiện tải trùng. `duong_dan_anh_goc` là ảnh trang 1; ảnh các trang nằm ở `trang_lo_nhan_dien`.
+
+## lo_nhan_dien (ADR-0016 mục 3, bảng kỹ thuật — không thuộc 16 bảng nghiệp vụ)
+
+| Cột (DB = code)   | Kiểu, nullable, default và ràng buộc                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| ma_lo             | `BigInt @id @default(autoincrement())`                                                       |
+| ma_bang_diem      | `Int` → `bang_diem.ma_bang_diem` (RESTRICT)                                                  |
+| ma_mau            | `Int` → `mau_bang_diem.ma_mau` (RESTRICT)                                                    |
+| nguoi_tai         | `Int` → `nguoi_dung.ma_nguoi_dung` (RESTRICT)                                                |
+| so_trang          | `Int`; CHECK 1..4                                                                            |
+| trang_thai        | `TrangThaiLo @default(DANG_XU_LY)` (`DANG_XU_LY`, `XONG`, `LOI`, `DA_HUY`)                   |
+| ma_loi            | `String? @db.VarChar(80)`; CHECK: bắt buộc khi `LOI`, chỉ có khi `LOI`/`DA_HUY`              |
+| trang_loi         | `Int?`; chỉ khi có `ma_loi`, trong `1..so_trang`; NULL khi lỗi không gắn với trang           |
+| phien_ban_mo_hinh | `String? @db.VarChar(80)`                                                                    |
+| version           | `Int @default(0)`; tăng mỗi lần đổi trạng thái                                               |
+| ly_do_huy         | `String? @db.VarChar(200)`; cùng `nguoi_huy`, `thoi_diem_huy`: có đủ khi và chỉ khi `DA_HUY` |
+| nguoi_huy         | `Int?` → `nguoi_dung.ma_nguoi_dung`                                                          |
+| thoi_diem_huy     | `DateTime? @db.Timestamptz(6)`                                                               |
+| ngay_tao          | `DateTime @default(now()) @db.Timestamptz(6)`                                                |
+
+Runtime chỉ `SELECT`; ghi qua hàm `SECURITY DEFINER`, tất cả yêu cầu giao dịch `SERIALIZABLE`: `tao_lo_nhan_dien` (phiên giáo viên được phân công; tạo lô, trang, phiếu, danh sách lớp, audit, idempotency `RECOGNITION_BATCH_UPLOAD` và MỘT sự kiện outbox `RECOGNITION_BATCH_REQUESTED`), `luu_ket_qua_lo` (ghi kết quả mọi phiếu của lô; lô `DA_HUY`/`XONG` thì bỏ qua), `danh_dau_lo_nhan_dien_loi` (cả lô và mọi phiếu đang xử lý → `LOI` cùng mã) và `huy_lo_nhan_dien` (hủy mềm mọi phiếu chưa duyệt; idempotency `RECOGNITION_BATCH_CANCEL`; lô phải thuộc đúng bảng điểm). Trigger chặn DELETE/TRUNCATE: không hard-delete lô.
+
+## trang_lo_nhan_dien (ADR-0016 mục 3, bảng kỹ thuật)
+
+| Cột (DB = code) | Kiểu, nullable, default và ràng buộc                                        |
+| --------------- | --------------------------------------------------------------------------- |
+| ma_lo           | `BigInt` → `lo_nhan_dien.ma_lo` (RESTRICT)                                  |
+| so_trang        | `Int`; CHECK 1..4                                                           |
+| ma_bam_tep      | `String @db.Char(64)`; CHECK SHA-256 hex                                    |
+| duong_dan_anh   | `String @db.VarChar(512)`; CHECK `^recognition/original/<uuid>.(png\|jpg)$` |
+
+Khóa chính `(ma_lo, so_trang)`; duy nhất `(ma_lo, ma_bam_tep)` (một ảnh không dùng cho hai trang). Trigger chặn UPDATE/DELETE/TRUNCATE: trang là bất biến.
 
 ## mau_bang_diem (ADR-0016, bảng danh mục — không thuộc 16 bảng nghiệp vụ baseline)
 
@@ -236,28 +270,29 @@ Khóa chính `(ma_mau, chi_so_cot)`. CHECK `cot_mau_theo_vai_tro` ràng buộc c
 
 ## ket_qua_dong
 
-| Cột (DB = code)     | Kiểu, nullable, default và ràng buộc   |
-| ------------------- | -------------------------------------- |
-| ma_dong             | `BigInt @id @default(autoincrement())` |
-| ma_phieu            | `BigInt`                               |
-| ma_hoc_sinh         | `Int`                                  |
-| ma_diem             | `BigInt?`                              |
-| thu_tu_dong         | `Int`                                  |
-| duong_dan_anh_o_so  | `String? @db.VarChar(512)`             |
-| duong_dan_anh_o_chu | `String? @db.VarChar(512)`             |
-| raw_kenh_a          | `String?`                              |
-| raw_kenh_b          | `String?`                              |
-| gia_tri_kenh_a      | `Decimal? @db.Decimal(3,1)`            |
-| gia_tri_kenh_b      | `Decimal? @db.Decimal(3,1)`            |
-| do_tin_cay_a        | `Decimal? @db.Decimal(5,4)`            |
-| do_tin_cay_b        | `Decimal? @db.Decimal(5,4)`            |
-| ket_luan_doi_chieu  | `KetLuan`                              |
-| muc_phan_loai       | `MucPhanLoai`                          |
-| gia_tri_chot        | `Decimal? @db.Decimal(3,1)`            |
-| nguoi_duyet         | `Int?`                                 |
-| thoi_diem_duyet     | `DateTime? @db.Timestamptz(6)`         |
+| Cột (DB = code)     | Kiểu, nullable, default và ràng buộc        |
+| ------------------- | ------------------------------------------- |
+| ma_dong             | `BigInt @id @default(autoincrement())`      |
+| ma_phieu            | `BigInt`                                    |
+| ma_hoc_sinh         | `Int`                                       |
+| ma_diem             | `BigInt?`                                   |
+| thu_tu_dong         | `Int`                                       |
+| duong_dan_anh_o_so  | `String? @db.VarChar(512)`                  |
+| duong_dan_anh_o_chu | `String? @db.VarChar(512)`                  |
+| raw_kenh_a          | `String?`                                   |
+| raw_kenh_b          | `String?`                                   |
+| gia_tri_kenh_a      | `Decimal? @db.Decimal(3,1)`                 |
+| gia_tri_kenh_b      | `Decimal? @db.Decimal(3,1)`                 |
+| do_tin_cay_a        | `Decimal? @db.Decimal(5,4)`                 |
+| do_tin_cay_b        | `Decimal? @db.Decimal(5,4)`                 |
+| ket_luan_doi_chieu  | `KetLuan`                                   |
+| muc_phan_loai       | `MucPhanLoai`                               |
+| gia_tri_chot        | `Decimal? @db.Decimal(3,1)`                 |
+| nguoi_duyet         | `Int?`                                      |
+| thoi_diem_duyet     | `DateTime? @db.Timestamptz(6)`              |
+| so_trang            | `Int?`; CHECK 1..4 (migration 202610200001) |
 
-Khóa ghép: `@@unique([ma_phieu, thu_tu_dong])`.
+Khóa ghép: `@@unique([ma_phieu, thu_tu_dong])`. `so_trang` là trang trong lô mà dòng được đọc; NULL với phiếu một ảnh cũ. Trigger `kiem_dong_theo_lo`: dòng của phiếu thuộc lô bắt buộc có `so_trang` ≤ số trang của lô, dòng của phiếu cũ bắt buộc không có. Với phiếu thuộc lô, `thu_tu_dong = (so_trang − 1) × 1000 + vị trí dòng trên trang`.
 
 FK: `ma_phieu` → `phieu_nhan_dien.ma_phieu`; `ma_hoc_sinh` → `hoc_sinh.ma_hoc_sinh`; `ma_diem` → `diem_thanh_phan.ma_diem`; `nguoi_duyet` → `nguoi_dung.ma_nguoi_dung`.
 
@@ -275,4 +310,4 @@ Migration 202609070002_constraints là nguồn SQL cho miền điểm, hệ số
 
 Ngày sinh/ngày lịch là date; thời điểm là timestamptz UTC. Lớp của học sinh, môn của thành phần và năm học/học kỳ tương ứng cần kiểm trong transaction của use case khi triển khai ghi; FK đơn không chứng minh những quan hệ đó. Snapshot bo_he_so giữ bộ hệ số bất biến theo kết quả, format nghiệp vụ chốt ở Giai đoạn 5. Không lưu ảnh binary/signed URL trong DB. Đường dẫn ảnh là private object key.
 
-Có đúng 16 bảng nghiệp vụ. Các bảng kỹ thuật hiện có gồm `_prisma_migrations`, `phien_lam_viec`, `nhat_ky_bao_mat`, `gioi_han_dang_nhap`, `gioi_han_tac_vu`, `khoa_idempotency` và `recognition_outbox`. `gioi_han_tac_vu` giữ khóa `(ma_nguoi_dung, thao_tac)`, đầu cửa sổ UTC và bộ đếm đã chặn tràn; runtime chỉ gọi hàm nguyên tử `tieu_thu_han_muc_tac_vu`, không có DML trực tiếp. Outbox giữ `ma_phieu`, payload tối thiểu, số lần thử, lease, thời điểm sẵn sàng/gửi và mã lỗi cuối; không chứa binary ảnh hoặc điểm chính thức. Quyền và rollback xem ADR-0002, ADR-0004 và ADR-0008. Không hard-delete dữ liệu điểm đã dùng. Seed chỉ dùng dữ liệu giả.
+Có đúng 16 bảng nghiệp vụ. Các bảng kỹ thuật hiện có gồm `_prisma_migrations`, `phien_lam_viec`, `nhat_ky_bao_mat`, `gioi_han_dang_nhap`, `gioi_han_tac_vu`, `khoa_idempotency`, `recognition_outbox`, `mau_bang_diem`, `cot_mau`, `lo_nhan_dien` và `trang_lo_nhan_dien`. `recognition_outbox.ma_phieu` nullable và có thêm `ma_lo` (duy nhất): sự kiện phiếu (`RECOGNITION_REQUESTED`, có `ma_phieu`) hoặc sự kiện lô (`RECOGNITION_BATCH_REQUESTED`, có `ma_lo`), CHECK đúng một trong hai. `gioi_han_tac_vu` giữ khóa `(ma_nguoi_dung, thao_tac)`, đầu cửa sổ UTC và bộ đếm đã chặn tràn; runtime chỉ gọi hàm nguyên tử `tieu_thu_han_muc_tac_vu`, không có DML trực tiếp. Outbox giữ `ma_phieu`, payload tối thiểu, số lần thử, lease, thời điểm sẵn sàng/gửi và mã lỗi cuối; không chứa binary ảnh hoặc điểm chính thức. Quyền và rollback xem ADR-0002, ADR-0004 và ADR-0008. Không hard-delete dữ liệu điểm đã dùng. Seed chỉ dùng dữ liệu giả.

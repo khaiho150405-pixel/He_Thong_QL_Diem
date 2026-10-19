@@ -55,6 +55,39 @@ export interface SaveTemplate {
   };
 }
 
+/** Thành phần điểm của môn trong một bảng điểm, kèm trạng thái khóa/chờ để giáo viên chọn ánh xạ. */
+export interface MappingComponent {
+  id: number;
+  name: string;
+  group: string;
+  displayOrder: number;
+  /** Cột đã chốt, ngoài thời gian nhập, bảng đã chốt hoặc môn Đạt/Không đạt (không dùng OCR điểm số). */
+  locked: boolean;
+  /** Đang có phiếu DANG_XU_LY hoặc CHO_DOI_CHIEU cho thành phần này. */
+  pending: boolean;
+}
+
+export interface MappingContext {
+  gradebookId: number;
+  templateId: number;
+  templateStatus: TemplateStatus;
+  columns: TemplateColumn[];
+  components: MappingComponent[];
+}
+
+/** Cổng đọc cho gợi ý ánh xạ cột mẫu -> thành phần (tách khỏi FormTemplateStore: chỉ phục vụ giáo viên của một bảng điểm). */
+export interface FormTemplateMappingStore {
+  /**
+   * Dữ liệu để gợi ý ánh xạ cho một bảng điểm; chỉ giáo viên được phân công (ném Forbidden nếu không). null khi mẫu không
+   * tồn tại.
+   */
+  mappingContext(
+    actor: Actor,
+    gradebookId: number,
+    templateId: number,
+  ): Promise<MappingContext | null>;
+}
+
 export interface FormTemplateStore {
   /** Quản trị viên thấy mọi trạng thái; giáo viên chỉ DANG_DUNG; học sinh bị từ chối ở policy. */
   list(
@@ -85,4 +118,7 @@ export interface FormTemplateStore {
 }
 
 export const FORM_TEMPLATE_STORE = Symbol("FORM_TEMPLATE_STORE");
+export const FORM_TEMPLATE_MAPPING_STORE = Symbol(
+  "FORM_TEMPLATE_MAPPING_STORE",
+);
 export const FORM_TEMPLATE_RECOGNIZER = Symbol("FORM_TEMPLATE_RECOGNIZER");

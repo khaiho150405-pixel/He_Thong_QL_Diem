@@ -36,7 +36,8 @@ export interface RecognitionWorkerStore {
   fail(ticketId: string, code: string): Promise<void>;
 }
 
-function crop(value: string): Uint8Array {
+/** Giải mã ảnh ô base64 từ dịch vụ nhận dạng (đã kiểm định dạng và kích thước); dùng chung với worker lô. */
+export function crop(value: string): Uint8Array {
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value))
     throw new Error("MALFORMED_RESPONSE");
   const bytes = Buffer.from(value, "base64");

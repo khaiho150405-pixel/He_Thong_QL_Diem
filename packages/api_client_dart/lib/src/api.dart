@@ -17,6 +17,7 @@ import 'package:api_client_dart/src/api/gradebooks_api.dart';
 import 'package:api_client_dart/src/api/health_api.dart';
 import 'package:api_client_dart/src/api/identity_api.dart';
 import 'package:api_client_dart/src/api/recognition_api.dart';
+import 'package:api_client_dart/src/api/recognition_batches_api.dart';
 import 'package:api_client_dart/src/api/reports_api.dart';
 import 'package:api_client_dart/src/api/review_api.dart';
 import 'package:api_client_dart/src/api/semester_weights_api.dart';
@@ -155,6 +156,12 @@ class ApiClientDart {
   /// by doing that all interceptors will not be executed
   RecognitionApi getRecognitionApi() {
     return RecognitionApi(dio);
+  }
+
+  /// Get RecognitionBatchesApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  RecognitionBatchesApi getRecognitionBatchesApi() {
+    return RecognitionBatchesApi(dio);
   }
 
   /// Get ReportsApi instance, base route and serializer can be overridden by a given but be careful,

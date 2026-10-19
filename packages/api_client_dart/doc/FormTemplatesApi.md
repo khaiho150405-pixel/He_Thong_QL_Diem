@@ -9,6 +9,7 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**formTemplateMappingMapping**](FormTemplatesApi.md#formtemplatemappingmapping) | **GET** /api/v1/gradebooks/{gradebookId}/form-templates/{templateId}/mapping |
 [**formTemplatesActivate**](FormTemplatesApi.md#formtemplatesactivate) | **POST** /api/v1/catalog/form-templates/{id}/activate |
 [**formTemplatesAnalyze**](FormTemplatesApi.md#formtemplatesanalyze) | **POST** /api/v1/catalog/form-templates/analyze |
 [**formTemplatesCreate**](FormTemplatesApi.md#formtemplatescreate) | **POST** /api/v1/catalog/form-templates |
@@ -19,6 +20,53 @@ Method | HTTP request | Description
 [**formTemplatesTryTemplate**](FormTemplatesApi.md#formtemplatestrytemplate) | **POST** /api/v1/catalog/form-templates/{id}/try |
 [**formTemplatesUpdate**](FormTemplatesApi.md#formtemplatesupdate) | **PUT** /api/v1/catalog/form-templates/{id} |
 
+
+# **formTemplateMappingMapping**
+> MappingDto formTemplateMappingMapping(templateId, gradebookId)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getFormTemplatesApi();
+final num templateId = 8.14; // num |
+final num gradebookId = 8.14; // num |
+
+try {
+    final response = api.formTemplateMappingMapping(templateId, gradebookId);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling FormTemplatesApi->formTemplateMappingMapping: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **templateId** | **num**|  |
+ **gradebookId** | **num**|  |
+
+### Return type
+
+[**MappingDto**](MappingDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **formTemplatesActivate**
 > TemplateDetailDto formTemplatesActivate(id, expectedVersionInput)

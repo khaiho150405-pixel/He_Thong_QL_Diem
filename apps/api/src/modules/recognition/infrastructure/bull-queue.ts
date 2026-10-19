@@ -28,17 +28,17 @@ export class BullRecognitionQueue implements RecognitionQueue {
   }
 
   async enqueue(event: RecognitionOutboxEvent): Promise<void> {
-    await this.queue.add(
-      "recognize-grade-sheet",
-      { ticketId: event.ticketId },
-      {
-        jobId: event.jobId,
-        attempts: 3,
-        backoff: { type: "exponential", delay: 1000 },
-        removeOnComplete: { age: 86_400, count: 10_000 },
-        removeOnFail: { age: 604_800, count: 10_000 },
-      },
-    );
+    // Sự kiện lô nhiều trang là MỘT job cho cả lô (ADR-0016); sự kiện phiếu một ảnh giữ nguyên.
+    const [name, data] = event.batchId
+      ? (["recognize-batch", { batchId: event.batchId }] as const)
+      : (["recognize-grade-sheet", { ticketId: event.ticketId }] as const);
+    await this.queue.add(name, data, {
+      jobId: event.jobId,
+      attempts: 3,
+      backoff: { type: "exponential", delay: 1000 },
+      removeOnComplete: { age: 86_400, count: 10_000 },
+      removeOnFail: { age: 604_800, count: 10_000 },
+    });
   }
 
   close(): Promise<void> {

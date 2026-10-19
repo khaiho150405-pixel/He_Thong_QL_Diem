@@ -845,6 +845,93 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks/{gradebookId}/form-templates/{templateId}/mapping": {
+      "get": {
+        "operationId": "formTemplateMappingMapping",
+        "parameters": [
+          {
+            "name": "templateId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ánh xạ gợi ý (nhóm, thứ tự) -> thành phần điểm của môn; chỉ giáo viên được phân công của bảng điểm",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MappingDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["form-templates"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
     "/api/v1/catalog/years": {
       "get": {
         "operationId": "yearsList",
@@ -4560,6 +4647,309 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks/{gradebookId}/recognition-batches": {
+      "post": {
+        "operationId": "recognitionBatchUpload",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["images", "templateId", "components"],
+                "properties": {
+                  "images": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "items": { "type": "string", "format": "binary" },
+                    "description": "Ảnh các trang theo thứ tự (trang 1 đứng đầu)"
+                  },
+                  "templateId": { "type": "integer", "minimum": 1 },
+                  "components": {
+                    "type": "string",
+                    "description": "JSON `[{\"templateColumnIndex\": n, \"componentId\": m}]` (1–20 mục); cột mẫu phải là cột điểm và khớp thành phần theo ánh xạ gợi ý"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecognitionBatchReceiptDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "413": { "description": "Image exceeds upload limit" },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["recognition-batches"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{gradebookId}/recognition-batches/{batchId}": {
+      "get": {
+        "operationId": "recognitionBatchDetail",
+        "parameters": [
+          {
+            "name": "batchId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RecognitionBatchDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["recognition-batches"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{gradebookId}/recognition-batches/{batchId}/cancel": {
+      "post": {
+        "operationId": "recognitionBatchCancel",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "batchId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CancelBatchInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hủy mềm mọi phiếu chưa duyệt của lô (phiếu DA_DUYET giữ nguyên); lô đã hủy trả lại chính nó",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RecognitionBatchDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["recognition-batches"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/reports/gradebooks/{gradebookId}/summary": {
       "get": {
         "operationId": "reportsSummary",
@@ -7723,6 +8113,66 @@
           "rows"
         ]
       },
+      "MappingItemDto": {
+        "type": "object",
+        "properties": {
+          "templateColumnIndex": {
+            "type": "number",
+            "description": "Chỉ số cột điểm trong mẫu"
+          },
+          "key": {
+            "type": "string",
+            "description": "Định danh cột điểm, ví dụ TX1"
+          },
+          "group": { "type": "string", "enum": ["TX", "GK", "CK"] },
+          "order": {
+            "type": "number",
+            "description": "Thứ tự trong nhóm, từ 1"
+          },
+          "channels": {
+            "type": "string",
+            "enum": ["SO", "SO_CHU"],
+            "description": "SO = chỉ điểm số (tối đa Vàng); SO_CHU = đọc cả điểm số lẫn điểm chữ"
+          },
+          "componentId": {
+            "type": "number",
+            "nullable": true,
+            "description": "Thành phần điểm của môn khớp (nhóm, thứ tự); null khi môn không có thành phần tương ứng"
+          },
+          "componentName": { "type": "string", "nullable": true },
+          "locked": {
+            "type": "boolean",
+            "description": "Cột đã chốt, ngoài thời gian nhập, bảng đã chốt hoặc môn Đạt/Không đạt: không chọn được"
+          },
+          "pending": {
+            "type": "boolean",
+            "description": "Đang có phiếu chờ xử lý/đối chiếu: không chọn được"
+          }
+        },
+        "required": [
+          "templateColumnIndex",
+          "key",
+          "group",
+          "order",
+          "channels",
+          "componentId",
+          "componentName",
+          "locked",
+          "pending"
+        ]
+      },
+      "MappingDto": {
+        "type": "object",
+        "properties": {
+          "gradebookId": { "type": "number" },
+          "templateId": { "type": "number" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MappingItemDto" }
+          }
+        },
+        "required": ["gradebookId", "templateId", "items"]
+      },
       "YearsDto": {
         "type": "object",
         "properties": {
@@ -8750,6 +9200,159 @@
           "status": { "type": "string", "enum": ["DANG_XU_LY"] }
         },
         "required": ["ticketId", "jobId", "status"]
+      },
+      "RecognitionBatchTicketReceiptDto": {
+        "type": "object",
+        "properties": {
+          "ticketId": {
+            "type": "string",
+            "description": "bigint recognition ticket ID"
+          },
+          "componentId": { "type": "number" }
+        },
+        "required": ["ticketId", "componentId"]
+      },
+      "RecognitionBatchReceiptDto": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "description": "bigint recognition batch ID"
+          },
+          "jobId": { "type": "string" },
+          "status": { "type": "string", "enum": ["DANG_XU_LY"] },
+          "tickets": {
+            "description": "Một phiếu cho mỗi thành phần được chọn",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecognitionBatchTicketReceiptDto"
+            }
+          }
+        },
+        "required": ["batchId", "jobId", "status", "tickets"]
+      },
+      "RecognitionBatchPageDto": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "number", "description": "Số trang, từ 1" },
+          "imageUrl": {
+            "type": "string",
+            "description": "URL ký 300 giây của ảnh trang; chuỗi rỗng khi lô đã hủy (ảnh đã bị xóa khỏi kho lưu trữ)"
+          }
+        },
+        "required": ["page", "imageUrl"]
+      },
+      "RecognitionBatchTicketDto": {
+        "type": "object",
+        "properties": {
+          "ticketId": { "type": "string" },
+          "componentId": { "type": "number" },
+          "componentName": { "type": "string" },
+          "templateColumnIndex": {
+            "type": "number",
+            "description": "Chỉ số cột điểm trong mẫu (chi_so_cot)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["DANG_XU_LY", "CHO_DOI_CHIEU", "DA_DUYET", "LOI", "DA_HUY"]
+          },
+          "errorCode": { "type": "string", "nullable": true },
+          "version": {
+            "type": "number",
+            "description": "Dùng làm expectedVersion khi duyệt/hủy phiếu"
+          },
+          "greenRows": {
+            "type": "number",
+            "description": "Số dòng mức Xanh (mức cuối)"
+          },
+          "yellowRows": {
+            "type": "number",
+            "description": "Số dòng mức Vàng (mức cuối)"
+          },
+          "redRows": {
+            "type": "number",
+            "description": "Số dòng mức Đỏ (mức cuối)"
+          }
+        },
+        "required": [
+          "ticketId",
+          "componentId",
+          "componentName",
+          "templateColumnIndex",
+          "status",
+          "errorCode",
+          "version",
+          "greenRows",
+          "yellowRows",
+          "redRows"
+        ]
+      },
+      "RecognitionBatchDto": {
+        "type": "object",
+        "properties": {
+          "batchId": { "type": "string" },
+          "gradebookId": { "type": "number" },
+          "templateId": { "type": "number" },
+          "pageCount": { "type": "number" },
+          "status": {
+            "type": "string",
+            "enum": ["DANG_XU_LY", "XONG", "LOI", "DA_HUY"]
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mã lỗi chung của lô; mọi phiếu LOI của lô mang cùng mã"
+          },
+          "errorPage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Trang gây lỗi (1..pageCount); null khi lỗi không gắn với trang"
+          },
+          "modelVersion": { "type": "string", "nullable": true },
+          "version": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "cancelReason": { "type": "string", "nullable": true },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "imageUrlExpiresInSeconds": { "type": "number", "example": 300 },
+          "pages": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RecognitionBatchPageDto" }
+          },
+          "tickets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecognitionBatchTicketDto"
+            }
+          }
+        },
+        "required": [
+          "batchId",
+          "gradebookId",
+          "templateId",
+          "pageCount",
+          "status",
+          "errorCode",
+          "errorPage",
+          "modelVersion",
+          "version",
+          "createdAt",
+          "cancelReason",
+          "cancelledAt",
+          "imageUrlExpiresInSeconds",
+          "pages",
+          "tickets"
+        ]
+      },
+      "CancelBatchInput": {
+        "type": "object",
+        "properties": {
+          "reason": { "type": "string", "minLength": 1, "maxLength": 200 }
+        },
+        "required": ["reason"]
       },
       "DistributionItemDto": {
         "type": "object",

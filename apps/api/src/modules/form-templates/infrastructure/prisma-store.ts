@@ -4,12 +4,14 @@ import {
   HttpException,
   Inject,
   Injectable,
+  NotFoundException,
 } from "@nestjs/common";
 import type { Prisma, PrismaClient } from "../../../generated/prisma/client.js";
 import { SETTINGS, type Settings } from "../../../common/database.js";
 import { unit } from "../../../common/store.js";
 import { sqlStateOf } from "../../../common/transaction.js";
 import { audit } from "../../audit/application/write.js";
+import { gradebookAccess } from "../../authorization/application/gradebook-policy.js";
 import {
   currentActor,
   type Actor,
@@ -22,7 +24,9 @@ import type {
 } from "../domain/definition.js";
 import { templateError } from "../application/errors.js";
 import type {
+  FormTemplateMappingStore,
   FormTemplateStore,
+  MappingContext,
   SaveTemplate,
   TemplateDetail,
   TemplateForTry,
@@ -116,7 +120,9 @@ function columnsOf(row: TemplateRow): TemplateColumn[] {
 }
 
 @Injectable()
-export class PrismaFormTemplateStore implements FormTemplateStore {
+export class PrismaFormTemplateStore
+  implements FormTemplateStore, FormTemplateMappingStore
+{
   constructor(
     @Inject("DATABASE") private readonly db: PrismaClient,
     @Inject(SETTINGS) private readonly settings: Settings,
@@ -181,6 +187,86 @@ export class PrismaFormTemplateStore implements FormTemplateStore {
             imageKey: row.duong_dan_anh_mau,
           }
         : null;
+    });
+  }
+
+  mappingContext(
+    actor: Actor,
+    gradebookId: number,
+    templateId: number,
+  ): Promise<MappingContext | null> {
+    return run(this.db, async (tx) => {
+      const authorization = unit(tx);
+      await currentActor(authorization, actor);
+      const book = await tx.bang_diem.findUnique({
+        where: { ma_bang_diem: gradebookId },
+      });
+      if (!book) throw new NotFoundException();
+      // Chỉ giáo viên được phân công (học sinh và quản trị viên bị từ chối): backend tự kiểm, không tin UI.
+      await gradebookAccess(
+        authorization,
+        actor,
+        {
+          classId: book.ma_lop,
+          subjectId: book.ma_mon,
+          termId: book.ma_hoc_ky,
+        },
+        true,
+      );
+      const template = await tx.mau_bang_diem.findUnique({
+        where: { ma_mau: templateId },
+        include: { cot_rows: true },
+      });
+      if (!template) return null;
+      const subject = await tx.mon_hoc.findUnique({
+        where: { ma_mon: book.ma_mon },
+        select: { danh_gia_dat: true },
+      });
+      const components = await tx.thanh_phan_diem.findMany({
+        where: { ma_mon: book.ma_mon },
+        orderBy: [{ thu_tu_hien_thi: "asc" }, { ma_thanh_phan: "asc" }],
+      });
+      const [locked, windows, pending] = await Promise.all([
+        tx.chot_cot_diem.findMany({ where: { ma_bang_diem: gradebookId } }),
+        tx.lich_nhap_diem.findMany({ where: { ma_bang_diem: gradebookId } }),
+        tx.phieu_nhan_dien.findMany({
+          where: {
+            ma_bang_diem: gradebookId,
+            trang_thai: { in: ["DANG_XU_LY", "CHO_DOI_CHIEU"] },
+          },
+          select: { ma_thanh_phan: true },
+        }),
+      ]);
+      const now = Date.now();
+      const closedWindows = new Set(
+        windows
+          .filter(
+            (window) =>
+              now < window.mo_luc.getTime() || now >= window.dong_luc.getTime(),
+          )
+          .map((window) => window.ma_thanh_phan),
+      );
+      const lockedIds = new Set(locked.map((item) => item.ma_thanh_phan));
+      const pendingIds = new Set(pending.map((item) => item.ma_thanh_phan));
+      const editable =
+        book.trang_thai === "DANG_NHAP_LIEU" && !subject?.danh_gia_dat;
+      return {
+        gradebookId,
+        templateId,
+        templateStatus: template.trang_thai,
+        columns: columnsOf(template),
+        components: components.map((component) => ({
+          id: component.ma_thanh_phan,
+          name: component.ten_thanh_phan,
+          group: component.loai_he_so,
+          displayOrder: component.thu_tu_hien_thi,
+          locked:
+            !editable ||
+            lockedIds.has(component.ma_thanh_phan) ||
+            closedWindows.has(component.ma_thanh_phan),
+          pending: pendingIds.has(component.ma_thanh_phan),
+        })),
+      };
     });
   }
 

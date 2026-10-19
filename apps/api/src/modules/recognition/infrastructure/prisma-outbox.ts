@@ -7,6 +7,7 @@ import type {
 interface OutboxRow {
   id: string;
   ticketId: string;
+  batchId: string | null;
   jobId: string;
   attempts: number;
 }
@@ -14,8 +15,8 @@ interface OutboxRow {
 export class PrismaRecognitionOutbox implements RecognitionOutbox {
   constructor(private readonly db: PrismaClient) {}
 
-  claim(limit: number): Promise<RecognitionOutboxEvent[]> {
-    return this.db.$queryRaw<OutboxRow[]>`
+  async claim(limit: number): Promise<RecognitionOutboxEvent[]> {
+    const rows = await this.db.$queryRaw<OutboxRow[]>`
       WITH picked AS (
         SELECT ma_su_kien FROM public.recognition_outbox
         WHERE da_gui_luc IS NULL AND so_lan_thu < 5
@@ -31,8 +32,16 @@ export class PrismaRecognitionOutbox implements RecognitionOutbox {
       FROM picked WHERE o.ma_su_kien=picked.ma_su_kien
       RETURNING o.ma_su_kien::text AS id,
         o.du_lieu->>'ticketId' AS "ticketId",
+        o.du_lieu->>'batchId' AS "batchId",
         o.du_lieu->>'jobId' AS "jobId",
         o.so_lan_thu AS attempts`;
+    return rows.map((row) => ({
+      id: row.id,
+      ticketId: row.ticketId,
+      jobId: row.jobId,
+      attempts: row.attempts,
+      ...(row.batchId ? { batchId: row.batchId } : {}),
+    }));
   }
 
   async published(eventId: string): Promise<void> {

@@ -271,6 +271,7 @@ export class PrismaRecognitionStore implements RecognitionStore {
           },
           select: {
             duong_dan_anh_goc: true,
+            ma_lo: true,
             ket_qua_dong_rows: {
               select: {
                 duong_dan_anh_o_so: true,
@@ -281,8 +282,23 @@ export class PrismaRecognitionStore implements RecognitionStore {
           },
         });
         if (!ticket) throw new NotFoundException();
+        // Phiếu thuộc lô dùng chung ảnh các trang với phiếu khác của lô: chỉ xóa ảnh trang khi mọi phiếu của lô đã hủy.
+        let sourceKeys: string[] = [ticket.duong_dan_anh_goc];
+        if (ticket.ma_lo !== null) {
+          const stillUsed = await tx.phieu_nhan_dien.count({
+            where: { ma_lo: ticket.ma_lo, trang_thai: { not: "DA_HUY" } },
+          });
+          sourceKeys = stillUsed
+            ? []
+            : (
+                await tx.trang_lo_nhan_dien.findMany({
+                  where: { ma_lo: ticket.ma_lo },
+                  select: { duong_dan_anh: true },
+                })
+              ).map((page) => page.duong_dan_anh);
+        }
         const objectKeys = [
-          ticket.duong_dan_anh_goc,
+          ...sourceKeys,
           ...ticket.ket_qua_dong_rows.flatMap((row) => [
             row.duong_dan_anh_o_so,
             row.duong_dan_anh_o_chu,

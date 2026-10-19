@@ -1,6 +1,9 @@
 export interface RecognitionOutboxEvent {
   id: string;
+  /** Phiếu của sự kiện. Với sự kiện lô: phiếu đại diện (cột mẫu đứng đầu), chỉ để ghi log; việc xử lý theo `batchId`. */
   ticketId: string;
+  /** Có mặt khi là sự kiện của cả lô nhiều trang (ADR-0016): MỘT sự kiện cho mọi phiếu của lô. */
+  batchId?: string;
   jobId: string;
   attempts: number;
 }

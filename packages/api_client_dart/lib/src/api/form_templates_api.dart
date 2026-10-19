@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 import 'package:api_client_dart/src/model/analyze_result_dto.dart';
 import 'package:api_client_dart/src/model/error_dto.dart';
 import 'package:api_client_dart/src/model/expected_version_input.dart';
+import 'package:api_client_dart/src/model/mapping_dto.dart';
 import 'package:api_client_dart/src/model/template_detail_dto.dart';
 import 'package:api_client_dart/src/model/template_page_dto.dart';
 import 'package:api_client_dart/src/model/try_result_dto.dart';
@@ -21,6 +22,104 @@ class FormTemplatesApi {
   final Dio _dio;
 
   const FormTemplatesApi(this._dio);
+
+  /// formTemplateMappingMapping
+  ///
+  ///
+  /// Parameters:
+  /// * [templateId]
+  /// * [gradebookId]
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [MappingDto] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<MappingDto>> formTemplateMappingMapping({
+    required num templateId,
+    required num gradebookId,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path =
+        r'/api/v1/gradebooks/{gradebookId}/form-templates/{templateId}/mapping'
+            .replaceAll(
+              '{'
+              r'templateId'
+              '}',
+              templateId.toString(),
+            )
+            .replaceAll(
+              '{'
+              r'gradebookId'
+              '}',
+              gradebookId.toString(),
+            );
+    final _options = Options(
+      method: r'GET',
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'apiKey',
+            'name': 'cookie',
+            'keyName': 'qld_session',
+            'where': '',
+          },
+          {'type': 'http', 'scheme': 'bearer', 'name': 'bearer'},
+        ],
+        ...?extra,
+      },
+      validateStatus: validateStatus,
+    );
+
+    final _response = await _dio.request<Object>(
+      _path,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    MappingDto? _responseData;
+
+    try {
+      final rawData = _response.data;
+      _responseData = rawData == null
+          ? null
+          : deserialize<MappingDto, MappingDto>(
+              rawData,
+              'MappingDto',
+              growable: true,
+            );
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<MappingDto>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
 
   /// formTemplatesActivate
   ///
