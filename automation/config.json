@@ -22,6 +22,8 @@
       "acceptEdits",
       "--allowedTools",
       "Read,Edit,Write,Glob,Grep,Bash(pnpm:*),Bash(node:*),Bash(npx:*),Bash(python:*),Bash(py:*),Bash(dart:*),Bash(flutter:*),Bash(cd:*),Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(.local/venv-ml/Scripts/python.exe:*)",
+      "--add-dir",
+      "F:/HK1_Nam04/KLCN/data",
       "--max-turns",
       "250",
       "--output-format",
