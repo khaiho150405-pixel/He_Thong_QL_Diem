@@ -89,6 +89,60 @@ function ok(result: BatchMatchResult) {
   return result;
 }
 
+const similarRoster = (names: string[]): RosterEntry[] =>
+  names.map((name, index) => ({
+    stt: index + 1,
+    studentId: index + 1,
+    fullName: name,
+  }));
+
+test("a student repeated on page 2 fails even when a similar-named classmate could absorb the repeated row", () => {
+  // Hồi quy P3-F1: "Nguyen Van An" và "Nguyen Van Anh" giống nhau 0,93; dòng lặp không được ép sang học sinh thứ hai.
+  const roster = similarRoster([
+    "Nguyen Van An",
+    "Nguyen Van Anh",
+    "Tran Thi Binh",
+    "Le Thi Chi",
+  ]);
+  const detected = [
+    row(1, 1, roster[0]!),
+    row(1, 2, roster[2]!),
+    row(1, 3, roster[3]!),
+    row(2, 1, roster[0]!),
+  ];
+  for (const sttCheck of [false, true]) {
+    const result = matchBatchRows(detected, roster, { sttCheck });
+    assert.equal(result.ok, false, `sttCheck=${sttCheck}`);
+    if (result.ok) throw new Error("unreachable");
+    assert.equal(result.code, "ROW_MATCH_FAILED");
+    assert.equal(result.reason, "DUPLICATE_STUDENT");
+    assert.doesNotMatch(result.detail, /Nguyen/);
+  }
+});
+
+test("similar-named classmates that each appear once are still matched across two pages", () => {
+  const roster = similarRoster([
+    "Nguyen Van An",
+    "Nguyen Van Anh",
+    "Tran Thi Binh",
+  ]);
+  const result = ok(
+    matchBatchRows(
+      [row(1, 1, roster[0]!), row(1, 2, roster[2]!), row(2, 1, roster[1]!)],
+      roster,
+      { sttCheck: true },
+    ),
+  );
+  assert.deepEqual(
+    result.matches.map((match) => [match.page, match.studentId]),
+    [
+      [1, 1],
+      [1, 3],
+      [2, 2],
+    ],
+  );
+});
+
 test("a 41-student class over two pages is matched once: 38 rows then 3 rows", () => {
   const roster = makeRoster(41);
   const detected = [...page(roster, 1, 1, 38), ...page(roster, 2, 39, 41)];

@@ -702,12 +702,11 @@ BEGIN
 
   SELECT * INTO b FROM public.bang_diem WHERE ma_bang_diem=p_book FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'NOT_FOUND' USING ERRCODE='P0002'; END IF;
-  -- Giáo viên được phân công lớp–môn–học kỳ của bảng điểm, hoặc chính người đã tải lô lên.
+  -- Chỉ giáo viên đang được phân công lớp–môn–học kỳ của bảng điểm (AGENTS 7.9); người tải lô mà đã mất phân công thì không hủy.
   assigned := EXISTS (SELECT 1 FROM public.phan_cong_giang_day pc
     WHERE pc.ma_giao_vien=actor_id AND pc.ma_lop=b.ma_lop
       AND pc.ma_mon=b.ma_mon AND pc.ma_hoc_ky=b.ma_hoc_ky);
-  IF NOT assigned AND NOT EXISTS (SELECT 1 FROM public.lo_nhan_dien
-    WHERE ma_lo=p_batch AND ma_bang_diem=p_book AND nguoi_tai=actor_id) THEN
+  IF NOT assigned THEN
     RAISE EXCEPTION 'FORBIDDEN' USING ERRCODE='42501';
   END IF;
 

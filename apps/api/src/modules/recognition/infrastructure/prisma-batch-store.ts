@@ -242,6 +242,8 @@ export class PrismaRecognitionBatchStore implements RecognitionBatchStore {
 
   cancel(input: CancelRecognitionBatch): Promise<{ objectKeys: string[] }> {
     return run(this.db, async (tx) => {
+      // Kiểm phân công hiện tại trước mọi thay đổi (AGENTS 7.9); hàm SQL tự bảo vệ thêm một lần.
+      await this.authorize(tx, input.actor, input.gradebookId, true);
       await tx.$queryRaw`
         SELECT public.huy_lo_nhan_dien(
           ${input.actor.sessionHash}::text,

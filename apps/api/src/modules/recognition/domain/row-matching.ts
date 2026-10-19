@@ -520,23 +520,24 @@ function matchPaged(
       duplicateState,
     );
 
-  // Hai dòng cùng chỉ khớp mạnh duy nhất một học sinh là cùng một học sinh xuất hiện hai lần.
-  const strongTargets = similarity.map((row) => {
-    if (!row) return [];
-    const targets: number[] = [];
-    row.forEach((value, index) => {
-      if (value >= NAME_STRONG) targets.push(index);
-    });
-    return targets;
-  });
+  // Hai dòng cùng nhắm tới một học sinh (học sinh có độ giống cao nhất, không hòa, từ mức khớp mạnh) là cùng một học sinh
+  // xuất hiện hai lần: dừng, không ép dòng lặp sang học sinh tên gần giống chỉ để đạt ghép một-một. Học sinh trùng họ tên
+  // trong lớp không thuộc kiểm tra này (hòa điểm cao nhất); các học sinh đó được phân biệt bằng STT.
+  const targetOf = (similar: number[] | null): number | null => {
+    if (!similar) return null;
+    const top = Math.max(...similar);
+    if (top < NAME_STRONG) return null;
+    const first = similar.indexOf(top);
+    return similar.indexOf(top, first + 1) === -1 ? first : null;
+  };
+  const targets = similarity.map(targetOf);
   for (let a = 0; a < n; a += 1)
     for (let b = a + 1; b < n; b += 1) {
-      const first = strongTargets[a]!;
-      const second = strongTargets[b]!;
-      if (first.length === 1 && second.length === 1 && first[0] === second[0])
+      const target = targets[a];
+      if (target != null && target === targets[b])
         return fail(
           "DUPLICATE_STUDENT",
-          `Dòng ${where(rows[a]!)} và dòng ${where(rows[b]!)} cùng khớp một học sinh (STT ${entries[first[0]!]!.stt})${multiPage ? "; vị trí ghi theo dạng trang.dòng" : ""}.`,
+          `Dòng ${where(rows[a]!)} và dòng ${where(rows[b]!)} cùng khớp một học sinh (STT ${entries[target]!.stt})${multiPage ? "; vị trí ghi theo dạng trang.dòng" : ""}.`,
         );
     }
 

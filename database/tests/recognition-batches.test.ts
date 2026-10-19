@@ -946,6 +946,52 @@ test("cancelling a batch is soft, idempotent and scoped to its own gradebook", a
   }
 });
 
+test("the uploader who lost the assignment can no longer cancel the batch; nothing changes", async () => {
+  const t = await createBatchFixture();
+  const { f } = t;
+  try {
+    const receipt = await t.createBatch();
+    const count = async (sql: string) =>
+      Number((await f.owner.query(sql, [receipt.batchId])).rows[0].count);
+    const snapshot = async () => ({
+      batch: await t.batchRow(receipt.batchId),
+      tickets: await Promise.all(
+        receipt.tickets.map((ticket) => t.ticketStatus(ticket.ticketId)),
+      ),
+      audit: Number(
+        (
+          await f.owner.query(
+            "SELECT count(*) FROM nhat_ky_bao_mat WHERE hanh_dong IN ('RECOGNITION_CANCELLED','RECOGNITION_BATCH_CANCELLED')",
+          )
+        ).rows[0].count,
+      ),
+      idempotency: Number(
+        (
+          await f.owner.query(
+            "SELECT count(*) FROM khoa_idempotency WHERE thao_tac='RECOGNITION_BATCH_CANCEL'",
+          )
+        ).rows[0].count,
+      ),
+      pendingOutbox: await count(
+        "SELECT count(*) FROM recognition_outbox WHERE ma_lo=$1 AND da_gui_luc IS NULL",
+      ),
+    });
+    const before = await snapshot();
+    await f.owner.query(
+      "DELETE FROM phan_cong_giang_day WHERE ma_giao_vien=$1",
+      [f.teacherId],
+    );
+    await assert.rejects(
+      t.cancelBatch(receipt.batchId),
+      failsWith("42501", "FORBIDDEN"),
+    );
+    assert.deepEqual(await snapshot(), before);
+    assert.equal(before.batch.status, "DANG_XU_LY");
+  } finally {
+    await t.close();
+  }
+});
+
 test("cancelling keeps the tickets that are already approved", async () => {
   const t = await createBatchFixture();
   try {

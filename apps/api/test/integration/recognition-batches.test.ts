@@ -746,6 +746,52 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       ),
       0,
     );
+    // Người đã tải lô nhưng mất phân công thì không hủy được (AGENTS 7.9): 403 và không gì thay đổi.
+    const cancelAudit = () =>
+      count(
+        "SELECT count(*) FROM nhat_ky_bao_mat WHERE hanh_dong IN ('RECOGNITION_CANCELLED','RECOGNITION_BATCH_CANCELLED')",
+        [],
+      );
+    const auditBefore = await cancelAudit();
+    await owner.query(
+      "DELETE FROM phan_cong_giang_day WHERE ma_giao_vien=$1 AND ma_lop=$2 AND ma_mon=$3 AND ma_hoc_ky=$4",
+      [teacher.id, cls, subject, term],
+    );
+    try {
+      assert.equal(
+        (
+          await cancelBatch(receipt.batchId, {
+            actor: teacher,
+            key: "lost-assignment-cancel",
+          })
+        ).status,
+        403,
+      );
+    } finally {
+      await assign(teacher, cls, subject);
+    }
+    assert.equal(
+      await count(
+        "SELECT count(*) FROM phieu_nhan_dien WHERE ma_lo=$1 AND trang_thai='DA_HUY'",
+        [receipt.batchId],
+      ),
+      0,
+    );
+    assert.equal(
+      await count(
+        "SELECT count(*) FROM lo_nhan_dien WHERE ma_lo=$1 AND trang_thai='DA_HUY'",
+        [receipt.batchId],
+      ),
+      0,
+    );
+    assert.equal(await cancelAudit(), auditBefore);
+    assert.equal(
+      await count(
+        "SELECT count(*) FROM khoa_idempotency WHERE khoa='lost-assignment-cancel'",
+        [],
+      ),
+      0,
+    );
 
     // --- AC-7: duyệt TỪNG phiếu của lô bằng endpoint duyệt hiện có ---
     const approve = async (ticketId: string, values: string[], key: string) => {
