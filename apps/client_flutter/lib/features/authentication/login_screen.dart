@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,14 +44,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => busy = false);
     }
-  }
-
-  void _autofillDemo(String u, String p) {
-    setState(() {
-      username.text = u;
-      password.text = p;
-      error = null;
-    });
   }
 
   @override
@@ -269,112 +260,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSpacing.lg),
-          CustomPaint(
-            painter: _DashedLinePainter(t.line2),
-            child: const SizedBox(height: 1, width: double.infinity),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            'XEM THỬ VỚI VAI TRÒ',
-            style: theme.textTheme.labelSmall?.copyWith(fontSize: 11),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: PopupMenuButton<String>(
-              tooltip: 'Gợi ý tài khoản demo',
-              onSelected: (role) {
-                switch (role) {
-                  case 'admin':
-                    _autofillDemo('admin', 'Password123!');
-                    break;
-                  case 'teacher':
-                    _autofillDemo('giaovien_toan', 'Password123!');
-                    break;
-                  case 'student':
-                    _autofillDemo('hocsinh_a', 'Password123!');
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                _demoItem(
-                  t,
-                  'admin',
-                  Icons.admin_panel_settings_outlined,
-                  'Quản trị viên (admin)',
-                ),
-                _demoItem(
-                  t,
-                  'teacher',
-                  Icons.school_outlined,
-                  'Giáo viên (giaovien_toan)',
-                ),
-                _demoItem(
-                  t,
-                  'student',
-                  Icons.person_outline,
-                  'Học sinh (hocsinh_a)',
-                ),
-              ],
-              child: Container(
-                constraints: const BoxConstraints(minHeight: 40),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: t.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  border: Border.all(color: t.line2),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline_rounded,
-                      size: 16,
-                      color: t.ink2,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Flexible(
-                      child: Text(
-                        'Gợi ý tài khoản demo',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: t.ink,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_drop_down_rounded,
-                      size: 20,
-                      color: t.ink2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  PopupMenuItem<String> _demoItem(
-    AppTokens t,
-    String value,
-    IconData icon,
-    String label,
-  ) {
-    return PopupMenuItem<String>(
-      value: value,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: t.pri),
-          const SizedBox(width: AppSpacing.sm),
-          Flexible(child: Text(label, style: const TextStyle(fontSize: 13))),
         ],
       ),
     );
@@ -422,30 +307,4 @@ class _CompactBrand extends StatelessWidget {
       ],
     );
   }
-}
-
-class _DashedLinePainter extends CustomPainter {
-  _DashedLinePainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    const dash = 4.0;
-    const gap = 3.0;
-    var x = 0.0;
-    while (x < size.width) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(math.min(x + dash, size.width), 0),
-        paint,
-      );
-      x += dash + gap;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedLinePainter old) => old.color != color;
 }

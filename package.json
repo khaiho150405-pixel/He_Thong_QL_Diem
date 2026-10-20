@@ -36,7 +36,7 @@
     "ops:storage-verify": "tsx apps/api/src/ops/object-storage-backup.ts verify",
     "ops:storage-restore-rehearsal": "tsx apps/api/src/ops/object-storage-backup.ts restore",
     "release:web:build": "tsx scripts/ops/web-release.ts",
-    "build": "pnpm --filter @qld/api build",
+    "build": "pnpm db:generate && pnpm --filter @qld/api build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
