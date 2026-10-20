@@ -155,8 +155,17 @@ try {
   }
   Ok 'Python venv-ml'
   $webIndex = Join-Path $root 'apps\client_flutter\build\web\index.html'
-  if (-not (Test-Path $webIndex)) {
-    Warn 'Chưa có bản build web, đang build (vài phút)...'
+  # Build lại khi chưa có bản build HOẶC mã Flutter/client sinh mới hơn bản build (sau khi pull code).
+  $needWeb = -not (Test-Path $webIndex)
+  if (-not $needWeb) {
+    $builtAt = (Get-Item $webIndex).LastWriteTimeUtc
+    $srcDirs = @('apps\client_flutter\lib', 'apps\client_flutter\web', 'packages\api_client_dart\lib') |
+      ForEach-Object { Join-Path $root $_ } | Where-Object { Test-Path $_ }
+    $newer = Get-ChildItem -Recurse -File $srcDirs | Where-Object { $_.LastWriteTimeUtc -gt $builtAt } | Select-Object -First 1
+    if ($newer) { $needWeb = $true; Warn "Mã giao diện mới hơn bản build web ($($newer.Name)), build lại..." }
+  }
+  if ($needWeb) {
+    Warn 'Đang build web (vài phút)...'
     Push-Location (Join-Path $root 'apps\client_flutter')
     try {
       & flutter build web --dart-define-from-file=config/development.json
@@ -164,6 +173,26 @@ try {
     } finally { Pop-Location }
   }
   Ok 'Bản build web'
+
+  # ---------------------------------------------------------------- 3b. Database thử + Prisma client
+  # Dịch vụ chạy trên database thử (mặc định qld_phase7_test, xem stack.ps1), KHÔNG phải DB trong .env.
+  # Mỗi lần bật: áp migration còn thiếu cho đúng database đó và sinh lại Prisma client, để code mới
+  # (sau khi pull) không lỗi "table does not exist".
+  Step 'Cập nhật database thử và Prisma client'
+  $pilotDb = if ($env:PILOT_DATABASE) { $env:PILOT_DATABASE } else { 'qld_phase7_test' }
+  $migPass = (Select-String -Path (Join-Path $root '.env') -Pattern '^\s*MIGRATION_PASSWORD=(.*)$' |
+    Select-Object -First 1).Matches[0].Groups[1].Value.Trim()
+  $oldMigUrl = $env:MIGRATION_DATABASE_URL
+  try {
+    $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$migPass@127.0.0.1:5433/$pilotDb"
+    & pnpm db:migrate
+    if ($LASTEXITCODE -ne 0) { throw "pnpm db:migrate thất bại trên $pilotDb." }
+    & pnpm db:generate
+    if ($LASTEXITCODE -ne 0) { throw 'pnpm db:generate thất bại.' }
+  } finally {
+    $env:MIGRATION_DATABASE_URL = $oldMigUrl
+  }
+  Ok "Database $pilotDb đã đủ migration, Prisma client mới"
 
   # ---------------------------------------------------------------- 4. Bật 5 dịch vụ
   Step 'Bật dịch vụ (recognition, api, dispatcher, worker, web)'
