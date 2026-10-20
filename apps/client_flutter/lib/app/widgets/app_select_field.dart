@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../design_tokens.dart';
@@ -247,6 +249,9 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
   bool _hasUserTyped = false;
   String _query = '';
   int _highlightedIndex = -1;
+  // Hoãn việc trả lại label khi rời ô: nếu làm ngay (setState + đổi text) giữa lúc
+  // đang bấm vào một mục của menu thì menu bị dựng lại và lần bấm đầu bị mất.
+  Timer? _blurResetTimer;
 
   DropdownMenuItem<T>? _findSelectedItem(T? val) {
     for (final item in widget.items) {
@@ -366,12 +371,11 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
   }
 
   void _onFocusChange() {
-    if (_focusNode.hasFocus != _isOpen) {
-      setState(() {
-        _isOpen = _focusNode.hasFocus;
-      });
-    }
+    // KHÔNG setState ở đây: _isOpen chỉ dùng cho xử lý phím, không ảnh hưởng giao diện.
+    // setState đúng lúc DropdownMenu đang mở menu / nhận lượt bấm làm mất lần bấm đầu.
+    _isOpen = _focusNode.hasFocus;
     if (_focusNode.hasFocus) {
+      _blurResetTimer?.cancel();
       if (widget.searchable) {
         _hasUserTyped = false;
         _query = '';
@@ -386,13 +390,26 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         });
       }
     } else {
-      _hasUserTyped = false;
-      _query = '';
-      _highlightedIndex = -1;
-      final expected = _getDisplayLabel(widget.value);
-      if (_controller.text != expected) {
-        _controller.text = expected;
-      }
+      // Đợi lượt bấm vào mục (nếu có) hoàn tất rồi mới trả lại label cũ.
+      _blurResetTimer?.cancel();
+      _blurResetTimer = Timer(const Duration(milliseconds: 300), () {
+        if (!mounted || _focusNode.hasFocus) return;
+        final expected = _getDisplayLabel(widget.value);
+        final dirty =
+            _hasUserTyped ||
+            _query.isNotEmpty ||
+            _highlightedIndex != -1 ||
+            _controller.text != expected;
+        if (!dirty) return;
+        setState(() {
+          _hasUserTyped = false;
+          _query = '';
+          _highlightedIndex = -1;
+        });
+        if (_controller.text != expected) {
+          _controller.text = expected;
+        }
+      });
     }
   }
 
@@ -412,6 +429,7 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
 
   @override
   void dispose() {
+    _blurResetTimer?.cancel();
     _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
     _controller.removeListener(_onTextChanged);
@@ -677,13 +695,14 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
     final interactiveMenu = Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: (_) {
+        // Chỉ ghi nhận trạng thái, KHÔNG setState: dựng lại widget đúng lúc
+        // DropdownMenu đang xử lý lượt bấm khiến lần bấm đầu không mở menu.
         if (!_isOpen && widget.enabled) {
-          setState(() {
-            _isOpen = true;
-            _hasUserTyped = false;
+          _isOpen = true;
+          if (!_hasUserTyped) {
             _query = '';
             _highlightedIndex = -1;
-          });
+          }
         }
         if (widget.searchable && widget.enabled) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
