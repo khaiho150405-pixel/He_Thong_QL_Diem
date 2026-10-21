@@ -34,6 +34,18 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md` (FE-01 → FE-05 đã hoàn tất 100%).
 
+### BE — Ô Miễn, học sinh vào lớp sau chốt, công bố theo phân công (xong; chưa commit)
+
+- Migration `202610210002_cell_exempt_enum` (enum `MIEN`), `202610210003_cell_exempt` (CHECK, `lich_su_mien_diem`, `dat_mien_diem`, `them_hoc_sinh_sau_chot`, `hoc_sinh_thieu_o`; thay `xu_ly_han_nhap_diem`, `cap_nhat_diem`, `duyet_phieu_nhan_dien`, `tinh_ket_qua_bang_diem`), `202610210004_publish_readiness` (`kiem_san_sang_cong_bo`, `kiem_cong_bo`).
+- API: `PUT /gradebooks/{id}/exemptions`, `GET .../missing-students`, `POST .../late-students`, `GET /catalog/semesters/{id}/publish-readiness`; `calculate` trả thêm `exempted`; `students/me/results` trả cả ô MIEN; Excel ghi "Miễn". Lỗi có mã qua `common/coded-error.ts` (ErrorFilter toàn cục đọc `code`/`details`). `TERM_RESULTS_INCOMPLETE.details.issues` dựng lại bằng `kiem_san_sang_cong_bo` trong `SemestersService.save` vì lỗi Prisma của update theo model không mang DETAIL.
+- Test: `integration/grade-deadlines.test.ts` (+5 ca), `database/tests/constraints.test.ts`. Chưa có test riêng cho `ROW_STUDENT_EXEMPT`, `RECOGNITION_PENDING` của miễn và cột Excel "Miễn".
+
+### BE — Lịch nhập điểm theo học kỳ, cột không bắt buộc, khởi tạo bảng điểm hàng loạt (xong; chưa commit)
+
+- Migration `202610210001_semester_deadlines`: bảng `lich_nhap_hoc_ky` (runtime chỉ SELECT), `lich_hieu_luc`, `dat_lich_nhap_hoc_ky`, `khoi_tao_bang_diem_hoc_ky`, hàm nội bộ `tao_luoi_diem_noi_bo`; thay `kiem_thoi_gian_nhap`, `dat_lich_nhap_diem`, `xu_ly_han_nhap_diem` (chỉ ghi 0 cho cột `bat_buoc`), `tao_luoi_diem_trong`.
+- API (gradebooks): `GET/PUT /catalog/semesters/{id}/deadlines[/{type}]`, `POST /catalog/semesters/{id}/gradebooks/initialize`, `GradeCellDto.deadlineSource`; OpenAPI và `packages/api_client_dart` đã sinh lại. Mã lỗi riêng: `DEADLINE_VERSION_CONFLICT`, `COLUMN_LOCKED`, `INVALID_ENTRY_WINDOW`, `TERM_ALREADY_PUBLISHED`.
+- Test: `integration/grade-deadlines.test.ts` (+4 ca), `database/tests/constraints.test.ts`. Chưa làm: `form-templates/infrastructure/prisma-store.ts` (xem trước ánh xạ) vẫn chỉ đọc `lich_nhap_diem`, chưa tính lịch học kỳ; SQL vẫn chặn đúng khi ghi.
+
 ### FE — Autocomplete cho mọi ô Select bằng AppSelectField (xong; chưa commit)
 
 - File: `apps/client_flutter/lib/app/widgets/app_select_field.dart`, `apps/client_flutter/lib/app/widgets/app_controls.dart`, `apps/client_flutter/lib/features/academic_catalog/edit_dialog.dart`, `apps/client_flutter/lib/features/timetable/timetable_screen.dart`, `apps/client_flutter/lib/features/gradebooks/gradebook_screen.dart`, `apps/client_flutter/test/app_select_field_test.dart` (15 tests).

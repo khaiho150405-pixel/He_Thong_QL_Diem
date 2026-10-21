@@ -110,13 +110,22 @@ export class ErrorFilter implements ExceptionFilter {
       ].includes(message)
         ? message
         : null;
+    // Lỗi nghiệp vụ có mã ổn định riêng (CodedException, DeadlineException, ...) giữ nguyên code/details của chúng.
+    const coded =
+      error instanceof HttpException &&
+      typeof (error as { code?: unknown }).code === "string"
+        ? (error as unknown as {
+            code: string;
+            details?: Record<string, unknown> | null;
+          })
+        : null;
     response.status(status).json({
-      code: codes[status] ?? "INTERNAL_ERROR",
+      code: coded?.code ?? codes[status] ?? "INTERNAL_ERROR",
       message:
         status >= 500
           ? "Dịch vụ tạm thời không sẵn sàng."
           : (safeMessage ?? "Yêu cầu không hợp lệ."),
-      details: null,
+      details: coded?.details ?? null,
       requestId: response.getHeader("x-request-id"),
     });
   }

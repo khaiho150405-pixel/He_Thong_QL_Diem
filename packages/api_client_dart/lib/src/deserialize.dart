@@ -37,6 +37,10 @@ import 'package:api_client_dart/src/model/create_gradebook_input.dart';
 import 'package:api_client_dart/src/model/create_timetable_item_input.dart';
 import 'package:api_client_dart/src/model/distribution_item_dto.dart';
 import 'package:api_client_dart/src/model/error_dto.dart';
+import 'package:api_client_dart/src/model/exempted_student_dto.dart';
+import 'package:api_client_dart/src/model/exemption_change_input.dart';
+import 'package:api_client_dart/src/model/exemptions_input.dart';
+import 'package:api_client_dart/src/model/exemptions_result_dto.dart';
 import 'package:api_client_dart/src/model/expected_version_input.dart';
 import 'package:api_client_dart/src/model/final_result_dto.dart';
 import 'package:api_client_dart/src/model/final_result_list_dto.dart';
@@ -51,13 +55,21 @@ import 'package:api_client_dart/src/model/gradebook_history_entry_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_list_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_summary_dto.dart';
 import 'package:api_client_dart/src/model/health_dto.dart';
+import 'package:api_client_dart/src/model/initialize_gradebooks_result_dto.dart';
+import 'package:api_client_dart/src/model/initialized_gradebook_dto.dart';
+import 'package:api_client_dart/src/model/late_student_input.dart';
+import 'package:api_client_dart/src/model/late_student_result_dto.dart';
 import 'package:api_client_dart/src/model/lock_input.dart';
 import 'package:api_client_dart/src/model/login_input.dart';
 import 'package:api_client_dart/src/model/mapping_dto.dart';
 import 'package:api_client_dart/src/model/mapping_item_dto.dart';
 import 'package:api_client_dart/src/model/missing_component_dto.dart';
+import 'package:api_client_dart/src/model/missing_student_dto.dart';
+import 'package:api_client_dart/src/model/missing_students_dto.dart';
 import 'package:api_client_dart/src/model/password_input.dart';
 import 'package:api_client_dart/src/model/profile_dto.dart';
+import 'package:api_client_dart/src/model/publish_issue_dto.dart';
+import 'package:api_client_dart/src/model/publish_readiness_dto.dart';
 import 'package:api_client_dart/src/model/recognition_batch_dto.dart';
 import 'package:api_client_dart/src/model/recognition_batch_page_dto.dart';
 import 'package:api_client_dart/src/model/recognition_batch_receipt_dto.dart';
@@ -70,6 +82,9 @@ import 'package:api_client_dart/src/model/recognition_ticket_dto.dart';
 import 'package:api_client_dart/src/model/review_approval_input.dart';
 import 'package:api_client_dart/src/model/review_approval_result_dto.dart';
 import 'package:api_client_dart/src/model/review_decision_input.dart';
+import 'package:api_client_dart/src/model/semester_deadline_dto.dart';
+import 'package:api_client_dart/src/model/semester_deadline_input.dart';
+import 'package:api_client_dart/src/model/semester_deadlines_dto.dart';
 import 'package:api_client_dart/src/model/semester_weights_dto.dart';
 import 'package:api_client_dart/src/model/semester_weights_input.dart';
 import 'package:api_client_dart/src/model/semester_weights_page.dart';
@@ -77,6 +92,7 @@ import 'package:api_client_dart/src/model/semesters_dto.dart';
 import 'package:api_client_dart/src/model/semesters_input.dart';
 import 'package:api_client_dart/src/model/semesters_page.dart';
 import 'package:api_client_dart/src/model/session_dto.dart';
+import 'package:api_client_dart/src/model/skipped_gradebook_dto.dart';
 import 'package:api_client_dart/src/model/skipped_student_dto.dart';
 import 'package:api_client_dart/src/model/student_approved_component_dto.dart';
 import 'package:api_client_dart/src/model/student_result_summary_dto.dart';
@@ -244,6 +260,18 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'ErrorDto':
       return ErrorDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'ExemptedStudentDto':
+      return ExemptedStudentDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ExemptionChangeInput':
+      return ExemptionChangeInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ExemptionsInput':
+      return ExemptionsInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'ExemptionsResultDto':
+      return ExemptionsResultDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'ExpectedVersionInput':
       return ExpectedVersionInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -283,6 +311,20 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'HealthDto':
       return HealthDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'InitializeGradebooksResultDto':
+      return InitializeGradebooksResultDto.fromJson(
+            value as Map<String, dynamic>,
+          )
+          as ReturnType;
+    case 'InitializedGradebookDto':
+      return InitializedGradebookDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'LateStudentInput':
+      return LateStudentInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'LateStudentResultDto':
+      return LateStudentResultDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'LockInput':
       return LockInput.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'LoginInput':
@@ -295,11 +337,23 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'MissingComponentDto':
       return MissingComponentDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'MissingStudentDto':
+      return MissingStudentDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'MissingStudentsDto':
+      return MissingStudentsDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'PasswordInput':
       return PasswordInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'ProfileDto':
       return ProfileDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'PublishIssueDto':
+      return PublishIssueDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'PublishReadinessDto':
+      return PublishReadinessDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'RecognitionBatchDto':
       return RecognitionBatchDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -338,6 +392,15 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'ReviewDecisionInput':
       return ReviewDecisionInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'SemesterDeadlineDto':
+      return SemesterDeadlineDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SemesterDeadlineInput':
+      return SemesterDeadlineInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'SemesterDeadlinesDto':
+      return SemesterDeadlinesDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'SemesterWeightsDto':
       return SemesterWeightsDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -357,6 +420,9 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'SessionDto':
       return SessionDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'SkippedGradebookDto':
+      return SkippedGradebookDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'SkippedStudentDto':
       return SkippedStudentDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;

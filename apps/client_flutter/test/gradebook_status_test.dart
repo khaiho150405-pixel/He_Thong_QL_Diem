@@ -63,6 +63,7 @@ class _Server implements HttpClientAdapter {
     'displayOrder': componentId == 201 ? 1 : 2,
     'value': value,
     'status': value == null ? 'CHUA_CO' : 'DA_DUYET',
+    'exemptionReason': null,
     'source': source,
     'closesAt': ?closes[componentId],
   };
@@ -135,6 +136,7 @@ GradeCellDto _column(int id, String? closesAt) => GradeCellDto.fromJson({
   'displayOrder': id,
   'value': null,
   'status': 'CHUA_CO',
+  'exemptionReason': null,
   'source': 'NHAP_TAY',
   'closesAt': ?closesAt,
 });

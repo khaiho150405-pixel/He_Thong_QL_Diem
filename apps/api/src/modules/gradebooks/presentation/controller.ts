@@ -71,14 +71,30 @@ export class GradeCellDto {
     | string
     | null;
   @ApiProperty({ type: Number, required: false }) deadlineVersion?: number;
+  @ApiProperty({
+    type: String,
+    enum: ["RIENG", "HOC_KY"],
+    nullable: true,
+    required: false,
+    description:
+      "Nguồn lịch hiệu lực: RIENG (bảng + cột) ghi đè HOC_KY (mặc định theo loại điểm); null = chưa có lịch",
+  })
+  deadlineSource?: "RIENG" | "HOC_KY" | null;
   @ApiProperty({ type: String, nullable: true }) value!: string | null;
   @ApiProperty({
     type: String,
-    enum: ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET"],
+    enum: ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET", "MIEN"],
+    description: "MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)",
   })
   status!: string;
   @ApiProperty({ type: String, enum: ["NHAP_TAY", "NHAN_DIEN"] })
   source!: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Lý do miễn gần nhất khi status = MIEN, ngược lại null",
+  })
+  exemptionReason!: string | null;
 }
 
 export class CellsResponseDto {
@@ -129,6 +145,54 @@ export class GradeDeadlineInput {
   @ApiProperty({ type: String, format: "date-time" }) opensAt!: string;
   @ApiProperty({ type: String, format: "date-time" }) closesAt!: string;
   @ApiProperty({ type: Number, minimum: 0 }) expectedVersion!: number;
+}
+
+export class ExemptionChangeInput {
+  @ApiProperty({ type: String, description: "bigint cell ID" }) cellId!: string;
+  @ApiProperty({ type: Boolean, description: "true = miễn, false = bỏ miễn" })
+  exempt!: boolean;
+  @ApiProperty({ type: String, minLength: 1, maxLength: 500 }) reason!: string;
+}
+
+export class ExemptionsInput {
+  @ApiProperty({ type: Number, minimum: 0 }) expectedVersion!: number;
+  @ApiProperty({ type: [ExemptionChangeInput], minItems: 1, maxItems: 100 })
+  changes!: ExemptionChangeInput[];
+}
+
+export class ExemptionsResultDto {
+  @ApiProperty({ type: Number }) bookId!: number;
+  @ApiProperty({ type: Number }) version!: number;
+  @ApiProperty({ type: [GradeCellDto] }) items!: GradeCellDto[];
+}
+
+export class MissingStudentDto {
+  @ApiProperty({ type: Number }) studentId!: number;
+  @ApiProperty({ type: String }) studentName!: string;
+}
+
+export class MissingStudentsDto {
+  @ApiProperty({ type: [MissingStudentDto] }) items!: MissingStudentDto[];
+}
+
+export class LateStudentInput {
+  @ApiProperty({ type: Number }) studentId!: number;
+  @ApiProperty({ type: String, minLength: 1, maxLength: 500 }) reason!: string;
+}
+
+export class LateStudentResultDto {
+  @ApiProperty({ type: Number }) bookId!: number;
+  @ApiProperty({ type: Number }) version!: number;
+  @ApiProperty({
+    type: Number,
+    description: "Tổng số ô được tạo (gồm cả ô MIEN)",
+  })
+  createdCells!: number;
+  @ApiProperty({
+    type: Number,
+    description: "Số ô MIEN trong các ô vừa tạo (cột đã chốt)",
+  })
+  exemptedCells!: number;
 }
 
 export class LockInput {
@@ -217,6 +281,45 @@ export class GradebooksController {
     @Body() body: unknown,
   ) {
     return this.service.batchUpdate(req.actor, id, idemKey, body);
+  }
+
+  @Put(":id/exemptions")
+  @ApiBody({ type: ExemptionsInput })
+  @ApiOkResponse({ type: ExemptionsResultDto })
+  @ApiParam({ name: "id", type: Number })
+  @ApiHeader({ name: "x-idempotency-key", required: true })
+  exemptions(
+    @Req() req: Request & { actor: Actor },
+    @Param("id", ParseIntPipe) id: number,
+    @Headers("x-idempotency-key") idemKey: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.exemptions(req.actor, id, idemKey, body);
+  }
+
+  @Get(":id/missing-students")
+  @ApiOkResponse({ type: MissingStudentsDto })
+  @ApiParam({ name: "id", type: Number })
+  missingStudents(
+    @Req() req: Request & { actor: Actor },
+    @Param("id", ParseIntPipe) id: number,
+  ) {
+    return this.service.missingStudents(req.actor, id);
+  }
+
+  @Post(":id/late-students")
+  @HttpCode(200)
+  @ApiBody({ type: LateStudentInput })
+  @ApiOkResponse({ type: LateStudentResultDto })
+  @ApiParam({ name: "id", type: Number })
+  @ApiHeader({ name: "x-idempotency-key", required: true })
+  lateStudent(
+    @Req() req: Request & { actor: Actor },
+    @Param("id", ParseIntPipe) id: number,
+    @Headers("x-idempotency-key") idemKey: string,
+    @Body() body: unknown,
+  ) {
+    return this.service.lateStudent(req.actor, id, idemKey, body);
   }
 
   @Put(":id/components/:componentId/deadline")

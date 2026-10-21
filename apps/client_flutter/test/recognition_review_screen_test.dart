@@ -81,6 +81,7 @@ class ReviewTestServer implements HttpClientAdapter {
             'displayOrder': 1,
             'value': null,
             'status': 'CHUA_CO',
+            'exemptionReason': null,
             'source': 'NHAP_TAY',
           },
         ],
@@ -121,8 +122,7 @@ class ReviewTestServer implements HttpClientAdapter {
         'cancelledAt': null,
         'sourceImageUrl': 'https://storage.test/source-$detailCalls.png',
         'imageUrlExpiresInSeconds': 300,
-        'rows':
-            rowsOverride ??
+        'rows': (rowsOverride ??
             [
               {
                 'rowId': 'r-green',
@@ -209,7 +209,7 @@ class ReviewTestServer implements HttpClientAdapter {
                     ? 'https://storage.test/crop-name-3.png'
                     : null,
               },
-            ],
+            ]).map((r) => <String, dynamic>{...r, 'exempt': r['exempt'] ?? false}).toList(),
       };
     } else if (options.path.contains('/recognition-tickets')) {
       body = [

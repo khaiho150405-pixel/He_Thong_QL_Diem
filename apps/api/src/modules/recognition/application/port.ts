@@ -97,6 +97,8 @@ export interface RecognitionEvidenceRow {
   sttOnPaper: number | null;
   studentId: number;
   studentName: string;
+  /** Ô điểm của học sinh ở cột này đang được miễn (MIEN). */
+  exempt: boolean;
   /** Họ tên máy đọc được trên giấy (để so với studentName). */
   nameRead: string | null;
   /** 0..1, 4 chữ số thập phân. */

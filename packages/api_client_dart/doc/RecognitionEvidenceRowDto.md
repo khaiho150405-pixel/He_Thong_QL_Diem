@@ -14,6 +14,7 @@ Name | Type | Description | Notes
 **sttOnPaper** | **num** | STT in trên giấy đọc được |
 **studentId** | **num** |  |
 **studentName** | **String** | Họ tên học sinh theo danh sách lớp đã chốt |
+**exempt** | **bool** | Học sinh được miễn cột điểm này: dòng chỉ duyệt được với giá trị null |
 **nameRead** | **String** | Họ tên máy đọc được trên giấy |
 **matchConfidence** | **String** | Độ tin cậy ghép dòng với học sinh, 0..1 |
 **matchNote** | **String** |  |

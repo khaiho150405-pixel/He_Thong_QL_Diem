@@ -24,8 +24,10 @@ Name | Type | Description | Notes
 **opensAt** | **String** |  | [optional]
 **closesAt** | **String** |  | [optional]
 **deadlineVersion** | **num** |  | [optional]
+**deadlineSource** | **String** | Nguồn lịch hiệu lực: RIENG (bảng + cột) ghi đè HOC_KY (mặc định theo loại điểm); null = chưa có lịch | [optional]
 **value** | **String** |  |
-**status** | **String** |  |
+**status** | **String** | MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm) |
 **source_** | **String** |  |
+**exemptionReason** | **String** | Lý do miễn gần nhất khi status = MIEN, ngược lại null |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

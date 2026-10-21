@@ -103,6 +103,12 @@ export class RecognitionEvidenceRowDto {
   })
   studentName!: string;
   @ApiProperty({
+    type: Boolean,
+    description:
+      "Học sinh được miễn cột điểm này: dòng chỉ duyệt được với giá trị null",
+  })
+  exempt!: boolean;
+  @ApiProperty({
     type: String,
     nullable: true,
     description: "Họ tên máy đọc được trên giấy",

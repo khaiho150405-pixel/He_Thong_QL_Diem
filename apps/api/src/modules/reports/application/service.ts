@@ -121,7 +121,7 @@ export class ReportsService {
       ];
       for (const { row, stt } of rows) {
         const components = new Map(
-          row.components.map((item) => [item.name, item.value]),
+          row.components.map((item) => [item.name, item]),
         );
         sheet.addRow({
           stt,
@@ -130,7 +130,9 @@ export class ReportsService {
           ...Object.fromEntries(
             componentNames.map((name, index) => [
               `component${index}`,
-              gradeCell(components.get(name)),
+              components.get(name)?.exempt
+                ? "Miễn"
+                : gradeCell(components.get(name)?.value),
             ]),
           ),
           finalScore: gradeCell(row.finalScore),

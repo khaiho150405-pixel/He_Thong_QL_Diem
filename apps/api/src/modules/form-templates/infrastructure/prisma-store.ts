@@ -228,7 +228,13 @@ export class PrismaFormTemplateStore
       });
       const [locked, windows, pending] = await Promise.all([
         tx.chot_cot_diem.findMany({ where: { ma_bang_diem: gradebookId } }),
-        tx.lich_nhap_diem.findMany({ where: { ma_bang_diem: gradebookId } }),
+        // Lịch hiệu lực: lịch riêng (bảng, cột) nếu có, không thì lịch mặc định của học kỳ (lich_hieu_luc).
+        tx.$queryRaw<
+          Array<{ ma_thanh_phan: number; mo_luc: Date; dong_luc: Date }>
+        >`SELECT t.ma_thanh_phan, e.mo_luc, e.dong_luc
+          FROM public.thanh_phan_diem t
+          CROSS JOIN LATERAL public.lich_hieu_luc(${gradebookId}::integer, t.ma_thanh_phan) e
+          WHERE t.ma_mon = ${book.ma_mon}::integer`,
         tx.phieu_nhan_dien.findMany({
           where: {
             ma_bang_diem: gradebookId,

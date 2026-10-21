@@ -36,10 +36,16 @@ import '../authentication/session.dart';
     case 'KEM':
     case 'KÉM':
       return (tone: AppBadgeTone.bad, label: 'Kém');
+    case 'CHUA_CONG_BO':
+    case 'CHƯA CÔNG BỐ':
+      return (tone: AppBadgeTone.neutral, label: 'Chưa công bố');
     default:
       return (tone: AppBadgeTone.neutral, label: code);
   }
 }
+
+/// Nhãn tiếng Việt tương ứng với mã xếp loại.
+String classificationLabel(String code) => classificationBadgeOf(code).label;
 
 /// ĐTB chung và trạng thái tổng kết học kỳ, tính ở client từ danh sách môn.
 /// GIỮ NGUYÊN hành vi của màn cũ (quy tắc "không đổi công thức"): chỉ tính khi
@@ -291,17 +297,22 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                   (c) => c?.componentName == cName,
                                   orElse: () => null,
                                 );
-                            if (comp == null || comp.value.isEmpty) {
+                            if (comp == null ||
+                                ((comp.value == null || comp.value!.isEmpty) &&
+                                    comp.status.value != 'MIEN')) {
                               return dash();
                             }
+                            final isMien = comp.status.value == 'MIEN';
                             return _Chip(
                               background: t.hover,
                               child: Text(
-                                item.passFail == true
+                                isMien
+                                    ? 'Miễn'
+                                    : item.passFail == true
                                     ? (comp.value == '10.0'
                                           ? 'Đạt'
                                           : 'Không đạt')
-                                    : comp.value,
+                                    : (comp.value ?? ''),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: t.ink,
@@ -478,11 +489,13 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            items[i].passFail == true
+                                            comp.status.value == 'MIEN'
+                                                ? 'Miễn'
+                                                : items[i].passFail == true
                                                 ? (comp.value == '10.0'
                                                       ? 'Đạt'
                                                       : 'Không đạt')
-                                                : comp.value,
+                                                : (comp.value ?? ''),
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,

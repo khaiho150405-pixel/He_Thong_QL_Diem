@@ -1,3 +1,4 @@
+import { codedFailure } from "./coded-error.js";
 import { ConflictException } from "@nestjs/common";
 import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
 export function sqlStateOf(error: unknown): string | undefined {
@@ -61,6 +62,8 @@ export async function transaction<T>(
           "Dữ liệu vừa thay đổi; tải lại và thử lại.",
         );
       if (sqlState === "23514") {
+        const coded = codedFailure(error);
+        if (coded) throw coded;
         const diagnostic =
           String(error) +
           JSON.stringify((error as { meta?: unknown }).meta ?? {});

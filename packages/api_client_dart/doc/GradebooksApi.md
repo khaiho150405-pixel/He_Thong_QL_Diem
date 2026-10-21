@@ -12,11 +12,14 @@ Method | HTTP request | Description
 [**gradebooksBatchUpdate**](GradebooksApi.md#gradebooksbatchupdate) | **PUT** /api/v1/gradebooks/{id}/grades |
 [**gradebooksCells**](GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
 [**gradebooksCreate**](GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
+[**gradebooksExemptions**](GradebooksApi.md#gradebooksexemptions) | **PUT** /api/v1/gradebooks/{id}/exemptions |
 [**gradebooksHistory**](GradebooksApi.md#gradebookshistory) | **GET** /api/v1/gradebooks/{id}/cells/{cellId}/history |
 [**gradebooksHistoryAll**](GradebooksApi.md#gradebookshistoryall) | **GET** /api/v1/gradebooks/{id}/history |
+[**gradebooksLateStudent**](GradebooksApi.md#gradebookslatestudent) | **POST** /api/v1/gradebooks/{id}/late-students |
 [**gradebooksList**](GradebooksApi.md#gradebookslist) | **GET** /api/v1/gradebooks |
 [**gradebooksLock**](GradebooksApi.md#gradebookslock) | **POST** /api/v1/gradebooks/{id}/lock |
 [**gradebooksLockColumn**](GradebooksApi.md#gradebookslockcolumn) | **POST** /api/v1/gradebooks/{id}/components/{componentId}/lock |
+[**gradebooksMissingStudents**](GradebooksApi.md#gradebooksmissingstudents) | **GET** /api/v1/gradebooks/{id}/missing-students |
 [**gradebooksSetDeadline**](GradebooksApi.md#gradebookssetdeadline) | **PUT** /api/v1/gradebooks/{id}/components/{componentId}/deadline |
 [**gradebooksSyncRoster**](GradebooksApi.md#gradebookssyncroster) | **POST** /api/v1/gradebooks/{id}/sync-roster |
 
@@ -170,6 +173,59 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **gradebooksExemptions**
+> ExemptionsResultDto gradebooksExemptions(xIdempotencyKey, id, exemptionsInput)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getGradebooksApi();
+final String xIdempotencyKey = xIdempotencyKey_example; // String |
+final num id = 8.14; // num |
+final ExemptionsInput exemptionsInput = ; // ExemptionsInput |
+
+try {
+    final response = api.gradebooksExemptions(xIdempotencyKey, id, exemptionsInput);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling GradebooksApi->gradebooksExemptions: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **xIdempotencyKey** | **String**|  |
+ **id** | **num**|  |
+ **exemptionsInput** | [**ExemptionsInput**](ExemptionsInput.md)|  |
+
+### Return type
+
+[**ExemptionsResultDto**](ExemptionsResultDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **gradebooksHistory**
 > GradeHistoryDto gradebooksHistory(cellId, id, cursor)
 
@@ -262,6 +318,59 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **gradebooksLateStudent**
+> LateStudentResultDto gradebooksLateStudent(xIdempotencyKey, id, lateStudentInput)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getGradebooksApi();
+final String xIdempotencyKey = xIdempotencyKey_example; // String |
+final num id = 8.14; // num |
+final LateStudentInput lateStudentInput = ; // LateStudentInput |
+
+try {
+    final response = api.gradebooksLateStudent(xIdempotencyKey, id, lateStudentInput);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling GradebooksApi->gradebooksLateStudent: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **xIdempotencyKey** | **String**|  |
+ **id** | **num**|  |
+ **lateStudentInput** | [**LateStudentInput**](LateStudentInput.md)|  |
+
+### Return type
+
+[**LateStudentResultDto**](LateStudentResultDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -417,6 +526,51 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **gradebooksMissingStudents**
+> MissingStudentsDto gradebooksMissingStudents(id)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getGradebooksApi();
+final num id = 8.14; // num |
+
+try {
+    final response = api.gradebooksMissingStudents(id);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling GradebooksApi->gradebooksMissingStudents: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **num**|  |
+
+### Return type
+
+[**MissingStudentsDto**](MissingStudentsDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -136,6 +136,7 @@ class ReviewRowContent extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
     final t = context.tokens;
+    final isExempt = row.exempt == true;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.soft,
@@ -166,6 +167,12 @@ class ReviewRowContent extends StatelessWidget {
                         color: t.ink,
                       ),
                     ),
+                    if (isExempt)
+                      const AppBadge.info(
+                        'Miễn',
+                        dot: false,
+                        key: ValueKey('review-exempt-badge'),
+                      ),
                     if (showPaperStt) buildSttMismatchChip(context, row),
                     if (ReviewPageLabels.labelOf(context, row.order)
                         case final pageLabel?)
@@ -180,7 +187,7 @@ class ReviewRowContent extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             buildReviewLevelBadge(context, level),
-            if (!readOnly) _buildMenu(context),
+            if (!readOnly && !isExempt) _buildMenu(context),
           ],
         ),
       ),
@@ -448,7 +455,9 @@ class ReviewRowContent extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Không ghi điểm',
+                    row.exempt == true
+                        ? 'Học sinh được miễn'
+                        : 'Không ghi điểm',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -456,66 +465,69 @@ class ReviewRowContent extends StatelessWidget {
                     ),
                   ),
                 ),
-                TextButton.icon(
-                  key: ValueKey('review-cancel-empty-${row.rowId}'),
-                  onPressed: enabled ? onCancelLeaveEmpty : null,
-                  icon: const Icon(Icons.undo_rounded, size: 16),
-                  label: const Text('Hủy'),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                if (row.exempt != true)
+                  TextButton.icon(
+                    key: ValueKey('review-cancel-empty-${row.rowId}'),
+                    onPressed: enabled ? onCancelLeaveEmpty : null,
+                    icon: const Icon(Icons.undo_rounded, size: 16),
+                    label: const Text('Hủy'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      minimumSize: const Size(48, 36),
                     ),
-                    minimumSize: const Size(48, 36),
                   ),
-                ),
               ],
             ),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                for (final chipLabel in ['Vắng thi', 'Miễn', 'Nhập sau'])
-                  ChoiceChip(
-                    key: ValueKey('review-chip-$chipLabel-${row.rowId}'),
-                    label: Text(
-                      chipLabel,
-                      style: const TextStyle(fontSize: 12),
+            if (row.exempt != true) ...[
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  for (final chipLabel in ['Vắng thi', 'Miễn', 'Nhập sau'])
+                    ChoiceChip(
+                      key: ValueKey('review-chip-$chipLabel-${row.rowId}'),
+                      label: Text(
+                        chipLabel,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      selected: reasonController.text == chipLabel,
+                      onSelected: enabled
+                          ? (selected) {
+                              if (selected) {
+                                reasonController.text = chipLabel;
+                                onReasonChanged?.call(chipLabel);
+                              }
+                            }
+                          : null,
                     ),
-                    selected: reasonController.text == chipLabel,
-                    onSelected: enabled
-                        ? (selected) {
-                            if (selected) {
-                              reasonController.text = chipLabel;
-                              onReasonChanged?.call(chipLabel);
+                  ActionChip(
+                    key: ValueKey('review-chip-other-${row.rowId}'),
+                    label: const Text('Khác…', style: TextStyle(fontSize: 12)),
+                    onPressed: enabled
+                        ? () {
+                            if ([
+                              'Vắng thi',
+                              'Miễn',
+                              'Nhập sau',
+                            ].contains(reasonController.text)) {
+                              reasonController.text = '';
+                              onReasonChanged?.call('');
                             }
                           }
                         : null,
                   ),
-                ActionChip(
-                  key: ValueKey('review-chip-other-${row.rowId}'),
-                  label: const Text('Khác…', style: TextStyle(fontSize: 12)),
-                  onPressed: enabled
-                      ? () {
-                          if ([
-                            'Vắng thi',
-                            'Miễn',
-                            'Nhập sau',
-                          ].contains(reasonController.text)) {
-                            reasonController.text = '';
-                            onReasonChanged?.call('');
-                          }
-                        }
-                      : null,
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
             const SizedBox(height: 6),
             TextFormField(
               key: ValueKey('review-reason-${row.rowId}'),
               controller: reasonController,
-              enabled: enabled,
+              enabled: enabled && row.exempt != true,
               textInputAction: TextInputAction.next,
               onChanged: onReasonChanged,
               decoration: const InputDecoration(

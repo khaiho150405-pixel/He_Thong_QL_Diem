@@ -16,6 +16,8 @@ import '../final_results/student_results_screen.dart'
     show classificationBadgeOf;
 import '../recognition/recognition_panel.dart';
 import '../reports/reports_panel.dart';
+import '../academic_catalog/semester_deadlines_repository.dart'
+    show apiErrorCode, deadlineErrorMessage;
 import 'excel_import_dialog.dart';
 import 'grade_deadlines_panel.dart';
 import 'gradebook_status.dart';
@@ -101,6 +103,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
   bool conflict = false;
   num? _selectedComponentId;
   late Future<List<FinalResultDto>> finalResults;
+  List<MissingStudentDto>? _missingStudents;
 
   bool get teacher => ref.read(sessionProvider)?.role.value == 'GIAO_VIEN';
   bool get admin => ref.read(sessionProvider)?.role.value == 'QUAN_TRI_VIEN';
@@ -128,6 +131,141 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     finalResults = locked
         ? ref.read(finalResultsRepositoryProvider).list(widget.data.book.id)
         : Future.value(const []);
+    if (admin) {
+      _loadMissingStudents();
+    }
+  }
+
+  Future<void> _loadMissingStudents() async {
+    try {
+      final items = await ref
+          .read(gradebooksRepositoryProvider)
+          .missingStudents(widget.data.book.id);
+      if (mounted) setState(() => _missingStudents = items);
+    } catch (_) {}
+  }
+
+  Future<String?> askLateStudentReason(String studentName) async {
+    var reason = '';
+    String? error;
+    final value = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AppDialog(
+          title: 'Xử lý học sinh vào muộn',
+          confirmLabel: 'Xác nhận',
+          onCancel: () => Navigator.pop(ctx),
+          onConfirm: () {
+            final normalized = reason.trim();
+            if (normalized.isEmpty) {
+              setDialogState(() => error = 'Cần nhập lý do.');
+              return;
+            }
+            if (normalized.length > 500) {
+              setDialogState(() => error = 'Lý do tối đa 500 ký tự.');
+              return;
+            }
+            Navigator.pop(ctx, normalized);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Học sinh: $studentName'),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('late-student-reason-field'),
+                autofocus: true,
+                maxLength: 500,
+                maxLines: 3,
+                onChanged: (value) => reason = value,
+                decoration: InputDecoration(
+                  labelText: 'Lý do bổ sung vào bảng điểm',
+                  hintText: 'Nhập lý do (1–500 ký tự)',
+                  errorText: error,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    return value;
+  }
+
+  Future<void> handleLateStudent(MissingStudentDto student) async {
+    final reason = await askLateStudentReason(student.studentName);
+    if (reason == null || !mounted) return;
+    await mutate(() async {
+      await ref.read(gradebooksRepositoryProvider).addLateStudent(
+            bookId: widget.data.book.id,
+            studentId: student.studentId,
+            reason: reason,
+          );
+      await _loadMissingStudents();
+    }, success: 'Đã xử lý học sinh ${student.studentName}');
+  }
+
+  Future<String?> askExemptionReason({required bool exempt}) async {
+    var reason = '';
+    String? error;
+    final value = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AppDialog(
+          title: exempt ? 'Đánh dấu miễn' : 'Bỏ miễn',
+          confirmLabel: 'Xác nhận',
+          onCancel: () => Navigator.pop(ctx),
+          onConfirm: () {
+            final normalized = reason.trim();
+            if (normalized.isEmpty) {
+              setDialogState(() => error = 'Cần nhập lý do.');
+              return;
+            }
+            if (normalized.length > 500) {
+              setDialogState(() => error = 'Lý do tối đa 500 ký tự.');
+              return;
+            }
+            Navigator.pop(ctx, normalized);
+          },
+          child: TextField(
+            key: const ValueKey('exemption-reason-field'),
+            autofocus: true,
+            maxLength: 500,
+            maxLines: 3,
+            onChanged: (value) => reason = value,
+            decoration: InputDecoration(
+              labelText: 'Lý do ${exempt ? "miễn" : "bỏ miễn"}',
+              hintText: 'Nhập lý do (1–500 ký tự)',
+              errorText: error,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+      ),
+    );
+    return value;
+  }
+
+  Future<void> setExemption(GradeCellDto cell, {required bool exempt}) async {
+    final reason = await askExemptionReason(exempt: exempt);
+    if (reason == null || !mounted) return;
+    await mutate(() async {
+      await ref.read(gradebooksRepositoryProvider).setExemptions(
+            bookId: widget.data.book.id,
+            expectedVersion: widget.data.book.version,
+            changes: [
+              ExemptionChangeInput(
+                cellId: cell.id,
+                exempt: exempt,
+                reason: reason,
+              ),
+            ],
+          );
+    }, success: exempt ? 'Đã đánh dấu miễn' : 'Đã bỏ miễn');
   }
 
   @override
@@ -151,7 +289,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
 
   List<GradeCellDto> changedCells() => widget.data.items.where((cell) {
     if (cell.openForInput == false || cell.columnLocked == true) return false;
-    final text = controllers[cell.id]!.text.trim();
+    if (cell.status.value == 'MIEN' || cell.active == false) return false;
+    final text = controllers[cell.id]?.text.trim() ?? '';
     return (text.isEmpty ? null : text) != cell.value;
   }).toList();
 
@@ -289,6 +428,22 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
+  /// Xác định lỗi 409 có phải là xung đột phiên bản bảng điểm (cần hiện banner vàng và khóa lưới) hay không.
+  /// Chỉ bật xung đột khi 409 KHÔNG có code nghiệp vụ, hoặc code là VERSION_OR_STATE_CONFLICT / CONFLICT (lệch phiên bản).
+  bool isGradebookConflict(Object error) {
+    if (error is! DioException || error.response?.statusCode != 409) {
+      return false;
+    }
+    final code = apiErrorCode(error);
+    if (code == null || code.isEmpty) {
+      return true;
+    }
+    return code == 'VERSION_OR_STATE_CONFLICT' ||
+        code == 'VERSION_CONFLICT' ||
+        code == 'CONFLICT' ||
+        code == 'GRADEBOOK_VERSION_OR_STATE_CONFLICT';
+  }
+
   Future<void> mutate(
     Future<void> Function() action, {
     required String success,
@@ -305,13 +460,12 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       widget.onReload();
     } catch (error) {
       if (!mounted) return;
-      final isConflict =
-          error is DioException && error.response?.statusCode == 409;
+      final isConflict = isGradebookConflict(error);
       setState(() {
         busy = false;
         conflict = isConflict;
       });
-      showMessage(errorMessage(error));
+      showMessage(deadlineErrorMessage(error));
     }
   }
 
@@ -421,6 +575,78 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMissingStudentsBanner() {
+    final t = context.tokens;
+    final count = _missingStudents!.length;
+    return Container(
+      key: const ValueKey('missing-students-banner'),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: t.warnSoft,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: t.warn),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: t.warn),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Có $count học sinh vào lớp sau khi cột đã chốt',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: t.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _missingStudents!.map((s) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: t.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(color: t.line),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      s.studentName,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      key: ValueKey('process-late-${s.studentId}'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        minimumSize: const Size(0, 32),
+                      ),
+                      onPressed: () => handleLateStudent(s),
+                      child: const Text('Xử lý'),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -654,6 +880,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildStatusStrip(orderedComponents),
+                if (admin &&
+                    _missingStudents != null &&
+                    _missingStudents!.isNotEmpty)
+                  _buildMissingStudentsBanner(),
                 Expanded(
                   child: TabBarView(
                     children: [
@@ -931,8 +1161,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Cột: ${selectedComp.componentName} · Hệ số ${selectedComp.coefficient}'
-                  '${selectedComp.required_ ? ' · Bắt buộc' : ''}'
+                  'Cột: ${selectedComp.componentName} · Hệ số ${selectedComp.coefficient} · '
+                  '${selectedComp.required_ ? 'Bắt buộc' : 'Không bắt buộc'}'
                   '${isLocked ? ' · (Đang khóa)' : ''}',
                   style: Theme.of(
                     context,
@@ -1239,9 +1469,31 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            '${component.componentName}\nHệ số ${component.coefficient}'
-                            '${component.required_ ? ' · bắt buộc' : ''}',
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${component.componentName}\nHệ số ${component.coefficient}',
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                component.required_
+                                    ? 'Bắt buộc'
+                                    : 'Không bắt buộc',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: component.required_
+                                          ? t.priLink
+                                          : t.ink3,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
                           ),
                           if (component.openForInput == false) ...[
                             const SizedBox(width: 4),
@@ -1437,8 +1689,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       children: [
                         Expanded(
                           child: Text(
-                            '${cell.componentName} · Hệ số ${cell.coefficient}'
-                            '${cell.required_ ? ' · bắt buộc' : ''}',
+                            '${cell.componentName} · Hệ số ${cell.coefficient} · '
+                            '${cell.required_ ? 'Bắt buộc' : 'Không bắt buộc'}',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(fontWeight: FontWeight.w500),
                           ),
@@ -1471,6 +1723,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     String? hintText,
     String? helperText,
     Widget? prefixIcon,
+    Widget? suffixIcon,
   }) {
     final t = context.tokens;
     OutlineInputBorder border(Color color, [double width = 1]) =>
@@ -1498,6 +1751,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       hintText: hintText,
       helperText: helperText,
       prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
       isDense: true,
       filled: true,
       fillColor: fill,
@@ -1515,97 +1769,200 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final isLocked = cell.columnLocked == true || cell.openForInput == false;
     final isPending = cell.status.value == 'CHO_DOI_CHIEU';
     final isAi = cell.source_.value == 'NHAN_DIEN';
+    final isExempt = cell.status.value == 'MIEN';
+
+    if (isExempt) {
+      final tooltipMsg = (cell.exemptionReason != null &&
+              cell.exemptionReason!.isNotEmpty)
+          ? cell.exemptionReason!
+          : 'Miễn';
+      final canUnexempt = editable && cell.active && !isLocked;
+
+      return SizedBox(
+        width: width,
+        child: Tooltip(
+          message: tooltipMsg,
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: t.subtle,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: t.line),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Miễn',
+                    key: ValueKey('grade-exempt-${cell.id}'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: t.ink2,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                if (canUnexempt)
+                  PopupMenuButton<String>(
+                    key: ValueKey('cell-exempt-menu-${cell.id}'),
+                    icon: Icon(Icons.more_vert, size: 16, color: t.ink3),
+                    padding: EdgeInsets.zero,
+                    tooltip: 'Thao tác ô miễn',
+                    onSelected: (val) {
+                      if (val == 'unexempt') setExemption(cell, exempt: false);
+                    },
+                    itemBuilder: (ctx) => const [
+                      PopupMenuItem(
+                        value: 'unexempt',
+                        child: Text('Bỏ miễn'),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final isEnabled = editable && cell.active && !isLocked && !isPending;
     final currentText = controllers[cell.id]!.text.trim();
     final isChanged =
         isEnabled && (currentText.isEmpty ? null : currentText) != cell.value;
     final isInvalid = isEnabled && validateGrade(currentText) != null;
+    final isEmptyCell =
+        (cell.value == null || cell.value!.isEmpty) && currentText.isEmpty;
+    final canMarkExempt =
+        editable && cell.active && !isLocked && !isPending && isEmptyCell;
+
+    final menuButton = PopupMenuButton<String>(
+      key: ValueKey('cell-menu-${cell.id}'),
+      icon: Icon(Icons.more_vert, size: 16, color: t.ink3),
+      padding: EdgeInsets.zero,
+      tooltip: 'Thao tác ô điểm',
+      onSelected: (val) {
+        if (val == 'exempt') setExemption(cell, exempt: true);
+      },
+      itemBuilder: (ctx) => const [
+        PopupMenuItem(
+          value: 'exempt',
+          child: Text('Đánh dấu miễn'),
+        ),
+      ],
+    );
 
     return SizedBox(
       width: width,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isAi && width < 200)
-            Padding(padding: const EdgeInsets.only(right: 6), child: _aiTag()),
-          Expanded(
-            child: cell.passFail == true
-                ? AppSelectField<String>(
-                    key: ValueKey('grade-pf-${cell.id}'),
-                    value: controllers[cell.id]!.text.isEmpty
-                        ? 'EMPTY'
-                        : controllers[cell.id]!.text,
-                    label: 'Đánh giá',
-                    dense: true,
-                    searchable: false,
-                    prefixIcon: isLocked
-                        ? Tooltip(
-                            message: 'Cột đang khóa hoặc ngoài lịch nhập',
-                            child: Icon(
-                              Icons.lock_outline_rounded,
-                              size: 14,
-                              color: t.warn,
-                            ),
-                          )
-                        : null,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'EMPTY',
-                        child: Text('Chưa đánh giá'),
-                      ),
-                      DropdownMenuItem(value: '10.0', child: Text('Đạt')),
-                      DropdownMenuItem(value: '0.0', child: Text('Không đạt')),
-                    ],
-                    onChanged: isEnabled
-                        ? (v) => setState(() {
-                            controllers[cell.id]!.text = v == 'EMPTY'
-                                ? ''
-                                : v ?? '';
-                          })
-                        : null,
-                  )
-                : TextFormField(
-                    key: ValueKey('grade-${cell.id}'),
-                    controller: controllers[cell.id],
-                    enabled: isEnabled,
-                    textAlign: TextAlign.center,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textInputAction: TextInputAction.next,
-                    onChanged: (_) {
-                      setState(() {});
-                    },
-                    decoration: _gradeDecoration(
-                      enabled: isEnabled,
-                      invalid: isInvalid,
-                      changed: isChanged,
-                      hintText: '—',
-                      prefixIcon: isLocked
-                          ? Tooltip(
-                              message:
-                                  'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
-                              child: Icon(
-                                Icons.lock_rounded,
-                                size: 14,
-                                color: t.warn,
+      child: GestureDetector(
+        onSecondaryTap:
+            canMarkExempt ? () => setExemption(cell, exempt: true) : null,
+        onLongPress:
+            canMarkExempt ? () => setExemption(cell, exempt: true) : null,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isAi && width < 200)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: _aiTag(),
+              ),
+            Expanded(
+              child: cell.passFail == true
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: AppSelectField<String>(
+                            key: ValueKey('grade-pf-${cell.id}'),
+                            value: controllers[cell.id]!.text.isEmpty
+                                ? 'EMPTY'
+                                : controllers[cell.id]!.text,
+                            label: 'Đánh giá',
+                            dense: true,
+                            searchable: false,
+                            prefixIcon: isLocked
+                                ? Tooltip(
+                                    message:
+                                        'Cột đang khóa hoặc ngoài lịch nhập',
+                                    child: Icon(
+                                      Icons.lock_outline_rounded,
+                                      size: 14,
+                                      color: t.warn,
+                                    ),
+                                  )
+                                : null,
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'EMPTY',
+                                child: Text('Chưa đánh giá'),
                               ),
-                            )
-                          : null,
-                      helperText: cell.columnLocked == true
-                          ? 'Cột đã chốt'
-                          : cell.openForInput == false
-                          ? 'Ngoài lịch nhập'
-                          : isPending
-                          ? 'Chờ đối chiếu'
-                          : cell.value == null
-                          ? 'Chưa có điểm'
-                          : null,
+                              DropdownMenuItem(
+                                value: '10.0',
+                                child: Text('Đạt'),
+                              ),
+                              DropdownMenuItem(
+                                value: '0.0',
+                                child: Text('Không đạt'),
+                              ),
+                            ],
+                            onChanged: isEnabled
+                                ? (v) => setState(() {
+                                    controllers[cell.id]!.text = v == 'EMPTY'
+                                        ? ''
+                                        : v ?? '';
+                                  })
+                                : null,
+                          ),
+                        ),
+                        if (canMarkExempt) menuButton,
+                      ],
+                    )
+                  : TextFormField(
+                      key: ValueKey('grade-${cell.id}'),
+                      controller: controllers[cell.id],
+                      enabled: isEnabled,
+                      textAlign: TextAlign.center,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      textInputAction: TextInputAction.next,
+                      onChanged: (_) {
+                        setState(() {});
+                      },
+                      decoration: _gradeDecoration(
+                        enabled: isEnabled,
+                        invalid: isInvalid,
+                        changed: isChanged,
+                        hintText: '—',
+                        prefixIcon: isLocked
+                            ? Tooltip(
+                                message:
+                                    'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
+                                child: Icon(
+                                  Icons.lock_rounded,
+                                  size: 14,
+                                  color: t.warn,
+                                ),
+                              )
+                            : null,
+                        suffixIcon: canMarkExempt ? menuButton : null,
+                        helperText: cell.columnLocked == true
+                            ? 'Cột đã chốt'
+                            : cell.openForInput == false
+                            ? 'Ngoài lịch nhập'
+                            : isPending
+                            ? 'Chờ đối chiếu'
+                            : cell.value == null
+                            ? 'Chưa có điểm'
+                            : null,
+                      ),
+                      validator: validateGrade,
                     ),
-                    validator: validateGrade,
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

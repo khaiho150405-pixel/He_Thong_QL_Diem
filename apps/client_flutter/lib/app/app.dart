@@ -10,6 +10,7 @@ import '../features/authentication/login_screen.dart';
 import '../features/authentication/home_screen.dart';
 import '../features/academic_catalog/catalog_screen.dart';
 import '../features/academic_catalog/fields.dart';
+import '../features/academic_catalog/semester_deadlines_screen.dart';
 import '../features/academic_catalog/subjects_weights_screen.dart';
 import '../features/academic_catalog/teaching_assignments_screen.dart';
 import '../features/form_templates/form_templates_screen.dart';
@@ -61,6 +62,10 @@ final routerProvider = Provider.family<GoRouter, String>((
       GoRoute(
         path: '/admin/subjects-weights',
         builder: (_, state) => const SubjectsWeightsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/semester-deadlines',
+        builder: (_, state) => const SemesterDeadlinesScreen(),
       ),
       GoRoute(
         path: '/admin/form-templates',
@@ -140,7 +145,8 @@ final routerProvider = Provider.family<GoRouter, String>((
       }
       // Route mới (bước 13): chỉ thêm điều kiện, không sửa điều kiện cũ.
       if ((state.uri.path == '/admin/teaching-assignments' ||
-              state.uri.path == '/admin/subjects-weights') &&
+              state.uri.path == '/admin/subjects-weights' ||
+              state.uri.path == '/admin/semester-deadlines') &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }

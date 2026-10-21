@@ -3,6 +3,7 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:api_client_dart/src/model/exempted_student_dto.dart';
 import 'package:api_client_dart/src/model/skipped_student_dto.dart';
 import 'package:api_client_dart/src/model/final_result_dto.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
@@ -35,6 +36,10 @@ class CalculateFinalResultsDto {
     required this.results,
 
     required this.skipped,
+
+    required this.exemptedStudents,
+
+    required this.exempted,
   });
 
   @JsonKey(name: r'gradebookId', required: true, includeIfNull: false)
@@ -61,6 +66,13 @@ class CalculateFinalResultsDto {
   @JsonKey(name: r'skipped', required: true, includeIfNull: false)
   final List<SkippedStudentDto> skipped;
 
+  /// Học sinh được miễn mọi ô của bảng: không tạo kết quả
+  @JsonKey(name: r'exemptedStudents', required: true, includeIfNull: false)
+  final num exemptedStudents;
+
+  @JsonKey(name: r'exempted', required: true, includeIfNull: false)
+  final List<ExemptedStudentDto> exempted;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -72,7 +84,9 @@ class CalculateFinalResultsDto {
           other.calculatedStudents == calculatedStudents &&
           other.skippedStudents == skippedStudents &&
           other.results == results &&
-          other.skipped == skipped;
+          other.skipped == skipped &&
+          other.exemptedStudents == exemptedStudents &&
+          other.exempted == exempted;
 
   @override
   int get hashCode =>
@@ -83,7 +97,9 @@ class CalculateFinalResultsDto {
       calculatedStudents.hashCode +
       skippedStudents.hashCode +
       results.hashCode +
-      skipped.hashCode;
+      skipped.hashCode +
+      exemptedStudents.hashCode +
+      exempted.hashCode;
 
   factory CalculateFinalResultsDto.fromJson(Map<String, dynamic> json) =>
       _$CalculateFinalResultsDtoFromJson(json);

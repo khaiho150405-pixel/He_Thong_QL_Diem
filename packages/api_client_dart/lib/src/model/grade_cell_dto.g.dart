@@ -39,11 +39,15 @@ abstract class _$GradeCellDtoCWProxy {
 
   GradeCellDto deadlineVersion(num? deadlineVersion);
 
+  GradeCellDto deadlineSource(GradeCellDtoDeadlineSourceEnum? deadlineSource);
+
   GradeCellDto value(String? value);
 
   GradeCellDto status(GradeCellDtoStatusEnum status);
 
   GradeCellDto source_(GradeCellDtoSource_Enum source_);
+
+  GradeCellDto exemptionReason(String? exemptionReason);
 
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `GradeCellDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
@@ -68,9 +72,11 @@ abstract class _$GradeCellDtoCWProxy {
     String? opensAt,
     String? closesAt,
     num? deadlineVersion,
+    GradeCellDtoDeadlineSourceEnum? deadlineSource,
     String? value,
     GradeCellDtoStatusEnum status,
     GradeCellDtoSource_Enum source_,
+    String? exemptionReason,
   });
 }
 
@@ -136,6 +142,10 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
       this(deadlineVersion: deadlineVersion);
 
   @override
+  GradeCellDto deadlineSource(GradeCellDtoDeadlineSourceEnum? deadlineSource) =>
+      this(deadlineSource: deadlineSource);
+
+  @override
   GradeCellDto value(String? value) => this(value: value);
 
   @override
@@ -144,6 +154,10 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
   @override
   GradeCellDto source_(GradeCellDtoSource_Enum source_) =>
       this(source_: source_);
+
+  @override
+  GradeCellDto exemptionReason(String? exemptionReason) =>
+      this(exemptionReason: exemptionReason);
 
   @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `GradeCellDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
@@ -169,9 +183,11 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
     Object? opensAt = const $CopyWithPlaceholder(),
     Object? closesAt = const $CopyWithPlaceholder(),
     Object? deadlineVersion = const $CopyWithPlaceholder(),
+    Object? deadlineSource = const $CopyWithPlaceholder(),
     Object? value = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? source_ = const $CopyWithPlaceholder(),
+    Object? exemptionReason = const $CopyWithPlaceholder(),
   }) {
     return GradeCellDto(
       id: id == const $CopyWithPlaceholder()
@@ -238,6 +254,10 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
           ? _value.deadlineVersion
           // ignore: cast_nullable_to_non_nullable
           : deadlineVersion as num?,
+      deadlineSource: deadlineSource == const $CopyWithPlaceholder()
+          ? _value.deadlineSource
+          // ignore: cast_nullable_to_non_nullable
+          : deadlineSource as GradeCellDtoDeadlineSourceEnum?,
       value: value == const $CopyWithPlaceholder()
           ? _value.value
           // ignore: cast_nullable_to_non_nullable
@@ -250,6 +270,10 @@ class _$GradeCellDtoCWProxyImpl implements _$GradeCellDtoCWProxy {
           ? _value.source_
           // ignore: cast_nullable_to_non_nullable
           : source_ as GradeCellDtoSource_Enum,
+      exemptionReason: exemptionReason == const $CopyWithPlaceholder()
+          ? _value.exemptionReason
+          // ignore: cast_nullable_to_non_nullable
+          : exemptionReason as String?,
     );
   }
 }
@@ -285,6 +309,7 @@ GradeCellDto _$GradeCellDtoFromJson(Map<String, dynamic> json) =>
             'value',
             'status',
             'source',
+            'exemptionReason',
           ],
         );
         final val = GradeCellDto(
@@ -304,6 +329,11 @@ GradeCellDto _$GradeCellDtoFromJson(Map<String, dynamic> json) =>
           opensAt: $checkedConvert('opensAt', (v) => v as String?),
           closesAt: $checkedConvert('closesAt', (v) => v as String?),
           deadlineVersion: $checkedConvert('deadlineVersion', (v) => v as num?),
+          deadlineSource: $checkedConvert(
+            'deadlineSource',
+            (v) =>
+                $enumDecodeNullable(_$GradeCellDtoDeadlineSourceEnumEnumMap, v),
+          ),
           value: $checkedConvert('value', (v) => v as String?),
           status: $checkedConvert(
             'status',
@@ -312,6 +342,10 @@ GradeCellDto _$GradeCellDtoFromJson(Map<String, dynamic> json) =>
           source_: $checkedConvert(
             'source',
             (v) => $enumDecode(_$GradeCellDtoSource_EnumEnumMap, v),
+          ),
+          exemptionReason: $checkedConvert(
+            'exemptionReason',
+            (v) => v as String?,
           ),
         );
         return val;
@@ -337,15 +371,24 @@ Map<String, dynamic> _$GradeCellDtoToJson(GradeCellDto instance) =>
       'opensAt': ?instance.opensAt,
       'closesAt': ?instance.closesAt,
       'deadlineVersion': ?instance.deadlineVersion,
+      'deadlineSource':
+          ?_$GradeCellDtoDeadlineSourceEnumEnumMap[instance.deadlineSource],
       'value': instance.value,
       'status': _$GradeCellDtoStatusEnumEnumMap[instance.status]!,
       'source': _$GradeCellDtoSource_EnumEnumMap[instance.source_]!,
+      'exemptionReason': instance.exemptionReason,
     };
+
+const _$GradeCellDtoDeadlineSourceEnumEnumMap = {
+  GradeCellDtoDeadlineSourceEnum.RIENG: 'RIENG',
+  GradeCellDtoDeadlineSourceEnum.HOC_KY: 'HOC_KY',
+};
 
 const _$GradeCellDtoStatusEnumEnumMap = {
   GradeCellDtoStatusEnum.CHUA_CO: 'CHUA_CO',
   GradeCellDtoStatusEnum.CHO_DOI_CHIEU: 'CHO_DOI_CHIEU',
   GradeCellDtoStatusEnum.DA_DUYET: 'DA_DUYET',
+  GradeCellDtoStatusEnum.MIEN: 'MIEN',
 };
 
 const _$GradeCellDtoSource_EnumEnumMap = {

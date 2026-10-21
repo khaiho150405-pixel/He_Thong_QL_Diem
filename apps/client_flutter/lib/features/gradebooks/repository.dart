@@ -183,4 +183,46 @@ class GradebooksRepository {
     } while (cursor != null);
     return items;
   }
+
+  Future<ExemptionsResultDto> setExemptions({
+    required num bookId,
+    required num expectedVersion,
+    required List<ExemptionChangeInput> changes,
+  }) async {
+    final input = ExemptionsInput(
+      expectedVersion: expectedVersion,
+      changes: changes,
+    );
+    final key = _key('exemptions', '$bookId:${jsonEncode(input)}');
+    final result = (await api.getGradebooksApi().gradebooksExemptions(
+      xIdempotencyKey: key,
+      id: bookId,
+      exemptionsInput: input,
+    )).data!;
+    _complete('exemptions', key);
+    return result;
+  }
+
+  Future<List<MissingStudentDto>> missingStudents(num bookId) async {
+    final res =
+        await api.getGradebooksApi().gradebooksMissingStudents(id: bookId);
+    return res.data?.items ?? [];
+  }
+
+  Future<LateStudentResultDto> addLateStudent({
+    required num bookId,
+    required num studentId,
+    required String reason,
+  }) async {
+    final input = LateStudentInput(studentId: studentId, reason: reason);
+    final key =
+        _key('late-student', '$bookId:$studentId:${jsonEncode(input)}');
+    final result = (await api.getGradebooksApi().gradebooksLateStudent(
+      xIdempotencyKey: key,
+      id: bookId,
+      lateStudentInput: input,
+    )).data!;
+    _complete('late-student', key);
+    return result;
+  }
 }

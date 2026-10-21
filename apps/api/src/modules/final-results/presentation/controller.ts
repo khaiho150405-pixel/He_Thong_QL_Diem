@@ -52,6 +52,11 @@ export class SkippedStudentDto {
   missingComponents!: MissingComponentDto[];
 }
 
+export class ExemptedStudentDto {
+  @ApiProperty({ type: Number }) studentId!: number;
+  @ApiProperty({ type: String }) studentName!: string;
+}
+
 export class CalculateFinalResultsInput {
   @ApiProperty({ type: Number, minimum: 0 }) expectedVersion!: number;
   @ApiProperty({ type: String, minLength: 1, maxLength: 500 }) reason!: string;
@@ -66,6 +71,13 @@ export class CalculateFinalResultsDto {
   @ApiProperty({ type: Number }) skippedStudents!: number;
   @ApiProperty({ type: [FinalResultDto] }) results!: FinalResultDto[];
   @ApiProperty({ type: [SkippedStudentDto] }) skipped!: SkippedStudentDto[];
+  @ApiProperty({
+    type: Number,
+    description: "Học sinh được miễn mọi ô của bảng: không tạo kết quả",
+  })
+  exemptedStudents!: number;
+  @ApiProperty({ type: [ExemptedStudentDto] })
+  exempted!: ExemptedStudentDto[];
 }
 
 export class CalculationHistoryDto {
@@ -122,7 +134,8 @@ export class StudentApprovedComponentDto {
   @ApiProperty({ type: Number }) componentId!: number;
   @ApiProperty({ type: String }) componentName!: string;
   @ApiProperty({ type: String }) coefficient!: string;
-  @ApiProperty({ type: String }) value!: string;
+  @ApiProperty({ type: String, nullable: true }) value!: string | null;
+  @ApiProperty({ type: String, enum: ["DA_DUYET", "MIEN"] }) status!: string;
 }
 
 export class StudentSubjectResultDto {

@@ -1,6 +1,8 @@
 import 'package:api_client_dart/api_client_dart.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_date_field.dart';
@@ -8,8 +10,9 @@ import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_select_field.dart';
 import '../authentication/session.dart';
 import 'academic_year_scope.dart';
-import 'repository.dart';
 import 'fields.dart';
+import 'repository.dart';
+import 'semester_deadlines_repository.dart';
 
 class EditDialog extends ConsumerStatefulWidget {
   const EditDialog({super.key, required this.spec, this.row});
@@ -387,6 +390,27 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     return confirmed == true;
   }
 
+  List<PublishIssueDto> _extractIssues(Object e) {
+    if (e is! DioException) return const [];
+    final data = e.response?.data;
+    if (data is! Map<String, dynamic>) return const [];
+    final details = data['details'];
+    if (details is! Map) return const [];
+    final rawList = details['issues'];
+    if (rawList is! List) return const [];
+    final result = <PublishIssueDto>[];
+    for (final item in rawList) {
+      if (item is Map) {
+        try {
+          result.add(
+            PublishIssueDto.fromJson(Map<String, dynamic>.from(item)),
+          );
+        } catch (_) {}
+      }
+    }
+    return result;
+  }
+
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
     final input = <String, dynamic>{};
@@ -457,7 +481,25 @@ class _EditDialogState extends ConsumerState<EditDialog> {
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) setState(() => error = errorMessage(e));
+      if (mounted) {
+        if (apiErrorCode(e) == 'TERM_RESULTS_INCOMPLETE') {
+          final rawIssues = _extractIssues(e);
+          final semesterId = widget.row?['ma_hoc_ky'] as num? ??
+              widget.row?[widget.spec.id] as num?;
+          if (semesterId != null) {
+            await showAppDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => PublishReadinessDialog(
+                semesterId: semesterId,
+                initialIssues: rawIssues.isNotEmpty ? rawIssues : null,
+              ),
+            );
+            return;
+          }
+        }
+        setState(() => error = deadlineErrorMessage(e));
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -472,7 +514,10 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             f.key == 'ma_giao_vien');
     if (f.kind == 'boolean') {
       final t = context.tokens;
-      final isYearHienHanh = widget.spec.key == 'years' && f.key == 'hien_hanh';
+      final isYearHienHanh =
+          widget.spec.key == 'years' && f.key == 'hien_hanh';
+      final isSemesterDaCongBo =
+          widget.spec.key == 'semesters' && f.key == 'da_cong_bo';
       return Container(
         decoration: BoxDecoration(
           color: t.subtle,
@@ -498,6 +543,23 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                   if (isYearHienHanh && v == true) {
                     final shouldProceed = await _confirmSwitchCurrentYear();
                     if (shouldProceed && mounted) {
+                      setState(() => values[f.key] = true);
+                    }
+                  } else if (isSemesterDaCongBo && v == true) {
+                    final semesterId = widget.row?['ma_hoc_ky'] as num? ??
+                        widget.row?[widget.spec.id] as num?;
+                    if (semesterId != null) {
+                      final shouldProceed = await showAppDialog<bool>(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (ctx) => PublishReadinessDialog(
+                          semesterId: semesterId,
+                        ),
+                      );
+                      if (shouldProceed == true && mounted) {
+                        setState(() => values[f.key] = true);
+                      }
+                    } else {
                       setState(() => values[f.key] = true);
                     }
                   } else {
@@ -897,3 +959,297 @@ AppBadge roleAppBadge(String role) => AppBadge(
   },
   dot: false,
 );
+
+String publishIssueDescription(PublishIssueDtoCodeEnum code) {
+  switch (code) {
+    case PublishIssueDtoCodeEnum.GRADEBOOK_MISSING:
+      return 'Chưa có bảng điểm — dùng Khởi tạo bảng điểm ở màn Lịch nhập điểm học kỳ';
+    case PublishIssueDtoCodeEnum.GRADEBOOK_NOT_LOCKED:
+      return 'Bảng điểm chưa chốt (còn cột chưa hết hạn hoặc chưa có lịch)';
+    case PublishIssueDtoCodeEnum.RECOGNITION_PENDING:
+      return 'Còn phiếu nhận dạng chưa duyệt';
+    case PublishIssueDtoCodeEnum.STUDENT_NOT_IN_GRADEBOOK:
+      return 'Có học sinh chưa có trong bảng điểm — mở bảng điểm để xử lý';
+    case PublishIssueDtoCodeEnum.RESULTS_MISSING:
+      return 'Giáo viên chưa tính tổng kết đủ';
+    case PublishIssueDtoCodeEnum.COLUMNS_WITHOUT_DEADLINE:
+      return 'Có cột chưa có lịch nhập';
+  }
+}
+
+String publishIssueGroupTitle(PublishIssueDtoCodeEnum code) {
+  switch (code) {
+    case PublishIssueDtoCodeEnum.GRADEBOOK_MISSING:
+      return 'Chưa có bảng điểm';
+    case PublishIssueDtoCodeEnum.GRADEBOOK_NOT_LOCKED:
+      return 'Bảng điểm chưa chốt';
+    case PublishIssueDtoCodeEnum.RECOGNITION_PENDING:
+      return 'Phiếu nhận dạng chưa duyệt';
+    case PublishIssueDtoCodeEnum.STUDENT_NOT_IN_GRADEBOOK:
+      return 'Học sinh chưa có trong bảng điểm';
+    case PublishIssueDtoCodeEnum.RESULTS_MISSING:
+      return 'Chưa tính tổng kết đủ';
+    case PublishIssueDtoCodeEnum.COLUMNS_WITHOUT_DEADLINE:
+      return 'Cột chưa có lịch nhập (Cảnh báo)';
+  }
+}
+
+class PublishReadinessDialog extends ConsumerStatefulWidget {
+  const PublishReadinessDialog({
+    super.key,
+    required this.semesterId,
+    this.initialIssues,
+  });
+
+  final num semesterId;
+  final List<PublishIssueDto>? initialIssues;
+
+  @override
+  ConsumerState<PublishReadinessDialog> createState() =>
+      _PublishReadinessDialogState();
+}
+
+class _PublishReadinessDialogState
+    extends ConsumerState<PublishReadinessDialog> {
+  bool _loading = false;
+  String? _error;
+  bool _ready = false;
+  List<PublishIssueDto> _issues = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialIssues != null) {
+      _issues = widget.initialIssues!;
+      _ready = false;
+    } else {
+      _checkReadiness();
+    }
+  }
+
+  Future<void> _checkReadiness() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await ref
+          .read(semesterDeadlinesRepositoryProvider)
+          .publishReadiness(widget.semesterId);
+      if (mounted) {
+        setState(() {
+          _ready = res.ready;
+          _issues = res.issues;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = deadlineErrorMessage(e);
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildIssueGroup(
+    BuildContext context,
+    PublishIssueDtoCodeEnum code,
+    List<PublishIssueDto> groupIssues,
+  ) {
+    final t = context.tokens;
+    final isWarning = code == PublishIssueDtoCodeEnum.COLUMNS_WITHOUT_DEADLINE;
+    final toneColor = isWarning ? t.warn : t.bad;
+    final toneBg = isWarning ? t.warnSoft : t.badSoft;
+    final toneLine = isWarning ? t.warnLine : t.badLine;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: toneBg,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: toneLine),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isWarning
+                    ? Icons.warning_amber_rounded
+                    : Icons.error_outline_rounded,
+                size: 18,
+                color: toneColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  publishIssueGroupTitle(code),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: toneColor,
+                  ),
+                ),
+              ),
+              AppBadge(
+                '${groupIssues.length}',
+                tone: isWarning ? AppBadgeTone.warn : AppBadgeTone.bad,
+                dot: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final issue in groupIssues)
+            Container(
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: t.surface,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: t.line),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${issue.className} – ${issue.subjectName}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: t.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          publishIssueDescription(issue.code),
+                          style: TextStyle(
+                            color: t.ink2,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (issue.gradebookId != null) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      key: ValueKey('open-gradebook-${issue.gradebookId}'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        context.push('/gradebooks/${issue.gradebookId}');
+                      },
+                      child: const Text(
+                        'Mở bảng điểm',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    final grouped = <PublishIssueDtoCodeEnum, List<PublishIssueDto>>{};
+    for (final issue in _issues) {
+      grouped.putIfAbsent(issue.code, () => []).add(issue);
+    }
+
+    return AppDialog(
+      title: 'Kiểm tra trước khi công bố',
+      maxWidth: 620,
+      confirmLabel: 'Xác nhận công bố',
+      cancelLabel: 'Đóng',
+      confirmEnabled: _ready && !_loading,
+      onConfirm: () => Navigator.pop(context, true),
+      onCancel: () => Navigator.pop(context, false),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _ready
+                      ? 'Học kỳ đủ điều kiện công bố xếp loại.'
+                      : 'Học kỳ chưa đủ điều kiện công bố xếp loại. Vui lòng xử lý các vấn đề bên dưới.',
+                  style: TextStyle(
+                    color: _ready ? t.ok : t.bad,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                key: const ValueKey('publish-readiness-retry'),
+                onPressed: _loading ? null : _checkReadiness,
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text(
+                  'Kiểm tra lại',
+                  style: TextStyle(fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_error != null)
+            Container(
+              margin: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: t.badSoft,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: t.badLine),
+              ),
+              child: Text(
+                _error!,
+                style: TextStyle(color: t.bad, fontSize: 13),
+              ),
+            )
+          else if (_issues.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  'Không có vấn đề nào được phát hiện.',
+                  style: TextStyle(color: t.ink2),
+                ),
+              ),
+            )
+          else ...[
+            const SizedBox(height: 16),
+            for (final entry in grouped.entries) ...[
+              _buildIssueGroup(context, entry.key, entry.value),
+              const SizedBox(height: 12),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+

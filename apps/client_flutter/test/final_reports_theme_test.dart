@@ -211,15 +211,19 @@ void main() {
           find.byKey(const ValueKey('calculate-final-results')),
           findsOneWidget,
         );
-        expect(find.byType(DataTable), findsOneWidget);
-        for (final column in [
-          'STT',
-          'Học sinh',
-          'Điểm tổng kết',
-          'Xếp loại',
-          'Chi tiết',
-        ]) {
-          expect(find.text(column), findsOneWidget);
+        if (width < 600) {
+          expect(find.byType(DataTable), findsNothing);
+        } else {
+          expect(find.byType(DataTable), findsOneWidget);
+          for (final column in [
+            'STT',
+            'Học sinh',
+            'Điểm tổng kết',
+            'Xếp loại',
+            'Chi tiết',
+          ]) {
+            expect(find.text(column), findsOneWidget);
+          }
         }
         expect(find.text('Nguyễn Văn An'), findsOneWidget);
         expect(find.text('8.6'), findsOneWidget);
@@ -229,13 +233,13 @@ void main() {
         expect(_badgeDotColor(tester, 'Khá'), tokens.priLink);
         expect(_badgeDotColor(tester, 'Đạt'), tokens.neu);
         expect(_badgeDotColor(tester, 'Yếu'), tokens.bad);
-        // Dữ liệu thật: phiên bản hệ số, chính sách, thời điểm tính.
+        // Dữ liệu thật: phiên bản hệ số, chính sách, thời điểm tính (hiển thị 1 lần phía trên).
         expect(
           find.textContaining('Hệ số W-012345678901234567'),
-          findsNWidgets(4),
+          findsOneWidget,
         );
-        expect(find.textContaining('Chính sách DEV-2026-01'), findsNWidgets(4));
-        expect(find.textContaining('Tính lúc '), findsNWidgets(4));
+        expect(find.textContaining('Chính sách DEV-2026-01'), findsOneWidget);
+        expect(find.textContaining('Tính lúc '), findsOneWidget);
         expect(find.byTooltip('Lịch sử tính'), findsNWidgets(4));
         expect(tester.takeException(), isNull);
       });

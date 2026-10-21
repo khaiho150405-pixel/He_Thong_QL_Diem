@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
+import '../academic_catalog/semester_deadlines_repository.dart'
+    show deadlineErrorMessage;
 import '../authentication/session.dart';
 
 String deadlineLabel(BuildContext context, String? value) {
@@ -11,6 +13,37 @@ String deadlineLabel(BuildContext context, String? value) {
   if (date == null) return 'Chưa đặt lịch';
   final local = MaterialLocalizations.of(context);
   return '${local.formatShortDate(date)} ${local.formatTimeOfDay(TimeOfDay.fromDateTime(date), alwaysUse24HourFormat: true)}';
+}
+
+Widget _deadlineSourceBadge(GradeCellDtoDeadlineSourceEnum? source) {
+  if (source == GradeCellDtoDeadlineSourceEnum.HOC_KY) {
+    return const AppBadge(
+      'Theo lịch học kỳ',
+      tone: AppBadgeTone.info,
+      dot: false,
+    );
+  }
+  if (source == GradeCellDtoDeadlineSourceEnum.RIENG) {
+    return const AppBadge('Lịch riêng', tone: AppBadgeTone.ok, dot: false);
+  }
+  return const AppBadge.warn('Chưa có lịch', dot: false);
+}
+
+Widget? _columnDeadlineStatusBadge(GradeCellDto column) {
+  if (column.columnLocked == true) return null;
+  final opensAt = DateTime.tryParse(column.opensAt ?? '')?.toLocal();
+  final closesAt = DateTime.tryParse(column.closesAt ?? '')?.toLocal();
+  if (closesAt == null || opensAt == null) {
+    return const AppBadge('Chưa đặt lịch', dot: false);
+  }
+  final now = DateTime.now();
+  if (now.isBefore(opensAt)) {
+    return const AppBadge('Chưa mở', tone: AppBadgeTone.neutral, dot: false);
+  }
+  if (!now.isBefore(closesAt)) {
+    return const AppBadge.warn('Đã hết hạn', dot: false);
+  }
+  return const AppBadge.ok('Đang hiệu lực', dot: false);
 }
 
 class GradeDeadlinesPanel extends ConsumerStatefulWidget {
@@ -45,8 +78,18 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
     child: ExpansionTile(
       initiallyExpanded: widget.isAdmin,
       title: const Text('Lịch nhập điểm của nhà trường'),
-      subtitle: Text(
-        '${widget.components.length} cột · Hết hạn: ô thiếu/chưa duyệt ghi 0 và tự khóa',
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${widget.components.length} cột · Hết hạn: ô thiếu/chưa duyệt ghi 0 và tự khóa',
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Hết hạn: cột bắt buộc còn trống sẽ ghi 0; cột không bắt buộc để trống, không tính vào điểm trung bình.',
+          ),
+        ],
       ),
       children: [
         if (widget.components.isEmpty)
@@ -114,9 +157,36 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              column.componentName,
-              style: Theme.of(context).textTheme.titleSmall,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    column.componentName,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                AppBadge(
+                  column.required_ ? 'Bắt buộc' : 'Không bắt buộc',
+                  tone: column.required_
+                      ? AppBadgeTone.info
+                      : AppBadgeTone.neutral,
+                  dot: false,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  _deadlineSourceBadge(column.deadlineSource),
+                  if (_columnDeadlineStatusBadge(column) != null)
+                    _columnDeadlineStatusBadge(column)!,
+                ],
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -134,7 +204,7 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
             else if (widget.isAdmin && !widget.locked)
               OutlinedButton.icon(
                 icon: const Icon(Icons.event_outlined),
-                label: Text(column.closesAt == null ? 'Đặt lịch' : 'Sửa lịch'),
+                label: const Text('Đặt lịch riêng cho bảng này'),
                 onPressed: () async {
                   final saved = await showDialog<bool>(
                     context: context,
@@ -187,6 +257,10 @@ class _DeadlineDialogState extends ConsumerState<_DeadlineDialog> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(value),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
     );
     if (time == null || !mounted) return;
     setState(() {
@@ -222,7 +296,7 @@ class _DeadlineDialogState extends ConsumerState<_DeadlineDialog> {
           );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) setState(() => error = errorMessage(e));
+      if (mounted) setState(() => error = deadlineErrorMessage(e));
     } finally {
       if (mounted) setState(() => busy = false);
     }

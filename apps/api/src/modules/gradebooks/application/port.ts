@@ -31,9 +31,11 @@ export interface GradeCell {
   opensAt?: string | null;
   closesAt?: string | null;
   deadlineVersion?: number;
+  deadlineSource?: "RIENG" | "HOC_KY" | null;
   value: string | null;
-  status: "CHUA_CO" | "CHO_DOI_CHIEU" | "DA_DUYET";
+  status: "CHUA_CO" | "CHO_DOI_CHIEU" | "DA_DUYET" | "MIEN";
   source: "NHAP_TAY" | "NHAN_DIEN";
+  exemptionReason: string | null;
 }
 export interface GradeHistoryEntry {
   id: string;
@@ -60,8 +62,98 @@ export interface BatchResult {
   version: number;
   items: Array<Pick<GradeCell, "id" | "value" | "status" | "source">>;
 }
+export interface MissingStudent {
+  studentId: number;
+  studentName: string;
+}
+export interface ExemptionResult {
+  bookId: number;
+  version: number;
+  cellIds: string[];
+}
+export interface LateStudentResult {
+  bookId: number;
+  version: number;
+  createdCells: number;
+  exemptedCells: number;
+}
+export interface PublishIssue {
+  code:
+    | "GRADEBOOK_MISSING"
+    | "GRADEBOOK_NOT_LOCKED"
+    | "RECOGNITION_PENDING"
+    | "STUDENT_NOT_IN_GRADEBOOK"
+    | "RESULTS_MISSING"
+    | "COLUMNS_WITHOUT_DEADLINE";
+  severity: "BLOCKING" | "WARNING";
+  classId: number;
+  className: string;
+  subjectId: number;
+  subjectName: string;
+  gradebookId: number | null;
+  studentIds: number[] | null;
+  count: number | null;
+}
+export interface PublishReadiness {
+  ready: boolean;
+  issues: PublishIssue[];
+}
+export type DeadlineType = "TX" | "GK" | "CK";
+export interface SemesterDeadline {
+  type: DeadlineType;
+  opensAt: string | null;
+  closesAt: string | null;
+  version: number;
+  expired: boolean;
+}
+export interface InitializeScope {
+  classId: number;
+  className: string;
+  subjectId: number;
+  subjectName: string;
+}
+export interface InitializeResult {
+  created: Array<InitializeScope & { gradebookId: number }>;
+  skipped: Array<
+    InitializeScope & { reason: "EMPTY_ROSTER" | "NO_COMPONENTS" }
+  >;
+}
 export interface GradebookUnit {
   authorization: Unit;
+  setExemptions(
+    sessionHash: string,
+    bookId: number,
+    version: number,
+    changes: Array<{ cellId: string; exempt: boolean; reason: string }>,
+    idempotencyKey: string,
+    requestHash: string,
+  ): Promise<ExemptionResult>;
+  cellsByIds(bookId: number, ids: string[]): Promise<GradeCell[]>;
+  missingStudents(bookId: number): Promise<MissingStudent[]>;
+  addLateStudent(
+    sessionHash: string,
+    bookId: number,
+    studentId: number,
+    reason: string,
+    idempotencyKey: string,
+    requestHash: string,
+  ): Promise<LateStudentResult>;
+  publishReadiness(termId: number): Promise<PublishReadiness>;
+  semesterDeadlines(termId: number): Promise<SemesterDeadline[]>;
+  setSemesterDeadline(
+    sessionHash: string,
+    termId: number,
+    type: DeadlineType,
+    opensAt: string,
+    closesAt: string,
+    version: number,
+  ): Promise<void>;
+  initializeSemester(
+    sessionHash: string,
+    termId: number,
+    idempotencyKey: string,
+    requestHash: string,
+  ): Promise<InitializeResult>;
   processDue(): Promise<number>;
   setDeadline(
     sessionHash: string,

@@ -50,11 +50,15 @@ class GradeCellDto {
 
     this.deadlineVersion,
 
+    this.deadlineSource,
+
     required this.value,
 
     required this.status,
 
     required this.source_,
+
+    required this.exemptionReason,
   });
 
   @JsonKey(name: r'id', required: true, includeIfNull: false)
@@ -106,14 +110,23 @@ class GradeCellDto {
   @JsonKey(name: r'deadlineVersion', required: false, includeIfNull: false)
   final num? deadlineVersion;
 
+  /// Nguồn lịch hiệu lực: RIENG (bảng + cột) ghi đè HOC_KY (mặc định theo loại điểm); null = chưa có lịch
+  @JsonKey(name: r'deadlineSource', required: false, includeIfNull: false)
+  final GradeCellDtoDeadlineSourceEnum? deadlineSource;
+
   @JsonKey(name: r'value', required: true, includeIfNull: true)
   final String? value;
 
+  /// MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)
   @JsonKey(name: r'status', required: true, includeIfNull: false)
   final GradeCellDtoStatusEnum status;
 
   @JsonKey(name: r'source', required: true, includeIfNull: false)
   final GradeCellDtoSource_Enum source_;
+
+  /// Lý do miễn gần nhất khi status = MIEN, ngược lại null
+  @JsonKey(name: r'exemptionReason', required: true, includeIfNull: true)
+  final String? exemptionReason;
 
   @override
   bool operator ==(Object other) =>
@@ -135,9 +148,11 @@ class GradeCellDto {
           other.opensAt == opensAt &&
           other.closesAt == closesAt &&
           other.deadlineVersion == deadlineVersion &&
+          other.deadlineSource == deadlineSource &&
           other.value == value &&
           other.status == status &&
-          other.source_ == source_;
+          other.source_ == source_ &&
+          other.exemptionReason == exemptionReason;
 
   @override
   int get hashCode =>
@@ -157,9 +172,11 @@ class GradeCellDto {
       (opensAt == null ? 0 : opensAt.hashCode) +
       (closesAt == null ? 0 : closesAt.hashCode) +
       deadlineVersion.hashCode +
+      (deadlineSource == null ? 0 : deadlineSource.hashCode) +
       (value == null ? 0 : value.hashCode) +
       status.hashCode +
-      source_.hashCode;
+      source_.hashCode +
+      (exemptionReason == null ? 0 : exemptionReason.hashCode);
 
   factory GradeCellDto.fromJson(Map<String, dynamic> json) =>
       _$GradeCellDtoFromJson(json);
@@ -172,13 +189,41 @@ class GradeCellDto {
   }
 }
 
+/// Nguồn lịch hiệu lực: RIENG (bảng + cột) ghi đè HOC_KY (mặc định theo loại điểm); null = chưa có lịch
+enum GradeCellDtoDeadlineSourceEnum {
+  /// Nguồn lịch hiệu lực: RIENG (bảng + cột) ghi đè HOC_KY (mặc định theo loại điểm); null = chưa có lịch
+  @JsonValue(r'RIENG')
+  RIENG(r'RIENG'),
+
+  /// Nguồn lịch hiệu lực: RIENG (bảng + cột) ghi đè HOC_KY (mặc định theo loại điểm); null = chưa có lịch
+  @JsonValue(r'HOC_KY')
+  HOC_KY(r'HOC_KY');
+
+  const GradeCellDtoDeadlineSourceEnum(this.value);
+
+  final String value;
+
+  @override
+  String toString() => value;
+}
+
+/// MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)
 enum GradeCellDtoStatusEnum {
+  /// MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)
   @JsonValue(r'CHUA_CO')
   CHUA_CO(r'CHUA_CO'),
+
+  /// MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)
   @JsonValue(r'CHO_DOI_CHIEU')
   CHO_DOI_CHIEU(r'CHO_DOI_CHIEU'),
+
+  /// MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)
   @JsonValue(r'DA_DUYET')
-  DA_DUYET(r'DA_DUYET');
+  DA_DUYET(r'DA_DUYET'),
+
+  /// MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)
+  @JsonValue(r'MIEN')
+  MIEN(r'MIEN');
 
   const GradeCellDtoStatusEnum(this.value);
 

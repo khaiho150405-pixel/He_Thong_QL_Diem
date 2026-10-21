@@ -719,6 +719,12 @@ class AppSidebar extends ConsumerWidget {
                         countBadge: null,
                       ),
                       (
+                        icon: Icons.event_available_outlined,
+                        title: 'Lịch nhập điểm học kỳ',
+                        route: '/admin/semester-deadlines',
+                        countBadge: null,
+                      ),
+                      (
                         icon: Icons.meeting_room_outlined,
                         title: 'Lớp học',
                         route: '/catalog/classes',

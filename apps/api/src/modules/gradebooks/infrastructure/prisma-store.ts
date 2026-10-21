@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { Prisma } from "../../../generated/prisma/client.js";
 import type { PrismaClient } from "../../../generated/prisma/client.js";
 import { unit } from "../../../common/store.js";
 import { classStudentOrder } from "../../../common/student-order.js";
@@ -17,7 +18,14 @@ import type {
   GradeHistoryEntry,
   GradebookHistoryEntry,
   BatchResult,
+  SemesterDeadline,
+  InitializeResult,
+  ExemptionResult,
+  LateStudentResult,
+  MissingStudent,
+  PublishReadiness,
 } from "../application/port.js";
+import { deadlineFailure } from "../application/deadline-errors.js";
 
 interface BookRow {
   ma_bang_diem: number;
@@ -64,6 +72,50 @@ export function createGridFailure(error: unknown): Error | null {
   return null;
 }
 
+/** Ô điểm của một bảng kèm lịch hiệu lực, trạng thái miễn và STT; `filter` chọn ô, `limit` giới hạn số dòng. */
+async function selectCells(
+  tx: Prisma.TransactionClient,
+  bookId: number,
+  filter: Prisma.Sql,
+  limit: Prisma.Sql,
+): Promise<GradeCell[]> {
+  const rows = await tx.$queryRaw<Array<Omit<GradeCell, "stt">>>(Prisma.sql`
+    SELECT d.ma_diem::text AS id, hs.ma_hoc_sinh AS "studentId", hs.ho_ten AS "studentName",
+      (hs.dang_theo_hoc AND hs.ma_lop = b.ma_lop) AS active,
+      tp.ma_thanh_phan AS "componentId", tp.ten_thanh_phan AS "componentName",
+      public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text AS coefficient, tp.bat_buoc AS required, tp.thu_tu_hien_thi AS "displayOrder",
+      (tp.cho_phep_nhap AND d.trang_thai<>'MIEN' AND (w.dong_luc IS NULL OR (clock_timestamp()>=w.mo_luc AND clock_timestamp()<w.dong_luc))) AS "openForInput",
+      to_char(w.mo_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "opensAt",
+      to_char(w.dong_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "closesAt",
+      CASE WHEN w.nguon='RIENG' THEN w.version ELSE 0 END AS "deadlineVersion",
+      w.nguon AS "deadlineSource",
+      EXISTS(SELECT 1 FROM public.chot_cot_diem c WHERE c.ma_bang_diem=b.ma_bang_diem AND c.ma_thanh_phan=tp.ma_thanh_phan) AS "columnLocked",
+      (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=b.ma_mon) AS "passFail",
+      d.gia_tri::text AS value, d.trang_thai AS status, d.nguon_nhap AS source,
+      (SELECT m.ly_do FROM public.lich_su_mien_diem m WHERE m.ma_diem=d.ma_diem AND d.trang_thai='MIEN'
+        ORDER BY m.ma DESC LIMIT 1) AS "exemptionReason"
+    FROM public.diem_thanh_phan d JOIN public.bang_diem b USING (ma_bang_diem)
+    JOIN public.hoc_sinh hs USING (ma_hoc_sinh)
+    JOIN public.thanh_phan_diem tp USING (ma_thanh_phan)
+    LEFT JOIN LATERAL public.lich_hieu_luc(b.ma_bang_diem,tp.ma_thanh_phan) w ON true
+    WHERE d.ma_bang_diem = ${bookId}::integer AND ${filter}
+    ORDER BY d.ma_diem ${limit}`);
+  if (!rows.length) return [];
+  const roster = await tx.$queryRaw<
+    Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
+  >`
+    SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten
+    FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop = hs.ma_lop
+    WHERE b.ma_bang_diem = ${bookId}::integer AND hs.dang_theo_hoc`;
+  const order = classStudentOrder(
+    roster.map((row) => ({ ...row, dang_theo_hoc: true })),
+  );
+  return rows.map((row) => ({
+    ...row,
+    stt: row.active ? (order.get(row.studentId) ?? null) : null,
+  }));
+}
+
 @Injectable()
 export class PrismaGradebookStore implements GradebookStore {
   constructor(@Inject("DATABASE") private readonly db: PrismaClient) {}
@@ -72,6 +124,40 @@ export class PrismaGradebookStore implements GradebookStore {
       return await transaction(this.db, (tx) =>
         work({
           authorization: unit(tx),
+          semesterDeadlines: (termId) =>
+            tx.$queryRaw<SemesterDeadline[]>`
+              SELECT v.type, to_char(h.mo_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "opensAt",
+                to_char(h.dong_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "closesAt",
+                coalesce(h.version,0) AS version,
+                coalesce(h.dong_luc<=clock_timestamp(),false) AS expired
+              FROM (VALUES ('TX',1),('GK',2),('CK',3)) v(type,position)
+              LEFT JOIN public.lich_nhap_hoc_ky h ON h.ma_hoc_ky=${termId}::integer AND h.loai_he_so=v.type
+              ORDER BY v.position`,
+          setSemesterDeadline: async (
+            sessionHash,
+            termId,
+            type,
+            opensAt,
+            closesAt,
+            version,
+          ) => {
+            try {
+              await tx.$queryRaw`SELECT public.dat_lich_nhap_hoc_ky(${sessionHash}::text,${termId}::integer,${type}::text,${opensAt}::timestamptz,${closesAt}::timestamptz,${version}::integer)::text`;
+            } catch (error) {
+              throw deadlineFailure(error) ?? error;
+            }
+          },
+          initializeSemester: async (sessionHash, termId, key, requestHash) => {
+            try {
+              const rows = await tx.$queryRaw<
+                Array<{ result: InitializeResult }>
+              >`
+                SELECT public.khoi_tao_bang_diem_hoc_ky(${sessionHash}::text,${termId}::integer,${key}::text,${requestHash}::text) AS result`;
+              return rows[0]!.result;
+            } catch (error) {
+              throw deadlineFailure(error) ?? error;
+            }
+          },
           processDue: async () => {
             const rows = await tx.$queryRaw<
               Array<{ count: number }>
@@ -128,39 +214,60 @@ export class PrismaGradebookStore implements GradebookStore {
             ORDER BY b.ma_bang_diem LIMIT 51`;
             return rows.map(book);
           },
-          cells: async (bookId, after) => {
-            const rows = await tx.$queryRaw<Array<Omit<GradeCell, "stt">>>`
-          SELECT d.ma_diem::text AS id, hs.ma_hoc_sinh AS "studentId", hs.ho_ten AS "studentName",
-            (hs.dang_theo_hoc AND hs.ma_lop = b.ma_lop) AS active,
-            tp.ma_thanh_phan AS "componentId", tp.ten_thanh_phan AS "componentName",
-            public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text AS coefficient, tp.bat_buoc AS required, tp.thu_tu_hien_thi AS "displayOrder",
-            (tp.cho_phep_nhap AND (w.ma_bang_diem IS NULL OR (clock_timestamp()>=w.mo_luc AND clock_timestamp()<w.dong_luc))) AS "openForInput",
-            to_char(w.mo_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "opensAt",
-            to_char(w.dong_luc AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "closesAt",
-            coalesce(w.version,0) AS "deadlineVersion",
-            EXISTS(SELECT 1 FROM public.chot_cot_diem c WHERE c.ma_bang_diem=b.ma_bang_diem AND c.ma_thanh_phan=tp.ma_thanh_phan) AS "columnLocked",
-            (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=b.ma_mon) AS "passFail",
-            d.gia_tri::text AS value, d.trang_thai AS status, d.nguon_nhap AS source
-          FROM public.diem_thanh_phan d JOIN public.bang_diem b USING (ma_bang_diem)
-          JOIN public.hoc_sinh hs USING (ma_hoc_sinh)
-          JOIN public.thanh_phan_diem tp USING (ma_thanh_phan)
-          LEFT JOIN public.lich_nhap_diem w ON w.ma_bang_diem=b.ma_bang_diem AND w.ma_thanh_phan=tp.ma_thanh_phan
-          WHERE d.ma_bang_diem = ${bookId}::integer AND d.ma_diem > ${after}::bigint
-          ORDER BY d.ma_diem LIMIT 51`;
-            if (!rows.length) return [];
-            const roster = await tx.$queryRaw<
-              Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
+          cells: async (bookId, after) =>
+            selectCells(
+              tx,
+              bookId,
+              Prisma.sql`d.ma_diem > ${after}::bigint`,
+              Prisma.sql`LIMIT 51`,
+            ),
+          cellsByIds: async (bookId, ids) =>
+            ids.length
+              ? selectCells(
+                  tx,
+                  bookId,
+                  Prisma.sql`d.ma_diem = ANY(${ids}::bigint[])`,
+                  Prisma.empty,
+                )
+              : [],
+          setExemptions: async (
+            sessionHash,
+            bookId,
+            version,
+            changes,
+            key,
+            requestHash,
+          ) => {
+            const rows = await tx.$queryRaw<Array<{ result: ExemptionResult }>>`
+              SELECT public.dat_mien_diem(${sessionHash}::text,${bookId}::integer,${version}::integer,
+                ${JSON.stringify(changes)}::jsonb,${key}::text,${requestHash}::text) AS result`;
+            return rows[0]!.result;
+          },
+          missingStudents: (bookId) =>
+            tx.$queryRaw<MissingStudent[]>`
+              SELECT ma_hoc_sinh AS "studentId", ho_ten AS "studentName"
+              FROM public.hoc_sinh_thieu_o(${bookId}::integer)`,
+          addLateStudent: async (
+            sessionHash,
+            bookId,
+            studentId,
+            reason,
+            key,
+            requestHash,
+          ) => {
+            const rows = await tx.$queryRaw<
+              Array<{ result: LateStudentResult }>
             >`
-              SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten
-              FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop = hs.ma_lop
-              WHERE b.ma_bang_diem = ${bookId}::integer AND hs.dang_theo_hoc`;
-            const order = classStudentOrder(
-              roster.map((row) => ({ ...row, dang_theo_hoc: true })),
-            );
-            return rows.map((row) => ({
-              ...row,
-              stt: row.active ? (order.get(row.studentId) ?? null) : null,
-            }));
+              SELECT public.them_hoc_sinh_sau_chot(${sessionHash}::text,${bookId}::integer,
+                ${studentId}::integer,${reason}::text,${key}::text,${requestHash}::text) AS result`;
+            return rows[0]!.result;
+          },
+          publishReadiness: async (termId) => {
+            const rows = await tx.$queryRaw<
+              Array<{ result: PublishReadiness }>
+            >`
+              SELECT public.kiem_san_sang_cong_bo(${termId}::integer) AS result`;
+            return rows[0]!.result;
           },
           updateGrades: async (sessionHash, bookId, version, changes) => {
             const rows = await tx.$queryRaw<Array<{ result: BatchResult }>>`

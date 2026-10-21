@@ -17,6 +17,7 @@ import {
   gradebookAccess,
   gradebookActor,
 } from "../../authorization/application/gradebook-policy.js";
+import { deadlineError } from "./deadline-errors.js";
 import { audit } from "../../audit/application/write.js";
 import {
   GRADEBOOK_STORE,
@@ -25,7 +26,10 @@ import {
   type GradebookScope,
   type GradebookUnit,
   type BatchResult,
+  type DeadlineType,
 } from "./port.js";
+
+const DEADLINE_TYPES: readonly DeadlineType[] = ["TX", "GK", "CK"];
 
 export function objectInput(
   input: unknown,
@@ -271,6 +275,180 @@ export class GradebooksService {
         body.closesAt as string,
         body.expectedVersion as number,
       );
+    });
+  }
+  semesterDeadlines(actor: Actor, termId: number) {
+    id(termId);
+    return this.run(actor, async (tx) => {
+      await gradebookActor(tx.authorization, actor);
+      if (!(await tx.authorization.find("hoc_ky", { ma_hoc_ky: termId })))
+        throw new NotFoundException();
+      return { items: await tx.semesterDeadlines(termId) };
+    });
+  }
+  setSemesterDeadline(
+    actor: Actor,
+    termId: number,
+    type: string,
+    input: unknown,
+  ) {
+    id(termId);
+    if (!DEADLINE_TYPES.includes(type as DeadlineType))
+      throw new BadRequestException("Loại điểm phải là TX, GK hoặc CK.");
+    const body = objectInput(input, ["opensAt", "closesAt", "expectedVersion"]);
+    for (const value of [body.opensAt, body.closesAt])
+      if (
+        typeof value !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(value) ||
+        !Number.isFinite(Date.parse(value))
+      )
+        throw new BadRequestException("Thời gian phải hợp lệ và có múi giờ.");
+    if (typeof body.expectedVersion !== "number")
+      throw new BadRequestException();
+    id(body.expectedVersion, true);
+    if (
+      Date.parse(body.closesAt as string) <=
+        Date.parse(body.opensAt as string) ||
+      Date.parse(body.closesAt as string) <= Date.now()
+    )
+      throw deadlineError("INVALID_ENTRY_WINDOW");
+    return this.run(actor, async (tx) => {
+      await currentActor(tx.authorization, actor);
+      administrator(actor);
+      if (!(await tx.authorization.find("hoc_ky", { ma_hoc_ky: termId })))
+        throw new NotFoundException();
+      await tx.setSemesterDeadline(
+        actor.sessionHash,
+        termId,
+        type as DeadlineType,
+        body.opensAt as string,
+        body.closesAt as string,
+        body.expectedVersion as number,
+      );
+      const rows = await tx.semesterDeadlines(termId);
+      return rows.find((row) => row.type === type)!;
+    });
+  }
+  initializeSemesterGradebooks(actor: Actor, termId: number, key: unknown) {
+    id(termId);
+    if (typeof key !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(key))
+      throw new BadRequestException();
+    const hash = createHash("sha256")
+      .update(JSON.stringify({ termId }))
+      .digest("hex");
+    return this.run(actor, async (tx) => {
+      await currentActor(tx.authorization, actor);
+      administrator(actor);
+      if (!(await tx.authorization.find("hoc_ky", { ma_hoc_ky: termId })))
+        throw new NotFoundException();
+      return tx.initializeSemester(actor.sessionHash, termId, key, hash);
+    });
+  }
+  exemptions(actor: Actor, bookId: number, key: unknown, input: unknown) {
+    id(bookId);
+    if (typeof key !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(key))
+      throw new BadRequestException();
+    const body = objectInput(input, ["expectedVersion", "changes"]);
+    if (typeof body.expectedVersion !== "number")
+      throw new BadRequestException();
+    const version = id(body.expectedVersion, true);
+    if (
+      !Array.isArray(body.changes) ||
+      !body.changes.length ||
+      body.changes.length > 100
+    )
+      throw new BadRequestException();
+    const seen = new Set<string>();
+    const changes = body.changes.map((change: unknown) => {
+      const c = objectInput(change, ["cellId", "exempt", "reason"]);
+      bigintCursor(c.cellId as string, false);
+      if (seen.has(c.cellId as string) || typeof c.exempt !== "boolean")
+        throw new BadRequestException();
+      seen.add(c.cellId as string);
+      if (
+        typeof c.reason !== "string" ||
+        !c.reason.trim() ||
+        c.reason.trim().length > 500
+      )
+        throw new BadRequestException();
+      return {
+        cellId: c.cellId as string,
+        exempt: c.exempt,
+        reason: c.reason.trim(),
+      };
+    });
+    const hash = createHash("sha256")
+      .update(JSON.stringify({ bookId, version, changes }))
+      .digest("hex");
+    return this.run(actor, async (tx) => {
+      await gradebookActor(tx.authorization, actor, true);
+      const book = await tx.find(bookId);
+      if (!book) throw new NotFoundException();
+      await gradebookAccess(tx.authorization, actor, book, true);
+      const result = await tx.setExemptions(
+        actor.sessionHash,
+        bookId,
+        version,
+        changes,
+        key,
+        hash,
+      );
+      return {
+        bookId: result.bookId,
+        version: result.version,
+        items: await tx.cellsByIds(bookId, result.cellIds),
+      };
+    });
+  }
+  missingStudents(actor: Actor, bookId: number) {
+    id(bookId);
+    return this.run(actor, async (tx) => {
+      await gradebookActor(tx.authorization, actor);
+      const book = await tx.find(bookId);
+      if (!book) throw new NotFoundException();
+      await gradebookAccess(tx.authorization, actor, book);
+      return { items: await tx.missingStudents(bookId) };
+    });
+  }
+  lateStudent(actor: Actor, bookId: number, key: unknown, input: unknown) {
+    id(bookId);
+    if (typeof key !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(key))
+      throw new BadRequestException();
+    const body = objectInput(input, ["studentId", "reason"]);
+    if (typeof body.studentId !== "number") throw new BadRequestException();
+    const studentId = id(body.studentId);
+    if (
+      typeof body.reason !== "string" ||
+      !body.reason.trim() ||
+      body.reason.trim().length > 500
+    )
+      throw new BadRequestException();
+    const reason = body.reason.trim();
+    const hash = createHash("sha256")
+      .update(JSON.stringify({ bookId, studentId, reason }))
+      .digest("hex");
+    return this.run(actor, async (tx) => {
+      await currentActor(tx.authorization, actor);
+      administrator(actor);
+      if (!(await tx.find(bookId))) throw new NotFoundException();
+      return tx.addLateStudent(
+        actor.sessionHash,
+        bookId,
+        studentId,
+        reason,
+        key,
+        hash,
+      );
+    });
+  }
+  publishReadiness(actor: Actor, termId: number) {
+    id(termId);
+    return this.run(actor, async (tx) => {
+      await currentActor(tx.authorization, actor);
+      administrator(actor);
+      if (!(await tx.authorization.find("hoc_ky", { ma_hoc_ky: termId })))
+        throw new NotFoundException();
+      return tx.publishReadiness(termId);
     });
   }
   lockColumn(

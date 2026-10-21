@@ -25,6 +25,8 @@ class StudentApprovedComponentDto {
     required this.coefficient,
 
     required this.value,
+
+    required this.status,
   });
 
   @JsonKey(name: r'componentId', required: true, includeIfNull: false)
@@ -36,8 +38,11 @@ class StudentApprovedComponentDto {
   @JsonKey(name: r'coefficient', required: true, includeIfNull: false)
   final String coefficient;
 
-  @JsonKey(name: r'value', required: true, includeIfNull: false)
-  final String value;
+  @JsonKey(name: r'value', required: true, includeIfNull: true)
+  final String? value;
+
+  @JsonKey(name: r'status', required: true, includeIfNull: false)
+  final StudentApprovedComponentDtoStatusEnum status;
 
   @override
   bool operator ==(Object other) =>
@@ -46,14 +51,16 @@ class StudentApprovedComponentDto {
           other.componentId == componentId &&
           other.componentName == componentName &&
           other.coefficient == coefficient &&
-          other.value == value;
+          other.value == value &&
+          other.status == status;
 
   @override
   int get hashCode =>
       componentId.hashCode +
       componentName.hashCode +
       coefficient.hashCode +
-      value.hashCode;
+      (value == null ? 0 : value.hashCode) +
+      status.hashCode;
 
   factory StudentApprovedComponentDto.fromJson(Map<String, dynamic> json) =>
       _$StudentApprovedComponentDtoFromJson(json);
@@ -64,4 +71,18 @@ class StudentApprovedComponentDto {
   String toString() {
     return toJson().toString();
   }
+}
+
+enum StudentApprovedComponentDtoStatusEnum {
+  @JsonValue(r'DA_DUYET')
+  DA_DUYET(r'DA_DUYET'),
+  @JsonValue(r'MIEN')
+  MIEN(r'MIEN');
+
+  const StudentApprovedComponentDtoStatusEnum(this.value);
+
+  final String value;
+
+  @override
+  String toString() => value;
 }

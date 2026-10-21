@@ -122,6 +122,18 @@ export class PrismaRecognitionStore implements RecognitionStore {
           })
         ).map((entry) => [entry.ma_hoc_sinh, entry]),
       );
+      const exempt = new Set(
+        (
+          await tx.diem_thanh_phan.findMany({
+            where: {
+              ma_bang_diem: gradebookId,
+              ma_thanh_phan: row.ma_thanh_phan,
+              trang_thai: "MIEN",
+            },
+            select: { ma_hoc_sinh: true },
+          })
+        ).map((cell) => cell.ma_hoc_sinh),
+      );
       const evidence: RecognitionEvidenceRow[] = row.ket_qua_dong_rows.map(
         (item) => ({
           rowId: item.ma_dong.toString(),
@@ -131,6 +143,7 @@ export class PrismaRecognitionStore implements RecognitionStore {
           studentId: item.ma_hoc_sinh,
           studentName:
             roster.get(item.ma_hoc_sinh)?.ho_ten ?? item.ma_hoc_sinh_ref.ho_ten,
+          exempt: exempt.has(item.ma_hoc_sinh),
           nameRead: item.ho_ten_doc_duoc,
           matchConfidence: item.do_tin_cay_ghep?.toFixed(4) ?? null,
           matchNote: item.ghi_chu_ghep,

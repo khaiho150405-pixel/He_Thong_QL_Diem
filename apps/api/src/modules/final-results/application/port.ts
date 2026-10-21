@@ -22,6 +22,11 @@ export interface SkippedStudent {
   missingComponents: MissingComponent[];
 }
 
+export interface ExemptedStudent {
+  studentId: number;
+  studentName: string;
+}
+
 export interface CalculationResult {
   gradebookId: number;
   gradebookVersion: number;
@@ -31,6 +36,8 @@ export interface CalculationResult {
   skippedStudents: number;
   results: FinalResult[];
   skipped: SkippedStudent[];
+  exemptedStudents: number;
+  exempted: ExemptedStudent[];
 }
 
 export interface CalculationHistory {
@@ -92,7 +99,8 @@ export interface StudentApprovedComponent {
   componentId: number;
   componentName: string;
   coefficient: string;
-  value: string;
+  value: string | null;
+  status: "DA_DUYET" | "MIEN";
 }
 
 export interface StudentSubjectResult {

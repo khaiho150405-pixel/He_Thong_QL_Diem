@@ -23,6 +23,10 @@ abstract class _$CalculateFinalResultsDtoCWProxy {
 
   CalculateFinalResultsDto skipped(List<SkippedStudentDto> skipped);
 
+  CalculateFinalResultsDto exemptedStudents(num exemptedStudents);
+
+  CalculateFinalResultsDto exempted(List<ExemptedStudentDto> exempted);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `CalculateFinalResultsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -38,6 +42,8 @@ abstract class _$CalculateFinalResultsDtoCWProxy {
     num skippedStudents,
     List<FinalResultDto> results,
     List<SkippedStudentDto> skipped,
+    num exemptedStudents,
+    List<ExemptedStudentDto> exempted,
   });
 }
 
@@ -81,6 +87,14 @@ class _$CalculateFinalResultsDtoCWProxyImpl
       this(skipped: skipped);
 
   @override
+  CalculateFinalResultsDto exemptedStudents(num exemptedStudents) =>
+      this(exemptedStudents: exemptedStudents);
+
+  @override
+  CalculateFinalResultsDto exempted(List<ExemptedStudentDto> exempted) =>
+      this(exempted: exempted);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `CalculateFinalResultsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -96,6 +110,8 @@ class _$CalculateFinalResultsDtoCWProxyImpl
     Object? skippedStudents = const $CopyWithPlaceholder(),
     Object? results = const $CopyWithPlaceholder(),
     Object? skipped = const $CopyWithPlaceholder(),
+    Object? exemptedStudents = const $CopyWithPlaceholder(),
+    Object? exempted = const $CopyWithPlaceholder(),
   }) {
     return CalculateFinalResultsDto(
       gradebookId: gradebookId == const $CopyWithPlaceholder()
@@ -130,6 +146,14 @@ class _$CalculateFinalResultsDtoCWProxyImpl
           ? _value.skipped
           // ignore: cast_nullable_to_non_nullable
           : skipped as List<SkippedStudentDto>,
+      exemptedStudents: exemptedStudents == const $CopyWithPlaceholder()
+          ? _value.exemptedStudents
+          // ignore: cast_nullable_to_non_nullable
+          : exemptedStudents as num,
+      exempted: exempted == const $CopyWithPlaceholder()
+          ? _value.exempted
+          // ignore: cast_nullable_to_non_nullable
+          : exempted as List<ExemptedStudentDto>,
     );
   }
 }
@@ -159,6 +183,8 @@ CalculateFinalResultsDto _$CalculateFinalResultsDtoFromJson(
       'skippedStudents',
       'results',
       'skipped',
+      'exemptedStudents',
+      'exempted',
     ],
   );
   final val = CalculateFinalResultsDto(
@@ -180,6 +206,13 @@ CalculateFinalResultsDto _$CalculateFinalResultsDtoFromJson(
           .map((e) => SkippedStudentDto.fromJson(e as Map<String, dynamic>))
           .toList(),
     ),
+    exemptedStudents: $checkedConvert('exemptedStudents', (v) => v as num),
+    exempted: $checkedConvert(
+      'exempted',
+      (v) => (v as List<dynamic>)
+          .map((e) => ExemptedStudentDto.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    ),
   );
   return val;
 });
@@ -195,4 +228,6 @@ Map<String, dynamic> _$CalculateFinalResultsDtoToJson(
   'skippedStudents': instance.skippedStudents,
   'results': instance.results.map((e) => e.toJson()).toList(),
   'skipped': instance.skipped.map((e) => e.toJson()).toList(),
+  'exemptedStudents': instance.exemptedStudents,
+  'exempted': instance.exempted.map((e) => e.toJson()).toList(),
 };

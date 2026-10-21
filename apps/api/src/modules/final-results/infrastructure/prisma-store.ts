@@ -123,14 +123,15 @@ export class PrismaFinalResultStore implements FinalResultStore {
                 m.ten_mon AS "subjectName",m.danh_gia_dat AS "passFail",h.ma_hoc_ky AS "termId",h.ten AS "termName",
                 jsonb_agg(jsonb_build_object('componentId',tp.ma_thanh_phan,
                   'componentName',tp.ten_thanh_phan,'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,
-                  'value',d.gia_tri::text) ORDER BY tp.thu_tu_hien_thi) AS components,
+                  'value',d.gia_tri::text,'status',d.trang_thai) ORDER BY tp.thu_tu_hien_thi) AS components,
                 k.diem_tong_ket::text AS "finalScore",CASE WHEN h.da_cong_bo THEN k.xep_loai ELSE NULL END AS classification,
                 CASE WHEN k.ngay_tinh IS NULL THEN NULL ELSE
                   to_char(k.ngay_tinh AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') END AS "calculatedAt"
               FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop=hs.ma_lop
               JOIN public.mon_hoc m ON m.ma_mon=b.ma_mon JOIN public.hoc_ky h ON h.ma_hoc_ky=b.ma_hoc_ky
               JOIN public.diem_thanh_phan d ON d.ma_bang_diem=b.ma_bang_diem
-                AND d.ma_hoc_sinh=hs.ma_hoc_sinh AND d.trang_thai='DA_DUYET' AND d.gia_tri IS NOT NULL
+                AND d.ma_hoc_sinh=hs.ma_hoc_sinh
+                AND ((d.trang_thai='DA_DUYET' AND d.gia_tri IS NOT NULL) OR d.trang_thai='MIEN')
               JOIN public.thanh_phan_diem tp ON tp.ma_thanh_phan=d.ma_thanh_phan AND tp.ma_mon=b.ma_mon
               LEFT JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
                 AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky

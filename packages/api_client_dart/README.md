@@ -96,11 +96,14 @@ Class | Method | HTTP request | Description
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksBatchUpdate**](doc/GradebooksApi.md#gradebooksbatchupdate) | **PUT** /api/v1/gradebooks/{id}/grades |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCells**](doc/GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCreate**](doc/GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksExemptions**](doc/GradebooksApi.md#gradebooksexemptions) | **PUT** /api/v1/gradebooks/{id}/exemptions |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksHistory**](doc/GradebooksApi.md#gradebookshistory) | **GET** /api/v1/gradebooks/{id}/cells/{cellId}/history |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksHistoryAll**](doc/GradebooksApi.md#gradebookshistoryall) | **GET** /api/v1/gradebooks/{id}/history |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksLateStudent**](doc/GradebooksApi.md#gradebookslatestudent) | **POST** /api/v1/gradebooks/{id}/late-students |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksList**](doc/GradebooksApi.md#gradebookslist) | **GET** /api/v1/gradebooks |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksLock**](doc/GradebooksApi.md#gradebookslock) | **POST** /api/v1/gradebooks/{id}/lock |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksLockColumn**](doc/GradebooksApi.md#gradebookslockcolumn) | **POST** /api/v1/gradebooks/{id}/components/{componentId}/lock |
+[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksMissingStudents**](doc/GradebooksApi.md#gradebooksmissingstudents) | **GET** /api/v1/gradebooks/{id}/missing-students |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksSetDeadline**](doc/GradebooksApi.md#gradebookssetdeadline) | **PUT** /api/v1/gradebooks/{id}/components/{componentId}/deadline |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksSyncRoster**](doc/GradebooksApi.md#gradebookssyncroster) | **POST** /api/v1/gradebooks/{id}/sync-roster |
 [*HealthApi*](doc/HealthApi.md) | [**healthLive**](doc/HealthApi.md#healthlive) | **GET** /api/v1/health/live |
@@ -130,6 +133,10 @@ Class | Method | HTTP request | Description
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsList**](doc/SemesterWeightsApi.md#semesterweightslist) | **GET** /api/v1/catalog/semester-weights |
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsRemove**](doc/SemesterWeightsApi.md#semesterweightsremove) | **DELETE** /api/v1/catalog/semester-weights/{id} |
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsUpdate**](doc/SemesterWeightsApi.md#semesterweightsupdate) | **PUT** /api/v1/catalog/semester-weights/{id} |
+[*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesInitialize**](doc/SemestersApi.md#semesterdeadlinesinitialize) | **POST** /api/v1/catalog/semesters/{id}/gradebooks/initialize |
+[*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesList**](doc/SemestersApi.md#semesterdeadlineslist) | **GET** /api/v1/catalog/semesters/{id}/deadlines |
+[*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesPublishReadiness**](doc/SemestersApi.md#semesterdeadlinespublishreadiness) | **GET** /api/v1/catalog/semesters/{id}/publish-readiness |
+[*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesSet**](doc/SemestersApi.md#semesterdeadlinesset) | **PUT** /api/v1/catalog/semesters/{id}/deadlines/{type} |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersCreate**](doc/SemestersApi.md#semesterscreate) | **POST** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersList**](doc/SemestersApi.md#semesterslist) | **GET** /api/v1/catalog/semesters |
 [*SemestersApi*](doc/SemestersApi.md) | [**semestersRemove**](doc/SemestersApi.md#semestersremove) | **DELETE** /api/v1/catalog/semesters/{id} |
@@ -201,6 +208,10 @@ Class | Method | HTTP request | Description
  - [CreateTimetableItemInput](doc/CreateTimetableItemInput.md)
  - [DistributionItemDto](doc/DistributionItemDto.md)
  - [ErrorDto](doc/ErrorDto.md)
+ - [ExemptedStudentDto](doc/ExemptedStudentDto.md)
+ - [ExemptionChangeInput](doc/ExemptionChangeInput.md)
+ - [ExemptionsInput](doc/ExemptionsInput.md)
+ - [ExemptionsResultDto](doc/ExemptionsResultDto.md)
  - [ExpectedVersionInput](doc/ExpectedVersionInput.md)
  - [FinalResultDto](doc/FinalResultDto.md)
  - [FinalResultListDto](doc/FinalResultListDto.md)
@@ -215,13 +226,21 @@ Class | Method | HTTP request | Description
  - [GradebookListDto](doc/GradebookListDto.md)
  - [GradebookSummaryDto](doc/GradebookSummaryDto.md)
  - [HealthDto](doc/HealthDto.md)
+ - [InitializeGradebooksResultDto](doc/InitializeGradebooksResultDto.md)
+ - [InitializedGradebookDto](doc/InitializedGradebookDto.md)
+ - [LateStudentInput](doc/LateStudentInput.md)
+ - [LateStudentResultDto](doc/LateStudentResultDto.md)
  - [LockInput](doc/LockInput.md)
  - [LoginInput](doc/LoginInput.md)
  - [MappingDto](doc/MappingDto.md)
  - [MappingItemDto](doc/MappingItemDto.md)
  - [MissingComponentDto](doc/MissingComponentDto.md)
+ - [MissingStudentDto](doc/MissingStudentDto.md)
+ - [MissingStudentsDto](doc/MissingStudentsDto.md)
  - [PasswordInput](doc/PasswordInput.md)
  - [ProfileDto](doc/ProfileDto.md)
+ - [PublishIssueDto](doc/PublishIssueDto.md)
+ - [PublishReadinessDto](doc/PublishReadinessDto.md)
  - [RecognitionBatchDto](doc/RecognitionBatchDto.md)
  - [RecognitionBatchPageDto](doc/RecognitionBatchPageDto.md)
  - [RecognitionBatchReceiptDto](doc/RecognitionBatchReceiptDto.md)
@@ -234,6 +253,9 @@ Class | Method | HTTP request | Description
  - [ReviewApprovalInput](doc/ReviewApprovalInput.md)
  - [ReviewApprovalResultDto](doc/ReviewApprovalResultDto.md)
  - [ReviewDecisionInput](doc/ReviewDecisionInput.md)
+ - [SemesterDeadlineDto](doc/SemesterDeadlineDto.md)
+ - [SemesterDeadlineInput](doc/SemesterDeadlineInput.md)
+ - [SemesterDeadlinesDto](doc/SemesterDeadlinesDto.md)
  - [SemesterWeightsDto](doc/SemesterWeightsDto.md)
  - [SemesterWeightsInput](doc/SemesterWeightsInput.md)
  - [SemesterWeightsPage](doc/SemesterWeightsPage.md)
@@ -241,6 +263,7 @@ Class | Method | HTTP request | Description
  - [SemestersInput](doc/SemestersInput.md)
  - [SemestersPage](doc/SemestersPage.md)
  - [SessionDto](doc/SessionDto.md)
+ - [SkippedGradebookDto](doc/SkippedGradebookDto.md)
  - [SkippedStudentDto](doc/SkippedStudentDto.md)
  - [StudentApprovedComponentDto](doc/StudentApprovedComponentDto.md)
  - [StudentResultSummaryDto](doc/StudentResultSummaryDto.md)

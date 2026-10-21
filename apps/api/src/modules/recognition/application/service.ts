@@ -189,6 +189,7 @@ export class RecognitionService {
             sttOnPaper: row.sttOnPaper,
             studentId: row.studentId,
             studentName: row.studentName,
+            exempt: row.exempt,
             nameRead: row.nameRead,
             matchConfidence: row.matchConfidence,
             matchNote: row.matchNote,

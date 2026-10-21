@@ -1678,6 +1678,1538 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks": {
+      "get": {
+        "operationId": "gradebooksList",
+        "parameters": [
+          {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ bảng điểm thuộc học kỳ của năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookListDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      },
+      "post": {
+        "operationId": "gradebooksCreate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateGradebookInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/cells": {
+      "get": {
+        "operationId": "gradebooksCells",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CellsResponseDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/grades": {
+      "put": {
+        "operationId": "gradebooksBatchUpdate",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BatchUpdateInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchUpdateResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/exemptions": {
+      "put": {
+        "operationId": "gradebooksExemptions",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExemptionsInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExemptionsResultDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/missing-students": {
+      "get": {
+        "operationId": "gradebooksMissingStudents",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MissingStudentsDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/late-students": {
+      "post": {
+        "operationId": "gradebooksLateStudent",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LateStudentInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LateStudentResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/components/{componentId}/deadline": {
+      "put": {
+        "operationId": "gradebooksSetDeadline",
+        "parameters": [
+          {
+            "name": "componentId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GradeDeadlineInput" }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "" },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/components/{componentId}/lock": {
+      "post": {
+        "operationId": "gradebooksLockColumn",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "componentId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LockInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/lock": {
+      "post": {
+        "operationId": "gradebooksLock",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LockInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/sync-roster": {
+      "post": {
+        "operationId": "gradebooksSyncRoster",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LockInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/history": {
+      "get": {
+        "operationId": "gradebooksHistoryAll",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradebookHistoryDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/gradebooks/{id}/cells/{cellId}/history": {
+      "get": {
+        "operationId": "gradebooksHistory",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "cellId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GradeHistoryDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["gradebooks"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/catalog/semesters/{id}/deadlines": {
+      "get": {
+        "operationId": "semesterDeadlinesList",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SemesterDeadlinesDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semesters"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/catalog/semesters/{id}/deadlines/{type}": {
+      "put": {
+        "operationId": "semesterDeadlinesSet",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": { "enum": ["TX", "GK", "CK"], "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SemesterDeadlineInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SemesterDeadlineDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semesters"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/semesters/{id}/gradebooks/initialize": {
+      "post": {
+        "operationId": "semesterDeadlinesInitialize",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitializeGradebooksResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semesters"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/semesters/{id}/publish-readiness": {
+      "get": {
+        "operationId": "semesterDeadlinesPublishReadiness",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PublishReadinessDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["semesters"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
     "/api/v1/catalog/classes": {
       "get": {
         "operationId": "classesList",
@@ -2541,917 +4073,6 @@
           }
         },
         "tags": ["student-results"],
-        "security": [{ "bearer": [] }, { "cookie": [] }]
-      }
-    },
-    "/api/v1/gradebooks": {
-      "get": {
-        "operationId": "gradebooksList",
-        "parameters": [
-          {
-            "name": "yearId",
-            "required": false,
-            "in": "query",
-            "description": "Chỉ bảng điểm thuộc học kỳ của năm học này; vắng = tất cả",
-            "schema": { "type": "number" }
-          },
-          {
-            "name": "cursor",
-            "required": false,
-            "in": "query",
-            "schema": { "type": "number" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GradebookListDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [] }]
-      },
-      "post": {
-        "operationId": "gradebooksCreate",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/CreateGradebookInput" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GradebookDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/cells": {
-      "get": {
-        "operationId": "gradebooksCells",
-        "parameters": [
-          {
-            "name": "cursor",
-            "required": false,
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/CellsResponseDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/grades": {
-      "put": {
-        "operationId": "gradebooksBatchUpdate",
-        "parameters": [
-          {
-            "name": "x-idempotency-key",
-            "in": "header",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/BatchUpdateInput" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchUpdateResultDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/components/{componentId}/deadline": {
-      "put": {
-        "operationId": "gradebooksSetDeadline",
-        "parameters": [
-          {
-            "name": "componentId",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/GradeDeadlineInput" }
-            }
-          }
-        },
-        "responses": {
-          "204": { "description": "" },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/components/{componentId}/lock": {
-      "post": {
-        "operationId": "gradebooksLockColumn",
-        "parameters": [
-          {
-            "name": "x-idempotency-key",
-            "in": "header",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "componentId",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/LockInput" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GradebookDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/lock": {
-      "post": {
-        "operationId": "gradebooksLock",
-        "parameters": [
-          {
-            "name": "x-idempotency-key",
-            "in": "header",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/LockInput" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GradebookDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/sync-roster": {
-      "post": {
-        "operationId": "gradebooksSyncRoster",
-        "parameters": [
-          {
-            "name": "x-idempotency-key",
-            "in": "header",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/LockInput" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GradebookDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/history": {
-      "get": {
-        "operationId": "gradebooksHistoryAll",
-        "parameters": [
-          {
-            "name": "cursor",
-            "required": false,
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GradebookHistoryDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
-        "security": [{ "bearer": [] }, { "cookie": [] }]
-      }
-    },
-    "/api/v1/gradebooks/{id}/cells/{cellId}/history": {
-      "get": {
-        "operationId": "gradebooksHistory",
-        "parameters": [
-          {
-            "name": "cursor",
-            "required": false,
-            "in": "query",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "cellId",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/GradeHistoryDto" }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["gradebooks"],
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
@@ -8310,6 +8931,479 @@
           "ngay_ket_thuc"
         ]
       },
+      "GradebookDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "classId": { "type": "number" },
+          "subjectId": { "type": "number" },
+          "termId": { "type": "number" },
+          "className": { "type": "string" },
+          "subjectName": { "type": "string" },
+          "termName": { "type": "string" },
+          "status": { "type": "string", "enum": ["DANG_NHAP_LIEU", "DA_CHOT"] },
+          "version": { "type": "number" }
+        },
+        "required": [
+          "id",
+          "classId",
+          "subjectId",
+          "termId",
+          "className",
+          "subjectName",
+          "termName",
+          "status",
+          "version"
+        ]
+      },
+      "GradebookListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradebookDto" }
+          },
+          "nextCursor": { "type": "number", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "CreateGradebookInput": {
+        "type": "object",
+        "properties": {
+          "classId": { "type": "number" },
+          "subjectId": { "type": "number" },
+          "termId": { "type": "number" }
+        },
+        "required": ["classId", "subjectId", "termId"]
+      },
+      "GradeCellDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" },
+          "stt": {
+            "type": "number",
+            "nullable": true,
+            "description": "STT trong lớp theo thứ tự tên; null khi học sinh đã nghỉ"
+          },
+          "active": { "type": "boolean" },
+          "componentId": { "type": "number" },
+          "componentName": { "type": "string" },
+          "coefficient": { "type": "string" },
+          "required": { "type": "boolean" },
+          "displayOrder": { "type": "number" },
+          "openForInput": { "type": "boolean" },
+          "columnLocked": { "type": "boolean" },
+          "passFail": { "type": "boolean" },
+          "opensAt": { "type": "string", "nullable": true },
+          "closesAt": { "type": "string", "nullable": true },
+          "deadlineVersion": { "type": "number" },
+          "deadlineSource": {
+            "type": "string",
+            "enum": ["RIENG", "HOC_KY"],
+            "nullable": true,
+            "description": "Nguồn lịch hiệu lực: RIENG (bảng + cột) ghi đè HOC_KY (mặc định theo loại điểm); null = chưa có lịch"
+          },
+          "value": { "type": "string", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET", "MIEN"],
+            "description": "MIEN: ô được miễn (giá trị luôn null, khác chưa có điểm)"
+          },
+          "source": { "type": "string", "enum": ["NHAP_TAY", "NHAN_DIEN"] },
+          "exemptionReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Lý do miễn gần nhất khi status = MIEN, ngược lại null"
+          }
+        },
+        "required": [
+          "id",
+          "studentId",
+          "studentName",
+          "stt",
+          "active",
+          "componentId",
+          "componentName",
+          "coefficient",
+          "required",
+          "displayOrder",
+          "value",
+          "status",
+          "source",
+          "exemptionReason"
+        ]
+      },
+      "CellsResponseDto": {
+        "type": "object",
+        "properties": {
+          "book": { "$ref": "#/components/schemas/GradebookDto" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradeCellDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["book", "items", "nextCursor"]
+      },
+      "GradeChangeInput": {
+        "type": "object",
+        "properties": {
+          "cellId": { "type": "string", "description": "bigint cell ID" },
+          "value": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^(10[.]0|[0-9][.][0-9])$",
+            "description": "0.0–10.0 step 0.1, or null to clear"
+          },
+          "reason": { "type": "string", "maxLength": 500 }
+        },
+        "required": ["cellId", "value", "reason"]
+      },
+      "BatchUpdateInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 0 },
+          "changes": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradeChangeInput" }
+          }
+        },
+        "required": ["expectedVersion", "changes"]
+      },
+      "UpdatedCellDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "value": { "type": "string", "nullable": true },
+          "status": {
+            "type": "string",
+            "enum": ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET"]
+          },
+          "source": { "type": "string", "enum": ["NHAP_TAY", "NHAN_DIEN"] }
+        },
+        "required": ["id", "value", "status", "source"]
+      },
+      "BatchUpdateResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UpdatedCellDto" }
+          },
+          "bookId": { "type": "number" },
+          "version": { "type": "number" }
+        },
+        "required": ["items", "bookId", "version"]
+      },
+      "ExemptionChangeInput": {
+        "type": "object",
+        "properties": {
+          "cellId": { "type": "string", "description": "bigint cell ID" },
+          "exempt": {
+            "type": "boolean",
+            "description": "true = miễn, false = bỏ miễn"
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["cellId", "exempt", "reason"]
+      },
+      "ExemptionsInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 0 },
+          "changes": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExemptionChangeInput" }
+          }
+        },
+        "required": ["expectedVersion", "changes"]
+      },
+      "ExemptionsResultDto": {
+        "type": "object",
+        "properties": {
+          "bookId": { "type": "number" },
+          "version": { "type": "number" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradeCellDto" }
+          }
+        },
+        "required": ["bookId", "version", "items"]
+      },
+      "MissingStudentDto": {
+        "type": "object",
+        "properties": {
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" }
+        },
+        "required": ["studentId", "studentName"]
+      },
+      "MissingStudentsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MissingStudentDto" }
+          }
+        },
+        "required": ["items"]
+      },
+      "LateStudentInput": {
+        "type": "object",
+        "properties": {
+          "studentId": { "type": "number" },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["studentId", "reason"]
+      },
+      "LateStudentResultDto": {
+        "type": "object",
+        "properties": {
+          "bookId": { "type": "number" },
+          "version": { "type": "number" },
+          "createdCells": {
+            "type": "number",
+            "description": "Tổng số ô được tạo (gồm cả ô MIEN)"
+          },
+          "exemptedCells": {
+            "type": "number",
+            "description": "Số ô MIEN trong các ô vừa tạo (cột đã chốt)"
+          }
+        },
+        "required": ["bookId", "version", "createdCells", "exemptedCells"]
+      },
+      "GradeDeadlineInput": {
+        "type": "object",
+        "properties": {
+          "opensAt": { "type": "string", "format": "date-time" },
+          "closesAt": { "type": "string", "format": "date-time" },
+          "expectedVersion": { "type": "number", "minimum": 0 }
+        },
+        "required": ["opensAt", "closesAt", "expectedVersion"]
+      },
+      "LockInput": {
+        "type": "object",
+        "properties": { "expectedVersion": { "type": "number" } },
+        "required": ["expectedVersion"]
+      },
+      "GradebookHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "cellId": { "type": "string" },
+          "editor": { "type": "number" },
+          "oldValue": { "type": "string", "nullable": true },
+          "newValue": { "type": "string", "nullable": true },
+          "reason": { "type": "string" },
+          "timestamp": { "type": "string" },
+          "studentName": { "type": "string" },
+          "componentName": { "type": "string" }
+        },
+        "required": [
+          "id",
+          "cellId",
+          "editor",
+          "oldValue",
+          "newValue",
+          "reason",
+          "timestamp",
+          "studentName",
+          "componentName"
+        ]
+      },
+      "GradebookHistoryDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradebookHistoryEntryDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "GradeHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "cellId": { "type": "string" },
+          "editor": { "type": "number" },
+          "oldValue": { "type": "string", "nullable": true },
+          "newValue": { "type": "string", "nullable": true },
+          "reason": { "type": "string" },
+          "timestamp": { "type": "string" }
+        },
+        "required": [
+          "id",
+          "cellId",
+          "editor",
+          "oldValue",
+          "newValue",
+          "reason",
+          "timestamp"
+        ]
+      },
+      "GradeHistoryDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GradeHistoryEntryDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "SemesterDeadlineDto": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["TX", "GK", "CK"] },
+          "opensAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "closesAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "version": {
+            "type": "number",
+            "minimum": 0,
+            "description": "0 khi học kỳ chưa đặt lịch cho loại điểm này"
+          },
+          "expired": { "type": "boolean", "description": "Đã qua hạn đóng" }
+        },
+        "required": ["type", "opensAt", "closesAt", "version", "expired"]
+      },
+      "SemesterDeadlinesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Luôn 3 phần tử theo thứ tự TX, GK, CK",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SemesterDeadlineDto" }
+          }
+        },
+        "required": ["items"]
+      },
+      "SemesterDeadlineInput": {
+        "type": "object",
+        "properties": {
+          "opensAt": { "type": "string", "format": "date-time" },
+          "closesAt": { "type": "string", "format": "date-time" },
+          "expectedVersion": { "type": "number", "minimum": 0 }
+        },
+        "required": ["opensAt", "closesAt", "expectedVersion"]
+      },
+      "InitializedGradebookDto": {
+        "type": "object",
+        "properties": {
+          "gradebookId": { "type": "number" },
+          "classId": { "type": "number" },
+          "className": { "type": "string" },
+          "subjectId": { "type": "number" },
+          "subjectName": { "type": "string" }
+        },
+        "required": [
+          "gradebookId",
+          "classId",
+          "className",
+          "subjectId",
+          "subjectName"
+        ]
+      },
+      "SkippedGradebookDto": {
+        "type": "object",
+        "properties": {
+          "classId": { "type": "number" },
+          "className": { "type": "string" },
+          "subjectId": { "type": "number" },
+          "subjectName": { "type": "string" },
+          "reason": {
+            "type": "string",
+            "enum": ["EMPTY_ROSTER", "NO_COMPONENTS"]
+          }
+        },
+        "required": [
+          "classId",
+          "className",
+          "subjectId",
+          "subjectName",
+          "reason"
+        ]
+      },
+      "InitializeGradebooksResultDto": {
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InitializedGradebookDto" }
+          },
+          "skipped": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SkippedGradebookDto" }
+          }
+        },
+        "required": ["created", "skipped"]
+      },
+      "PublishIssueDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "GRADEBOOK_MISSING",
+              "GRADEBOOK_NOT_LOCKED",
+              "RECOGNITION_PENDING",
+              "STUDENT_NOT_IN_GRADEBOOK",
+              "RESULTS_MISSING",
+              "COLUMNS_WITHOUT_DEADLINE"
+            ]
+          },
+          "severity": { "type": "string", "enum": ["BLOCKING", "WARNING"] },
+          "classId": { "type": "number" },
+          "className": { "type": "string" },
+          "subjectId": { "type": "number" },
+          "subjectName": { "type": "string" },
+          "gradebookId": { "type": "number", "nullable": true },
+          "studentIds": {
+            "nullable": true,
+            "type": "array",
+            "items": { "type": "number" }
+          },
+          "count": { "type": "number", "nullable": true }
+        },
+        "required": [
+          "code",
+          "severity",
+          "classId",
+          "className",
+          "subjectId",
+          "subjectName",
+          "gradebookId",
+          "studentIds",
+          "count"
+        ]
+      },
+      "PublishReadinessDto": {
+        "type": "object",
+        "properties": {
+          "ready": { "type": "boolean" },
+          "issues": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PublishIssueDto" }
+          }
+        },
+        "required": ["ready", "issues"]
+      },
       "ClassesDto": {
         "type": "object",
         "properties": {
@@ -8412,6 +9506,14 @@
         },
         "required": ["studentId", "studentName", "missingComponents"]
       },
+      "ExemptedStudentDto": {
+        "type": "object",
+        "properties": {
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" }
+        },
+        "required": ["studentId", "studentName"]
+      },
       "CalculateFinalResultsDto": {
         "type": "object",
         "properties": {
@@ -8428,6 +9530,14 @@
           "skipped": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/SkippedStudentDto" }
+          },
+          "exemptedStudents": {
+            "type": "number",
+            "description": "Học sinh được miễn mọi ô của bảng: không tạo kết quả"
+          },
+          "exempted": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExemptedStudentDto" }
           }
         },
         "required": [
@@ -8438,7 +9548,9 @@
           "calculatedStudents",
           "skippedStudents",
           "results",
-          "skipped"
+          "skipped",
+          "exemptedStudents",
+          "exempted"
         ]
       },
       "CalculationHistoryDto": {
@@ -8526,9 +9638,16 @@
           "componentId": { "type": "number" },
           "componentName": { "type": "string" },
           "coefficient": { "type": "string" },
-          "value": { "type": "string" }
+          "value": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["DA_DUYET", "MIEN"] }
         },
-        "required": ["componentId", "componentName", "coefficient", "value"]
+        "required": [
+          "componentId",
+          "componentName",
+          "coefficient",
+          "value",
+          "status"
+        ]
       },
       "StudentSubjectResultDto": {
         "type": "object",
@@ -8598,243 +9717,6 @@
           "summary": { "$ref": "#/components/schemas/StudentResultSummaryDto" }
         },
         "required": ["items", "summary"]
-      },
-      "GradebookDto": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "number" },
-          "classId": { "type": "number" },
-          "subjectId": { "type": "number" },
-          "termId": { "type": "number" },
-          "className": { "type": "string" },
-          "subjectName": { "type": "string" },
-          "termName": { "type": "string" },
-          "status": { "type": "string", "enum": ["DANG_NHAP_LIEU", "DA_CHOT"] },
-          "version": { "type": "number" }
-        },
-        "required": [
-          "id",
-          "classId",
-          "subjectId",
-          "termId",
-          "className",
-          "subjectName",
-          "termName",
-          "status",
-          "version"
-        ]
-      },
-      "GradebookListDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/GradebookDto" }
-          },
-          "nextCursor": { "type": "number", "nullable": true }
-        },
-        "required": ["items", "nextCursor"]
-      },
-      "CreateGradebookInput": {
-        "type": "object",
-        "properties": {
-          "classId": { "type": "number" },
-          "subjectId": { "type": "number" },
-          "termId": { "type": "number" }
-        },
-        "required": ["classId", "subjectId", "termId"]
-      },
-      "GradeCellDto": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "studentId": { "type": "number" },
-          "studentName": { "type": "string" },
-          "stt": {
-            "type": "number",
-            "nullable": true,
-            "description": "STT trong lớp theo thứ tự tên; null khi học sinh đã nghỉ"
-          },
-          "active": { "type": "boolean" },
-          "componentId": { "type": "number" },
-          "componentName": { "type": "string" },
-          "coefficient": { "type": "string" },
-          "required": { "type": "boolean" },
-          "displayOrder": { "type": "number" },
-          "openForInput": { "type": "boolean" },
-          "columnLocked": { "type": "boolean" },
-          "passFail": { "type": "boolean" },
-          "opensAt": { "type": "string", "nullable": true },
-          "closesAt": { "type": "string", "nullable": true },
-          "deadlineVersion": { "type": "number" },
-          "value": { "type": "string", "nullable": true },
-          "status": {
-            "type": "string",
-            "enum": ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET"]
-          },
-          "source": { "type": "string", "enum": ["NHAP_TAY", "NHAN_DIEN"] }
-        },
-        "required": [
-          "id",
-          "studentId",
-          "studentName",
-          "stt",
-          "active",
-          "componentId",
-          "componentName",
-          "coefficient",
-          "required",
-          "displayOrder",
-          "value",
-          "status",
-          "source"
-        ]
-      },
-      "CellsResponseDto": {
-        "type": "object",
-        "properties": {
-          "book": { "$ref": "#/components/schemas/GradebookDto" },
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/GradeCellDto" }
-          },
-          "nextCursor": { "type": "string", "nullable": true }
-        },
-        "required": ["book", "items", "nextCursor"]
-      },
-      "GradeChangeInput": {
-        "type": "object",
-        "properties": {
-          "cellId": { "type": "string", "description": "bigint cell ID" },
-          "value": {
-            "type": "string",
-            "nullable": true,
-            "pattern": "^(10[.]0|[0-9][.][0-9])$",
-            "description": "0.0–10.0 step 0.1, or null to clear"
-          },
-          "reason": { "type": "string", "maxLength": 500 }
-        },
-        "required": ["cellId", "value", "reason"]
-      },
-      "BatchUpdateInput": {
-        "type": "object",
-        "properties": {
-          "expectedVersion": { "type": "number", "minimum": 0 },
-          "changes": {
-            "minItems": 1,
-            "maxItems": 100,
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/GradeChangeInput" }
-          }
-        },
-        "required": ["expectedVersion", "changes"]
-      },
-      "UpdatedCellDto": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "value": { "type": "string", "nullable": true },
-          "status": {
-            "type": "string",
-            "enum": ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET"]
-          },
-          "source": { "type": "string", "enum": ["NHAP_TAY", "NHAN_DIEN"] }
-        },
-        "required": ["id", "value", "status", "source"]
-      },
-      "BatchUpdateResultDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/UpdatedCellDto" }
-          },
-          "bookId": { "type": "number" },
-          "version": { "type": "number" }
-        },
-        "required": ["items", "bookId", "version"]
-      },
-      "GradeDeadlineInput": {
-        "type": "object",
-        "properties": {
-          "opensAt": { "type": "string", "format": "date-time" },
-          "closesAt": { "type": "string", "format": "date-time" },
-          "expectedVersion": { "type": "number", "minimum": 0 }
-        },
-        "required": ["opensAt", "closesAt", "expectedVersion"]
-      },
-      "LockInput": {
-        "type": "object",
-        "properties": { "expectedVersion": { "type": "number" } },
-        "required": ["expectedVersion"]
-      },
-      "GradebookHistoryEntryDto": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "cellId": { "type": "string" },
-          "editor": { "type": "number" },
-          "oldValue": { "type": "string", "nullable": true },
-          "newValue": { "type": "string", "nullable": true },
-          "reason": { "type": "string" },
-          "timestamp": { "type": "string" },
-          "studentName": { "type": "string" },
-          "componentName": { "type": "string" }
-        },
-        "required": [
-          "id",
-          "cellId",
-          "editor",
-          "oldValue",
-          "newValue",
-          "reason",
-          "timestamp",
-          "studentName",
-          "componentName"
-        ]
-      },
-      "GradebookHistoryDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/GradebookHistoryEntryDto" }
-          },
-          "nextCursor": { "type": "string", "nullable": true }
-        },
-        "required": ["items", "nextCursor"]
-      },
-      "GradeHistoryEntryDto": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "cellId": { "type": "string" },
-          "editor": { "type": "number" },
-          "oldValue": { "type": "string", "nullable": true },
-          "newValue": { "type": "string", "nullable": true },
-          "reason": { "type": "string" },
-          "timestamp": { "type": "string" }
-        },
-        "required": [
-          "id",
-          "cellId",
-          "editor",
-          "oldValue",
-          "newValue",
-          "reason",
-          "timestamp"
-        ]
-      },
-      "GradeHistoryDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/GradeHistoryEntryDto" }
-          },
-          "nextCursor": { "type": "string", "nullable": true }
-        },
-        "required": ["items", "nextCursor"]
       },
       "ProfileDto": {
         "type": "object",
@@ -9031,6 +9913,10 @@
             "type": "string",
             "description": "Họ tên học sinh theo danh sách lớp đã chốt"
           },
+          "exempt": {
+            "type": "boolean",
+            "description": "Học sinh được miễn cột điểm này: dòng chỉ duyệt được với giá trị null"
+          },
           "nameRead": {
             "type": "string",
             "nullable": true,
@@ -9087,6 +9973,7 @@
           "sttOnPaper",
           "studentId",
           "studentName",
+          "exempt",
           "nameRead",
           "matchConfidence",
           "matchNote",

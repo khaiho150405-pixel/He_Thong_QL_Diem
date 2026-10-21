@@ -30,6 +30,8 @@ class RecognitionEvidenceRowDto {
 
     required this.studentName,
 
+    required this.exempt,
+
     required this.nameRead,
 
     required this.matchConfidence,
@@ -88,6 +90,10 @@ class RecognitionEvidenceRowDto {
   /// Họ tên học sinh theo danh sách lớp đã chốt
   @JsonKey(name: r'studentName', required: true, includeIfNull: false)
   final String studentName;
+
+  /// Học sinh được miễn cột điểm này: dòng chỉ duyệt được với giá trị null
+  @JsonKey(name: r'exempt', required: true, includeIfNull: false)
+  final bool exempt;
 
   /// Họ tên máy đọc được trên giấy
   @JsonKey(name: r'nameRead', required: true, includeIfNull: true)
@@ -159,6 +165,7 @@ class RecognitionEvidenceRowDto {
           other.sttOnPaper == sttOnPaper &&
           other.studentId == studentId &&
           other.studentName == studentName &&
+          other.exempt == exempt &&
           other.nameRead == nameRead &&
           other.matchConfidence == matchConfidence &&
           other.matchNote == matchNote &&
@@ -186,6 +193,7 @@ class RecognitionEvidenceRowDto {
       (sttOnPaper == null ? 0 : sttOnPaper.hashCode) +
       studentId.hashCode +
       studentName.hashCode +
+      exempt.hashCode +
       (nameRead == null ? 0 : nameRead.hashCode) +
       (matchConfidence == null ? 0 : matchConfidence.hashCode) +
       (matchNote == null ? 0 : matchNote.hashCode) +

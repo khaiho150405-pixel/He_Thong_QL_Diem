@@ -107,6 +107,8 @@ test("calculation hashes the normalized request and forwards the authenticated s
             skippedStudents: 0,
             results: [],
             skipped: [],
+            exemptedStudents: 0,
+            exempted: [],
           };
         },
         list: async () => [],

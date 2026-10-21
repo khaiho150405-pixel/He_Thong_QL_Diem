@@ -13,7 +13,11 @@ abstract class _$StudentApprovedComponentDtoCWProxy {
 
   StudentApprovedComponentDto coefficient(String coefficient);
 
-  StudentApprovedComponentDto value(String value);
+  StudentApprovedComponentDto value(String? value);
+
+  StudentApprovedComponentDto status(
+    StudentApprovedComponentDtoStatusEnum status,
+  );
 
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentApprovedComponentDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
@@ -25,7 +29,8 @@ abstract class _$StudentApprovedComponentDtoCWProxy {
     num componentId,
     String componentName,
     String coefficient,
-    String value,
+    String? value,
+    StudentApprovedComponentDtoStatusEnum status,
   });
 }
 
@@ -49,7 +54,12 @@ class _$StudentApprovedComponentDtoCWProxyImpl
       this(coefficient: coefficient);
 
   @override
-  StudentApprovedComponentDto value(String value) => this(value: value);
+  StudentApprovedComponentDto value(String? value) => this(value: value);
+
+  @override
+  StudentApprovedComponentDto status(
+    StudentApprovedComponentDtoStatusEnum status,
+  ) => this(status: status);
 
   @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentApprovedComponentDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
@@ -63,6 +73,7 @@ class _$StudentApprovedComponentDtoCWProxyImpl
     Object? componentName = const $CopyWithPlaceholder(),
     Object? coefficient = const $CopyWithPlaceholder(),
     Object? value = const $CopyWithPlaceholder(),
+    Object? status = const $CopyWithPlaceholder(),
   }) {
     return StudentApprovedComponentDto(
       componentId: componentId == const $CopyWithPlaceholder()
@@ -80,7 +91,11 @@ class _$StudentApprovedComponentDtoCWProxyImpl
       value: value == const $CopyWithPlaceholder()
           ? _value.value
           // ignore: cast_nullable_to_non_nullable
-          : value as String,
+          : value as String?,
+      status: status == const $CopyWithPlaceholder()
+          ? _value.status
+          // ignore: cast_nullable_to_non_nullable
+          : status as StudentApprovedComponentDtoStatusEnum,
     );
   }
 }
@@ -106,13 +121,18 @@ StudentApprovedComponentDto _$StudentApprovedComponentDtoFromJson(
       'componentName',
       'coefficient',
       'value',
+      'status',
     ],
   );
   final val = StudentApprovedComponentDto(
     componentId: $checkedConvert('componentId', (v) => v as num),
     componentName: $checkedConvert('componentName', (v) => v as String),
     coefficient: $checkedConvert('coefficient', (v) => v as String),
-    value: $checkedConvert('value', (v) => v as String),
+    value: $checkedConvert('value', (v) => v as String?),
+    status: $checkedConvert(
+      'status',
+      (v) => $enumDecode(_$StudentApprovedComponentDtoStatusEnumEnumMap, v),
+    ),
   );
   return val;
 });
@@ -124,4 +144,10 @@ Map<String, dynamic> _$StudentApprovedComponentDtoToJson(
   'componentName': instance.componentName,
   'coefficient': instance.coefficient,
   'value': instance.value,
+  'status': _$StudentApprovedComponentDtoStatusEnumEnumMap[instance.status]!,
+};
+
+const _$StudentApprovedComponentDtoStatusEnumEnumMap = {
+  StudentApprovedComponentDtoStatusEnum.DA_DUYET: 'DA_DUYET',
+  StudentApprovedComponentDtoStatusEnum.MIEN: 'MIEN',
 };

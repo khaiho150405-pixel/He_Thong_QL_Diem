@@ -147,28 +147,46 @@ class AcademicYearFilterControl extends ConsumerWidget {
     required this.years,
     required this.onChanged,
     this.width,
+    this.allowAll = true,
   });
 
   final List<Json> years;
   final VoidCallback onChanged;
   final double? width;
+  final bool allowAll;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewingYear = ref.watch(viewingYearProvider);
+    final num? effectiveValue;
+    if (!allowAll && (viewingYear == null || viewingYear.isAll)) {
+      Json? current;
+      for (final y in years) {
+        if (y['hien_hanh'] == true) {
+          current = y;
+          break;
+        }
+      }
+      current ??= years.firstOrNull;
+      effectiveValue = current?['ma_nam_hoc'] as num?;
+    } else {
+      effectiveValue = viewingYear?.id;
+    }
+
     final isArchive =
         viewingYear != null && !viewingYear.isAll && !viewingYear.isCurrent;
 
     final dropdown = AppFilterDropdown<num?>(
       label: 'Năm học',
       icon: Icons.calendar_month_outlined,
-      value: viewingYear?.id,
+      value: effectiveValue,
       width: width,
       items: [
-        const DropdownMenuItem<num?>(
-          value: null,
-          child: Text('Tất cả các năm'),
-        ),
+        if (allowAll)
+          const DropdownMenuItem<num?>(
+            value: null,
+            child: Text('Tất cả các năm'),
+          ),
         for (final y in years)
           DropdownMenuItem<num?>(
             value: y['ma_nam_hoc'] as num?,

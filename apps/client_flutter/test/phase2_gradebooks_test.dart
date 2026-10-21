@@ -173,6 +173,7 @@ class GradebookFakeServer implements HttpClientAdapter {
     'displayOrder': componentId == 201 ? 1 : 2,
     'value': value,
     'status': value == null ? 'CHUA_CO' : 'DA_DUYET',
+    'exemptionReason': null,
     'source': 'NHAP_TAY',
   };
 }

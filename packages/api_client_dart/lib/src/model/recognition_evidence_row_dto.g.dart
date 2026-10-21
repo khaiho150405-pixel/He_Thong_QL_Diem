@@ -19,6 +19,8 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
 
   RecognitionEvidenceRowDto studentName(String studentName);
 
+  RecognitionEvidenceRowDto exempt(bool exempt);
+
   RecognitionEvidenceRowDto nameRead(String? nameRead);
 
   RecognitionEvidenceRowDto matchConfidence(String? matchConfidence);
@@ -78,6 +80,7 @@ abstract class _$RecognitionEvidenceRowDtoCWProxy {
     num? sttOnPaper,
     num studentId,
     String studentName,
+    bool exempt,
     String? nameRead,
     String? matchConfidence,
     String? matchNote,
@@ -126,6 +129,9 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
   @override
   RecognitionEvidenceRowDto studentName(String studentName) =>
       this(studentName: studentName);
+
+  @override
+  RecognitionEvidenceRowDto exempt(bool exempt) => this(exempt: exempt);
 
   @override
   RecognitionEvidenceRowDto nameRead(String? nameRead) =>
@@ -218,6 +224,7 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
     Object? sttOnPaper = const $CopyWithPlaceholder(),
     Object? studentId = const $CopyWithPlaceholder(),
     Object? studentName = const $CopyWithPlaceholder(),
+    Object? exempt = const $CopyWithPlaceholder(),
     Object? nameRead = const $CopyWithPlaceholder(),
     Object? matchConfidence = const $CopyWithPlaceholder(),
     Object? matchNote = const $CopyWithPlaceholder(),
@@ -262,6 +269,10 @@ class _$RecognitionEvidenceRowDtoCWProxyImpl
           ? _value.studentName
           // ignore: cast_nullable_to_non_nullable
           : studentName as String,
+      exempt: exempt == const $CopyWithPlaceholder()
+          ? _value.exempt
+          // ignore: cast_nullable_to_non_nullable
+          : exempt as bool,
       nameRead: nameRead == const $CopyWithPlaceholder()
           ? _value.nameRead
           // ignore: cast_nullable_to_non_nullable
@@ -361,6 +372,7 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
       'sttOnPaper',
       'studentId',
       'studentName',
+      'exempt',
       'nameRead',
       'matchConfidence',
       'matchNote',
@@ -388,6 +400,7 @@ RecognitionEvidenceRowDto _$RecognitionEvidenceRowDtoFromJson(
     sttOnPaper: $checkedConvert('sttOnPaper', (v) => v as num?),
     studentId: $checkedConvert('studentId', (v) => v as num),
     studentName: $checkedConvert('studentName', (v) => v as String),
+    exempt: $checkedConvert('exempt', (v) => v as bool),
     nameRead: $checkedConvert('nameRead', (v) => v as String?),
     matchConfidence: $checkedConvert('matchConfidence', (v) => v as String?),
     matchNote: $checkedConvert('matchNote', (v) => v as String?),
@@ -449,6 +462,7 @@ Map<String, dynamic> _$RecognitionEvidenceRowDtoToJson(
   'sttOnPaper': instance.sttOnPaper,
   'studentId': instance.studentId,
   'studentName': instance.studentName,
+  'exempt': instance.exempt,
   'nameRead': instance.nameRead,
   'matchConfidence': instance.matchConfidence,
   'matchNote': instance.matchNote,

@@ -167,7 +167,7 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.text('Đặt lịch'));
+      await tester.tap(find.text('Đặt lịch riêng cho bảng này'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Hạn nhập:'), findsOneWidget);
       await tester.tap(find.text('Lưu lịch nhập'));
@@ -199,7 +199,7 @@ void main() {
       );
       await tester.tap(find.text('Lịch nhập điểm của nhà trường'));
       await tester.pumpAndSettle();
-      expect(find.text('Đặt lịch'), findsNothing);
+      expect(find.text('Đặt lịch riêng cho bảng này'), findsNothing);
       expect(find.textContaining('Chốt cột'), findsNothing);
       expect(find.textContaining('Chưa đặt lịch'), findsOneWidget);
       expect(tester.takeException(), isNull);

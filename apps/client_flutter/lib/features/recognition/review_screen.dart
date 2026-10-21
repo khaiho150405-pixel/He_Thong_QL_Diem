@@ -81,7 +81,22 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     if (!mounted) return data;
     loaded = data;
     for (final row in data.rows) {
-      if (!values.containsKey(row.rowId)) {
+      if (row.exempt == true) {
+        if (!values.containsKey(row.rowId)) {
+          values[row.rowId] = TextEditingController(text: '');
+          reasons[row.rowId] = TextEditingController(
+            text: 'Học sinh được miễn cột này',
+          );
+          leavingEmpty[row.rowId] = true;
+          agreedYellow[row.rowId] = false;
+          sttConfirmed[row.rowId] = true;
+          focusNodes[row.rowId] = FocusNode();
+        } else {
+          values[row.rowId]!.text = '';
+          reasons[row.rowId]!.text = 'Học sinh được miễn cột này';
+          leavingEmpty[row.rowId] = true;
+        }
+      } else if (!values.containsKey(row.rowId)) {
         final suggested = _suggested(row);
         values[row.rowId] = TextEditingController(text: suggested ?? '');
         reasons[row.rowId] = TextEditingController(
@@ -231,7 +246,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       return;
     }
 
-    final redRows = data.rows.where((r) => r.reviewLevel.value == 'DO');
+    final redRows =
+        data.rows.where((r) => r.exempt != true && r.reviewLevel.value == 'DO');
     if (!redRows.every(_isRowRedHandled)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -243,7 +259,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       return;
     }
 
-    final sttWarningRows = data.rows.where(_isSttWarning);
+    final sttWarningRows =
+        data.rows.where((r) => r.exempt != true && _isSttWarning(r));
     if (!sttWarningRows.every((r) => sttConfirmed[r.rowId] == true)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -652,16 +669,22 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 return left.order.compareTo(right.order);
               });
 
+            final exemptRows =
+                orderedRows.where((r) => r.exempt == true).toList();
             final needReviewRows = orderedRows
                 .where(
                   (r) =>
-                      r.reviewLevel.value == 'DO' ||
-                      r.reviewLevel.value == 'VANG' ||
-                      _hasSttDiff(r),
+                      r.exempt != true &&
+                      (r.reviewLevel.value == 'DO' ||
+                          r.reviewLevel.value == 'VANG' ||
+                          _hasSttDiff(r)),
                 )
                 .toList();
             final greenRows = orderedRows
-                .where((r) => r.reviewLevel.value == 'XANH' && !_hasSttDiff(r))
+                .where((r) =>
+                    r.exempt != true &&
+                    r.reviewLevel.value == 'XANH' &&
+                    !_hasSttDiff(r))
                 .toList();
 
             final totalNeedReview = needReviewRows.length;
@@ -669,10 +692,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 .where((r) => _isRowHandled(r))
                 .length;
             final allRedHandled = orderedRows
-                .where((r) => r.reviewLevel.value == 'DO')
+                .where((r) => r.exempt != true && r.reviewLevel.value == 'DO')
                 .every((r) => _isRowRedHandled(r));
             final allSttWarningsConfirmed = orderedRows
-                .where(_isSttWarning)
+                .where((r) => r.exempt != true && _isSttWarning(r))
                 .every((r) => sttConfirmed[r.rowId] == true);
 
             // Bộ lọc: danh sách các dòng cần hiển thị
@@ -800,6 +823,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                               isTablet: isTablet,
                               isMobile: isMobile,
                               showGreenCollapsible: showGreenCollapsible,
+                              exemptRows: exemptRows,
                             ),
                     ),
 
@@ -835,6 +859,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     required List<RecognitionEvidenceRowDto> needReviewRows,
     required List<RecognitionEvidenceRowDto> allNeedReviewRows,
     required List<RecognitionEvidenceRowDto> greenRows,
+    required List<RecognitionEvidenceRowDto> exemptRows,
     required int totalNeedReview,
     required int reviewedCount,
     required bool canApprove,
@@ -911,6 +936,30 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     isSttConfirmed: sttConfirmed[row.rowId] ?? false,
                     onSttConfirmedChanged: (val) =>
                         _onSttConfirmedChanged(row.rowId, val),
+                    isCancelled: ticket.status.value == 'DA_HUY',
+                  ),
+
+                // Danh sách dòng Miễn (không tính vào số dòng cần xử lý)
+                for (final row in exemptRows)
+                  ReviewRowCard(
+                    row: row,
+                    valueController: values[row.rowId]!,
+                    reasonController: reasons[row.rowId]!,
+                    isLeavingEmpty: true,
+                    isAgreedYellow: false,
+                    enabled: false,
+                    focusNode: focusNodes[row.rowId],
+                    onFocusNext: null,
+                    onGradeChanged: (_) {},
+                    onReasonChanged: (_) {},
+                    onLeaveEmpty: () {},
+                    onCancelLeaveEmpty: () {},
+                    onAgreeYellow: () {},
+                    onRefresh: refreshEvidence,
+                    isDesktop: isDesktop,
+                    readOnly: true,
+                    isSttConfirmed: true,
+                    onSttConfirmedChanged: null,
                     isCancelled: ticket.status.value == 'DA_HUY',
                   ),
 
