@@ -32,6 +32,8 @@ export function accountUsername(username: unknown, role: Role): boolean {
   );
 }
 const idle = 30 * 60 * 1000;
+/** Chỉ ghi lại hoat_dong_cuoi khi giá trị cũ đã quá 60 giây (hạn idle 30 phút vẫn kiểm đúng như cũ). */
+const touchInterval = 60 * 1000;
 const publicUser = (u: Row) => ({
   id: Number(u.ma_nguoi_dung),
   username: String(u.ten_dang_nhap),
@@ -211,9 +213,29 @@ export class IdentityService {
     if (!result) throw new UnauthorizedException();
     return { ...result, token, csrf };
   }
+  /**
+   * Gia hạn hoạt động của phiên bằng một UPDATE có điều kiện, ở mức ReadCommitted và ngoài giao dịch Serializable của request:
+   * nhiều request song song của cùng phiên không còn ghi–đọc chéo nhau trên một dòng (nguồn của 40001 → 409). Request đến
+   * sau thấy giá trị mới và không ghi gì. Điều kiện nằm trong WHERE nên không bao giờ lùi hoat_dong_cuoi.
+   */
+  private async touchSession(key: string): Promise<void> {
+    const now = new Date();
+    await this.store.run(
+      (tx) =>
+        tx.updateMany(
+          "phien_lam_viec",
+          {
+            ma_bam: key,
+            hoat_dong_cuoi: { lt: new Date(+now - touchInterval) },
+          },
+          { hoat_dong_cuoi: now },
+        ),
+      { isolationLevel: "ReadCommitted" },
+    );
+  }
   async authenticate(token: string): Promise<{ actor: Actor; csrf: string }> {
     if (!/^[a-f0-9]{64}$/.test(token)) throw new UnauthorizedException();
-    return this.store.run(async (tx) => {
+    const result = await this.store.run(async (tx) => {
       const key = digest(token);
       const now = new Date();
       const session = await tx.find("phien_lam_viec", { ma_bam: key });
@@ -227,16 +249,15 @@ export class IdentityService {
         ma_nguoi_dung: session.ma_nguoi_dung,
       });
       if (!user?.trang_thai) throw new UnauthorizedException();
-      await tx.update(
-        "phien_lam_viec",
-        { ma_bam: key },
-        { hoat_dong_cuoi: now },
-      );
       return {
         actor: { ...publicUser(user), sessionHash: key },
         csrf: String(session.csrf),
+        // Chỉ cần chạm phiên khi giá trị cũ đã quá touchInterval; phần lớn request không ghi gì.
+        stale: +(session.hoat_dong_cuoi as Date) + touchInterval <= +now,
       };
     });
+    if (result.stale) await this.touchSession(result.actor.sessionHash);
+    return { actor: result.actor, csrf: result.csrf };
   }
   async logout(actor: Actor) {
     authenticated(actor);

@@ -14,14 +14,35 @@ export function sqlStateOf(error: unknown): string | undefined {
     e?.cause?.originalCode
   );
 }
+export interface TransactionOptions {
+  /** Mặc định Serializable. Mức thấp hơn chỉ dành cho việc chạm phiên (không ảnh hưởng dữ liệu nghiệp vụ). */
+  isolationLevel?: "Serializable" | "ReadCommitted";
+}
+
+/** Tổng số lần chạy tối đa của một giao dịch gặp lỗi tuần tự hóa (1 lần đầu + 4 lần thử lại). */
+export const MAX_TRANSACTION_ATTEMPTS = 5;
+
+/**
+ * Chờ ngẫu nhiên tăng dần trước lần thử lại thứ n (n = 1..4): 20–60, 40–120, 80–240, 160–480 ms (tổng tối đa < 1 giây),
+ * để các giao dịch đụng nhau không chạy lại đúng cùng lúc.
+ */
+export function retryDelayMs(
+  retry: number,
+  random: () => number = Math.random,
+) {
+  const low = 20 * 2 ** (retry - 1);
+  return low + random() * low * 2;
+}
+
 export async function transaction<T>(
   db: PrismaClient,
   work: (tx: Prisma.TransactionClient) => Promise<T>,
+  options: TransactionOptions = {},
 ): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await db.$transaction(work, {
-        isolationLevel: "Serializable",
+        isolationLevel: options.isolationLevel ?? "Serializable",
         timeout: 15000,
       });
     } catch (error) {
@@ -29,7 +50,12 @@ export async function transaction<T>(
       const sqlState = sqlStateOf(error);
       const retryable =
         code === "P2034" || ["40001", "40P01"].includes(sqlState ?? "");
-      if (retryable && attempt < 2) continue;
+      if (retryable && attempt < MAX_TRANSACTION_ATTEMPTS - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, retryDelayMs(attempt + 1)),
+        );
+        continue;
+      }
       if (retryable)
         throw new ConflictException(
           "Dữ liệu vừa thay đổi; tải lại và thử lại.",

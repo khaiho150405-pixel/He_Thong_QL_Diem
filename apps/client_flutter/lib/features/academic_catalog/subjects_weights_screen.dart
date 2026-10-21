@@ -9,6 +9,7 @@ import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../../core/vietnamese_sort.dart';
 import '../authentication/session.dart';
+import 'academic_year_scope.dart';
 import 'merged_view_widgets.dart';
 import 'repository.dart';
 
@@ -19,12 +20,14 @@ class _Source {
     required this.components,
     required this.weights,
     required this.semesters,
+    required this.years,
   });
 
   final List<Json> subjects;
   final List<Json> components;
   final List<Json> weights;
   final List<Json> semesters;
+  final List<Json> years;
 }
 
 /// Hiển thị số hệ số lấy từ dữ liệu ("1.00" thành "1"); không tính toán.
@@ -56,8 +59,15 @@ class SubjectsWeightsScreen extends ConsumerStatefulWidget {
 }
 
 class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
+  static const Map<String, String> _defaultWeights = {
+    'TX': '1',
+    'GK': '2',
+    'CK': '3',
+  };
+
   late Future<_Source> _future;
   num? _semesterId;
+  ViewingYear? _lastViewingYear;
 
   @override
   void initState() {
@@ -72,26 +82,116 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
       fetchAllCatalogRows(repository, 'components'),
       fetchAllCatalogRows(repository, 'semester-weights'),
       fetchAllCatalogRows(repository, 'semesters'),
+      fetchAllCatalogRows(repository, 'years').catchError((_) => <Json>[]),
     ]);
     return _Source(
       subjects: results[0],
       components: results[1],
       weights: results[2],
       semesters: results[3],
+      years: results[4],
     );
   }
 
   void _reload() => setState(() => _future = _load());
 
-  /// Học kỳ đang chọn; chưa chọn thì lấy học kỳ đầu tiên có dòng hệ số.
-  num? _activeSemester(_Source data) {
-    if (_semesterId != null) return _semesterId;
-    for (final s in data.semesters) {
-      final id = s['ma_hoc_ky'];
-      if (id is num && data.weights.any((w) => w['ma_hoc_ky'] == id)) {
-        return id;
+  Map<num, Json> _buildYearMap(List<Json> years) => {
+    for (final y in years)
+      if (y['ma_nam_hoc'] is num) y['ma_nam_hoc'] as num: y,
+  };
+
+  List<Json> _filterAndSortSemesters(
+    List<Json> semesters,
+    Map<num, Json> yearMap,
+    ViewingYear? viewingYear,
+  ) {
+    final filtered = viewingYear?.id != null
+        ? semesters.where((s) => s['ma_nam_hoc'] == viewingYear!.id).toList()
+        : [...semesters];
+
+    filtered.sort((a, b) {
+      final yearA = yearMap[a['ma_nam_hoc']];
+      final yearB = yearMap[b['ma_nam_hoc']];
+      final startA = yearA?['ngay_bat_dau']?.toString() ?? '';
+      final startB = yearB?['ngay_bat_dau']?.toString() ?? '';
+      final yearCmp = startB.compareTo(startA);
+      if (yearCmp != 0) return yearCmp;
+
+      final idA = (a['ma_nam_hoc'] as num?) ?? 0;
+      final idB = (b['ma_nam_hoc'] as num?) ?? 0;
+      final idCmp = idB.compareTo(idA);
+      if (idCmp != 0) return idCmp;
+
+      final thuTuA = (a['thu_tu'] as num?) ?? 0;
+      final thuTuB = (b['thu_tu'] as num?) ?? 0;
+      return thuTuA.compareTo(thuTuB);
+    });
+
+    return filtered;
+  }
+
+  String _semesterLabel(Json s, Map<num, Json> yearMap) {
+    final semTen = (s['ten'] ?? s['label'] ?? (s['thu_tu'] != null ? 'Học kỳ ${s['thu_tu']}' : 'Học kỳ')).toString().trim();
+    final yearId = s['ma_nam_hoc'];
+    final yearRow = yearId is num ? yearMap[yearId] : null;
+    final yearName = (yearRow?['ten'] ?? yearRow?['label'] ?? '').toString().trim();
+    if (yearName.isNotEmpty && !semTen.contains(yearName)) {
+      return '$semTen · $yearName';
+    }
+    return semTen;
+  }
+
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
+  /// Thứ tự ưu tiên chọn học kỳ:
+  /// 1. Học kỳ người dùng đã chọn (nếu có trong validSemesters).
+  /// 2. Học kỳ của năm đang xem đang diễn ra theo ngày hôm nay.
+  /// 3. Học kỳ có thu_tu nhỏ nhất của năm đang xem.
+  /// 4. Học kỳ đầu danh sách.
+  num? _activeSemester(List<Json> validSemesters) {
+    if (validSemesters.isEmpty) return null;
+
+    if (_semesterId != null &&
+        validSemesters.any((s) => s['ma_hoc_ky'] == _semesterId)) {
+      return _semesterId;
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    for (final s in validSemesters) {
+      final start = _parseDate(s['ngay_bat_dau']);
+      final end = _parseDate(s['ngay_ket_thuc']);
+      if (start != null && end != null) {
+        final startDate = DateTime(start.year, start.month, start.day);
+        final endDate = DateTime(end.year, end.month, end.day);
+        if (!today.isBefore(startDate) && !today.isAfter(endDate)) {
+          final id = s['ma_hoc_ky'];
+          if (id is num) return id;
+        }
       }
     }
+
+    Json? minThuTuSem;
+    for (final s in validSemesters) {
+      final tt = s['thu_tu'];
+      if (tt is num) {
+        if (minThuTuSem == null || (minThuTuSem['thu_tu'] as num) > tt) {
+          minThuTuSem = s;
+        }
+      }
+    }
+    if (minThuTuSem != null && minThuTuSem['ma_hoc_ky'] is num) {
+      return minThuTuSem['ma_hoc_ky'] as num;
+    }
+
+    final firstId = validSemesters.first['ma_hoc_ky'];
+    if (firstId is num) return firstId;
+
     return null;
   }
 
@@ -238,10 +338,17 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
     );
   }
 
-  Widget _weightsCard(BuildContext context, _Source data, num? semester) {
+  Widget _weightsCard(
+    BuildContext context,
+    _Source data,
+    num? semester,
+    List<Json> validSemesters,
+    Map<num, Json> yearMap,
+    Map<String, String> weights,
+    bool isDefault,
+  ) {
     final t = context.tokens;
     final theme = Theme.of(context);
-    final weights = _weightsOf(data, semester);
     const order = ['TX', 'GK', 'CK'];
     final codes = [
       ...order.where(weights.containsKey),
@@ -272,11 +379,11 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
             value: semester,
             width: double.infinity,
             items: [
-              for (final s in data.semesters)
+              for (final s in validSemesters)
                 if (s['ma_hoc_ky'] is num)
                   DropdownMenuItem(
                     value: s['ma_hoc_ky'] as num,
-                    child: Text(s['label']?.toString() ?? s['ten'].toString()),
+                    child: Text(_semesterLabel(s, yearMap)),
                   ),
             ],
             onChanged: (value) => setState(() => _semesterId = value),
@@ -284,10 +391,10 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
           const SizedBox(height: AppSpacing.md),
           if (codes.isEmpty)
             Text(
-              'Học kỳ này chưa có hệ số được cấu hình.',
+              'Chưa có học kỳ nào.',
               style: theme.textTheme.bodyMedium?.copyWith(color: t.ink2),
             )
-          else
+          else ...[
             for (final code in codes) ...[
               Row(
                 children: [
@@ -310,6 +417,14 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
               if (code != codes.last)
                 Divider(height: AppSpacing.xl, color: t.line),
             ],
+            if (isDefault) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Đang dùng hệ số mặc định (chưa cấu hình riêng cho học kỳ này).',
+                style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
+              ),
+            ],
+          ],
         ],
       ),
     );
@@ -318,6 +433,12 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(sessionProvider);
+    final viewingYear = ref.watch(viewingYearProvider);
+    if (_lastViewingYear != viewingYear) {
+      _lastViewingYear = viewingYear;
+      _semesterId = null;
+    }
+
     return AppScaffold(
       title: 'Môn học & hệ số',
       currentPath: '/admin/subjects-weights',
@@ -352,7 +473,7 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
                         onAction: _reload,
                       );
                     }
-                    return _content(context, snapshot.data!);
+                    return _content(context, snapshot.data!, viewingYear);
                   },
                 ),
               ),
@@ -360,9 +481,22 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
     );
   }
 
-  Widget _content(BuildContext context, _Source data) {
-    final semester = _activeSemester(data);
-    final weights = _weightsOf(data, semester);
+  Widget _content(
+    BuildContext context,
+    _Source data,
+    ViewingYear? viewingYear,
+  ) {
+    final yearMap = _buildYearMap(data.years);
+    final validSemesters = _filterAndSortSemesters(
+      data.semesters,
+      yearMap,
+      viewingYear,
+    );
+    final semester = _activeSemester(validSemesters);
+    final configured = _weightsOf(data, semester);
+    final isDefault = configured.isEmpty && semester != null;
+    final weights = isDefault ? _defaultWeights : configured;
+
     final subjects = [...data.subjects]
       ..sort(
         (a, b) => VietnameseCollation.compare(
@@ -399,7 +533,15 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
         const SizedBox(height: AppSpacing.lg),
         LayoutBuilder(
           builder: (context, box) {
-            final weightsCard = _weightsCard(context, data, semester);
+            final weightsCard = _weightsCard(
+              context,
+              data,
+              semester,
+              validSemesters,
+              yearMap,
+              weights,
+              isDefault,
+            );
             final Widget list = subjects.isEmpty
                 ? const SizedBox(
                     height: 280,

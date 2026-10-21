@@ -2,7 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ConflictException } from "@nestjs/common";
 import type { PrismaClient } from "../src/generated/prisma/client.js";
-import { transaction, sqlStateOf } from "../src/common/transaction.js";
+import {
+  MAX_TRANSACTION_ATTEMPTS,
+  retryDelayMs,
+  sqlStateOf,
+  transaction,
+} from "../src/common/transaction.js";
 
 for (const sqlState of ["40001", "40P01"]) {
   test(`direct adapter ${sqlState} at commit retries the entire transaction`, async () => {
@@ -26,7 +31,7 @@ for (const sqlState of ["40001", "40P01"]) {
   });
 }
 
-test("persistent serialization failure stops after three attempts with HTTP conflict", async () => {
+test("persistent serialization failure stops after five attempts with HTTP conflict", async () => {
   let calls = 0;
   const db = {
     $transaction: async () => {
@@ -38,7 +43,8 @@ test("persistent serialization failure stops after three attempts with HTTP conf
     transaction(db, async () => 1),
     ConflictException,
   );
-  assert.equal(calls, 3);
+  assert.equal(calls, MAX_TRANSACTION_ATTEMPTS);
+  assert.equal(MAX_TRANSACTION_ATTEMPTS, 5);
 });
 
 test("unexpected adapter errors remain visible and are not retried", async () => {
@@ -111,4 +117,68 @@ test("other unique violations are not rewritten as duplicate uploads", async () 
     transaction(db, async () => 1),
     (e) => e === error,
   );
+});
+
+test("retry waits grow with randomised jitter and total less than one second", () => {
+  assert.equal(MAX_TRANSACTION_ATTEMPTS - 1, 4);
+  const bounds = [1, 2, 3, 4].map((retry) => [
+    retryDelayMs(retry, () => 0),
+    retryDelayMs(retry, () => 1),
+  ]);
+  assert.deepEqual(bounds, [
+    [20, 60],
+    [40, 120],
+    [80, 240],
+    [160, 480],
+  ]);
+  assert.ok(bounds.reduce((sum, [, high]) => sum + high!, 0) < 1000);
+  // Ngẫu nhiên thật sự: nhiều lần lấy mẫu không cho cùng một giá trị.
+  assert.ok(
+    new Set(Array.from({ length: 20 }, () => retryDelayMs(3))).size > 1,
+  );
+});
+
+test("a transaction that succeeds after a few serialization failures is retried with a pause", async () => {
+  let calls = 0;
+  const db = {
+    $transaction: async () => {
+      calls++;
+      if (calls < 4) throw { code: "P2034" };
+      return calls;
+    },
+  } as unknown as PrismaClient;
+  const started = Date.now();
+  assert.equal(await transaction(db, async () => 0), 4);
+  assert.ok(Date.now() - started >= 20 + 40 + 80 - 5);
+});
+
+test("isolation level defaults to Serializable and can be lowered explicitly", async () => {
+  const seen: unknown[] = [];
+  const db = {
+    $transaction: async (
+      _work: unknown,
+      options: { isolationLevel: string },
+    ) => {
+      seen.push(options.isolationLevel);
+      return 1;
+    },
+  } as unknown as PrismaClient;
+  await transaction(db, async () => 0);
+  await transaction(db, async () => 0, { isolationLevel: "ReadCommitted" });
+  assert.deepEqual(seen, ["Serializable", "ReadCommitted"]);
+});
+
+test("non serialization errors are not retried and keep the generic handling", async () => {
+  let calls = 0;
+  const db = {
+    $transaction: async () => {
+      calls++;
+      throw { code: "P2002" };
+    },
+  } as unknown as PrismaClient;
+  await assert.rejects(
+    transaction(db, async () => 1),
+    ConflictException,
+  );
+  assert.equal(calls, 1);
 });

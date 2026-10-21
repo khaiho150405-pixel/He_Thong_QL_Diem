@@ -59,6 +59,7 @@ function fakeUnit(years: Array<{ ma_nam_hoc: number; hien_hanh: boolean }>) {
       if (target) Object.assign(target, data);
       return where;
     },
+    updateMany: async () => 0,
     remove: async () => {},
   };
   return { unit, writes, audits, years };

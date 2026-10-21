@@ -85,6 +85,7 @@ test("calculation hashes the normalized request and forwards the authenticated s
           update: async () => ({}),
           list: async () => [],
           count: async () => 0,
+          updateMany: async () => 0,
           remove: async () => {},
         },
         findBook: async () => ({

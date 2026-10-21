@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
-import { transaction } from "./transaction.js";
+import { transaction, type TransactionOptions } from "./transaction.js";
 
 export type Row = Record<string, unknown>;
 export type Table =
@@ -32,10 +32,15 @@ export interface Unit {
   count(table: Table, where: Row): Promise<number>;
   create(table: Table, data: Row): Promise<Row>;
   update(table: Table, where: Row, data: Row): Promise<Row>;
+  /** Cập nhật mọi dòng khớp điều kiện; trả số dòng đã đổi (0 là hợp lệ, không ném lỗi). */
+  updateMany(table: Table, where: Row, data: Row): Promise<number>;
   remove(table: Table, where: Row): Promise<void>;
 }
 export interface Store {
-  run<T>(work: (unit: Unit) => Promise<T>): Promise<T>;
+  run<T>(
+    work: (unit: Unit) => Promise<T>,
+    options?: TransactionOptions,
+  ): Promise<T>;
 }
 export const STORE = Symbol("STORE");
 interface Delegate {
@@ -44,6 +49,7 @@ interface Delegate {
   count(args: Row): Promise<number>;
   create(args: Row): Promise<Row>;
   update(args: Row): Promise<Row>;
+  updateMany(args: Row): Promise<{ count: number }>;
   deleteMany(args: Row): Promise<unknown>;
 }
 export function unit(tx: Prisma.TransactionClient): Unit {
@@ -59,6 +65,8 @@ export function unit(tx: Prisma.TransactionClient): Unit {
     count: (table, where) => delegate(table).count({ where }),
     create: (table, data) => delegate(table).create({ data }),
     update: (table, where, data) => delegate(table).update({ where, data }),
+    updateMany: async (table, where, data) =>
+      (await delegate(table).updateMany({ where, data })).count,
     remove: async (table, where) => {
       await delegate(table).deleteMany({ where });
     },
@@ -67,7 +75,10 @@ export function unit(tx: Prisma.TransactionClient): Unit {
 @Injectable()
 export class PrismaStore implements Store {
   constructor(@Inject("DATABASE") private readonly db: PrismaClient) {}
-  run<T>(work: (unit: Unit) => Promise<T>): Promise<T> {
-    return transaction(this.db, (tx) => work(unit(tx)));
+  run<T>(
+    work: (unit: Unit) => Promise<T>,
+    options?: TransactionOptions,
+  ): Promise<T> {
+    return transaction(this.db, (tx) => work(unit(tx)), options);
   }
 }

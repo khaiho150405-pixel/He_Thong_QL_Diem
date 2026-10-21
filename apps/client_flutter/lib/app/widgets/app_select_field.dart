@@ -557,174 +557,199 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tokens;
-    final size = MediaQuery.sizeOf(context);
-    final insets = MediaQuery.viewInsetsOf(context);
-    final isMobile = size.width < 600;
-    final availableHeight = (size.height - insets.bottom).clamp(
-      160.0,
-      size.height,
-    );
-    final maxMenuHeight = isMobile
-        ? (availableHeight * 0.5).clamp(140.0, 320.0)
-        : 320.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double? effectiveWidth;
+        if (widget.width != null && widget.width!.isFinite) {
+          effectiveWidth = widget.width;
+        } else if (constraints.hasBoundedWidth && constraints.maxWidth.isFinite) {
+          effectiveWidth = constraints.maxWidth;
+        } else {
+          effectiveWidth = null;
+        }
 
-    Widget? leading;
-    if (widget.prefixIcon != null) {
-      leading = widget.prefixIcon;
-    } else if (widget.icon != null) {
-      leading = widget.icon is Widget
-          ? widget.icon as Widget
-          : Icon(widget.icon as IconData, size: 18, color: t.ink2);
-    }
+        final t = context.tokens;
+        final size = MediaQuery.sizeOf(context);
+        final insets = MediaQuery.viewInsetsOf(context);
+        final isMobile = size.width < 600;
+        final availableHeight = (size.height - insets.bottom).clamp(
+          160.0,
+          size.height,
+        );
+        final maxMenuHeight = isMobile
+            ? (availableHeight * 0.5).clamp(140.0, 320.0)
+            : 320.0;
 
-    final inputTheme = InputDecorationTheme(
-      isDense: widget.dense,
-      constraints: widget.dense
-          ? const BoxConstraints.tightFor(height: 48)
-          : null,
-      filled: true,
-      fillColor: widget.enabled ? t.surface : t.subtle,
-      contentPadding: widget.dense
-          ? const EdgeInsets.fromLTRB(10, 4, 10, 4)
-          : const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      labelStyle: TextStyle(
-        fontSize: widget.dense ? 12 : 14,
-        color: widget.enabled ? t.ink2 : t.ink3,
-      ),
-      hintStyle: TextStyle(fontSize: widget.dense ? 13 : 14, color: t.ink3),
-      helperStyle: TextStyle(fontSize: 12, color: t.ink3),
-      errorStyle: TextStyle(fontSize: 12, color: t.bad),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: t.line),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: t.line),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: t.pri, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: t.bad),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: t.bad, width: 1.5),
-      ),
-      disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide(color: t.line),
-      ),
-    );
+        Widget? leading;
+        if (widget.prefixIcon != null) {
+          leading = widget.prefixIcon;
+        } else if (widget.icon != null) {
+          leading = widget.icon is Widget
+              ? widget.icon as Widget
+              : Icon(widget.icon as IconData, size: 18, color: t.ink2);
+        }
 
-    Widget trailingWidget;
-    if (_query.isNotEmpty && widget.enabled && widget.searchable) {
-      trailingWidget = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            key: const ValueKey('app-select-clear-button'),
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              _controller.clear();
-              setState(() {
-                _query = '';
-                _hasUserTyped = true;
-                _highlightedIndex = -1;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Icon(Icons.close, size: 18, color: t.ink2),
+        final inputTheme = InputDecorationTheme(
+          isDense: widget.dense,
+          constraints: widget.dense
+              ? const BoxConstraints.tightFor(height: 48)
+              : null,
+          filled: true,
+          fillColor: widget.enabled ? t.surface : t.subtle,
+          contentPadding: widget.dense
+              ? const EdgeInsets.fromLTRB(10, 4, 10, 4)
+              : const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          labelStyle: TextStyle(
+            fontSize: widget.dense ? 12 : 14,
+            color: widget.enabled ? t.ink2 : t.ink3,
+          ),
+          hintStyle: TextStyle(fontSize: widget.dense ? 13 : 14, color: t.ink3),
+          helperStyle: TextStyle(fontSize: 12, color: t.ink3),
+          errorStyle: TextStyle(fontSize: 12, color: t.bad),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(color: t.line),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(color: t.line),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(color: t.pri, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(color: t.bad),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(color: t.bad, width: 1.5),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide(color: t.line),
+          ),
+        );
+
+        Widget trailingWidget;
+        if (_query.isNotEmpty && widget.enabled && widget.searchable) {
+          trailingWidget = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                key: const ValueKey('app-select-clear-button'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  _controller.clear();
+                  setState(() {
+                    _query = '';
+                    _hasUserTyped = true;
+                    _highlightedIndex = -1;
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(Icons.close, size: 18, color: t.ink2),
+                ),
+              ),
+              Icon(Icons.arrow_drop_down, color: t.ink2),
+            ],
+          );
+        } else {
+          trailingWidget = Icon(Icons.arrow_drop_down, color: t.ink2);
+        }
+
+        final menu = DropdownMenu<T?>(
+          enabled: widget.enabled,
+          controller: _controller,
+          focusNode: _focusNode,
+          width: effectiveWidth,
+          hintText: widget.hintText,
+          expandedInsets: effectiveWidth != null ? EdgeInsets.zero : null,
+          menuHeight: maxMenuHeight,
+          enableFilter: widget.searchable,
+          enableSearch: widget.searchable,
+          requestFocusOnTap: widget.searchable,
+          leadingIcon: leading,
+          trailingIcon: trailingWidget,
+          selectedTrailingIcon: trailingWidget,
+          label: widget.label != null ? Text(widget.label!) : null,
+          helperText: widget.helperText,
+          errorText: widget.fieldState.errorText,
+          inputDecorationTheme: inputTheme,
+          textStyle: TextStyle(
+            fontSize: widget.dense ? 13 : 14,
+            fontWeight: FontWeight.w500,
+            color: widget.enabled ? t.ink : t.ink3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          menuStyle: MenuStyle(
+            minimumSize: effectiveWidth != null
+                ? WidgetStatePropertyAll(Size(effectiveWidth, 0))
+                : null,
+            maximumSize: effectiveWidth != null
+                ? WidgetStatePropertyAll(Size(effectiveWidth, double.infinity))
+                : null,
+            backgroundColor: WidgetStatePropertyAll(t.surface),
+            surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+            elevation: const WidgetStatePropertyAll(4),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                side: BorderSide(color: t.line),
+              ),
             ),
           ),
-          Icon(Icons.arrow_drop_down, color: t.ink2),
-        ],
-      );
-    } else {
-      trailingWidget = Icon(Icons.arrow_drop_down, color: t.ink2);
-    }
+          dropdownMenuEntries: _getFilteredEntries(t),
+          initialSelection: widget.value,
+          filterCallback: widget.searchable
+              ? (allEntries, rawQuery) => _getFilteredEntries(t)
+              : null,
+          onSelected: widget.onChanged == null ? null : _selectItem,
+        );
 
-    final menu = DropdownMenu<T?>(
-      enabled: widget.enabled,
-      controller: _controller,
-      focusNode: _focusNode,
-      width: widget.width,
-      hintText: widget.hintText,
-      expandedInsets: widget.width == null ? EdgeInsets.zero : null,
-      menuHeight: maxMenuHeight,
-      enableFilter: widget.searchable,
-      enableSearch: widget.searchable,
-      requestFocusOnTap: widget.searchable,
-      leadingIcon: leading,
-      trailingIcon: trailingWidget,
-      selectedTrailingIcon: trailingWidget,
-      label: widget.label != null ? Text(widget.label!) : null,
-      helperText: widget.helperText,
-      errorText: widget.fieldState.errorText,
-      inputDecorationTheme: inputTheme,
-      textStyle: TextStyle(
-        fontSize: widget.dense ? 13 : 14,
-        fontWeight: FontWeight.w500,
-        color: widget.enabled ? t.ink : t.ink3,
-        overflow: TextOverflow.ellipsis,
-      ),
-      menuStyle: MenuStyle(
-        backgroundColor: WidgetStatePropertyAll(t.surface),
-        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
-        elevation: const WidgetStatePropertyAll(4),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            side: BorderSide(color: t.line),
-          ),
-        ),
-      ),
-      dropdownMenuEntries: _getFilteredEntries(t),
-      initialSelection: widget.value,
-      filterCallback: widget.searchable
-          ? (allEntries, rawQuery) => _getFilteredEntries(t)
-          : null,
-      onSelected: widget.onChanged == null ? null : _selectItem,
-    );
-
-    final interactiveMenu = Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: (_) {
-        // Chỉ ghi nhận trạng thái, KHÔNG setState: dựng lại widget đúng lúc
-        // DropdownMenu đang xử lý lượt bấm khiến lần bấm đầu không mở menu.
-        if (!_isOpen && widget.enabled) {
-          _isOpen = true;
-          if (!_hasUserTyped) {
-            _query = '';
-            _highlightedIndex = -1;
-          }
-        }
-        if (widget.searchable && widget.enabled) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && _focusNode.hasFocus) {
-              _controller.selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: _controller.text.length,
-              );
+        final interactiveMenu = Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (_) {
+            // Chỉ ghi nhận trạng thái, KHÔNG setState: dựng lại widget đúng lúc
+            // DropdownMenu đang xử lý lượt bấm khiến lần bấm đầu không mở menu.
+            if (!_isOpen && widget.enabled) {
+              _isOpen = true;
+              if (!_hasUserTyped) {
+                _query = '';
+                _highlightedIndex = -1;
+              }
             }
-          });
-        }
-      },
-      child: menu,
-    );
+            if (widget.searchable && widget.enabled) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && _focusNode.hasFocus) {
+                  _controller.selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _controller.text.length,
+                  );
+                }
+              });
+            }
+          },
+          child: menu,
+        );
 
-    if (widget.dense) {
-      return SizedBox(
-        width: widget.width,
-        height: 48.0,
-        child: interactiveMenu,
-      );
-    }
-    return interactiveMenu;
+        if (effectiveWidth != null) {
+          return SizedBox(
+            width: effectiveWidth,
+            height: widget.dense ? 48.0 : null,
+            child: interactiveMenu,
+          );
+        }
+        if (widget.dense) {
+          return SizedBox(
+            height: 48.0,
+            child: interactiveMenu,
+          );
+        }
+        return interactiveMenu;
+      },
+    );
   }
 }

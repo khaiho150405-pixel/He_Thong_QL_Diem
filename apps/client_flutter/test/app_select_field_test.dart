@@ -694,4 +694,62 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    '15. Ô rộng 300 trong khung 1200 với width: double.infinity: mở menu thì menu rộng ≈ 300 và căn trái theo ô',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 300,
+                child: AppSelectField<String>(
+                  label: 'Học kỳ',
+                  value: 'hk1',
+                  width: double.infinity,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'hk1',
+                      child: Text('Học kỳ 1 · 2024-2025'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'hk2',
+                      child: Text('Học kỳ 2 · 2024-2025'),
+                    ),
+                  ],
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final fieldFinder = find.byType(TextField);
+      final fieldRect = tester.getRect(fieldFinder);
+      expect(fieldRect.width, closeTo(300, 1.0));
+
+      await tester.tap(fieldFinder);
+      await tester.pumpAndSettle();
+
+      final itemFinder = find.widgetWithText(
+        MenuItemButton,
+        'Học kỳ 1 · 2024-2025',
+      );
+      expect(itemFinder, findsOneWidget);
+
+      final itemRect = tester.getRect(itemFinder);
+      // Menu rộng ≈ 300 và căn trái theo ô
+      expect(itemRect.width, closeTo(300, 2.0));
+      expect(itemRect.left, closeTo(fieldRect.left, 2.0));
+    },
+  );
 }
