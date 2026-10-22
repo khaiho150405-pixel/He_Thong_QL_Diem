@@ -54,6 +54,8 @@ class _FakeAdapter implements HttpClientAdapter {
           'termName': 'Học kỳ I',
           'status': 'DANG_NHAP_LIEU',
           'version': 1,
+          'pendingAdjustmentId': null,
+          'resultsOutdated': false,
         },
         'items': [
           {
@@ -129,10 +131,42 @@ class FakeDeadlinesRepo implements SemesterDeadlinesRepository {
 }
 
 class FakeFinalResultsRepo extends FinalResultsRepository {
-  FakeFinalResultsRepo() : super(ApiClientDart());
+  FakeFinalResultsRepo({this.listDto}) : super(ApiClientDart());
+
+  final FinalResultListDto? listDto;
 
   @override
-  Future<List<FinalResultDto>> list(num gradebookId) async => [];
+  Future<FinalResultListDto> list(num gradebookId) async =>
+      listDto ??
+      FinalResultListDto(
+        items: [
+          FinalResultDto(
+            id: 'res-1',
+            studentId: 1,
+            studentName: 'Nguyễn Văn A',
+            finalScore: '8.5',
+            classification: 'GIOI',
+            calculatedAt: DateTime.parse('2026-10-22T08:00:00Z'),
+            weightVersion: 'W-1',
+            policyVersion: '1.0',
+          ),
+        ],
+        nextCursor: null,
+        exemptedStudents: 1,
+        exempted: [
+          ExemptedStudentDto(studentId: 2, studentName: 'Học sinh được miễn'),
+        ],
+        skippedStudents: 1,
+        skipped: [
+          SkippedStudentDto(
+            studentId: 1,
+            studentName: 'Học sinh thiếu điểm',
+            missingComponents: [
+              MissingComponentDto(componentId: 1, name: 'CK'),
+            ],
+          ),
+        ],
+      );
 }
 
 void main() {
@@ -247,13 +281,17 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Miễn môn (1 học sinh):'), findsOneWidget);
+    expect(find.byKey(const ValueKey('group-tab-exempted')), findsOneWidget);
+    expect(find.byKey(const ValueKey('group-tab-skipped')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('group-tab-exempted')));
+    await tester.pumpAndSettle();
     expect(find.text('Học sinh được miễn'), findsOneWidget);
-    expect(find.text('Thiếu điểm (1 học sinh):'), findsOneWidget);
-    expect(
-      find.text('Học sinh thiếu điểm (thiếu CK)'),
-      findsOneWidget,
-    );
+
+    await tester.tap(find.byKey(const ValueKey('group-tab-skipped')));
+    await tester.pumpAndSettle();
+    expect(find.text('Học sinh thiếu điểm'), findsOneWidget);
+    expect(find.text('CK'), findsOneWidget);
   });
 
   testWidgets(

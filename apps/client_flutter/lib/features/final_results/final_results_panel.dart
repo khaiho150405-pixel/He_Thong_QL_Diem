@@ -39,22 +39,25 @@ class FinalResultsPanel extends ConsumerStatefulWidget {
     required this.gradebookVersion,
     this.showResults = true,
     this.initialSummary,
+    this.resultsOutdated,
   });
 
   final num gradebookId;
   final num gradebookVersion;
   final bool showResults;
   final CalculateFinalResultsDto? initialSummary;
+  final bool? resultsOutdated;
 
   @override
   ConsumerState<FinalResultsPanel> createState() => FinalResultsPanelState();
 }
 
 class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
-  late Future<List<FinalResultDto>> results;
+  late Future<FinalResultListDto> results;
   late Future<Map<num, num?>> _studentSttFuture;
   bool busy = false;
   CalculateFinalResultsDto? _lastSummary;
+  late bool _resultsOutdated;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -70,9 +73,19 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
   @override
   void initState() {
     super.initState();
+    _resultsOutdated = widget.resultsOutdated ?? false;
     _lastSummary = widget.initialSummary;
     results = ref.read(finalResultsRepositoryProvider).list(widget.gradebookId);
     _studentSttFuture = _loadStudentStt();
+  }
+
+  @override
+  void didUpdateWidget(covariant FinalResultsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.resultsOutdated != null &&
+        widget.resultsOutdated != oldWidget.resultsOutdated) {
+      _resultsOutdated = widget.resultsOutdated!;
+    }
   }
 
   @override
@@ -85,6 +98,9 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
     try {
       final cells =
           await ref.read(gradebooksRepositoryProvider).cells(widget.gradebookId);
+      if (widget.resultsOutdated == null && cells.book.resultsOutdated == true) {
+        if (mounted) setState(() => _resultsOutdated = true);
+      }
       final map = <num, num?>{};
       for (final cell in cells.items) {
         if (cell.stt != null) {
@@ -172,6 +188,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       if (!mounted) return;
       setState(() {
         _lastSummary = summary;
+        _resultsOutdated = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -954,6 +971,34 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
         children: [
           _header(context),
           const SizedBox(height: AppSpacing.lg),
+          if (_resultsOutdated) ...[
+            Container(
+              key: const ValueKey('results-outdated-banner'),
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: t.warnSoft,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: t.warnLine),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 20, color: t.warn),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Điểm đã được điều chỉnh — cần Tính kết quả lại',
+                      style: TextStyle(
+                        color: t.warn,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (_lastSummary != null) _summaryCard(context, _lastSummary!),
           if (busy)
             Padding(
@@ -971,7 +1016,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
               ).textTheme.bodyMedium?.copyWith(color: t.ink2),
             ),
           if (widget.showResults)
-            FutureBuilder<List<FinalResultDto>>(
+            FutureBuilder<FinalResultListDto>(
               future: results,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
@@ -987,8 +1032,22 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                     ),
                   );
                 }
-                final rawItems = snapshot.data!;
-                if (rawItems.isEmpty) {
+                final listDto = snapshot.data!;
+                final rawItems = listDto.items;
+                final exemptedList = listDto.exempted;
+                final skippedList = listDto.skipped;
+                final exemptedCount = max(
+                  listDto.exemptedStudents.toInt(),
+                  exemptedList.length,
+                );
+                final skippedCount = max(
+                  listDto.skippedStudents.toInt(),
+                  skippedList.length,
+                );
+
+                if (rawItems.isEmpty &&
+                    exemptedList.isEmpty &&
+                    skippedList.isEmpty) {
                   return _stateMessage(
                     context,
                     'Chưa tính kết quả cho bảng điểm này.',
@@ -1007,12 +1066,10 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                         .toList()
                       ..sort();
 
-                    final exemptedList = _lastSummary?.exempted ?? [];
-                    final skippedList = _lastSummary?.skipped ?? [];
-
                     // Dòng thông tin chung duy nhất phía trên bảng
-                    final metaSummaryWidget =
-                        _metaSummary(context, rawItems.first);
+                    final metaSummaryWidget = rawItems.isNotEmpty
+                        ? _metaSummary(context, rawItems.first)
+                        : const SizedBox.shrink();
 
                     // Lọc và sắp xếp nhóm "Tất cả"
                     final query = _searchQuery.trim().toLowerCase();
@@ -1048,8 +1105,8 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                         _toolbar(
                           context,
                           totalCount: rawItems.length,
-                          exemptedCount: exemptedList.length,
-                          skippedCount: skippedList.length,
+                          exemptedCount: exemptedCount,
+                          skippedCount: skippedCount,
                           availableClassifications: availableClassifications,
                           isMobile: isMobile,
                         ),

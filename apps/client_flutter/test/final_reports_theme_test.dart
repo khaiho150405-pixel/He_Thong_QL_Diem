@@ -72,7 +72,14 @@ class _FakeServer implements HttpClientAdapter {
       };
     } else if (options.path.endsWith('/final-results') &&
         options.method == 'GET') {
-      body = {'items': results, 'nextCursor': null};
+      body = {
+        'items': results,
+        'nextCursor': null,
+        'exemptedStudents': 0,
+        'exempted': [],
+        'skippedStudents': 0,
+        'skipped': [],
+      };
     } else if (options.path.endsWith('/reports/gradebooks/7/summary')) {
       body = {
         'gradebookId': 7,
@@ -267,8 +274,8 @@ void main() {
         await tester.tap(find.byTooltip('Lịch sử tính').first);
         await tester.pumpAndSettle();
         expect(find.text('Lịch sử tổng kết · Nguyễn Văn An'), findsOneWidget);
-        expect(find.text('Chưa có → 8.4 · GIOI'), findsOneWidget);
-        expect(find.text('8.4 → 8.6 · GIOI'), findsOneWidget);
+        expect(find.text('Chưa có → 8.4 · Giỏi'), findsOneWidget);
+        expect(find.text('8.4 → 8.6 · Giỏi'), findsOneWidget);
         expect(find.text('Tính lại sau khi sửa điểm'), findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.tap(find.text('Đóng').last);

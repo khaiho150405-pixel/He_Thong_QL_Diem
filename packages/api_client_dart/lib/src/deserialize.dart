@@ -5,6 +5,15 @@ import 'package:api_client_dart/src/model/accounts_dto.dart';
 import 'package:api_client_dart/src/model/accounts_import_input.dart';
 import 'package:api_client_dart/src/model/accounts_import_result.dart';
 import 'package:api_client_dart/src/model/activate_classification_policy_input.dart';
+import 'package:api_client_dart/src/model/adjustment_change_input.dart';
+import 'package:api_client_dart/src/model/adjustment_dto.dart';
+import 'package:api_client_dart/src/model/adjustment_input.dart';
+import 'package:api_client_dart/src/model/adjustment_line_dto.dart';
+import 'package:api_client_dart/src/model/adjustment_list_dto.dart';
+import 'package:api_client_dart/src/model/adjustment_page_dto.dart';
+import 'package:api_client_dart/src/model/adjustment_person_dto.dart';
+import 'package:api_client_dart/src/model/adjustment_reject_input.dart';
+import 'package:api_client_dart/src/model/adjustment_version_input.dart';
 import 'package:api_client_dart/src/model/admin_grade_distribution_dto.dart';
 import 'package:api_client_dart/src/model/admin_grade_level_progress_dto.dart';
 import 'package:api_client_dart/src/model/admin_kpi_dto.dart';
@@ -168,6 +177,33 @@ ReturnType deserialize<ReturnType, BaseType>(
       return ActivateClassificationPolicyInput.fromJson(
             value as Map<String, dynamic>,
           )
+          as ReturnType;
+    case 'AdjustmentChangeInput':
+      return AdjustmentChangeInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentDto':
+      return AdjustmentDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentInput':
+      return AdjustmentInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentLineDto':
+      return AdjustmentLineDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentListDto':
+      return AdjustmentListDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentPageDto':
+      return AdjustmentPageDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentPersonDto':
+      return AdjustmentPersonDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentRejectInput':
+      return AdjustmentRejectInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'AdjustmentVersionInput':
+      return AdjustmentVersionInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'AdminGradeDistributionDto':
       return AdminGradeDistributionDto.fromJson(value as Map<String, dynamic>)

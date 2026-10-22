@@ -56,6 +56,8 @@ export async function closedFixture(
       termName: row.ten,
       status: row.trang_thai,
       version: row.version,
+      pendingAdjustmentId: null,
+      resultsOutdated: false,
     };
     await c.query(
       "INSERT INTO khoa_idempotency(khoa,ma_nguoi_dung,thao_tac,ma_bam_yeu_cau,ket_qua) VALUES($1,$2,'LOCK_COLUMN',$3,$4)",

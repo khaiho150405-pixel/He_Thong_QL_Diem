@@ -1103,3 +1103,126 @@ test("a term without assignments cannot be published", async () => {
     await f.done();
   }
 });
+
+test("final-results list returns the current exempted and skipped groups on every page without recalculating", async () => {
+  const f = await fixture();
+  try {
+    const cls = await f.klass("grp", 4);
+    const subject = await f.subject("grp", [
+      ["TX", true],
+      ["GK", true],
+    ]);
+    await f.assign(cls, subject.id);
+    const book = await f.service.create(f.teacher, {
+      classId: cls,
+      subjectId: subject.id,
+      termId: f.term,
+    });
+    const [tx, gk] = subject.ids as [number, number];
+    for (const type of ["TX", "GK"])
+      await f.service.setSemesterDeadline(
+        f.admin,
+        f.term,
+        type,
+        f.window(-1, 60),
+      );
+    let view = await bookView(f, book.id);
+    const [a, b, c, d] = view.students as [number, number, number, number];
+    const setValue = (student: number, component: number, value: number) =>
+      f.owner.query(
+        "UPDATE diem_thanh_phan SET gia_tri=$4,trang_thai='DA_DUYET' WHERE ma_bang_diem=$1 AND ma_hoc_sinh=$2 AND ma_thanh_phan=$3",
+        [book.id, student, component, value],
+      );
+    await setValue(a, tx, 8);
+    await setValue(a, gk, 7);
+    await setValue(c, tx, 6);
+    const exempt = async (students: number[]) => {
+      view = await bookView(f, book.id);
+      await f.service.exemptions(f.teacher, book.id, uniqueKey("ex"), {
+        expectedVersion: view.version,
+        changes: students.flatMap((student) =>
+          [tx, gk].map((component) => ({
+            cellId: view.cell(student, component).id,
+            exempt: true,
+            reason: "Miễn toàn bộ",
+          })),
+        ),
+      });
+    };
+    const groups = async (actor = f.teacher) => {
+      const page = await f.finalResults.list(actor, book.id);
+      return {
+        exempted: page.exempted.map((s) => s.studentId),
+        skipped: page.skipped.map((s) => [
+          s.studentId,
+          s.missingComponents.map((m) => m.componentId),
+        ]),
+        counts: [page.exemptedStudents, page.skippedStudents],
+      };
+    };
+
+    await exempt([b]);
+    assert.deepEqual(await groups(), {
+      exempted: [b],
+      skipped: [
+        [c, [gk]],
+        [d, [tx, gk]],
+      ],
+      counts: [1, 2],
+    });
+    // Miễn thêm một học sinh (cột còn mở), chỉ GET lại: nhóm miễn cập nhật mà không tính lại.
+    await exempt([d]);
+    assert.deepEqual(await groups(), {
+      exempted: [b, d],
+      skipped: [[c, [gk]]],
+      counts: [2, 1],
+    });
+    assert.deepEqual(await groups(f.admin), await groups());
+
+    // Hết hạn (ô GK của c bị ghi 0), thêm học sinh vào lớp sau chốt: học sinh đó không có ô nên bị liệt kê thiếu.
+    await f.expire("TX");
+    await f.expire("GK");
+    await f.service.processDue();
+    const lateId = (
+      await f.owner.query(
+        "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,'Học sinh vào muộn','2010-01-01') RETURNING ma_hoc_sinh",
+        [cls],
+      )
+    ).rows[0].ma_hoc_sinh as number;
+    const locked = await bookView(f, book.id);
+    const result = await f.finalResults.calculate(
+      f.teacher,
+      book.id,
+      uniqueKey("calc"),
+      { expectedVersion: locked.version, reason: "Tính kết quả" },
+    );
+    const after = await groups();
+    assert.deepEqual(after, {
+      exempted: [b, d],
+      skipped: [[lateId, [tx, gk]]],
+      counts: [2, 1],
+    });
+    assert.deepEqual(
+      result.exempted.map((s) => s.studentId).sort(),
+      after.exempted.slice().sort(),
+    );
+    assert.deepEqual(
+      result.skipped.map((s) => s.studentId),
+      [lateId],
+    );
+    assert.equal(result.skippedStudents, after.counts[1]);
+
+    // Giáo viên không được phân công không xem được.
+    const other = await f.actor("GIAO_VIEN", "x");
+    await f.owner.query(
+      "INSERT INTO giao_vien(ma_giao_vien,ho_ten) VALUES($1,'Giáo viên khác')",
+      [other.id],
+    );
+    await assert.rejects(
+      f.finalResults.list(other, book.id),
+      ForbiddenException,
+    );
+  } finally {
+    await f.done();
+  }
+});

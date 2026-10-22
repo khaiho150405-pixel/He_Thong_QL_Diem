@@ -12,6 +12,8 @@ export interface Gradebook extends GradebookScope {
   termName: string;
   status: "DANG_NHAP_LIEU" | "DA_CHOT";
   version: number;
+  pendingAdjustmentId: string | null;
+  resultsOutdated: boolean;
 }
 export interface GradeCell {
   id: string;
@@ -84,6 +86,8 @@ export interface PublishIssue {
     | "RECOGNITION_PENDING"
     | "STUDENT_NOT_IN_GRADEBOOK"
     | "RESULTS_MISSING"
+    | "RESULTS_OUTDATED"
+    | "ADJUSTMENT_PENDING"
     | "COLUMNS_WITHOUT_DEADLINE";
   severity: "BLOCKING" | "WARNING";
   classId: number;

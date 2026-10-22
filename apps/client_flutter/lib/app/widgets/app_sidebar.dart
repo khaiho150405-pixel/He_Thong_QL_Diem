@@ -682,6 +682,12 @@ class AppSidebar extends ConsumerWidget {
                         countBadge: null,
                       ),
                       (
+                        icon: Icons.fact_check_outlined,
+                        title: 'Duyệt điều chỉnh điểm',
+                        route: '/adjustments',
+                        countBadge: null,
+                      ),
+                      (
                         icon: Icons.rule_outlined,
                         title: 'Chính sách',
                         route: '/classification-policy',

@@ -50,6 +50,42 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
     "Học sinh không thuộc lớp của bảng điểm hoặc không còn đang học.",
   ],
   [
+    "CELL_NOT_LOCKED",
+    "CELL_NOT_LOCKED",
+    "Ô thuộc cột còn mở; nhập điểm thường, phiếu điều chỉnh chỉ dành cho cột đã chốt.",
+  ],
+  [
+    "ADJUSTMENT_PENDING_EXISTS",
+    "ADJUSTMENT_PENDING_EXISTS",
+    "Bảng điểm đang có một phiếu điều chỉnh chờ duyệt; xử lý phiếu đó trước.",
+  ],
+  [
+    "ADJUSTMENT_NO_CHANGE",
+    "ADJUSTMENT_NO_CHANGE",
+    "Phiếu không có thay đổi nào so với điểm hiện tại.",
+  ],
+  [
+    "ADJUSTMENT_NOT_PENDING",
+    "ADJUSTMENT_NOT_PENDING",
+    "Phiếu điều chỉnh không còn ở trạng thái chờ duyệt.",
+  ],
+  [
+    "ADJUSTMENT_STALE",
+    "ADJUSTMENT_STALE",
+    "Điểm của một ô trong phiếu đã thay đổi kể từ lúc gửi; từ chối phiếu và gửi lại.",
+  ],
+  ["INVALID_GRADE", "INVALID_GRADE", "Điểm phải từ 0.0 đến 10.0, bước 0.1."],
+  [
+    "PASS_FAIL_VALUE_REQUIRED",
+    "PASS_FAIL_VALUE_REQUIRED",
+    "Môn Đạt/Không đạt chỉ nhận Đạt hoặc Không đạt.",
+  ],
+  [
+    "ADJUSTMENT_VERSION_OR_STATE_CONFLICT",
+    "VERSION_OR_STATE_CONFLICT",
+    "Bảng điểm hoặc phiếu vừa thay đổi; tải lại rồi thử lại.",
+  ],
+  [
     "TERM_ALREADY_PUBLISHED",
     "TERM_ALREADY_PUBLISHED",
     "Học kỳ đã công bố; không được thay đổi hoặc tính lại kết quả.",

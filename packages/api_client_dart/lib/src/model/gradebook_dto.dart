@@ -35,6 +35,10 @@ class GradebookDto {
     required this.status,
 
     required this.version,
+
+    required this.pendingAdjustmentId,
+
+    required this.resultsOutdated,
   });
 
   @JsonKey(name: r'id', required: true, includeIfNull: false)
@@ -64,6 +68,14 @@ class GradebookDto {
   @JsonKey(name: r'version', required: true, includeIfNull: false)
   final num version;
 
+  /// Mã phiếu điều chỉnh sau chốt đang CHO_DUYET (nếu có)
+  @JsonKey(name: r'pendingAdjustmentId', required: true, includeIfNull: true)
+  final String? pendingAdjustmentId;
+
+  /// Điểm đã được điều chỉnh sau lần tính tổng kết gần nhất
+  @JsonKey(name: r'resultsOutdated', required: true, includeIfNull: false)
+  final bool resultsOutdated;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -76,7 +88,9 @@ class GradebookDto {
           other.subjectName == subjectName &&
           other.termName == termName &&
           other.status == status &&
-          other.version == version;
+          other.version == version &&
+          other.pendingAdjustmentId == pendingAdjustmentId &&
+          other.resultsOutdated == resultsOutdated;
 
   @override
   int get hashCode =>
@@ -88,7 +102,9 @@ class GradebookDto {
       subjectName.hashCode +
       termName.hashCode +
       status.hashCode +
-      version.hashCode;
+      version.hashCode +
+      (pendingAdjustmentId == null ? 0 : pendingAdjustmentId.hashCode) +
+      resultsOutdated.hashCode;
 
   factory GradebookDto.fromJson(Map<String, dynamic> json) =>
       _$GradebookDtoFromJson(json);

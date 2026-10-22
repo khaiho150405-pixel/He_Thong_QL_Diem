@@ -48,14 +48,16 @@ Please follow the [installation procedure](#installation--usage) and then run th
 import 'package:api_client_dart/api_client_dart.dart';
 
 
-final api = ApiClientDart().getAssignmentsApi();
-final AssignmentsInput assignmentsInput = ; // AssignmentsInput |
+final api = ApiClientDart().getAdjustmentsApi();
+final String xIdempotencyKey = xIdempotencyKey_example; // String |
+final String adjId = adjId_example; // String |
+final AdjustmentVersionInput adjustmentVersionInput = ; // AdjustmentVersionInput |
 
 try {
-    final response = await api.assignmentsCreate(assignmentsInput);
+    final response = await api.adjustmentsApprove(xIdempotencyKey, adjId, adjustmentVersionInput);
     print(response);
 } catch on DioException (e) {
-    print("Exception when calling AssignmentsApi->assignmentsCreate: $e\n");
+    print("Exception when calling AdjustmentsApi->adjustmentsApprove: $e\n");
 }
 
 ```
@@ -66,6 +68,13 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*AdjustmentsApi*](doc/AdjustmentsApi.md) | [**adjustmentsApprove**](doc/AdjustmentsApi.md#adjustmentsapprove) | **POST** /api/v1/adjustments/{adjId}/approve |
+[*AdjustmentsApi*](doc/AdjustmentsApi.md) | [**adjustmentsCancel**](doc/AdjustmentsApi.md#adjustmentscancel) | **POST** /api/v1/adjustments/{adjId}/cancel |
+[*AdjustmentsApi*](doc/AdjustmentsApi.md) | [**adjustmentsDetail**](doc/AdjustmentsApi.md#adjustmentsdetail) | **GET** /api/v1/adjustments/{adjId} |
+[*AdjustmentsApi*](doc/AdjustmentsApi.md) | [**adjustmentsList**](doc/AdjustmentsApi.md#adjustmentslist) | **GET** /api/v1/adjustments |
+[*AdjustmentsApi*](doc/AdjustmentsApi.md) | [**adjustmentsReject**](doc/AdjustmentsApi.md#adjustmentsreject) | **POST** /api/v1/adjustments/{adjId}/reject |
+[*AdjustmentsApi*](doc/AdjustmentsApi.md) | [**gradebookAdjustmentsListForBook**](doc/AdjustmentsApi.md#gradebookadjustmentslistforbook) | **GET** /api/v1/gradebooks/{id}/adjustments |
+[*AdjustmentsApi*](doc/AdjustmentsApi.md) | [**gradebookAdjustmentsSubmit**](doc/AdjustmentsApi.md#gradebookadjustmentssubmit) | **POST** /api/v1/gradebooks/{id}/adjustments |
 [*AssignmentsApi*](doc/AssignmentsApi.md) | [**assignmentsCreate**](doc/AssignmentsApi.md#assignmentscreate) | **POST** /api/v1/catalog/assignments |
 [*AssignmentsApi*](doc/AssignmentsApi.md) | [**assignmentsList**](doc/AssignmentsApi.md#assignmentslist) | **GET** /api/v1/catalog/assignments |
 [*AssignmentsApi*](doc/AssignmentsApi.md) | [**assignmentsRemove**](doc/AssignmentsApi.md#assignmentsremove) | **DELETE** /api/v1/catalog/assignments/{id} |
@@ -176,6 +185,15 @@ Class | Method | HTTP request | Description
  - [AccountsImportInput](doc/AccountsImportInput.md)
  - [AccountsImportResult](doc/AccountsImportResult.md)
  - [ActivateClassificationPolicyInput](doc/ActivateClassificationPolicyInput.md)
+ - [AdjustmentChangeInput](doc/AdjustmentChangeInput.md)
+ - [AdjustmentDto](doc/AdjustmentDto.md)
+ - [AdjustmentInput](doc/AdjustmentInput.md)
+ - [AdjustmentLineDto](doc/AdjustmentLineDto.md)
+ - [AdjustmentListDto](doc/AdjustmentListDto.md)
+ - [AdjustmentPageDto](doc/AdjustmentPageDto.md)
+ - [AdjustmentPersonDto](doc/AdjustmentPersonDto.md)
+ - [AdjustmentRejectInput](doc/AdjustmentRejectInput.md)
+ - [AdjustmentVersionInput](doc/AdjustmentVersionInput.md)
  - [AdminGradeDistributionDto](doc/AdminGradeDistributionDto.md)
  - [AdminGradeLevelProgressDto](doc/AdminGradeLevelProgressDto.md)
  - [AdminKpiDto](doc/AdminKpiDto.md)

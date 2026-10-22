@@ -544,6 +544,7 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
             key: _panelKey,
             gradebookId: book.id,
             gradebookVersion: book.version,
+            resultsOutdated: book.resultsOutdated,
             showResults: true,
           ),
         ),

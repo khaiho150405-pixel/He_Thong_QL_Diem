@@ -42,6 +42,8 @@ class _Server implements HttpClientAdapter {
     'termName': 'Học kỳ I',
     'status': locked ? 'DA_CHOT' : 'DANG_NHAP_LIEU',
     'version': 2,
+    'pendingAdjustmentId': null,
+    'resultsOutdated': false,
   };
 
   Map<String, dynamic> cell(

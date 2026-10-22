@@ -127,8 +127,15 @@ export interface StudentResultSummary {
   classSize: number;
 }
 
+/** Nhóm "miễn" và "thiếu điểm" tính theo dữ liệu hiện tại của bảng điểm (không lưu lần tính). */
+export interface GradebookGroups {
+  exempted: ExemptedStudent[];
+  skipped: SkippedStudent[];
+}
+
 export interface FinalResultUnit {
   authorization: Unit;
+  groups(gradebookId: number): Promise<GradebookGroups>;
   findBook(id: number): Promise<FinalResultBook | null>;
   calculate(input: CalculateInput): Promise<CalculationResult>;
   list(gradebookId: number, after: string): Promise<FinalResult[]>;

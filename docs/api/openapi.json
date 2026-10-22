@@ -3210,6 +3210,640 @@
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
+    "/api/v1/gradebooks/{id}/adjustments": {
+      "post": {
+        "operationId": "gradebookAdjustmentsSubmit",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AdjustmentInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdjustmentDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["adjustments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      },
+      "get": {
+        "operationId": "gradebookAdjustmentsListForBook",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdjustmentListDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["adjustments"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/adjustments": {
+      "get": {
+        "operationId": "adjustmentsList",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": ["CHO_DUYET", "DA_DUYET", "TU_CHOI", "DA_HUY"],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdjustmentPageDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["adjustments"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/adjustments/{adjId}": {
+      "get": {
+        "operationId": "adjustmentsDetail",
+        "parameters": [
+          {
+            "name": "adjId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdjustmentDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["adjustments"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/adjustments/{adjId}/approve": {
+      "post": {
+        "operationId": "adjustmentsApprove",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "adjId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustmentVersionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdjustmentDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["adjustments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/adjustments/{adjId}/reject": {
+      "post": {
+        "operationId": "adjustmentsReject",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "adjId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AdjustmentRejectInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdjustmentDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["adjustments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/adjustments/{adjId}/cancel": {
+      "post": {
+        "operationId": "adjustmentsCancel",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "adjId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustmentVersionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AdjustmentDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["adjustments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/classes": {
       "get": {
         "operationId": "classesList",
@@ -8942,7 +9576,16 @@
           "subjectName": { "type": "string" },
           "termName": { "type": "string" },
           "status": { "type": "string", "enum": ["DANG_NHAP_LIEU", "DA_CHOT"] },
-          "version": { "type": "number" }
+          "version": { "type": "number" },
+          "pendingAdjustmentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mã phiếu điều chỉnh sau chốt đang CHO_DUYET (nếu có)"
+          },
+          "resultsOutdated": {
+            "type": "boolean",
+            "description": "Điểm đã được điều chỉnh sau lần tính tổng kết gần nhất"
+          }
         },
         "required": [
           "id",
@@ -8953,7 +9596,9 @@
           "subjectName",
           "termName",
           "status",
-          "version"
+          "version",
+          "pendingAdjustmentId",
+          "resultsOutdated"
         ]
       },
       "GradebookListDto": {
@@ -9365,6 +10010,8 @@
               "RECOGNITION_PENDING",
               "STUDENT_NOT_IN_GRADEBOOK",
               "RESULTS_MISSING",
+              "RESULTS_OUTDATED",
+              "ADJUSTMENT_PENDING",
               "COLUMNS_WITHOUT_DEADLINE"
             ]
           },
@@ -9403,6 +10050,171 @@
           }
         },
         "required": ["ready", "issues"]
+      },
+      "AdjustmentChangeInput": {
+        "type": "object",
+        "properties": {
+          "cellId": { "type": "string", "description": "bigint cell ID" },
+          "value": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^(10[.]0|[0-9][.][0-9])$",
+            "description": "Giá trị mới 0.0–10.0; null khi exempt = true"
+          },
+          "exempt": {
+            "type": "boolean",
+            "description": "true = đặt Miễn (value = null); false = value bắt buộc"
+          },
+          "note": { "type": "string", "nullable": true, "maxLength": 200 }
+        },
+        "required": ["cellId", "value", "exempt", "note"]
+      },
+      "AdjustmentInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 0 },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "changes": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdjustmentChangeInput" }
+          }
+        },
+        "required": ["expectedVersion", "reason", "changes"]
+      },
+      "AdjustmentPersonDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" }
+        },
+        "required": ["id", "name"]
+      },
+      "AdjustmentLineDto": {
+        "type": "object",
+        "properties": {
+          "cellId": { "type": "string" },
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" },
+          "componentId": { "type": "number" },
+          "componentName": { "type": "string" },
+          "oldValue": { "type": "string", "nullable": true },
+          "oldStatus": {
+            "type": "string",
+            "enum": ["CHUA_CO", "CHO_DOI_CHIEU", "DA_DUYET", "MIEN"]
+          },
+          "newValue": { "type": "string", "nullable": true },
+          "newExempt": { "type": "boolean" },
+          "note": { "type": "string", "nullable": true }
+        },
+        "required": [
+          "cellId",
+          "studentId",
+          "studentName",
+          "componentId",
+          "componentName",
+          "oldValue",
+          "oldStatus",
+          "newValue",
+          "newExempt",
+          "note"
+        ]
+      },
+      "AdjustmentDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "gradebookId": { "type": "number" },
+          "className": { "type": "string" },
+          "subjectName": { "type": "string" },
+          "termName": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["CHO_DUYET", "DA_DUYET", "TU_CHOI", "DA_HUY"]
+          },
+          "reason": { "type": "string" },
+          "submittedBy": { "$ref": "#/components/schemas/AdjustmentPersonDto" },
+          "submittedAt": { "type": "string", "format": "date-time" },
+          "decidedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [{ "$ref": "#/components/schemas/AdjustmentPersonDto" }]
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "decisionReason": { "type": "string", "nullable": true },
+          "lineCount": { "type": "number" },
+          "version": { "type": "number" },
+          "lines": {
+            "description": "Chỉ có trong chi tiết một phiếu",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdjustmentLineDto" }
+          }
+        },
+        "required": [
+          "id",
+          "gradebookId",
+          "className",
+          "subjectName",
+          "termName",
+          "status",
+          "reason",
+          "submittedBy",
+          "submittedAt",
+          "decidedBy",
+          "decidedAt",
+          "decisionReason",
+          "lineCount",
+          "version"
+        ]
+      },
+      "AdjustmentListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdjustmentDto" }
+          }
+        },
+        "required": ["items"]
+      },
+      "AdjustmentPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AdjustmentDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "AdjustmentVersionInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Version phiếu"
+          }
+        },
+        "required": ["expectedVersion"]
+      },
+      "AdjustmentRejectInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Version phiếu"
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["expectedVersion", "reason"]
       },
       "ClassesDto": {
         "type": "object",
@@ -9467,24 +10279,13 @@
           "calculatedAt"
         ]
       },
-      "FinalResultListDto": {
+      "ExemptedStudentDto": {
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/FinalResultDto" }
-          },
-          "nextCursor": { "type": "string", "nullable": true }
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" }
         },
-        "required": ["items", "nextCursor"]
-      },
-      "CalculateFinalResultsInput": {
-        "type": "object",
-        "properties": {
-          "expectedVersion": { "type": "number", "minimum": 0 },
-          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
-        },
-        "required": ["expectedVersion", "reason"]
+        "required": ["studentId", "studentName"]
       },
       "MissingComponentDto": {
         "type": "object",
@@ -9506,13 +10307,47 @@
         },
         "required": ["studentId", "studentName", "missingComponents"]
       },
-      "ExemptedStudentDto": {
+      "FinalResultListDto": {
         "type": "object",
         "properties": {
-          "studentId": { "type": "number" },
-          "studentName": { "type": "string" }
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FinalResultDto" }
+          },
+          "nextCursor": { "type": "string", "nullable": true },
+          "exemptedStudents": {
+            "type": "number",
+            "description": "Số học sinh được miễn mọi ô của bảng (tính theo dữ liệu hiện tại, không theo cursor)"
+          },
+          "exempted": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExemptedStudentDto" }
+          },
+          "skippedStudents": {
+            "type": "number",
+            "description": "Số học sinh còn thiếu cột bắt buộc (tính theo dữ liệu hiện tại, không theo cursor)"
+          },
+          "skipped": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SkippedStudentDto" }
+          }
         },
-        "required": ["studentId", "studentName"]
+        "required": [
+          "items",
+          "nextCursor",
+          "exemptedStudents",
+          "exempted",
+          "skippedStudents",
+          "skipped"
+        ]
+      },
+      "CalculateFinalResultsInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 0 },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["expectedVersion", "reason"]
       },
       "CalculateFinalResultsDto": {
         "type": "object",

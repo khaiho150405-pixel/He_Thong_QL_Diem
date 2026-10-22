@@ -35,6 +35,8 @@ interface BookRow {
   ten_lop: string;
   ten_mon: string;
   ten_hoc_ky: string;
+  ma_phieu_cho?: string | null;
+  can_tinh_lai_tong_ket?: boolean;
   trang_thai: Gradebook["status"];
   version: number;
 }
@@ -47,6 +49,8 @@ function book(row: BookRow): Gradebook {
     className: row.ten_lop,
     subjectName: row.ten_mon,
     termName: row.ten_hoc_ky,
+    pendingAdjustmentId: row.ma_phieu_cho ?? null,
+    resultsOutdated: row.can_tinh_lai_tong_ket ?? false,
     status: row.trang_thai,
     version: row.version,
   };
@@ -177,7 +181,7 @@ export class PrismaGradebookStore implements GradebookStore {
           createBlankGrid: async (sessionHash, scope) => {
             try {
               const rows = await tx.$queryRaw<BookRow[]>`
-            SELECT created.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
+            SELECT created.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky, (SELECT p.ma::text FROM public.phieu_dieu_chinh p WHERE p.ma_bang_diem = created.ma_bang_diem AND p.trang_thai = 'CHO_DUYET') AS ma_phieu_cho
             FROM public.tao_luoi_diem_trong(${sessionHash}::text,
               ${scope.classId}::integer, ${scope.subjectId}::integer, ${scope.termId}::integer) created
             JOIN public.lop l ON l.ma_lop = created.ma_lop
@@ -190,7 +194,7 @@ export class PrismaGradebookStore implements GradebookStore {
           },
           find: async (id) => {
             const rows = await tx.$queryRaw<BookRow[]>`
-              SELECT b.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
+              SELECT b.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky, (SELECT p.ma::text FROM public.phieu_dieu_chinh p WHERE p.ma_bang_diem = b.ma_bang_diem AND p.trang_thai = 'CHO_DUYET') AS ma_phieu_cho
               FROM public.bang_diem b
               JOIN public.lop l USING(ma_lop)
               JOIN public.mon_hoc m USING(ma_mon)
@@ -200,7 +204,7 @@ export class PrismaGradebookStore implements GradebookStore {
           },
           list: async (teacherId, after, yearId) => {
             const rows = await tx.$queryRaw<BookRow[]>`
-            SELECT b.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
+            SELECT b.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky, (SELECT p.ma::text FROM public.phieu_dieu_chinh p WHERE p.ma_bang_diem = b.ma_bang_diem AND p.trang_thai = 'CHO_DUYET') AS ma_phieu_cho
             FROM public.bang_diem b
             JOIN public.lop l USING(ma_lop)
             JOIN public.mon_hoc m USING(ma_mon)
@@ -277,7 +281,7 @@ export class PrismaGradebookStore implements GradebookStore {
           },
           syncRoster: async (sessionHash, bookId, version) => {
             const rows = await tx.$queryRaw<BookRow[]>`
-              SELECT updated.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
+              SELECT updated.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky, (SELECT p.ma::text FROM public.phieu_dieu_chinh p WHERE p.ma_bang_diem = updated.ma_bang_diem AND p.trang_thai = 'CHO_DUYET') AS ma_phieu_cho
               FROM public.dong_bo_si_so(${sessionHash}::text,${bookId}::integer,${version}::integer) updated
               JOIN public.lop l ON l.ma_lop = updated.ma_lop
               JOIN public.mon_hoc m ON m.ma_mon = updated.ma_mon
@@ -287,14 +291,14 @@ export class PrismaGradebookStore implements GradebookStore {
           lockColumn: async (sessionHash, bookId, componentId, version) => {
             const rows = await tx.$queryRaw<
               BookRow[]
-            >`SELECT c.*,l.ten_lop,m.ten_mon,h.ten AS ten_hoc_ky
+            >`SELECT c.*,l.ten_lop,m.ten_mon,h.ten AS ten_hoc_ky, (SELECT p.ma::text FROM public.phieu_dieu_chinh p WHERE p.ma_bang_diem = c.ma_bang_diem AND p.trang_thai = 'CHO_DUYET') AS ma_phieu_cho
             FROM public.chot_cot(${sessionHash}::text,${bookId}::integer,${componentId}::integer,${version}::integer) c
             JOIN public.lop l ON l.ma_lop=c.ma_lop JOIN public.mon_hoc m ON m.ma_mon=c.ma_mon JOIN public.hoc_ky h ON h.ma_hoc_ky=c.ma_hoc_ky`;
             return book(rows[0]!);
           },
           lockGradebook: async (sessionHash, bookId, expectedVersion) => {
             const rows = await tx.$queryRaw<BookRow[]>`
-            SELECT locked.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky
+            SELECT locked.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky, (SELECT p.ma::text FROM public.phieu_dieu_chinh p WHERE p.ma_bang_diem = locked.ma_bang_diem AND p.trang_thai = 'CHO_DUYET') AS ma_phieu_cho
             FROM public.chot_bang_diem(
               ${sessionHash}::text, ${bookId}::integer, ${expectedVersion}::integer) locked
             JOIN public.lop l ON l.ma_lop = locked.ma_lop

@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import type { PrismaClient } from "../../../generated/prisma/client.js";
 import { unit } from "../../../common/store.js";
+import { compareStudents } from "../../../common/student-order.js";
 import { sqlStateOf, transaction } from "../../../common/transaction.js";
 import type {
   CalculationHistory,
@@ -53,6 +54,48 @@ export class PrismaFinalResultStore implements FinalResultStore {
             const rows = await tx.$queryRaw<BookRow[]>`
               SELECT * FROM public.bang_diem WHERE ma_bang_diem=${id}::integer`;
             return rows[0] ? mapBook(rows[0]) : null;
+          },
+          groups: async (gradebookId) => {
+            // Cùng quy tắc với tinh_ket_qua_bang_diem: học sinh miễn mọi ô → exempted; còn lại thiếu cột bắt buộc → skipped.
+            const rows = await tx.$queryRaw<
+              Array<{
+                ma_hoc_sinh: number;
+                ma_lop: number;
+                ho_ten: string;
+                exempted: boolean;
+                missing: Array<{ componentId: number; name: string }>;
+              }>
+            >`
+              SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten,
+                (EXISTS(SELECT 1 FROM public.diem_thanh_phan d WHERE d.ma_bang_diem = b.ma_bang_diem AND d.ma_hoc_sinh = hs.ma_hoc_sinh)
+                  AND NOT EXISTS(SELECT 1 FROM public.diem_thanh_phan d WHERE d.ma_bang_diem = b.ma_bang_diem
+                    AND d.ma_hoc_sinh = hs.ma_hoc_sinh AND d.trang_thai <> 'MIEN')) AS exempted,
+                (SELECT coalesce(jsonb_agg(jsonb_build_object('componentId', tp.ma_thanh_phan, 'name', tp.ten_thanh_phan)
+                    ORDER BY tp.thu_tu_hien_thi, tp.ma_thanh_phan), '[]'::jsonb)
+                  FROM public.thanh_phan_diem tp
+                  LEFT JOIN public.diem_thanh_phan d ON d.ma_bang_diem = b.ma_bang_diem
+                    AND d.ma_hoc_sinh = hs.ma_hoc_sinh AND d.ma_thanh_phan = tp.ma_thanh_phan
+                  WHERE tp.ma_mon = b.ma_mon AND tp.bat_buoc
+                    AND (d.ma_diem IS NULL OR (d.trang_thai <> 'MIEN' AND (d.gia_tri IS NULL OR d.trang_thai <> 'DA_DUYET')))) AS missing
+              FROM public.bang_diem b
+              JOIN public.hoc_sinh hs ON hs.ma_lop = b.ma_lop AND hs.dang_theo_hoc
+              WHERE b.ma_bang_diem = ${gradebookId}::integer`;
+            const ordered = rows.sort(compareStudents);
+            return {
+              exempted: ordered
+                .filter((row) => row.exempted)
+                .map((row) => ({
+                  studentId: row.ma_hoc_sinh,
+                  studentName: row.ho_ten,
+                })),
+              skipped: ordered
+                .filter((row) => !row.exempted && row.missing.length > 0)
+                .map((row) => ({
+                  studentId: row.ma_hoc_sinh,
+                  studentName: row.ho_ten,
+                  missingComponents: row.missing,
+                })),
+            };
           },
           calculate: async (input) => {
             const rows = await tx.$queryRaw<

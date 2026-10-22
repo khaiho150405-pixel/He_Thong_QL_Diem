@@ -34,6 +34,12 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md` (FE-01 → FE-05 đã hoàn tất 100%).
 
+### BE — Điều chỉnh điểm sau chốt (phiếu điều chỉnh, ADR-0017) (xong; chưa commit)
+
+- Migration `202610220001_adjustments`: enum `TrangThaiPhieuDieuChinh`, `phieu_dieu_chinh`, `dong_dieu_chinh` (bất biến), `bang_diem.can_tinh_lai_tong_ket`; hàm `gui_/duyet_/tu_choi_/huy_phieu_dieu_chinh`; thay `kiem_cot_diem` (cờ `qld.dieu_chinh_sau_chot` = mã phiếu), `tinh_ket_qua_bang_diem`, `kiem_san_sang_cong_bo` (`RESULTS_OUTDATED`).
+- Module mới `apps/api/src/modules/adjustments` (`POST/GET /gradebooks/{id}/adjustments`, `GET /adjustments[?status]`, `GET /adjustments/{id}`, `approve|reject|cancel`); `book` trong cells/list có `pendingAdjustmentId`, `resultsOutdated`. Mã lỗi thêm vào `common/coded-error.ts`.
+- Test: `integration/grade-adjustments.test.ts` (6 ca), `database/tests/constraints.test.ts`.
+
 ### BE — Ô Miễn, học sinh vào lớp sau chốt, công bố theo phân công (xong; chưa commit)
 
 - Migration `202610210002_cell_exempt_enum` (enum `MIEN`), `202610210003_cell_exempt` (CHECK, `lich_su_mien_diem`, `dat_mien_diem`, `them_hoc_sinh_sau_chot`, `hoc_sinh_thieu_o`; thay `xu_ly_han_nhap_diem`, `cap_nhat_diem`, `duyet_phieu_nhan_dien`, `tinh_ket_qua_bang_diem`), `202610210004_publish_readiness` (`kiem_san_sang_cong_bo`, `kiem_cong_bo`).

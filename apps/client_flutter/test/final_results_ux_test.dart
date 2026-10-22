@@ -56,6 +56,8 @@ class _UxFakeServer implements HttpClientAdapter {
             'termName': 'Học kỳ I',
             'status': 'DANG_NHAP_LIEU',
             'version': 1,
+            'pendingAdjustmentId': null,
+            'resultsOutdated': false,
           },
           {
             'id': 2,
@@ -67,6 +69,8 @@ class _UxFakeServer implements HttpClientAdapter {
             'termName': 'Học kỳ I',
             'status': 'DA_CHOT',
             'version': 2,
+            'pendingAdjustmentId': null,
+            'resultsOutdated': false,
           },
         ],
         'nextCursor': null,
@@ -83,6 +87,8 @@ class _UxFakeServer implements HttpClientAdapter {
           'termName': 'Học kỳ I',
           'status': 'DANG_NHAP_LIEU',
           'version': 1,
+          'pendingAdjustmentId': null,
+          'resultsOutdated': false,
         },
         'items': [
           {
@@ -144,6 +150,27 @@ class _UxFakeServer implements HttpClientAdapter {
           },
         ],
         'nextCursor': null,
+        'exemptedStudents': 1,
+        'exempted': [
+          {
+            'studentId': 103,
+            'studentName': 'Lê Văn Miễn',
+            'reason': 'Miễn học theo quyết định',
+          },
+        ],
+        'skippedStudents': 1,
+        'skipped': [
+          {
+            'studentId': 104,
+            'studentName': 'Phạm Văn Thiếu',
+            'missingComponents': [
+              {
+                'componentId': 201,
+                'name': 'Điểm miệng',
+              },
+            ],
+          },
+        ],
       };
     } else if (options.path.endsWith('/reports/gradebooks/1/summary')) {
       body = {

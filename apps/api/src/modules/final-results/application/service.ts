@@ -140,15 +140,24 @@ export class FinalResultsService {
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book);
       const rows = await tx.list(gradebookId, after);
+      const groups = await tx.groups(gradebookId);
       const term = await tx.authorization.find("hoc_ky", {
         ma_hoc_ky: book.termId,
       });
-      return page(
-        rows.map((r) => ({
-          ...r,
-          classification: term?.da_cong_bo ? r.classification : "CHUA_CONG_BO",
-        })),
-      );
+      return {
+        ...page(
+          rows.map((r) => ({
+            ...r,
+            classification: term?.da_cong_bo
+              ? r.classification
+              : "CHUA_CONG_BO",
+          })),
+        ),
+        exemptedStudents: groups.exempted.length,
+        exempted: groups.exempted,
+        skippedStudents: groups.skipped.length,
+        skipped: groups.skipped,
+      };
     });
   }
 

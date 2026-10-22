@@ -25,6 +25,10 @@ abstract class _$GradebookDtoCWProxy {
 
   GradebookDto version(num version);
 
+  GradebookDto pendingAdjustmentId(String? pendingAdjustmentId);
+
+  GradebookDto resultsOutdated(bool resultsOutdated);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `GradebookDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -41,6 +45,8 @@ abstract class _$GradebookDtoCWProxy {
     String termName,
     GradebookDtoStatusEnum status,
     num version,
+    String? pendingAdjustmentId,
+    bool resultsOutdated,
   });
 }
 
@@ -79,6 +85,14 @@ class _$GradebookDtoCWProxyImpl implements _$GradebookDtoCWProxy {
   GradebookDto version(num version) => this(version: version);
 
   @override
+  GradebookDto pendingAdjustmentId(String? pendingAdjustmentId) =>
+      this(pendingAdjustmentId: pendingAdjustmentId);
+
+  @override
+  GradebookDto resultsOutdated(bool resultsOutdated) =>
+      this(resultsOutdated: resultsOutdated);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `GradebookDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -95,6 +109,8 @@ class _$GradebookDtoCWProxyImpl implements _$GradebookDtoCWProxy {
     Object? termName = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? version = const $CopyWithPlaceholder(),
+    Object? pendingAdjustmentId = const $CopyWithPlaceholder(),
+    Object? resultsOutdated = const $CopyWithPlaceholder(),
   }) {
     return GradebookDto(
       id: id == const $CopyWithPlaceholder()
@@ -133,6 +149,14 @@ class _$GradebookDtoCWProxyImpl implements _$GradebookDtoCWProxy {
           ? _value.version
           // ignore: cast_nullable_to_non_nullable
           : version as num,
+      pendingAdjustmentId: pendingAdjustmentId == const $CopyWithPlaceholder()
+          ? _value.pendingAdjustmentId
+          // ignore: cast_nullable_to_non_nullable
+          : pendingAdjustmentId as String?,
+      resultsOutdated: resultsOutdated == const $CopyWithPlaceholder()
+          ? _value.resultsOutdated
+          // ignore: cast_nullable_to_non_nullable
+          : resultsOutdated as bool,
     );
   }
 }
@@ -161,6 +185,8 @@ GradebookDto _$GradebookDtoFromJson(Map<String, dynamic> json) =>
           'termName',
           'status',
           'version',
+          'pendingAdjustmentId',
+          'resultsOutdated',
         ],
       );
       final val = GradebookDto(
@@ -176,6 +202,11 @@ GradebookDto _$GradebookDtoFromJson(Map<String, dynamic> json) =>
           (v) => $enumDecode(_$GradebookDtoStatusEnumEnumMap, v),
         ),
         version: $checkedConvert('version', (v) => v as num),
+        pendingAdjustmentId: $checkedConvert(
+          'pendingAdjustmentId',
+          (v) => v as String?,
+        ),
+        resultsOutdated: $checkedConvert('resultsOutdated', (v) => v as bool),
       );
       return val;
     });
@@ -191,6 +222,8 @@ Map<String, dynamic> _$GradebookDtoToJson(GradebookDto instance) =>
       'termName': instance.termName,
       'status': _$GradebookDtoStatusEnumEnumMap[instance.status]!,
       'version': instance.version,
+      'pendingAdjustmentId': instance.pendingAdjustmentId,
+      'resultsOutdated': instance.resultsOutdated,
     };
 
 const _$GradebookDtoStatusEnumEnumMap = {

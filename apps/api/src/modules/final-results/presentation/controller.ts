@@ -35,11 +35,6 @@ export class FinalResultDto {
   @ApiProperty({ type: String, format: "date-time" }) calculatedAt!: string;
 }
 
-export class FinalResultListDto {
-  @ApiProperty({ type: [FinalResultDto] }) items!: FinalResultDto[];
-  @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
-}
-
 export class MissingComponentDto {
   @ApiProperty({ type: Number }) componentId!: number;
   @ApiProperty({ type: String }) name!: string;
@@ -55,6 +50,27 @@ export class SkippedStudentDto {
 export class ExemptedStudentDto {
   @ApiProperty({ type: Number }) studentId!: number;
   @ApiProperty({ type: String }) studentName!: string;
+}
+
+export class FinalResultListDto {
+  @ApiProperty({ type: [FinalResultDto] }) items!: FinalResultDto[];
+  @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
+  @ApiProperty({
+    type: Number,
+    description:
+      "Số học sinh được miễn mọi ô của bảng (tính theo dữ liệu hiện tại, không theo cursor)",
+  })
+  exemptedStudents!: number;
+  @ApiProperty({ type: [ExemptedStudentDto] })
+  exempted!: ExemptedStudentDto[];
+  @ApiProperty({
+    type: Number,
+    description:
+      "Số học sinh còn thiếu cột bắt buộc (tính theo dữ liệu hiện tại, không theo cursor)",
+  })
+  skippedStudents!: number;
+  @ApiProperty({ type: [SkippedStudentDto] })
+  skipped!: SkippedStudentDto[];
 }
 
 export class CalculateFinalResultsInput {

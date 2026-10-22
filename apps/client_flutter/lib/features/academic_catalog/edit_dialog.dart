@@ -402,9 +402,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     for (final item in rawList) {
       if (item is Map) {
         try {
-          result.add(
-            PublishIssueDto.fromJson(Map<String, dynamic>.from(item)),
-          );
+          result.add(PublishIssueDto.fromJson(Map<String, dynamic>.from(item)));
         } catch (_) {}
       }
     }
@@ -484,7 +482,8 @@ class _EditDialogState extends ConsumerState<EditDialog> {
       if (mounted) {
         if (apiErrorCode(e) == 'TERM_RESULTS_INCOMPLETE') {
           final rawIssues = _extractIssues(e);
-          final semesterId = widget.row?['ma_hoc_ky'] as num? ??
+          final semesterId =
+              widget.row?['ma_hoc_ky'] as num? ??
               widget.row?[widget.spec.id] as num?;
           if (semesterId != null) {
             await showAppDialog<bool>(
@@ -514,8 +513,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             f.key == 'ma_giao_vien');
     if (f.kind == 'boolean') {
       final t = context.tokens;
-      final isYearHienHanh =
-          widget.spec.key == 'years' && f.key == 'hien_hanh';
+      final isYearHienHanh = widget.spec.key == 'years' && f.key == 'hien_hanh';
       final isSemesterDaCongBo =
           widget.spec.key == 'semesters' && f.key == 'da_cong_bo';
       return Container(
@@ -546,15 +544,15 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                       setState(() => values[f.key] = true);
                     }
                   } else if (isSemesterDaCongBo && v == true) {
-                    final semesterId = widget.row?['ma_hoc_ky'] as num? ??
+                    final semesterId =
+                        widget.row?['ma_hoc_ky'] as num? ??
                         widget.row?[widget.spec.id] as num?;
                     if (semesterId != null) {
                       final shouldProceed = await showAppDialog<bool>(
                         context: context,
                         barrierDismissible: false,
-                        builder: (ctx) => PublishReadinessDialog(
-                          semesterId: semesterId,
-                        ),
+                        builder: (ctx) =>
+                            PublishReadinessDialog(semesterId: semesterId),
                       );
                       if (shouldProceed == true && mounted) {
                         setState(() => values[f.key] = true);
@@ -974,6 +972,10 @@ String publishIssueDescription(PublishIssueDtoCodeEnum code) {
       return 'Giáo viên chưa tính tổng kết đủ';
     case PublishIssueDtoCodeEnum.COLUMNS_WITHOUT_DEADLINE:
       return 'Có cột chưa có lịch nhập';
+    case PublishIssueDtoCodeEnum.RESULTS_OUTDATED:
+      return 'Đã điều chỉnh điểm, cần tính lại tổng kết';
+    case PublishIssueDtoCodeEnum.ADJUSTMENT_PENDING:
+      return 'Còn phiếu điều chỉnh điểm chờ duyệt';
   }
 }
 
@@ -991,6 +993,10 @@ String publishIssueGroupTitle(PublishIssueDtoCodeEnum code) {
       return 'Chưa tính tổng kết đủ';
     case PublishIssueDtoCodeEnum.COLUMNS_WITHOUT_DEADLINE:
       return 'Cột chưa có lịch nhập (Cảnh báo)';
+    case PublishIssueDtoCodeEnum.RESULTS_OUTDATED:
+      return 'Chưa tính lại tổng kết sau điều chỉnh';
+    case PublishIssueDtoCodeEnum.ADJUSTMENT_PENDING:
+      return 'Phiếu điều chỉnh chờ duyệt';
   }
 }
 
@@ -1128,15 +1134,32 @@ class _PublishReadinessDialogState
                         const SizedBox(height: 2),
                         Text(
                           publishIssueDescription(issue.code),
-                          style: TextStyle(
-                            color: t.ink2,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: t.ink2, fontSize: 12),
                         ),
                       ],
                     ),
                   ),
-                  if (issue.gradebookId != null) ...[
+                  if (issue.code == PublishIssueDtoCodeEnum.ADJUSTMENT_PENDING) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      key: ValueKey('open-adjustments-${issue.gradebookId ?? "all"}'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        context.push('/adjustments');
+                      },
+                      child: const Text(
+                        'Duyệt điều chỉnh điểm',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ] else if (issue.gradebookId != null) ...[
                     const SizedBox(width: 8),
                     OutlinedButton(
                       key: ValueKey('open-gradebook-${issue.gradebookId}'),
@@ -1252,4 +1275,3 @@ class _PublishReadinessDialogState
     );
   }
 }
-

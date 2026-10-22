@@ -88,6 +88,7 @@ test("calculation hashes the normalized request and forwards the authenticated s
           updateMany: async () => 0,
           remove: async () => {},
         },
+        groups: async () => ({ exempted: [], skipped: [] }),
         findBook: async () => ({
           id: 9,
           classId: 1,

@@ -16,6 +16,7 @@ import '../features/academic_catalog/teaching_assignments_screen.dart';
 import '../features/form_templates/form_templates_screen.dart';
 import '../features/form_templates/template_detail_screen.dart';
 import '../features/form_templates/template_wizard_screen.dart';
+import '../features/gradebooks/adjustments_screen.dart';
 import '../features/gradebooks/gradebook_screen.dart';
 import '../features/gradebooks/gradebooks_screen.dart';
 import '../features/recognition/batch_result_screen.dart';
@@ -82,6 +83,10 @@ final routerProvider = Provider.family<GoRouter, String>((
               ? const FormTemplatesScreen()
               : TemplateDetailScreen(templateId: id);
         },
+      ),
+      GoRoute(
+        path: '/adjustments',
+        builder: (_, state) => const AdjustmentsScreen(),
       ),
       GoRoute(
         path: '/final-results',
@@ -152,6 +157,10 @@ final routerProvider = Provider.family<GoRouter, String>((
       }
       // Mẫu bảng điểm (ADR-0016): chỉ QTV, cả màn danh sách lẫn chi tiết.
       if (state.uri.path.startsWith('/admin/form-templates') &&
+          user.role.value != 'QUAN_TRI_VIEN') {
+        return '/';
+      }
+      if (state.uri.path == '/adjustments' &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }

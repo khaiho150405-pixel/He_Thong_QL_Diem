@@ -29,6 +29,8 @@ class GradebookConflictFakeServer implements HttpClientAdapter {
         'termName': 'Học kỳ I',
         'status': 'DANG_NHAP_LIEU',
         'version': version,
+        'pendingAdjustmentId': null,
+        'resultsOutdated': false,
       };
 
   @override

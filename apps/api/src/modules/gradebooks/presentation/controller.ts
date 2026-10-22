@@ -38,6 +38,17 @@ export class GradebookDto {
   @ApiProperty({ type: String, enum: ["DANG_NHAP_LIEU", "DA_CHOT"] })
   status!: string;
   @ApiProperty({ type: Number }) version!: number;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Mã phiếu điều chỉnh sau chốt đang CHO_DUYET (nếu có)",
+  })
+  pendingAdjustmentId!: string | null;
+  @ApiProperty({
+    type: Boolean,
+    description: "Điểm đã được điều chỉnh sau lần tính tổng kết gần nhất",
+  })
+  resultsOutdated!: boolean;
 }
 
 export class GradebookListDto {

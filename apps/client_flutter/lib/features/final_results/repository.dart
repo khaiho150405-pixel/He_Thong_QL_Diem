@@ -25,22 +25,31 @@ class FinalResultsRepository {
     return _pendingKey!;
   }
 
-  Future<List<FinalResultDto>> list(num gradebookId) async {
+  Future<FinalResultListDto> list(num gradebookId) async {
     String? cursor;
     final results = <FinalResultDto>[];
     final seen = <String>{};
+    FinalResultListDto? firstPage;
     do {
       final page = (await api.getFinalResultsApi().finalResultsList(
         gradebookId: gradebookId,
         cursor: cursor,
       )).data!;
+      firstPage ??= page;
       results.addAll(page.items);
       cursor = page.nextCursor;
       if (cursor != null && !seen.add(cursor)) {
         throw StateError('Cursor kết quả tổng kết bị lặp.');
       }
     } while (cursor != null);
-    return results;
+    return FinalResultListDto(
+      items: results,
+      nextCursor: null,
+      exemptedStudents: firstPage.exemptedStudents,
+      exempted: firstPage.exempted,
+      skippedStudents: firstPage.skippedStudents,
+      skipped: firstPage.skipped,
+    );
   }
 
   Future<CalculateFinalResultsDto> calculate({
