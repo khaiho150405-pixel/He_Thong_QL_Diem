@@ -38,7 +38,7 @@ export interface CatalogSpec {
 const YEAR_SCOPES: Partial<Record<Table, (yearId: number) => Row>> = {
   lop: (yearId) => ({ ma_nam_hoc: yearId }),
   hoc_ky: (yearId) => ({ ma_nam_hoc: yearId }),
-  hoc_sinh: (yearId) => ({ ma_lop_ref: { ma_nam_hoc: yearId } }),
+  hoc_sinh: (yearId) => ({ ghi_danh_rows: { some: { ma_nam_hoc: yearId } } }),
   phan_cong_giang_day: (yearId) => ({
     ma_hoc_ky_ref: { ma_nam_hoc: yearId },
   }),
@@ -215,12 +215,25 @@ export class CatalogService {
       label: parts.length ? `${name} · ${parts.join(" · ")}` : name,
       ...(this.spec.table === "hoc_sinh"
         ? {
+            ...(await this.currentClass(tx, row)),
             stt_toan_truong:
               studentOrders?.school.get(Number(row.ma_hoc_sinh)) ?? null,
             stt_lop:
               studentOrders?.byClass.get(Number(row.ma_hoc_sinh)) ?? null,
           }
         : {}),
+    };
+  }
+
+  /** Lớp hiện tại của học sinh (ma_lop được trigger ghi danh giữ đồng bộ với ghi danh DANG_HOC mới nhất). */
+  private async currentClass(tx: Unit, row: Row) {
+    const klass = row.ma_lop
+      ? await tx.find("lop", { ma_lop: row.ma_lop })
+      : null;
+    return {
+      currentClassId: klass ? Number(klass.ma_lop) : null,
+      currentClassName: klass ? String(klass.ten_lop) : null,
+      currentYearId: klass ? Number(klass.ma_nam_hoc) : null,
     };
   }
 
@@ -411,6 +424,7 @@ export class CatalogService {
       case "lop":
         return any([
           ["hoc_sinh", { ma_lop: row.ma_lop }],
+          ["hoc_sinh_lop", { ma_lop: row.ma_lop }],
           ["phan_cong_giang_day", { ma_lop: row.ma_lop }],
           ["bang_diem", { ma_lop: row.ma_lop }],
           ["thoi_khoa_bieu", { ma_lop: row.ma_lop }],

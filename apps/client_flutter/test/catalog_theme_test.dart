@@ -27,6 +27,9 @@ class _CatalogServer implements HttpClientAdapter {
       'label': 'Nguyễn Văn An · 10A1',
       'stt_toan_truong': 1,
       'stt_lop': 1,
+      'currentClassId': 1,
+      'currentClassName': '10A1',
+      'currentYearId': 1,
     },
     {
       'ma_hoc_sinh': 2,
@@ -38,6 +41,9 @@ class _CatalogServer implements HttpClientAdapter {
       'label': 'Trần Thị Bình · 10A2',
       'stt_toan_truong': 2,
       'stt_lop': 1,
+      'currentClassId': 2,
+      'currentClassName': '10A2',
+      'currentYearId': 1,
     },
   ];
 

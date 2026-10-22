@@ -50,6 +50,11 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
     "Học sinh không thuộc lớp của bảng điểm hoặc không còn đang học.",
   ],
   [
+    "STUDENT_CLASS_VIA_ENROLLMENT",
+    "STUDENT_CLASS_VIA_ENROLLMENT",
+    "Đổi lớp hoặc trạng thái đang học của học sinh phải thực hiện qua ghi danh, không sửa trực tiếp ở danh mục học sinh.",
+  ],
+  [
     "CELL_NOT_LOCKED",
     "CELL_NOT_LOCKED",
     "Ô thuộc cột còn mở; nhập điểm thường, phiếu điều chỉnh chỉ dành cho cột đã chốt.",

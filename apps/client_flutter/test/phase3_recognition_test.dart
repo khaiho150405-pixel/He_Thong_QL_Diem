@@ -59,6 +59,8 @@ class RecognitionFakeServer implements HttpClientAdapter {
           'termName': 'Học kỳ 1',
           'status': 'DANG_NHAP_LIEU',
           'version': 1,
+          'pendingAdjustmentId': null,
+          'resultsOutdated': false,
         },
         'items': [_cell('9001', 101, 'An'), _cell('9002', 102, 'Bình')],
         'nextCursor': null,
@@ -103,6 +105,7 @@ class RecognitionFakeServer implements HttpClientAdapter {
             'sttOnPaper': null,
             'studentId': 101,
             'studentName': 'An',
+            'exempt': false,
             'nameRead': 'An',
             'matchConfidence': '0.9900',
             'matchNote': null,
@@ -176,6 +179,7 @@ class RecognitionFakeServer implements HttpClientAdapter {
     'displayOrder': 1,
     'value': null,
     'status': 'CHUA_CO',
+    'exemptionReason': null,
     'source': 'NHAP_TAY',
   };
 }
@@ -233,6 +237,11 @@ void main() {
 
     // Polling receives CHO_DOI_CHIEU and automatically navigates to ReviewScreen.
     expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
+    final greenGroup = find.byKey(const ValueKey('review-green-group'));
+    if (greenGroup.evaluate().isNotEmpty) {
+      await tester.tap(greenGroup);
+      await tester.pumpAndSettle();
+    }
     expect(find.textContaining('An'), findsWidgets);
     expect(find.byKey(const ValueKey('review-value-51')), findsOneWidget);
     await tester.enterText(

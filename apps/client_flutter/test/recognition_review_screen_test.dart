@@ -66,6 +66,8 @@ class ReviewTestServer implements HttpClientAdapter {
           'termName': 'Học kỳ 1',
           'status': 'DANG_NHAP_LIEU',
           'version': 1,
+          'pendingAdjustmentId': null,
+          'resultsOutdated': false,
         },
         'items': [
           {

@@ -12,6 +12,7 @@ export type Table =
   | "hoc_ky"
   | "lop"
   | "hoc_sinh"
+  | "hoc_sinh_lop"
   | "mon_hoc"
   | "thanh_phan_diem"
   | "he_so_hoc_ky"

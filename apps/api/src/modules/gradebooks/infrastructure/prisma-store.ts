@@ -85,7 +85,7 @@ async function selectCells(
 ): Promise<GradeCell[]> {
   const rows = await tx.$queryRaw<Array<Omit<GradeCell, "stt">>>(Prisma.sql`
     SELECT d.ma_diem::text AS id, hs.ma_hoc_sinh AS "studentId", hs.ho_ten AS "studentName",
-      (hs.dang_theo_hoc AND hs.ma_lop = b.ma_lop) AS active,
+      coalesce(cl.con_hoc, false) AS active,
       tp.ma_thanh_phan AS "componentId", tp.ten_thanh_phan AS "componentName",
       public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text AS coefficient, tp.bat_buoc AS required, tp.thu_tu_hien_thi AS "displayOrder",
       (tp.cho_phep_nhap AND d.trang_thai<>'MIEN' AND (w.dong_luc IS NULL OR (clock_timestamp()>=w.mo_luc AND clock_timestamp()<w.dong_luc))) AS "openForInput",
@@ -100,6 +100,8 @@ async function selectCells(
         ORDER BY m.ma DESC LIMIT 1) AS "exemptionReason"
     FROM public.diem_thanh_phan d JOIN public.bang_diem b USING (ma_bang_diem)
     JOIN public.hoc_sinh hs USING (ma_hoc_sinh)
+    LEFT JOIN LATERAL (SELECT s.con_hoc FROM public.hoc_sinh_cua_lop(b.ma_lop, b.ma_hoc_ky) s
+      WHERE s.ma_hoc_sinh = d.ma_hoc_sinh) cl ON true
     JOIN public.thanh_phan_diem tp USING (ma_thanh_phan)
     LEFT JOIN LATERAL public.lich_hieu_luc(b.ma_bang_diem,tp.ma_thanh_phan) w ON true
     WHERE d.ma_bang_diem = ${bookId}::integer AND ${filter}
@@ -108,9 +110,9 @@ async function selectCells(
   const roster = await tx.$queryRaw<
     Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
   >`
-    SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten
-    FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop = hs.ma_lop
-    WHERE b.ma_bang_diem = ${bookId}::integer AND hs.dang_theo_hoc`;
+    SELECT s.ma_hoc_sinh, b.ma_lop, s.ho_ten
+    FROM public.bang_diem b CROSS JOIN LATERAL public.hoc_sinh_cua_lop(b.ma_lop, b.ma_hoc_ky) s
+    WHERE b.ma_bang_diem = ${bookId}::integer AND s.con_hoc`;
   const order = classStudentOrder(
     roster.map((row) => ({ ...row, dang_theo_hoc: true })),
   );

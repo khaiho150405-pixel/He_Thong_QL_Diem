@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException } from "@nestjs/common";
+import { BadRequestException } from "@nestjs/common";
+import { CodedException } from "../../../common/coded-error.js";
 import type { Row, Unit } from "../../../common/store.js";
 export async function validateStudent(
   tx: Unit,
@@ -12,10 +13,14 @@ export async function validateStudent(
     if (!account || account.vai_tro !== "HOC_SINH")
       throw new BadRequestException();
   }
+  // Lớp và trạng thái đang học thay đổi theo ghi danh (hoc_sinh_lop), không sửa trực tiếp từ danh mục học sinh.
   if (
     previous &&
-    previous.ma_lop !== data.ma_lop &&
-    (await tx.count("diem_thanh_phan", { ma_hoc_sinh: previous.ma_hoc_sinh }))
+    (Number(previous.ma_lop) !== Number(data.ma_lop) ||
+      previous.dang_theo_hoc !== data.dang_theo_hoc)
   )
-    throw new ConflictException();
+    throw new CodedException(
+      "STUDENT_CLASS_VIA_ENROLLMENT",
+      "Đổi lớp hoặc trạng thái đang học của học sinh phải thực hiện qua ghi danh, không sửa trực tiếp ở danh mục học sinh.",
+    );
 }

@@ -13,7 +13,7 @@ Method | HTTP request | Description
 
 
 # **studentResultsList**
-> StudentResultsDto studentResultsList(termId)
+> StudentResultsDto studentResultsList(yearId, termId)
 
 
 
@@ -26,10 +26,11 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getStudentResultsApi();
+final num yearId = 8.14; // num | Chỉ kết quả của năm học này (qua mọi ghi danh của em); vắng = tất cả
 final num termId = 8.14; // num |
 
 try {
-    final response = api.studentResultsList(termId);
+    final response = api.studentResultsList(yearId, termId);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling StudentResultsApi->studentResultsList: $e\n');
@@ -40,6 +41,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **yearId** | **num**| Chỉ kết quả của năm học này (qua mọi ghi danh của em); vắng = tất cả | [optional]
  **termId** | **num**|  | [optional]
 
 ### Return type

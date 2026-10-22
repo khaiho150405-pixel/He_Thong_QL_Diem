@@ -46,15 +46,21 @@ class _EditDialogState extends ConsumerState<EditDialog> {
   void initState() {
     super.initState();
     for (final f in fields) {
-      values[f.key] =
-          widget.row?[f.key] ??
-          (f.kind == 'boolean'
-              ? !['da_cong_bo', 'danh_gia_dat'].contains(f.key)
-              : f.kind == 'coefficient'
-              ? 'TX'
-              : f.kind == 'role'
-              ? 'HOC_SINH'
-              : null);
+      if (widget.spec.key == 'students' &&
+          f.key == 'ma_lop' &&
+          widget.row != null) {
+        values[f.key] = widget.row?['currentClassId'] ?? widget.row?['ma_lop'];
+      } else {
+        values[f.key] =
+            widget.row?[f.key] ??
+            (f.kind == 'boolean'
+                ? !['da_cong_bo', 'danh_gia_dat'].contains(f.key)
+                : f.kind == 'coefficient'
+                ? 'TX'
+                : f.kind == 'role'
+                ? 'HOC_SINH'
+                : null);
+      }
       var initialText = widget.row?[f.key]?.toString() ?? '';
       if (f.kind == 'date' && initialText.isNotEmpty) {
         final parsed = AppDateField.parseIsoDate(initialText);
@@ -505,9 +511,13 @@ class _EditDialogState extends ConsumerState<EditDialog> {
   }
 
   Widget field(FormFieldSpec f) {
+    final isStudentEdit = widget.spec.key == 'students' && widget.row != null;
+    final isStudentClassOrStatus =
+        isStudentEdit && (f.key == 'ma_lop' || f.key == 'dang_theo_hoc');
     final locked =
         !editable ||
         busy ||
+        isStudentClassOrStatus ||
         (widget.spec.key == 'teachers' &&
             widget.row != null &&
             f.key == 'ma_giao_vien');
@@ -534,6 +544,15 @@ class _EditDialogState extends ConsumerState<EditDialog> {
               color: t.ink,
             ),
           ),
+          subtitle: isStudentEdit && f.key == 'dang_theo_hoc'
+              ? Text(
+                  'Đổi lớp, lên lớp, nghỉ học: dùng chức năng Xếp lớp (sắp có)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: t.ink3,
+                  ),
+                )
+              : null,
           value: values[f.key] as bool? ?? false,
           onChanged: locked
               ? null
@@ -638,10 +657,15 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         );
       }
       if (selected != null && !rows.any((r) => r[target.id] == selected)) {
+        final fallbackLabel = (widget.spec.key == 'students' &&
+                widget.row?['currentClassName'] != null &&
+                widget.row!['currentClassName'].toString().isNotEmpty)
+            ? widget.row!['currentClassName'].toString()
+            : 'Bản ghi hiện tại';
         items.add(
           DropdownMenuItem(
             value: selected as num,
-            child: const Text('Bản ghi hiện tại'),
+            child: Text(fallbackLabel),
           ),
         );
       }
@@ -650,9 +674,12 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         label: '${f.label}${f.optional ? ' (không bắt buộc)' : ''}',
         helperText: widget.spec.key == 'teachers' && widget.row != null
             ? 'Liên kết tài khoản không thể đổi sau khi tạo hồ sơ.'
-            : null,
+            : (isStudentEdit && f.key == 'ma_lop'
+                ? 'Đổi lớp, lên lớp, nghỉ học: dùng chức năng Xếp lớp (sắp có)'
+                : null),
         prefixIcon: const Icon(Icons.link_rounded, size: 20),
         items: items,
+        enabled: !locked,
         onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
         validator: (v) =>
             v == null && !f.optional ? 'Chọn ${f.label.toLowerCase()}' : null,

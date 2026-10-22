@@ -42,6 +42,7 @@ GradeCellDto column() => GradeCellDto.fromJson({
   'status': 'CHUA_CO',
   'source': 'NHAP_TAY',
   'deadlineVersion': 0,
+  'exemptionReason': null,
 });
 
 void main() {
@@ -201,7 +202,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Đặt lịch riêng cho bảng này'), findsNothing);
       expect(find.textContaining('Chốt cột'), findsNothing);
-      expect(find.textContaining('Chưa đặt lịch'), findsOneWidget);
+      expect(find.text('Chưa đặt lịch'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );

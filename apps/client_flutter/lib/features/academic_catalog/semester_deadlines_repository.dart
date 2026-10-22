@@ -25,6 +25,8 @@ String? apiErrorCode(Object error) {
 /// Thông điệp tiếng Việt thân thiện theo trường code lỗi của backend.
 String deadlineErrorMessage(Object error) {
   return switch (apiErrorCode(error)) {
+    'STUDENT_CLASS_VIA_ENROLLMENT' =>
+      'Không đổi lớp trực tiếp ở đây; dùng chức năng xếp lớp/chuyển lớp',
     'DEADLINE_VERSION_CONFLICT' => 'Lịch vừa được thay đổi, hãy tải lại',
     'COLUMN_LOCKED' => 'Lịch đã qua hạn, không sửa được',
     'INVALID_ENTRY_WINDOW' => 'Hạn nhập phải sau giờ mở và ở tương lai',
@@ -42,8 +44,22 @@ String deadlineErrorMessage(Object error) {
       'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
     'VERSION_CONFLICT' =>
       'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
-    'CONFLICT' =>
-      'Dữ liệu vừa thay đổi hoặc đã chốt, hãy tải lại',
+    'CONFLICT' => () {
+        if (error is DioException) {
+          var data = error.response?.data;
+          if (data is String) {
+            try {
+              data = jsonDecode(data);
+            } catch (_) {}
+          }
+          if (data is Map<String, dynamic> &&
+              data['message'] is String &&
+              (data['message'] as String).isNotEmpty) {
+            return data['message'] as String;
+          }
+        }
+        return 'Dữ liệu vừa thay đổi hoặc đã chốt, hãy tải lại';
+      }(),
     'GRADEBOOK_NOT_EDITABLE' =>
       'Bảng điểm đã khóa, không thể sửa',
     _ => errorMessage(error),

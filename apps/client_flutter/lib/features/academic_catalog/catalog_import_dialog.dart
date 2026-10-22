@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_dialog.dart';
-import '../authentication/session.dart';
 import 'repository.dart';
+import 'semester_deadlines_repository.dart';
 
 class CatalogImportDialog extends StatefulWidget {
   const CatalogImportDialog({
@@ -199,7 +199,7 @@ class _CatalogImportDialogState extends State<CatalogImportDialog> {
       );
       Navigator.pop(context, true);
     } catch (error) {
-      if (mounted) setState(() => _error = errorMessage(error));
+      if (mounted) setState(() => _error = deadlineErrorMessage(error));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

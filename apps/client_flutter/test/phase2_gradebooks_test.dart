@@ -34,6 +34,8 @@ class GradebookFakeServer implements HttpClientAdapter {
     'termName': 'Học kỳ I',
     'status': locked ? 'DA_CHOT' : 'DANG_NHAP_LIEU',
     'version': version,
+    'pendingAdjustmentId': null,
+    'resultsOutdated': false,
   };
 
   @override
@@ -379,7 +381,9 @@ void main() {
           .toList();
       final vuIndex = textWidgets.indexOf('Vũ');
       final anIndex = textWidgets.indexOf('An');
-      final binhIndex = textWidgets.indexOf('Bình\nNgừng theo học');
+      final binhIndex = textWidgets.indexWhere(
+        (t) => t == 'Bình\nĐã chuyển/nghỉ' || t == 'Bình\nNgừng theo học',
+      );
       expect(vuIndex, isNonNegative);
       expect(anIndex, isNonNegative);
       expect(binhIndex, isNonNegative);

@@ -1483,7 +1483,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                             ),
                             if (!student.active)
                               Text(
-                                'Ngừng theo học',
+                                'Đã chuyển/nghỉ',
                                 style: TextStyle(color: t.bad, fontSize: 12),
                               ),
                           ],
@@ -1740,6 +1740,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             controller: verticalGridController,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
             child: DataTable(
+              headingRowHeight: 64,
               horizontalMargin: _GridColumnSizes.horizontalMargin,
               columnSpacing: _GridColumnSizes.columnSpacing,
               columns: [
@@ -1831,7 +1832,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                           child: Text(
                             entry.value.first.active
                                 ? entry.value.first.studentName
-                                : '${entry.value.first.studentName}\nNgừng theo học',
+                                : '${entry.value.first.studentName}\nĐã chuyển/nghỉ',
                           ),
                         ),
                       ),
@@ -1939,7 +1940,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Ngừng theo học',
+                        'Đã chuyển/nghỉ',
                         style: TextStyle(color: t.bad, fontSize: 12),
                       ),
                     ),

@@ -184,7 +184,7 @@ class StudentOrderIndex {
 
     final classGroups = <num, List<Map<String, dynamic>>>{};
     for (final student in students) {
-      final classId = student['ma_lop'] as num?;
+      final classId = (student['currentClassId'] ?? student['ma_lop']) as num?;
       if (classId != null) {
         classGroups.putIfAbsent(classId, () => []).add(student);
       }

@@ -17,5 +17,8 @@ Name | Type | Description | Notes
 **maHocSinh** | **num** |  |
 **sttToanTruong** | **num** |  |
 **sttLop** | **num** |  |
+**currentClassId** | **num** | Lớp hiện tại theo ghi danh (ma_lop là cột cũ, giữ để tương thích) |
+**currentClassName** | **String** |  |
+**currentYearId** | **num** |  |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

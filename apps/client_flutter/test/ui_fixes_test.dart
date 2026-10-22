@@ -94,6 +94,8 @@ class _GradebookFakeServer implements HttpClientAdapter {
         'termName': 'Học kỳ I',
         'status': 'DANG_NHAP_LIEU',
         'version': version,
+        'resultsOutdated': false,
+        'pendingAdjustmentId': null,
       };
 
   @override

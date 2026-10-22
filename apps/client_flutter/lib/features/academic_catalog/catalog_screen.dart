@@ -114,6 +114,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   }
 
   String _extractClassName(Json row) {
+    final currentClassName = row['currentClassName']?.toString() ?? '';
+    if (currentClassName.isNotEmpty) {
+      return currentClassName;
+    }
     final label = row['label']?.toString() ?? '';
     if (label.contains(' · ')) {
       return label.split(' · ').last.trim();
@@ -354,7 +358,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
     switch (widget.resource) {
       case 'students':
-        if (_filterClassId != null && row['ma_lop'] != _filterClassId) {
+        final studentClassId = row['currentClassId'] ?? row['ma_lop'];
+        if (_filterClassId != null && studentClassId != _filterClassId) {
           return false;
         }
         if (_filterStudentStatus != null) {

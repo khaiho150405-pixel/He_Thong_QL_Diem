@@ -121,6 +121,7 @@ class CancelNavigationTestServer implements HttpClientAdapter {
             'sttOnPaper': null,
             'studentId': 101,
             'studentName': 'Học sinh A',
+            'exempt': false,
             'nameRead': 'Hoc sinh A',
             'matchConfidence': '0.98',
             'matchNote': null,
@@ -188,6 +189,8 @@ class CancelNavigationTestServer implements HttpClientAdapter {
           'termName': 'Học kỳ 1',
           'status': 'DANG_NHAP_LIEU',
           'version': 1,
+          'pendingAdjustmentId': null,
+          'resultsOutdated': false,
         },
         'items': [
           {
@@ -203,6 +206,7 @@ class CancelNavigationTestServer implements HttpClientAdapter {
             'displayOrder': 1,
             'value': null,
             'status': 'CHUA_CO',
+            'exemptionReason': null,
             'source': 'NHAP_TAY',
           },
         ],

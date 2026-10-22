@@ -34,6 +34,11 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md` (FE-01 → FE-05 đã hoàn tất 100%).
 
+### BE — Ghi danh học sinh theo lớp/năm học, đợt A (ADR-0018) (xong; chưa commit)
+
+- Migration `202610230001_student_enrollment`: `hoc_sinh_lop` + enum `TrangThaiGhiDanh`, chuyển dữ liệu (1 ghi danh/học sinh), trigger đồng bộ `hoc_sinh.ma_lop/dang_theo_hoc` (DEPRECATED), chặn sửa trực tiếp (`STUDENT_CLASS_VIA_ENROLLMENT`), hàm `hoc_sinh_cua_lop`; 14 hàm SQL viết lại dùng hàm này. API: gradebooks/final-results/reports/recognition/catalog/policy dùng ghi danh; `students/me/results?yearId=`; DTO học sinh có `currentClassId/Name/YearId`.
+- Test: `integration/student-enrollment.test.ts` (4 ca), sửa 2 test cũ đang UPDATE `dang_theo_hoc` trực tiếp, `database/tests/constraints.test.ts`. Chưa làm (đợt B): chức năng lên lớp/đổi lớp/lưu ban/thôi học qua API và UI.
+
 ### BE — Điều chỉnh điểm sau chốt (phiếu điều chỉnh, ADR-0017) (xong; chưa commit)
 
 - Migration `202610220001_adjustments`: enum `TrangThaiPhieuDieuChinh`, `phieu_dieu_chinh`, `dong_dieu_chinh` (bất biến), `bang_diem.can_tinh_lai_tong_ket`; hàm `gui_/duyet_/tu_choi_/huy_phieu_dieu_chinh`; thay `kiem_cot_diem` (cờ `qld.dieu_chinh_sau_chot` = mã phiếu), `tinh_ket_qua_bang_diem`, `kiem_san_sang_cong_bo` (`RESULTS_OUTDATED`).

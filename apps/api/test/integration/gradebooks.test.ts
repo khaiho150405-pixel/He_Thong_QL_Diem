@@ -195,7 +195,7 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
       [cells[0]!.id],
     );
     await owner.query(
-      "UPDATE hoc_sinh SET dang_theo_hoc=false WHERE ma_hoc_sinh=$1",
+      "UPDATE hoc_sinh_lop SET trang_thai='NGHI_HOC',den_ngay=greatest(CURRENT_DATE,tu_ngay) WHERE ma_hoc_sinh=$1 AND trang_thai='DANG_HOC'",
       [cells[0]!.studentId],
     );
     await owner.query(

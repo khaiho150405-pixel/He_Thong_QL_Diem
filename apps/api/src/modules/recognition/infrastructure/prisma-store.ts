@@ -341,9 +341,9 @@ export class PrismaRecognitionStore implements RecognitionStore {
         const students = await tx.$queryRaw<
           Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
         >`
-          SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten
-          FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop = hs.ma_lop
-          WHERE b.ma_bang_diem = ${input.gradebookId}::integer AND hs.dang_theo_hoc`;
+          SELECT s.ma_hoc_sinh, b.ma_lop, s.ho_ten
+          FROM public.bang_diem b CROSS JOIN LATERAL public.hoc_sinh_cua_lop(b.ma_lop, b.ma_hoc_ky) s
+          WHERE b.ma_bang_diem = ${input.gradebookId}::integer AND s.con_hoc`;
         const order = classStudentOrder(
           students.map((row) => ({ ...row, dang_theo_hoc: true })),
         );

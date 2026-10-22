@@ -279,13 +279,22 @@ export class StudentResultsController {
   @Get()
   @ApiOkResponse({ type: StudentResultsDto })
   @ApiQuery({ name: "termId", type: Number, required: false })
+  @ApiQuery({
+    name: "yearId",
+    type: Number,
+    required: false,
+    description:
+      "Chỉ kết quả của năm học này (qua mọi ghi danh của em); vắng = tất cả",
+  })
   async list(
     @Req() req: Request & { actor: Actor },
     @Query("termId") termId?: string,
+    @Query("yearId") yearId?: string,
   ) {
     return this.service.myOverview(
       req.actor,
       termId === undefined ? undefined : Number(termId),
+      yearId,
     );
   }
 }

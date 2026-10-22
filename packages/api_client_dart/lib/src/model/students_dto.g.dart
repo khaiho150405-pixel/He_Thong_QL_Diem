@@ -25,6 +25,12 @@ abstract class _$StudentsDtoCWProxy {
 
   StudentsDto sttLop(num? sttLop);
 
+  StudentsDto currentClassId(num? currentClassId);
+
+  StudentsDto currentClassName(String? currentClassName);
+
+  StudentsDto currentYearId(num? currentYearId);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -41,6 +47,9 @@ abstract class _$StudentsDtoCWProxy {
     num maHocSinh,
     num? sttToanTruong,
     num? sttLop,
+    num? currentClassId,
+    String? currentClassName,
+    num? currentYearId,
   });
 }
 
@@ -79,6 +88,18 @@ class _$StudentsDtoCWProxyImpl implements _$StudentsDtoCWProxy {
   StudentsDto sttLop(num? sttLop) => this(sttLop: sttLop);
 
   @override
+  StudentsDto currentClassId(num? currentClassId) =>
+      this(currentClassId: currentClassId);
+
+  @override
+  StudentsDto currentClassName(String? currentClassName) =>
+      this(currentClassName: currentClassName);
+
+  @override
+  StudentsDto currentYearId(num? currentYearId) =>
+      this(currentYearId: currentYearId);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -95,6 +116,9 @@ class _$StudentsDtoCWProxyImpl implements _$StudentsDtoCWProxy {
     Object? maHocSinh = const $CopyWithPlaceholder(),
     Object? sttToanTruong = const $CopyWithPlaceholder(),
     Object? sttLop = const $CopyWithPlaceholder(),
+    Object? currentClassId = const $CopyWithPlaceholder(),
+    Object? currentClassName = const $CopyWithPlaceholder(),
+    Object? currentYearId = const $CopyWithPlaceholder(),
   }) {
     return StudentsDto(
       maNguoiDung: maNguoiDung == const $CopyWithPlaceholder()
@@ -133,6 +157,18 @@ class _$StudentsDtoCWProxyImpl implements _$StudentsDtoCWProxy {
           ? _value.sttLop
           // ignore: cast_nullable_to_non_nullable
           : sttLop as num?,
+      currentClassId: currentClassId == const $CopyWithPlaceholder()
+          ? _value.currentClassId
+          // ignore: cast_nullable_to_non_nullable
+          : currentClassId as num?,
+      currentClassName: currentClassName == const $CopyWithPlaceholder()
+          ? _value.currentClassName
+          // ignore: cast_nullable_to_non_nullable
+          : currentClassName as String?,
+      currentYearId: currentYearId == const $CopyWithPlaceholder()
+          ? _value.currentYearId
+          // ignore: cast_nullable_to_non_nullable
+          : currentYearId as num?,
     );
   }
 }
@@ -163,6 +199,9 @@ StudentsDto _$StudentsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
         'ma_hoc_sinh',
         'stt_toan_truong',
         'stt_lop',
+        'currentClassId',
+        'currentClassName',
+        'currentYearId',
       ],
     );
     final val = StudentsDto(
@@ -175,6 +214,12 @@ StudentsDto _$StudentsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
       maHocSinh: $checkedConvert('ma_hoc_sinh', (v) => v as num),
       sttToanTruong: $checkedConvert('stt_toan_truong', (v) => v as num?),
       sttLop: $checkedConvert('stt_lop', (v) => v as num?),
+      currentClassId: $checkedConvert('currentClassId', (v) => v as num?),
+      currentClassName: $checkedConvert(
+        'currentClassName',
+        (v) => v as String?,
+      ),
+      currentYearId: $checkedConvert('currentYearId', (v) => v as num?),
     );
     return val;
   },
@@ -201,4 +246,7 @@ Map<String, dynamic> _$StudentsDtoToJson(StudentsDto instance) =>
       'ma_hoc_sinh': instance.maHocSinh,
       'stt_toan_truong': instance.sttToanTruong,
       'stt_lop': instance.sttLop,
+      'currentClassId': instance.currentClassId,
+      'currentClassName': instance.currentClassName,
+      'currentYearId': instance.currentYearId,
     };

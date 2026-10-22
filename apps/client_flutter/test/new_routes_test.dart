@@ -174,6 +174,8 @@ class _Server implements HttpClientAdapter {
     'termName': 'Học kỳ I · 2026-2027',
     'status': 'DANG_NHAP_LIEU',
     'version': 3,
+    'pendingAdjustmentId': null,
+    'resultsOutdated': false,
   };
 
   static Map<String, dynamic> _result(String id, String name, String score) => {
@@ -240,10 +242,17 @@ class _Server implements HttpClientAdapter {
         ],
       };
     } else if (path.endsWith('/final-results') && options.method == 'GET') {
-      items = [
-        _result('501', 'Nguyễn Văn An', '8.6'),
-        _result('502', 'Trần Thị Bích', '9.1'),
-      ];
+      body = {
+        'items': [
+          _result('501', 'Nguyễn Văn An', '8.6'),
+          _result('502', 'Trần Thị Bích', '9.1'),
+        ],
+        'nextCursor': null,
+        'exemptedStudents': 0,
+        'exempted': <dynamic>[],
+        'skippedStudents': 0,
+        'skipped': <dynamic>[],
+      };
     } else {
       status = 404;
     }
@@ -465,17 +474,15 @@ void main() {
           width: width,
         );
         expect(tester.takeException(), isNull);
-        expect(find.text('Chọn một bảng điểm'), findsOneWidget);
+        expect(find.byKey(const ValueKey('view-gradebook-7')), findsOneWidget);
         expect(find.byType(FinalResultsPanel), findsNothing);
 
-        await tester.tap(find.byKey(const ValueKey('final-book-select')));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('10A1 · Toán · Học kỳ I · 2026-2027').last);
+        await tester.tap(find.byKey(const ValueKey('view-gradebook-7')));
         await tester.pumpAndSettle();
 
         expect(find.byType(FinalResultsPanel), findsOneWidget);
         expect(find.byType(ReportsPanel), findsOneWidget);
-        expect(find.byKey(const ValueKey('export-xlsx')), findsOneWidget);
+        expect(find.byKey(const ValueKey('export-xlsx')), findsWidgets);
         expect(find.text('Nguyễn Văn An'), findsOneWidget);
         expect(find.text('8.6'), findsOneWidget);
         expect(find.textContaining('W-012345678901234567'), findsWidgets);
@@ -484,7 +491,7 @@ void main() {
         // Giáo viên được tính; không có cột TB nhóm TX/GK/CK.
         expect(
           find.byKey(const ValueKey('calculate-final-results')),
-          findsOneWidget,
+          findsWidgets,
         );
         expect(find.text('TX (TB)'), findsNothing);
         expect(tester.takeException(), isNull);
@@ -562,7 +569,7 @@ void main() {
         ];
     for (final e in expectations) {
       testWidgets('${e.role}: hiện đúng mục', (tester) async {
-        tester.view.physicalSize = const Size(1280, 900);
+        tester.view.physicalSize = const Size(1280, 1400);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);

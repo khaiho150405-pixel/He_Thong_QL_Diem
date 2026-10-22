@@ -149,10 +149,12 @@ export interface FinalResultUnit {
   studentResults(
     userId: number,
     termId: number | null,
+    yearId: number | null,
   ): Promise<StudentSubjectResult[]>;
   studentSummary(
     userId: number,
     termId: number | null,
+    yearId: number | null,
   ): Promise<StudentResultSummary>;
 }
 

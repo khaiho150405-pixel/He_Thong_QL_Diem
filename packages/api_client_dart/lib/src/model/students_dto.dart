@@ -35,6 +35,12 @@ class StudentsDto {
     required this.sttToanTruong,
 
     required this.sttLop,
+
+    required this.currentClassId,
+
+    required this.currentClassName,
+
+    required this.currentYearId,
   });
 
   @JsonKey(name: r'ma_nguoi_dung', required: true, includeIfNull: true)
@@ -64,6 +70,16 @@ class StudentsDto {
   @JsonKey(name: r'stt_lop', required: true, includeIfNull: true)
   final num? sttLop;
 
+  /// Lớp hiện tại theo ghi danh (ma_lop là cột cũ, giữ để tương thích)
+  @JsonKey(name: r'currentClassId', required: true, includeIfNull: true)
+  final num? currentClassId;
+
+  @JsonKey(name: r'currentClassName', required: true, includeIfNull: true)
+  final String? currentClassName;
+
+  @JsonKey(name: r'currentYearId', required: true, includeIfNull: true)
+  final num? currentYearId;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -76,7 +92,10 @@ class StudentsDto {
           other.label == label &&
           other.maHocSinh == maHocSinh &&
           other.sttToanTruong == sttToanTruong &&
-          other.sttLop == sttLop;
+          other.sttLop == sttLop &&
+          other.currentClassId == currentClassId &&
+          other.currentClassName == currentClassName &&
+          other.currentYearId == currentYearId;
 
   @override
   int get hashCode =>
@@ -88,7 +107,10 @@ class StudentsDto {
       label.hashCode +
       maHocSinh.hashCode +
       (sttToanTruong == null ? 0 : sttToanTruong.hashCode) +
-      (sttLop == null ? 0 : sttLop.hashCode);
+      (sttLop == null ? 0 : sttLop.hashCode) +
+      (currentClassId == null ? 0 : currentClassId.hashCode) +
+      (currentClassName == null ? 0 : currentClassName.hashCode) +
+      (currentYearId == null ? 0 : currentYearId.hashCode);
 
   factory StudentsDto.fromJson(Map<String, dynamic> json) =>
       _$StudentsDtoFromJson(json);

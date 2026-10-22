@@ -21,6 +21,7 @@ class StudentResultsApi {
   ///
   ///
   /// Parameters:
+  /// * [yearId] - Chỉ kết quả của năm học này (qua mọi ghi danh của em); vắng = tất cả
   /// * [termId]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
@@ -32,6 +33,7 @@ class StudentResultsApi {
   /// Returns a [Future] containing a [Response] with a [StudentResultsDto] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<StudentResultsDto>> studentResultsList({
+    num? yearId,
     num? termId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -60,6 +62,7 @@ class StudentResultsApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (yearId != null) r'yearId': yearId,
       if (termId != null) r'termId': termId,
     };
 

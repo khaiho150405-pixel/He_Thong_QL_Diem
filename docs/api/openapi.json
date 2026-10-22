@@ -4634,6 +4634,13 @@
         "operationId": "studentResultsList",
         "parameters": [
           {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ kết quả của năm học này (qua mọi ghi danh của em); vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "termId",
             "required": false,
             "in": "query",
@@ -11296,7 +11303,14 @@
           "label": { "type": "string" },
           "ma_hoc_sinh": { "type": "number" },
           "stt_toan_truong": { "type": "number", "nullable": true },
-          "stt_lop": { "type": "number", "nullable": true }
+          "stt_lop": { "type": "number", "nullable": true },
+          "currentClassId": {
+            "type": "number",
+            "nullable": true,
+            "description": "Lớp hiện tại theo ghi danh (ma_lop là cột cũ, giữ để tương thích)"
+          },
+          "currentClassName": { "type": "string", "nullable": true },
+          "currentYearId": { "type": "number", "nullable": true }
         },
         "required": [
           "ma_nguoi_dung",
@@ -11307,7 +11321,10 @@
           "label",
           "ma_hoc_sinh",
           "stt_toan_truong",
-          "stt_lop"
+          "stt_lop",
+          "currentClassId",
+          "currentClassName",
+          "currentYearId"
         ]
       },
       "StudentsPage": {

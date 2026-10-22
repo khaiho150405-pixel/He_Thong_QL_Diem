@@ -6,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { parseYearId } from "../../../common/catalog.js";
 import {
   currentActor,
   type Actor,
@@ -271,11 +272,12 @@ export class FinalResultsService {
       throw new BadRequestException();
     return this.store.run(async (tx) => {
       await currentActor(tx.authorization, actor);
-      return tx.studentResults(actor.id, termId ?? null);
+      return tx.studentResults(actor.id, termId ?? null, null);
     });
   }
 
-  myOverview(actor: Actor, termId?: number) {
+  myOverview(actor: Actor, termId?: number, yearIdInput?: unknown) {
+    const yearId = parseYearId(yearIdInput);
     if (actor.role !== "HOC_SINH") throw new ForbiddenException();
     if (
       termId !== undefined &&
@@ -285,8 +287,8 @@ export class FinalResultsService {
     return this.store.run(async (tx) => {
       await currentActor(tx.authorization, actor);
       const [items, summary] = await Promise.all([
-        tx.studentResults(actor.id, termId ?? null),
-        tx.studentSummary(actor.id, termId ?? null),
+        tx.studentResults(actor.id, termId ?? null, yearId),
+        tx.studentSummary(actor.id, termId ?? null, yearId),
       ]);
       return { items, summary };
     });

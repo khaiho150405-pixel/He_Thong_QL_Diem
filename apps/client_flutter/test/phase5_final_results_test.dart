@@ -48,6 +48,8 @@ class Phase5FakeServer implements HttpClientAdapter {
           'termName': 'Học kỳ I',
           'status': 'DA_CHOT',
           'version': 4,
+          'pendingAdjustmentId': null,
+          'resultsOutdated': false,
         },
         'items': [
           {
@@ -63,6 +65,7 @@ class Phase5FakeServer implements HttpClientAdapter {
             'displayOrder': 1,
             'value': '0.0',
             'status': 'DA_DUYET',
+            'exemptionReason': null,
             'source': 'NHAP_TAY',
           },
         ],
@@ -118,6 +121,7 @@ class Phase5FakeServer implements HttpClientAdapter {
                 'componentName': 'Cuối kỳ',
                 'coefficient': '2.00',
                 'value': '0.0',
+                'status': 'DA_DUYET',
               },
             ],
             'finalScore': '6.5',

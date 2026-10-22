@@ -24,8 +24,12 @@ export async function catalogScope(
       };
     case "hoc_sinh":
       return {
-        ma_lop_ref: {
-          phan_cong_giang_day_rows: { some: { ma_giao_vien: actor.id } },
+        ghi_danh_rows: {
+          some: {
+            lop: {
+              phan_cong_giang_day_rows: { some: { ma_giao_vien: actor.id } },
+            },
+          },
         },
       };
     case "giao_vien":

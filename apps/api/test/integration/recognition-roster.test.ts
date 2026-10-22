@@ -115,7 +115,7 @@ test("recognition ticket accepts only a valid class roster snapshot", async () =
     // Lớp đổi sau khi tạo phiếu: snapshot giữ nguyên.
     await makeStudent(cls, "Mới Vào Lớp");
     await owner.query(
-      "UPDATE hoc_sinh SET dang_theo_hoc=false WHERE ma_hoc_sinh=$1",
+      "UPDATE hoc_sinh_lop SET trang_thai='NGHI_HOC',den_ngay=greatest(CURRENT_DATE,tu_ngay) WHERE ma_hoc_sinh=$1 AND trang_thai='DANG_HOC'",
       [s.cuong],
     );
     const after = await owner.query(

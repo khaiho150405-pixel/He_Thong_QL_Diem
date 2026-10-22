@@ -6,6 +6,7 @@ import '../../app/widgets/app_avatar.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../../app/widgets/app_tabs.dart';
+import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../authentication/session.dart';
@@ -98,24 +99,90 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
 
   /// 0 = 'Thẻ theo môn', 1 = 'Bảng tổng hợp'.
   int _viewIndex = 0;
+  num? _selectedYearId;
 
   @override
   void initState() {
     super.initState();
-    reload();
+    reload(_selectedYearId);
   }
 
-  void reload() {
+  void reload([num? yearId]) {
+    final targetYearId = yearId ?? _selectedYearId;
     data = ref
         .read(apiProvider)
         .getStudentResultsApi()
-        .studentResultsList()
+        .studentResultsList(yearId: targetYearId)
         .then((response) => response.data!);
+  }
+
+  void _onYearChanged(num? newId) {
+    if (newId == _selectedYearId) return;
+    setState(() {
+      _selectedYearId = newId;
+      reload(_selectedYearId);
+    });
+  }
+
+  List<({num? id, String label})> _extractYearOptions(
+    StudentResultsDto? results,
+  ) {
+    final list = <({num? id, String label})>[
+      (id: null, label: 'Tất cả năm học'),
+    ];
+    if (results != null) {
+      final seen = <String>{};
+      for (final item in results.items) {
+        final m = RegExp(r'(\d{4}\s*-\s*\d{4})').firstMatch(item.termName);
+        if (m != null) {
+          final yr = m.group(1)!.trim();
+          if (seen.add(yr)) {
+            list.add((id: null, label: 'Năm học $yr'));
+          }
+        }
+      }
+    }
+    if (_selectedYearId != null && !list.any((e) => e.id == _selectedYearId)) {
+      list.add((id: _selectedYearId, label: 'Năm học $_selectedYearId'));
+    }
+    return list;
+  }
+
+  Widget _buildYearSelector(
+    BuildContext context,
+    List<({num? id, String label})> years,
+  ) {
+    if (years.isEmpty) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        child: AppFilterDropdown<num?>(
+          key: const ValueKey('student-results-year-select'),
+          label: 'Năm học',
+          icon: Icons.calendar_month_outlined,
+          value: _selectedYearId,
+          width: 240,
+          searchable: false,
+          items: [
+            for (final y in years)
+              DropdownMenuItem<num?>(
+                value: y.id,
+                child: Text(y.label),
+              ),
+          ],
+          onChanged: (newId) {
+            _onYearChanged(newId);
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.tokens;
 
     return AppScaffold(
       title: 'Điểm của tôi',
@@ -124,7 +191,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
       actions: [
         IconButton(
           tooltip: 'Tải lại',
-          onPressed: () => setState(reload),
+          onPressed: () => setState(() => reload(_selectedYearId)),
           icon: const Icon(Icons.refresh),
         ),
       ],
@@ -134,28 +201,57 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
           child: FutureBuilder<StudentResultsDto>(
             future: data,
             builder: (context, snapshot) {
+              final yearOptions = _extractYearOptions(snapshot.data);
+
               if (snapshot.connectionState != ConnectionState.done) {
-                return const Padding(
-                  padding: EdgeInsets.all(AppSpacing.xxl),
-                  child: ShimmerLoading(itemCount: 4, itemHeight: 96),
+                return ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.pageCompact,
+                    vertical: AppSpacing.xl,
+                  ),
+                  children: [
+                    _buildYearSelector(context, yearOptions),
+                    const SizedBox(height: AppSpacing.md),
+                    const ShimmerLoading(itemCount: 4, itemHeight: 96),
+                  ],
                 );
               }
               if (snapshot.hasError) {
-                return EmptyState(
-                  icon: Icons.error_outline,
-                  title: 'Lỗi tải kết quả',
-                  message: errorMessage(snapshot.error!),
-                  actionLabel: 'Thử lại',
-                  onAction: () => setState(reload),
+                return ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.pageCompact,
+                    vertical: AppSpacing.xl,
+                  ),
+                  children: [
+                    _buildYearSelector(context, yearOptions),
+                    const SizedBox(height: AppSpacing.xl),
+                    EmptyState(
+                      icon: Icons.error_outline,
+                      title: 'Lỗi tải kết quả',
+                      message: errorMessage(snapshot.error!),
+                      actionLabel: 'Thử lại',
+                      onAction: () => setState(() => reload(_selectedYearId)),
+                    ),
+                  ],
                 );
               }
               final items = snapshot.data!.items;
               final summary = snapshot.data!.summary;
               if (items.isEmpty) {
-                return const EmptyState(
-                  icon: Icons.fact_check_outlined,
-                  title: 'Chưa có điểm',
-                  message: 'Bạn chưa có điểm đã duyệt.',
+                return ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.pageCompact,
+                    vertical: AppSpacing.xl,
+                  ),
+                  children: [
+                    _buildYearSelector(context, yearOptions),
+                    const SizedBox(height: AppSpacing.xl),
+                    const EmptyState(
+                      icon: Icons.fact_check_outlined,
+                      title: 'Chưa có điểm',
+                      message: 'Bạn chưa có điểm đã duyệt.',
+                    ),
+                  ],
                 );
               }
 
@@ -164,18 +260,23 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
               final allPublished =
                   totalSubjects > 0 && publishedSubjects >= totalSubjects;
               final average = _formatAverage(summary.averageScore);
-              // Hàng tổng kết của bảng dùng phép tính cũ ở client (xem
-              // semesterOverviewOf); hero dùng summary.averageScore của API.
-              final overview = semesterOverviewOf(items);
 
-              // Danh sách các cột điểm thành phần duy nhất.
-              final componentNames = <String>[];
+              // Nhóm theo năm học -> học kỳ
+              final grouped =
+                  <String, Map<String, List<StudentSubjectResultDto>>>{};
               for (final item in items) {
-                for (final comp in item.components) {
-                  if (!componentNames.contains(comp.componentName)) {
-                    componentNames.add(comp.componentName);
-                  }
-                }
+                final yearMatch =
+                    RegExp(r'(\d{4}\s*-\s*\d{4})').firstMatch(item.termName);
+                final yearKey = yearMatch != null
+                    ? 'Năm học ${yearMatch.group(1)}'
+                    : (_selectedYearId != null
+                        ? 'Năm học $_selectedYearId'
+                        : 'Năm học');
+                final termKey = item.termName;
+                grouped
+                    .putIfAbsent(yearKey, () => {})
+                    .putIfAbsent(termKey, () => [])
+                    .add(item);
               }
 
               return ListView(
@@ -184,6 +285,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                   vertical: AppSpacing.xl,
                 ),
                 children: [
+                  _buildYearSelector(context, yearOptions),
                   _ResultsHero(
                     className: summary.className,
                     termName: summary.termName ?? items.first.termName,
@@ -209,22 +311,86 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                     onChanged: (index) => setState(() => _viewIndex = index),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  if (_viewIndex == 1)
-                    _buildUnifiedGradeTable(
-                      context: context,
-                      items: items,
-                      componentNames: componentNames,
-                      allLocked: overview.allLocked,
-                      gpa: overview.gpa,
-                    )
-                  else
-                    _buildSubjectCards(context: context, items: items),
+                  for (final yearEntry in grouped.entries) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.md,
+                        bottom: AppSpacing.sm,
+                      ),
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            yearEntry.key,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: t.heading,
+                            ),
+                          ),
+                          if (summary.className.isNotEmpty)
+                            AppBadge(
+                              'Lớp ${summary.className}',
+                              tone: AppBadgeTone.info,
+                            ),
+                        ],
+                      ),
+                    ),
+                    for (final termEntry in yearEntry.value.entries) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xs,
+                        ),
+                        child: Text(
+                          termEntry.key,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: t.ink2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      if (_viewIndex == 1)
+                        _buildTermGradeTable(
+                          context: context,
+                          items: termEntry.value,
+                        )
+                      else
+                        _buildSubjectCards(
+                          context: context,
+                          items: termEntry.value,
+                        ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                  ],
                 ],
               );
             },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTermGradeTable({
+    required BuildContext context,
+    required List<StudentSubjectResultDto> items,
+  }) {
+    final componentNames = <String>[];
+    for (final item in items) {
+      for (final comp in item.components) {
+        if (!componentNames.contains(comp.componentName)) {
+          componentNames.add(comp.componentName);
+        }
+      }
+    }
+    final overview = semesterOverviewOf(items);
+    return _buildUnifiedGradeTable(
+      context: context,
+      items: items,
+      componentNames: componentNames,
+      allLocked: overview.allLocked,
+      gpa: overview.gpa,
     );
   }
 

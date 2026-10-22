@@ -116,6 +116,7 @@ class _FakeServer implements HttpClientAdapter {
         'componentName': 'Cuối kỳ',
         'coefficient': '2.00',
         'value': score ?? '5.0',
+        'status': 'DA_DUYET',
       },
     ],
     'finalScore': score,

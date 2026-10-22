@@ -32,6 +32,7 @@ List<Map<String, dynamic>> gradeCells(int components, {int students = 2}) => [
         'displayOrder': c,
         'value': '7.0',
         'status': 'DA_DUYET',
+        'exemptionReason': null,
         'source': 'NHAP_TAY',
       },
 ];

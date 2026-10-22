@@ -66,7 +66,7 @@ export class PrismaFinalResultStore implements FinalResultStore {
                 missing: Array<{ componentId: number; name: string }>;
               }>
             >`
-              SELECT hs.ma_hoc_sinh, hs.ma_lop, hs.ho_ten,
+              SELECT hs.ma_hoc_sinh, b.ma_lop, hs.ho_ten,
                 (EXISTS(SELECT 1 FROM public.diem_thanh_phan d WHERE d.ma_bang_diem = b.ma_bang_diem AND d.ma_hoc_sinh = hs.ma_hoc_sinh)
                   AND NOT EXISTS(SELECT 1 FROM public.diem_thanh_phan d WHERE d.ma_bang_diem = b.ma_bang_diem
                     AND d.ma_hoc_sinh = hs.ma_hoc_sinh AND d.trang_thai <> 'MIEN')) AS exempted,
@@ -78,8 +78,8 @@ export class PrismaFinalResultStore implements FinalResultStore {
                   WHERE tp.ma_mon = b.ma_mon AND tp.bat_buoc
                     AND (d.ma_diem IS NULL OR (d.trang_thai <> 'MIEN' AND (d.gia_tri IS NULL OR d.trang_thai <> 'DA_DUYET')))) AS missing
               FROM public.bang_diem b
-              JOIN public.hoc_sinh hs ON hs.ma_lop = b.ma_lop AND hs.dang_theo_hoc
-              WHERE b.ma_bang_diem = ${gradebookId}::integer`;
+              CROSS JOIN LATERAL public.hoc_sinh_cua_lop(b.ma_lop, b.ma_hoc_ky) hs
+              WHERE b.ma_bang_diem = ${gradebookId}::integer AND hs.con_hoc`;
             const ordered = rows.sort(compareStudents);
             return {
               exempted: ordered
@@ -115,9 +115,9 @@ export class PrismaFinalResultStore implements FinalResultStore {
               k.bo_he_so->'classificationPolicy'->>'version' AS "policyVersion",
               to_char(k.ngay_tinh AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "calculatedAt"
             FROM public.ket_qua_tong_ket k
-            JOIN public.hoc_sinh hs USING(ma_hoc_sinh)
             JOIN public.bang_diem b ON b.ma_bang_diem=${gradebookId}::integer
-              AND b.ma_lop=hs.ma_lop AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+              AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+            JOIN public.hoc_sinh_cua_lop(b.ma_lop,b.ma_hoc_ky) hs ON hs.ma_hoc_sinh=k.ma_hoc_sinh
             WHERE k.ma_ket_qua>${BigInt(after)}::bigint
             ORDER BY k.ma_ket_qua LIMIT 51`,
           history: (gradebookId, resultId, after) =>
@@ -129,9 +129,9 @@ export class PrismaFinalResultStore implements FinalResultStore {
                 to_char(h.thoi_diem AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "calculatedAt"
               FROM public.lich_su_tong_ket h
               JOIN public.ket_qua_tong_ket k USING(ma_ket_qua)
-              JOIN public.hoc_sinh hs USING(ma_hoc_sinh)
               JOIN public.bang_diem b ON b.ma_bang_diem=${gradebookId}::integer
-                AND b.ma_lop=hs.ma_lop AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+              AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+            JOIN public.hoc_sinh_cua_lop(b.ma_lop,b.ma_hoc_ky) hs ON hs.ma_hoc_sinh=k.ma_hoc_sinh
               WHERE h.ma_ket_qua=${BigInt(resultId)}::bigint
                 AND h.ma_lich_su>${BigInt(after)}::bigint
               ORDER BY h.ma_lich_su LIMIT 51`,
@@ -160,7 +160,7 @@ export class PrismaFinalResultStore implements FinalResultStore {
               ) AS policy`;
             return rows[0]!.policy;
           },
-          studentResults: (userId, termId) =>
+          studentResults: (userId, termId, yearId) =>
             tx.$queryRaw<StudentSubjectResult[]>`
               SELECT b.ma_bang_diem AS "gradebookId",m.ma_mon AS "subjectId",
                 m.ten_mon AS "subjectName",m.danh_gia_dat AS "passFail",h.ma_hoc_ky AS "termId",h.ten AS "termName",
@@ -170,7 +170,9 @@ export class PrismaFinalResultStore implements FinalResultStore {
                 k.diem_tong_ket::text AS "finalScore",CASE WHEN h.da_cong_bo THEN k.xep_loai ELSE NULL END AS classification,
                 CASE WHEN k.ngay_tinh IS NULL THEN NULL ELSE
                   to_char(k.ngay_tinh AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') END AS "calculatedAt"
-              FROM public.hoc_sinh hs JOIN public.bang_diem b ON b.ma_lop=hs.ma_lop
+              FROM public.hoc_sinh hs
+              JOIN public.hoc_sinh_lop g ON g.ma_hoc_sinh=hs.ma_hoc_sinh
+              JOIN public.bang_diem b ON b.ma_lop=g.ma_lop
               JOIN public.mon_hoc m ON m.ma_mon=b.ma_mon JOIN public.hoc_ky h ON h.ma_hoc_ky=b.ma_hoc_ky
               JOIN public.diem_thanh_phan d ON d.ma_bang_diem=b.ma_bang_diem
                 AND d.ma_hoc_sinh=hs.ma_hoc_sinh
@@ -181,29 +183,40 @@ export class PrismaFinalResultStore implements FinalResultStore {
               WHERE hs.ma_nguoi_dung=${userId}::integer
                 AND (b.trang_thai='DA_CHOT' OR EXISTS(SELECT 1 FROM public.chot_cot_diem c WHERE c.ma_bang_diem=b.ma_bang_diem AND c.ma_thanh_phan=d.ma_thanh_phan))
                 AND (${termId}::integer IS NULL OR b.ma_hoc_ky=${termId}::integer)
+                AND (${yearId}::integer IS NULL OR h.ma_nam_hoc=${yearId}::integer)
               GROUP BY b.ma_bang_diem,m.ma_mon,m.ten_mon,h.ma_hoc_ky,h.ten,
                 k.diem_tong_ket,k.xep_loai,k.ngay_tinh,h.da_cong_bo
               ORDER BY h.ma_hoc_ky DESC,m.ten_mon`,
-          studentSummary: async (userId, termId) => {
+          studentSummary: async (userId, termId, yearId) => {
             const rows = await tx.$queryRaw<StudentResultSummary[]>`
-              WITH me AS (
-                SELECT hs.ma_hoc_sinh,hs.ma_lop,l.ten_lop
-                FROM public.hoc_sinh hs JOIN public.lop l USING(ma_lop)
-                WHERE hs.ma_nguoi_dung=${userId}::integer AND hs.dang_theo_hoc
+              WITH base AS (
+                SELECT hs.ma_hoc_sinh FROM public.hoc_sinh hs WHERE hs.ma_nguoi_dung=${userId}::integer
               ), selected_term AS (
                 SELECT COALESCE(${termId}::integer,(
-                  SELECT max(b.ma_hoc_ky) FROM public.bang_diem b JOIN me ON me.ma_lop=b.ma_lop
+                  SELECT max(b.ma_hoc_ky) FROM public.bang_diem b
+                  JOIN public.hoc_sinh_lop g ON g.ma_lop=b.ma_lop
+                  JOIN base ON base.ma_hoc_sinh=g.ma_hoc_sinh
+                  JOIN public.hoc_ky hk ON hk.ma_hoc_ky=b.ma_hoc_ky
                   WHERE b.trang_thai='DA_CHOT'
+                    AND (${yearId}::integer IS NULL OR hk.ma_nam_hoc=${yearId}::integer)
                 )) AS term_id
+              ), me AS (
+                -- Lớp của em trong năm học của học kỳ đã chọn (qua ghi danh).
+                SELECT base.ma_hoc_sinh,g.ma_lop,l.ten_lop
+                FROM base JOIN public.hoc_sinh_lop g ON g.ma_hoc_sinh=base.ma_hoc_sinh
+                JOIN public.lop l ON l.ma_lop=g.ma_lop
+                JOIN selected_term st ON true
+                JOIN public.hoc_ky hk ON hk.ma_hoc_ky=st.term_id AND hk.ma_nam_hoc=l.ma_nam_hoc
+                ORDER BY g.tu_ngay DESC,g.ma DESC LIMIT 1
               ), averages AS (
                 SELECT hs.ma_hoc_sinh,avg(k.diem_tong_ket)::numeric(4,2) AS average_score
-                FROM public.hoc_sinh hs JOIN me ON me.ma_lop=hs.ma_lop
-                JOIN selected_term st ON true
-                JOIN public.bang_diem b ON b.ma_lop=hs.ma_lop AND b.ma_hoc_ky=st.term_id
+                FROM me JOIN selected_term st ON true
+                CROSS JOIN LATERAL public.hoc_sinh_cua_lop(me.ma_lop,st.term_id) hs
+                JOIN public.bang_diem b ON b.ma_lop=me.ma_lop AND b.ma_hoc_ky=st.term_id
                   AND b.trang_thai='DA_CHOT'
                 JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
                   AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
-                WHERE hs.dang_theo_hoc AND EXISTS(SELECT 1 FROM public.hoc_ky h WHERE h.ma_hoc_ky=st.term_id AND h.da_cong_bo) AND NOT EXISTS(SELECT 1 FROM public.mon_hoc m WHERE m.ma_mon=b.ma_mon AND m.danh_gia_dat)
+                WHERE hs.con_hoc AND EXISTS(SELECT 1 FROM public.hoc_ky h WHERE h.ma_hoc_ky=st.term_id AND h.da_cong_bo) AND NOT EXISTS(SELECT 1 FROM public.mon_hoc m WHERE m.ma_mon=b.ma_mon AND m.danh_gia_dat)
                 GROUP BY hs.ma_hoc_sinh
               ), ranked AS (
                 SELECT ma_hoc_sinh,average_score,
@@ -221,8 +234,8 @@ export class PrismaFinalResultStore implements FinalResultStore {
                  WHERE b.ma_lop=me.ma_lop AND b.ma_hoc_ky=st.term_id
                    AND b.trang_thai='DA_CHOT') AS "totalSubjects",
                 r.class_rank AS "classRank",
-                (SELECT count(*)::integer FROM public.hoc_sinh hs
-                 WHERE hs.ma_lop=me.ma_lop AND hs.dang_theo_hoc) AS "classSize"
+                (SELECT count(*)::integer FROM public.hoc_sinh_cua_lop(me.ma_lop,st.term_id) s
+                 WHERE s.con_hoc) AS "classSize"
               FROM me CROSS JOIN selected_term st
               LEFT JOIN public.hoc_ky h ON h.ma_hoc_ky=st.term_id
               LEFT JOIN ranked r ON r.ma_hoc_sinh=me.ma_hoc_sinh`;

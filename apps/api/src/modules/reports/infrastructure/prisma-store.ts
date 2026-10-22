@@ -65,9 +65,10 @@ export class PrismaReportStore implements ReportStore {
                   JOIN public.tieu_chi_xep_loai c USING(ma_chinh_sach)
                   WHERE p.phien_ban=k.bo_he_so->'classificationPolicy'->>'version'
                     AND c.ma_xep_loai=k.xep_loai LIMIT 1),false) END AS dat
-              FROM public.ket_qua_tong_ket k JOIN public.hoc_sinh hs USING(ma_hoc_sinh)
+              FROM public.ket_qua_tong_ket k
               JOIN public.bang_diem b ON b.ma_bang_diem=${gradebookId}::integer
-                AND b.ma_lop=hs.ma_lop AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+                AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+              JOIN public.hoc_sinh_cua_lop(b.ma_lop,b.ma_hoc_ky) hs ON hs.ma_hoc_sinh=k.ma_hoc_sinh
             ), dist AS (
               SELECT xep_loai,count(*)::integer AS students FROM scoped GROUP BY xep_loai
             )
@@ -87,13 +88,13 @@ export class PrismaReportStore implements ReportStore {
               THEN d.gia_tri::text ELSE NULL END,'exempt',coalesce(d.trang_thai='MIEN',false)) ORDER BY tp.thu_tu_hien_thi)
               FILTER(WHERE tp.ma_thanh_phan IS NOT NULL),'[]'::jsonb) AS components,
             k.diem_tong_ket::text AS "finalScore",k.xep_loai AS classification
-          FROM public.bang_diem b JOIN public.hoc_sinh hs ON hs.ma_lop=b.ma_lop AND hs.dang_theo_hoc
+          FROM public.bang_diem b CROSS JOIN LATERAL public.hoc_sinh_cua_lop(b.ma_lop,b.ma_hoc_ky) hs
           LEFT JOIN public.thanh_phan_diem tp ON tp.ma_mon=b.ma_mon
           LEFT JOIN public.diem_thanh_phan d ON d.ma_bang_diem=b.ma_bang_diem
             AND d.ma_hoc_sinh=hs.ma_hoc_sinh AND d.ma_thanh_phan=tp.ma_thanh_phan
           LEFT JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
             AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
-          WHERE b.ma_bang_diem=${gradebookId}::integer
+          WHERE b.ma_bang_diem=${gradebookId}::integer AND hs.con_hoc
           GROUP BY hs.ma_hoc_sinh,hs.ho_ten,k.diem_tong_ket,k.xep_loai ORDER BY hs.ma_hoc_sinh`,
         recordExport: async (actorId, gradebookId) => {
           const count = await tx.nhat_ky_bao_mat.count({

@@ -38,6 +38,17 @@ export class StudentsDto extends StudentsInput {
     | number
     | null;
   @ApiProperty({ type: Number, nullable: true }) stt_lop!: number | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description:
+      "Lớp hiện tại theo ghi danh (ma_lop là cột cũ, giữ để tương thích)",
+  })
+  currentClassId!: number | null;
+  @ApiProperty({ type: String, nullable: true }) currentClassName!:
+    | string
+    | null;
+  @ApiProperty({ type: Number, nullable: true }) currentYearId!: number | null;
 }
 export class StudentsPage {
   @ApiProperty({ type: [StudentsDto] }) items!: StudentsDto[];
