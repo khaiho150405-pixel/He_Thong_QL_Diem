@@ -546,7 +546,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           ),
           subtitle: isStudentEdit && f.key == 'dang_theo_hoc'
               ? Text(
-                  'Đổi lớp, lên lớp, nghỉ học: dùng chức năng Xếp lớp (sắp có)',
+                  'Chuyển lớp, nghỉ học, học lại: dùng menu thao tác trên danh mục học sinh',
                   style: TextStyle(
                     fontSize: 12,
                     color: t.ink3,
@@ -675,7 +675,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         helperText: widget.spec.key == 'teachers' && widget.row != null
             ? 'Liên kết tài khoản không thể đổi sau khi tạo hồ sơ.'
             : (isStudentEdit && f.key == 'ma_lop'
-                ? 'Đổi lớp, lên lớp, nghỉ học: dùng chức năng Xếp lớp (sắp có)'
+                ? 'Chuyển lớp, nghỉ học, học lại: dùng menu thao tác trên danh mục học sinh'
                 : null),
         prefixIcon: const Icon(Icons.link_rounded, size: 20),
         items: items,

@@ -119,10 +119,13 @@ test("calculation hashes the normalized request and forwards the authenticated s
           throw new Error("unused");
         },
         studentResults: async () => [],
+        studentYears: async () => [],
         studentSummary: async () => ({
           termId: null,
           termName: null,
           className: "10A1",
+          yearId: null,
+          yearName: null,
           averageScore: null,
           publishedSubjects: 0,
           totalSubjects: 0,

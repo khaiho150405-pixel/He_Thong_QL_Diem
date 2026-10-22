@@ -63,12 +63,17 @@ class _FakeServer implements HttpClientAdapter {
           'termId': 30,
           'termName': 'Học kỳ I',
           'className': '10A1',
+          'yearId': 1,
+          'yearName': '2025-2026',
           'averageScore': '6.50',
           'publishedSubjects': 5,
           'totalSubjects': 6,
           'classRank': 3,
           'classSize': 38,
         },
+        'years': [
+          {'id': 1, 'name': '2025-2026', 'className': '10A1'},
+        ],
       };
     } else if (options.path.endsWith('/classification-policies/active')) {
       body = {
@@ -110,6 +115,9 @@ class _FakeServer implements HttpClientAdapter {
     'subjectName': name,
     'termId': 30,
     'termName': 'Học kỳ I',
+    'yearId': 1,
+    'yearName': '2025-2026',
+    'className': '10A1',
     'components': [
       {
         'componentId': 201,

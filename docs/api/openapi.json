@@ -4179,6 +4179,554 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/classes/{id}/promotion-preview": {
+      "get": {
+        "operationId": "classPromotionPreview",
+        "parameters": [
+          {
+            "name": "targetYearId",
+            "required": true,
+            "in": "query",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PromotionPreviewDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["enrollments"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/classes/{id}/promotion": {
+      "post": {
+        "operationId": "classPromotionPromote",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PromotionInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PromotionResultDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["enrollments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/students/{id}/enrollments": {
+      "get": {
+        "operationId": "studentEnrollmentsList",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnrollmentListDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["enrollments"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/students/{id}/transfer": {
+      "post": {
+        "operationId": "studentEnrollmentsTransfer",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TransferInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransferResultDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["enrollments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/students/{id}/withdraw": {
+      "post": {
+        "operationId": "studentEnrollmentsWithdraw",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WithdrawInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnrollmentResultDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["enrollments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/students/{id}/reenroll": {
+      "post": {
+        "operationId": "studentEnrollmentsReenroll",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReenrollInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnrollmentResultDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["enrollments"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/gradebooks/{gradebookId}/final-results": {
       "get": {
         "operationId": "finalResultsList",
@@ -10263,6 +10811,252 @@
         },
         "required": ["ma_nam_hoc", "ma_gv_chu_nhiem", "ten_lop", "khoi"]
       },
+      "PromotionSourceClassDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "grade": { "type": "number" },
+          "yearId": { "type": "number" },
+          "yearName": { "type": "string" }
+        },
+        "required": ["id", "name", "grade", "yearId", "yearName"]
+      },
+      "PromotionTargetYearDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "startDate": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          }
+        },
+        "required": ["id", "name", "startDate"]
+      },
+      "PromotionClassDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "grade": { "type": "number" }
+        },
+        "required": ["id", "name", "grade"]
+      },
+      "PromotionPreviewItemDto": {
+        "type": "object",
+        "properties": {
+          "studentId": { "type": "number" },
+          "studentName": { "type": "string" },
+          "order": { "type": "number", "description": "STT trong lớp nguồn" },
+          "suggestedAction": {
+            "type": "string",
+            "enum": ["LEN_LOP", "TOT_NGHIEP"]
+          },
+          "suggestedTargetClassId": {
+            "type": "number",
+            "nullable": true,
+            "description": "Lớp khối +1 cùng hậu tố (10A1 → 11A1); null nếu không có"
+          },
+          "alreadyEnrolledInTargetYear": { "type": "boolean" }
+        },
+        "required": [
+          "studentId",
+          "studentName",
+          "order",
+          "suggestedAction",
+          "suggestedTargetClassId",
+          "alreadyEnrolledInTargetYear"
+        ]
+      },
+      "PromotionPreviewDto": {
+        "type": "object",
+        "properties": {
+          "sourceClass": {
+            "$ref": "#/components/schemas/PromotionSourceClassDto"
+          },
+          "targetYear": {
+            "$ref": "#/components/schemas/PromotionTargetYearDto"
+          },
+          "targetClasses": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PromotionClassDto" }
+          },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PromotionPreviewItemDto" }
+          }
+        },
+        "required": ["sourceClass", "targetYear", "targetClasses", "items"]
+      },
+      "PromotionItemInput": {
+        "type": "object",
+        "properties": {
+          "studentId": { "type": "number" },
+          "action": {
+            "type": "string",
+            "enum": ["LEN_LOP", "LUU_BAN", "TOT_NGHIEP", "NGHI_HOC"]
+          },
+          "targetClassId": {
+            "type": "number",
+            "nullable": true,
+            "description": "Bắt buộc với LEN_LOP/LUU_BAN; không được gửi với TOT_NGHIEP/NGHI_HOC"
+          },
+          "reason": { "type": "string", "nullable": true, "maxLength": 500 }
+        },
+        "required": ["studentId", "action"]
+      },
+      "PromotionInput": {
+        "type": "object",
+        "properties": {
+          "targetYearId": { "type": "number" },
+          "items": {
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PromotionItemInput" }
+          }
+        },
+        "required": ["targetYearId", "items"]
+      },
+      "PromotionResultDto": {
+        "type": "object",
+        "properties": {
+          "processed": { "type": "number" },
+          "promoted": { "type": "number" },
+          "retained": { "type": "number" },
+          "graduated": { "type": "number" },
+          "withdrawn": { "type": "number" }
+        },
+        "required": [
+          "processed",
+          "promoted",
+          "retained",
+          "graduated",
+          "withdrawn"
+        ]
+      },
+      "EnrollmentDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "classId": { "type": "number" },
+          "className": { "type": "string" },
+          "grade": { "type": "number" },
+          "yearId": { "type": "number" },
+          "yearName": { "type": "string" },
+          "fromDate": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "toDate": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DANG_HOC",
+              "LEN_LOP",
+              "LUU_BAN",
+              "DA_CHUYEN_LOP",
+              "NGHI_HOC",
+              "TOT_NGHIEP"
+            ]
+          },
+          "reason": { "type": "string", "nullable": true },
+          "actorName": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": [
+          "id",
+          "classId",
+          "className",
+          "grade",
+          "yearId",
+          "yearName",
+          "fromDate",
+          "toDate",
+          "status",
+          "reason",
+          "actorName",
+          "createdAt"
+        ]
+      },
+      "EnrollmentListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EnrollmentDto" }
+          }
+        },
+        "required": ["items"]
+      },
+      "TransferInput": {
+        "type": "object",
+        "properties": {
+          "targetClassId": { "type": "number" },
+          "effectiveDate": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["targetClassId", "effectiveDate", "reason"]
+      },
+      "AffectedGradebookDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "subjectName": { "type": "string" },
+          "termName": { "type": "string" }
+        },
+        "required": ["id", "subjectName", "termName"]
+      },
+      "TransferResultDto": {
+        "type": "object",
+        "properties": {
+          "enrollment": { "$ref": "#/components/schemas/EnrollmentDto" },
+          "affectedGradebooks": {
+            "description": "Bảng điểm của lớp mới thuộc các học kỳ từ ngày hiệu lực; ô điểm không được tự tạo",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AffectedGradebookDto" }
+          }
+        },
+        "required": ["enrollment", "affectedGradebooks"]
+      },
+      "WithdrawInput": {
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["effectiveDate", "reason"]
+      },
+      "EnrollmentResultDto": {
+        "type": "object",
+        "properties": {
+          "enrollment": { "$ref": "#/components/schemas/EnrollmentDto" }
+        },
+        "required": ["enrollment"]
+      },
+      "ReenrollInput": {
+        "type": "object",
+        "properties": {
+          "classId": { "type": "number" },
+          "effectiveDate": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["classId", "effectiveDate", "reason"]
+      },
       "FinalResultDto": {
         "type": "object",
         "properties": {
@@ -10500,6 +11294,12 @@
           "subjectName": { "type": "string" },
           "termId": { "type": "number" },
           "termName": { "type": "string" },
+          "yearId": { "type": "number" },
+          "yearName": { "type": "string" },
+          "className": {
+            "type": "string",
+            "description": "Lớp của em trong học kỳ này (theo ghi danh)"
+          },
           "components": {
             "type": "array",
             "items": {
@@ -10520,11 +11320,23 @@
           "subjectName",
           "termId",
           "termName",
+          "yearId",
+          "yearName",
+          "className",
           "components",
           "finalScore",
           "classification",
           "calculatedAt"
         ]
+      },
+      "StudentYearDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "name": { "type": "string" },
+          "className": { "type": "string" }
+        },
+        "required": ["id", "name", "className"]
       },
       "StudentResultSummaryDto": {
         "type": "object",
@@ -10532,6 +11344,8 @@
           "termId": { "type": "number", "nullable": true },
           "termName": { "type": "string", "nullable": true },
           "className": { "type": "string" },
+          "yearId": { "type": "number", "nullable": true },
+          "yearName": { "type": "string", "nullable": true },
           "averageScore": { "type": "string", "nullable": true },
           "publishedSubjects": { "type": "number" },
           "totalSubjects": { "type": "number" },
@@ -10542,6 +11356,8 @@
           "termId",
           "termName",
           "className",
+          "yearId",
+          "yearName",
           "averageScore",
           "publishedSubjects",
           "totalSubjects",
@@ -10556,9 +11372,14 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/StudentSubjectResultDto" }
           },
+          "years": {
+            "description": "Mọi năm học em có ghi danh, mới nhất trước; không bị ảnh hưởng bởi yearId",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StudentYearDto" }
+          },
           "summary": { "$ref": "#/components/schemas/StudentResultSummaryDto" }
         },
-        "required": ["items", "summary"]
+        "required": ["items", "years", "summary"]
       },
       "ProfileDto": {
         "type": "object",

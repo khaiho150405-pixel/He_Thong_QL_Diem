@@ -131,15 +131,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
       (id: null, label: 'Tất cả năm học'),
     ];
     if (results != null) {
-      final seen = <String>{};
-      for (final item in results.items) {
-        final m = RegExp(r'(\d{4}\s*-\s*\d{4})').firstMatch(item.termName);
-        if (m != null) {
-          final yr = m.group(1)!.trim();
-          if (seen.add(yr)) {
-            list.add((id: null, label: 'Năm học $yr'));
-          }
-        }
+      for (final y in results.years) {
+        final label = y.className.isNotEmpty
+            ? '${y.name} · Lớp ${y.className}'
+            : y.name;
+        list.add((id: y.id, label: label));
       }
     }
     if (_selectedYearId != null && !list.any((e) => e.id == _selectedYearId)) {
@@ -262,21 +258,27 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
               final average = _formatAverage(summary.averageScore);
 
               // Nhóm theo năm học -> học kỳ
-              final grouped =
-                  <String, Map<String, List<StudentSubjectResultDto>>>{};
+              final grouped = <String, ({
+                String yearName,
+                String className,
+                Map<String, List<StudentSubjectResultDto>> terms,
+              })>{};
               for (final item in items) {
-                final yearMatch =
-                    RegExp(r'(\d{4}\s*-\s*\d{4})').firstMatch(item.termName);
-                final yearKey = yearMatch != null
-                    ? 'Năm học ${yearMatch.group(1)}'
-                    : (_selectedYearId != null
-                        ? 'Năm học $_selectedYearId'
-                        : 'Năm học');
+                final yearKey = item.yearName.isNotEmpty
+                    ? item.yearName
+                    : (item.yearId != 0 ? 'Năm học ${item.yearId}' : 'Năm học');
                 final termKey = item.termName;
-                grouped
-                    .putIfAbsent(yearKey, () => {})
-                    .putIfAbsent(termKey, () => [])
-                    .add(item);
+                final group = grouped.putIfAbsent(
+                  yearKey,
+                  () => (
+                    yearName: yearKey.startsWith('Năm học')
+                        ? yearKey
+                        : 'Năm học $yearKey',
+                    className: item.className,
+                    terms: <String, List<StudentSubjectResultDto>>{},
+                  ),
+                );
+                group.terms.putIfAbsent(termKey, () => []).add(item);
               }
 
               return ListView(
@@ -322,13 +324,18 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            yearEntry.key,
+                            yearEntry.value.yearName,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: t.heading,
                             ),
                           ),
-                          if (summary.className.isNotEmpty)
+                          if (yearEntry.value.className.isNotEmpty)
+                            AppBadge(
+                              'Lớp ${yearEntry.value.className}',
+                              tone: AppBadgeTone.info,
+                            )
+                          else if (summary.className.isNotEmpty)
                             AppBadge(
                               'Lớp ${summary.className}',
                               tone: AppBadgeTone.info,
@@ -336,7 +343,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                         ],
                       ),
                     ),
-                    for (final termEntry in yearEntry.value.entries) ...[
+                    for (final termEntry in yearEntry.value.terms.entries) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.xs,

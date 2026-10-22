@@ -34,6 +34,11 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 Nhánh `codex/recognition-row-matching`. Chưa commit/push. Tiến độ chính thức: `docs/development/phase-7-prompts.md` (FE-01 → FE-05 đã hoàn tất 100%).
 
+### BE — Ghi danh học sinh, đợt B: lên lớp / chuyển lớp / nghỉ học / học lại (xong; chưa commit)
+
+- Migration `202610230002_enrollment_actions` (`xep_lop_nam_moi`, `chuyen_lop_hoc_sinh`, `cho_nghi_hoc`, `cho_hoc_lai`); module `apps/api/src/modules/enrollments` (`/classes/{id}/promotion[-preview]`, `/students/{id}/transfer|withdraw|reenroll|enrollments`); 13 mã lỗi mới trong `common/coded-error.ts` (lỗi theo học sinh có `details { studentId, reason }`). `students/me/results` thêm `yearId/yearName/className` và `years`.
+- Test: `integration/enrollment-actions.test.ts` (5 ca). Rà soát R6: form-templates, gradebooks/reports service, teachers không còn lấy học sinh bằng `ma_lop`/`dang_theo_hoc`. Chưa làm: UI (AI frontend).
+
 ### BE — Ghi danh học sinh theo lớp/năm học, đợt A (ADR-0018) (xong; chưa commit)
 
 - Migration `202610230001_student_enrollment`: `hoc_sinh_lop` + enum `TrangThaiGhiDanh`, chuyển dữ liệu (1 ghi danh/học sinh), trigger đồng bộ `hoc_sinh.ma_lop/dang_theo_hoc` (DEPRECATED), chặn sửa trực tiếp (`STUDENT_CLASS_VIA_ENROLLMENT`), hàm `hoc_sinh_cua_lop`; 14 hàm SQL viết lại dùng hàm này. API: gradebooks/final-results/reports/recognition/catalog/policy dùng ghi danh; `students/me/results?yearId=`; DTO học sinh có `currentClassId/Name/YearId`.

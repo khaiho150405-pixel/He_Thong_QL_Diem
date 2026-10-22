@@ -110,16 +110,27 @@ export interface StudentSubjectResult {
   subjectName: string;
   termId: number;
   termName: string;
+  yearId: number;
+  yearName: string;
+  className: string;
   components: StudentApprovedComponent[];
   finalScore: string | null;
   classification: string | null;
   calculatedAt: string | null;
 }
 
+export interface StudentYear {
+  id: number;
+  name: string;
+  className: string;
+}
+
 export interface StudentResultSummary {
   termId: number | null;
   termName: string | null;
   className: string;
+  yearId: number | null;
+  yearName: string | null;
   averageScore: string | null;
   publishedSubjects: number;
   totalSubjects: number;
@@ -151,6 +162,7 @@ export interface FinalResultUnit {
     termId: number | null,
     yearId: number | null,
   ): Promise<StudentSubjectResult[]>;
+  studentYears(userId: number): Promise<StudentYear[]>;
   studentSummary(
     userId: number,
     termId: number | null,

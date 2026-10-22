@@ -286,11 +286,12 @@ export class FinalResultsService {
       throw new BadRequestException();
     return this.store.run(async (tx) => {
       await currentActor(tx.authorization, actor);
-      const [items, summary] = await Promise.all([
+      const [items, summary, years] = await Promise.all([
         tx.studentResults(actor.id, termId ?? null, yearId),
         tx.studentSummary(actor.id, termId ?? null, yearId),
+        tx.studentYears(actor.id),
       ]);
-      return { items, summary };
+      return { items, summary, years };
     });
   }
 }

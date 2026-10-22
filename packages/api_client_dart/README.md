@@ -89,6 +89,12 @@ Class | Method | HTTP request | Description
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsList**](doc/ComponentsApi.md#componentslist) | **GET** /api/v1/catalog/components |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsRemove**](doc/ComponentsApi.md#componentsremove) | **DELETE** /api/v1/catalog/components/{id} |
 [*ComponentsApi*](doc/ComponentsApi.md) | [**componentsUpdate**](doc/ComponentsApi.md#componentsupdate) | **PUT** /api/v1/catalog/components/{id} |
+[*EnrollmentsApi*](doc/EnrollmentsApi.md) | [**classPromotionPreview**](doc/EnrollmentsApi.md#classpromotionpreview) | **GET** /api/v1/classes/{id}/promotion-preview |
+[*EnrollmentsApi*](doc/EnrollmentsApi.md) | [**classPromotionPromote**](doc/EnrollmentsApi.md#classpromotionpromote) | **POST** /api/v1/classes/{id}/promotion |
+[*EnrollmentsApi*](doc/EnrollmentsApi.md) | [**studentEnrollmentsList**](doc/EnrollmentsApi.md#studentenrollmentslist) | **GET** /api/v1/students/{id}/enrollments |
+[*EnrollmentsApi*](doc/EnrollmentsApi.md) | [**studentEnrollmentsReenroll**](doc/EnrollmentsApi.md#studentenrollmentsreenroll) | **POST** /api/v1/students/{id}/reenroll |
+[*EnrollmentsApi*](doc/EnrollmentsApi.md) | [**studentEnrollmentsTransfer**](doc/EnrollmentsApi.md#studentenrollmentstransfer) | **POST** /api/v1/students/{id}/transfer |
+[*EnrollmentsApi*](doc/EnrollmentsApi.md) | [**studentEnrollmentsWithdraw**](doc/EnrollmentsApi.md#studentenrollmentswithdraw) | **POST** /api/v1/students/{id}/withdraw |
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsCalculate**](doc/FinalResultsApi.md#finalresultscalculate) | **POST** /api/v1/gradebooks/{gradebookId}/final-results/calculate |
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsHistory**](doc/FinalResultsApi.md#finalresultshistory) | **GET** /api/v1/gradebooks/{gradebookId}/final-results/{resultId}/history |
 [*FinalResultsApi*](doc/FinalResultsApi.md) | [**finalResultsList**](doc/FinalResultsApi.md#finalresultslist) | **GET** /api/v1/gradebooks/{gradebookId}/final-results |
@@ -200,6 +206,7 @@ Class | Method | HTTP request | Description
  - [AdminOcrAccuracyDto](doc/AdminOcrAccuracyDto.md)
  - [AdminOverviewDto](doc/AdminOverviewDto.md)
  - [AdminRecentActivityDto](doc/AdminRecentActivityDto.md)
+ - [AffectedGradebookDto](doc/AffectedGradebookDto.md)
  - [AnalyzeResultDto](doc/AnalyzeResultDto.md)
  - [AnalyzedColumnDto](doc/AnalyzedColumnDto.md)
  - [AssignmentsDto](doc/AssignmentsDto.md)
@@ -225,6 +232,9 @@ Class | Method | HTTP request | Description
  - [CreateGradebookInput](doc/CreateGradebookInput.md)
  - [CreateTimetableItemInput](doc/CreateTimetableItemInput.md)
  - [DistributionItemDto](doc/DistributionItemDto.md)
+ - [EnrollmentDto](doc/EnrollmentDto.md)
+ - [EnrollmentListDto](doc/EnrollmentListDto.md)
+ - [EnrollmentResultDto](doc/EnrollmentResultDto.md)
  - [ErrorDto](doc/ErrorDto.md)
  - [ExemptedStudentDto](doc/ExemptedStudentDto.md)
  - [ExemptionChangeInput](doc/ExemptionChangeInput.md)
@@ -257,6 +267,14 @@ Class | Method | HTTP request | Description
  - [MissingStudentsDto](doc/MissingStudentsDto.md)
  - [PasswordInput](doc/PasswordInput.md)
  - [ProfileDto](doc/ProfileDto.md)
+ - [PromotionClassDto](doc/PromotionClassDto.md)
+ - [PromotionInput](doc/PromotionInput.md)
+ - [PromotionItemInput](doc/PromotionItemInput.md)
+ - [PromotionPreviewDto](doc/PromotionPreviewDto.md)
+ - [PromotionPreviewItemDto](doc/PromotionPreviewItemDto.md)
+ - [PromotionResultDto](doc/PromotionResultDto.md)
+ - [PromotionSourceClassDto](doc/PromotionSourceClassDto.md)
+ - [PromotionTargetYearDto](doc/PromotionTargetYearDto.md)
  - [PublishIssueDto](doc/PublishIssueDto.md)
  - [PublishReadinessDto](doc/PublishReadinessDto.md)
  - [RecognitionBatchDto](doc/RecognitionBatchDto.md)
@@ -268,6 +286,7 @@ Class | Method | HTTP request | Description
  - [RecognitionReceiptDto](doc/RecognitionReceiptDto.md)
  - [RecognitionTicketDetailDto](doc/RecognitionTicketDetailDto.md)
  - [RecognitionTicketDto](doc/RecognitionTicketDto.md)
+ - [ReenrollInput](doc/ReenrollInput.md)
  - [ReviewApprovalInput](doc/ReviewApprovalInput.md)
  - [ReviewApprovalResultDto](doc/ReviewApprovalResultDto.md)
  - [ReviewDecisionInput](doc/ReviewDecisionInput.md)
@@ -287,6 +306,7 @@ Class | Method | HTTP request | Description
  - [StudentResultSummaryDto](doc/StudentResultSummaryDto.md)
  - [StudentResultsDto](doc/StudentResultsDto.md)
  - [StudentSubjectResultDto](doc/StudentSubjectResultDto.md)
+ - [StudentYearDto](doc/StudentYearDto.md)
  - [StudentsDto](doc/StudentsDto.md)
  - [StudentsImportInput](doc/StudentsImportInput.md)
  - [StudentsImportResult](doc/StudentsImportResult.md)
@@ -306,11 +326,14 @@ Class | Method | HTTP request | Description
  - [TemplateSummaryDto](doc/TemplateSummaryDto.md)
  - [TimetableItemDto](doc/TimetableItemDto.md)
  - [TimetableListDto](doc/TimetableListDto.md)
+ - [TransferInput](doc/TransferInput.md)
+ - [TransferResultDto](doc/TransferResultDto.md)
  - [TryGradeDto](doc/TryGradeDto.md)
  - [TryResultDto](doc/TryResultDto.md)
  - [TryRowDto](doc/TryRowDto.md)
  - [UpdatedCellDto](doc/UpdatedCellDto.md)
  - [VersionedDefinitionInput](doc/VersionedDefinitionInput.md)
+ - [WithdrawInput](doc/WithdrawInput.md)
  - [YearPendingSummaryDto](doc/YearPendingSummaryDto.md)
  - [YearsDto](doc/YearsDto.md)
  - [YearsInput](doc/YearsInput.md)

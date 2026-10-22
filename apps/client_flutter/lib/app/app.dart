@@ -10,6 +10,7 @@ import '../features/authentication/login_screen.dart';
 import '../features/authentication/home_screen.dart';
 import '../features/academic_catalog/catalog_screen.dart';
 import '../features/academic_catalog/fields.dart';
+import '../features/academic_catalog/promotion_screen.dart';
 import '../features/academic_catalog/semester_deadlines_screen.dart';
 import '../features/academic_catalog/subjects_weights_screen.dart';
 import '../features/academic_catalog/teaching_assignments_screen.dart';
@@ -131,6 +132,15 @@ final routerProvider = Provider.family<GoRouter, String>((
               : BatchResultScreen(gradebookId: id, batchId: batchId);
         },
       ),
+      GoRoute(
+        path: '/admin/classes/:id/promotion',
+        builder: (_, state) {
+          final id = num.tryParse(state.pathParameters['id'] ?? '');
+          return id == null
+              ? const CatalogScreen(resource: 'classes')
+              : PromotionScreen(classId: id);
+        },
+      ),
     ],
     redirect: (context, state) {
       if (state.uri.path == '/connection') return null;
@@ -152,6 +162,12 @@ final routerProvider = Provider.family<GoRouter, String>((
       if ((state.uri.path == '/admin/teaching-assignments' ||
               state.uri.path == '/admin/subjects-weights' ||
               state.uri.path == '/admin/semester-deadlines') &&
+          user.role.value != 'QUAN_TRI_VIEN') {
+        return '/';
+      }
+      // Lên lớp cuối năm (QTV)
+      if (state.uri.path.startsWith('/admin/classes/') &&
+          state.uri.path.endsWith('/promotion') &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }

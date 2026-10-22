@@ -7,6 +7,7 @@ export { SubjectsModule } from "./subjects/module.js";
 export { TeachersModule } from "./teachers/module.js";
 export { GradebooksModule } from "./gradebooks/module.js";
 export { AdjustmentsModule } from "./adjustments/module.js";
+export { EnrollmentsModule } from "./enrollments/module.js";
 export { RecognitionModule } from "./recognition/module.js";
 export { ReviewModule } from "./review/module.js";
 export { FinalResultsModule } from "./final-results/module.js";

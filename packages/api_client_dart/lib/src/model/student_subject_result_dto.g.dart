@@ -19,6 +19,12 @@ abstract class _$StudentSubjectResultDtoCWProxy {
 
   StudentSubjectResultDto termName(String termName);
 
+  StudentSubjectResultDto yearId(num yearId);
+
+  StudentSubjectResultDto yearName(String yearName);
+
+  StudentSubjectResultDto className(String className);
+
   StudentSubjectResultDto components(
     List<StudentApprovedComponentDto> components,
   );
@@ -42,6 +48,9 @@ abstract class _$StudentSubjectResultDtoCWProxy {
     String subjectName,
     num termId,
     String termName,
+    num yearId,
+    String yearName,
+    String className,
     List<StudentApprovedComponentDto> components,
     String? finalScore,
     String? classification,
@@ -78,6 +87,16 @@ class _$StudentSubjectResultDtoCWProxyImpl
   StudentSubjectResultDto termName(String termName) => this(termName: termName);
 
   @override
+  StudentSubjectResultDto yearId(num yearId) => this(yearId: yearId);
+
+  @override
+  StudentSubjectResultDto yearName(String yearName) => this(yearName: yearName);
+
+  @override
+  StudentSubjectResultDto className(String className) =>
+      this(className: className);
+
+  @override
   StudentSubjectResultDto components(
     List<StudentApprovedComponentDto> components,
   ) => this(components: components);
@@ -108,6 +127,9 @@ class _$StudentSubjectResultDtoCWProxyImpl
     Object? subjectName = const $CopyWithPlaceholder(),
     Object? termId = const $CopyWithPlaceholder(),
     Object? termName = const $CopyWithPlaceholder(),
+    Object? yearId = const $CopyWithPlaceholder(),
+    Object? yearName = const $CopyWithPlaceholder(),
+    Object? className = const $CopyWithPlaceholder(),
     Object? components = const $CopyWithPlaceholder(),
     Object? finalScore = const $CopyWithPlaceholder(),
     Object? classification = const $CopyWithPlaceholder(),
@@ -138,6 +160,18 @@ class _$StudentSubjectResultDtoCWProxyImpl
           ? _value.termName
           // ignore: cast_nullable_to_non_nullable
           : termName as String,
+      yearId: yearId == const $CopyWithPlaceholder()
+          ? _value.yearId
+          // ignore: cast_nullable_to_non_nullable
+          : yearId as num,
+      yearName: yearName == const $CopyWithPlaceholder()
+          ? _value.yearName
+          // ignore: cast_nullable_to_non_nullable
+          : yearName as String,
+      className: className == const $CopyWithPlaceholder()
+          ? _value.className
+          // ignore: cast_nullable_to_non_nullable
+          : className as String,
       components: components == const $CopyWithPlaceholder()
           ? _value.components
           // ignore: cast_nullable_to_non_nullable
@@ -180,6 +214,9 @@ StudentSubjectResultDto _$StudentSubjectResultDtoFromJson(
       'subjectName',
       'termId',
       'termName',
+      'yearId',
+      'yearName',
+      'className',
       'components',
       'finalScore',
       'classification',
@@ -193,6 +230,9 @@ StudentSubjectResultDto _$StudentSubjectResultDtoFromJson(
     subjectName: $checkedConvert('subjectName', (v) => v as String),
     termId: $checkedConvert('termId', (v) => v as num),
     termName: $checkedConvert('termName', (v) => v as String),
+    yearId: $checkedConvert('yearId', (v) => v as num),
+    yearName: $checkedConvert('yearName', (v) => v as String),
+    className: $checkedConvert('className', (v) => v as String),
     components: $checkedConvert(
       'components',
       (v) => (v as List<dynamic>)
@@ -221,6 +261,9 @@ Map<String, dynamic> _$StudentSubjectResultDtoToJson(
   'subjectName': instance.subjectName,
   'termId': instance.termId,
   'termName': instance.termName,
+  'yearId': instance.yearId,
+  'yearName': instance.yearName,
+  'className': instance.className,
   'components': instance.components.map((e) => e.toJson()).toList(),
   'finalScore': instance.finalScore,
   'classification': instance.classification,

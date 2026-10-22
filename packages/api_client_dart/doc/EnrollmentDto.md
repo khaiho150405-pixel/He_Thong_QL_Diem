@@ -1,0 +1,24 @@
+# api_client_dart.model.EnrollmentDto
+
+## Load the model package
+```dart
+import 'package:api_client_dart/api.dart';
+```
+
+## Properties
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**id** | **String** |  |
+**classId** | **num** |  |
+**className** | **String** |  |
+**grade** | **num** |  |
+**yearId** | **num** |  |
+**yearName** | **String** |  |
+**fromDate** | **String** |  |
+**toDate** | **String** |  |
+**status** | **String** |  |
+**reason** | **String** |  |
+**actorName** | **String** |  |
+**createdAt** | [**DateTime**](DateTime.md) |  |
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

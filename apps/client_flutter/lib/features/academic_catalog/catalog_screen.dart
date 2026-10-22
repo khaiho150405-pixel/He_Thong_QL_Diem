@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_avatar.dart';
 import '../../app/widgets/app_badge.dart';
@@ -16,6 +18,7 @@ import 'repository.dart';
 import 'fields.dart';
 import 'edit_dialog.dart';
 import 'catalog_import_dialog.dart';
+import 'student_enrollment_dialogs.dart';
 
 class CatalogScreen extends ConsumerStatefulWidget {
   const CatalogScreen({super.key, required this.resource});
@@ -1727,6 +1730,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   Widget _actionsCell(AppTokens t, Json row) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
+      if (admin && spec.key == 'classes')
+        IconButton(
+          key: ValueKey('class-promotion-${row['ma_lop']}'),
+          tooltip: 'Lên lớp cuối năm',
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          icon: Icon(Icons.school_outlined, size: 20, color: t.priLink),
+          onPressed: () =>
+              context.go('/admin/classes/${row['ma_lop']}/promotion'),
+        ),
       if (admin && !['accounts', 'students'].contains(spec.key))
         IconButton(
           tooltip: 'Xóa',
@@ -1739,8 +1752,143 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     ],
   );
 
-  double get _actionsWidth =>
-      admin && !['accounts', 'students'].contains(spec.key) ? 84 : 24;
+  double get _actionsWidth {
+    if (admin && spec.key == 'classes') return 124;
+    return admin && !['accounts', 'students'].contains(spec.key) ? 84 : 24;
+  }
+
+  Widget _studentActionsCell(AppTokens t, Json row) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (admin) _buildStudentMenu(t, row),
+      Icon(Icons.chevron_right, color: t.ink3),
+    ],
+  );
+
+  Widget _buildStudentMenu(AppTokens t, Json row) {
+    final studentId = row['ma_hoc_sinh'];
+    final isAttending = row['dang_theo_hoc'] == true;
+    final classes =
+        (_references['classes'] ?? <Json>[]).cast<Map<String, dynamic>>();
+
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: PopupMenuButton<String>(
+        key: ValueKey('student-actions-$studentId'),
+        tooltip: 'Thao tác học sinh',
+        padding: EdgeInsets.zero,
+        icon: Icon(Icons.more_vert, size: 20, color: t.ink2),
+      onSelected: (val) async {
+        switch (val) {
+          case 'transfer':
+            final result = await showAppDialog<TransferResultDto>(
+              context: context,
+              builder: (ctx) => StudentTransferDialog(
+                student: row,
+                api: ref.read(apiProvider),
+                allClasses: classes,
+              ),
+            );
+            if (result != null && mounted) {
+              if (result.affectedGradebooks.isNotEmpty) {
+                await showAffectedGradebooksNotice(
+                  context,
+                  affectedGradebooks: result.affectedGradebooks,
+                );
+              }
+              reload();
+            }
+            break;
+          case 'withdraw':
+            final result = await showAppDialog<EnrollmentResultDto>(
+              context: context,
+              builder: (ctx) => StudentWithdrawDialog(
+                student: row,
+                api: ref.read(apiProvider),
+              ),
+            );
+            if (result != null && mounted) {
+              reload();
+            }
+            break;
+          case 'reenroll':
+            final result = await showAppDialog<EnrollmentResultDto>(
+              context: context,
+              builder: (ctx) => StudentReenrollDialog(
+                student: row,
+                api: ref.read(apiProvider),
+                allClasses: classes,
+              ),
+            );
+            if (result != null && mounted) {
+              reload();
+            }
+            break;
+          case 'history':
+            if (mounted) {
+              await showAppDialog<void>(
+                context: context,
+                builder: (ctx) => StudentEnrollmentHistoryDialog(
+                  student: row,
+                  api: ref.read(apiProvider),
+                ),
+              );
+            }
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        if (isAttending) ...[
+          PopupMenuItem(
+            key: ValueKey('student-transfer-$studentId'),
+            value: 'transfer',
+            child: const Row(
+              children: [
+                Icon(Icons.swap_horiz_rounded, size: 18),
+                SizedBox(width: 8),
+                Text('Chuyển lớp'),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            key: ValueKey('student-withdraw-$studentId'),
+            value: 'withdraw',
+            child: const Row(
+              children: [
+                Icon(Icons.person_off_outlined, size: 18),
+                SizedBox(width: 8),
+                Text('Cho nghỉ học'),
+              ],
+            ),
+          ),
+        ] else ...[
+          PopupMenuItem(
+            key: ValueKey('student-reenroll-$studentId'),
+            value: 'reenroll',
+            child: const Row(
+              children: [
+                Icon(Icons.person_add_alt_outlined, size: 18),
+                SizedBox(width: 8),
+                Text('Học lại'),
+              ],
+            ),
+          ),
+        ],
+        PopupMenuItem(
+          key: ValueKey('student-history-$studentId'),
+          value: 'history',
+          child: const Row(
+            children: [
+              Icon(Icons.history_rounded, size: 18),
+              SizedBox(width: 8),
+              Text('Lịch sử xếp lớp'),
+            ],
+          ),
+        ),
+      ],
+    ),);
+  }
 
   List<_CatalogColumn> _tableColumns(AppTokens t) {
     switch (spec.key) {
@@ -1777,7 +1925,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 : const AppBadge('Chưa liên kết'),
             width: 130,
           ),
-          _CatalogColumn('', (row) => _actionsCell(t, row), width: 24),
+          _CatalogColumn(
+            '',
+            (row) => _studentActionsCell(t, row),
+            width: admin ? 72 : 24,
+          ),
         ];
       case 'teachers':
         return [
@@ -2051,6 +2203,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (admin && spec.key == 'classes')
+              IconButton(
+                key: ValueKey('class-promotion-${row['ma_lop']}'),
+                tooltip: 'Lên lớp cuối năm',
+                icon: Icon(Icons.school_outlined, size: 20, color: t.priLink),
+                onPressed: () =>
+                    context.go('/admin/classes/${row['ma_lop']}/promotion'),
+              ),
+            if (admin && spec.key == 'students')
+              _buildStudentMenu(t, row),
             if (admin && !['accounts', 'students'].contains(spec.key))
               IconButton(
                 tooltip: 'Xóa',

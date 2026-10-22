@@ -3,6 +3,7 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:api_client_dart/src/model/student_year_dto.dart';
 import 'package:api_client_dart/src/model/student_result_summary_dto.dart';
 import 'package:api_client_dart/src/model/student_subject_result_dto.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
@@ -19,10 +20,20 @@ part 'student_results_dto.g.dart';
 )
 class StudentResultsDto {
   /// Returns a new [StudentResultsDto] instance.
-  StudentResultsDto({required this.items, required this.summary});
+  StudentResultsDto({
+    required this.items,
+
+    required this.years,
+
+    required this.summary,
+  });
 
   @JsonKey(name: r'items', required: true, includeIfNull: false)
   final List<StudentSubjectResultDto> items;
+
+  /// Mọi năm học em có ghi danh, mới nhất trước; không bị ảnh hưởng bởi yearId
+  @JsonKey(name: r'years', required: true, includeIfNull: false)
+  final List<StudentYearDto> years;
 
   @JsonKey(name: r'summary', required: true, includeIfNull: false)
   final StudentResultSummaryDto summary;
@@ -32,10 +43,11 @@ class StudentResultsDto {
       identical(this, other) ||
       other is StudentResultsDto &&
           other.items == items &&
+          other.years == years &&
           other.summary == summary;
 
   @override
-  int get hashCode => items.hashCode + summary.hashCode;
+  int get hashCode => items.hashCode + years.hashCode + summary.hashCode;
 
   factory StudentResultsDto.fromJson(Map<String, dynamic> json) =>
       _$StudentResultsDtoFromJson(json);

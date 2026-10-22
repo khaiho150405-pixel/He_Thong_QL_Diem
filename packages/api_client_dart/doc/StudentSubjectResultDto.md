@@ -14,6 +14,9 @@ Name | Type | Description | Notes
 **subjectName** | **String** |  |
 **termId** | **num** |  |
 **termName** | **String** |  |
+**yearId** | **num** |  |
+**yearName** | **String** |  |
+**className** | **String** | Lớp của em trong học kỳ này (theo ghi danh) |
 **components** | [**List&lt;StudentApprovedComponentDto&gt;**](StudentApprovedComponentDto.md) |  |
 **finalScore** | **String** |  |
 **classification** | **String** |  |

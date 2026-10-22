@@ -50,6 +50,71 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
     "Học sinh không thuộc lớp của bảng điểm hoặc không còn đang học.",
   ],
   [
+    "TARGET_YEAR_NOT_AFTER",
+    "TARGET_YEAR_NOT_AFTER",
+    "Năm học đích phải bắt đầu sau khi năm học nguồn kết thúc.",
+  ],
+  [
+    "TARGET_CLASS_WRONG_YEAR",
+    "TARGET_CLASS_WRONG_YEAR",
+    "Lớp đích không thuộc đúng năm học yêu cầu.",
+  ],
+  [
+    "PROMOTION_GRADE_MISMATCH",
+    "PROMOTION_GRADE_MISMATCH",
+    "Lớp đích sai khối: lên lớp phải sang khối kế tiếp, lưu ban giữ nguyên khối.",
+  ],
+  [
+    "GRADUATION_ONLY_GRADE_12",
+    "GRADUATION_ONLY_GRADE_12",
+    "Chỉ học sinh khối 12 mới xét tốt nghiệp.",
+  ],
+  [
+    "TARGET_CLASS_REQUIRED",
+    "TARGET_CLASS_REQUIRED",
+    "Lên lớp hoặc lưu ban phải chọn lớp đích.",
+  ],
+  [
+    "TARGET_CLASS_NOT_ALLOWED",
+    "TARGET_CLASS_NOT_ALLOWED",
+    "Tốt nghiệp hoặc nghỉ học không có lớp đích.",
+  ],
+  [
+    "STUDENT_ALREADY_ENROLLED",
+    "STUDENT_ALREADY_ENROLLED",
+    "Học sinh đã có ghi danh trong năm học đích hoặc đã từng học lớp này.",
+  ],
+  [
+    "ENROLLMENT_NOT_ACTIVE",
+    "ENROLLMENT_NOT_ACTIVE",
+    "Học sinh không đang học ở lớp được chọn.",
+  ],
+  [
+    "DUPLICATE_STUDENT",
+    "DUPLICATE_STUDENT",
+    "Một học sinh xuất hiện nhiều lần trong danh sách.",
+  ],
+  [
+    "TRANSFER_SAME_CLASS",
+    "TRANSFER_SAME_CLASS",
+    "Lớp đích trùng với lớp hiện tại của học sinh.",
+  ],
+  [
+    "TRANSFER_GRADE_MISMATCH",
+    "TRANSFER_GRADE_MISMATCH",
+    "Chuyển lớp giữa năm chỉ trong cùng khối.",
+  ],
+  [
+    "TRANSFER_HAS_LATER_GRADES",
+    "TRANSFER_HAS_LATER_GRADES",
+    "Lớp cũ đã có điểm của học sinh ở học kỳ từ ngày hiệu lực; không chuyển lớp được.",
+  ],
+  [
+    "EFFECTIVE_DATE_OUT_OF_RANGE",
+    "EFFECTIVE_DATE_OUT_OF_RANGE",
+    "Ngày hiệu lực phải nằm trong năm học và sau ngày bắt đầu ghi danh hiện tại.",
+  ],
+  [
     "STUDENT_CLASS_VIA_ENROLLMENT",
     "STUDENT_CLASS_VIA_ENROLLMENT",
     "Đổi lớp hoặc trạng thái đang học của học sinh phải thực hiện qua ghi danh, không sửa trực tiếp ở danh mục học sinh.",
@@ -109,9 +174,18 @@ export function codedFailure(error: unknown): CodedException | null {
       { issues: issuesOf(error) },
     );
   }
-  for (const [sql, code, message] of SQL_ERRORS)
-    if (new RegExp(`(?<![A-Z_])${sql}(?![A-Z_])`).test(diagnostic))
-      return new CodedException(code, message);
+  for (const [sql, code, message] of SQL_ERRORS) {
+    // Lỗi theo học sinh có dạng 'MA_LOI:<ma_hoc_sinh>' → details { studentId, reason }.
+    const found = new RegExp(`(?<![A-Z_])${sql}(?![A-Z_])(?::([0-9]+))?`).exec(
+      diagnostic,
+    );
+    if (found)
+      return new CodedException(
+        code,
+        message,
+        found[1] ? { studentId: Number(found[1]), reason: code } : null,
+      );
+  }
   return null;
 }
 

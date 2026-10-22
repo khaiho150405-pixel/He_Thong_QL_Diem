@@ -3,10 +3,13 @@ import 'dart:typed_data';
 
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:client_flutter/app/design_tokens.dart';
+import 'package:client_flutter/app/widgets/app_dialog.dart';
 import 'package:client_flutter/app/widgets/app_select_field.dart';
 import 'package:client_flutter/features/academic_catalog/edit_dialog.dart';
 import 'package:client_flutter/features/academic_catalog/fields.dart';
+import 'package:client_flutter/features/academic_catalog/promotion_screen.dart';
 import 'package:client_flutter/features/academic_catalog/semester_deadlines_repository.dart';
+import 'package:client_flutter/features/academic_catalog/student_enrollment_dialogs.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:client_flutter/features/final_results/student_results_screen.dart';
 import 'package:client_flutter/features/gradebooks/gradebook_screen.dart';
@@ -25,6 +28,7 @@ class FakeSessionController extends StateNotifier<SessionDto?>
 
 class _FakeEnrollmentServer implements HttpClientAdapter {
   final List<RequestOptions> requests = [];
+  bool shouldFailPromotion = false;
 
   final years = [
     {
@@ -37,11 +41,11 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
     },
     {
       'ma_nam_hoc': 2,
-      'ten': '2024-2025',
-      'ngay_bat_dau': '2024-09-01',
-      'ngay_ket_thuc': '2025-06-01',
+      'ten': '2026-2027',
+      'ngay_bat_dau': '2026-09-01',
+      'ngay_ket_thuc': '2027-06-01',
       'hien_hanh': false,
-      'label': '2024-2025',
+      'label': '2026-2027',
     },
   ];
 
@@ -89,6 +93,174 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
       body = {'items': years, 'nextCursor': null};
     } else if (path.endsWith('/catalog/classes')) {
       body = {'items': classes, 'nextCursor': null};
+    } else if (path.contains('/promotion-preview')) {
+      body = {
+        'sourceClass': {
+          'id': 101,
+          'name': '10A1',
+          'grade': 10,
+          'yearId': 1,
+          'yearName': '2025-2026',
+        },
+        'targetYear': {
+          'id': 2,
+          'name': '2026-2027',
+          'startDate': '2026-09-01',
+        },
+        'targetClasses': [
+          {'id': 201, 'name': '11A1', 'grade': 11},
+          {'id': 202, 'name': '11A2', 'grade': 11},
+          {'id': 102, 'name': '10A2', 'grade': 10},
+        ],
+        'items': [
+          {
+            'studentId': 1,
+            'studentName': 'Nguyễn Văn A',
+            'order': 1,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': 201,
+            'alreadyEnrolledInTargetYear': false,
+          },
+          {
+            'studentId': 2,
+            'studentName': 'Trần Thị B',
+            'order': 2,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': 201,
+            'alreadyEnrolledInTargetYear': true,
+          },
+        ],
+      };
+    } else if (path.contains('/promotion') && options.method == 'POST') {
+      if (shouldFailPromotion) {
+        status = 400;
+        body = {
+          'code': 'STUDENT_ALREADY_ENROLLED',
+          'message': 'Học sinh đã có ghi danh trong năm học đích',
+          'details': {'studentId': 1},
+        };
+      } else {
+        body = {
+          'processed': 1,
+          'promoted': 1,
+          'retained': 0,
+          'graduated': 0,
+          'withdrawn': 0,
+        };
+      }
+    } else if (path.contains('/transfer') && options.method == 'POST') {
+      body = {
+        'enrollment': {
+          'id': 'enr-1',
+          'classId': 102,
+          'className': '10A2',
+          'grade': 10,
+          'yearId': 1,
+          'yearName': '2025-2026',
+          'fromDate': '2026-10-22',
+          'toDate': null,
+          'status': 'DANG_HOC',
+          'reason': 'Chuyển lớp theo nguyện vọng',
+          'actorName': 'Admin',
+          'createdAt': '2026-10-22T08:00:00.000Z',
+        },
+        'affectedGradebooks': [
+          {
+            'id': 1,
+            'subjectName': 'Toán',
+            'termName': 'Học kỳ I',
+          },
+        ],
+      };
+    } else if (path.contains('/enrollments') && options.method == 'GET') {
+      body = {
+        'items': [
+          {
+            'id': 'e1',
+            'classId': 101,
+            'className': '10A1',
+            'grade': 10,
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'fromDate': '2025-09-01',
+            'toDate': null,
+            'status': 'DANG_HOC',
+            'reason': null,
+            'actorName': 'Admin',
+            'createdAt': '2025-09-01T00:00:00.000Z',
+          },
+          {
+            'id': 'e2',
+            'classId': 101,
+            'className': '10A1',
+            'grade': 10,
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'fromDate': '2025-09-01',
+            'toDate': '2026-05-30',
+            'status': 'LEN_LOP',
+            'reason': 'Lên lớp thẳng',
+            'actorName': 'Admin',
+            'createdAt': '2025-09-01T00:00:00.000Z',
+          },
+          {
+            'id': 'e3',
+            'classId': 101,
+            'className': '10A1',
+            'grade': 10,
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'fromDate': '2025-09-01',
+            'toDate': '2026-05-30',
+            'status': 'LUU_BAN',
+            'reason': 'Lưu ban do học lực',
+            'actorName': 'Admin',
+            'createdAt': '2025-09-01T00:00:00.000Z',
+          },
+          {
+            'id': 'e4',
+            'classId': 101,
+            'className': '10A1',
+            'grade': 10,
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'fromDate': '2025-09-01',
+            'toDate': '2026-05-30',
+            'status': 'DA_CHUYEN_LOP',
+            'reason': 'Chuyển lớp sang 10A2',
+            'actorName': 'Admin',
+            'createdAt': '2025-09-01T00:00:00.000Z',
+          },
+          {
+            'id': 'e5',
+            'classId': 101,
+            'className': '10A1',
+            'grade': 10,
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'fromDate': '2025-09-01',
+            'toDate': '2026-05-30',
+            'status': 'NGHI_HOC',
+            'reason': 'Nghỉ học có đơn',
+            'actorName': 'Admin',
+            'createdAt': '2025-09-01T00:00:00.000Z',
+          },
+          {
+            'id': 'e6',
+            'classId': 101,
+            'className': '12A1',
+            'grade': 12,
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'fromDate': '2025-09-01',
+            'toDate': '2026-05-30',
+            'status': 'TOT_NGHIEP',
+            'reason': 'Tốt nghiệp THPT',
+            'actorName': 'Admin',
+            'createdAt': '2025-09-01T00:00:00.000Z',
+          },
+        ],
+      };
     } else if (path.endsWith('/students/me/results')) {
       final yearId = options.queryParameters['yearId']?.toString();
       body = {
@@ -99,6 +271,9 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
             'subjectName': 'Toán $yearId',
             'termId': 30,
             'termName': 'Học kỳ I',
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'className': '10A1',
             'components': [
               {
                 'componentId': 201,
@@ -113,10 +288,16 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
             'calculatedAt': '2026-09-13T01:00:00.000Z',
           },
         ],
+        'years': [
+          {'id': 1, 'name': '2025-2026', 'className': '10A1'},
+          {'id': 2, 'name': '2024-2025', 'className': '10A1'},
+        ],
         'summary': {
           'termId': 30,
           'termName': 'Học kỳ I',
           'className': '10A1',
+          'yearId': 1,
+          'yearName': '2025-2026',
           'averageScore': '8.50',
           'publishedSubjects': 1,
           'totalSubjects': 1,
@@ -277,7 +458,7 @@ void main() {
 
         // Expect the hint text to appear
         expect(
-          find.text('Đổi lớp, lên lớp, nghỉ học: dùng chức năng Xếp lớp (sắp có)'),
+          find.text('Chuyển lớp, nghỉ học, học lại: dùng menu thao tác trên danh mục học sinh'),
           findsWidgets,
         );
 
@@ -414,6 +595,344 @@ void main() {
         // Inactive student row should have label 'Đã chuyển/nghỉ'
         expect(find.textContaining('Đã chuyển/nghỉ'), findsWidgets);
         expect(find.textContaining('Ngừng theo học'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'PromotionScreen: lọc lớp đích theo hành động (LEN_LOP khối +1, LUU_BAN cùng khối)',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        final client = _createClient(server);
+
+        tester.view.physicalSize = const Size(1280, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+              sessionProvider.overrideWith(
+                (ref) => FakeSessionController(_adminSession),
+              ),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              routes: {
+                '/catalog/classes': (_) => const Scaffold(),
+              },
+              home: const PromotionScreen(classId: 101),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // 1. Select target year (2026-2027)
+        await tester.tap(find.byKey(const ValueKey('promotion-target-year-select')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('2026-2027').last);
+        await tester.pumpAndSettle();
+
+        // Preview loads. Row 1 has LEN_LOP. Target class dropdown should have 11A1 and 11A2, but not 10A2
+        final targetClassDropdownFinder = find.byKey(const ValueKey('promotion-target-class-1'));
+        expect(targetClassDropdownFinder, findsOneWidget);
+        await tester.tap(targetClassDropdownFinder);
+        await tester.pumpAndSettle();
+        expect(find.text('11A1'), findsWidgets);
+        expect(find.text('11A2'), findsWidgets);
+        expect(find.text('10A2'), findsNothing);
+
+        // Close dropdown by selecting 11A1
+        await tester.tap(find.text('11A1').last);
+        await tester.pumpAndSettle();
+
+        // Change action to LUU_BAN
+        await tester.tap(find.byKey(const ValueKey('promotion-action-1')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Lưu ban').last);
+        await tester.pumpAndSettle();
+
+        // Target class dropdown should now show 10A2, but not 11A1 or 11A2
+        await tester.tap(find.byKey(const ValueKey('promotion-target-class-1')));
+        await tester.pumpAndSettle();
+        expect(find.text('10A2'), findsWidgets);
+        expect(find.text('11A2'), findsNothing);
+        expect(find.widgetWithText(MenuItemButton, '11A1'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'PromotionScreen: bỏ dòng đã có ghi danh năm đích khi gửi API',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        final client = _createClient(server);
+
+        tester.view.physicalSize = const Size(1280, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+              sessionProvider.overrideWith(
+                (ref) => FakeSessionController(_adminSession),
+              ),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              routes: {
+                '/catalog/classes': (_) => const Scaffold(),
+              },
+              home: const PromotionScreen(classId: 101),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Select target year
+        await tester.tap(find.byKey(const ValueKey('promotion-target-year-select')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('2026-2027').last);
+        await tester.pumpAndSettle();
+
+        // Student 2 is already enrolled -> displays badge
+        expect(find.text('Đã có ghi danh'), findsOneWidget);
+
+        // Submit promotion
+        await tester.ensureVisible(find.byKey(const ValueKey('promotion-submit-btn')));
+        await tester.tap(find.byKey(const ValueKey('promotion-submit-btn')));
+        await tester.pumpAndSettle();
+
+        // Confirmation dialog appears
+        expect(find.text('Xác nhận lên lớp cuối năm'), findsOneWidget);
+        await tester.tap(find.text('Xác nhận thực hiện'));
+        await tester.pumpAndSettle();
+
+        // Verify request payload only sent student 1
+        final promoRequests = server.requests.where(
+          (r) => r.path.contains('/promotion') && r.method == 'POST',
+        ).toList();
+        expect(promoRequests, isNotEmpty);
+        final data = jsonDecode(promoRequests.last.data as String) as Map<String, dynamic>;
+        final items = data['items'] as List;
+        expect(items.length, 1);
+        expect(items.first['studentId'], 1);
+
+        // Displays success card
+        expect(find.text('Lên lớp cuối năm thành công!'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'PromotionScreen: tô dòng lỗi theo details.studentId',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        server.shouldFailPromotion = true;
+        final client = _createClient(server);
+
+        tester.view.physicalSize = const Size(1280, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+              sessionProvider.overrideWith(
+                (ref) => FakeSessionController(_adminSession),
+              ),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              routes: {
+                '/catalog/classes': (_) => const Scaffold(),
+              },
+              home: const PromotionScreen(classId: 101),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Select target year
+        await tester.tap(find.byKey(const ValueKey('promotion-target-year-select')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('2026-2027').last);
+        await tester.pumpAndSettle();
+
+        // Submit promotion
+        await tester.ensureVisible(find.byKey(const ValueKey('promotion-submit-btn')));
+        await tester.tap(find.byKey(const ValueKey('promotion-submit-btn')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Xác nhận thực hiện'));
+        await tester.pumpAndSettle();
+
+        // Error message displayed
+        expect(
+          find.text('Học sinh đã có ghi danh trong năm học đích hoặc từng học lớp này'),
+          findsWidgets,
+        );
+
+        // Row for student 1 has error indication
+        expect(find.text('Lỗi dòng này'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Dialog chuyển lớp: hiện affectedGradebooks và cảnh báo khi thành công',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        final client = _createClient(server);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: Scaffold(
+                body: Builder(
+                  builder: (ctx) => ElevatedButton(
+                    onPressed: () async {
+                      final res = await showAppDialog<TransferResultDto>(
+                        context: ctx,
+                        builder: (_) => StudentTransferDialog(
+                          student: const {'ma_hoc_sinh': 1, 'ho_ten': 'Nguyễn Văn A', 'ma_lop': 101},
+                          api: client,
+                          allClasses: const [
+                            {'ma_lop': 101, 'ma_nam_hoc': 1, 'khoi': 10, 'ten_lop': '10A1'},
+                            {'ma_lop': 102, 'ma_nam_hoc': 1, 'khoi': 10, 'ten_lop': '10A2'},
+                          ],
+                        ),
+                      );
+                      if (res != null && res.affectedGradebooks.isNotEmpty) {
+                        await showAffectedGradebooksNotice(
+                          ctx,
+                          affectedGradebooks: res.affectedGradebooks,
+                        );
+                      }
+                    },
+                    child: const Text('Open Transfer'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Open Transfer'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Chuyển lớp: Nguyễn Văn A'), findsOneWidget);
+
+        // Select class 10A2
+        await tester.tap(find.byType(AppSelectField<num>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('10A2').last);
+        await tester.pumpAndSettle();
+
+        // Enter reason
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Lý do chuyển lớp *'),
+          'Chuyển lớp theo nguyện vọng gia đình',
+        );
+        await tester.pumpAndSettle();
+
+        // Tap confirm
+        await tester.tap(find.text('Chuyển lớp').last);
+        await tester.pumpAndSettle();
+
+        // Notice dialog appears
+        expect(find.text('Bảng điểm bị ảnh hưởng'), findsOneWidget);
+        expect(find.text('Toán · Học kỳ I'), findsOneWidget);
+        expect(
+          find.textContaining('Cột đã chốt: dùng chức năng Học sinh vào lớp sau khi chốt'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'Lịch sử xếp lớp: hiển thị đầy đủ các trạng thái tiếng Việt',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        final client = _createClient(server);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: Scaffold(
+                body: Builder(
+                  builder: (ctx) => ElevatedButton(
+                    onPressed: () => showAppDialog<void>(
+                      context: ctx,
+                      builder: (_) => StudentEnrollmentHistoryDialog(
+                        student: const {'ma_hoc_sinh': 1, 'ho_ten': 'Nguyễn Văn A'},
+                        api: client,
+                      ),
+                    ),
+                    child: const Text('Open History'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Open History'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Lịch sử xếp lớp: Nguyễn Văn A'), findsOneWidget);
+        expect(find.text('Đang học'), findsOneWidget);
+        expect(find.text('Lên lớp'), findsOneWidget);
+        expect(find.text('Lưu ban'), findsOneWidget);
+        expect(find.text('Đã chuyển lớp'), findsOneWidget);
+        expect(find.text('Nghỉ học'), findsOneWidget);
+        expect(find.text('Tốt nghiệp'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Màn kết quả học sinh: nhóm theo năm học (kèm tên lớp) và dùng years mới cho dropdown',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        final client = _createClient(server);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: const StudentResultsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Check dropdown shows "Tất cả năm học" by default
+        expect(find.text('Tất cả năm học'), findsOneWidget);
+
+        // Grouping header displays Year name with Class name
+        expect(find.text('Năm học 2025-2026'), findsOneWidget);
+        expect(find.text('Lớp 10A1'), findsWidgets);
+
+        // Open year dropdown to verify new items from results.years
+        await tester.tap(find.byKey(const ValueKey('student-results-year-select')));
+        await tester.pumpAndSettle();
+        expect(find.text('2025-2026 · Lớp 10A1'), findsWidgets);
+        expect(find.text('2024-2025 · Lớp 10A1'), findsWidgets);
       },
     );
   });

@@ -12,6 +12,7 @@ import 'package:api_client_dart/src/api/assignments_api.dart';
 import 'package:api_client_dart/src/api/classes_api.dart';
 import 'package:api_client_dart/src/api/classification_policies_api.dart';
 import 'package:api_client_dart/src/api/components_api.dart';
+import 'package:api_client_dart/src/api/enrollments_api.dart';
 import 'package:api_client_dart/src/api/final_results_api.dart';
 import 'package:api_client_dart/src/api/form_templates_api.dart';
 import 'package:api_client_dart/src/api/gradebooks_api.dart';
@@ -127,6 +128,12 @@ class ApiClientDart {
   /// by doing that all interceptors will not be executed
   ComponentsApi getComponentsApi() {
     return ComponentsApi(dio);
+  }
+
+  /// Get EnrollmentsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  EnrollmentsApi getEnrollmentsApi() {
+    return EnrollmentsApi(dio);
   }
 
   /// Get FinalResultsApi instance, base route and serializer can be overridden by a given but be careful,

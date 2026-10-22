@@ -161,6 +161,13 @@ export class StudentSubjectResultDto {
   @ApiProperty({ type: String }) subjectName!: string;
   @ApiProperty({ type: Number }) termId!: number;
   @ApiProperty({ type: String }) termName!: string;
+  @ApiProperty({ type: Number }) yearId!: number;
+  @ApiProperty({ type: String }) yearName!: string;
+  @ApiProperty({
+    type: String,
+    description: "Lớp của em trong học kỳ này (theo ghi danh)",
+  })
+  className!: string;
   @ApiProperty({ type: [StudentApprovedComponentDto] })
   components!: StudentApprovedComponentDto[];
   @ApiProperty({ type: String, nullable: true }) finalScore!: string | null;
@@ -174,6 +181,8 @@ export class StudentResultSummaryDto {
   @ApiProperty({ type: Number, nullable: true }) termId!: number | null;
   @ApiProperty({ type: String, nullable: true }) termName!: string | null;
   @ApiProperty({ type: String }) className!: string;
+  @ApiProperty({ type: Number, nullable: true }) yearId!: number | null;
+  @ApiProperty({ type: String, nullable: true }) yearName!: string | null;
   @ApiProperty({ type: String, nullable: true }) averageScore!: string | null;
   @ApiProperty({ type: Number }) publishedSubjects!: number;
   @ApiProperty({ type: Number }) totalSubjects!: number;
@@ -181,9 +190,21 @@ export class StudentResultSummaryDto {
   @ApiProperty({ type: Number }) classSize!: number;
 }
 
+export class StudentYearDto {
+  @ApiProperty({ type: Number }) id!: number;
+  @ApiProperty({ type: String }) name!: string;
+  @ApiProperty({ type: String }) className!: string;
+}
+
 export class StudentResultsDto {
   @ApiProperty({ type: [StudentSubjectResultDto] })
   items!: StudentSubjectResultDto[];
+  @ApiProperty({
+    type: [StudentYearDto],
+    description:
+      "Mọi năm học em có ghi danh, mới nhất trước; không bị ảnh hưởng bởi yearId",
+  })
+  years!: StudentYearDto[];
   @ApiProperty({ type: StudentResultSummaryDto })
   summary!: StudentResultSummaryDto;
 }

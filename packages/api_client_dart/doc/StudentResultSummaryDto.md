@@ -11,6 +11,8 @@ Name | Type | Description | Notes
 **termId** | **num** |  |
 **termName** | **String** |  |
 **className** | **String** |  |
+**yearId** | **num** |  |
+**yearName** | **String** |  |
 **averageScore** | **String** |  |
 **publishedSubjects** | **num** |  |
 **totalSubjects** | **num** |  |

@@ -164,6 +164,7 @@ export class PrismaFinalResultStore implements FinalResultStore {
             tx.$queryRaw<StudentSubjectResult[]>`
               SELECT b.ma_bang_diem AS "gradebookId",m.ma_mon AS "subjectId",
                 m.ten_mon AS "subjectName",m.danh_gia_dat AS "passFail",h.ma_hoc_ky AS "termId",h.ten AS "termName",
+                h.ma_nam_hoc AS "yearId",ny.ten AS "yearName",cl.ten_lop AS "className",
                 jsonb_agg(jsonb_build_object('componentId',tp.ma_thanh_phan,
                   'componentName',tp.ten_thanh_phan,'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,
                   'value',d.gia_tri::text,'status',d.trang_thai) ORDER BY tp.thu_tu_hien_thi) AS components,
@@ -174,6 +175,8 @@ export class PrismaFinalResultStore implements FinalResultStore {
               JOIN public.hoc_sinh_lop g ON g.ma_hoc_sinh=hs.ma_hoc_sinh
               JOIN public.bang_diem b ON b.ma_lop=g.ma_lop
               JOIN public.mon_hoc m ON m.ma_mon=b.ma_mon JOIN public.hoc_ky h ON h.ma_hoc_ky=b.ma_hoc_ky
+              JOIN public.nam_hoc ny ON ny.ma_nam_hoc=h.ma_nam_hoc
+              JOIN public.lop cl ON cl.ma_lop=b.ma_lop
               JOIN public.diem_thanh_phan d ON d.ma_bang_diem=b.ma_bang_diem
                 AND d.ma_hoc_sinh=hs.ma_hoc_sinh
                 AND ((d.trang_thai='DA_DUYET' AND d.gia_tri IS NOT NULL) OR d.trang_thai='MIEN')
@@ -184,9 +187,25 @@ export class PrismaFinalResultStore implements FinalResultStore {
                 AND (b.trang_thai='DA_CHOT' OR EXISTS(SELECT 1 FROM public.chot_cot_diem c WHERE c.ma_bang_diem=b.ma_bang_diem AND c.ma_thanh_phan=d.ma_thanh_phan))
                 AND (${termId}::integer IS NULL OR b.ma_hoc_ky=${termId}::integer)
                 AND (${yearId}::integer IS NULL OR h.ma_nam_hoc=${yearId}::integer)
-              GROUP BY b.ma_bang_diem,m.ma_mon,m.ten_mon,h.ma_hoc_ky,h.ten,
+              GROUP BY b.ma_bang_diem,m.ma_mon,m.ten_mon,h.ma_hoc_ky,h.ten,h.ma_nam_hoc,ny.ten,cl.ten_lop,
                 k.diem_tong_ket,k.xep_loai,k.ngay_tinh,h.da_cong_bo
               ORDER BY h.ma_hoc_ky DESC,m.ten_mon`,
+          studentYears: async (userId) => {
+            const rows = await tx.$queryRaw<
+              Array<{ id: number; name: string; className: string }>
+            >`
+              SELECT y.id, y.name, y."className" FROM (
+                SELECT DISTINCT ON (n.ma_nam_hoc) n.ma_nam_hoc AS id, n.ten AS name, l.ten_lop AS "className",
+                  n.ngay_bat_dau AS starts
+                FROM public.hoc_sinh hs
+                JOIN public.hoc_sinh_lop g ON g.ma_hoc_sinh = hs.ma_hoc_sinh
+                JOIN public.lop l ON l.ma_lop = g.ma_lop
+                JOIN public.nam_hoc n ON n.ma_nam_hoc = g.ma_nam_hoc
+                WHERE hs.ma_nguoi_dung = ${userId}::integer
+                ORDER BY n.ma_nam_hoc, g.tu_ngay DESC, g.ma DESC
+              ) y ORDER BY y.starts DESC, y.id DESC`;
+            return rows;
+          },
           studentSummary: async (userId, termId, yearId) => {
             const rows = await tx.$queryRaw<StudentResultSummary[]>`
               WITH base AS (
@@ -224,6 +243,7 @@ export class PrismaFinalResultStore implements FinalResultStore {
                 FROM averages
               )
               SELECT st.term_id AS "termId",h.ten AS "termName",me.ten_lop AS "className",
+                h.ma_nam_hoc AS "yearId",(SELECT n.ten FROM public.nam_hoc n WHERE n.ma_nam_hoc=h.ma_nam_hoc) AS "yearName",
                 r.average_score::text AS "averageScore",
                 (SELECT count(DISTINCT k.ma_mon)::integer
                  FROM public.ket_qua_tong_ket k JOIN public.bang_diem b

@@ -22,11 +22,44 @@ String? apiErrorCode(Object error) {
   return null;
 }
 
+/// Chi tiết lỗi trong envelope lỗi của API (`details`).
+Map<String, dynamic>? apiErrorDetails(Object error) {
+  if (error is! DioException) return null;
+  var data = error.response?.data;
+  if (data is String) {
+    try {
+      data = jsonDecode(data);
+    } catch (_) {}
+  }
+  if (data is Map<String, dynamic>) {
+    final details = data['details'];
+    if (details is Map<String, dynamic>) return details;
+  }
+  return null;
+}
+
 /// Thông điệp tiếng Việt thân thiện theo trường code lỗi của backend.
 String deadlineErrorMessage(Object error) {
   return switch (apiErrorCode(error)) {
     'STUDENT_CLASS_VIA_ENROLLMENT' =>
       'Không đổi lớp trực tiếp ở đây; dùng chức năng xếp lớp/chuyển lớp',
+    'TARGET_YEAR_NOT_AFTER' => 'Năm học đích phải sau năm học hiện tại',
+    'TARGET_CLASS_WRONG_YEAR' => 'Lớp đích không thuộc năm học đích',
+    'PROMOTION_GRADE_MISMATCH' =>
+      'Khối của lớp đích không khớp với hành động lên lớp/lưu ban',
+    'GRADUATION_ONLY_GRADE_12' => 'Chỉ học sinh khối 12 mới được xét tốt nghiệp',
+    'TARGET_CLASS_REQUIRED' => 'Vui lòng chọn lớp đích',
+    'TARGET_CLASS_NOT_ALLOWED' => 'Hành động này không được chọn lớp đích',
+    'STUDENT_ALREADY_ENROLLED' =>
+      'Học sinh đã có ghi danh trong năm học đích hoặc từng học lớp này',
+    'ENROLLMENT_NOT_ACTIVE' => 'Ghi danh của học sinh không còn hiệu lực',
+    'DUPLICATE_STUDENT' => 'Học sinh bị trùng lặp trong danh sách',
+    'TRANSFER_SAME_CLASS' => 'Lớp chuyển đến phải khác lớp hiện tại',
+    'TRANSFER_GRADE_MISMATCH' => 'Chỉ được chuyển sang lớp cùng khối',
+    'TRANSFER_HAS_LATER_GRADES' =>
+      'Học sinh đã có điểm ở lớp sau thời điểm chuyển',
+    'EFFECTIVE_DATE_OUT_OF_RANGE' =>
+      'Ngày hiệu lực phải sau ngày bắt đầu ghi danh hiện tại và trong năm học',
     'DEADLINE_VERSION_CONFLICT' => 'Lịch vừa được thay đổi, hãy tải lại',
     'COLUMN_LOCKED' => 'Lịch đã qua hạn, không sửa được',
     'INVALID_ENTRY_WINDOW' => 'Hạn nhập phải sau giờ mở và ở tương lai',

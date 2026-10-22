@@ -9,6 +9,8 @@ part of 'student_results_dto.dart';
 abstract class _$StudentResultsDtoCWProxy {
   StudentResultsDto items(List<StudentSubjectResultDto> items);
 
+  StudentResultsDto years(List<StudentYearDto> years);
+
   StudentResultsDto summary(StudentResultSummaryDto summary);
 
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentResultsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
@@ -19,6 +21,7 @@ abstract class _$StudentResultsDtoCWProxy {
   /// ````
   StudentResultsDto call({
     List<StudentSubjectResultDto> items,
+    List<StudentYearDto> years,
     StudentResultSummaryDto summary,
   });
 }
@@ -34,6 +37,9 @@ class _$StudentResultsDtoCWProxyImpl implements _$StudentResultsDtoCWProxy {
       this(items: items);
 
   @override
+  StudentResultsDto years(List<StudentYearDto> years) => this(years: years);
+
+  @override
   StudentResultsDto summary(StudentResultSummaryDto summary) =>
       this(summary: summary);
 
@@ -46,6 +52,7 @@ class _$StudentResultsDtoCWProxyImpl implements _$StudentResultsDtoCWProxy {
   /// ````
   StudentResultsDto call({
     Object? items = const $CopyWithPlaceholder(),
+    Object? years = const $CopyWithPlaceholder(),
     Object? summary = const $CopyWithPlaceholder(),
   }) {
     return StudentResultsDto(
@@ -53,6 +60,10 @@ class _$StudentResultsDtoCWProxyImpl implements _$StudentResultsDtoCWProxy {
           ? _value.items
           // ignore: cast_nullable_to_non_nullable
           : items as List<StudentSubjectResultDto>,
+      years: years == const $CopyWithPlaceholder()
+          ? _value.years
+          // ignore: cast_nullable_to_non_nullable
+          : years as List<StudentYearDto>,
       summary: summary == const $CopyWithPlaceholder()
           ? _value.summary
           // ignore: cast_nullable_to_non_nullable
@@ -74,7 +85,7 @@ extension $StudentResultsDtoCopyWith on StudentResultsDto {
 
 StudentResultsDto _$StudentResultsDtoFromJson(Map<String, dynamic> json) =>
     $checkedCreate('StudentResultsDto', json, ($checkedConvert) {
-      $checkKeys(json, requiredKeys: const ['items', 'summary']);
+      $checkKeys(json, requiredKeys: const ['items', 'years', 'summary']);
       final val = StudentResultsDto(
         items: $checkedConvert(
           'items',
@@ -83,6 +94,12 @@ StudentResultsDto _$StudentResultsDtoFromJson(Map<String, dynamic> json) =>
                 (e) =>
                     StudentSubjectResultDto.fromJson(e as Map<String, dynamic>),
               )
+              .toList(),
+        ),
+        years: $checkedConvert(
+          'years',
+          (v) => (v as List<dynamic>)
+              .map((e) => StudentYearDto.fromJson(e as Map<String, dynamic>))
               .toList(),
         ),
         summary: $checkedConvert(
@@ -96,5 +113,6 @@ StudentResultsDto _$StudentResultsDtoFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$StudentResultsDtoToJson(StudentResultsDto instance) =>
     <String, dynamic>{
       'items': instance.items.map((e) => e.toJson()).toList(),
+      'years': instance.years.map((e) => e.toJson()).toList(),
       'summary': instance.summary.toJson(),
     };

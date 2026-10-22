@@ -17,3 +17,13 @@
 ## Còn dùng cột cũ (có chủ đích)
 
 STT toàn trường/lớp trong danh mục học sinh, thời khóa biểu của học sinh và số học sinh trên tổng quan quản trị dùng "lớp hiện tại" (`ma_lop`, `dang_theo_hoc`), đúng nghĩa của chúng sau khi đồng bộ.
+
+## Đợt B: lên lớp, chuyển lớp, nghỉ học, học lại (chỉ QTV)
+
+Bốn hàm SECURITY DEFINER (migration `202610230002_enrollment_actions`), mỗi hàm tự kiểm phiên/vai trò/SERIALIZABLE/idempotency và ghi nhật ký; chỉ ghi `hoc_sinh_lop` (trigger đợt A đồng bộ cột lớp hiện tại). Trigger đợt A không chặn UPDATE `hoc_sinh_lop` nên không cần cờ GUC; runtime vẫn không có quyền ghi bảng này.
+
+- Quy ước ngày: ghi danh cũ đóng với `den_ngay = ngày hiệu lực − 1`, ghi danh mới `tu_ngay = ngày hiệu lực`; không dùng `CURRENT_DATE`.
+- `xep_lop_nam_moi` (`POST /classes/{id}/promotion`, xem trước `GET /classes/{id}/promotion-preview`): 1–100 học sinh đang `DANG_HOC` ở lớp nguồn. `LEN_LOP` → lớp đích khối +1, `LUU_BAN` → cùng khối, `TOT_NGHIEP` chỉ khối 12, `NGHI_HOC`; ghi danh nguồn đóng với `den_ngay` = ngày kết thúc năm nguồn, ghi danh đích mở từ ngày bắt đầu năm đích. Năm đích phải bắt đầu sau năm nguồn; một dòng sai hủy cả lô (`details { studentId, reason }`). Dữ liệu năm cũ không đổi vì `con_hoc` của `LEN_LOP/LUU_BAN/TOT_NGHIEP/NGHI_HOC` đóng cuối năm vẫn đúng.
+- `chuyen_lop_hoc_sinh`: cùng năm, cùng khối, khác lớp; ngày hiệu lực trong năm và sau `tu_ngay` hiện tại; chặn `TRANSFER_HAS_LATER_GRADES` nếu lớp cũ có ô đã có giá trị ở học kỳ bắt đầu từ ngày hiệu lực. Không tự tạo ô điểm; trả `affectedGradebooks` (bảng điểm lớp mới của các học kỳ chưa kết thúc tại ngày hiệu lực).
+- `cho_nghi_hoc`: `DANG_HOC → NGHI_HOC`, không khóa tài khoản. `cho_hoc_lai`: cùng lớp của ghi danh `NGHI_HOC` gần nhất → mở lại chính ghi danh đó (giá trị cũ vào nhật ký); lớp khác → ghi danh mới; đã từng học lớp đó mà không phải lần nghỉ gần nhất → `STUDENT_ALREADY_ENROLLED` (ràng buộc duy nhất `(học sinh, lớp)`).
+- `GET /students/{id}/enrollments`: QTV, giáo viên chủ nhiệm hoặc được phân công lớp em đang/đã học. `GET /students/me/results` có thêm `yearId/yearName/className` ở từng môn và `years` (mọi năm, mới nhất trước).

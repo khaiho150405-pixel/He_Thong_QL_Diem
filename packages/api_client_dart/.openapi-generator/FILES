@@ -25,6 +25,7 @@ doc/AdminKpiDto.md
 doc/AdminOcrAccuracyDto.md
 doc/AdminOverviewDto.md
 doc/AdminRecentActivityDto.md
+doc/AffectedGradebookDto.md
 doc/AnalyzeResultDto.md
 doc/AnalyzedColumnDto.md
 doc/AssignmentsApi.md
@@ -54,6 +55,10 @@ doc/ComponentsPage.md
 doc/CreateGradebookInput.md
 doc/CreateTimetableItemInput.md
 doc/DistributionItemDto.md
+doc/EnrollmentDto.md
+doc/EnrollmentListDto.md
+doc/EnrollmentResultDto.md
+doc/EnrollmentsApi.md
 doc/ErrorDto.md
 doc/ExemptedStudentDto.md
 doc/ExemptionChangeInput.md
@@ -91,6 +96,14 @@ doc/MissingStudentDto.md
 doc/MissingStudentsDto.md
 doc/PasswordInput.md
 doc/ProfileDto.md
+doc/PromotionClassDto.md
+doc/PromotionInput.md
+doc/PromotionItemInput.md
+doc/PromotionPreviewDto.md
+doc/PromotionPreviewItemDto.md
+doc/PromotionResultDto.md
+doc/PromotionSourceClassDto.md
+doc/PromotionTargetYearDto.md
 doc/PublishIssueDto.md
 doc/PublishReadinessDto.md
 doc/RecognitionApi.md
@@ -104,6 +117,7 @@ doc/RecognitionEvidenceRowDto.md
 doc/RecognitionReceiptDto.md
 doc/RecognitionTicketDetailDto.md
 doc/RecognitionTicketDto.md
+doc/ReenrollInput.md
 doc/ReportsApi.md
 doc/ReviewApi.md
 doc/ReviewApprovalInput.md
@@ -128,6 +142,7 @@ doc/StudentResultSummaryDto.md
 doc/StudentResultsApi.md
 doc/StudentResultsDto.md
 doc/StudentSubjectResultDto.md
+doc/StudentYearDto.md
 doc/StudentsApi.md
 doc/StudentsDto.md
 doc/StudentsImportInput.md
@@ -151,11 +166,14 @@ doc/TemplateSummaryDto.md
 doc/TimetableApi.md
 doc/TimetableItemDto.md
 doc/TimetableListDto.md
+doc/TransferInput.md
+doc/TransferResultDto.md
 doc/TryGradeDto.md
 doc/TryResultDto.md
 doc/TryRowDto.md
 doc/UpdatedCellDto.md
 doc/VersionedDefinitionInput.md
+doc/WithdrawInput.md
 doc/YearPendingSummaryDto.md
 doc/YearsApi.md
 doc/YearsDto.md
@@ -168,6 +186,7 @@ lib/src/api/assignments_api.dart
 lib/src/api/classes_api.dart
 lib/src/api/classification_policies_api.dart
 lib/src/api/components_api.dart
+lib/src/api/enrollments_api.dart
 lib/src/api/final_results_api.dart
 lib/src/api/form_templates_api.dart
 lib/src/api/gradebooks_api.dart
@@ -213,6 +232,7 @@ lib/src/model/admin_kpi_dto.dart
 lib/src/model/admin_ocr_accuracy_dto.dart
 lib/src/model/admin_overview_dto.dart
 lib/src/model/admin_recent_activity_dto.dart
+lib/src/model/affected_gradebook_dto.dart
 lib/src/model/analyze_result_dto.dart
 lib/src/model/analyzed_column_dto.dart
 lib/src/model/assignments_dto.dart
@@ -238,6 +258,9 @@ lib/src/model/components_page.dart
 lib/src/model/create_gradebook_input.dart
 lib/src/model/create_timetable_item_input.dart
 lib/src/model/distribution_item_dto.dart
+lib/src/model/enrollment_dto.dart
+lib/src/model/enrollment_list_dto.dart
+lib/src/model/enrollment_result_dto.dart
 lib/src/model/error_dto.dart
 lib/src/model/exempted_student_dto.dart
 lib/src/model/exemption_change_input.dart
@@ -270,6 +293,14 @@ lib/src/model/missing_student_dto.dart
 lib/src/model/missing_students_dto.dart
 lib/src/model/password_input.dart
 lib/src/model/profile_dto.dart
+lib/src/model/promotion_class_dto.dart
+lib/src/model/promotion_input.dart
+lib/src/model/promotion_item_input.dart
+lib/src/model/promotion_preview_dto.dart
+lib/src/model/promotion_preview_item_dto.dart
+lib/src/model/promotion_result_dto.dart
+lib/src/model/promotion_source_class_dto.dart
+lib/src/model/promotion_target_year_dto.dart
 lib/src/model/publish_issue_dto.dart
 lib/src/model/publish_readiness_dto.dart
 lib/src/model/recognition_batch_dto.dart
@@ -281,6 +312,7 @@ lib/src/model/recognition_evidence_row_dto.dart
 lib/src/model/recognition_receipt_dto.dart
 lib/src/model/recognition_ticket_detail_dto.dart
 lib/src/model/recognition_ticket_dto.dart
+lib/src/model/reenroll_input.dart
 lib/src/model/review_approval_input.dart
 lib/src/model/review_approval_result_dto.dart
 lib/src/model/review_decision_input.dart
@@ -300,6 +332,7 @@ lib/src/model/student_approved_component_dto.dart
 lib/src/model/student_result_summary_dto.dart
 lib/src/model/student_results_dto.dart
 lib/src/model/student_subject_result_dto.dart
+lib/src/model/student_year_dto.dart
 lib/src/model/students_dto.dart
 lib/src/model/students_import_input.dart
 lib/src/model/students_import_result.dart
@@ -319,11 +352,14 @@ lib/src/model/template_page_dto.dart
 lib/src/model/template_summary_dto.dart
 lib/src/model/timetable_item_dto.dart
 lib/src/model/timetable_list_dto.dart
+lib/src/model/transfer_input.dart
+lib/src/model/transfer_result_dto.dart
 lib/src/model/try_grade_dto.dart
 lib/src/model/try_result_dto.dart
 lib/src/model/try_row_dto.dart
 lib/src/model/updated_cell_dto.dart
 lib/src/model/versioned_definition_input.dart
+lib/src/model/withdraw_input.dart
 lib/src/model/year_pending_summary_dto.dart
 lib/src/model/years_dto.dart
 lib/src/model/years_input.dart

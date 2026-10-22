@@ -24,6 +24,10 @@ class StudentResultSummaryDto {
 
     required this.className,
 
+    required this.yearId,
+
+    required this.yearName,
+
     required this.averageScore,
 
     required this.publishedSubjects,
@@ -43,6 +47,12 @@ class StudentResultSummaryDto {
 
   @JsonKey(name: r'className', required: true, includeIfNull: false)
   final String className;
+
+  @JsonKey(name: r'yearId', required: true, includeIfNull: true)
+  final num? yearId;
+
+  @JsonKey(name: r'yearName', required: true, includeIfNull: true)
+  final String? yearName;
 
   @JsonKey(name: r'averageScore', required: true, includeIfNull: true)
   final String? averageScore;
@@ -66,6 +76,8 @@ class StudentResultSummaryDto {
           other.termId == termId &&
           other.termName == termName &&
           other.className == className &&
+          other.yearId == yearId &&
+          other.yearName == yearName &&
           other.averageScore == averageScore &&
           other.publishedSubjects == publishedSubjects &&
           other.totalSubjects == totalSubjects &&
@@ -77,6 +89,8 @@ class StudentResultSummaryDto {
       (termId == null ? 0 : termId.hashCode) +
       (termName == null ? 0 : termName.hashCode) +
       className.hashCode +
+      (yearId == null ? 0 : yearId.hashCode) +
+      (yearName == null ? 0 : yearName.hashCode) +
       (averageScore == null ? 0 : averageScore.hashCode) +
       publishedSubjects.hashCode +
       totalSubjects.hashCode +

@@ -115,6 +115,9 @@ class Phase5FakeServer implements HttpClientAdapter {
             'subjectName': 'Toán',
             'termId': 30,
             'termName': 'Học kỳ I',
+            'yearId': 1,
+            'yearName': '2025-2026',
+            'className': '10A1',
             'components': [
               {
                 'componentId': 201,
@@ -129,10 +132,15 @@ class Phase5FakeServer implements HttpClientAdapter {
             'calculatedAt': '2026-09-13T01:00:00.000Z',
           },
         ],
+        'years': [
+          {'id': 1, 'name': '2025-2026', 'className': '10A1'},
+        ],
         'summary': {
           'termId': 30,
           'termName': 'Học kỳ I',
           'className': '10A1',
+          'yearId': 1,
+          'yearName': '2025-2026',
           'averageScore': '6.50',
           'publishedSubjects': 1,
           'totalSubjects': 1,

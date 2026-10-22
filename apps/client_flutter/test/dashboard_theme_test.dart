@@ -34,10 +34,15 @@ class _StudentServer implements HttpClientAdapter {
       status = 200;
       body = {
         'items': <Object>[],
+        'years': <Object>[
+          {'id': 1, 'name': '2025-2026', 'className': '10A1'},
+        ],
         'summary': {
           'termId': 30,
           'termName': 'Học kỳ I',
           'className': '10A1',
+          'yearId': 1,
+          'yearName': '2025-2026',
           'averageScore': '6.50',
           'publishedSubjects': 5,
           'totalSubjects': 6,

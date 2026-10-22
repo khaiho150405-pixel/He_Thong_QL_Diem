@@ -31,6 +31,12 @@ class StudentSubjectResultDto {
 
     required this.termName,
 
+    required this.yearId,
+
+    required this.yearName,
+
+    required this.className,
+
     required this.components,
 
     required this.finalScore,
@@ -58,6 +64,16 @@ class StudentSubjectResultDto {
   @JsonKey(name: r'termName', required: true, includeIfNull: false)
   final String termName;
 
+  @JsonKey(name: r'yearId', required: true, includeIfNull: false)
+  final num yearId;
+
+  @JsonKey(name: r'yearName', required: true, includeIfNull: false)
+  final String yearName;
+
+  /// Lớp của em trong học kỳ này (theo ghi danh)
+  @JsonKey(name: r'className', required: true, includeIfNull: false)
+  final String className;
+
   @JsonKey(name: r'components', required: true, includeIfNull: false)
   final List<StudentApprovedComponentDto> components;
 
@@ -80,6 +96,9 @@ class StudentSubjectResultDto {
           other.subjectName == subjectName &&
           other.termId == termId &&
           other.termName == termName &&
+          other.yearId == yearId &&
+          other.yearName == yearName &&
+          other.className == className &&
           other.components == components &&
           other.finalScore == finalScore &&
           other.classification == classification &&
@@ -93,6 +112,9 @@ class StudentSubjectResultDto {
       subjectName.hashCode +
       termId.hashCode +
       termName.hashCode +
+      yearId.hashCode +
+      yearName.hashCode +
+      className.hashCode +
       components.hashCode +
       (finalScore == null ? 0 : finalScore.hashCode) +
       (classification == null ? 0 : classification.hashCode) +
