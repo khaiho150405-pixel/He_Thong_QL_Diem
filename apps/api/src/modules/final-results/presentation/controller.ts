@@ -205,8 +205,12 @@ export class StudentResultsDto {
       "Mọi năm học em có ghi danh, mới nhất trước; không bị ảnh hưởng bởi yearId",
   })
   years!: StudentYearDto[];
-  @ApiProperty({ type: StudentResultSummaryDto })
-  summary!: StudentResultSummaryDto;
+  @ApiProperty({
+    type: StudentResultSummaryDto,
+    nullable: true,
+    description: "null khi chưa có kết quả nào trong phạm vi đã chọn",
+  })
+  summary!: StudentResultSummaryDto | null;
 }
 
 @ApiTags("final-results")

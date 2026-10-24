@@ -259,7 +259,7 @@ export class PrismaFinalResultStore implements FinalResultStore {
               FROM me CROSS JOIN selected_term st
               LEFT JOIN public.hoc_ky h ON h.ma_hoc_ky=st.term_id
               LEFT JOIN ranked r ON r.ma_hoc_sinh=me.ma_hoc_sinh`;
-            return rows[0]!;
+            return rows[0] ?? null;
           },
         }),
       );

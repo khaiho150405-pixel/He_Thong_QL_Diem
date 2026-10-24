@@ -283,7 +283,7 @@ test("a promoted student stays in last year's gradebook, results and publication
       onlyX.items.map((r) => r.gradebookId),
       [bookX.id],
     );
-    assert.equal(onlyX.summary.className.startsWith("10A"), true);
+    assert.equal(onlyX.summary!.className.startsWith("10A"), true);
     const onlyY = await f.finalResults.myOverview(
       account,
       undefined,
@@ -293,7 +293,18 @@ test("a promoted student stays in last year's gradebook, results and publication
       onlyY.items.map((r) => r.gradebookId),
       [bookY.id],
     );
-    assert.equal(onlyY.summary.className.startsWith("11B"), true);
+    assert.equal(onlyY.summary!.className.startsWith("11B"), true);
+    // Năm chưa có kết quả: 200 với đủ trường, summary = null; không lọc thì như cũ.
+    const w = await f.year("Năm chưa có", "2029-09-01", "2030-06-01");
+    const noResults = await f.finalResults.myOverview(
+      account,
+      undefined,
+      String(w),
+    );
+    assert.deepEqual(noResults.items, []);
+    assert.equal(noResults.summary, null);
+    assert.equal(noResults.years.length, 2);
+    assert.equal(all.items.length, 2);
   } finally {
     await f.done();
   }

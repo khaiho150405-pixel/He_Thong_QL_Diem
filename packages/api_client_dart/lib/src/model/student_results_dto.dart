@@ -35,8 +35,9 @@ class StudentResultsDto {
   @JsonKey(name: r'years', required: true, includeIfNull: false)
   final List<StudentYearDto> years;
 
-  @JsonKey(name: r'summary', required: true, includeIfNull: false)
-  final StudentResultSummaryDto summary;
+  /// null khi chưa có kết quả nào trong phạm vi đã chọn
+  @JsonKey(name: r'summary', required: true, includeIfNull: true)
+  final StudentResultSummaryDto? summary;
 
   @override
   bool operator ==(Object other) =>
@@ -47,7 +48,10 @@ class StudentResultsDto {
           other.summary == summary;
 
   @override
-  int get hashCode => items.hashCode + years.hashCode + summary.hashCode;
+  int get hashCode =>
+      items.hashCode +
+      years.hashCode +
+      (summary == null ? 0 : summary.hashCode);
 
   factory StudentResultsDto.fromJson(Map<String, dynamic> json) =>
       _$StudentResultsDtoFromJson(json);

@@ -668,5 +668,39 @@ void main() {
       await tester.tap(find.text('Hủy'));
       await tester.pumpAndSettle();
     });
+
+    testWidgets('nút Tải lại trên AppScaffold gọi lại API và cập nhật giao diện', (tester) async {
+      final repo = FakeSemesterDeadlinesRepository(
+        semesters: multiYearSemesters,
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
+          sessionProvider.overrideWith((ref) => FakeSessionController(session)),
+          academicYearsProvider.overrideWith((ref) => mockYears),
+        ],
+      );
+      container
+          .read(viewingYearProvider.notifier)
+          .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: SemesterDeadlinesScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final refreshBtn = find.byKey(const ValueKey('semester-deadlines-refresh-btn'));
+      expect(refreshBtn, findsOneWidget);
+      await tester.tap(refreshBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
+    });
   });
 }

@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
 import { test } from "node:test";
 import {
@@ -17,7 +17,7 @@ import { GradebooksService } from "../../src/modules/gradebooks/application/serv
 import { EnrollmentsService } from "../../src/modules/enrollments/application/service.js";
 import { ReportsService } from "../../src/modules/reports/application/service.js";
 
-// Ghi danh há»c sinh theo lá»›p/nÄƒm há»c (migration 202610230001). Dá»¯ liá»‡u giáº£, chá»‰ cháº¡y trÃªn DB *_test.
+// Ghi danh học sinh theo lớp/năm học (migration 202610230001). Dữ liệu giả, chỉ chạy trên DB *_test.
 
 const uniqueKey = (tag: string) => `${tag}-${randomBytes(4).toString("hex")}`;
 
@@ -62,7 +62,7 @@ async function fixture() {
     );
     if (role === "GIAO_VIEN")
       await owner.query(
-        "INSERT INTO giao_vien(ma_giao_vien,ho_ten) VALUES($1,'GiÃ¡o viÃªn giáº£')",
+        "INSERT INTO giao_vien(ma_giao_vien,ho_ten) VALUES($1,'Giáo viên giả')",
         [id],
       );
     return { id, username, role, sessionHash };
@@ -80,7 +80,7 @@ async function fixture() {
     (
       await one(
         "INSERT INTO hoc_ky(ma_nam_hoc,ten,thu_tu,ngay_bat_dau,ngay_ket_thuc) VALUES($1,$5,$4,$2,$3) RETURNING ma_hoc_ky",
-        [yearId, from, to, order, `Ká»³ ${order}`],
+        [yearId, from, to, order, `Kỳ ${order}`],
       )
     ).ma_hoc_ky!;
   const klass = async (yearId: number, name: string, grade = 10) =>
@@ -101,7 +101,7 @@ async function fixture() {
     const id = (
       await one(
         "INSERT INTO mon_hoc(ten_mon,so_tiet_tuan) VALUES($1,2) RETURNING ma_mon",
-        [`MÃ´n ${suffix}`],
+        [`Môn ${suffix}`],
       )
     ).ma_mon!;
     const component = (
@@ -119,7 +119,7 @@ async function fixture() {
     );
     return gradebooks.create(teacher, { classId: cls, subjectId, termId });
   };
-  /** Äiá»n Ä‘iá»ƒm cho má»i Ã´ cÃ²n trá»‘ng, chá»‘t cá»™t báº±ng lá»‹ch Ä‘Ã£ háº¿t háº¡n vÃ  tÃ­nh tá»•ng káº¿t. */
+  /** Điền điểm cho mọi ô còn trống, chốt cột bằng lịch đã hết hạn và tính tổng kết. */
   const finish = async (bookId: number, component: number, value = 6) => {
     await owner.query(
       "UPDATE diem_thanh_phan SET gia_tri=$2,trang_thai='DA_DUYET' WHERE ma_bang_diem=$1 AND trang_thai='CHUA_CO'",
@@ -134,7 +134,7 @@ async function fixture() {
     assert.equal(view.book.status, "DA_CHOT");
     return finalResults.calculate(teacher, bookId, uniqueKey("calc"), {
       expectedVersion: view.book.version,
-      reason: "TÃ­nh káº¿t quáº£ kiá»ƒm thá»­",
+      reason: "Tính kết quả kiểm thử",
     });
   };
   return {
@@ -186,8 +186,8 @@ const failsWith =
 test("end-of-year promotion keeps last year's gradebook, results, report and publication untouched", async () => {
   const f = await fixture();
   try {
-    const x = await f.year("NÄƒm X", "2026-09-01", "2027-06-01");
-    const y = await f.year("NÄƒm Y", "2027-09-01", "2028-06-01");
+    const x = await f.year("Năm X", "2026-09-01", "2027-06-01");
+    const y = await f.year("Năm Y", "2027-09-01", "2028-06-01");
     const termX = await f.term(x, "2026-09-05", "2027-01-10");
     const termY = await f.term(y, "2027-09-05", "2028-01-10");
     const a1 = await f.klass(x, "10A1", 10);
@@ -195,8 +195,8 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
     const target11a2 = await f.klass(y, "11A2", 11);
     const target10a3 = await f.klass(y, "10A3", 10);
     const students: number[] = [];
-    for (const name of ["An", "BÃ¬nh", "ChÃ¢u", "DÅ©ng", "Em"])
-      students.push(await f.student(a1, `Há»c sinh ${name}`));
+    for (const name of ["An", "Bình", "Châu", "Dũng", "Em"])
+      students.push(await f.student(a1, `Học sinh ${name}`));
     const subject = await f.subject();
     const bookX = await f.book(a1, subject.id, termX);
     await f.finish(bookX.id, subject.component, 6);
@@ -219,7 +219,7 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
     };
     assert.equal(before.cells.length, 5);
 
-    // Xem trÆ°á»›c: STT, gá»£i Ã½ lá»›p Ä‘Ã­ch cÃ¹ng háº­u tá»‘ (10A1 â†’ 11A1) vÃ  hÃ nh Ä‘á»™ng.
+    // Xem trước: STT, gợi ý lớp đích cùng hậu tố (10A1 → 11A1) và hành động.
     const preview = await f.enrollments.preview(f.admin, a1, String(y));
     assert.equal(preview.items.length, 5);
     assert.deepEqual(
@@ -232,6 +232,11 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
           i.suggestedAction === "LEN_LOP" &&
           i.suggestedTargetClassId === target11a1 &&
           !i.alreadyEnrolledInTargetYear,
+      ),
+    );
+    assert.ok(
+      preview.items.every(
+        (i) => i.processedStatus === null && i.targetClassName === null,
       ),
     );
     assert.equal(preview.targetClasses.length, 3);
@@ -256,7 +261,7 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
         { studentId: s2, action: "LEN_LOP", targetClassId: target11a2 },
         { studentId: s3, action: "LEN_LOP", targetClassId: target11a2 },
         { studentId: s4, action: "LUU_BAN", targetClassId: target10a3 },
-        { studentId: s5, action: "NGHI_HOC", reason: "Chuyá»ƒn trÆ°á»ng" },
+        { studentId: s5, action: "NGHI_HOC", reason: "Chuyển trường" },
       ],
     };
     const done = await f.enrollments.promote(f.admin, a1, key, body);
@@ -269,7 +274,38 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
     });
     assert.deepEqual(await f.enrollments.promote(f.admin, a1, key, body), done);
 
-    // NÄƒm X khÃ´ng Ä‘á»•i.
+    // Preview sau khi đã xử lý vẫn đủ học sinh, kèm trạng thái xử lý và lớp đích.
+    const again = await f.enrollments.preview(f.admin, a1, String(y));
+    assert.equal(again.items.length, 5);
+    const byStudent = new Map(again.items.map((i) => [i.studentId, i]));
+    const info = (id: number) => {
+      const i = byStudent.get(id)!;
+      return [
+        i.processedStatus,
+        i.targetClassName?.slice(0, 4) ?? null,
+        i.alreadyEnrolledInTargetYear,
+      ];
+    };
+    assert.deepEqual(info(s1), ["LEN_LOP", "11A2", true]);
+    assert.deepEqual(info(s3), ["LEN_LOP", "11A2", true]);
+    assert.deepEqual(info(s4), ["LUU_BAN", "10A3", true]);
+    assert.deepEqual(info(s5), ["NGHI_HOC", null, false]);
+    assert.deepEqual(
+      again.items.map((i) => i.order),
+      [1, 2, 3, 4, 5],
+    );
+    // Em đã xử lý không lên lớp lại được (luật POST giữ nguyên).
+    await assert.rejects(
+      f.enrollments.promote(f.admin, a1, uniqueKey("again"), {
+        targetYearId: y,
+        items: [
+          { studentId: s1, action: "LEN_LOP", targetClassId: target11a2 },
+        ],
+      }),
+      failsWith("ENROLLMENT_NOT_ACTIVE", s1),
+    );
+
+    // Năm X không đổi.
     const after = {
       cells: (await f.gradebooks.cells(f.teacher, bookX.id)).items.map((c) => [
         c.studentId,
@@ -293,7 +329,7 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
       [],
     );
 
-    // Lá»›p Ä‘Ã­ch Ä‘Ãºng há»c sinh; cá»™t lá»›p hiá»‡n táº¡i Ä‘á»•i theo ghi danh.
+    // Lớp đích đúng học sinh; cột lớp hiện tại đổi theo ghi danh.
     const roster = async (cls: number) =>
       (
         await f.owner.query(
@@ -327,7 +363,7 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
       den_ngay: "2027-06-01",
     });
 
-    // Há»c sinh tháº¥y hai nÄƒm.
+    // Học sinh thấy hai năm.
     const bookY = await f.book(target11a2, subject.id, termY);
     await f.finish(bookY.id, subject.component, 9);
     const account = await f.actor("HOC_SINH", "s");
@@ -364,10 +400,25 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
       [bookX.id],
     );
     assert.equal(onlyX.years.length, 2);
-    assert.equal(onlyX.summary.yearId, x);
-    assert.equal(onlyX.summary.className.slice(0, 4), "10A1");
+    assert.equal(onlyX.summary!.yearId, x);
+    // Lọc năm chưa có kết quả: vẫn trả đủ trường, summary = null, years đủ hai năm.
+    const empty = await f.year("Năm trống", "2028-09-01", "2029-06-01");
+    const none = await f.finalResults.myOverview(
+      account,
+      undefined,
+      String(empty),
+    );
+    assert.deepEqual(none.items, []);
+    assert.equal(none.summary, null);
+    assert.equal(none.years.length, 2);
+    assert.deepEqual(Object.keys(JSON.parse(JSON.stringify(none))).sort(), [
+      "items",
+      "summary",
+      "years",
+    ]);
+    assert.equal(onlyX.summary!.className.slice(0, 4), "10A1");
 
-    // Lá»‹ch sá»­ ghi danh: QTV vÃ  giÃ¡o viÃªn chá»§ nhiá»‡m xem Ä‘Æ°á»£c, má»›i nháº¥t trÆ°á»›c.
+    // Lịch sử ghi danh: QTV và giáo viên chủ nhiệm xem được, mới nhất trước.
     const history = (await f.enrollments.list(f.teacher, s1)).items;
     assert.deepEqual(
       history.map((h) => [
@@ -390,9 +441,9 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
 test("promotion batches with any invalid row are rejected as a whole", async () => {
   const f = await fixture();
   try {
-    const x = await f.year("NÄƒm X", "2026-09-01", "2027-06-01");
-    const y = await f.year("NÄƒm Y", "2027-09-01", "2028-06-01");
-    const z = await f.year("NÄƒm Z", "2028-09-01", "2029-06-01");
+    const x = await f.year("Năm X", "2026-09-01", "2027-06-01");
+    const y = await f.year("Năm Y", "2027-09-01", "2028-06-01");
+    const z = await f.year("Năm Z", "2028-09-01", "2029-06-01");
     const src = await f.klass(x, "10B", 10);
     const other = await f.klass(x, "10C", 10);
     const t11 = await f.klass(y, "11B", 11);
@@ -400,18 +451,18 @@ test("promotion batches with any invalid row are rejected as a whole", async () 
     const t12 = await f.klass(y, "12B", 12);
     const wrongYear = await f.klass(z, "11Z", 11);
     const [a, b, c, d] = [
-      await f.student(src, "Há»c sinh a"),
-      await f.student(src, "Há»c sinh b"),
-      await f.student(src, "Há»c sinh c"),
-      await f.student(src, "Há»c sinh d"),
+      await f.student(src, "Học sinh a"),
+      await f.student(src, "Học sinh b"),
+      await f.student(src, "Học sinh c"),
+      await f.student(src, "Học sinh d"),
     ] as [number, number, number, number];
-    const stranger = await f.student(other, "Há»c sinh ngoÃ i lá»›p");
-    // d Ä‘Ã£ cÃ³ ghi danh nÄƒm Ä‘Ã­ch.
+    const stranger = await f.student(other, "Học sinh ngoài lớp");
+    // d đã có ghi danh năm đích.
     await f.owner.query(
       "INSERT INTO hoc_sinh_lop(ma_hoc_sinh,ma_lop,tu_ngay,trang_thai) VALUES($1,$2,'2027-09-01','DANG_HOC')",
       [d, t11],
     );
-    // d vá»«a cÃ³ ghi danh DANG_HOC nÄƒm Y nÃªn "lá»›p hiá»‡n táº¡i" Ä‘Ã£ sang 11B; há»“ sÆ¡ khÃ¡c dÃ¹ng lÃ m nguá»“n lÃªn lá»›p.
+    // d vừa có ghi danh DANG_HOC năm Y nên "lớp hiện tại" đã sang 11B; hồ sơ khác dùng làm nguồn lên lớp.
     const ids = [a, b, c, d, stranger];
     const before = await snapshot(f, ids);
     const good = { studentId: a, action: "LEN_LOP", targetClassId: t11 };
@@ -481,9 +532,9 @@ test("promotion batches with any invalid row are rejected as a whole", async () 
       "ENROLLMENT_NOT_ACTIVE",
       stranger,
     );
-    // Khá»‘i 12 tá»‘t nghiá»‡p Ä‘Æ°á»£c, vÃ  lÃ´ sai Ä‘áº§u vÃ o bá»‹ tá»« chá»‘i á»Ÿ API (400).
+    // Khối 12 tốt nghiệp được, và lô sai đầu vào bị từ chối ở API (400).
     const senior = await f.klass(x, "12B", 12);
-    const grad = await f.student(senior, "Há»c sinh cuá»‘i cáº¥p");
+    const grad = await f.student(senior, "Học sinh cuối cấp");
     const graduated = await f.enrollments.promote(
       f.admin,
       senior,
@@ -517,17 +568,17 @@ test("promotion batches with any invalid row are rejected as a whole", async () 
 test("mid-year transfer keeps the old class's grades and blocks invalid moves", async () => {
   const f = await fixture();
   try {
-    const x = await f.year("NÄƒm chuyá»ƒn", "2026-09-01", "2027-06-01");
-    const z = await f.year("NÄƒm khÃ¡c", "2027-09-01", "2028-06-01");
+    const x = await f.year("Năm chuyển", "2026-09-01", "2027-06-01");
+    const z = await f.year("Năm khác", "2027-09-01", "2028-06-01");
     const term1 = await f.term(x, "2026-09-05", "2027-01-10", 1);
     const term2 = await f.term(x, "2027-01-15", "2027-05-31", 2);
     const c1 = await f.klass(x, "10C1", 10);
     const c2 = await f.klass(x, "10C2", 10);
     const c3 = await f.klass(x, "11C3", 11);
     const other = await f.klass(z, "10Z", 10);
-    const stay = await f.student(c1, "Há»c sinh á»Ÿ láº¡i");
-    const mover = await f.student(c1, "Há»c sinh chuyá»ƒn");
-    await f.student(c2, "Há»c sinh lá»›p má»›i");
+    const stay = await f.student(c1, "Học sinh ở lại");
+    const mover = await f.student(c1, "Học sinh chuyển");
+    await f.student(c2, "Học sinh lớp mới");
     const subject = await f.subject();
     const book1 = await f.book(c1, subject.id, term1);
     const book2 = await f.book(c1, subject.id, term2);
@@ -546,7 +597,7 @@ test("mid-year transfer keeps the old class's grades and blocks invalid moves", 
       target: number,
       date: string,
       k = uniqueKey("t"),
-      reason = "Chuyá»ƒn lá»›p",
+      reason = "Chuyển lớp",
     ) =>
       f.enrollments.transfer(f.admin, mover, k, {
         targetClassId: target,
@@ -577,7 +628,7 @@ test("mid-year transfer keeps the old class's grades and blocks invalid moves", 
       );
     assert.deepEqual(await snapshot(f, [mover]), before);
 
-    // XÃ³a Ä‘iá»ƒm há»c ká»³ sau (cá»™t chÆ°a chá»‘t) â†’ chuyá»ƒn Ä‘Æ°á»£c; lá»›p má»›i cÃ³ báº£ng Ä‘iá»ƒm nhÆ°ng khÃ´ng tá»± táº¡o Ã´.
+    // Xóa điểm học kỳ sau (cột chưa chốt) → chuyển được; lớp mới có bảng điểm nhưng không tự tạo ô.
     await f.owner.query(
       "UPDATE diem_thanh_phan SET gia_tri=NULL,trang_thai='CHUA_CO' WHERE ma_diem=$1",
       [moverCell],
@@ -607,7 +658,7 @@ test("mid-year transfer keeps the old class's grades and blocks invalid moves", 
       [mover],
     );
 
-    // Lá»›p cÅ©: em khÃ´ng cÃ²n tÃ­nh â€” khÃ´ng bá»‹ ghi 0 khi háº¿t háº¡n, khÃ´ng bá»‹ Ä‘Ã²i káº¿t quáº£.
+    // Lớp cũ: em không còn tính — không bị ghi 0 khi hết hạn, không bị đòi kết quả.
     const view = await f.gradebooks.cells(f.teacher, book1.id);
     assert.equal(view.items.find((c) => c.studentId === mover)!.active, false);
     await f.owner.query(
@@ -627,7 +678,7 @@ test("mid-year transfer keeps the old class's grades and blocks invalid moves", 
       uniqueKey("c"),
       {
         expectedVersion: locked.book.version,
-        reason: "TÃ­nh káº¿t quáº£",
+        reason: "Tính kết quả",
       },
     );
     assert.deepEqual(
@@ -645,10 +696,10 @@ test("mid-year transfer keeps the old class's grades and blocks invalid moves", 
 test("withdraw then reenroll: same class reopens the old enrollment, another class creates a new one", async () => {
   const f = await fixture();
   try {
-    const x = await f.year("NÄƒm nghá»‰", "2026-09-01", "2027-06-01");
+    const x = await f.year("Năm nghỉ", "2026-09-01", "2027-06-01");
     const c1 = await f.klass(x, "10D1", 10);
     const c2 = await f.klass(x, "10D2", 10);
-    const s = await f.student(c1, "Há»c sinh nghá»‰ há»c");
+    const s = await f.student(c1, "Học sinh nghỉ học");
     const account = await f.actor("HOC_SINH", "s");
     await f.owner.query(
       "UPDATE hoc_sinh SET ma_nguoi_dung=$1 WHERE ma_hoc_sinh=$2",
@@ -656,10 +707,10 @@ test("withdraw then reenroll: same class reopens the old enrollment, another cla
     );
     const withdraw = (
       date: string,
-      reason = "á»m dÃ i ngÃ y",
+      reason = "Ốm dài ngày",
       k = uniqueKey("w"),
     ) => f.enrollments.withdraw(f.admin, s, k, { effectiveDate: date, reason });
-    const reenroll = (cls: number, date: string, reason = "Quay láº¡i há»c") =>
+    const reenroll = (cls: number, date: string, reason = "Quay lại học") =>
       f.enrollments.reenroll(f.admin, s, uniqueKey("r"), {
         classId: cls,
         effectiveDate: date,
@@ -699,7 +750,7 @@ test("withdraw then reenroll: same class reopens the old enrollment, another cla
     assert.equal(back.enrollment.id, out.enrollment.id);
     assert.equal(back.enrollment.status, "DANG_HOC");
     assert.equal(back.enrollment.toDate, null);
-    assert.equal(back.enrollment.reason, "Quay láº¡i há»c");
+    assert.equal(back.enrollment.reason, "Quay lại học");
     assert.equal((await f.enrollments.list(f.admin, s)).items.length, 1);
     const audit = await f.owner.query(
       "SELECT doi_tuong FROM nhat_ky_bao_mat WHERE hanh_dong='ENROLLMENT_REOPENED' AND doi_tuong LIKE $1",
@@ -708,8 +759,8 @@ test("withdraw then reenroll: same class reopens the old enrollment, another cla
     assert.equal(audit.rowCount, 1);
     assert.match(audit.rows[0].doi_tuong, /nghi=2026-10-31/);
 
-    await withdraw("2027-01-05", "Nghá»‰ láº§n hai");
-    const other = await reenroll(c2, "2027-02-01", "Há»c lá»›p khÃ¡c");
+    await withdraw("2027-01-05", "Nghỉ lần hai");
+    const other = await reenroll(c2, "2027-02-01", "Học lớp khác");
     assert.notEqual(other.enrollment.id, out.enrollment.id);
     assert.equal(other.enrollment.className.slice(0, 5), "10D2 ");
     assert.equal(other.enrollment.fromDate, "2027-02-01");
@@ -731,12 +782,12 @@ test("withdraw then reenroll: same class reopens the old enrollment, another cla
 test("only admins run enrollment actions; history is visible to related teachers; keys are idempotent", async () => {
   const f = await fixture();
   try {
-    const x = await f.year("NÄƒm quyá»n", "2026-09-01", "2027-06-01");
-    const y = await f.year("NÄƒm sau", "2027-09-01", "2028-06-01");
+    const x = await f.year("Năm quyền", "2026-09-01", "2027-06-01");
+    const y = await f.year("Năm sau", "2027-09-01", "2028-06-01");
     const c1 = await f.klass(x, "10E1", 10);
     const c2 = await f.klass(x, "10E2", 10);
     const t11 = await f.klass(y, "11E1", 11);
-    const s = await f.student(c1, "Há»c sinh quyá»n");
+    const s = await f.student(c1, "Học sinh quyền");
     const stranger = await f.actor("GIAO_VIEN", "u");
     const student = await f.actor("HOC_SINH", "h");
     for (const who of [f.teacher, student]) {
@@ -775,7 +826,7 @@ test("only admins run enrollment actions; history is visible to related teachers
         ForbiddenException,
       );
     }
-    // SQL cÅ©ng tá»« chá»‘i khi gá»i tháº³ng vá»›i phiÃªn giÃ¡o viÃªn (kiá»ƒm quyá»n á»Ÿ cáº£ hai táº§ng).
+    // SQL cũng từ chối khi gọi thẳng với phiên giáo viên (kiểm quyền ở cả hai tầng).
     const client = await f.runtimePool.connect();
     try {
       await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
@@ -792,28 +843,28 @@ test("only admins run enrollment actions; history is visible to related teachers
     }
     assert.equal((await snapshot(f, [s])).length, 1);
 
-    // Lá»‹ch sá»­: QTV vÃ  giÃ¡o viÃªn chá»§ nhiá»‡m xem Ä‘Æ°á»£c; giÃ¡o viÃªn khÃ´ng liÃªn quan vÃ  há»c sinh thÃ¬ khÃ´ng.
+    // Lịch sử: QTV và giáo viên chủ nhiệm xem được; giáo viên không liên quan và học sinh thì không.
     assert.equal((await f.enrollments.list(f.admin, s)).items.length, 1);
     assert.equal((await f.enrollments.list(f.teacher, s)).items.length, 1);
     await assert.rejects(f.enrollments.list(stranger, s), ForbiddenException);
     await assert.rejects(f.enrollments.list(student, s), ForbiddenException);
 
-    // Idempotency: cÃ¹ng khÃ³a + cÃ¹ng ná»™i dung â†’ cÃ¹ng káº¿t quáº£ (khÃ´ng táº¡o thÃªm); cÃ¹ng khÃ³a, ná»™i dung khÃ¡c â†’ lá»—i.
+    // Idempotency: cùng khóa + cùng nội dung → cùng kết quả (không tạo thêm); cùng khóa, nội dung khác → lỗi.
     const key = uniqueKey("w");
     const first = await f.enrollments.withdraw(f.admin, s, key, {
       effectiveDate: "2026-11-01",
-      reason: "á»m",
+      reason: "Ốm",
     });
     const again = await f.enrollments.withdraw(f.admin, s, key, {
       effectiveDate: "2026-11-01",
-      reason: "á»m",
+      reason: "Ốm",
     });
     assert.deepEqual(again, first);
     assert.equal((await f.enrollments.list(f.admin, s)).items.length, 1);
     await assert.rejects(
       f.enrollments.withdraw(f.admin, s, key, {
         effectiveDate: "2026-11-01",
-        reason: "LÃ½ do khÃ¡c",
+        reason: "Lý do khác",
       }),
       ConflictException,
     );

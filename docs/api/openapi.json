@@ -10858,7 +10858,24 @@
             "nullable": true,
             "description": "Lớp khối +1 cùng hậu tố (10A1 → 11A1); null nếu không có"
           },
-          "alreadyEnrolledInTargetYear": { "type": "boolean" }
+          "alreadyEnrolledInTargetYear": { "type": "boolean" },
+          "processedStatus": {
+            "type": "string",
+            "enum": [
+              "LEN_LOP",
+              "LUU_BAN",
+              "TOT_NGHIEP",
+              "NGHI_HOC",
+              "DA_CHUYEN_LOP"
+            ],
+            "nullable": true,
+            "description": "Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)"
+          },
+          "targetClassName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Lớp ghi danh của em ở năm đích (nếu có)"
+          }
         },
         "required": [
           "studentId",
@@ -10866,7 +10883,9 @@
           "order",
           "suggestedAction",
           "suggestedTargetClassId",
-          "alreadyEnrolledInTargetYear"
+          "alreadyEnrolledInTargetYear",
+          "processedStatus",
+          "targetClassName"
         ]
       },
       "PromotionPreviewDto": {
@@ -11377,7 +11396,14 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/StudentYearDto" }
           },
-          "summary": { "$ref": "#/components/schemas/StudentResultSummaryDto" }
+          "summary": {
+            "nullable": true,
+            "description": "null khi chưa có kết quả nào trong phạm vi đã chọn",
+            "type": "object",
+            "allOf": [
+              { "$ref": "#/components/schemas/StudentResultSummaryDto" }
+            ]
+          }
         },
         "required": ["items", "years", "summary"]
       },

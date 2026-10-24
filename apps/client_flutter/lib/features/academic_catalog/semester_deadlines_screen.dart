@@ -99,6 +99,17 @@ class _SemesterDeadlinesScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.invalidate(academicYearsProvider);
+    });
+    final viewingYear = ref.read(viewingYearProvider);
+    final years = ref.read(academicYearsProvider).valueOrNull ?? const [];
+    final effectiveYearId = _resolveEffectiveYearId(viewingYear, years);
+    _loadSemesters(yearId: effectiveYearId);
+  }
+
+  void _refresh() {
+    ref.invalidate(academicYearsProvider);
     final viewingYear = ref.read(viewingYearProvider);
     final years = ref.read(academicYearsProvider).valueOrNull ?? const [];
     final effectiveYearId = _resolveEffectiveYearId(viewingYear, years);
@@ -311,6 +322,14 @@ class _SemesterDeadlinesScreenState
     return AppScaffold(
       title: 'Lịch nhập điểm học kỳ',
       currentPath: '/admin/semester-deadlines',
+      actions: [
+        IconButton(
+          key: const ValueKey('semester-deadlines-refresh-btn'),
+          tooltip: 'Tải lại',
+          icon: const Icon(Icons.refresh),
+          onPressed: _refresh,
+        ),
+      ],
       body: FutureBuilder<List<SemestersDto>>(
         future: _semestersFuture,
         builder: (context, semSnapshot) {
@@ -375,11 +394,10 @@ class _SemesterDeadlinesScreenState
                           width: 200,
                           allowAll: false,
                           onChanged: () {
+                            ref.invalidate(academicYearsProvider);
                             final cur = ref.read(viewingYearProvider);
                             final effId = _resolveEffectiveYearId(cur, years);
-                            if (effId != _lastLoadedYearId) {
-                              _onViewingYearChanged(effId);
-                            }
+                            _onViewingYearChanged(effId);
                           },
                         ),
                         SizedBox(
@@ -409,8 +427,7 @@ class _SemesterDeadlinesScreenState
                             onChanged: semesters.isEmpty
                                 ? null
                                 : (val) {
-                                    if (val != null &&
-                                        val != _selectedSemesterId) {
+                                    if (val != null) {
                                       setState(() {
                                         _selectedSemesterId = val;
                                         _loadDeadlines();

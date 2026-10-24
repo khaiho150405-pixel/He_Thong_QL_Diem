@@ -1,4 +1,5 @@
 import 'package:api_client_dart/api_client_dart.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/design_tokens.dart';
@@ -85,6 +86,36 @@ String overallClassificationCodeOf(double gpa) => gpa >= 8.0
     : gpa >= 6.5
     ? 'KHA'
     : 'DAT';
+
+String _formatErrorMessage(Object error) {
+  if (error is DioException) {
+    if (error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return 'Không thể kết nối dịch vụ. Vui lòng thử lại.';
+    }
+    final responseData = error.response?.data;
+    if (responseData is Map<String, dynamic> &&
+        responseData['message'] is String &&
+        (responseData['message'] as String).isNotEmpty) {
+      return responseData['message'] as String;
+    }
+    final statusCode = error.response?.statusCode;
+    return switch (statusCode) {
+      400 => 'Thông tin yêu cầu chưa hợp lệ. Vui lòng thử lại.',
+      401 => 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.',
+      403 => 'Bạn không có quyền xem thông tin này.',
+      404 => 'Không tìm thấy dữ liệu kết quả học tập.',
+      409 => 'Dữ liệu vừa thay đổi. Vui lòng tải lại trang.',
+      429 => 'Bạn thử quá nhiều lần. Vui lòng chờ một phút.',
+      _ when statusCode != null && statusCode >= 500 =>
+        'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.',
+      _ => 'Lỗi tải dữ liệu. Vui lòng thử lại.',
+    };
+  }
+  return 'Lỗi tải dữ liệu. Vui lòng thử lại.';
+}
 
 class StudentResultsScreen extends ConsumerStatefulWidget {
   const StudentResultsScreen({super.key});
@@ -224,7 +255,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                     EmptyState(
                       icon: Icons.error_outline,
                       title: 'Lỗi tải kết quả',
-                      message: errorMessage(snapshot.error!),
+                      message: _formatErrorMessage(snapshot.error!),
                       actionLabel: 'Thử lại',
                       onAction: () => setState(() => reload(_selectedYearId)),
                     ),
@@ -233,7 +264,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
               }
               final items = snapshot.data!.items;
               final summary = snapshot.data!.summary;
-              if (items.isEmpty) {
+              if (items.isEmpty || summary == null) {
                 return ListView(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.pageCompact,
@@ -244,8 +275,8 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                     const SizedBox(height: AppSpacing.xl),
                     const EmptyState(
                       icon: Icons.fact_check_outlined,
-                      title: 'Chưa có điểm',
-                      message: 'Bạn chưa có điểm đã duyệt.',
+                      title: 'Chưa có kết quả',
+                      message: 'Năm học này chưa có kết quả được công bố',
                     ),
                   ],
                 );

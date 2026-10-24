@@ -29,6 +29,10 @@ class PromotionPreviewItemDto {
     required this.suggestedTargetClassId,
 
     required this.alreadyEnrolledInTargetYear,
+
+    required this.processedStatus,
+
+    required this.targetClassName,
   });
 
   @JsonKey(name: r'studentId', required: true, includeIfNull: false)
@@ -55,6 +59,14 @@ class PromotionPreviewItemDto {
   )
   final bool alreadyEnrolledInTargetYear;
 
+  /// Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)
+  @JsonKey(name: r'processedStatus', required: true, includeIfNull: true)
+  final PromotionPreviewItemDtoProcessedStatusEnum? processedStatus;
+
+  /// Lớp ghi danh của em ở năm đích (nếu có)
+  @JsonKey(name: r'targetClassName', required: true, includeIfNull: true)
+  final String? targetClassName;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -64,7 +76,9 @@ class PromotionPreviewItemDto {
           other.order == order &&
           other.suggestedAction == suggestedAction &&
           other.suggestedTargetClassId == suggestedTargetClassId &&
-          other.alreadyEnrolledInTargetYear == alreadyEnrolledInTargetYear;
+          other.alreadyEnrolledInTargetYear == alreadyEnrolledInTargetYear &&
+          other.processedStatus == processedStatus &&
+          other.targetClassName == targetClassName;
 
   @override
   int get hashCode =>
@@ -73,7 +87,9 @@ class PromotionPreviewItemDto {
       order.hashCode +
       suggestedAction.hashCode +
       (suggestedTargetClassId == null ? 0 : suggestedTargetClassId.hashCode) +
-      alreadyEnrolledInTargetYear.hashCode;
+      alreadyEnrolledInTargetYear.hashCode +
+      (processedStatus == null ? 0 : processedStatus.hashCode) +
+      (targetClassName == null ? 0 : targetClassName.hashCode);
 
   factory PromotionPreviewItemDto.fromJson(Map<String, dynamic> json) =>
       _$PromotionPreviewItemDtoFromJson(json);
@@ -93,6 +109,36 @@ enum PromotionPreviewItemDtoSuggestedActionEnum {
   TOT_NGHIEP(r'TOT_NGHIEP');
 
   const PromotionPreviewItemDtoSuggestedActionEnum(this.value);
+
+  final String value;
+
+  @override
+  String toString() => value;
+}
+
+/// Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)
+enum PromotionPreviewItemDtoProcessedStatusEnum {
+  /// Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)
+  @JsonValue(r'LEN_LOP')
+  LEN_LOP(r'LEN_LOP'),
+
+  /// Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)
+  @JsonValue(r'LUU_BAN')
+  LUU_BAN(r'LUU_BAN'),
+
+  /// Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)
+  @JsonValue(r'TOT_NGHIEP')
+  TOT_NGHIEP(r'TOT_NGHIEP'),
+
+  /// Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)
+  @JsonValue(r'NGHI_HOC')
+  NGHI_HOC(r'NGHI_HOC'),
+
+  /// Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)
+  @JsonValue(r'DA_CHUYEN_LOP')
+  DA_CHUYEN_LOP(r'DA_CHUYEN_LOP');
+
+  const PromotionPreviewItemDtoProcessedStatusEnum(this.value);
 
   final String value;
 

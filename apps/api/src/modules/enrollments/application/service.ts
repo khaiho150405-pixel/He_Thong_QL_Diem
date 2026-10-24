@@ -139,6 +139,8 @@ export class EnrollmentsService {
             suggestedAction: graduating ? "TOT_NGHIEP" : "LEN_LOP",
             suggestedTargetClassId: suggested,
             alreadyEnrolledInTargetYear: s.enrolledInTargetYear,
+            processedStatus: s.processedStatus,
+            targetClassName: s.targetClassName,
           }))
           .sort((a, b) => a.order - b.order),
       };

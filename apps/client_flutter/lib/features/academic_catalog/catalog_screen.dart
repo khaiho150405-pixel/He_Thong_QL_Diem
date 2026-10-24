@@ -273,7 +273,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   }
 
   void reload() {
-    page = _loadPage();
+    setState(() {
+      page = _loadPage();
+    });
   }
 
   Future<CatalogPageData> _loadPage() async {
@@ -1737,8 +1739,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints.tightFor(width: 40, height: 40),
           icon: Icon(Icons.school_outlined, size: 20, color: t.priLink),
-          onPressed: () =>
-              context.go('/admin/classes/${row['ma_lop']}/promotion'),
+          onPressed: () async {
+            await context.push('/admin/classes/${row['ma_lop']}/promotion');
+            if (mounted) reload();
+          },
         ),
       if (admin && !['accounts', 'students'].contains(spec.key))
         IconButton(
@@ -2208,8 +2212,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 key: ValueKey('class-promotion-${row['ma_lop']}'),
                 tooltip: 'Lên lớp cuối năm',
                 icon: Icon(Icons.school_outlined, size: 20, color: t.priLink),
-                onPressed: () =>
-                    context.go('/admin/classes/${row['ma_lop']}/promotion'),
+                onPressed: () async {
+                  await context.push('/admin/classes/${row['ma_lop']}/promotion');
+                  if (mounted) reload();
+                },
               ),
             if (admin && spec.key == 'students')
               _buildStudentMenu(t, row),

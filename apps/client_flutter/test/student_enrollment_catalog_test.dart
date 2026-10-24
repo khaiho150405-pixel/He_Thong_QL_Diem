@@ -10,6 +10,7 @@ import 'package:client_flutter/features/academic_catalog/fields.dart';
 import 'package:client_flutter/features/academic_catalog/promotion_screen.dart';
 import 'package:client_flutter/features/academic_catalog/semester_deadlines_repository.dart';
 import 'package:client_flutter/features/academic_catalog/student_enrollment_dialogs.dart';
+import 'package:client_flutter/features/authentication/presentation/widgets/home_dashboard_content.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:client_flutter/features/final_results/student_results_screen.dart';
 import 'package:client_flutter/features/gradebooks/gradebook_screen.dart';
@@ -29,6 +30,10 @@ class FakeSessionController extends StateNotifier<SessionDto?>
 class _FakeEnrollmentServer implements HttpClientAdapter {
   final List<RequestOptions> requests = [];
   bool shouldFailPromotion = false;
+  bool studentResultsNullSummary = false;
+  bool studentResultsNetworkError = false;
+  bool studentResultsServerError = false;
+  List<Map<String, dynamic>>? customPromotionPreviewItems;
 
   final years = [
     {
@@ -112,7 +117,7 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
           {'id': 202, 'name': '11A2', 'grade': 11},
           {'id': 102, 'name': '10A2', 'grade': 10},
         ],
-        'items': [
+        'items': customPromotionPreviewItems ?? [
           {
             'studentId': 1,
             'studentName': 'Nguyễn Văn A',
@@ -120,6 +125,8 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
             'suggestedAction': 'LEN_LOP',
             'suggestedTargetClassId': 201,
             'alreadyEnrolledInTargetYear': false,
+            'processedStatus': null,
+            'targetClassName': null,
           },
           {
             'studentId': 2,
@@ -128,6 +135,8 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
             'suggestedAction': 'LEN_LOP',
             'suggestedTargetClassId': 201,
             'alreadyEnrolledInTargetYear': true,
+            'processedStatus': null,
+            'targetClassName': null,
           },
         ],
       };
@@ -262,9 +271,29 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
         ],
       };
     } else if (path.endsWith('/students/me/results')) {
-      final yearId = options.queryParameters['yearId']?.toString();
-      body = {
-        'items': [
+      if (studentResultsNetworkError) {
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.connectionTimeout,
+          error: 'Connection timeout',
+        );
+      }
+      if (studentResultsServerError) {
+        status = 500;
+        body = {};
+      } else if (studentResultsNullSummary) {
+        body = {
+          'items': <Object>[],
+          'years': [
+            {'id': 1, 'name': '2025-2026', 'className': '10A1'},
+            {'id': 2, 'name': '2024-2025', 'className': '10A1'},
+          ],
+          'summary': null,
+        };
+      } else {
+        final yearId = options.queryParameters['yearId']?.toString();
+        body = {
+          'items': [
           {
             'gradebookId': 1,
             'subjectId': 10,
@@ -305,6 +334,7 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
           'classSize': 35,
         },
       };
+      }
     } else if (path.endsWith('/cells')) {
       body = {
         'book': {
@@ -933,6 +963,270 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('2025-2026 · Lớp 10A1'), findsWidgets);
         expect(find.text('2024-2025 · Lớp 10A1'), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      'Màn Điểm của tôi: khi summary null hiển thị trạng thái trống và giữ bộ chọn năm',
+      (tester) async {
+        final server = _FakeEnrollmentServer()..studentResultsNullSummary = true;
+        final client = _createClient(server);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: const StudentResultsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Chưa có kết quả'), findsOneWidget);
+        expect(find.text('Năm học này chưa có kết quả được công bố'), findsOneWidget);
+        expect(find.byKey(const ValueKey('student-results-year-select')), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Màn Điểm của tôi: lỗi mạng hiện Không thể kết nối dịch vụ',
+      (tester) async {
+        final serverTimeout = _FakeEnrollmentServer()..studentResultsNetworkError = true;
+        final clientTimeout = _createClient(serverTimeout);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(clientTimeout),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: const StudentResultsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Không thể kết nối dịch vụ. Vui lòng thử lại.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Màn Điểm của tôi: lỗi 500 hiện thông điệp máy chủ',
+      (tester) async {
+        final server500 = _FakeEnrollmentServer()..studentResultsServerError = true;
+        final client500 = _createClient(server500);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client500),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: const StudentResultsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Dashboard học sinh: hiển thị trạng thái trống khi summary null không lỗi',
+      (tester) async {
+        final server = _FakeEnrollmentServer()..studentResultsNullSummary = true;
+        final client = _createClient(server);
+
+        final user = SessionDto(
+          id: 1,
+          username: '0912345678',
+          role: SessionDtoRoleEnum.HOC_SINH,
+          active: true,
+          token: 'token',
+          csrf: 'csrf',
+        );
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: Scaffold(
+                body: HomeDashboardContent(
+                  user: user,
+                  role: 'HOC_SINH',
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Chưa có kết quả'), findsOneWidget);
+        expect(find.text('Năm học này chưa có kết quả được công bố'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'PromotionScreen: dòng đã xử lý hiển thị nhãn trạng thái và không gửi lên API',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        server.customPromotionPreviewItems = [
+          {
+            'studentId': 1,
+            'studentName': 'Em Đã Lên Lớp',
+            'order': 1,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': 201,
+            'alreadyEnrolledInTargetYear': false,
+            'processedStatus': 'LEN_LOP',
+            'targetClassName': '11A1',
+          },
+          {
+            'studentId': 2,
+            'studentName': 'Em Đã Lưu Ban',
+            'order': 2,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': 201,
+            'alreadyEnrolledInTargetYear': false,
+            'processedStatus': 'LUU_BAN',
+            'targetClassName': '10A1',
+          },
+          {
+            'studentId': 3,
+            'studentName': 'Em Đã Tốt Nghiệp',
+            'order': 3,
+            'suggestedAction': 'TOT_NGHIEP',
+            'suggestedTargetClassId': null,
+            'alreadyEnrolledInTargetYear': false,
+            'processedStatus': 'TOT_NGHIEP',
+            'targetClassName': null,
+          },
+          {
+            'studentId': 4,
+            'studentName': 'Em Đã Nghỉ Học',
+            'order': 4,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': null,
+            'alreadyEnrolledInTargetYear': false,
+            'processedStatus': 'NGHI_HOC',
+            'targetClassName': null,
+          },
+          {
+            'studentId': 5,
+            'studentName': 'Em Đã Chuyển Lớp',
+            'order': 5,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': null,
+            'alreadyEnrolledInTargetYear': false,
+            'processedStatus': 'DA_CHUYEN_LOP',
+            'targetClassName': null,
+          },
+          {
+            'studentId': 6,
+            'studentName': 'Em Chưa Xử Lý',
+            'order': 6,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': 201,
+            'alreadyEnrolledInTargetYear': false,
+            'processedStatus': null,
+            'targetClassName': null,
+          },
+        ];
+        final client = _createClient(server);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: const PromotionScreen(classId: 101),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Target year select
+        await tester.tap(find.byKey(const ValueKey('promotion-target-year-select')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('2026-2027').last);
+        await tester.pumpAndSettle();
+
+        // Verify badges
+        expect(find.text('Đã lên lớp → 11A1'), findsOneWidget);
+        expect(find.text('Đã lưu ban → 10A1'), findsOneWidget);
+        expect(find.text('Đã tốt nghiệp'), findsOneWidget);
+        expect(find.text('Đã nghỉ học'), findsOneWidget);
+        expect(find.text('Đã chuyển lớp'), findsOneWidget);
+
+        // Disabled dropdowns on processed rows
+        expect(find.byKey(const ValueKey('promotion-action-1')), findsNothing);
+        expect(find.byKey(const ValueKey('promotion-action-6')), findsOneWidget);
+
+        // Active count only counts unhandled row (studentId 6)
+        expect(find.text('Số học sinh sẽ thực hiện: 1'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'PromotionScreen: mọi dòng đã xử lý hiện thông báo và khóa nút Thực hiện',
+      (tester) async {
+        final server = _FakeEnrollmentServer();
+        server.customPromotionPreviewItems = [
+          {
+            'studentId': 1,
+            'studentName': 'Em Đã Lên Lớp',
+            'order': 1,
+            'suggestedAction': 'LEN_LOP',
+            'suggestedTargetClassId': 201,
+            'alreadyEnrolledInTargetYear': false,
+            'processedStatus': 'LEN_LOP',
+            'targetClassName': '11A1',
+          },
+        ];
+        final client = _createClient(server);
+
+        await tester.pumpWidget(
+          ProviderContainerWidget(
+            overrides: [
+              apiProvider.overrideWithValue(client),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(extensions: [AppTokens.light]),
+              home: const PromotionScreen(classId: 101),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Target year select
+        await tester.tap(find.byKey(const ValueKey('promotion-target-year-select')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('2026-2027').last);
+        await tester.pumpAndSettle();
+
+        // Check banner
+        expect(
+          find.text('Tất cả học sinh của lớp đã được xử lý cho năm 2026-2027'),
+          findsOneWidget,
+        );
+
+        // Check submit button is disabled
+        final submitBtn = tester.widget<FilledButton>(
+          find.byKey(const ValueKey('promotion-submit-btn')),
+        );
+        expect(submitBtn.onPressed, isNull);
+        expect(find.text('Số học sinh sẽ thực hiện: 0'), findsOneWidget);
       },
     );
   });

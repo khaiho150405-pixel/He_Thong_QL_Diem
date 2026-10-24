@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/design_tokens.dart';
+import '../../../../app/widgets/empty_state.dart';
 import '../../../../app/widgets/role_badge.dart';
 import '../../../../app/widgets/stat_card.dart';
 import '../../../academic_catalog/fields.dart';
@@ -81,7 +82,7 @@ class HomeDashboardContent extends ConsumerWidget {
   ) {
     final average = summary.averageScore == null
         ? '—'
-        : double.parse(summary.averageScore!).toStringAsFixed(1);
+        : double.tryParse(summary.averageScore ?? '')?.toStringAsFixed(1) ?? '—';
     final rank = summary.classRank == null ? '—' : '${summary.classRank}';
     return StatCardGrid(
       children: [
@@ -326,7 +327,15 @@ class HomeDashboardContent extends ConsumerWidget {
                   style: TextStyle(color: t.bad),
                 );
               }
-              return _buildStudentStatistics(context, snapshot.data!.summary);
+              final summary = snapshot.data?.summary;
+              if (summary == null) {
+                return const EmptyState(
+                  icon: Icons.fact_check_outlined,
+                  title: 'Chưa có kết quả',
+                  message: 'Năm học này chưa có kết quả được công bố',
+                );
+              }
+              return _buildStudentStatistics(context, summary);
             },
           ),
 

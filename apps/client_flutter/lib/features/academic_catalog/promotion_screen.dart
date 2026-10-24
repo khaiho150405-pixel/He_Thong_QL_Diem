@@ -20,6 +20,8 @@ class _PromotionRowState {
     required this.action,
     required this.targetClassId,
     required this.alreadyEnrolled,
+    required this.processedStatus,
+    required this.targetClassName,
   });
 
   final num studentId;
@@ -29,6 +31,28 @@ class _PromotionRowState {
   num? targetClassId;
   String? reason;
   final bool alreadyEnrolled;
+  final PromotionPreviewItemDtoProcessedStatusEnum? processedStatus;
+  final String? targetClassName;
+
+  bool get isProcessed => processedStatus != null;
+  bool get isActionable => !isProcessed && !alreadyEnrolled;
+
+  String? get processedLabel {
+    if (processedStatus == null) return null;
+    return switch (processedStatus!) {
+      PromotionPreviewItemDtoProcessedStatusEnum.LEN_LOP =>
+        targetClassName != null && targetClassName!.isNotEmpty
+            ? 'Đã lên lớp → $targetClassName'
+            : 'Đã lên lớp',
+      PromotionPreviewItemDtoProcessedStatusEnum.LUU_BAN =>
+        targetClassName != null && targetClassName!.isNotEmpty
+            ? 'Đã lưu ban → $targetClassName'
+            : 'Đã lưu ban',
+      PromotionPreviewItemDtoProcessedStatusEnum.TOT_NGHIEP => 'Đã tốt nghiệp',
+      PromotionPreviewItemDtoProcessedStatusEnum.NGHI_HOC => 'Đã nghỉ học',
+      PromotionPreviewItemDtoProcessedStatusEnum.DA_CHUYEN_LOP => 'Đã chuyển lớp',
+    };
+  }
 }
 
 class PromotionScreen extends ConsumerStatefulWidget {
@@ -125,6 +149,8 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
           action: action,
           targetClassId: item.suggestedTargetClassId,
           alreadyEnrolled: item.alreadyEnrolledInTargetYear,
+          processedStatus: item.processedStatus,
+          targetClassName: item.targetClassName,
         );
       }).toList();
 
@@ -191,7 +217,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
     if (_quickApplyClassId == null) return;
     setState(() {
       for (final r in _rows) {
-        if (!r.alreadyEnrolled) {
+        if (r.isActionable) {
           r.action = PromotionItemInputActionEnum.LEN_LOP;
           r.targetClassId = _quickApplyClassId;
         }
@@ -201,7 +227,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
 
   bool get _hasMissingTargetClass {
     return _rows.any((r) {
-      if (r.alreadyEnrolled) return false;
+      if (!r.isActionable) return false;
       if (r.action == PromotionItemInputActionEnum.LEN_LOP ||
           r.action == PromotionItemInputActionEnum.LUU_BAN) {
         return r.targetClassId == null;
@@ -213,7 +239,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
   Future<void> _confirmAndSubmit() async {
     if (_preview == null || _selectedTargetYearId == null) return;
 
-    final activeRows = _rows.where((r) => !r.alreadyEnrolled).toList();
+    final activeRows = _rows.where((r) => r.isActionable).toList();
     if (activeRows.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Không có học sinh nào cần xử lý.')),
@@ -396,7 +422,13 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
       title: title,
       currentPath: '/admin/classes/${widget.classId}/promotion',
       showBackButton: true,
-      onBack: () => context.go('/catalog/classes'),
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/catalog/classes');
+        }
+      },
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -438,6 +470,32 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                   child: Text(
                     _submitError!,
                     style: TextStyle(color: t.bad, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (_rows.isNotEmpty && _rows.every((r) => !r.isActionable)) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: t.priSoft,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: t.priLine),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: t.priLink),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Tất cả học sinh của lớp đã được xử lý cho năm ${_preview!.targetYear.name}',
+                          style: TextStyle(
+                            color: t.ink,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -615,9 +673,10 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
 
   DataRow _buildDataRow(_PromotionRowState row, AppTokens t, bool isGrade12) {
     final isError = _errorStudentId == row.studentId;
+    final isDimmed = !row.isActionable;
     final rowColor = isError
         ? t.badSoft
-        : (row.alreadyEnrolled
+        : (isDimmed
             ? t.subtle.withValues(alpha: 0.5)
             : Colors.transparent);
 
@@ -632,7 +691,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
             '#${row.order}',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: row.alreadyEnrolled ? t.ink3 : t.ink,
+              color: isDimmed ? t.ink3 : t.ink,
             ),
           ),
         ),
@@ -646,10 +705,15 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: row.alreadyEnrolled ? t.ink3 : t.ink,
+                  color: isDimmed ? t.ink3 : t.ink,
                 ),
               ),
-              if (row.alreadyEnrolled)
+              if (row.processedLabel != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: AppBadge(row.processedLabel!, tone: AppBadgeTone.neutral),
+                )
+              else if (row.alreadyEnrolled)
                 const Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: AppBadge('Đã có ghi danh', tone: AppBadgeTone.neutral),
@@ -670,7 +734,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
           ),
         ),
         DataCell(
-          row.alreadyEnrolled
+          isDimmed
               ? Text('—', style: TextStyle(color: t.ink3))
               : Container(
                   width: 140,
@@ -711,7 +775,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                 ),
         ),
         DataCell(
-          row.alreadyEnrolled
+          isDimmed
               ? Text('—', style: TextStyle(color: t.ink3))
               : (row.action == PromotionItemInputActionEnum.TOT_NGHIEP ||
                       row.action == PromotionItemInputActionEnum.NGHI_HOC)
@@ -753,7 +817,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                     ),
         ),
         DataCell(
-          row.alreadyEnrolled
+          isDimmed
               ? Text('—', style: TextStyle(color: t.ink3))
               : (row.action == PromotionItemInputActionEnum.LUU_BAN ||
                       row.action == PromotionItemInputActionEnum.NGHI_HOC)
@@ -777,7 +841,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
   }
 
   Widget _buildSubmitBar(AppTokens t) {
-    final activeCount = _rows.where((r) => !r.alreadyEnrolled).length;
+    final activeCount = _rows.where((r) => r.isActionable).length;
     final canSubmit =
         !_submitting && activeCount > 0 && !_hasMissingTargetClass;
 
@@ -877,7 +941,13 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
           ),
           const SizedBox(height: 24),
           FilledButton(
-            onPressed: () => context.go('/catalog/classes'),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/catalog/classes');
+              }
+            },
             child: const Text('Quay lại danh sách lớp'),
           ),
         ],

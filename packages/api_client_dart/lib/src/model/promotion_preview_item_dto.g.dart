@@ -23,6 +23,12 @@ abstract class _$PromotionPreviewItemDtoCWProxy {
     bool alreadyEnrolledInTargetYear,
   );
 
+  PromotionPreviewItemDto processedStatus(
+    PromotionPreviewItemDtoProcessedStatusEnum? processedStatus,
+  );
+
+  PromotionPreviewItemDto targetClassName(String? targetClassName);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `PromotionPreviewItemDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -36,6 +42,8 @@ abstract class _$PromotionPreviewItemDtoCWProxy {
     PromotionPreviewItemDtoSuggestedActionEnum suggestedAction,
     num? suggestedTargetClassId,
     bool alreadyEnrolledInTargetYear,
+    PromotionPreviewItemDtoProcessedStatusEnum? processedStatus,
+    String? targetClassName,
   });
 }
 
@@ -72,6 +80,15 @@ class _$PromotionPreviewItemDtoCWProxyImpl
   ) => this(alreadyEnrolledInTargetYear: alreadyEnrolledInTargetYear);
 
   @override
+  PromotionPreviewItemDto processedStatus(
+    PromotionPreviewItemDtoProcessedStatusEnum? processedStatus,
+  ) => this(processedStatus: processedStatus);
+
+  @override
+  PromotionPreviewItemDto targetClassName(String? targetClassName) =>
+      this(targetClassName: targetClassName);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `PromotionPreviewItemDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -85,6 +102,8 @@ class _$PromotionPreviewItemDtoCWProxyImpl
     Object? suggestedAction = const $CopyWithPlaceholder(),
     Object? suggestedTargetClassId = const $CopyWithPlaceholder(),
     Object? alreadyEnrolledInTargetYear = const $CopyWithPlaceholder(),
+    Object? processedStatus = const $CopyWithPlaceholder(),
+    Object? targetClassName = const $CopyWithPlaceholder(),
   }) {
     return PromotionPreviewItemDto(
       studentId: studentId == const $CopyWithPlaceholder()
@@ -113,6 +132,14 @@ class _$PromotionPreviewItemDtoCWProxyImpl
           ? _value.alreadyEnrolledInTargetYear
           // ignore: cast_nullable_to_non_nullable
           : alreadyEnrolledInTargetYear as bool,
+      processedStatus: processedStatus == const $CopyWithPlaceholder()
+          ? _value.processedStatus
+          // ignore: cast_nullable_to_non_nullable
+          : processedStatus as PromotionPreviewItemDtoProcessedStatusEnum?,
+      targetClassName: targetClassName == const $CopyWithPlaceholder()
+          ? _value.targetClassName
+          // ignore: cast_nullable_to_non_nullable
+          : targetClassName as String?,
     );
   }
 }
@@ -140,6 +167,8 @@ PromotionPreviewItemDto _$PromotionPreviewItemDtoFromJson(
       'suggestedAction',
       'suggestedTargetClassId',
       'alreadyEnrolledInTargetYear',
+      'processedStatus',
+      'targetClassName',
     ],
   );
   final val = PromotionPreviewItemDto(
@@ -159,6 +188,14 @@ PromotionPreviewItemDto _$PromotionPreviewItemDtoFromJson(
       'alreadyEnrolledInTargetYear',
       (v) => v as bool,
     ),
+    processedStatus: $checkedConvert(
+      'processedStatus',
+      (v) => $enumDecodeNullable(
+        _$PromotionPreviewItemDtoProcessedStatusEnumEnumMap,
+        v,
+      ),
+    ),
+    targetClassName: $checkedConvert('targetClassName', (v) => v as String?),
   );
   return val;
 });
@@ -174,9 +211,21 @@ Map<String, dynamic> _$PromotionPreviewItemDtoToJson(
           .suggestedAction]!,
   'suggestedTargetClassId': instance.suggestedTargetClassId,
   'alreadyEnrolledInTargetYear': instance.alreadyEnrolledInTargetYear,
+  'processedStatus':
+      _$PromotionPreviewItemDtoProcessedStatusEnumEnumMap[instance
+          .processedStatus],
+  'targetClassName': instance.targetClassName,
 };
 
 const _$PromotionPreviewItemDtoSuggestedActionEnumEnumMap = {
   PromotionPreviewItemDtoSuggestedActionEnum.LEN_LOP: 'LEN_LOP',
   PromotionPreviewItemDtoSuggestedActionEnum.TOT_NGHIEP: 'TOT_NGHIEP',
+};
+
+const _$PromotionPreviewItemDtoProcessedStatusEnumEnumMap = {
+  PromotionPreviewItemDtoProcessedStatusEnum.LEN_LOP: 'LEN_LOP',
+  PromotionPreviewItemDtoProcessedStatusEnum.LUU_BAN: 'LUU_BAN',
+  PromotionPreviewItemDtoProcessedStatusEnum.TOT_NGHIEP: 'TOT_NGHIEP',
+  PromotionPreviewItemDtoProcessedStatusEnum.NGHI_HOC: 'NGHI_HOC',
+  PromotionPreviewItemDtoProcessedStatusEnum.DA_CHUYEN_LOP: 'DA_CHUYEN_LOP',
 };

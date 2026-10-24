@@ -11,7 +11,7 @@ abstract class _$StudentResultsDtoCWProxy {
 
   StudentResultsDto years(List<StudentYearDto> years);
 
-  StudentResultsDto summary(StudentResultSummaryDto summary);
+  StudentResultsDto summary(StudentResultSummaryDto? summary);
 
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentResultsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
@@ -22,7 +22,7 @@ abstract class _$StudentResultsDtoCWProxy {
   StudentResultsDto call({
     List<StudentSubjectResultDto> items,
     List<StudentYearDto> years,
-    StudentResultSummaryDto summary,
+    StudentResultSummaryDto? summary,
   });
 }
 
@@ -40,7 +40,7 @@ class _$StudentResultsDtoCWProxyImpl implements _$StudentResultsDtoCWProxy {
   StudentResultsDto years(List<StudentYearDto> years) => this(years: years);
 
   @override
-  StudentResultsDto summary(StudentResultSummaryDto summary) =>
+  StudentResultsDto summary(StudentResultSummaryDto? summary) =>
       this(summary: summary);
 
   @override
@@ -67,7 +67,7 @@ class _$StudentResultsDtoCWProxyImpl implements _$StudentResultsDtoCWProxy {
       summary: summary == const $CopyWithPlaceholder()
           ? _value.summary
           // ignore: cast_nullable_to_non_nullable
-          : summary as StudentResultSummaryDto,
+          : summary as StudentResultSummaryDto?,
     );
   }
 }
@@ -104,7 +104,9 @@ StudentResultsDto _$StudentResultsDtoFromJson(Map<String, dynamic> json) =>
         ),
         summary: $checkedConvert(
           'summary',
-          (v) => StudentResultSummaryDto.fromJson(v as Map<String, dynamic>),
+          (v) => v == null
+              ? null
+              : StudentResultSummaryDto.fromJson(v as Map<String, dynamic>),
         ),
       );
       return val;
@@ -114,5 +116,5 @@ Map<String, dynamic> _$StudentResultsDtoToJson(StudentResultsDto instance) =>
     <String, dynamic>{
       'items': instance.items.map((e) => e.toJson()).toList(),
       'years': instance.years.map((e) => e.toJson()).toList(),
-      'summary': instance.summary.toJson(),
+      'summary': instance.summary?.toJson(),
     };

@@ -167,7 +167,7 @@ export interface FinalResultUnit {
     userId: number,
     termId: number | null,
     yearId: number | null,
-  ): Promise<StudentResultSummary>;
+  ): Promise<StudentResultSummary | null>;
 }
 
 export interface FinalResultStore {

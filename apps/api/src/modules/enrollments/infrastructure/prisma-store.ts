@@ -72,9 +72,13 @@ export class PrismaEnrollmentStore implements EnrollmentStore {
             >`
               SELECT hs.ma_hoc_sinh AS id, hs.ho_ten AS name,
                 EXISTS(SELECT 1 FROM public.hoc_sinh_lop t WHERE t.ma_hoc_sinh = hs.ma_hoc_sinh
-                  AND t.ma_nam_hoc = ${targetYearId}::integer) AS "enrolledInTargetYear"
+                  AND t.ma_nam_hoc = ${targetYearId}::integer) AS "enrolledInTargetYear",
+                CASE WHEN g.trang_thai = 'DANG_HOC' THEN NULL ELSE g.trang_thai::text END AS "processedStatus",
+                (SELECT l2.ten_lop FROM public.hoc_sinh_lop t JOIN public.lop l2 ON l2.ma_lop = t.ma_lop
+                  WHERE t.ma_hoc_sinh = hs.ma_hoc_sinh AND t.ma_nam_hoc = ${targetYearId}::integer
+                  ORDER BY t.tu_ngay DESC, t.ma DESC LIMIT 1) AS "targetClassName"
               FROM public.hoc_sinh_lop g JOIN public.hoc_sinh hs ON hs.ma_hoc_sinh = g.ma_hoc_sinh
-              WHERE g.ma_lop = ${classId}::integer AND g.trang_thai = 'DANG_HOC'`;
+              WHERE g.ma_lop = ${classId}::integer`;
             return {
               sourceClass: source[0],
               targetYear: target[0],

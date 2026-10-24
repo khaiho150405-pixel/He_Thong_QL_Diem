@@ -33,7 +33,13 @@ export interface PromotionPreviewData {
   };
   targetYear: { id: number; name: string; startDate: string };
   targetClasses: Array<{ id: number; name: string; grade: number }>;
-  students: Array<{ id: number; name: string; enrolledInTargetYear: boolean }>;
+  students: Array<{
+    id: number;
+    name: string;
+    enrolledInTargetYear: boolean;
+    processedStatus: Exclude<Enrollment["status"], "DANG_HOC"> | null;
+    targetClassName: string | null;
+  }>;
 }
 export interface PromotionItem {
   studentId: number;

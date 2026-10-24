@@ -312,7 +312,7 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
       ),
     );
     assert.equal(
-      (await finalResults.myOverview(studentActor, term)).summary.classRank,
+      (await finalResults.myOverview(studentActor, term)).summary!.classRank,
       null,
     );
     assert.deepEqual(
@@ -404,7 +404,7 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
     assert.equal(mine.find((r) => r.passFail)!.classification, "DAT");
     const summary = (await finalResults.myOverview(studentActor, term)).summary;
     const numericScore = mine.find((r) => !r.passFail)!.finalScore;
-    assert.equal(Number(summary.averageScore), Number(numericScore));
+    assert.equal(Number(summary!.averageScore), Number(numericScore));
     await assert.rejects(
       finalResults.calculate(teacher, book.id, "after-publish", {
         expectedVersion: locked.version,

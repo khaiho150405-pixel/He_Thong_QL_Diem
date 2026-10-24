@@ -65,6 +65,20 @@ export class PromotionPreviewItemDto {
   })
   suggestedTargetClassId!: number | null;
   @ApiProperty({ type: Boolean }) alreadyEnrolledInTargetYear!: boolean;
+  @ApiProperty({
+    type: String,
+    enum: ["LEN_LOP", "LUU_BAN", "TOT_NGHIEP", "NGHI_HOC", "DA_CHUYEN_LOP"],
+    nullable: true,
+    description:
+      "Trạng thái ghi danh nguồn nếu đã đóng; null nếu em còn DANG_HOC (chỉ dòng này mới gửi lên lớp được)",
+  })
+  processedStatus!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Lớp ghi danh của em ở năm đích (nếu có)",
+  })
+  targetClassName!: string | null;
 }
 
 export class PromotionPreviewDto {
