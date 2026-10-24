@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -83,7 +84,8 @@ Widget _buildHighlightedLabel({
   if (query.isEmpty) {
     return Text(
       label,
-      maxLines: 1,
+      maxLines: 2,
+      softWrap: true,
       overflow: TextOverflow.ellipsis,
       style: baseStyle,
     );
@@ -95,7 +97,8 @@ Widget _buildHighlightedLabel({
   if (matchIndex < 0 || cleanLabel.length != label.length) {
     return Text(
       label,
-      maxLines: 1,
+      maxLines: 2,
+      softWrap: true,
       overflow: TextOverflow.ellipsis,
       style: baseStyle,
     );
@@ -116,7 +119,8 @@ Widget _buildHighlightedLabel({
         if (safeEnd < label.length) TextSpan(text: label.substring(safeEnd)),
       ],
     ),
-    maxLines: 1,
+    maxLines: 2,
+    softWrap: true,
     overflow: TextOverflow.ellipsis,
   );
 }
@@ -449,7 +453,8 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         final labelWidget = item.child is Text
             ? Text(
                 label,
-                maxLines: 1,
+                maxLines: 2,
+                softWrap: true,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 13,
@@ -685,15 +690,21 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
             overflow: TextOverflow.ellipsis,
           ),
           menuStyle: MenuStyle(
-            minimumSize: effectiveWidth != null
-                ? WidgetStatePropertyAll(Size(effectiveWidth, 0))
-                : null,
-            maximumSize: effectiveWidth != null
-                ? WidgetStatePropertyAll(Size(effectiveWidth, double.infinity))
-                : null,
+            minimumSize: WidgetStatePropertyAll(
+              Size(effectiveWidth ?? 200, 0),
+            ),
+            maximumSize: WidgetStatePropertyAll(
+              Size(
+                math.max(
+                  effectiveWidth ?? 300,
+                  math.min(500.0, size.width - 24),
+                ),
+                double.infinity,
+              ),
+            ),
             backgroundColor: WidgetStatePropertyAll(t.surface),
             surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
-            elevation: const WidgetStatePropertyAll(4),
+            elevation: const WidgetStatePropertyAll(6),
             shape: WidgetStatePropertyAll(
               RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),

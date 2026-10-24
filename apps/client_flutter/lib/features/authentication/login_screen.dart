@@ -1,7 +1,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_edge_scrollbar.dart';
 import '../../app/widgets/theme_mode_button.dart';
@@ -236,23 +235,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Icon(Icons.arrow_forward_rounded, size: 18),
                     ],
                   ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton(
-            onPressed: () => context.push('/connection'),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.wifi_tethering_rounded, size: 16),
-                SizedBox(width: AppSpacing.sm),
-                Flexible(
-                  child: Text(
-                    'Kiểm tra kết nối hệ thống',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(

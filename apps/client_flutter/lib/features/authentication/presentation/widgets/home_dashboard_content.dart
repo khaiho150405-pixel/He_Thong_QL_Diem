@@ -166,13 +166,17 @@ class HomeDashboardContent extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'Xin chào, ${user.username}',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.5,
-                              color: t.heading,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Xin chào, ${user.username}',
+                              style: TextStyle(
+                                fontSize: isDesktop ? 24 : 20,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.5,
+                                color: t.heading,
+                              ),
                             ),
                           ),
                         ],

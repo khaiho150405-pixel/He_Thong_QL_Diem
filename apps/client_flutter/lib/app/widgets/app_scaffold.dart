@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -80,9 +79,10 @@ class AppScaffold extends ConsumerWidget {
   }
 
   Widget? _backButton(BuildContext context) {
-    if (kIsWeb || !showBackButton) return null;
+    if (!showBackButton) return null;
     return IconButton(
       icon: const Icon(Icons.arrow_back),
+      tooltip: 'Quay lại',
       onPressed:
           onBack ??
           () async {
@@ -181,7 +181,7 @@ class AppScaffold extends ConsumerWidget {
         leading: leading ?? _backButton(context),
         automaticallyImplyLeading:
             automaticallyImplyLeading ??
-            (!kIsWeb && showBackButton ? false : true),
+            (showBackButton ? false : true),
         titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w700,
