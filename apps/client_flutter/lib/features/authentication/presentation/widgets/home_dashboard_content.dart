@@ -1,13 +1,10 @@
 import 'package:api_client_dart/api_client_dart.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../app/design_tokens.dart';
 import '../../../../app/widgets/empty_state.dart';
 import '../../../../app/widgets/role_badge.dart';
 import '../../../../app/widgets/stat_card.dart';
-import '../../../academic_catalog/fields.dart';
 import '../../../reports/repository.dart';
 import '../../admin_charts.dart';
 import '../../session.dart';
@@ -69,12 +66,10 @@ class HomeDashboardContent extends ConsumerWidget {
     super.key,
     required this.user,
     required this.role,
-    this.isDesktop = false,
   });
 
   final SessionDto user;
   final String role;
-  final bool isDesktop;
 
   Widget _buildStudentStatistics(
     BuildContext context,
@@ -343,19 +338,6 @@ class HomeDashboardContent extends ConsumerWidget {
         if (role == 'QUAN_TRI_VIEN') ...[
           const SizedBox(height: AppSpacing.xl),
           const AdminChartsSection(),
-        ],
-
-        // Danh mục trên app mobile native (ẩn trên web và desktop).
-        if (!isDesktop && !kIsWeb && role == 'QUAN_TRI_VIEN') ...[
-          const SizedBox(height: AppSpacing.lg),
-          for (final r in resources)
-            Card(
-              child: ListTile(
-                title: Text(r.label),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.go('/catalog/${r.key}'),
-              ),
-            ),
         ],
       ],
     );

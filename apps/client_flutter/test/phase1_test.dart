@@ -117,10 +117,19 @@ void registerPhaseOneTests({bool resize = true}) {
       await tester.tap(find.widgetWithText(FilledButton, 'Đăng nhập'));
       await tester.pumpAndSettle();
       expect(find.text('Xin chào, fake_user'), findsOneWidget);
+      if (width < 960) {
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+      }
       await tester.scrollUntilVisible(
         find.text('Năm học'),
         100,
-        scrollable: find.byType(Scrollable).first,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const ValueKey('app-sidebar')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
       await tester.tap(find.text('Năm học'));
       await tester.pumpAndSettle();

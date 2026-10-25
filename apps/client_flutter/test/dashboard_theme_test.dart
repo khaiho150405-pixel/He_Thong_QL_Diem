@@ -201,11 +201,7 @@ Future<void> _pump(
             ? ThemeMode.dark
             : ThemeMode.light,
         home: Scaffold(
-          body: HomeDashboardContent(
-            user: _user(role),
-            role: role,
-            isDesktop: width >= 720,
-          ),
+          body: HomeDashboardContent(user: _user(role), role: role),
         ),
       ),
     ),
@@ -256,8 +252,8 @@ void main() {
           ),
           findsOneWidget,
         );
-        // Danh mục chỉ hiện ở mobile native (isDesktop=false, kIsWeb=false).
-        expect(find.byType(ListTile), wide ? findsNothing : findsWidgets);
+        // Danh mục nằm trong menu, không lặp trên dashboard ở mọi độ rộng.
+        expect(find.byType(ListTile), findsNothing);
         expect(find.text('1248'), findsOneWidget);
         expect(find.text('39 HS / lớp'), findsOneWidget);
         // Dưới 720 px nhãn rút gọn như bản cũ.

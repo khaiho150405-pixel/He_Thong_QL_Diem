@@ -69,11 +69,7 @@ class HomeWebView extends ConsumerWidget {
                       child: Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 1140),
-                          child: HomeDashboardContent(
-                            user: user,
-                            role: role,
-                            isDesktop: true,
-                          ),
+                          child: HomeDashboardContent(user: user, role: role),
                         ),
                       ),
                     ),

@@ -83,11 +83,7 @@ class HomeMobileView extends ConsumerWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1140),
-            child: HomeDashboardContent(
-              user: user,
-              role: role,
-              isDesktop: false,
-            ),
+            child: HomeDashboardContent(user: user, role: role),
           ),
         ),
       ),
