@@ -52,7 +52,10 @@ class StatCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: radius,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.sizeOf(context).width < 360 ? 12 : 18,
+              vertical: 14,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -128,8 +131,8 @@ class StatCard extends StatelessWidget {
   }
 }
 
-/// Lưới thẻ chỉ số: từ 720 px trở lên xếp một hàng (mỗi thẻ một cột), hẹp hơn
-/// xếp 2 cột; các thẻ cùng hàng cao bằng nhau.
+/// Lưới thẻ chỉ số: từ breakpoint trở lên xếp một hàng, từ 340px xếp 2 cột,
+/// dưới 340px xếp 1 cột; các thẻ cùng hàng cao bằng nhau.
 class StatCardGrid extends StatelessWidget {
   const StatCardGrid({
     super.key,
@@ -145,9 +148,14 @@ class StatCardGrid extends StatelessWidget {
     if (children.isEmpty) return const SizedBox.shrink();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= breakpoint
-            ? children.length
-            : 2;
+        final int columns;
+        if (constraints.maxWidth >= breakpoint) {
+          columns = children.length;
+        } else if (constraints.maxWidth >= 340) {
+          columns = 2;
+        } else {
+          columns = 1;
+        }
         final rows = <Widget>[];
         for (var start = 0; start < children.length; start += columns) {
           final cells = <Widget>[];

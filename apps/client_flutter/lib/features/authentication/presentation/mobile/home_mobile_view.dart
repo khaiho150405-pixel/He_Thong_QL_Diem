@@ -35,38 +35,70 @@ class HomeMobileView extends ConsumerWidget {
           fontWeight: FontWeight.w700,
           color: t.heading,
         ),
-        title: const Text('EduScore · THPT Bà Điểm'),
+        title: const Text(
+          'EduScore',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
-          if (role != 'QUAN_TRI_VIEN')
-            IconButton(
-              tooltip: 'Hồ sơ cá nhân',
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (_) => const ProfileDialog(),
-              ),
-              icon: const Icon(Icons.person_outline),
-            ),
-          if (role != 'HOC_SINH')
-            IconButton(
-              tooltip: 'Đổi mật khẩu',
-              onPressed: () => onChangePassword(context, ref),
-              icon: const Icon(Icons.password),
-            ),
           const ThemeModeButton(),
-          IconButton(
-            tooltip: 'Đăng xuất',
-            onPressed: () async {
-              try {
-                await ref.read(sessionProvider.notifier).logout();
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(errorMessage(e))));
+          PopupMenuButton<String>(
+            tooltip: 'Tài khoản & Thao tác',
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: (val) async {
+              if (val == 'profile') {
+                showDialog<void>(
+                  context: context,
+                  builder: (_) => const ProfileDialog(),
+                );
+              } else if (val == 'password') {
+                onChangePassword(context, ref);
+              } else if (val == 'logout') {
+                try {
+                  await ref.read(sessionProvider.notifier).logout();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(errorMessage(e))),
+                    );
+                  }
                 }
               }
             },
-            icon: const Icon(Icons.logout),
+            itemBuilder: (ctx) => [
+              if (role != 'QUAN_TRI_VIEN')
+                const PopupMenuItem(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline, size: 20),
+                      SizedBox(width: 8),
+                      Text('Hồ sơ cá nhân'),
+                    ],
+                  ),
+                ),
+              if (role != 'HOC_SINH')
+                const PopupMenuItem(
+                  value: 'password',
+                  child: Row(
+                    children: [
+                      Icon(Icons.password, size: 20),
+                      SizedBox(width: 8),
+                      Text('Đổi mật khẩu'),
+                    ],
+                  ),
+                ),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, size: 20),
+                    SizedBox(width: 8),
+                    Text('Đăng xuất'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

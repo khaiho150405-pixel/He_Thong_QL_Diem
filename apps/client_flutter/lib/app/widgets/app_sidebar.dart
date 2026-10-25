@@ -80,13 +80,11 @@ class AppSidebar extends ConsumerWidget {
       if (inDrawer && Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      if (currentPath != route) {
-        try {
-          context.go(route);
-        } catch (_) {
-          if (context.mounted) {
-            Navigator.of(context).pushNamed(route);
-          }
+      try {
+        context.go(route);
+      } catch (_) {
+        if (context.mounted) {
+          Navigator.of(context).pushNamed(route);
         }
       }
     }
@@ -825,12 +823,6 @@ class AppSidebar extends ConsumerWidget {
                     title: 'Điểm của tôi',
                     route: '/my-results',
                   ),
-                sectionLabel('HỆ THỐNG'),
-                buildNavTile(
-                  icon: Icons.wifi_tethering_outlined,
-                  title: 'Trạng thái kết nối',
-                  route: '/connection',
-                ),
               ],
             ),
           ),

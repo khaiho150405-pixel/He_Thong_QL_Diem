@@ -502,31 +502,49 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   Widget _buildTable(BuildContext context, List<GradebookDto> items) {
     final t = context.tokens;
     final radius = BorderRadius.circular(AppRadius.md);
-    return ListView(
-      children: [
-        DecoratedBox(
-          key: const ValueKey('gradebooks-table'),
-          decoration: BoxDecoration(
-            color: t.surface,
-            borderRadius: radius,
-            border: Border.all(color: t.line),
-            boxShadow: t.shadow,
-          ),
-          child: ClipRRect(
-            borderRadius: radius,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _tableHeader(context),
-                for (final book in items) ...[
-                  Divider(height: 1, thickness: 1, color: t.line),
-                  _tableRow(context, book),
-                ],
-              ],
+    const minTableWidth = 760.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tableContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _tableHeader(context),
+            for (final book in items) ...[
+              Divider(height: 1, thickness: 1, color: t.line),
+              _tableRow(context, book),
+            ],
+          ],
+        );
+
+        final child = constraints.maxWidth < minTableWidth
+            ? SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: minTableWidth,
+                  child: tableContent,
+                ),
+              )
+            : tableContent;
+
+        return ListView(
+          children: [
+            DecoratedBox(
+              key: const ValueKey('gradebooks-table'),
+              decoration: BoxDecoration(
+                color: t.surface,
+                borderRadius: radius,
+                border: Border.all(color: t.line),
+                boxShadow: t.shadow,
+              ),
+              child: ClipRRect(
+                borderRadius: radius,
+                child: child,
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 

@@ -68,13 +68,10 @@ void main() {
           find.widgetWithText(TextFormField, 'Tên đăng nhập'),
         );
         final login = tester.getSize(find.byType(FilledButton));
-        final check = tester.getSize(find.byType(OutlinedButton));
 
         expect(login.width, closeTo(field.width, 0.5));
-        expect(check.width, closeTo(field.width, 0.5));
         expect(login.width, lessThanOrEqualTo(380));
         expect(login.height, greaterThanOrEqualTo(48));
-        expect(check.height, greaterThanOrEqualTo(48));
         // Nút nằm đúng dưới ô nhập, không lệch trái.
         expect(
           tester.getTopLeft(find.byType(FilledButton)).dx,

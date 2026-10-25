@@ -1479,7 +1479,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            mainAxisExtent: 94,
+                            mainAxisExtent: 112,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 10,
                           ),
@@ -1573,49 +1573,67 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final t = context.tokens;
     final columns = _tableColumns(t);
     final radius = BorderRadius.circular(AppRadius.md);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Flexible(
-          child: DecoratedBox(
-            key: ValueKey('catalog-table-${spec.key}'),
-            decoration: BoxDecoration(
-              color: t.surface,
-              borderRadius: radius,
-              border: Border.all(color: t.line),
-            ),
-            child: ClipRRect(
-              borderRadius: radius,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildTableHeader(t, columns),
-                  Flexible(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: rows.length,
-                      itemBuilder: (context, index) => _buildTableRow(
-                        t,
-                        columns,
-                        rows[index],
-                        isLast: index == rows.length - 1,
-                      ),
-                    ),
-                  ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: t.line)),
-                    ),
-                    child: pagination,
-                  ),
-                ],
+    const minTableWidth = 780.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tableBody = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildTableHeader(t, columns),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: rows.length,
+                itemBuilder: (context, index) => _buildTableRow(
+                  t,
+                  columns,
+                  rows[index],
+                  isLast: index == rows.length - 1,
+                ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xxl),
-      ],
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: t.line)),
+              ),
+              child: pagination,
+            ),
+          ],
+        );
+
+        final content = constraints.maxWidth < minTableWidth
+            ? SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: minTableWidth,
+                  child: tableBody,
+                ),
+              )
+            : tableBody;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Flexible(
+              child: DecoratedBox(
+                key: ValueKey('catalog-table-${spec.key}'),
+                decoration: BoxDecoration(
+                  color: t.surface,
+                  borderRadius: radius,
+                  border: Border.all(color: t.line),
+                ),
+                child: ClipRRect(
+                  borderRadius: radius,
+                  child: content,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+          ],
+        );
+      },
     );
   }
 

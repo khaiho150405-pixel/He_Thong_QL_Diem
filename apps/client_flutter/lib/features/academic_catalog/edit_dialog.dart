@@ -1,6 +1,7 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/design_tokens.dart';
@@ -42,6 +43,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
   final Set<num> _existingTeacherIds = {};
   final List<Json> _existingAssignments = [];
 
+  int? _selectedStartYear;
+  int? _selectedEndYear;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +74,42 @@ class _EditDialogState extends ConsumerState<EditDialog> {
       }
       controllers[f.key] = TextEditingController(text: initialText);
     }
+
+    if (widget.spec.key == 'years') {
+      final tenText = widget.row?['ten']?.toString() ?? '';
+      final match = RegExp(r'^(\d{4})\s*[-–]\s*(\d{4})$').firstMatch(tenText);
+      if (match != null) {
+        _selectedStartYear = int.tryParse(match.group(1)!);
+        _selectedEndYear = int.tryParse(match.group(2)!);
+      }
+      if (_selectedStartYear == null) {
+        final sDate = AppDateField.parseIsoDate(
+          widget.row?['ngay_bat_dau']?.toString(),
+        );
+        _selectedStartYear = sDate?.year ?? DateTime.now().year;
+      }
+      if (_selectedEndYear == null) {
+        final eDate = AppDateField.parseIsoDate(
+          widget.row?['ngay_ket_thuc']?.toString(),
+        );
+        _selectedEndYear = eDate?.year ?? (_selectedStartYear! + 1);
+      }
+      controllers['ten']?.text = '$_selectedStartYear-$_selectedEndYear';
+      if (widget.row == null) {
+        controllers['ngay_bat_dau']?.text = AppDateField.formatIso(
+          DateTime(_selectedStartYear!, 9, 5),
+        );
+        controllers['ngay_ket_thuc']?.text = AppDateField.formatIso(
+          DateTime(_selectedEndYear!, 5, 31),
+        );
+      }
+    } else if (widget.spec.key == 'semesters' && widget.row == null) {
+      if ((controllers['ten']?.text ?? '').isEmpty) {
+        controllers['ten']?.text = 'Học kỳ 1';
+        controllers['thu_tu']?.text = '1';
+      }
+    }
+
     loadChoices();
   }
 
@@ -680,7 +720,48 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         prefixIcon: const Icon(Icons.link_rounded, size: 20),
         items: items,
         enabled: !locked,
-        onChanged: locked ? null : (v) => setState(() => values[f.key] = v),
+        onChanged: locked
+            ? null
+            : (v) => setState(() {
+                values[f.key] = v;
+                if (widget.spec.key == 'semesters' &&
+                    f.key == 'ma_nam_hoc' &&
+                    v != null) {
+                  final yearRows = choices['years'];
+                  final yRow = yearRows?.firstWhere(
+                    (r) => r['ma_nam_hoc'] == v,
+                    orElse: () => <String, dynamic>{},
+                  );
+                  if (yRow != null && yRow.isNotEmpty) {
+                    final yStart = AppDateField.parseIsoDate(
+                      yRow['ngay_bat_dau']?.toString(),
+                    );
+                    final yEnd = AppDateField.parseIsoDate(
+                      yRow['ngay_ket_thuc']?.toString(),
+                    );
+                    final curSemStart = AppDateField.parseIsoDate(
+                      controllers['ngay_bat_dau']?.text,
+                    );
+                    final curSemEnd = AppDateField.parseIsoDate(
+                      controllers['ngay_ket_thuc']?.text,
+                    );
+                    if (yStart != null &&
+                        (curSemStart == null ||
+                            curSemStart.isBefore(yStart) ||
+                            (yEnd != null && curSemStart.isAfter(yEnd)))) {
+                      controllers['ngay_bat_dau']?.text =
+                          AppDateField.formatIso(yStart);
+                    }
+                    if (yEnd != null &&
+                        (curSemEnd == null ||
+                            curSemEnd.isAfter(yEnd) ||
+                            (yStart != null && curSemEnd.isBefore(yStart)))) {
+                      controllers['ngay_ket_thuc']?.text =
+                          AppDateField.formatIso(yEnd);
+                    }
+                  }
+                }
+              }),
         validator: (v) =>
             v == null && !f.optional ? 'Chọn ${f.label.toLowerCase()}' : null,
       );
@@ -710,6 +791,197 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         ],
       );
     }
+    if (widget.spec.key == 'years' && f.key == 'ten') {
+      final t = context.tokens;
+      final currentYear = DateTime.now().year;
+      final startYears = List.generate(31, (i) => 2020 + i);
+      final currentStart = _selectedStartYear ?? currentYear;
+      final endYears = List.generate(6, (i) => currentStart + 1 + i);
+      final currentEnd = _selectedEndYear ?? (currentStart + 1);
+
+      return Container(
+        decoration: BoxDecoration(
+          color: t.subtle,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: t.line),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.calendar_today_rounded, size: 18, color: t.priLink),
+                const SizedBox(width: 8),
+                Text(
+                  'Chọn năm học: $currentStart–$currentEnd',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: t.ink,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: AppSelectField<int>(
+                    value: currentStart,
+                    label: 'Năm bắt đầu',
+                    searchable: false,
+                    enabled: editable && !locked,
+                    items: startYears
+                        .map(
+                          (y) => DropdownMenuItem(
+                            value: y,
+                            child: Text('$y'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) {
+                      if (val == null) return;
+                      setState(() {
+                        _selectedStartYear = val;
+                        if (_selectedEndYear == null ||
+                            _selectedEndYear! <= val) {
+                          _selectedEndYear = val + 1;
+                        }
+                        controllers['ten']?.text =
+                            '$_selectedStartYear-$_selectedEndYear';
+
+                        // Ràng buộc ngày bắt đầu trong năm chữ số trước (val)
+                        final curStart = AppDateField.parseIsoDate(
+                          controllers['ngay_bat_dau']?.text,
+                        );
+                        if (curStart == null || curStart.year != val) {
+                          controllers['ngay_bat_dau']?.text =
+                              AppDateField.formatIso(DateTime(val, 9, 5));
+                        }
+                        // Ràng buộc ngày kết thúc trong năm chữ số sau (_selectedEndYear)
+                        final curEnd = AppDateField.parseIsoDate(
+                          controllers['ngay_ket_thuc']?.text,
+                        );
+                        if (curEnd == null ||
+                            curEnd.year != _selectedEndYear) {
+                          controllers['ngay_ket_thuc']?.text =
+                              AppDateField.formatIso(
+                                DateTime(_selectedEndYear!, 5, 31),
+                              );
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppSelectField<int>(
+                    value: currentEnd,
+                    label: 'Năm kết thúc',
+                    searchable: false,
+                    enabled: editable && !locked,
+                    items: endYears
+                        .map(
+                          (y) => DropdownMenuItem(
+                            value: y,
+                            child: Text('$y'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) {
+                      if (val == null) return;
+                      setState(() {
+                        _selectedEndYear = val;
+                        controllers['ten']?.text =
+                            '$_selectedStartYear-$_selectedEndYear';
+
+                        // Ràng buộc ngày kết thúc trong năm chữ số sau (val)
+                        final curEnd = AppDateField.parseIsoDate(
+                          controllers['ngay_ket_thuc']?.text,
+                        );
+                        if (curEnd == null || curEnd.year != val) {
+                          controllers['ngay_ket_thuc']?.text =
+                              AppDateField.formatIso(DateTime(val, 5, 31));
+                        }
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+    if (widget.spec.key == 'semesters' && f.key == 'ten') {
+      final currentTen = controllers['ten']?.text.trim() ?? '';
+      const standardSemesters = ['Học kỳ 1', 'Học kỳ 2', 'Học kỳ hè'];
+      final items = <DropdownMenuItem<String>>[
+        const DropdownMenuItem(value: 'Học kỳ 1', child: Text('Học kỳ 1')),
+        const DropdownMenuItem(value: 'Học kỳ 2', child: Text('Học kỳ 2')),
+        const DropdownMenuItem(value: 'Học kỳ hè', child: Text('Học kỳ hè')),
+      ];
+      if (currentTen.isNotEmpty && !standardSemesters.contains(currentTen)) {
+        items.insert(
+          0,
+          DropdownMenuItem(value: currentTen, child: Text(currentTen)),
+        );
+      }
+      return AppSelectField<String>(
+        value: currentTen.isNotEmpty ? currentTen : 'Học kỳ 1',
+        label: f.label,
+        searchable: false,
+        enabled: editable && !locked,
+        items: items,
+        onChanged: (val) {
+          if (val == null) return;
+          setState(() {
+            controllers['ten']?.text = val;
+            if (val == 'Học kỳ 1') {
+              controllers['thu_tu']?.text = '1';
+            } else if (val == 'Học kỳ 2') {
+              controllers['thu_tu']?.text = '2';
+            } else if (val == 'Học kỳ hè') {
+              controllers['thu_tu']?.text = '3';
+            }
+          });
+        },
+      );
+    }
+    if (widget.spec.key == 'semesters' && f.key == 'thu_tu') {
+      return TextFormField(
+        controller: controllers['thu_tu'],
+        enabled: !locked,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: const InputDecoration(
+          labelText: 'Thứ tự học kỳ (1, 2 hoặc 3)',
+          helperText: '1: Học kỳ 1 · 2: Học kỳ 2 · 3: Học kỳ hè',
+        ),
+        validator: (value) {
+          if (!editable) return null;
+          if (value == null || value.trim().isEmpty) {
+            return 'Nhập thứ tự học kỳ (1–3)';
+          }
+          final n = int.tryParse(value.trim());
+          if (n == null || n < 1 || n > 3) {
+            return 'Thứ tự học kỳ chỉ nhận 1, 2 hoặc 3';
+          }
+          return null;
+        },
+        onChanged: (val) {
+          final n = int.tryParse(val.trim());
+          if (n == 1) {
+            controllers['ten']?.text = 'Học kỳ 1';
+          } else if (n == 2) {
+            controllers['ten']?.text = 'Học kỳ 2';
+          } else if (n == 3) {
+            controllers['ten']?.text = 'Học kỳ hè';
+          }
+        },
+      );
+    }
     if (f.kind == 'date') {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
@@ -723,29 +995,37 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         lastDate = today;
         initialDateWhenEmpty = DateTime(now.year - 16, 1, 1);
       } else if (widget.spec.key == 'years') {
+        final startY = _selectedStartYear ?? DateTime.now().year;
+        final endY = _selectedEndYear ?? (startY + 1);
         if (f.key == 'ngay_bat_dau') {
-          firstDate = DateTime(2000, 1, 1);
-          lastDate = DateTime(2100, 12, 31);
-          initialDateWhenEmpty = today;
+          firstDate = DateTime(startY, 1, 1);
+          lastDate = DateTime(startY, 12, 31);
+          initialDateWhenEmpty = DateTime(startY, 9, 5);
+          crossValidator = (value) {
+            if (!editable) return null;
+            final d = AppDateField.parseIsoDate(value);
+            if (d == null) return 'Chọn ngày bắt đầu';
+            if (d.year != startY) {
+              return 'Ngày bắt đầu phải là 1 ngày trong năm $startY';
+            }
+            return null;
+          };
         } else if (f.key == 'ngay_ket_thuc') {
-          final start = AppDateField.parseIsoDate(
-            controllers['ngay_bat_dau']?.text,
-          );
-          firstDate = start != null
-              ? start.add(const Duration(days: 1))
-              : DateTime(2000, 1, 1);
-          lastDate = DateTime(2100, 12, 31);
-          initialDateWhenEmpty = start != null
-              ? DateTime(start.year, start.month + 9, start.day)
-              : today;
+          firstDate = DateTime(endY, 1, 1);
+          lastDate = DateTime(endY, 12, 31);
+          initialDateWhenEmpty = DateTime(endY, 5, 31);
           crossValidator = (value) {
             if (!editable) return null;
             final s = AppDateField.parseIsoDate(
               controllers['ngay_bat_dau']?.text,
             );
             final e = AppDateField.parseIsoDate(value);
-            if (s != null && e != null && !e.isAfter(s)) {
+            if (e == null) return 'Chọn ngày kết thúc';
+            if (s != null && !e.isAfter(s)) {
               return 'Ngày kết thúc phải sau ngày bắt đầu';
+            }
+            if (e.year != endY) {
+              return 'Ngày kết thúc phải là 1 ngày trong năm $endY';
             }
             return null;
           };
@@ -768,29 +1048,57 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         final yearEnd = AppDateField.parseIsoDate(
           yearRow?['ngay_ket_thuc']?.toString(),
         );
+        final semStart = AppDateField.parseIsoDate(
+          controllers['ngay_bat_dau']?.text,
+        );
+        final semEnd = AppDateField.parseIsoDate(
+          controllers['ngay_ket_thuc']?.text,
+        );
 
         if (f.key == 'ngay_bat_dau') {
           firstDate = yearStart ?? DateTime(2000, 1, 1);
-          lastDate = yearEnd ?? DateTime(2100, 12, 31);
-          initialDateWhenEmpty = today;
+          lastDate = semEnd ?? yearEnd ?? DateTime(2100, 12, 31);
+          initialDateWhenEmpty = yearStart ?? today;
+          crossValidator = (value) {
+            if (!editable) return null;
+            final s = AppDateField.parseIsoDate(value);
+            if (s == null) return 'Chọn ngày bắt đầu học kỳ';
+            if (yearStart != null && s.isBefore(yearStart)) {
+              return 'Không được trước ngày bắt đầu năm học (${AppDateField.formatDisplay(yearStart)})';
+            }
+            if (yearEnd != null && s.isAfter(yearEnd)) {
+              return 'Không được sau ngày kết thúc năm học (${AppDateField.formatDisplay(yearEnd)})';
+            }
+            final e = AppDateField.parseIsoDate(
+              controllers['ngay_ket_thuc']?.text,
+            );
+            if (e != null && !s.isBefore(e)) {
+              return 'Ngày bắt đầu phải trước ngày kết thúc';
+            }
+            return null;
+          };
         } else if (f.key == 'ngay_ket_thuc') {
-          final semStart = AppDateField.parseIsoDate(
-            controllers['ngay_bat_dau']?.text,
-          );
           firstDate = semStart != null
               ? semStart.add(const Duration(days: 1))
               : (yearStart ?? DateTime(2000, 1, 1));
           lastDate = yearEnd ?? DateTime(2100, 12, 31);
           initialDateWhenEmpty = semStart != null
-              ? DateTime(semStart.year, semStart.month + 9, semStart.day)
+              ? DateTime(semStart.year, semStart.month + 4, semStart.day)
               : (yearEnd ?? today);
           crossValidator = (value) {
             if (!editable) return null;
+            final e = AppDateField.parseIsoDate(value);
+            if (e == null) return 'Chọn ngày kết thúc học kỳ';
+            if (yearEnd != null && e.isAfter(yearEnd)) {
+              return 'Không được sau ngày kết thúc năm học (${AppDateField.formatDisplay(yearEnd)})';
+            }
+            if (yearStart != null && e.isBefore(yearStart)) {
+              return 'Không được trước ngày bắt đầu năm học (${AppDateField.formatDisplay(yearStart)})';
+            }
             final s = AppDateField.parseIsoDate(
               controllers['ngay_bat_dau']?.text,
             );
-            final e = AppDateField.parseIsoDate(value);
-            if (s != null && e != null && !e.isAfter(s)) {
+            if (s != null && !e.isAfter(s)) {
               return 'Ngày kết thúc phải sau ngày bắt đầu';
             }
             return null;

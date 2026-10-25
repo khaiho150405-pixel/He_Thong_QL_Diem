@@ -256,9 +256,7 @@ void main() {
       'Lớp học',
       'Thành phần điểm',
       'Hệ số học kỳ',
-      'Trạng thái kết nối',
       'ĐIỀU HƯỚNG CHÍNH',
-      'HỆ THỐNG',
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
