@@ -28,13 +28,6 @@ class FormTemplatesScreen extends ConsumerWidget {
       title: 'Mẫu bảng điểm',
       currentPath: '/admin/form-templates',
       showBackButton: true,
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: reload,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1140),

@@ -74,6 +74,7 @@ class AppFilterDropdown<T> extends StatelessWidget {
     required this.onChanged,
     this.width,
     this.searchable = true,
+    this.hintText,
   });
 
   final String label;
@@ -83,17 +84,21 @@ class AppFilterDropdown<T> extends StatelessWidget {
   final ValueChanged<T?>? onChanged;
   final double? width;
   final bool searchable;
+  final String? hintText;
 
   @override
   Widget build(BuildContext context) {
+    final defaultWidth =
+        math.max(220.0, AppControlMetrics.responsiveFieldWidth(context));
     final resolvedWidth =
-        width ?? AppControlMetrics.responsiveFieldWidth(context);
+        width != null ? math.max(210.0, width!) : defaultWidth;
     return AppSelectField<T>(
       value: value,
       label: label,
       icon: icon,
       width: resolvedWidth,
       dense: true,
+      hintText: hintText,
       items: items,
       onChanged: onChanged,
       searchable: searchable,

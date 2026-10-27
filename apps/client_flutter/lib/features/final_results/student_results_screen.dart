@@ -190,7 +190,6 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
           icon: Icons.calendar_month_outlined,
           value: _selectedYearId,
           width: 240,
-          searchable: false,
           items: [
             for (final y in years)
               DropdownMenuItem<num?>(
@@ -215,13 +214,6 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
       title: 'Điểm của tôi',
       currentPath: '/my-results',
       showBackButton: true,
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: () => setState(() => reload(_selectedYearId)),
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
@@ -456,98 +448,184 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
     Widget dash() => Text('—', style: TextStyle(color: t.ink3));
 
     return Card(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Theme(
-          data: theme.copyWith(dividerColor: t.line),
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(t.subtle),
-            columnSpacing: AppSpacing.xxl,
-            horizontalMargin: AppSpacing.xl,
-            columns: [
-              DataColumn(label: Text('Môn học', style: headStyle)),
-              for (final cName in componentNames)
-                DataColumn(label: Text(cName, style: headStyle)),
-              DataColumn(label: Text('ĐTB Môn', style: headStyle)),
-              DataColumn(label: Text('Xếp loại', style: headStyle)),
-            ],
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final totalColumns = 3 + componentNames.length;
+          final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+          const colSpacing = 16.0;
+          final availableTotalWidth =
+              constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+
+          const minSubject = 150.0;
+          const minComp = 70.0;
+          const minScore = 90.0;
+          const minClassif = 100.0;
+          final minRequired =
+              minSubject + (componentNames.length * minComp) + minScore + minClassif;
+
+          final double colSubject;
+          final double colComp;
+          final double colScore;
+          final double colClassif;
+
+          if (availableTotalWidth > minRequired) {
+            final extra = availableTotalWidth - minRequired;
+            colSubject = minSubject + extra * 0.35;
+            final compExtra =
+                (extra * 0.35) / (componentNames.isEmpty ? 1 : componentNames.length);
+            colComp = minComp + compExtra;
+            colScore = minScore + extra * 0.15;
+            colClassif = minClassif + extra * 0.15;
+          } else {
+            colSubject = minSubject;
+            colComp = minComp;
+            colScore = minScore;
+            colClassif = minClassif;
+          }
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Theme(
+                data: theme.copyWith(dividerColor: t.line),
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(t.subtle),
+                  columnSpacing: colSpacing,
+                  horizontalMargin: hMargin,
+                  columns: [
+                    DataColumn(
+                      label: SizedBox(
+                        width: colSubject,
+                        child: Text('Môn học', style: headStyle),
+                      ),
+                    ),
+                    for (final cName in componentNames)
+                      DataColumn(
+                        label: SizedBox(
+                          width: colComp,
+                          child: Center(
+                            child: Text(cName, style: headStyle),
+                          ),
+                        ),
+                      ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colScore,
+                        child: Center(
+                          child: Text('ĐTB Môn', style: headStyle),
+                        ),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colClassif,
+                        child: Center(
+                          child: Text('Xếp loại', style: headStyle),
+                        ),
+                      ),
+                    ),
+                  ],
             rows: [
               for (final item in items)
                 DataRow(
                   cells: [
                     DataCell(
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.book_outlined, size: 16, color: t.pri),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(
-                            item.subjectName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: t.ink,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    for (final cName in componentNames)
-                      DataCell(
-                        Builder(
-                          builder: (_) {
-                            final comp = item.components
-                                .cast<StudentApprovedComponentDto?>()
-                                .firstWhere(
-                                  (c) => c?.componentName == cName,
-                                  orElse: () => null,
-                                );
-                            if (comp == null ||
-                                ((comp.value == null || comp.value!.isEmpty) &&
-                                    comp.status.value != 'MIEN')) {
-                              return dash();
-                            }
-                            final isMien = comp.status.value == 'MIEN';
-                            return _Chip(
-                              background: t.hover,
+                      SizedBox(
+                        width: colSubject,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.book_outlined, size: 16, color: t.pri),
+                            const SizedBox(width: AppSpacing.sm),
+                            Flexible(
                               child: Text(
-                                isMien
-                                    ? 'Miễn'
-                                    : item.passFail == true
-                                    ? (comp.value == '10.0'
-                                          ? 'Đạt'
-                                          : 'Không đạt')
-                                    : (comp.value ?? ''),
+                                item.subjectName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: t.ink,
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    for (final cName in componentNames)
+                      DataCell(
+                        SizedBox(
+                          width: colComp,
+                          child: Center(
+                            child: Builder(
+                              builder: (_) {
+                                final comp = item.components
+                                    .cast<StudentApprovedComponentDto?>()
+                                    .firstWhere(
+                                      (c) => c?.componentName == cName,
+                                      orElse: () => null,
+                                    );
+                                if (comp == null ||
+                                    ((comp.value == null || comp.value!.isEmpty) &&
+                                        comp.status.value != 'MIEN')) {
+                                  return dash();
+                                }
+                                final isMien = comp.status.value == 'MIEN';
+                                return _Chip(
+                                  background: t.hover,
+                                  child: Text(
+                                    isMien
+                                        ? 'Miễn'
+                                        : item.passFail == true
+                                        ? (comp.value == '10.0'
+                                              ? 'Đạt'
+                                              : 'Không đạt')
+                                        : (comp.value ?? ''),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: t.ink,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     DataCell(
-                      item.finalScore != null
-                          ? _Chip(
-                              background: t.priSoft,
-                              child: Text(
-                                item.passFail == true
-                                    ? (item.finalScore == '10.0'
-                                          ? 'Đạt'
-                                          : 'Không đạt')
-                                    : item.finalScore!,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: t.priLink,
-                                ),
-                              ),
-                            )
-                          : const AppBadge.warn('Chờ chốt', dot: false),
+                      SizedBox(
+                        width: colScore,
+                        child: Center(
+                          child: item.finalScore != null
+                              ? _Chip(
+                                  background: t.priSoft,
+                                  child: Text(
+                                    item.passFail == true
+                                        ? (item.finalScore == '10.0'
+                                              ? 'Đạt'
+                                              : 'Không đạt')
+                                        : item.finalScore!,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: t.priLink,
+                                    ),
+                                  ),
+                                )
+                              : const AppBadge.warn('Chờ chốt', dot: false),
+                        ),
+                      ),
                     ),
                     DataCell(
-                      item.classification != null
-                          ? _classificationBadge(item.classification!)
-                          : dash(),
+                      SizedBox(
+                        width: colClassif,
+                        child: Center(
+                          child: item.classification != null
+                              ? _classificationBadge(item.classification!)
+                              : dash(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -558,48 +636,63 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                 color: WidgetStateProperty.all(t.subtle),
                 cells: [
                   DataCell(
-                    Text(
-                      'ĐIỂM TRUNG BÌNH CHUNG',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: t.heading,
+                    SizedBox(
+                      width: colSubject,
+                      child: Text(
+                        'ĐIỂM TRUNG BÌNH CHUNG',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: t.heading,
+                        ),
                       ),
                     ),
                   ),
                   for (var i = 0; i < componentNames.length; i++)
-                    const DataCell(Text('')),
+                    DataCell(
+                      SizedBox(width: colComp, child: const SizedBox()),
+                    ),
                   DataCell(
-                    allLocked && gpa != null
-                        ? _Chip(
-                            background: t.pri,
-                            child: Text(
-                              gpa.toStringAsFixed(1),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: t.onPri,
+                    SizedBox(
+                      width: colScore,
+                      child: Center(
+                        child: allLocked && gpa != null
+                            ? _Chip(
+                                background: t.pri,
+                                child: Text(
+                                  gpa.toStringAsFixed(1),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: t.onPri,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                'Chờ công bố',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: t.warn,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                          )
-                        : Text(
-                            'Chờ công bố',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: t.warn,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                      ),
+                    ),
                   ),
                   DataCell(
-                    allLocked && gpa != null
-                        ? _classificationBadge(overallClassificationCodeOf(gpa))
-                        : Text(
-                            'Chờ công bố',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: t.warn,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    SizedBox(
+                      width: colClassif,
+                      child: Center(
+                        child: allLocked && gpa != null
+                            ? _classificationBadge(overallClassificationCodeOf(gpa))
+                            : Text(
+                                'Chờ công bố',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: t.warn,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -608,6 +701,9 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
         ),
       ),
     );
+  },
+),
+);
   }
 
   Widget _classificationBadge(String code) {

@@ -593,12 +593,13 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
           ),
           if (nextGradeClasses.isNotEmpty) ...[
             SizedBox(
-              width: 200,
+              width: 220,
               child: AppSelectField<num>(
                 key: const ValueKey('promotion-quick-class-select'),
                 value: _quickApplyClassId,
                 label: 'Lên lớp →',
-                searchable: false,
+                searchable: true,
+                hintText: '(Chọn lớp)',
                 items: nextGradeClasses
                     .map(
                       (c) => DropdownMenuItem<num>(
@@ -645,33 +646,116 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 800),
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(t.subtle),
-              dataRowMinHeight: 64,
-              dataRowMaxHeight: 76,
-              columns: const [
-                DataColumn(label: Text('STT', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('Họ tên', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('Hành động', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('Lớp đích', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('Lý do (Lưu ban / Nghỉ)', style: TextStyle(fontWeight: FontWeight.bold))),
-              ],
-              rows: [
-                for (final row in _rows)
-                  _buildDataRow(row, t, isGrade12),
-              ],
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const totalColumns = 5;
+            final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+            const colSpacing = 16.0;
+            final availableTotalWidth =
+                constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+
+            const minOrder = 50.0;
+            const minName = 160.0;
+            const minAction = 140.0;
+            const minTarget = 140.0;
+            const minReason = 160.0;
+            const minRequired = minOrder + minName + minAction + minTarget + minReason;
+
+            final double colOrder;
+            final double colName;
+            final double colAction;
+            final double colTarget;
+            final double colReason;
+
+            if (availableTotalWidth > minRequired) {
+              final extra = availableTotalWidth - minRequired;
+              colOrder = minOrder;
+              colName = minName + extra * 0.28;
+              colAction = minAction + extra * 0.24;
+              colTarget = minTarget + extra * 0.24;
+              colReason = minReason + extra * 0.24;
+            } else {
+              colOrder = minOrder;
+              colName = minName;
+              colAction = minAction;
+              colTarget = minTarget;
+              colReason = minReason;
+            }
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(t.subtle),
+                  columnSpacing: colSpacing,
+                  horizontalMargin: hMargin,
+                  dataRowMinHeight: 64,
+                  dataRowMaxHeight: 76,
+                  columns: [
+                    DataColumn(
+                      label: SizedBox(
+                        width: colOrder,
+                        child: const Text('STT', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colName,
+                        child: const Text('Họ tên', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colAction,
+                        child: const Text('Hành động', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colTarget,
+                        child: const Text('Lớp đích', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colReason,
+                        child: const Text('Lý do (Lưu ban / Nghỉ)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                  rows: [
+                    for (final row in _rows)
+                      _buildDataRow(
+                        row,
+                        t,
+                        isGrade12,
+                        colOrder,
+                        colName,
+                        colAction,
+                        colTarget,
+                        colReason,
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  DataRow _buildDataRow(_PromotionRowState row, AppTokens t, bool isGrade12) {
+  DataRow _buildDataRow(
+    _PromotionRowState row,
+    AppTokens t,
+    bool isGrade12,
+    double colOrder,
+    double colName,
+    double colAction,
+    double colTarget,
+    double colReason,
+  ) {
     final isError = _errorStudentId == row.studentId;
     final isDimmed = !row.isActionable;
     final rowColor = isError
@@ -687,154 +771,178 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
       color: WidgetStateProperty.all(rowColor),
       cells: [
         DataCell(
-          Text(
-            '#${row.order}',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: isDimmed ? t.ink3 : t.ink,
+          SizedBox(
+            width: colOrder,
+            child: Text(
+              '#${row.order}',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: isDimmed ? t.ink3 : t.ink,
+              ),
             ),
           ),
         ),
         DataCell(
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                row.studentName,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: isDimmed ? t.ink3 : t.ink,
-                ),
-              ),
-              if (row.processedLabel != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: AppBadge(row.processedLabel!, tone: AppBadgeTone.neutral),
-                )
-              else if (row.alreadyEnrolled)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: AppBadge('Đã có ghi danh', tone: AppBadgeTone.neutral),
-                )
-              else if (isError)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Lỗi dòng này',
-                    style: TextStyle(
-                      color: t.bad,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
+          SizedBox(
+            width: colName,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  row.studentName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: isDimmed ? t.ink3 : t.ink,
                   ),
                 ),
-            ],
+                if (row.processedLabel != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: AppBadge(row.processedLabel!, tone: AppBadgeTone.neutral),
+                  )
+                else if (row.alreadyEnrolled)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: AppBadge('Đã có ghi danh', tone: AppBadgeTone.neutral),
+                  )
+                else if (isError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Lỗi dòng này',
+                      style: TextStyle(
+                        color: t.bad,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         DataCell(
-          isDimmed
-              ? Text('—', style: TextStyle(color: t.ink3))
-              : Container(
-                  width: 140,
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: Border.all(color: t.line),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<PromotionItemInputActionEnum>(
-                      key: ValueKey('promotion-action-${row.studentId}'),
-                      isExpanded: true,
-                      value: row.action,
-                      items: [
-                        const DropdownMenuItem(
-                          value: PromotionItemInputActionEnum.LEN_LOP,
-                          child: Text('Lên lớp'),
-                        ),
-                        const DropdownMenuItem(
-                          value: PromotionItemInputActionEnum.LUU_BAN,
-                          child: Text('Lưu ban'),
-                        ),
-                        if (isGrade12)
-                          const DropdownMenuItem(
-                            value: PromotionItemInputActionEnum.TOT_NGHIEP,
-                            child: Text('Tốt nghiệp'),
-                          ),
-                        const DropdownMenuItem(
-                          value: PromotionItemInputActionEnum.NGHI_HOC,
-                          child: Text('Nghỉ học'),
-                        ),
-                      ],
-                      onChanged: (v) =>
-                          v != null ? _onActionChanged(row, v) : null,
-                    ),
-                  ),
-                ),
-        ),
-        DataCell(
-          isDimmed
-              ? Text('—', style: TextStyle(color: t.ink3))
-              : (row.action == PromotionItemInputActionEnum.TOT_NGHIEP ||
-                      row.action == PromotionItemInputActionEnum.NGHI_HOC)
-                  ? Text('—', style: TextStyle(color: t.ink3))
-                  : Container(
-                      width: 140,
+          SizedBox(
+            width: colAction,
+            child: isDimmed
+                ? Text('—', style: TextStyle(color: t.ink3))
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: colAction.clamp(140.0, 240.0),
                       height: 40,
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        border: Border.all(
-                          color: row.targetClassId == null ? t.bad : t.line,
-                        ),
+                        border: Border.all(color: t.line),
                       ),
                       child: DropdownButtonHideUnderline(
-                        child: DropdownButton<num>(
-                          key: ValueKey(
-                            'promotion-target-class-${row.studentId}',
-                          ),
+                        child: DropdownButton<PromotionItemInputActionEnum>(
+                          key: ValueKey('promotion-action-${row.studentId}'),
                           isExpanded: true,
-                          value: eligibleTargetClasses.any(
-                                (c) => c.id == row.targetClassId,
-                              )
-                              ? row.targetClassId
-                              : null,
-                          hint: const Text('Chọn lớp...'),
-                          items: eligibleTargetClasses
-                              .map(
-                                (c) => DropdownMenuItem<num>(
-                                  value: c.id,
-                                  child: Text(c.name),
-                                ),
-                              )
-                              .toList(),
+                          value: row.action,
+                          items: [
+                            const DropdownMenuItem(
+                              value: PromotionItemInputActionEnum.LEN_LOP,
+                              child: Text('Lên lớp'),
+                            ),
+                            const DropdownMenuItem(
+                              value: PromotionItemInputActionEnum.LUU_BAN,
+                              child: Text('Lưu ban'),
+                            ),
+                            if (isGrade12)
+                              const DropdownMenuItem(
+                                value: PromotionItemInputActionEnum.TOT_NGHIEP,
+                                child: Text('Tốt nghiệp'),
+                              ),
+                            const DropdownMenuItem(
+                              value: PromotionItemInputActionEnum.NGHI_HOC,
+                              child: Text('Nghỉ học'),
+                            ),
+                          ],
                           onChanged: (v) =>
-                              setState(() => row.targetClassId = v),
+                              v != null ? _onActionChanged(row, v) : null,
                         ),
                       ),
                     ),
+                  ),
+          ),
         ),
         DataCell(
-          isDimmed
-              ? Text('—', style: TextStyle(color: t.ink3))
-              : (row.action == PromotionItemInputActionEnum.LUU_BAN ||
-                      row.action == PromotionItemInputActionEnum.NGHI_HOC)
-                  ? SizedBox(
-                      width: 180,
-                      child: TextFormField(
-                        initialValue: row.reason,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          hintText: 'Lý do (tùy chọn)',
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          border: OutlineInputBorder(),
+          SizedBox(
+            width: colTarget,
+            child: isDimmed
+                ? Text('—', style: TextStyle(color: t.ink3))
+                : (row.action == PromotionItemInputActionEnum.TOT_NGHIEP ||
+                        row.action == PromotionItemInputActionEnum.NGHI_HOC)
+                    ? Text('—', style: TextStyle(color: t.ink3))
+                    : Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: colTarget.clamp(140.0, 240.0),
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            border: Border.all(
+                              color: row.targetClassId == null ? t.bad : t.line,
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<num>(
+                              key: ValueKey(
+                                'promotion-target-class-${row.studentId}',
+                              ),
+                              isExpanded: true,
+                              value: eligibleTargetClasses.any(
+                                    (c) => c.id == row.targetClassId,
+                                  )
+                                  ? row.targetClassId
+                                  : null,
+                              hint: const Text('Chọn lớp...'),
+                              items: eligibleTargetClasses
+                                  .map(
+                                    (c) => DropdownMenuItem<num>(
+                                      value: c.id,
+                                      child: Text(c.name),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => row.targetClassId = v),
+                            ),
+                          ),
                         ),
-                        onChanged: (v) => row.reason = v,
                       ),
-                    )
-                  : Text('—', style: TextStyle(color: t.ink3)),
+          ),
+        ),
+        DataCell(
+          SizedBox(
+            width: colReason,
+            child: isDimmed
+                ? Text('—', style: TextStyle(color: t.ink3))
+                : (row.action == PromotionItemInputActionEnum.LUU_BAN ||
+                        row.action == PromotionItemInputActionEnum.NGHI_HOC)
+                    ? Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: colReason.clamp(160.0, 320.0),
+                          child: TextFormField(
+                            initialValue: row.reason,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              hintText: 'Lý do (tùy chọn)',
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (v) => row.reason = v,
+                          ),
+                        ),
+                      )
+                    : Text('—', style: TextStyle(color: t.ink3)),
+          ),
         ),
       ],
     );

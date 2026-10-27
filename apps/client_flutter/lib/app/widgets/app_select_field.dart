@@ -257,6 +257,17 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
   // đang bấm vào một mục của menu thì menu bị dựng lại và lần bấm đầu bị mất.
   Timer? _blurResetTimer;
 
+  bool _isPlaceholder(T? val, String text) {
+    if (val == null) return true;
+    final clean = text.trim().toLowerCase();
+    final hint = widget.hintText?.trim().toLowerCase();
+    return clean == 'tất cả' ||
+        clean == '(tất cả)' ||
+        clean.startsWith('tất cả') ||
+        clean.isEmpty ||
+        (hint != null && hint.isNotEmpty && clean == hint);
+  }
+
   DropdownMenuItem<T>? _findSelectedItem(T? val) {
     for (final item in widget.items) {
       if (item.value == val) return item;
@@ -381,17 +392,25 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
     if (_focusNode.hasFocus) {
       _blurResetTimer?.cancel();
       if (widget.searchable) {
-        _hasUserTyped = false;
-        _query = '';
-        _highlightedIndex = -1;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _focusNode.hasFocus) {
-            _controller.selection = TextSelection(
-              baseOffset: 0,
-              extentOffset: _controller.text.length,
-            );
-          }
-        });
+        final isPlh = _isPlaceholder(widget.value, _controller.text);
+        if (isPlh) {
+          _controller.clear();
+          _hasUserTyped = false;
+          _query = '';
+          _highlightedIndex = -1;
+        } else {
+          _hasUserTyped = false;
+          _query = '';
+          _highlightedIndex = -1;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _focusNode.hasFocus) {
+              _controller.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _controller.text.length,
+              );
+            }
+          });
+        }
       }
     } else {
       // Đợi lượt bấm vào mục (nếu có) hoàn tất rồi mới trả lại label cũ.
@@ -637,8 +656,12 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
           ),
         );
 
+        final hasSelectedOption = widget.value != null &&
+            !_isPlaceholder(widget.value, _getDisplayLabel(widget.value));
+        final isTypingQuery = _query.isNotEmpty && widget.enabled && widget.searchable;
+
         Widget trailingWidget;
-        if (_query.isNotEmpty && widget.enabled && widget.searchable) {
+        if (isTypingQuery) {
           trailingWidget = Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -661,9 +684,33 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
               Icon(Icons.arrow_drop_down, color: t.ink2),
             ],
           );
+        } else if (hasSelectedOption && widget.enabled) {
+          trailingWidget = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Tooltip(
+                message: 'Bỏ chọn',
+                child: GestureDetector(
+                  key: const ValueKey('app-select-deselect-button'),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _selectItem(null),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(Icons.close_rounded, size: 18, color: t.ink2),
+                  ),
+                ),
+              ),
+              Icon(Icons.arrow_drop_down, color: t.ink2),
+            ],
+          );
         } else {
           trailingWidget = Icon(Icons.arrow_drop_down, color: t.ink2);
         }
+
+        final isCurrentPlaceholder = _isPlaceholder(
+          widget.value,
+          _controller.text,
+        );
 
         final menu = DropdownMenu<T?>(
           enabled: widget.enabled,
@@ -686,7 +733,9 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
           textStyle: TextStyle(
             fontSize: widget.dense ? 13 : 14,
             fontWeight: FontWeight.w500,
-            color: widget.enabled ? t.ink : t.ink3,
+            color: widget.enabled
+                ? (isCurrentPlaceholder ? t.ink3 : t.ink)
+                : t.ink3,
             overflow: TextOverflow.ellipsis,
           ),
           menuStyle: MenuStyle(

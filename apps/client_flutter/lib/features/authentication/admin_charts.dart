@@ -41,15 +41,6 @@ class AdminChartsSection extends ConsumerWidget {
                   ),
                 ),
                 const AppBadge.ok('Trực tiếp (10s)'),
-                const SizedBox(width: AppSpacing.xs),
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded, size: 16),
-                  color: t.ink2,
-                  tooltip: 'Làm mới dữ liệu ngay',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () =>
-                      ref.read(adminOverviewProvider.notifier).refresh(),
-                ),
               ],
             ),
             const SizedBox(height: 2),

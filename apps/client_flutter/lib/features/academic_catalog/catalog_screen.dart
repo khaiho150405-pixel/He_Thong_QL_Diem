@@ -46,6 +46,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   String _studentSortBy = 'name'; // 'name' | 'class' | 'status'
   bool _sortAscending = true;
   int _clientPage = 0;
+  bool _mobileFiltersOpen = false;
 
   // System References cache
   Map<String, List<Json>> _references = {};
@@ -538,42 +539,36 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     return AppScaffold(
       title: spec.label,
       currentPath: '/catalog/${widget.resource}',
       showBackButton: true,
       actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: () => setState(reload),
-          icon: const Icon(Icons.refresh),
-        ),
+        if (admin && isMobile) ...[
+          if (_supportsImport)
+            IconButton(
+              key: ValueKey('catalog-import-${widget.resource}'),
+              tooltip: 'Nhập từ file',
+              icon: const Icon(Icons.upload_file_outlined),
+              onPressed: _showImport,
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: FilledButton.tonalIcon(
+              key: ValueKey('catalog-add-${widget.resource}'),
+              onPressed: () => edit(),
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Thêm mới'),
+              style: FilledButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+            ),
+          ),
+        ],
       ],
-      floatingActionButton: admin
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (_supportsImport) ...[
-                  AppActionButton(
-                    key: ValueKey('catalog-import-${widget.resource}'),
-                    kind: AppActionButtonKind.secondary,
-                    onPressed: _showImport,
-                    icon: Icons.upload_file_outlined,
-                    label: 'Nhập từ file',
-                  ),
-                  const SizedBox(height: AppControlMetrics.spacing),
-                ],
-                AppActionButton(
-                  key: ValueKey('catalog-add-${widget.resource}'),
-                  onPressed: () => edit(),
-                  icon: Icons.add,
-                  label: 'Thêm mới',
-                ),
-              ],
-            )
-          : null,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1140),
@@ -585,6 +580,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (admin && !isMobile) _buildTopActionBar(context, theme),
                 // Học sinh chỉ nhận đúng hồ sơ của mình từ backend, nên không
                 // hiển thị bộ lọc/tìm kiếm không có ý nghĩa cho một bản ghi.
                 if (!studentViewer) _buildFilterBar(theme),
@@ -675,6 +671,41 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
+  Widget _buildTopActionBar(BuildContext context, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 10,
+        runSpacing: 8,
+        children: [
+          if (_supportsImport)
+            FilledButton.tonalIcon(
+              key: ValueKey('catalog-import-${widget.resource}'),
+              onPressed: _showImport,
+              icon: const Icon(Icons.upload_file_outlined, size: 18),
+              label: const Text('Nhập từ file'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, AppControlMetrics.height),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+            ),
+          FilledButton.icon(
+            key: ValueKey('catalog-add-${widget.resource}'),
+            onPressed: () => edit(),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Thêm mới'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, AppControlMetrics.height),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFilterBar(ThemeData theme) {
     final t = context.tokens;
     if (_loadingReferences) {
@@ -700,12 +731,91 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       _filterCurrentYear != null,
     ].where((b) => b).length;
 
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
+    if (isMobile) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: AppControlMetrics.height,
+                      child: _buildSearchField(t),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      minimumSize: const Size(0, AppControlMetrics.height),
+                      foregroundColor: activeCount > 0 ? t.priLink : t.ink,
+                      side: BorderSide(
+                        color: activeCount > 0 ? t.priLink : t.line,
+                      ),
+                    ),
+                    onPressed: () =>
+                        setState(() => _mobileFiltersOpen = !_mobileFiltersOpen),
+                    icon: Badge(
+                      isLabelVisible: activeCount > 0,
+                      label: Text('$activeCount'),
+                      child: Icon(
+                        _mobileFiltersOpen
+                            ? Icons.filter_alt_off_rounded
+                            : Icons.filter_alt_outlined,
+                        size: 17,
+                      ),
+                    ),
+                    label: Text(
+                      _mobileFiltersOpen
+                          ? 'Thu gọn'
+                          : (activeCount > 0
+                              ? 'Lọc ($activeCount)'
+                              : 'Bộ lọc'),
+                      style: const TextStyle(fontSize: 12.5),
+                    ),
+                  ),
+                ],
+              ),
+              if (_mobileFiltersOpen) ...[
+                const SizedBox(height: 10),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: _buildResourceDropdowns(),
+                ),
+                if (_hasActiveFilter) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => setState(_resetFilters),
+                      icon: const Icon(Icons.clear_all_rounded, size: 16),
+                      label: const Text('Đặt lại bộ lọc'),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: MediaQuery.sizeOf(context).width < 600 ? 8 : 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -755,7 +865,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 if (_hasActiveFilter)
                   TextButton.icon(
                     onPressed: () => setState(_resetFilters),
-                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    icon: const Icon(Icons.clear_all_rounded, size: 16),
                     label: const Text('Đặt lại bộ lọc'),
                     style: TextButton.styleFrom(
                       visualDensity: VisualDensity.compact,
@@ -763,7 +873,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   ),
               ],
             ),
-            SizedBox(height: MediaQuery.sizeOf(context).width < 600 ? 6 : 12),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 12,
               runSpacing: 10,
@@ -773,93 +883,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 SizedBox(
                   width: AppControlMetrics.responsiveFieldWidth(context),
                   height: AppControlMetrics.height,
-                  child: RawAutocomplete<String>(
-                    textEditingController: searchController,
-                    focusNode: _searchFocusNode,
-                    displayStringForOption: (option) => option,
-                    optionsBuilder: (value) {
-                      final query = _normalized(value.text);
-                      if (query.isEmpty) return const Iterable<String>.empty();
-                      return _searchSuggestions
-                          .where((item) => _normalized(item).contains(query))
-                          .take(8);
-                    },
-                    onSelected: (value) {
-                      searchController.text = value;
-                      _searchAsYouType(value);
-                    },
-                    optionsViewBuilder: (context, onSelected, options) => Align(
-                      alignment: Alignment.topLeft,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          boxShadow: t.pop,
-                        ),
-                        child: Material(
-                          color: t.surface,
-                          clipBehavior: Clip.antiAlias,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            side: BorderSide(color: t.line),
-                          ),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxWidth: 360,
-                              maxHeight: 280,
-                            ),
-                            child: ListView(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              shrinkWrap: true,
-                              children: [
-                                for (final option in options)
-                                  ListTile(
-                                    dense: true,
-                                    hoverColor: t.hover,
-                                    leading: Icon(
-                                      Icons.search,
-                                      size: 18,
-                                      color: t.ink3,
-                                    ),
-                                    title: Text(option, maxLines: 2),
-                                    onTap: () => onSelected(option),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    fieldViewBuilder:
-                        (context, controller, focusNode, onSubmitted) =>
-                            TextField(
-                              controller: controller,
-                              focusNode: focusNode,
-                              textAlignVertical: TextAlignVertical.center,
-                              style: TextStyle(fontSize: 13, color: t.ink),
-                              decoration: AppControlMetrics.decoration(
-                                context,
-                                label: 'Tìm kiếm',
-                                icon: Icons.search,
-                                hintText: 'Từ khóa tìm kiếm...',
-                                suffixIcon: filter.isNotEmpty
-                                    ? IconButton(
-                                        icon: const Icon(Icons.clear, size: 16),
-                                        onPressed: () {
-                                          searchController.clear();
-                                          setState(() {
-                                            filter = '';
-                                            _clientPage = 0;
-                                            reload();
-                                          });
-                                        },
-                                      )
-                                    : null,
-                              ),
-                              textInputAction: TextInputAction.search,
-                              onChanged: _searchAsYouType,
-                              onSubmitted: (_) => onSubmitted(),
-                            ),
-                  ),
+                  child: _buildSearchField(t),
                 ),
               ],
             ),
@@ -869,10 +893,99 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
+  Widget _buildSearchField(AppTokens t) {
+    return RawAutocomplete<String>(
+      textEditingController: searchController,
+      focusNode: _searchFocusNode,
+      displayStringForOption: (option) => option,
+      optionsBuilder: (value) {
+        final query = _normalized(value.text);
+        if (query.isEmpty) return const Iterable<String>.empty();
+        return _searchSuggestions
+            .where((item) => _normalized(item).contains(query))
+            .take(8);
+      },
+      onSelected: (value) {
+        searchController.text = value;
+        _searchAsYouType(value);
+      },
+      optionsViewBuilder: (context, onSelected, options) => Align(
+        alignment: Alignment.topLeft,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            boxShadow: t.pop,
+          ),
+          child: Material(
+            color: t.surface,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              side: BorderSide(color: t.line),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 360,
+                maxHeight: 280,
+              ),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                shrinkWrap: true,
+                children: [
+                  for (final option in options)
+                    ListTile(
+                      dense: true,
+                      hoverColor: t.hover,
+                      leading: Icon(
+                        Icons.search,
+                        size: 18,
+                        color: t.ink3,
+                      ),
+                      title: Text(option, maxLines: 2),
+                      onTap: () => onSelected(option),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      fieldViewBuilder:
+          (context, controller, focusNode, onSubmitted) => TextField(
+            controller: controller,
+            focusNode: focusNode,
+            textAlignVertical: TextAlignVertical.center,
+            style: TextStyle(fontSize: 13, color: t.ink),
+            decoration: AppControlMetrics.decoration(
+              context,
+              label: 'Tìm kiếm',
+              icon: Icons.search,
+              hintText: 'Từ khóa tìm kiếm...',
+              suffixIcon: filter.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 16),
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() {
+                          filter = '';
+                          _clientPage = 0;
+                          reload();
+                        });
+                      },
+                    )
+                  : null,
+            ),
+            textInputAction: TextInputAction.search,
+            onChanged: _searchAsYouType,
+            onSubmitted: (_) => onSubmitted(),
+          ),
+    );
+  }
+
   Widget _buildYearScopeControl(List<Json> years) {
     return AcademicYearFilterControl(
       years: years,
-      width: 170,
+      width: 270,
       onChanged: () {
         // setState để FutureBuilder nhận future mới; thiếu setState thì danh sách giữ dữ liệu năm cũ.
         setState(() {
@@ -900,7 +1013,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             items: [
               const DropdownMenuItem(
                 value: null,
-                child: Text('Tất cả các lớp'),
+                child: Text('Tất cả'),
               ),
               for (final c in classes)
                 DropdownMenuItem(
@@ -919,7 +1032,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.verified_user_outlined,
             value: _filterStudentStatus,
             items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả tình trạng')),
+              DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(value: 'active', child: Text('Đang theo học')),
               DropdownMenuItem(value: 'inactive', child: Text('Đã ngừng học')),
             ],
@@ -959,7 +1072,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.filter_list_rounded,
             value: _filterGrade,
             items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả các khối')),
+              DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(value: 10, child: Text('Khối 10')),
               DropdownMenuItem(value: 11, child: Text('Khối 11')),
               DropdownMenuItem(value: 12, child: Text('Khối 12')),
@@ -975,7 +1088,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.person_pin_outlined,
             value: _filterTeacherId,
             items: [
-              const DropdownMenuItem(value: null, child: Text('Tất cả GVCN')),
+              const DropdownMenuItem(value: null, child: Text('Tất cả')),
               for (final t in uniqueTeachers)
                 DropdownMenuItem(
                   value: t['ma_giao_vien'] as num?,
@@ -1012,7 +1125,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.meeting_room_outlined,
             value: _filterClassId,
             items: [
-              const DropdownMenuItem(value: null, child: Text('Tất cả lớp')),
+              const DropdownMenuItem(value: null, child: Text('Tất cả')),
               for (final c in classes)
                 DropdownMenuItem(
                   value: c['ma_lop'] as num?,
@@ -1030,7 +1143,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.menu_book_outlined,
             value: _filterSubjectId,
             items: [
-              const DropdownMenuItem(value: null, child: Text('Tất cả môn')),
+              const DropdownMenuItem(value: null, child: Text('Tất cả')),
               for (final s in subjects)
                 DropdownMenuItem(
                   value: s['ma_mon'] as num?,
@@ -1050,7 +1163,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             items: [
               const DropdownMenuItem(
                 value: null,
-                child: Text('Tất cả giáo viên'),
+                child: Text('Tất cả'),
               ),
               for (final t in uniqueTeachers)
                 DropdownMenuItem(
@@ -1071,7 +1184,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.date_range_outlined,
             value: _filterSemesterId,
             items: [
-              const DropdownMenuItem(value: null, child: Text('Tất cả học kỳ')),
+              const DropdownMenuItem(value: null, child: Text('Tất cả')),
               for (final sem in semesters)
                 DropdownMenuItem(
                   value: sem['ma_hoc_ky'] as num?,
@@ -1098,7 +1211,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             items: [
               const DropdownMenuItem(
                 value: null,
-                child: Text('Tất cả môn học'),
+                child: Text('Tất cả'),
               ),
               for (final s in subjects)
                 DropdownMenuItem(
@@ -1117,7 +1230,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.percent_outlined,
             value: _filterRequired,
             items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả tính chất')),
+              DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(value: true, child: Text('Bắt buộc')),
               DropdownMenuItem(value: false, child: Text('Tùy chọn')),
             ],
@@ -1136,7 +1249,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.manage_accounts_outlined,
             value: _filterRole,
             items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả vai trò')),
+              DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(
                 value: 'QUAN_TRI_VIEN',
                 child: Text('Quản trị viên'),
@@ -1155,7 +1268,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.lock_open_outlined,
             value: _filterAccountActive,
             items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả trạng thái')),
+              DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(value: true, child: Text('Đang hoạt động')),
               DropdownMenuItem(value: false, child: Text('Đã khóa')),
             ],
@@ -1182,7 +1295,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.badge_outlined,
             value: _filterDepartment,
             items: [
-              const DropdownMenuItem(value: null, child: Text('Tất cả tổ')),
+              const DropdownMenuItem(value: null, child: Text('Tất cả')),
               for (final d in depts) DropdownMenuItem(value: d, child: Text(d)),
             ],
             onChanged: (val) => setState(() {
@@ -1233,7 +1346,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.schedule_outlined,
             value: _filterPeriods,
             items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả số tiết')),
+              DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(value: 1, child: Text('1 tiết / tuần')),
               DropdownMenuItem(value: 2, child: Text('2 tiết / tuần')),
               DropdownMenuItem(value: 3, child: Text('3 tiết / tuần')),
@@ -1254,7 +1367,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             icon: Icons.event_available_outlined,
             value: _filterCurrentYear,
             items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả trạng thái')),
+              DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(value: true, child: Text('Năm hiện hành')),
               DropdownMenuItem(value: false, child: Text('Năm lưu trữ')),
             ],
@@ -1426,7 +1539,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: () => setState(_resetFilters),
-              icon: const Icon(Icons.refresh_rounded),
+              icon: const Icon(Icons.clear_all_rounded),
               label: const Text('Xóa bộ lọc'),
             ),
           ],

@@ -6,6 +6,7 @@ import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/app/theme.dart';
 import 'package:client_flutter/app/widgets/app_scaffold.dart';
 import 'package:client_flutter/app/widgets/app_sidebar.dart';
+import 'package:client_flutter/app/widgets/app_user_avatar_menu.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -155,9 +156,9 @@ void main() {
           );
           expect(topBar.color, tokens.surface);
 
-          // Chân sidebar: tên, nút đăng xuất duy nhất trên màn rộng.
+          // Chân sidebar: tên người dùng; thanh header có avatar menu tài khoản.
           expect(find.text('fake_user'), findsOneWidget);
-          expect(find.byTooltip('Đăng xuất'), findsOneWidget);
+          expect(find.byType(AppUserAvatarMenu), findsWidgets);
           expect(find.byType(NavigationBar), findsNothing);
           _expectNoLegacySidebarText();
           expect(tester.takeException(), isNull);
@@ -204,7 +205,7 @@ void main() {
             find.byKey(const ValueKey('sidebar-active-bar')),
             findsOneWidget,
           );
-          expect(find.byTooltip('Đăng xuất'), findsWidgets);
+          expect(find.byType(AppUserAvatarMenu), findsWidgets);
           _expectNoLegacySidebarText();
           expect(tester.takeException(), isNull);
         },
@@ -212,7 +213,7 @@ void main() {
     }
   }
 
-  testWidgets('sidebar thu gọn rộng 70, vẫn có avatar và đăng xuất', (
+  testWidgets('sidebar thu gọn rộng 70, vẫn có avatar menu', (
     tester,
   ) async {
     final container = await _pumpShell(
@@ -228,7 +229,7 @@ void main() {
     expect(tester.getSize(sidebar).width, 70);
     expect(tester.widget<Material>(sidebar).color, AppTokens.dark.navy);
     expect(find.byKey(const ValueKey('sidebar-active-bar')), findsOneWidget);
-    expect(find.byTooltip('Đăng xuất'), findsOneWidget);
+    expect(find.byType(AppUserAvatarMenu), findsWidgets);
     expect(find.byTooltip('Mở rộng sidebar'), findsOneWidget);
     _expectNoLegacySidebarText();
     expect(tester.takeException(), isNull);
@@ -264,7 +265,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('đăng xuất từ sidebar hỏi xác nhận', (tester) async {
+  testWidgets('đăng xuất từ avatar menu hỏi xác nhận', (tester) async {
     await _pumpShell(
       tester,
       role: 'GIAO_VIEN',
@@ -272,7 +273,10 @@ void main() {
       size: const Size(1280, 800),
       brightness: Brightness.light,
     );
-    await tester.tap(find.byTooltip('Đăng xuất'));
+    await tester.tap(find.byType(AppUserAvatarMenu).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Đăng xuất'), findsOneWidget);
+    await tester.tap(find.text('Đăng xuất'));
     await tester.pumpAndSettle();
     expect(find.text('Xác nhận đăng xuất'), findsOneWidget);
     await tester.tap(find.text('Hủy'));

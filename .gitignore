@@ -34,3 +34,8 @@ apps/api/src/generated/
 
 # Log của bộ tự động hóa (automation/run.py)
 automation/runs/
+
+# Scripts chạy thủ công trên máy local - không đẩy lên Git
+*.bat
+!apps/client_flutter/android/gradlew.bat
+

@@ -6,6 +6,7 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
+import '../../app/widgets/app_select_field.dart';
 import 'academic_year_scope.dart';
 import 'repository.dart';
 import 'semester_deadlines_repository.dart';
@@ -322,14 +323,6 @@ class _SemesterDeadlinesScreenState
     return AppScaffold(
       title: 'Lịch nhập điểm học kỳ',
       currentPath: '/admin/semester-deadlines',
-      actions: [
-        IconButton(
-          key: const ValueKey('semester-deadlines-refresh-btn'),
-          tooltip: 'Tải lại',
-          icon: const Icon(Icons.refresh),
-          onPressed: _refresh,
-        ),
-      ],
       body: FutureBuilder<List<SemestersDto>>(
         future: _semestersFuture,
         builder: (context, semSnapshot) {
@@ -391,7 +384,7 @@ class _SemesterDeadlinesScreenState
                       children: [
                         AcademicYearFilterControl(
                           years: years,
-                          width: 200,
+                          width: 270,
                           allowAll: false,
                           onChanged: () {
                             ref.invalidate(academicYearsProvider);
@@ -402,18 +395,12 @@ class _SemesterDeadlinesScreenState
                         ),
                         SizedBox(
                           width: 280,
-                          child: DropdownButtonFormField<num>(
+                          child: AppSelectField<num>(
                             key: ValueKey(selectedDropdownValue),
-                            initialValue: selectedDropdownValue,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Chọn học kỳ',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                            ),
+                            value: selectedDropdownValue,
+                            label: 'Chọn học kỳ',
+                            dense: true,
+                            hintText: 'Tất cả',
                             items: [
                               for (final s in semesters)
                                 DropdownMenuItem(

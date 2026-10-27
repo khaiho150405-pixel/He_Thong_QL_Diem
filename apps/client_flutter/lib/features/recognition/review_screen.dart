@@ -1,4 +1,5 @@
 import 'package:api_client_dart/api_client_dart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -589,7 +590,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         titleWidget: isMobile ? null : _buildBreadcrumb(context),
         showBackButton: false,
         automaticallyImplyLeading: false,
-        leading: isMobile
+        leading: (isMobile && !kIsWeb)
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
                 tooltip: 'Quay lại bảng điểm',

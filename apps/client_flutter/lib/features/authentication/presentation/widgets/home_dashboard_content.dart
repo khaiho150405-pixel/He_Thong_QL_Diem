@@ -172,7 +172,7 @@ class HomeDashboardContent extends ConsumerWidget {
                             child: Text(
                               'Xin chào, ${user.username}',
                               style: TextStyle(
-                                fontSize: isDesktop ? 24 : 20,
+                                fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: -0.5,
                                 color: t.heading,
@@ -351,7 +351,7 @@ class HomeDashboardContent extends ConsumerWidget {
 
         // Danh mục trên app mobile native (ẩn trên web và desktop).
         if (!isDesktop && !kIsWeb && role == 'QUAN_TRI_VIEN') ...[
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: 56),
           for (final r in resources)
             Card(
               child: ListTile(
@@ -360,6 +360,7 @@ class HomeDashboardContent extends ConsumerWidget {
                 onTap: () => context.go('/catalog/${r.key}'),
               ),
             ),
+          const SizedBox(height: 88),
         ],
       ],
     );

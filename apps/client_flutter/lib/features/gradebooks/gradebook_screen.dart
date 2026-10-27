@@ -893,11 +893,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               ],
             ),
             actions: [
-              IconButton(
-                tooltip: 'Tải lại',
-                onPressed: widget.onReload,
-                icon: const Icon(Icons.refresh),
-              ),
               PopupMenuButton<String>(
                 tooltip: 'Thao tác khác',
                 icon: const Icon(Icons.more_vert_rounded),

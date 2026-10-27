@@ -7,7 +7,7 @@ import '../../../../app/widgets/app_edge_scrollbar.dart';
 import '../../../../app/widgets/app_shell.dart';
 import '../../../../app/widgets/app_sidebar.dart';
 import '../../../../app/widgets/theme_mode_button.dart';
-import '../../profile_dialog.dart';
+import '../../../../app/widgets/app_user_avatar_menu.dart';
 import '../../session.dart';
 import '../widgets/home_dashboard_content.dart';
 
@@ -40,66 +40,11 @@ class HomeMobileView extends ConsumerWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        actions: [
-          const ThemeModeButton(),
-          PopupMenuButton<String>(
-            tooltip: 'Tài khoản & Thao tác',
-            icon: const Icon(Icons.more_vert_rounded),
-            onSelected: (val) async {
-              if (val == 'profile') {
-                showDialog<void>(
-                  context: context,
-                  builder: (_) => const ProfileDialog(),
-                );
-              } else if (val == 'password') {
-                onChangePassword(context, ref);
-              } else if (val == 'logout') {
-                try {
-                  await ref.read(sessionProvider.notifier).logout();
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(errorMessage(e))),
-                    );
-                  }
-                }
-              }
-            },
-            itemBuilder: (ctx) => [
-              if (role != 'QUAN_TRI_VIEN')
-                const PopupMenuItem(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline, size: 20),
-                      SizedBox(width: 8),
-                      Text('Hồ sơ cá nhân'),
-                    ],
-                  ),
-                ),
-              if (role != 'HOC_SINH')
-                const PopupMenuItem(
-                  value: 'password',
-                  child: Row(
-                    children: [
-                      Icon(Icons.password, size: 20),
-                      SizedBox(width: 8),
-                      Text('Đổi mật khẩu'),
-                    ],
-                  ),
-                ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, size: 20),
-                    SizedBox(width: 8),
-                    Text('Đăng xuất'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        actions: const [
+          ThemeModeButton(),
+          SizedBox(width: 4),
+          AppUserAvatarMenu(showName: false),
+          SizedBox(width: 8),
         ],
       ),
       drawer: Drawer(

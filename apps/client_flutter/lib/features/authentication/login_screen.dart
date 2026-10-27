@@ -124,7 +124,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildForm(BuildContext context, bool wide) {
     final t = context.tokens;
     final theme = Theme.of(context);
-
     return Form(
       key: form,
       child: Column(
@@ -236,7 +235,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Quên mật khẩu? Liên hệ quản trị viên của trường.',
             style: theme.textTheme.bodySmall,

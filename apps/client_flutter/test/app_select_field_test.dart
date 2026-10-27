@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/app/widgets/app_select_field.dart';
 
 void main() {
@@ -750,6 +751,95 @@ void main() {
       // Menu rộng ≈ 300 và căn trái theo ô
       expect(itemRect.width, closeTo(300, 2.0));
       expect(itemRect.left, closeTo(fieldRect.left, 2.0));
+    },
+  );
+
+  testWidgets(
+    '16. Placeholder "Tất cả" có màu xám nhạt (t.ink3), khi tap vào thì chữ tự biến mất để nhập và gợi ý menu vẫn mở đầy đủ',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 320,
+                child: AppSelectField<String?>(
+                  label: 'Môn học',
+                  value: null,
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Tất cả')),
+                    DropdownMenuItem(value: 'toan', child: Text('Toán học')),
+                    DropdownMenuItem(value: 'van', child: Text('Ngữ văn')),
+                  ],
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Ban đầu hiện "Tất cả" với màu xám nhạt kiểu placeholder (ink3)
+      final fieldFinder = find.byType(TextField);
+      expect(find.widgetWithText(TextField, 'Tất cả'), findsOneWidget);
+      final fieldWidget = tester.widget<TextField>(fieldFinder);
+      expect(fieldWidget.style?.color, AppTokens.light.ink3);
+
+      // Tap vào ô dropdown
+      await tester.tap(fieldFinder);
+      await tester.pumpAndSettle();
+
+      // Chữ "Tất cả" trong ô biến mất (trống) để người dùng gõ từ khóa
+      final fieldAfterTap = tester.widget<TextField>(fieldFinder);
+      expect(fieldAfterTap.controller?.text, isEmpty);
+
+      // Menu dropdown vẫn mở và gợi ý đầy đủ các option
+      expect(find.widgetWithText(MenuItemButton, 'Tất cả'), findsOneWidget);
+      expect(find.widgetWithText(MenuItemButton, 'Toán học'), findsOneWidget);
+      expect(find.widgetWithText(MenuItemButton, 'Ngữ văn'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    '17. Autocomplete tự động filter ngay khi gõ từng ký tự mà không cần nhấn Enter',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 320,
+                child: AppSelectField<String?>(
+                  label: 'Lớp',
+                  value: null,
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Tất cả')),
+                    DropdownMenuItem(value: '10A1', child: Text('Lớp 10A1')),
+                    DropdownMenuItem(value: '10A2', child: Text('Lớp 10A2')),
+                    DropdownMenuItem(value: '11B1', child: Text('Lớp 11B1')),
+                  ],
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final fieldFinder = find.byType(TextField);
+      await tester.tap(fieldFinder);
+      await tester.pumpAndSettle();
+
+      // Gõ "10" vào ô mà không nhấn Enter
+      await tester.enterText(fieldFinder, '10');
+      await tester.pumpAndSettle();
+
+      // Danh sách menu được tự động filter ngay lập tức
+      expect(find.textContaining('10A1'), findsOneWidget);
+      expect(find.textContaining('10A2'), findsOneWidget);
+      expect(find.textContaining('11B1'), findsNothing);
     },
   );
 }

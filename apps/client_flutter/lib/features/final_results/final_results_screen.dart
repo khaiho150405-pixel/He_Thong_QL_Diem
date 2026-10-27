@@ -182,7 +182,7 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
 
     final yearFilter = AcademicYearFilterControl(
       years: years,
-      width: isMobile ? double.infinity : 180,
+      width: isMobile ? double.infinity : 270,
       onChanged: _reload,
     );
 
@@ -191,9 +191,9 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       label: 'Học kỳ',
       icon: Icons.date_range_outlined,
       value: _termId,
-      width: isMobile ? double.infinity : 200,
+      width: isMobile ? double.infinity : 220,
       items: [
-        const DropdownMenuItem(value: null, child: Text('Tất cả học kỳ')),
+        const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final e in terms.entries)
           DropdownMenuItem(value: e.key, child: Text(e.value)),
       ],
@@ -208,9 +208,9 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       label: 'Lớp học',
       icon: Icons.meeting_room_outlined,
       value: _classId,
-      width: isMobile ? double.infinity : 170,
+      width: isMobile ? double.infinity : 220,
       items: [
-        const DropdownMenuItem(value: null, child: Text('Tất cả các lớp')),
+        const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final e in classes.entries)
           DropdownMenuItem(value: e.key, child: Text(e.value)),
       ],
@@ -225,9 +225,9 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       label: 'Môn học',
       icon: Icons.menu_book_outlined,
       value: _subjectId,
-      width: isMobile ? double.infinity : 180,
+      width: isMobile ? double.infinity : 220,
       items: [
-        const DropdownMenuItem(value: null, child: Text('Tất cả môn học')),
+        const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final e in subjects.entries)
           DropdownMenuItem(value: e.key, child: Text(e.value)),
       ],
@@ -360,45 +360,156 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            showCheckboxColumn: false,
-            columns: const [
-              DataColumn(label: Text('Lớp')),
-              DataColumn(label: Text('Môn học')),
-              DataColumn(label: Text('Học kỳ')),
-              DataColumn(label: Text('Trạng thái')),
-              DataColumn(label: Text('Thao tác')),
-            ],
-            rows: [
-              for (final b in pagedBooks)
-                DataRow(
-                  onSelectChanged: (_) => setState(() => _selectedBook = b),
-                  cells: [
-                    DataCell(
-                      Text(
-                        b.className,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: t.ink,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const totalColumns = 5;
+            final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+            const colSpacing = 16.0;
+            final availableTotalWidth =
+                constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+
+            const minLop = 80.0;
+            const minMon = 140.0;
+            const minHk = 100.0;
+            const minStatus = 120.0;
+            const minAction = 76.0;
+            const minRequired = minLop + minMon + minHk + minStatus + minAction;
+
+            final double colLop;
+            final double colMon;
+            final double colHk;
+            final double colStatus;
+            final double colAction;
+
+            if (availableTotalWidth > minRequired) {
+              final extra = availableTotalWidth - minRequired;
+              colLop = minLop + extra * 0.15;
+              colMon = minMon + extra * 0.35;
+              colHk = minHk + extra * 0.20;
+              colStatus = minStatus + extra * 0.20;
+              colAction = minAction + extra * 0.10;
+            } else {
+              colLop = minLop;
+              colMon = minMon;
+              colHk = minHk;
+              colStatus = minStatus;
+              colAction = minAction;
+            }
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  showCheckboxColumn: false,
+                  columnSpacing: colSpacing,
+                  horizontalMargin: hMargin,
+                  columns: [
+                    DataColumn(
+                      label: SizedBox(
+                        width: colLop,
+                        child: const Text('Lớp'),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colMon,
+                        child: const Text('Môn học'),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colHk,
+                        child: const Text('Học kỳ'),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colStatus,
+                        child: const Text('Trạng thái'),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colAction,
+                        child: const Align(
+                          alignment: Alignment.centerRight,
+                          child: Text('Thao tác'),
                         ),
                       ),
                     ),
-                    DataCell(Text(b.subjectName)),
-                    DataCell(Text(b.termName)),
-                    DataCell(GradebookStatusBadge(b.status.value)),
-                    DataCell(
-                      FilledButton.tonal(
-                        key: ValueKey('view-gradebook-${b.id}'),
-                        onPressed: () => setState(() => _selectedBook = b),
-                        child: const Text('Xem'),
+                  ],
+                  rows: [
+                    for (final b in pagedBooks)
+                      DataRow(
+                        onSelectChanged: (_) => setState(() => _selectedBook = b),
+                        cells: [
+                          DataCell(
+                            SizedBox(
+                              width: colLop,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  b.className,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: t.ink,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colMon,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  b.subjectName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colHk,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(b.termName),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colStatus,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: GradebookStatusBadge(b.status.value),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colAction,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: FilledButton.tonal(
+                                  key: ValueKey('view-gradebook-${b.id}'),
+                                  onPressed: () => setState(() => _selectedBook = b),
+                                  child: const Text('Xem'),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
                   ],
                 ),
-            ],
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -570,13 +681,6 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       title: 'Tổng kết & xếp loại',
       currentPath: '/final-results',
       showBackButton: true,
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: _reload,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
       body: user == null
           ? const SizedBox.shrink()
           : Center(
