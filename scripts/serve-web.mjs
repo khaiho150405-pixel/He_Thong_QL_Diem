@@ -23,6 +23,16 @@ const types = {
 };
 createServer(async (req, res) => {
   try {
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, HEAD, OPTIONS",
+        "access-control-allow-headers": "*",
+      });
+      res.end();
+      return;
+    }
+
     const url = new URL(req.url, "http://localhost");
     const pathname = decodeURIComponent(url.pathname);
     let target = path.resolve(root, "." + pathname);
@@ -56,6 +66,9 @@ createServer(async (req, res) => {
     }
     res.writeHead(200, {
       "content-type": types[path.extname(target)] ?? "application/octet-stream",
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "GET, HEAD, OPTIONS",
+      "access-control-allow-headers": "*",
       "cache-control":
         "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
     });
@@ -66,5 +79,5 @@ createServer(async (req, res) => {
     res.end();
   }
 }).listen(8080, "0.0.0.0", () =>
-  console.log("Flutter web: http://localhost:8080"),
+  console.log("Flutter web server running at: http://localhost:8080 (0.0.0.0:8080)"),
 );

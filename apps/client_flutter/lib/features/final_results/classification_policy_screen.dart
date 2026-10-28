@@ -229,53 +229,55 @@ class _ClassificationPolicyScreenState
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         'Các mức xếp loại',
-                        style: theme.textTheme.titleLarge,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: t.heading,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       for (var index = 0; index < criteria.length; index++)
                         Padding(
                           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                           child: Card(
+                            margin: EdgeInsets.zero,
                             child: Padding(
                               padding: const EdgeInsets.all(AppSpacing.md),
-                              child: Wrap(
-                                spacing: AppSpacing.md,
-                                runSpacing: AppSpacing.sm,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 190,
-                                    child: TextFormField(
-                                      controller: criteria[index].code,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Mã xếp loại',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) =>
-                                          RegExp(
-                                            r'^[A-Z][A-Z0-9_]{0,19}$',
-                                          ).hasMatch(value ?? '')
-                                          ? null
-                                          : 'Ví dụ: GIOI',
+                              child: LayoutBuilder(
+                                builder: (context, cardConstraints) {
+                                  final isWide = cardConstraints.maxWidth >= 600;
+                                  final codeField = TextFormField(
+                                    controller: criteria[index].code,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Mã xếp loại',
+                                      hintText: 'Ví dụ: GIOI',
+                                      border: OutlineInputBorder(),
+                                      isDense: true,
                                     ),
-                                  ),
-                                  SizedBox(
-                                    width: 150,
-                                    child: TextFormField(
-                                      controller: criteria[index].minimum,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Điểm tối thiểu',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      validator: (value) =>
-                                          RegExp(
-                                            r'^(?:[0-9]\.[0-9]|10\.0)$',
-                                          ).hasMatch(value ?? '')
-                                          ? null
-                                          : 'Dùng 0.0–10.0',
+                                    validator: (value) =>
+                                        RegExp(
+                                          r'^[A-Z][A-Z0-9_]{0,19}$',
+                                        ).hasMatch(value ?? '')
+                                        ? null
+                                        : 'Ví dụ: GIOI',
+                                  );
+
+                                  final minField = TextFormField(
+                                    controller: criteria[index].minimum,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Điểm tối thiểu',
+                                      hintText: '0.0–10.0',
+                                      border: OutlineInputBorder(),
+                                      isDense: true,
                                     ),
-                                  ),
-                                  FilterChip(
+                                    validator: (value) =>
+                                        RegExp(
+                                          r'^(?:[0-9]\.[0-9]|10\.0)$',
+                                        ).hasMatch(value ?? '')
+                                        ? null
+                                        : 'Dùng 0.0–10.0',
+                                  );
+
+                                  final passChip = FilterChip(
                                     selected: criteria[index].passing,
                                     selectedColor: t.okSoft,
                                     checkmarkColor: t.ok,
@@ -298,8 +300,9 @@ class _ClassificationPolicyScreenState
                                     onSelected: (value) => setState(
                                       () => criteria[index].passing = value,
                                     ),
-                                  ),
-                                  IconButton(
+                                  );
+
+                                  final deleteBtn = IconButton(
                                     tooltip: 'Xóa mức',
                                     onPressed: criteria.length <= 2
                                         ? null
@@ -307,8 +310,47 @@ class _ClassificationPolicyScreenState
                                             criteria.removeAt(index).dispose();
                                           }),
                                     icon: const Icon(Icons.delete_outline),
-                                  ),
-                                ],
+                                  );
+
+                                  if (isWide) {
+                                    return Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                          flex: 3,
+                                          child: codeField,
+                                        ),
+                                        const SizedBox(width: AppSpacing.md),
+                                        Expanded(
+                                          flex: 2,
+                                          child: minField,
+                                        ),
+                                        const SizedBox(width: AppSpacing.md),
+                                        passChip,
+                                        const SizedBox(width: AppSpacing.xs),
+                                        deleteBtn,
+                                      ],
+                                    );
+                                  }
+
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      codeField,
+                                      const SizedBox(height: AppSpacing.sm),
+                                      minField,
+                                      const SizedBox(height: AppSpacing.sm),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          passChip,
+                                          deleteBtn,
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                           ),

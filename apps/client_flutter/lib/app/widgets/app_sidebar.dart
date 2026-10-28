@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/authentication/session.dart';
 import '../design_tokens.dart';
-import 'app_avatar.dart';
+import 'app_user_avatar_menu.dart';
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
+final sidebarScrollOffsetProvider = StateProvider<double>((ref) => 0.0);
+final PageStorageBucket sidebarPageStorageBucket = PageStorageBucket();
 final sidebarOpenGroupsProvider = StateProvider<Set<String>>(
   (ref) => {
     'grades',
@@ -30,7 +32,7 @@ typedef _SidebarItem = ({
 ///
 /// [onLogout] do màn hình cha cấp (kèm hộp thoại xác nhận); khi để trống thì
 /// đăng xuất ngay như trang chủ.
-class AppSidebar extends ConsumerWidget {
+class AppSidebar extends ConsumerStatefulWidget {
   const AppSidebar({
     super.key,
     this.currentPath,
@@ -46,10 +48,6 @@ class AppSidebar extends ConsumerWidget {
   final Future<bool> Function()? onBeforeNavigate;
   final Future<void> Function()? onLogout;
 
-  bool _isRouteActive(String route) =>
-      currentPath == route ||
-      (route != '/' && (currentPath?.startsWith(route) ?? false));
-
   static String _roleLabel(String role) => switch (role) {
     'QUAN_TRI_VIEN' => 'Quản trị viên',
     'GIAO_VIEN' => 'Giáo viên',
@@ -57,7 +55,46 @@ class AppSidebar extends ConsumerWidget {
   };
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppSidebar> createState() => _AppSidebarState();
+}
+
+class _AppSidebarState extends ConsumerState<AppSidebar> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialOffset = ref.read(sidebarScrollOffsetProvider);
+    _scrollController = ScrollController(initialScrollOffset: initialOffset);
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      ref.read(sidebarScrollOffsetProvider.notifier).state =
+          _scrollController.offset;
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  bool _isRouteActive(String route) =>
+      widget.currentPath == route ||
+      (route != '/' && (widget.currentPath?.startsWith(route) ?? false));
+
+  @override
+  Widget build(BuildContext context) {
+    final currentPath = widget.currentPath;
+    final inDrawer = widget.inDrawer;
+    final isCollapsed = widget.isCollapsed;
+    final onBeforeNavigate = widget.onBeforeNavigate;
+    final onLogout = widget.onLogout;
+
     final t = context.tokens;
     final user = ref.watch(sessionProvider);
     final role = user?.role.value ?? 'GIAO_VIEN';
@@ -73,7 +110,7 @@ class AppSidebar extends ConsumerWidget {
 
     Future<void> navigate(String route) async {
       if (onBeforeNavigate != null) {
-        final allow = await onBeforeNavigate!();
+        final allow = await onBeforeNavigate();
         if (!allow) return;
       }
       if (!context.mounted) return;
@@ -86,23 +123,6 @@ class AppSidebar extends ConsumerWidget {
         if (context.mounted) {
           Navigator.of(context).pushNamed(route);
         }
-      }
-    }
-
-    Future<void> logout() async {
-      final notifier = ref.read(sessionProvider.notifier);
-      final messenger = ScaffoldMessenger.of(context);
-      if (inDrawer && Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      if (onLogout != null) {
-        await onLogout!();
-        return;
-      }
-      try {
-        await notifier.logout();
-      } catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text(errorMessage(e))));
       }
     }
 
@@ -502,14 +522,6 @@ class AppSidebar extends ConsumerWidget {
       );
     }
 
-    Widget logoutButton() => IconButton(
-      tooltip: 'Đăng xuất',
-      icon: const Icon(Icons.logout_rounded, size: 20),
-      color: t.onNavy,
-      hoverColor: hoverBg,
-      onPressed: logout,
-    );
-
     Widget buildUserFooter() {
       if (user == null) return const SizedBox(height: 12);
 
@@ -524,13 +536,11 @@ class AppSidebar extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Tooltip(
-                  message: '${user.username} (${_roleLabel(role)})',
-                  preferBelow: false,
-                  child: AppAvatar(name: user.username, size: AppAvatarSize.sm),
+                AppUserAvatarMenu(
+                  showName: false,
+                  textColor: t.onNavy,
+                  onLogout: onLogout,
                 ),
-                const SizedBox(height: 4),
-                logoutButton(),
               ],
             ),
           ),
@@ -539,8 +549,12 @@ class AppSidebar extends ConsumerWidget {
 
       Widget userRow(String subtitle) => Row(
         children: [
-          AppAvatar(name: user.username, size: AppAvatarSize.sm),
-          const SizedBox(width: 10),
+          AppUserAvatarMenu(
+            showName: false,
+            textColor: t.onNavy,
+            onLogout: onLogout,
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,7 +580,6 @@ class AppSidebar extends ConsumerWidget {
               ],
             ),
           ),
-          logoutButton(),
         ],
       );
 
@@ -639,7 +652,7 @@ class AppSidebar extends ConsumerWidget {
           },
         );
       }
-      return footer(userRow(_roleLabel(role)));
+      return footer(userRow(AppSidebar._roleLabel(role)));
     }
 
     final timetableTitle = role == 'QUAN_TRI_VIEN'
@@ -653,9 +666,13 @@ class AppSidebar extends ConsumerWidget {
         children: [
           buildBrandHeader(),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              children: [
+            child: PageStorage(
+              bucket: sidebarPageStorageBucket,
+              child: ListView(
+                key: const PageStorageKey('app-sidebar-nav-list'),
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                children: [
                 sectionLabel('ĐIỀU HƯỚNG CHÍNH', top: 10),
                 buildNavTile(
                   icon: Icons.grid_view_outlined,
@@ -825,6 +842,7 @@ class AppSidebar extends ConsumerWidget {
                   ),
               ],
             ),
+          ),
           ),
           buildUserFooter(),
         ],

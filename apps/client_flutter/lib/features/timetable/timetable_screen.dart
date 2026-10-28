@@ -331,9 +331,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             label: 'Lớp học',
             icon: Icons.meeting_room_outlined,
             value: _selectedClassId,
-            width: 170,
+            width: 220,
             items: [
-              const DropdownMenuItem(value: null, child: Text('Tất cả lớp')),
+              const DropdownMenuItem(value: null, child: Text('Tất cả')),
               for (final c in _classes)
                 DropdownMenuItem(
                   value: c['ma_lop'] as num?,
@@ -349,11 +349,11 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             label: 'Giáo viên',
             icon: Icons.badge_outlined,
             value: _selectedTeacherId,
-            width: 200,
+            width: 220,
             items: [
               const DropdownMenuItem(
                 value: null,
-                child: Text('Tất cả giáo viên'),
+                child: Text('Tất cả'),
               ),
               for (final teacher in _teachers)
                 DropdownMenuItem(
@@ -370,7 +370,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             label: 'Học kỳ',
             icon: Icons.calendar_month_outlined,
             value: _selectedSemesterId,
-            width: 205,
+            width: 220,
             items: [
               const DropdownMenuItem(
                 value: null,
@@ -391,7 +391,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             label: 'Hiển thị lịch theo',
             icon: Icons.layers_outlined,
             value: _groupByRoom,
-            width: 180,
+            width: 210,
             searchable: false,
             items: const [
               DropdownMenuItem(value: false, child: Text('Lớp học')),
@@ -429,16 +429,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
       title: title,
       currentPath: '/timetable',
       showBackButton: true,
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          icon: const Icon(Icons.refresh),
-          onPressed: () {
-            _loadMetadata();
-            _loadTimetable();
-          },
-        ),
-      ],
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1180),
@@ -576,21 +566,25 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                       }
                       if (snapshot.hasError) {
                         return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.error_outline, size: 40, color: t.bad),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Lỗi: ${snapshot.error}',
-                                style: TextStyle(color: t.ink),
-                              ),
-                              const SizedBox(height: 10),
-                              FilledButton.tonal(
-                                onPressed: _loadTimetable,
-                                child: const Text('Thử lại'),
-                              ),
-                            ],
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.error_outline, size: 40, color: t.bad),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Lỗi: ${snapshot.error}',
+                                  style: TextStyle(color: t.ink),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 10),
+                                FilledButton.tonal(
+                                  onPressed: _loadTimetable,
+                                  child: const Text('Thử lại'),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }

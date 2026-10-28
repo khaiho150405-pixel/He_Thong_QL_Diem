@@ -443,13 +443,6 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
       title: 'Môn học & hệ số',
       currentPath: '/admin/subjects-weights',
       showBackButton: true,
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: _reload,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
       body: user == null
           ? const SizedBox.shrink()
           : Center(

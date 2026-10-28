@@ -159,13 +159,6 @@ class _TemplateDetailScreenState extends ConsumerState<TemplateDetailScreen> {
       currentPath: '/admin/form-templates',
       showBackButton: true,
       onBack: () => context.go('/admin/form-templates'),
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: _reload,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1000),

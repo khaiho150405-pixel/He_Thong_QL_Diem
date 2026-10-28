@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -176,11 +178,13 @@ class AcademicYearFilterControl extends ConsumerWidget {
     final isArchive =
         viewingYear != null && !viewingYear.isAll && !viewingYear.isCurrent;
 
+    final resolvedWidth = width != null ? math.max(260.0, width!) : 270.0;
+
     final dropdown = AppFilterDropdown<num?>(
       label: 'Năm học',
       icon: Icons.calendar_month_outlined,
       value: effectiveValue,
-      width: width,
+      width: resolvedWidth,
       items: [
         if (allowAll)
           const DropdownMenuItem<num?>(

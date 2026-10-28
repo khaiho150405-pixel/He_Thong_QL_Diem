@@ -5,6 +5,7 @@ import '../../../../app/design_tokens.dart';
 import '../../../../app/widgets/app_edge_scrollbar.dart';
 import '../../../../app/widgets/app_shell.dart';
 import '../../../../app/widgets/app_sidebar.dart';
+import '../../../../app/widgets/app_user_avatar_menu.dart';
 import '../../../../app/widgets/theme_mode_button.dart';
 import '../../profile_dialog.dart';
 import '../widgets/home_dashboard_content.dart';
@@ -47,22 +48,10 @@ class HomeWebView extends ConsumerWidget {
                       role: role,
                       title: 'Tổng quan',
                       actions: [
-                        if (role != 'QUAN_TRI_VIEN')
-                          IconButton(
-                            tooltip: 'Hồ sơ cá nhân',
-                            onPressed: () => showDialog<void>(
-                              context: context,
-                              builder: (_) => const ProfileDialog(),
-                            ),
-                            icon: const Icon(Icons.person_outline),
-                          ),
-                        if (role != 'HOC_SINH')
-                          IconButton(
-                            tooltip: 'Đổi mật khẩu',
-                            onPressed: () => onChangePassword(context, ref),
-                            icon: const Icon(Icons.password),
-                          ),
                         const ThemeModeButton(),
+                        const SizedBox(width: 8),
+                        const AppUserAvatarMenu(showName: true),
+                        const SizedBox(width: 6),
                       ],
                     ),
                     Expanded(

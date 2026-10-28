@@ -552,14 +552,6 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
 
     return AppScaffold(
       title: 'Duyệt điều chỉnh điểm',
-      actions: [
-        IconButton(
-          key: const ValueKey('refresh-adjustments-btn'),
-          icon: const Icon(Icons.refresh_rounded),
-          tooltip: 'Tải lại',
-          onPressed: () => _fetchPage(refresh: true),
-        ),
-      ],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -662,63 +654,226 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
               )
             else
               Card(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: const [
-                      DataColumn(label: Text('Lớp')),
-                      DataColumn(label: Text('Môn')),
-                      DataColumn(label: Text('Học kỳ')),
-                      DataColumn(label: Text('Giáo viên')),
-                      DataColumn(label: Text('Số ô')),
-                      DataColumn(label: Text('Gửi lúc')),
-                      DataColumn(label: Text('Trạng thái')),
-                      DataColumn(label: Text('Thao tác')),
-                    ],
-                    rows: _items.map((item) {
-                      return DataRow(
-                        key: ValueKey('adjustment-row-${item.id}'),
-                        cells: [
-                          DataCell(Text(item.className,
-                              style: const TextStyle(fontWeight: FontWeight.w600))),
-                          DataCell(Text(item.subjectName)),
-                          DataCell(Text(item.termName)),
-                          DataCell(Text(item.submittedBy.name)),
-                          DataCell(Text('${item.lineCount}')),
-                          DataCell(Text(formatAdjustmentDateTime(item.submittedAt))),
-                          DataCell(adjustmentStatusBadge(item.status)),
-                          DataCell(
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                OutlinedButton(
-                                  key: ValueKey('view-adjustment-${item.id}'),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
+                clipBehavior: Clip.antiAlias,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    const totalColumns = 8;
+                    const colSpacing = 16.0;
+                    final hMargin =
+                        constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+                    final availableTotalWidth = constraints.maxWidth -
+                        (hMargin * 2) -
+                        ((totalColumns - 1) * colSpacing);
+
+                    const minColLop = 70.0;
+                    const minColMon = 100.0;
+                    const minColHk = 90.0;
+                    const minColGv = 130.0;
+                    const minColSoO = 50.0;
+                    const minColGuiLuc = 120.0;
+                    const minColTrangThai = 110.0;
+                    const minColThaoTac = 90.0;
+                    const minRequired = minColLop +
+                        minColMon +
+                        minColHk +
+                        minColGv +
+                        minColSoO +
+                        minColGuiLuc +
+                        minColTrangThai +
+                        minColThaoTac;
+
+                    final double colLop;
+                    final double colMon;
+                    final double colHk;
+                    final double colGv;
+                    final double colSoO;
+                    final double colGuiLuc;
+                    final double colTrangThai;
+                    final double colThaoTac;
+
+                    if (availableTotalWidth > minRequired) {
+                      final extra = availableTotalWidth - minRequired;
+                      colLop = minColLop + extra * 0.10;
+                      colMon = minColMon + extra * 0.18;
+                      colHk = minColHk + extra * 0.12;
+                      colGv = minColGv + extra * 0.20;
+                      colSoO = minColSoO;
+                      colGuiLuc = minColGuiLuc + extra * 0.18;
+                      colTrangThai = minColTrangThai + extra * 0.12;
+                      colThaoTac = minColThaoTac + extra * 0.10;
+                    } else {
+                      colLop = minColLop;
+                      colMon = minColMon;
+                      colHk = minColHk;
+                      colGv = minColGv;
+                      colSoO = minColSoO;
+                      colGuiLuc = minColGuiLuc;
+                      colTrangThai = minColTrangThai;
+                      colThaoTac = minColThaoTac;
+                    }
+
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(minWidth: constraints.maxWidth),
+                        child: DataTable(
+                          columnSpacing: colSpacing,
+                          horizontalMargin: hMargin,
+                          columns: [
+                            DataColumn(
+                              label: SizedBox(
+                                width: colLop,
+                                child: const Text('Lớp'),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: colMon,
+                                child: const Text('Môn'),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: colHk,
+                                child: const Text('Học kỳ'),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: colGv,
+                                child: const Text('Giáo viên'),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: colSoO,
+                                child: const Center(child: Text('Số ô')),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: colGuiLuc,
+                                child: const Text('Gửi lúc'),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: colTrangThai,
+                                child: const Text('Trạng thái'),
+                              ),
+                            ),
+                            DataColumn(
+                              label: SizedBox(
+                                width: colThaoTac,
+                                child: const Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text('Thao tác'),
+                                ),
+                              ),
+                            ),
+                          ],
+                          rows: _items.map((item) {
+                            return DataRow(
+                              key: ValueKey('adjustment-row-${item.id}'),
+                              cells: [
+                                DataCell(
+                                  SizedBox(
+                                    width: colLop,
+                                    child: Text(
+                                      item.className,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  onPressed: () => _openDetail(item),
-                                  child: Text(
-                                    item.status ==
-                                                AdjustmentDtoStatusEnum.CHO_DUYET &&
-                                            isQtv
-                                        ? 'Duyệt / Xem'
-                                        : 'Xem',
-                                    style: const TextStyle(fontSize: 12),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: colMon,
+                                    child: Text(
+                                      item.subjectName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: colHk,
+                                    child: Text(item.termName),
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: colGv,
+                                    child: Text(
+                                      item.submittedBy.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: colSoO,
+                                    child: Center(
+                                      child: Text('${item.lineCount}'),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: colGuiLuc,
+                                    child: Text(
+                                      formatAdjustmentDateTime(item.submittedAt),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: colTrangThai,
+                                    child: adjustmentStatusBadge(item.status),
+                                  ),
+                                ),
+                                DataCell(
+                                  SizedBox(
+                                    width: colThaoTac,
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: OutlinedButton(
+                                        key: ValueKey(
+                                            'view-adjustment-${item.id}'),
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        onPressed: () => _openDetail(item),
+                                        child: Text(
+                                          item.status ==
+                                                      AdjustmentDtoStatusEnum
+                                                          .CHO_DUYET &&
+                                                  isQtv
+                                              ? 'Duyệt / Xem'
+                                              : 'Xem',
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             if (_loading)

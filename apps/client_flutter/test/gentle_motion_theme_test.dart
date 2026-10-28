@@ -5,6 +5,7 @@ import 'package:client_flutter/features/connection/connection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 Widget _buildTransition({required bool disableAnimations}) {
   final route = MaterialPageRoute<void>(builder: (_) => const SizedBox());
@@ -149,7 +150,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Kiểm tra kết nối hệ thống'));
+      GoRouter.of(tester.element(find.text('Đăng nhập').first)).push('/connection');
       await tester.pump();
       for (final ms in [40, 60, 60, 60]) {
         await tester.pump(Duration(milliseconds: ms));

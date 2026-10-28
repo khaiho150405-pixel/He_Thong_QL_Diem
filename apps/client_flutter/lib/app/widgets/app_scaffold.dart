@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../design_tokens.dart';
 import 'app_edge_scrollbar.dart';
 import 'app_shell.dart';
 import 'app_sidebar.dart';
+import 'app_user_avatar_menu.dart';
 import 'theme_mode_button.dart';
 
 class AppScaffold extends ConsumerWidget {
@@ -79,6 +81,7 @@ class AppScaffold extends ConsumerWidget {
   }
 
   Widget? _backButton(BuildContext context) {
+    if (kIsWeb) return null;
     if (!showBackButton) return null;
     return IconButton(
       icon: const Icon(Icons.arrow_back),
@@ -153,7 +156,13 @@ class AppScaffold extends ConsumerWidget {
                       titleWidget: titleWidget,
                       yearLabel: yearLabel,
                       leading: leading ?? _backButton(context),
-                      actions: [...?actions, const ThemeModeButton()],
+                      actions: [
+                        ...?actions,
+                        const ThemeModeButton(),
+                        const SizedBox(width: 4),
+                        const AppUserAvatarMenu(showName: false),
+                        const SizedBox(width: 8),
+                      ],
                       bottom: bottom,
                     ),
                     Expanded(child: AppEdgeScrollbar(child: body)),
@@ -168,12 +177,18 @@ class AppScaffold extends ConsumerWidget {
       );
     }
 
-    // Mobile / tablet: AppBar + Drawer navy + thanh điều hướng đáy theo vai.
-    final mobileNav = AppBottomNav(
-      role: role,
-      currentPath: currentPath,
-      onBeforeLeave: onBeforeLeave,
-    );
+    // Thanh điều hướng đáy chỉ hiển thị trên ứng dụng di động native (Android / iOS).
+    // Trên Web (kể cả khi co nhỏ màn hình hoặc mở web trên điện thoại), KHÔNG dùng bottom nav,
+    // người dùng điều hướng qua Drawer và Sidebar.
+    final showMobileNav = !kIsWeb;
+    final mobileNav = showMobileNav
+        ? AppBottomNav(
+            role: role,
+            currentPath: currentPath,
+            onBeforeLeave: onBeforeLeave,
+          )
+        : null;
+
     return Scaffold(
       backgroundColor: t.bg,
       appBar: AppBar(
@@ -181,7 +196,7 @@ class AppScaffold extends ConsumerWidget {
         leading: leading ?? _backButton(context),
         automaticallyImplyLeading:
             automaticallyImplyLeading ??
-            (showBackButton ? false : true),
+            ((!kIsWeb && showBackButton) ? false : true),
         titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w700,
@@ -211,14 +226,9 @@ class AppScaffold extends ConsumerWidget {
         actions: [
           ...?actions,
           const ThemeModeButton(),
-          if (!showBackButton) ...[
-            IconButton(
-              tooltip: 'Đăng xuất',
-              icon: const Icon(Icons.logout_rounded),
-              onPressed: () => _logout(context, ref),
-            ),
-            const SizedBox(width: 4),
-          ],
+          const SizedBox(width: 4),
+          const AppUserAvatarMenu(showName: false),
+          const SizedBox(width: 6),
         ],
       ),
       drawer: Drawer(
@@ -233,10 +243,12 @@ class AppScaffold extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: bottomBar != null
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [bottomBar!, mobileNav],
-            )
+          ? (mobileNav != null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [bottomBar!, mobileNav],
+                )
+              : bottomBar)
           : mobileNav,
       body: AppEdgeScrollbar(child: body),
       floatingActionButton: floatingActionButton,

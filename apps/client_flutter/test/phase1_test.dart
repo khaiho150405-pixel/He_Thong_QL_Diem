@@ -181,8 +181,20 @@ void registerPhaseOneTests({bool resize = true}) {
       expect(tester.takeException(), isNull);
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Đăng xuất'));
-      await tester.pumpAndSettle();
+      final avatarFinder = find.byType(PopupMenuButton<String>);
+      if (avatarFinder.evaluate().isNotEmpty) {
+        await tester.tap(avatarFinder.first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Đăng xuất'));
+        await tester.pumpAndSettle();
+        if (find.text('Xác nhận đăng xuất').evaluate().isNotEmpty) {
+          await tester.tap(find.widgetWithText(FilledButton, 'Đăng xuất'));
+          await tester.pumpAndSettle();
+        }
+      } else {
+        await tester.tap(find.byTooltip('Đăng xuất'));
+        await tester.pumpAndSettle();
+      }
       expect(find.widgetWithText(FilledButton, 'Đăng nhập'), findsOneWidget);
       expect(dio.options.headers.containsKey('authorization'), false);
       await tester.pumpWidget(const SizedBox.shrink());

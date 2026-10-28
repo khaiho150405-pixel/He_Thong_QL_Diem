@@ -161,9 +161,19 @@ class _AppDateFieldState extends State<AppDateField> {
       lastDate: effectiveLast,
       initialEntryMode: DatePickerEntryMode.calendar,
       locale: pickerLocale,
-      helpText: widget.label,
+      helpText: 'Chọn ngày',
+      fieldLabelText: 'Ngày',
       cancelText: 'Hủy',
       confirmText: 'Chọn',
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          inputDecorationTheme: const InputDecorationTheme(
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            isDense: true,
+          ),
+        ),
+        child: child!,
+      ),
     );
 
     if (picked != null) {

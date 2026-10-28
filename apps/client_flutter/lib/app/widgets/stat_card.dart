@@ -54,7 +54,7 @@ class StatCard extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: MediaQuery.sizeOf(context).width < 360 ? 12 : 18,
-              vertical: 14,
+              vertical: 16,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

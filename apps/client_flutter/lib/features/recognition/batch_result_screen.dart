@@ -148,13 +148,6 @@ class _BatchResultScreenState extends ConsumerState<BatchResultScreen> {
       title: 'Kết quả lô #${widget.batchId}',
       currentPath: '/gradebooks',
       showBackButton: true,
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: _reload,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1140),

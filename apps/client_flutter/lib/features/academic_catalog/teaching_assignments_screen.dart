@@ -163,7 +163,7 @@ class _TeachingAssignmentsScreenState
       value: _semesterId,
       width: 260,
       items: [
-        const DropdownMenuItem(value: null, child: Text('Tất cả học kỳ')),
+        const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final s in data.semesters)
           if (s['ma_hoc_ky'] is num)
             DropdownMenuItem(
@@ -320,13 +320,6 @@ class _TeachingAssignmentsScreenState
       title: 'Giáo viên & phân công',
       currentPath: '/admin/teaching-assignments',
       showBackButton: true,
-      actions: [
-        IconButton(
-          tooltip: 'Tải lại',
-          onPressed: _reload,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
       body: user == null
           ? const SizedBox.shrink()
           : Center(

@@ -32,9 +32,83 @@
 
   <title>EduScore - THPT Bà Điểm</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    // Tu dong xoa sach Service Worker va CacheStorage cu de luon hien thi UI moi nhat
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        for (var r of regs) { r.unregister(); }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function (names) {
+        for (var n of names) { caches.delete(n); }
+      });
+    }
+  </script>
 </head>
 
 <body>
+  <div id="app-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0F172A;font-family:system-ui,-apple-system,sans-serif;z-index:999999;transition:opacity 0.4s ease, visibility 0.4s ease;pointer-events:none;">
+    <div style="width:44px;height:44px;border:3px solid rgba(255,255,255,0.12);border-top-color:#38BDF8;border-radius:50%;animation:es-spin 0.8s linear infinite;"></div>
+    <div style="margin-top:16px;font-size:18px;font-weight:600;color:#F8FAFC;letter-spacing:0.5px;">EduScore</div>
+    <div style="margin-top:6px;font-size:13px;color:#94A3B8;">Đang tải hệ thống...</div>
+  </div>
+  <style>
+    @keyframes es-spin { to { transform: rotate(360deg); } }
+  </style>
+  <script>
+    (function () {
+      function dismissLoading() {
+        var el = document.getElementById('app-loading');
+        if (el && !el.dataset.dismissed) {
+          el.dataset.dismissed = 'true';
+          el.style.opacity = '0';
+          el.style.visibility = 'hidden';
+          setTimeout(function () {
+            if (el.parentNode) el.parentNode.removeChild(el);
+          }, 450);
+        }
+      }
+
+      // 1. Luôn tự động tắt sau tối đa 2.5s để đảm bảo giao diện luôn xuất hiện trong 5-10s
+      var fallbackTimer = setTimeout(dismissLoading, 2500);
+
+      // 2. Tắt ngay khi Flutter gắn view / canvas vào DOM
+      function checkAndDismiss() {
+        if (document.querySelector('flutter-view, flt-glass-pane, flt-scene-host, canvas, [flt-renderer]')) {
+          dismissLoading();
+          clearTimeout(fallbackTimer);
+          return true;
+        }
+        return false;
+      }
+
+      var observer = new MutationObserver(function () {
+        if (checkAndDismiss()) {
+          observer.disconnect();
+        }
+      });
+
+      if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+      } else {
+        window.addEventListener('DOMContentLoaded', function () {
+          observer.observe(document.body, { childList: true, subtree: true });
+        });
+      }
+
+      var interval = setInterval(function () {
+        if (checkAndDismiss()) {
+          clearInterval(interval);
+        }
+      }, 100);
+
+      window.addEventListener('load', function () {
+        setTimeout(dismissLoading, 1000);
+      });
+      window.addEventListener('flutter-first-frame', dismissLoading);
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
+import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/empty_state.dart';
 import '../authentication/session.dart';
@@ -418,17 +419,13 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       ],
     );
 
-    final classificationDropdown = DropdownButtonFormField<String?>(
+    final classificationDropdown = AppFilterDropdown<String?>(
       key: const ValueKey('final-results-classification-filter'),
-      initialValue: _classificationFilter,
-      isDense: true,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'Lọc xếp loại',
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      ),
+      label: 'Lọc xếp loại',
+      icon: Icons.filter_alt_outlined,
+      value: _classificationFilter,
       items: [
-        const DropdownMenuItem(value: null, child: Text('Tất cả xếp loại')),
+        const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final c in availableClassifications)
           DropdownMenuItem(
             value: c,
@@ -441,15 +438,11 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       }),
     );
 
-    final sortDropdown = DropdownButtonFormField<_ResultSort>(
+    final sortDropdown = AppFilterDropdown<_ResultSort>(
       key: const ValueKey('final-results-sort'),
-      initialValue: _sort,
-      isDense: true,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: 'Sắp xếp',
-        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      ),
+      label: 'Sắp xếp',
+      icon: Icons.sort_rounded,
+      value: _sort,
       items: const [
         DropdownMenuItem(
           value: _ResultSort.sttAsc,
@@ -808,64 +801,158 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            dataRowMinHeight: 48,
-            dataRowMaxHeight: 56,
-            columns: const [
-              DataColumn(label: Text('STT')),
-              DataColumn(label: Text('Học sinh')),
-              DataColumn(label: Text('Điểm tổng kết')),
-              DataColumn(label: Text('Xếp loại')),
-              DataColumn(label: Text('Chi tiết')),
-            ],
-            rows: [
-              for (var i = 0; i < items.length; i++)
-                DataRow(
-                  cells: [
-                    DataCell(
-                      Text(
-                        sttMap[items[i].studentId] != null
-                            ? '${sttMap[items[i].studentId]}'
-                            : '${i + 1 + _page * _pageSize}',
-                        style: TextStyle(color: t.ink3),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const totalColumns = 5;
+            final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+            const colSpacing = 16.0;
+            final availableTotalWidth =
+                constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+
+            const minStt = 50.0;
+            const minStudent = 160.0;
+            const minScore = 110.0;
+            const minClassif = 110.0;
+            const minDetail = 60.0;
+            const minRequired = minStt + minStudent + minScore + minClassif + minDetail;
+
+            final double colStt;
+            final double colStudent;
+            final double colScore;
+            final double colClassif;
+            final double colDetail;
+
+            if (availableTotalWidth > minRequired) {
+              final extra = availableTotalWidth - minRequired;
+              colStt = minStt;
+              colDetail = minDetail;
+              colStudent = minStudent + extra * 0.50;
+              colScore = minScore + extra * 0.25;
+              colClassif = minClassif + extra * 0.25;
+            } else {
+              colStt = minStt;
+              colStudent = minStudent;
+              colScore = minScore;
+              colClassif = minClassif;
+              colDetail = minDetail;
+            }
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: DataTable(
+                  columnSpacing: colSpacing,
+                  horizontalMargin: hMargin,
+                  dataRowMinHeight: 48,
+                  dataRowMaxHeight: 56,
+                  columns: [
+                    DataColumn(
+                      label: SizedBox(
+                        width: colStt,
+                        child: const Center(child: Text('STT')),
                       ),
                     ),
-                    DataCell(
-                      Text(
-                        items[i].studentName,
-                        style: TextStyle(
-                          color: t.ink,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colStudent,
+                        child: const Text('Học sinh'),
                       ),
                     ),
-                    DataCell(
-                      Text(
-                        items[i].finalScore,
-                        style: TextStyle(
-                          color: t.ink,
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colScore,
+                        child: const Center(child: Text('Điểm tổng kết')),
                       ),
                     ),
-                    DataCell(
-                      _classificationBadge(items[i].classification),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colClassif,
+                        child: const Center(child: Text('Xếp loại')),
+                      ),
                     ),
-                    DataCell(
-                      IconButton(
-                        tooltip: 'Lịch sử tính',
-                        color: t.ink2,
-                        onPressed: () => showHistory(items[i]),
-                        icon: const Icon(Icons.history),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colDetail,
+                        child: const Center(child: Text('Chi tiết')),
                       ),
                     ),
                   ],
+                  rows: [
+                    for (var i = 0; i < items.length; i++)
+                      DataRow(
+                        cells: [
+                          DataCell(
+                            SizedBox(
+                              width: colStt,
+                              child: Center(
+                                child: Text(
+                                  sttMap[items[i].studentId] != null
+                                      ? '${sttMap[items[i].studentId]}'
+                                      : '${i + 1 + _page * _pageSize}',
+                                  style: TextStyle(color: t.ink3),
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colStudent,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  items[i].studentName,
+                                  style: TextStyle(
+                                    color: t.ink,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colScore,
+                              child: Center(
+                                child: Text(
+                                  items[i].finalScore,
+                                  style: TextStyle(
+                                    color: t.ink,
+                                    fontWeight: FontWeight.w700,
+                                    fontFeatures: const [FontFeature.tabularFigures()],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colClassif,
+                              child: Center(
+                                child: _classificationBadge(items[i].classification),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            SizedBox(
+                              width: colDetail,
+                              child: Center(
+                                child: IconButton(
+                                  tooltip: 'Lịch sử tính',
+                                  color: t.ink2,
+                                  onPressed: () => showHistory(items[i]),
+                                  icon: const Icon(Icons.history),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

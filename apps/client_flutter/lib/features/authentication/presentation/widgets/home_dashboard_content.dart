@@ -77,7 +77,8 @@ class HomeDashboardContent extends ConsumerWidget {
   ) {
     final average = summary.averageScore == null
         ? '—'
-        : double.tryParse(summary.averageScore ?? '')?.toStringAsFixed(1) ?? '—';
+        : double.tryParse(summary.averageScore ?? '')?.toStringAsFixed(1) ??
+              '—';
     final rank = summary.classRank == null ? '—' : '${summary.classRank}';
     return StatCardGrid(
       children: [
@@ -167,7 +168,7 @@ class HomeDashboardContent extends ConsumerWidget {
                             child: Text(
                               'Xin chào, ${user.username}',
                               style: TextStyle(
-                                fontSize: isDesktop ? 24 : 20,
+                                fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: -0.5,
                                 color: t.heading,
