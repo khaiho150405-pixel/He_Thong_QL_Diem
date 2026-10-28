@@ -244,7 +244,8 @@ class _ClassificationPolicyScreenState
                               padding: const EdgeInsets.all(AppSpacing.md),
                               child: LayoutBuilder(
                                 builder: (context, cardConstraints) {
-                                  final isWide = cardConstraints.maxWidth >= 600;
+                                  final isWide =
+                                      cardConstraints.maxWidth >= 600;
                                   final codeField = TextFormField(
                                     controller: criteria[index].code,
                                     decoration: const InputDecoration(
@@ -314,17 +315,12 @@ class _ClassificationPolicyScreenState
 
                                   if (isWide) {
                                     return Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
-                                        Expanded(
-                                          flex: 3,
-                                          child: codeField,
-                                        ),
+                                        Expanded(flex: 3, child: codeField),
                                         const SizedBox(width: AppSpacing.md),
-                                        Expanded(
-                                          flex: 2,
-                                          child: minField,
-                                        ),
+                                        Expanded(flex: 2, child: minField),
                                         const SizedBox(width: AppSpacing.md),
                                         passChip,
                                         const SizedBox(width: AppSpacing.xs),
@@ -334,7 +330,8 @@ class _ClassificationPolicyScreenState
                                   }
 
                                   return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       codeField,
                                       const SizedBox(height: AppSpacing.sm),
@@ -343,10 +340,7 @@ class _ClassificationPolicyScreenState
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          passChip,
-                                          deleteBtn,
-                                        ],
+                                        children: [passChip, deleteBtn],
                                       ),
                                     ],
                                   );

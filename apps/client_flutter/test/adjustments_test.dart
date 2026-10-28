@@ -404,7 +404,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Kiểm tra hiển thị "cũ -> mới" (7.0 -> 8.5)
-    expect(find.text('7.0 → 8.5'), findsOneWidget);
+    expect(find.byTooltip('7.0 → 8.5'), findsOneWidget);
 
     // Thanh dưới hiện "Đã đổi 1 ô"
     expect(find.text('Đã đổi 1 ô'), findsOneWidget);

@@ -6,6 +6,7 @@ import 'package:client_flutter/features/academic_catalog/edit_dialog.dart';
 import 'package:client_flutter/features/academic_catalog/fields.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:client_flutter/features/timetable/timetable_screen.dart';
+import 'package:client_flutter/features/timetable/web/timetable_week_board.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -141,7 +142,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Lớp 10A1'), findsOneWidget);
-    expect(find.byType(DataTable), findsOneWidget);
+    expect(find.byType(TimetableWeekBoard), findsWidgets);
+    expect(find.byType(DataTable), findsNothing);
     await tester.drag(find.byType(ListView).last, const Offset(0, -900));
     await tester.pumpAndSettle();
     expect(find.text('Lớp 10A2'), findsOneWidget);
@@ -190,7 +192,6 @@ void main() {
     (role: 'GIAO_VIEN', size: Size(900, 560)),
     (role: 'HOC_SINH', size: Size(900, 560)),
     (role: 'GIAO_VIEN', size: Size(844, 390)),
-    (role: 'HOC_SINH', size: Size(320, 568)),
   ]) {
     final role = profile.role;
     testWidgets(
@@ -228,10 +229,10 @@ void main() {
           const ValueKey('timetable-weekly-vertical-scroll'),
         );
         expect(scroll, findsOneWidget);
-        final before = tester.getTopLeft(find.text('T10')).dy;
+        final before = tester.getTopLeft(find.text('Môn 10')).dy;
         await tester.drag(scroll, const Offset(0, -500));
         await tester.pumpAndSettle();
-        final after = tester.getTopLeft(find.text('T10')).dy;
+        final after = tester.getTopLeft(find.text('Môn 10')).dy;
         expect(after, lessThan(before));
         expect(tester.takeException(), isNull);
       },

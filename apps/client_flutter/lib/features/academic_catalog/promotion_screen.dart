@@ -50,7 +50,8 @@ class _PromotionRowState {
             : 'Đã lưu ban',
       PromotionPreviewItemDtoProcessedStatusEnum.TOT_NGHIEP => 'Đã tốt nghiệp',
       PromotionPreviewItemDtoProcessedStatusEnum.NGHI_HOC => 'Đã nghỉ học',
-      PromotionPreviewItemDtoProcessedStatusEnum.DA_CHUYEN_LOP => 'Đã chuyển lớp',
+      PromotionPreviewItemDtoProcessedStatusEnum.DA_CHUYEN_LOP =>
+        'Đã chuyển lớp',
     };
   }
 }
@@ -159,7 +160,9 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
       final nextGradeClasses = preview.targetClasses
           .where((c) => c.grade == nextGrade)
           .toList();
-      final quickClass = nextGradeClasses.isNotEmpty ? nextGradeClasses.first.id : null;
+      final quickClass = nextGradeClasses.isNotEmpty
+          ? nextGradeClasses.first.id
+          : null;
 
       if (mounted) {
         setState(() {
@@ -197,7 +200,10 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
     return [];
   }
 
-  void _onActionChanged(_PromotionRowState row, PromotionItemInputActionEnum newAction) {
+  void _onActionChanged(
+    _PromotionRowState row,
+    PromotionItemInputActionEnum newAction,
+  ) {
     setState(() {
       row.action = newAction;
       final eligibleClasses = _filteredTargetClasses(newAction);
@@ -206,8 +212,9 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
         row.targetClassId = null;
       } else {
         if (!eligibleClasses.any((c) => c.id == row.targetClassId)) {
-          row.targetClassId =
-              eligibleClasses.isNotEmpty ? eligibleClasses.first.id : null;
+          row.targetClassId = eligibleClasses.isNotEmpty
+              ? eligibleClasses.first.id
+              : null;
         }
       }
     });
@@ -296,11 +303,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (promotedCount > 0)
-                        _summaryRow(
-                          'Lên lớp',
-                          '$promotedCount học sinh',
-                          t.ok,
-                        ),
+                        _summaryRow('Lên lớp', '$promotedCount học sinh', t.ok),
                       if (retainedCount > 0)
                         _summaryRow(
                           'Lưu ban',
@@ -352,7 +355,9 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
             studentId: r.studentId,
             action: r.action,
             targetClassId: r.targetClassId,
-            reason: r.reason?.trim().isNotEmpty == true ? r.reason!.trim() : null,
+            reason: r.reason?.trim().isNotEmpty == true
+                ? r.reason!.trim()
+                : null,
           );
         }).toList(),
       );
@@ -395,7 +400,10 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          ),
           Text(
             value,
             style: TextStyle(
@@ -545,13 +553,13 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                   .map(
                     (y) => DropdownMenuItem<num>(
                       value: y.maNamHoc,
-                      child: Text(
-                        y.hienHanh ? '${y.ten} (Hiện hành)' : y.ten,
-                      ),
+                      child: Text(y.hienHanh ? '${y.ten} (Hiện hành)' : y.ten),
                     ),
                   )
                   .toList(),
-              onChanged: _submitting ? null : (v) => v != null ? _loadPreview(v) : null,
+              onChanged: _submitting
+                  ? null
+                  : (v) => v != null ? _loadPreview(v) : null,
             ),
         ],
       ),
@@ -649,17 +657,22 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             const totalColumns = 5;
-            final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+            final hMargin = constraints.maxWidth >= 768
+                ? AppSpacing.xl
+                : AppSpacing.md;
             const colSpacing = 16.0;
             final availableTotalWidth =
-                constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+                constraints.maxWidth -
+                (hMargin * 2) -
+                ((totalColumns - 1) * colSpacing);
 
             const minOrder = 50.0;
             const minName = 160.0;
             const minAction = 140.0;
             const minTarget = 140.0;
             const minReason = 160.0;
-            const minRequired = minOrder + minName + minAction + minTarget + minReason;
+            const minRequired =
+                minOrder + minName + minAction + minTarget + minReason;
 
             final double colOrder;
             final double colName;
@@ -696,31 +709,46 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                     DataColumn(
                       label: SizedBox(
                         width: colOrder,
-                        child: const Text('STT', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'STT',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                     DataColumn(
                       label: SizedBox(
                         width: colName,
-                        child: const Text('Họ tên', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Họ tên',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                     DataColumn(
                       label: SizedBox(
                         width: colAction,
-                        child: const Text('Hành động', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Hành động',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                     DataColumn(
                       label: SizedBox(
                         width: colTarget,
-                        child: const Text('Lớp đích', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Lớp đích',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                     DataColumn(
                       label: SizedBox(
                         width: colReason,
-                        child: const Text('Lý do (Lưu ban / Nghỉ)', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Lý do (Lưu ban / Nghỉ)',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ],
@@ -760,9 +788,7 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
     final isDimmed = !row.isActionable;
     final rowColor = isError
         ? t.badSoft
-        : (isDimmed
-            ? t.subtle.withValues(alpha: 0.5)
-            : Colors.transparent);
+        : (isDimmed ? t.subtle.withValues(alpha: 0.5) : Colors.transparent);
 
     final eligibleTargetClasses = _filteredTargetClasses(row.action);
 
@@ -800,12 +826,18 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                 if (row.processedLabel != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: AppBadge(row.processedLabel!, tone: AppBadgeTone.neutral),
+                    child: AppBadge(
+                      row.processedLabel!,
+                      tone: AppBadgeTone.neutral,
+                    ),
                   )
                 else if (row.alreadyEnrolled)
                   const Padding(
                     padding: EdgeInsets.only(top: 4),
-                    child: AppBadge('Đã có ghi danh', tone: AppBadgeTone.neutral),
+                    child: AppBadge(
+                      'Đã có ghi danh',
+                      tone: AppBadgeTone.neutral,
+                    ),
                   )
                 else if (isError)
                   Padding(
@@ -876,46 +908,47 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
             child: isDimmed
                 ? Text('—', style: TextStyle(color: t.ink3))
                 : (row.action == PromotionItemInputActionEnum.TOT_NGHIEP ||
-                        row.action == PromotionItemInputActionEnum.NGHI_HOC)
-                    ? Text('—', style: TextStyle(color: t.ink3))
-                    : Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          width: colTarget.clamp(140.0, 240.0),
-                          height: 40,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            border: Border.all(
-                              color: row.targetClassId == null ? t.bad : t.line,
-                            ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<num>(
-                              key: ValueKey(
-                                'promotion-target-class-${row.studentId}',
-                              ),
-                              isExpanded: true,
-                              value: eligibleTargetClasses.any(
-                                    (c) => c.id == row.targetClassId,
-                                  )
-                                  ? row.targetClassId
-                                  : null,
-                              hint: const Text('Chọn lớp...'),
-                              items: eligibleTargetClasses
-                                  .map(
-                                    (c) => DropdownMenuItem<num>(
-                                      value: c.id,
-                                      child: Text(c.name),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (v) =>
-                                  setState(() => row.targetClassId = v),
-                            ),
-                          ),
+                      row.action == PromotionItemInputActionEnum.NGHI_HOC)
+                ? Text('—', style: TextStyle(color: t.ink3))
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: colTarget.clamp(140.0, 240.0),
+                      height: 40,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(
+                          color: row.targetClassId == null ? t.bad : t.line,
                         ),
                       ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<num>(
+                          key: ValueKey(
+                            'promotion-target-class-${row.studentId}',
+                          ),
+                          isExpanded: true,
+                          value:
+                              eligibleTargetClasses.any(
+                                (c) => c.id == row.targetClassId,
+                              )
+                              ? row.targetClassId
+                              : null,
+                          hint: const Text('Chọn lớp...'),
+                          items: eligibleTargetClasses
+                              .map(
+                                (c) => DropdownMenuItem<num>(
+                                  value: c.id,
+                                  child: Text(c.name),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => row.targetClassId = v),
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ),
         DataCell(
@@ -924,24 +957,27 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
             child: isDimmed
                 ? Text('—', style: TextStyle(color: t.ink3))
                 : (row.action == PromotionItemInputActionEnum.LUU_BAN ||
-                        row.action == PromotionItemInputActionEnum.NGHI_HOC)
-                    ? Align(
-                        alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          width: colReason.clamp(160.0, 320.0),
-                          child: TextFormField(
-                            initialValue: row.reason,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              hintText: 'Lý do (tùy chọn)',
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (v) => row.reason = v,
+                      row.action == PromotionItemInputActionEnum.NGHI_HOC)
+                ? Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: colReason.clamp(160.0, 320.0),
+                      child: TextFormField(
+                        initialValue: row.reason,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          hintText: 'Lý do (tùy chọn)',
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
                           ),
+                          border: OutlineInputBorder(),
                         ),
-                      )
-                    : Text('—', style: TextStyle(color: t.ink3)),
+                        onChanged: (v) => row.reason = v,
+                      ),
+                    ),
+                  )
+                : Text('—', style: TextStyle(color: t.ink3)),
           ),
         ),
       ],
@@ -992,7 +1028,10 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Icon(Icons.check_circle_outline),
             label: const Text('Thực hiện lên lớp'),

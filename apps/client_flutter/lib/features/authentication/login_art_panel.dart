@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
+import '../school_profile/school_profile.dart';
 
 /// Nửa trái nền navy của màn đăng nhập (chỉ hiện từ 960): thương hiệu, mockup
 /// "từ giấy viết tay sang số hóa", tiêu đề và 3 ý tính năng. Toàn bộ là nội dung
@@ -12,7 +14,7 @@ import '../../app/widgets/app_badge.dart';
 /// [horizontalMockup] do màn đăng nhập tính từ chiều rộng nửa trái (nội dung
 /// >= 560 thì xếp ngang giấy | vạch quét | thẻ, hẹp hơn thì xếp dọc). Không dùng
 /// `LayoutBuilder` ở đây vì panel nằm trong `IntrinsicHeight`.
-class LoginArtPanel extends StatelessWidget {
+class LoginArtPanel extends ConsumerWidget {
   const LoginArtPanel({super.key, required this.horizontalMockup});
 
   final bool horizontalMockup;
@@ -24,9 +26,10 @@ class LoginArtPanel extends StatelessWidget {
   static const horizontalPadding = 72.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = context.tokens;
     final theme = Theme.of(context);
+    final school = ref.watch(schoolProfileProvider).valueOrNull;
     return Container(
       color: t.navy,
       padding: const EdgeInsets.all(36),
@@ -42,7 +45,26 @@ class LoginArtPanel extends StatelessWidget {
                   color: t.onPri.withAlpha(36),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(Icons.school_rounded, size: 22, color: t.onPri),
+                child: school?.hasLogo == true
+                    ? Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: t.onPri,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: SchoolLogoImage(
+                            profile: school,
+                            size: 32,
+                            fallback: Icon(
+                              Icons.school_rounded,
+                              size: 22,
+                              color: t.navy,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Icon(Icons.school_rounded, size: 22, color: t.onPri),
               ),
               const SizedBox(width: AppSpacing.md),
               Flexible(
@@ -58,7 +80,9 @@ class LoginArtPanel extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Trường THPT Bà Điểm · Quản lý điểm',
+                      school == null
+                          ? 'Quản lý điểm'
+                          : '${school.name} · Quản lý điểm',
                       style: TextStyle(fontSize: 13, color: t.onNavy),
                     ),
                   ],

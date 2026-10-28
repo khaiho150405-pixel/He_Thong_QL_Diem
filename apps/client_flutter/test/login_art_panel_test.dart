@@ -2,10 +2,13 @@ import 'package:client_flutter/app/app.dart';
 import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/app/theme_mode.dart';
 import 'package:client_flutter/app/widgets/app_badge.dart';
+import 'package:client_flutter/features/school_profile/school_profile.dart';
 import 'package:client_flutter/features/authentication/login_art_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/fake_school_profile.dart';
 
 Future<void> pumpLogin(
   WidgetTester tester,
@@ -19,7 +22,12 @@ Future<void> pumpLogin(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [themeModeProvider.overrideWith((ref) => mode)],
+      overrides: [
+        themeModeProvider.overrideWith((ref) => mode),
+        schoolProfileRepositoryProvider.overrideWithValue(
+          FakeSchoolProfileRepository(),
+        ),
+      ],
       child: const GradebookApp(initialLocation: '/login'),
     ),
   );
@@ -54,7 +62,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(LoginArtPanel), findsOneWidget);
       expect(find.text('EduScore'), findsOneWidget);
-      expect(find.text('Trường THPT Bà Điểm · Quản lý điểm'), findsOneWidget);
+      expect(find.text('$fakeSchoolName · Quản lý điểm'), findsOneWidget);
       expect(
         find.text('Nhập điểm nhanh hơn, đối chiếu rõ ràng hơn.'),
         findsOneWidget,
@@ -135,6 +143,9 @@ void main() {
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 
     await pumpLogin(tester, const Size(1280, 800), settle: false);
+    // Cho schoolProfileProvider (bất đồng bộ) trả về trước khi kiểm khung hình.
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
 
     expect(opacityOf(tester, 'Kiểm tra lại'), 1);
     expect(opacityOf(tester, 'Khớp'), 1);

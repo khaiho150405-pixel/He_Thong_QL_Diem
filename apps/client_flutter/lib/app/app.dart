@@ -15,6 +15,8 @@ import '../features/academic_catalog/semester_deadlines_screen.dart';
 import '../features/academic_catalog/subjects_weights_screen.dart';
 import '../features/academic_catalog/teaching_assignments_screen.dart';
 import '../features/form_templates/form_templates_screen.dart';
+import '../features/school_profile/school_profile.dart';
+import '../features/school_profile/school_profile_screen.dart';
 import '../features/form_templates/template_detail_screen.dart';
 import '../features/form_templates/template_wizard_screen.dart';
 import '../features/gradebooks/adjustments_screen.dart';
@@ -68,6 +70,10 @@ final routerProvider = Provider.family<GoRouter, String>((
       GoRoute(
         path: '/admin/semester-deadlines',
         builder: (_, state) => const SemesterDeadlinesScreen(),
+      ),
+      GoRoute(
+        path: '/admin/school-profile',
+        builder: (_, state) => const SchoolProfileScreen(),
       ),
       GoRoute(
         path: '/admin/form-templates',
@@ -176,6 +182,10 @@ final routerProvider = Provider.family<GoRouter, String>((
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }
+      if (state.uri.path == '/admin/school-profile' &&
+          user.role.value != 'QUAN_TRI_VIEN') {
+        return '/';
+      }
       if (state.uri.path == '/adjustments' &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
@@ -208,7 +218,12 @@ class GradebookApp extends ConsumerWidget {
   final String initialLocation;
   @override
   Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(
-    title: 'Quản lý điểm',
+    // Title của MaterialApp đi qua SystemChrome.setApplicationSwitcherDescription
+    // (tiêu đề tab trình duyệt trên web).
+    title: switch (ref.watch(schoolProfileProvider).valueOrNull?.shortName) {
+      final short? => 'EduScore - $short',
+      _ => 'EduScore',
+    },
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light(),
     darkTheme: AppTheme.dark(),

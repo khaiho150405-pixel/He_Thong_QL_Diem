@@ -8,7 +8,6 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
-import '../../app/widgets/app_select_field.dart';
 import '../authentication/session.dart';
 import '../final_results/final_results_panel.dart';
 import '../final_results/repository.dart';
@@ -27,6 +26,7 @@ import 'adjustments_screen.dart'
 import 'excel_import_dialog.dart';
 import 'grade_deadlines_panel.dart';
 import 'gradebook_status.dart';
+import 'widgets/grade_cell.dart';
 import 'repository.dart';
 
 class GradebookScreen extends ConsumerStatefulWidget {
@@ -149,9 +149,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     }
     finalResults = locked
         ? ref
-            .read(finalResultsRepositoryProvider)
-            .list(widget.data.book.id)
-            .then((r) => r.items)
+              .read(finalResultsRepositoryProvider)
+              .list(widget.data.book.id)
+              .then((r) => r.items)
         : Future.value(const []);
     if (admin) {
       _loadMissingStudents();
@@ -164,8 +164,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
 
   Future<void> _loadPendingAdjustment(String adjId) async {
     try {
-      final adj =
-          await ref.read(adjustmentsRepositoryProvider).getDetail(adjId);
+      final adj = await ref
+          .read(adjustmentsRepositoryProvider)
+          .getDetail(adjId);
       if (mounted) setState(() => _pendingAdjustment = adj);
     } catch (_) {}
   }
@@ -252,7 +253,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final reason = await askLateStudentReason(student.studentName);
     if (reason == null || !mounted) return;
     await mutate(() async {
-      await ref.read(gradebooksRepositoryProvider).addLateStudent(
+      await ref
+          .read(gradebooksRepositoryProvider)
+          .addLateStudent(
             bookId: widget.data.book.id,
             studentId: student.studentId,
             reason: reason,
@@ -307,7 +310,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final reason = await askExemptionReason(exempt: exempt);
     if (reason == null || !mounted) return;
     await mutate(() async {
-      await ref.read(gradebooksRepositoryProvider).setExemptions(
+      await ref
+          .read(gradebooksRepositoryProvider)
+          .setExemptions(
             bookId: widget.data.book.id,
             expectedVersion: widget.data.book.version,
             changes: [
@@ -656,10 +661,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               Expanded(
                 child: Text(
                   'Có $count học sinh vào lớp sau khi cột đã chốt',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: t.ink,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: t.ink),
                 ),
               ),
             ],
@@ -1317,42 +1319,72 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.lock_outline_rounded, size: 18, color: t.ok),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Bảng điểm đã khóa. ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: t.ok,
-                        ),
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final message = Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Bảng điểm đã khóa. ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: t.ok,
                       ),
-                      TextSpan(
-                        text:
-                            'Chỉ xem, không sửa được. Điểm tự khóa khi đến hạn nhập do nhà trường đặt.',
-                        style: TextStyle(color: t.ok),
+                    ),
+                    TextSpan(
+                      text:
+                          'Chỉ xem, không sửa được. Điểm tự khóa khi đến hạn nhập do nhà trường đặt.',
+                      style: TextStyle(color: t.ok),
+                    ),
+                  ],
+                ),
+                style: Theme.of(context).textTheme.bodySmall,
+              );
+              final button = canRequestAdjustment && !adjustmentMode
+                  ? FilledButton.tonalIcon(
+                      key: const ValueKey('request-adjustment-btn'),
+                      onPressed: _startAdjustmentMode,
+                      icon: const Icon(Icons.edit_calendar_outlined, size: 16),
+                      label: const Text('Yêu cầu điều chỉnh'),
+                    )
+                  : null;
+              final lock = Icon(
+                Icons.lock_outline_rounded,
+                size: 18,
+                color: t.ok,
+              );
+              // Màn hẹp: nút xuống dòng dưới chữ thay vì tràn ngang.
+              if (box.maxWidth < 560) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    lock,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          message,
+                          if (button != null) ...[
+                            const SizedBox(height: 8),
+                            button,
+                          ],
+                        ],
                       ),
-                    ],
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-              if (canRequestAdjustment && !adjustmentMode) ...[
-                const SizedBox(width: 10),
-                FilledButton.tonalIcon(
-                  key: const ValueKey('request-adjustment-btn'),
-                  onPressed: _startAdjustmentMode,
-                  icon: const Icon(Icons.edit_calendar_outlined, size: 16),
-                  label: const Text('Yêu cầu điều chỉnh'),
-                ),
-              ],
-            ],
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  lock,
+                  const SizedBox(width: 10),
+                  Expanded(child: message),
+                  if (button != null) ...[const SizedBox(width: 10), button],
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -1398,6 +1430,36 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             'Nhập từ ảnh',
           ),
           item(box(t.badSoft, t.bad), 'Điểm không hợp lệ'),
+          item(box(t.subtle, t.line), 'Cột đã chốt'),
+          item(
+            Icon(Icons.lock_rounded, size: 14, color: t.warn),
+            'Ngoài lịch nhập',
+          ),
+          item(
+            Icon(Icons.schedule, size: 14, color: t.priLink),
+            'Chờ đối chiếu',
+          ),
+          item(
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: t.subtle,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: t.line),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Text(
+                  'Miễn',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: t.ink2,
+                  ),
+                ),
+              ),
+            ),
+            'Ô miễn',
+          ),
         ],
       ),
     );
@@ -1511,29 +1573,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: t.priLink,
-        ),
-      ),
-    );
-  }
-
-  /// Nhãn nhỏ "● AI" cho ô nhập từ ảnh nhận dạng.
-  Widget _aiTag() {
-    final t = context.tokens;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: t.okSoft,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: t.okLine),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-        child: Text(
-          '● AI',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: t.ok,
-          ),
         ),
       ),
     );
@@ -1736,6 +1775,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
             child: DataTable(
               headingRowHeight: 64,
+              dataRowMinHeight: 56,
+              dataRowMaxHeight: 56,
               horizontalMargin: _GridColumnSizes.horizontalMargin,
               columnSpacing: _GridColumnSizes.columnSpacing,
               columns: [
@@ -1761,9 +1802,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                                 component.required_
                                     ? 'Bắt buộc'
                                     : 'Không bắt buộc',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
+                                style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(
                                       color: component.required_
                                           ? t.priLink
@@ -1818,6 +1857,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                             entry.value.first.stt != null
                                 ? '${entry.value.first.stt}'
                                 : '—',
+                            style: const TextStyle(
+                              fontFeatures: [FontFeature.tabularFigures()],
+                            ),
                           ),
                         ),
                       ),
@@ -1865,6 +1907,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                               resultScore(
                                 results[entry.value.first.studentId]
                                     ?.finalScore,
+                              ),
+                              style: const TextStyle(
+                                fontFeatures: [FontFeature.tabularFigures()],
                               ),
                             ),
                           ),
@@ -1974,7 +2019,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                                 ?.copyWith(fontWeight: FontWeight.w500),
                           ),
                         ),
-                        if (cell.source_.value == 'NHAN_DIEN') _aiTag(),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -1989,57 +2033,52 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Kiểu ô điểm theo `.gc` của prototype, dựng ngay tại chỗ cũ bằng token để
-  /// giữ `TextFormField` / `DropdownButtonFormField` và `ValueKey` mà test ghim.
-  /// Thứ tự màu: không hợp lệ (viền `bad`), đã sửa chưa lưu (nền `accSoft`),
-  /// bình thường. [invalid] và [changed] lấy từ logic sẵn có (`validateGrade`,
-  /// so sánh với giá trị đã lưu như `changedCells`), widget không tự kiểm tra.
-  InputDecoration _gradeDecoration({
+  /// Ô nhập số trong khung [GradeCellFrame]: giữ `TextFormField` (và `ValueKey`)
+  /// để nhập bằng bàn phím, Tab/Enter sang ô kế và validate như cũ.
+  Widget _gradeTextField({
+    required GradeCellDto cell,
     required bool enabled,
-    required bool invalid,
-    required bool changed,
-    String? labelText,
-    String? hintText,
-    String? helperText,
-    Widget? prefixIcon,
-    Widget? suffixIcon,
+    required ValueChanged<String> onChanged,
+    String hint = '—',
+    double hintSize = 14,
   }) {
     final t = context.tokens;
-    OutlineInputBorder border(Color color, [double width = 1]) =>
-        OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: color, width: width),
-        );
-    final Color fill;
-    final Color edge;
-    if (invalid) {
-      fill = t.badSoft;
-      edge = t.bad;
-    } else if (changed) {
-      fill = t.accSoft;
-      edge = t.warnLine;
-    } else if (!enabled) {
-      fill = t.subtle;
-      edge = t.line;
+    return TextFormField(
+      key: ValueKey('grade-${cell.id}'),
+      controller: controllers[cell.id],
+      enabled: enabled,
+      textAlign: TextAlign.center,
+      textAlignVertical: TextAlignVertical.center,
+      style: gradeNumberStyle(context, color: enabled ? t.ink : t.ink2),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      textInputAction: TextInputAction.next,
+      onChanged: onChanged,
+      decoration: gradeInputDecoration(context, hint: hint, hintSize: hintSize),
+      validator: validateGrade,
+    );
+  }
+
+  /// Vùng trái của ô: biểu tượng trạng thái (đồng hồ chờ đối chiếu / khóa ngoài
+  /// lịch nhập) và chấm "nhập từ ảnh". Cột đã chốt không lặp biểu tượng khóa vì
+  /// tiêu đề cột đã có.
+  Widget? _gradeLeading(GradeCellDto cell) {
+    final t = context.tokens;
+    final Widget? icon;
+    if (cell.status.value == 'CHO_DOI_CHIEU') {
+      icon = Icon(Icons.schedule, size: 14, color: t.priLink);
+    } else if (cell.openForInput == false && cell.columnLocked != true) {
+      icon = Icon(Icons.lock_rounded, size: 14, color: t.warn);
     } else {
-      fill = t.surface;
-      edge = t.line2;
+      icon = null;
     }
-    return InputDecoration(
-      labelText: labelText,
-      hintText: hintText,
-      helperText: helperText,
-      prefixIcon: prefixIcon,
-      suffixIcon: suffixIcon,
-      isDense: true,
-      filled: true,
-      fillColor: fill,
-      border: border(edge),
-      enabledBorder: border(edge),
-      disabledBorder: border(edge),
-      focusedBorder: border(invalid ? t.bad : t.pri, 1.5),
-      errorBorder: border(t.bad),
-      focusedErrorBorder: border(t.bad, 1.5),
+    final ai = cell.source_.value == 'NHAN_DIEN'
+        ? GradeAiDot(key: ValueKey('grade-ai-${cell.id}'))
+        : null;
+    if (icon == null) return ai;
+    if (ai == null) return icon;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [icon, const SizedBox(width: 2), ai],
     );
   }
 
@@ -2051,60 +2090,41 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final t = context.tokens;
     final isLocked = cell.columnLocked == true || cell.openForInput == false;
     final isPending = cell.status.value == 'CHO_DOI_CHIEU';
-    final isAi = cell.source_.value == 'NHAN_DIEN';
     final isExempt = cell.status.value == 'MIEN';
 
     if (isExempt) {
-      final tooltipMsg = (cell.exemptionReason != null &&
-              cell.exemptionReason!.isNotEmpty)
+      final tooltipMsg =
+          (cell.exemptionReason != null && cell.exemptionReason!.isNotEmpty)
           ? cell.exemptionReason!
           : 'Miễn';
       final canUnexempt = editable && cell.active && !isLocked;
 
-      return SizedBox(
+      return GradeCellFrame(
         width: width,
-        child: Tooltip(
-          message: tooltipMsg,
-          child: Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: t.subtle,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(color: t.line),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Miễn',
-                    key: ValueKey('grade-exempt-${cell.id}'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: t.ink2,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                if (canUnexempt)
-                  PopupMenuButton<String>(
-                    key: ValueKey('cell-exempt-menu-${cell.id}'),
-                    icon: Icon(Icons.more_vert, size: 16, color: t.ink3),
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Thao tác ô miễn',
-                    onSelected: (val) {
-                      if (val == 'unexempt') setExemption(cell, exempt: false);
-                    },
-                    itemBuilder: (ctx) => const [
-                      PopupMenuItem(
-                        value: 'unexempt',
-                        child: Text('Bỏ miễn'),
-                      ),
-                    ],
-                  ),
-              ],
+        tone: GradeCellTone.readOnly,
+        tooltip: tooltipMsg,
+        trailing: canUnexempt
+            ? PopupMenuButton<String>(
+                key: ValueKey('cell-exempt-menu-${cell.id}'),
+                icon: Icon(Icons.more_vert, size: 16, color: t.ink3),
+                padding: EdgeInsets.zero,
+                tooltip: 'Thao tác ô miễn',
+                onSelected: (val) {
+                  if (val == 'unexempt') setExemption(cell, exempt: false);
+                },
+                itemBuilder: (ctx) => const [
+                  PopupMenuItem(value: 'unexempt', child: Text('Bỏ miễn')),
+                ],
+              )
+            : null,
+        child: Center(
+          child: Text(
+            'Miễn',
+            key: ValueKey('grade-exempt-${cell.id}'),
+            style: gradeNumberStyle(
+              context,
+              color: t.ink2,
+              weight: FontWeight.w700,
             ),
           ),
         ),
@@ -2130,122 +2150,66 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         if (val == 'exempt') setExemption(cell, exempt: true);
       },
       itemBuilder: (ctx) => const [
-        PopupMenuItem(
-          value: 'exempt',
-          child: Text('Đánh dấu miễn'),
-        ),
+        PopupMenuItem(value: 'exempt', child: Text('Đánh dấu miễn')),
       ],
     );
 
-    return SizedBox(
-      width: width,
-      child: GestureDetector(
-        onSecondaryTap:
-            canMarkExempt ? () => setExemption(cell, exempt: true) : null,
-        onLongPress:
-            canMarkExempt ? () => setExemption(cell, exempt: true) : null,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isAi && width < 200)
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: _aiTag(),
+    final tone = isInvalid
+        ? GradeCellTone.invalid
+        : isChanged
+        ? GradeCellTone.changed
+        : !isEnabled
+        ? GradeCellTone.readOnly
+        : GradeCellTone.normal;
+    // Mô tả trạng thái nay là tooltip, không còn helperText dưới ô.
+    final status = cell.columnLocked == true
+        ? 'Cột đã chốt'
+        : cell.openForInput == false
+        ? 'Ngoài lịch nhập'
+        : isPending
+        ? 'Chờ đối chiếu'
+        : cell.value == null
+        ? 'Chưa có điểm'
+        : null;
+
+    return GestureDetector(
+      onSecondaryTap: canMarkExempt
+          ? () => setExemption(cell, exempt: true)
+          : null,
+      onLongPress: canMarkExempt
+          ? () => setExemption(cell, exempt: true)
+          : null,
+      child: GradeCellFrame(
+        width: width,
+        tone: tone,
+        tooltip: status,
+        // Nhấn giữ ở ô trống đang nhập dùng để đánh dấu miễn: tooltip chỉ hiện
+        // khi rê chuột ở các ô đó.
+        tooltipTrigger: canMarkExempt
+            ? TooltipTriggerMode.manual
+            : TooltipTriggerMode.longPress,
+        leading: _gradeLeading(cell),
+        trailing: canMarkExempt
+            ? menuButton
+            : (cell.passFail == true && isEnabled
+                  ? Icon(Icons.arrow_drop_down, size: 18, color: t.ink3)
+                  : null),
+        child: cell.passFail == true
+            ? GradePassFailMenu(
+                key: ValueKey('grade-pf-${cell.id}'),
+                value: controllers[cell.id]!.text.isEmpty
+                    ? 'EMPTY'
+                    : controllers[cell.id]!.text,
+                enabled: isEnabled,
+                onChanged: (v) => setState(() {
+                  controllers[cell.id]!.text = v == 'EMPTY' ? '' : v;
+                }),
+              )
+            : _gradeTextField(
+                cell: cell,
+                enabled: isEnabled,
+                onChanged: (_) => setState(() {}),
               ),
-            Expanded(
-              child: cell.passFail == true
-                  ? Row(
-                      children: [
-                        Expanded(
-                          child: AppSelectField<String>(
-                            key: ValueKey('grade-pf-${cell.id}'),
-                            value: controllers[cell.id]!.text.isEmpty
-                                ? 'EMPTY'
-                                : controllers[cell.id]!.text,
-                            label: 'Đánh giá',
-                            dense: true,
-                            searchable: false,
-                            prefixIcon: isLocked
-                                ? Tooltip(
-                                    message:
-                                        'Cột đang khóa hoặc ngoài lịch nhập',
-                                    child: Icon(
-                                      Icons.lock_outline_rounded,
-                                      size: 14,
-                                      color: t.warn,
-                                    ),
-                                  )
-                                : null,
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'EMPTY',
-                                child: Text('Chưa đánh giá'),
-                              ),
-                              DropdownMenuItem(
-                                value: '10.0',
-                                child: Text('Đạt'),
-                              ),
-                              DropdownMenuItem(
-                                value: '0.0',
-                                child: Text('Không đạt'),
-                              ),
-                            ],
-                            onChanged: isEnabled
-                                ? (v) => setState(() {
-                                    controllers[cell.id]!.text = v == 'EMPTY'
-                                        ? ''
-                                        : v ?? '';
-                                  })
-                                : null,
-                          ),
-                        ),
-                        if (canMarkExempt) menuButton,
-                      ],
-                    )
-                  : TextFormField(
-                      key: ValueKey('grade-${cell.id}'),
-                      controller: controllers[cell.id],
-                      enabled: isEnabled,
-                      textAlign: TextAlign.center,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      textInputAction: TextInputAction.next,
-                      onChanged: (_) {
-                        setState(() {});
-                      },
-                      decoration: _gradeDecoration(
-                        enabled: isEnabled,
-                        invalid: isInvalid,
-                        changed: isChanged,
-                        hintText: '—',
-                        prefixIcon: isLocked
-                            ? Tooltip(
-                                message:
-                                    'Cột đang khóa hoặc ngoài lịch nhập nhà trường đặt',
-                                child: Icon(
-                                  Icons.lock_rounded,
-                                  size: 14,
-                                  color: t.warn,
-                                ),
-                              )
-                            : null,
-                        suffixIcon: canMarkExempt ? menuButton : null,
-                        helperText: cell.columnLocked == true
-                            ? 'Cột đã chốt'
-                            : cell.openForInput == false
-                            ? 'Ngoài lịch nhập'
-                            : isPending
-                            ? 'Chờ đối chiếu'
-                            : cell.value == null
-                            ? 'Chưa có điểm'
-                            : null,
-                      ),
-                      validator: validateGrade,
-                    ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -2324,8 +2288,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
           }
         }
         for (final line in detail.lines ?? const <AdjustmentLineDto>[]) {
-          final cell =
-              widget.data.items.where((c) => c.id == line.cellId).firstOrNull;
+          final cell = widget.data.items
+              .where((c) => c.id == line.cellId)
+              .firstOrNull;
           if (cell != null) {
             final draft = _getOrCreateDraft(cell);
             draft.newExempt = line.newExempt;
@@ -2369,7 +2334,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             children: [
               Text(
                 'Học sinh: ${cell.studentName} • Cột: ${cell.componentName}',
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -2414,7 +2382,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
           onConfirm: () {
             if (isPassFail) {
               if (enteredValue.isEmpty) {
-                setDialogState(() => error = 'Vui lòng chọn Đạt hoặc Không đạt');
+                setDialogState(
+                  () => error = 'Vui lòng chọn Đạt hoặc Không đạt',
+                );
                 return;
               }
               Navigator.pop(ctx, enteredValue);
@@ -2439,7 +2409,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             children: [
               Text(
                 'Học sinh: ${cell.studentName} • Cột: ${cell.componentName}',
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 12),
               if (isPassFail)
@@ -2456,8 +2429,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               else
                 TextField(
                   autofocus: true,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Điểm mới (0.0 – 10.0) *',
                     hintText: 'Ví dụ: 8.5',
@@ -2511,20 +2485,23 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       }
     }
 
-    final submitData = await showAppDialog<
-        ({String reason, List<AdjustmentChangeInput> changes})>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _AdjustmentSubmitDialog(
-        changedDrafts: changedDrafts,
-      ),
-    );
+    final submitData =
+        await showAppDialog<
+          ({String reason, List<AdjustmentChangeInput> changes})
+        >(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) =>
+              _AdjustmentSubmitDialog(changedDrafts: changedDrafts),
+        );
 
     if (submitData == null || !mounted) return;
 
     setState(() => busy = true);
     try {
-      await ref.read(adjustmentsRepositoryProvider).submitAdjustment(
+      await ref
+          .read(adjustmentsRepositoryProvider)
+          .submitAdjustment(
             bookId: widget.data.book.id,
             expectedVersion: widget.data.book.version,
             reason: submitData.reason,
@@ -2564,10 +2541,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
 
     setState(() => busy = true);
     try {
-      await ref.read(adjustmentsRepositoryProvider).cancel(
-            adjId: adj.id,
-            expectedVersion: adj.version,
-          );
+      await ref
+          .read(adjustmentsRepositoryProvider)
+          .cancel(adjId: adj.id, expectedVersion: adj.version);
       if (!mounted) return;
       setState(() => busy = false);
       showMessage('Đã hủy phiếu điều chỉnh thành công.');
@@ -2610,22 +2586,26 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     final oldDisplay = cell.status.value == 'MIEN'
         ? 'Miễn'
         : (cell.passFail == true
-            ? (cell.value == '10.0'
-                ? 'Đạt'
-                : (cell.value == '0.0' ? 'Không đạt' : '—'))
-            : (cell.value ?? '—'));
+              ? (cell.value == '10.0'
+                    ? 'Đạt'
+                    : (cell.value == '0.0' ? 'Không đạt' : '—'))
+              : (cell.value ?? '—'));
 
     final newDisplay = draft.newExempt
         ? 'Miễn'
         : (cell.passFail == true
-            ? (draft.newValue == '10.0'
-                ? 'Đạt'
-                : (draft.newValue == '0.0' ? 'Không đạt' : '—'))
-            : (draft.newValue ?? '—'));
+              ? (draft.newValue == '10.0'
+                    ? 'Đạt'
+                    : (draft.newValue == '0.0' ? 'Không đạt' : '—'))
+              : (draft.newValue ?? '—'));
 
     final menuButton = PopupMenuButton<String>(
       key: ValueKey('adjustment-cell-menu-${cell.id}'),
-      icon: Icon(Icons.more_vert, size: 16, color: isChanged ? t.priLink : t.ink3),
+      icon: Icon(
+        Icons.more_vert,
+        size: 16,
+        color: isChanged ? t.priLink : t.ink3,
+      ),
       padding: EdgeInsets.zero,
       tooltip: 'Thao tác ô điều chỉnh',
       onSelected: (val) {
@@ -2649,178 +2629,101 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       },
       itemBuilder: (ctx) => [
         if (!isExempt)
-          const PopupMenuItem(
-            value: 'exempt',
-            child: Text('Đặt Miễn'),
-          ),
+          const PopupMenuItem(value: 'exempt', child: Text('Đặt Miễn')),
         if (isExempt)
-          const PopupMenuItem(
-            value: 'unexempt',
-            child: Text('Bỏ Miễn'),
-          ),
-        const PopupMenuItem(
-          value: 'note',
-          child: Text('Ghi chú…'),
-        ),
+          const PopupMenuItem(value: 'unexempt', child: Text('Bỏ Miễn')),
+        const PopupMenuItem(value: 'note', child: Text('Ghi chú…')),
         if (isChanged)
-          const PopupMenuItem(
-            value: 'revert',
-            child: Text('Hoàn tác ô này'),
-          ),
+          const PopupMenuItem(value: 'revert', child: Text('Hoàn tác ô này')),
       ],
     );
 
+    final noteIcon = note != null && note.isNotEmpty
+        ? Tooltip(
+            message: note,
+            child: Icon(
+              Icons.sticky_note_2_outlined,
+              size: 14,
+              color: t.priLink,
+            ),
+          )
+        : null;
+
     if (isExempt) {
-      return SizedBox(
+      return GradeCellFrame(
         width: width,
-        child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: isChanged ? t.accSoft : t.subtle,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: isChanged ? t.warnLine : t.line),
-          ),
-          child: Row(
-            children: [
-              if (note != null && note.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: Tooltip(
-                    message: note,
-                    child: Icon(Icons.sticky_note_2_outlined,
-                        size: 14, color: t.priLink),
-                  ),
-                ),
-              Expanded(
-                child: Text(
-                  isChanged ? '$oldDisplay → Miễn' : 'Miễn',
-                  key: ValueKey('grade-exempt-${cell.id}'),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: isChanged ? t.priLink : t.ink2,
-                    fontSize: 13,
-                  ),
-                ),
+        tone: isChanged ? GradeCellTone.changed : GradeCellTone.readOnly,
+        leading: noteIcon,
+        trailing: menuButton,
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              isChanged ? '$oldDisplay → Miễn' : 'Miễn',
+              key: ValueKey('grade-exempt-${cell.id}'),
+              style: gradeNumberStyle(
+                context,
+                color: isChanged ? t.priLink : t.ink2,
+                size: 13,
+                weight: FontWeight.w700,
               ),
-              menuButton,
-            ],
+            ),
           ),
         ),
       );
     }
 
     if (cell.passFail == true) {
-      return SizedBox(
+      return GradeCellFrame(
         width: width,
-        child: Container(
-          decoration: isChanged
-              ? BoxDecoration(
-                  color: t.accSoft,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: t.warnLine),
-                )
-              : null,
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (isChanged)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8, top: 2),
-                        child: Text(
-                          '$oldDisplay → $newDisplay',
-                          style: TextStyle(
-                            color: t.priLink,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    AppSelectField<String>(
-                      key: ValueKey('grade-pf-${cell.id}'),
-                      value: draft.newValue ?? '10.0',
-                      label: 'Đánh giá',
-                      dense: true,
-                      searchable: false,
-                      items: const [
-                        DropdownMenuItem(value: '10.0', child: Text('Đạt')),
-                        DropdownMenuItem(value: '0.0', child: Text('Không đạt')),
-                      ],
-                      onChanged: (v) {
-                        if (v != null && v != 'EMPTY') {
-                          setState(() {
-                            draft.newExempt = false;
-                            draft.newValue = v;
-                            controllers[cell.id]!.text = v;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              if (note != null && note.isNotEmpty)
-                Tooltip(
-                  message: note,
-                  child: Icon(Icons.sticky_note_2_outlined,
-                      size: 14, color: t.priLink),
-                ),
-              menuButton,
-            ],
-          ),
+        tone: isChanged ? GradeCellTone.changed : GradeCellTone.normal,
+        leading: noteIcon,
+        trailing: menuButton,
+        child: GradePassFailMenu(
+          key: ValueKey('grade-pf-${cell.id}'),
+          value: draft.newValue ?? '10.0',
+          enabled: true,
+          includeEmpty: false,
+          display: isChanged ? '$oldDisplay → $newDisplay' : null,
+          onChanged: (v) {
+            if (v != 'EMPTY') {
+              setState(() {
+                draft.newExempt = false;
+                draft.newValue = v;
+                controllers[cell.id]!.text = v;
+              });
+            }
+          },
         ),
       );
     }
 
     final currentText = controllers[cell.id]!.text.trim();
-    final invalidGrade = currentText.isEmpty || validateGrade(currentText) != null;
-    return SizedBox(
+    final invalidGrade =
+        currentText.isEmpty || validateGrade(currentText) != null;
+    return GradeCellFrame(
       width: width,
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              key: ValueKey('grade-${cell.id}'),
-              controller: controllers[cell.id],
-              enabled: true,
-              textAlign: TextAlign.center,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textInputAction: TextInputAction.next,
-              onChanged: (val) {
-                final v = val.trim();
-                draft.newExempt = false;
-                draft.newValue = v.isEmpty ? null : v;
-                setState(() {});
-              },
-              decoration: _gradeDecoration(
-                enabled: true,
-                invalid: invalidGrade,
-                changed: isChanged,
-                hintText: '0.0–10.0',
-                helperText: isChanged
-                    ? '$oldDisplay → ${currentText.isEmpty ? "—" : currentText}'
-                    : (currentText.isEmpty ? 'Không được để trống' : null),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (note != null && note.isNotEmpty)
-                      Tooltip(
-                        message: note,
-                        child: Icon(Icons.sticky_note_2_outlined,
-                            size: 14, color: t.priLink),
-                      ),
-                    menuButton,
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+      tone: invalidGrade
+          ? GradeCellTone.invalid
+          : isChanged
+          ? GradeCellTone.changed
+          : GradeCellTone.normal,
+      tooltip: isChanged
+          ? '$oldDisplay → ${currentText.isEmpty ? "—" : currentText}'
+          : (currentText.isEmpty ? 'Không được để trống' : null),
+      leading: noteIcon,
+      trailing: menuButton,
+      child: _gradeTextField(
+        cell: cell,
+        enabled: true,
+        hint: '0.0–10.0',
+        hintSize: 12,
+        onChanged: (val) {
+          final v = val.trim();
+          draft.newExempt = false;
+          draft.newValue = v.isEmpty ? null : v;
+          setState(() {});
+        },
       ),
     );
   }
@@ -2862,8 +2765,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       ),
                       Text(
                         'Các phiếu đề xuất điều chỉnh điểm sau khi chốt',
-                        style:
-                            theme.textTheme.bodySmall?.copyWith(color: t.ink2),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: t.ink2,
+                        ),
                       ),
                     ],
                   ),
@@ -2902,7 +2806,9 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   child: Container(
                     margin: const EdgeInsets.only(top: 6),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: t.surface,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -2931,14 +2837,16 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                               const SizedBox(height: 2),
                               Text(
                                 'Người gửi: ${adj.submittedBy.name} • ${formatAdjustmentDateTime(adj.submittedAt)} • ${adj.lineCount} ô',
-                                style:
-                                    TextStyle(color: t.ink2, fontSize: 12),
+                                style: TextStyle(color: t.ink2, fontSize: 12),
                               ),
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right_rounded,
-                            size: 20, color: t.ink3),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20,
+                          color: t.ink3,
+                        ),
                       ],
                     ),
                   ),
@@ -2975,9 +2883,7 @@ class _AdjustmentDraftCell {
 }
 
 class _AdjustmentSubmitDialog extends StatefulWidget {
-  const _AdjustmentSubmitDialog({
-    required this.changedDrafts,
-  });
+  const _AdjustmentSubmitDialog({required this.changedDrafts});
 
   final List<({GradeCellDto cell, _AdjustmentDraftCell draft})> changedDrafts;
 
@@ -3019,10 +2925,7 @@ class _AdjustmentSubmitDialogState extends State<_AdjustmentSubmitDialog> {
           );
         }).toList();
 
-        Navigator.pop(
-          context,
-          (reason: reason, changes: changes),
-        );
+        Navigator.pop(context, (reason: reason, changes: changes));
       },
       onCancel: () => Navigator.pop(context),
       child: Column(
@@ -3077,39 +2980,51 @@ class _AdjustmentSubmitDialogState extends State<_AdjustmentSubmitDialog> {
                       final oldStr = cell.status.value == 'MIEN'
                           ? 'Miễn'
                           : (cell.passFail == true
-                              ? (cell.value == '10.0'
-                                  ? 'Đạt'
-                                  : (cell.value == '0.0' ? 'Không đạt' : '—'))
-                              : (cell.value ?? '—'));
+                                ? (cell.value == '10.0'
+                                      ? 'Đạt'
+                                      : (cell.value == '0.0'
+                                            ? 'Không đạt'
+                                            : '—'))
+                                : (cell.value ?? '—'));
                       final newStr = draft.newExempt
                           ? 'Miễn'
                           : (cell.passFail == true
-                              ? (draft.newValue == '10.0'
-                                  ? 'Đạt'
-                                  : 'Không đạt')
-                              : (draft.newValue ?? '—'));
+                                ? (draft.newValue == '10.0'
+                                      ? 'Đạt'
+                                      : 'Không đạt')
+                                : (draft.newValue ?? '—'));
                       return DataRow(
                         cells: [
-                          DataCell(Text(cell.studentName,
+                          DataCell(
+                            Text(
+                              cell.studentName,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: t.ink,
-                              ))),
-                          DataCell(Text(cell.componentName)),
-                          DataCell(Text(
-                            '$oldStr → $newStr',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: t.priLink,
+                              ),
                             ),
-                          )),
-                          DataCell(Text(draft.note ?? '—',
+                          ),
+                          DataCell(Text(cell.componentName)),
+                          DataCell(
+                            Text(
+                              '$oldStr → $newStr',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: t.priLink,
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Text(
+                              draft.note ?? '—',
                               style: TextStyle(
                                 color: t.ink2,
                                 fontStyle: draft.note == null
                                     ? FontStyle.italic
                                     : FontStyle.normal,
-                              ))),
+                              ),
+                            ),
+                          ),
                         ],
                       );
                     }).toList(),
@@ -3227,15 +3142,14 @@ class _GridColumnSizes {
   static const _baseComponent = 170.0;
   static const _baseTotal = 110.0;
   static const _baseClassification = 100.0;
-  static const _maxField = 190.0;
 
   final double student;
   final double component;
   final double total;
   final double classification;
 
-  /// Ô nhập giữ vừa phải (dưới 200) để nhãn "● AI" vẫn hiện cạnh ô.
-  double get field => component < _maxField ? component : _maxField;
+  /// Mọi ô điểm trong cột rộng bằng cột.
+  double get field => component;
 
   factory _GridColumnSizes.fit({
     required double available,

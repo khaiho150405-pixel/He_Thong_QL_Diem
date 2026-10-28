@@ -146,7 +146,11 @@ export function makeOpenApi(app: INestApplication) {
     for (const method of ["get", "post", "put", "delete"] as const) {
       const operation = item?.[method];
       if (!operation || path.includes("/health/")) continue;
-      if (!path.endsWith("/login"))
+      const open =
+        path.endsWith("/login") ||
+        (method === "get" &&
+          /^\/(?:api\/v1\/)?school-profile(?:\/logo)?$/.test(path));
+      if (!open)
         operation.security = [
           { bearer: [] },
           method === "get" ? { cookie: [] } : { cookie: [], csrf: [] },

@@ -1,3 +1,41 @@
+/// Học kỳ của danh sách TKB đang hiển thị; ngày là ngày thuần ở UTC.
+class TimetableSemester {
+  final num id;
+  final String name;
+  final String yearName;
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const TimetableSemester({
+    required this.id,
+    required this.name,
+    required this.yearName,
+    required this.startDate,
+    required this.endDate,
+  });
+
+  /// Trả null khi thiếu/hỏng ngày để màn hình rơi về chế độ không có học kỳ.
+  static TimetableSemester? tryParse(Object? json) {
+    if (json is! Map<String, dynamic>) return null;
+    final start = DateTime.tryParse('${json['startDate']}');
+    final end = DateTime.tryParse('${json['endDate']}');
+    if (start == null || end == null) return null;
+    return TimetableSemester(
+      id: (json['id'] as num?) ?? 0,
+      name: json['name']?.toString() ?? '',
+      yearName: json['yearName']?.toString() ?? '',
+      startDate: DateTime.utc(start.year, start.month, start.day),
+      endDate: DateTime.utc(end.year, end.month, end.day),
+    );
+  }
+}
+
+class TimetableResult {
+  final List<TimetableItem> items;
+  final TimetableSemester? semester;
+  const TimetableResult(this.items, this.semester);
+}
+
 class TimetableItem {
   final int maTietHoc;
   final int maLop;

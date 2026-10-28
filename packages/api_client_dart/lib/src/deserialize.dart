@@ -104,6 +104,7 @@ import 'package:api_client_dart/src/model/reenroll_input.dart';
 import 'package:api_client_dart/src/model/review_approval_input.dart';
 import 'package:api_client_dart/src/model/review_approval_result_dto.dart';
 import 'package:api_client_dart/src/model/review_decision_input.dart';
+import 'package:api_client_dart/src/model/school_profile_dto.dart';
 import 'package:api_client_dart/src/model/semester_deadline_dto.dart';
 import 'package:api_client_dart/src/model/semester_deadline_input.dart';
 import 'package:api_client_dart/src/model/semester_deadlines_dto.dart';
@@ -140,11 +141,13 @@ import 'package:api_client_dart/src/model/template_page_dto.dart';
 import 'package:api_client_dart/src/model/template_summary_dto.dart';
 import 'package:api_client_dart/src/model/timetable_item_dto.dart';
 import 'package:api_client_dart/src/model/timetable_list_dto.dart';
+import 'package:api_client_dart/src/model/timetable_semester_dto.dart';
 import 'package:api_client_dart/src/model/transfer_input.dart';
 import 'package:api_client_dart/src/model/transfer_result_dto.dart';
 import 'package:api_client_dart/src/model/try_grade_dto.dart';
 import 'package:api_client_dart/src/model/try_result_dto.dart';
 import 'package:api_client_dart/src/model/try_row_dto.dart';
+import 'package:api_client_dart/src/model/update_school_profile_input.dart';
 import 'package:api_client_dart/src/model/updated_cell_dto.dart';
 import 'package:api_client_dart/src/model/versioned_definition_input.dart';
 import 'package:api_client_dart/src/model/withdraw_input.dart';
@@ -484,6 +487,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'ReviewDecisionInput':
       return ReviewDecisionInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'SchoolProfileDto':
+      return SchoolProfileDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'SemesterDeadlineDto':
       return SemesterDeadlineDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -584,6 +590,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'TimetableListDto':
       return TimetableListDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'TimetableSemesterDto':
+      return TimetableSemesterDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'TransferInput':
       return TransferInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -596,6 +605,9 @@ ReturnType deserialize<ReturnType, BaseType>(
       return TryResultDto.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'TryRowDto':
       return TryRowDto.fromJson(value as Map<String, dynamic>) as ReturnType;
+    case 'UpdateSchoolProfileInput':
+      return UpdateSchoolProfileInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'UpdatedCellDto':
       return UpdatedCellDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;

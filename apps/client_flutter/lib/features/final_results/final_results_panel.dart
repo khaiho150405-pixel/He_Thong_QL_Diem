@@ -97,9 +97,11 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
 
   Future<Map<num, num?>> _loadStudentStt() async {
     try {
-      final cells =
-          await ref.read(gradebooksRepositoryProvider).cells(widget.gradebookId);
-      if (widget.resultsOutdated == null && cells.book.resultsOutdated == true) {
+      final cells = await ref
+          .read(gradebooksRepositoryProvider)
+          .cells(widget.gradebookId);
+      if (widget.resultsOutdated == null &&
+          cells.book.resultsOutdated == true) {
         if (mounted) setState(() => _resultsOutdated = true);
       }
       final map = <num, num?>{};
@@ -115,11 +117,10 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
   }
 
   void reload() => setState(() {
-        busy = false;
-        results =
-            ref.read(finalResultsRepositoryProvider).list(widget.gradebookId);
-        _studentSttFuture = _loadStudentStt();
-      });
+    busy = false;
+    results = ref.read(finalResultsRepositoryProvider).list(widget.gradebookId);
+    _studentSttFuture = _loadStudentStt();
+  });
 
   Future<String?> askReason() async {
     var reason = '';
@@ -381,8 +382,10 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
               )
             : null,
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
       ),
     );
 
@@ -427,10 +430,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       items: [
         const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final c in availableClassifications)
-          DropdownMenuItem(
-            value: c,
-            child: Text(classificationLabel(c)),
-          ),
+          DropdownMenuItem(value: c, child: Text(classificationLabel(c))),
       ],
       onChanged: (v) => setState(() {
         _classificationFilter = v;
@@ -569,7 +569,8 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       return const EmptyState(
         icon: Icons.check_circle_outline,
         title: 'Không có học sinh miễn môn',
-        message: 'Tất cả học sinh trong bảng điểm đều tham gia đánh giá đầy đủ.',
+        message:
+            'Tất cả học sinh trong bảng điểm đều tham gia đánh giá đầy đủ.',
       );
     }
     return ListView.separated(
@@ -632,8 +633,11 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                   children: [
                     CircleAvatar(
                       backgroundColor: t.warnSoft,
-                      child: Icon(Icons.warning_amber_rounded,
-                          color: t.warn, size: 20),
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        color: t.warn,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
@@ -703,7 +707,8 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
         child: EmptyState(
           icon: Icons.search_off_outlined,
           title: 'Không tìm thấy kết quả',
-          message: 'Không có học sinh nào khớp với điều kiện tìm kiếm hoặc lọc.',
+          message:
+              'Không có học sinh nào khớp với điều kiện tìm kiếm hoặc lọc.',
         ),
       );
     }
@@ -718,8 +723,9 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
         itemBuilder: (context, index) {
           final item = items[index];
           final rawStt = sttMap[item.studentId];
-          final displayStt =
-              rawStt != null ? '$rawStt' : '${index + 1 + _page * _pageSize}';
+          final displayStt = rawStt != null
+              ? '$rawStt'
+              : '${index + 1 + _page * _pageSize}';
 
           return Card(
             margin: EdgeInsets.zero,
@@ -804,17 +810,22 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             const totalColumns = 5;
-            final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+            final hMargin = constraints.maxWidth >= 768
+                ? AppSpacing.xl
+                : AppSpacing.md;
             const colSpacing = 16.0;
             final availableTotalWidth =
-                constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+                constraints.maxWidth -
+                (hMargin * 2) -
+                ((totalColumns - 1) * colSpacing);
 
             const minStt = 50.0;
             const minStudent = 160.0;
             const minScore = 110.0;
             const minClassif = 110.0;
             const minDetail = 60.0;
-            const minRequired = minStt + minStudent + minScore + minClassif + minDetail;
+            const minRequired =
+                minStt + minStudent + minScore + minClassif + minDetail;
 
             final double colStt;
             final double colStudent;
@@ -919,7 +930,9 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                                   style: TextStyle(
                                     color: t.ink,
                                     fontWeight: FontWeight.w700,
-                                    fontFeatures: const [FontFeature.tabularFigures()],
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -929,7 +942,9 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                             SizedBox(
                               width: colClassif,
                               child: Center(
-                                child: _classificationBadge(items[i].classification),
+                                child: _classificationBadge(
+                                  items[i].classification,
+                                ),
                               ),
                             ),
                           ),
@@ -978,9 +993,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
               IconButton(
                 icon: const Icon(Icons.chevron_left),
                 tooltip: 'Trang trước',
-                onPressed: _page > 0
-                    ? () => setState(() => _page--)
-                    : null,
+                onPressed: _page > 0 ? () => setState(() => _page--) : null,
               ),
               Text(
                 'Trang ${_page + 1} / $totalPages',
@@ -1147,11 +1160,12 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                     final sttMap = sttSnapshot.data ?? const {};
 
                     // Thu thập danh sách mã xếp loại có sẵn để lọc
-                    final availableClassifications = rawItems
-                        .map((i) => i.classification.trim().toUpperCase())
-                        .toSet()
-                        .toList()
-                      ..sort();
+                    final availableClassifications =
+                        rawItems
+                            .map((i) => i.classification.trim().toUpperCase())
+                            .toSet()
+                            .toList()
+                          ..sort();
 
                     // Dòng thông tin chung duy nhất phía trên bảng
                     final metaSummaryWidget = rawItems.isNotEmpty
@@ -1171,11 +1185,12 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                         return false;
                       }
                       return true;
-                    }).toList()
-                      ..sort((a, b) => _compareStudents(a, b, sttMap));
+                    }).toList()..sort((a, b) => _compareStudents(a, b, sttMap));
 
-                    final totalPages =
-                        max(1, (filteredAll.length / _pageSize).ceil());
+                    final totalPages = max(
+                      1,
+                      (filteredAll.length / _pageSize).ceil(),
+                    );
                     if (_page >= totalPages) _page = totalPages - 1;
                     if (_page < 0) _page = 0;
 

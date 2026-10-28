@@ -118,6 +118,23 @@ export class TimetableService {
       orderBy: [{ thu: "asc" }, { tiet: "asc" }],
     });
 
+    const found = semesterId
+      ? await this.db.hoc_ky.findUnique({
+          where: { ma_hoc_ky: semesterId },
+          include: { ma_nam_hoc_ref: true },
+        })
+      : null;
+    const day = (value: Date) => value.toISOString().slice(0, 10);
+    const semester = found
+      ? {
+          id: found.ma_hoc_ky,
+          name: found.ten,
+          yearName: found.ma_nam_hoc_ref.ten,
+          startDate: day(found.ngay_bat_dau),
+          endDate: day(found.ngay_ket_thuc),
+        }
+      : null;
+
     const items: TimetableItemDto[] = rows.map((r) => ({
       ma_tiet_hoc: r.ma_tiet_hoc,
       ma_lop: r.ma_lop,
@@ -134,7 +151,7 @@ export class TimetableService {
       ghi_chu: r.ghi_chu,
     }));
 
-    return { items, total: items.length };
+    return { items, total: items.length, semester };
   }
 
   async createItem(

@@ -5,6 +5,7 @@ import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_charts.dart';
 import '../../app/widgets/app_progress.dart';
 import '../reports/repository.dart';
+import '../school_profile/school_profile.dart';
 
 const double kAdminChartCardHeight = 310.0;
 
@@ -96,6 +97,10 @@ class AdminChartsSection extends ConsumerWidget {
                   activities: data.recentActivities,
                   totalTeachers: data.kpi.totalTeachers,
                   totalClasses: data.kpi.totalClasses,
+                  schoolShortName: ref
+                      .watch(schoolProfileProvider)
+                      .valueOrNull
+                      ?.shortName,
                 );
                 Widget sized(Widget card) =>
                     SizedBox(height: kAdminChartCardHeight, child: card);
@@ -502,11 +507,13 @@ class _RecentGradebookActivityCard extends StatelessWidget {
     required this.activities,
     required this.totalTeachers,
     required this.totalClasses,
+    required this.schoolShortName,
   });
 
   final List<AdminRecentActivityItem> activities;
   final int totalTeachers;
   final int totalClasses;
+  final String? schoolShortName;
 
   @override
   Widget build(BuildContext context) {
@@ -587,7 +594,8 @@ class _RecentGradebookActivityCard extends StatelessWidget {
             ),
       footerIcon: Icons.history_rounded,
       footerText:
-          '$totalTeachers Giáo viên bộ môn · $totalClasses Lớp học THPT Bà Điểm',
+          '$totalTeachers Giáo viên bộ môn · $totalClasses Lớp học'
+          '${schoolShortName == null ? '' : ' $schoolShortName'}',
     );
   }
 }

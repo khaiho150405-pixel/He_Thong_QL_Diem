@@ -587,10 +587,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           subtitle: isStudentEdit && f.key == 'dang_theo_hoc'
               ? Text(
                   'Chuyển lớp, nghỉ học, học lại: dùng menu thao tác trên danh mục học sinh',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: t.ink3,
-                  ),
+                  style: TextStyle(fontSize: 12, color: t.ink3),
                 )
               : null,
           value: values[f.key] as bool? ?? false,
@@ -697,16 +694,14 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         );
       }
       if (selected != null && !rows.any((r) => r[target.id] == selected)) {
-        final fallbackLabel = (widget.spec.key == 'students' &&
+        final fallbackLabel =
+            (widget.spec.key == 'students' &&
                 widget.row?['currentClassName'] != null &&
                 widget.row!['currentClassName'].toString().isNotEmpty)
             ? widget.row!['currentClassName'].toString()
             : 'Bản ghi hiện tại';
         items.add(
-          DropdownMenuItem(
-            value: selected as num,
-            child: Text(fallbackLabel),
-          ),
+          DropdownMenuItem(value: selected as num, child: Text(fallbackLabel)),
         );
       }
       final dropdown = AppSelectField<num>(
@@ -715,8 +710,8 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         helperText: widget.spec.key == 'teachers' && widget.row != null
             ? 'Liên kết tài khoản không thể đổi sau khi tạo hồ sơ.'
             : (isStudentEdit && f.key == 'ma_lop'
-                ? 'Chuyển lớp, nghỉ học, học lại: dùng menu thao tác trên danh mục học sinh'
-                : null),
+                  ? 'Chuyển lớp, nghỉ học, học lại: dùng menu thao tác trên danh mục học sinh'
+                  : null),
         prefixIcon: const Icon(Icons.link_rounded, size: 20),
         items: items,
         enabled: !locked,
@@ -803,8 +798,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
         ),
         onChanged: (val) {
-          final match =
-              RegExp(r'^(\d{4})\s*[-–]\s*(\d{4})$').firstMatch(val.trim());
+          final match = RegExp(
+            r'^(\d{4})\s*[-–]\s*(\d{4})$',
+          ).firstMatch(val.trim());
           if (match != null) {
             final s = int.tryParse(match.group(1)!);
             final e = int.tryParse(match.group(2)!);
@@ -1401,10 +1397,13 @@ class _PublishReadinessDialogState
                       ],
                     ),
                   ),
-                  if (issue.code == PublishIssueDtoCodeEnum.ADJUSTMENT_PENDING) ...[
+                  if (issue.code ==
+                      PublishIssueDtoCodeEnum.ADJUSTMENT_PENDING) ...[
                     const SizedBox(width: 8),
                     OutlinedButton(
-                      key: ValueKey('open-adjustments-${issue.gradebookId ?? "all"}'),
+                      key: ValueKey(
+                        'open-adjustments-${issue.gradebookId ?? "all"}',
+                      ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,

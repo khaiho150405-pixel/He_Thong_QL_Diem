@@ -90,6 +90,7 @@ enum TrangThaiLo {
 
 model nguoi_dung {
   ghi_danh_thuc_hien_rows hoc_sinh_lop[]
+  truong_cap_nhat_rows    truong[]
   phieu_gui_rows          phieu_dieu_chinh[]  @relation("PhieuDieuChinhGui")
   phieu_xu_ly_rows        phieu_dieu_chinh[]  @relation("PhieuDieuChinhXuLy")
   lich_su_mien_rows       lich_su_mien_diem[]
@@ -791,4 +792,23 @@ model hoc_sinh_lop {
   @@unique([ma_hoc_sinh, ma_lop])
   @@index([ma_lop])
   @@index([ma_nam_hoc])
+}
+
+/// Thông tin trường (ADR-0019). CHECK ma_truong = 1: mức 1 là mỗi trường một bản cài; nới CHECK để mở nhiều trường.
+model truong {
+  ma_truong         Int         @id @default(1) @db.SmallInt
+  ten_truong        String      @db.VarChar(200)
+  ten_ngan          String      @db.VarChar(60)
+  co_quan_chu_quan  String?     @db.VarChar(200)
+  dia_chi           String?     @db.VarChar(300)
+  dien_thoai        String?     @db.VarChar(20)
+  email             String?     @db.VarChar(200)
+  hieu_truong       String?     @db.VarChar(120)
+  logo_key          String?     @db.VarChar(300)
+  logo_content_type String?     @db.VarChar(30)
+  logo_checksum     String?     @db.VarChar(64)
+  phien_ban         Int         @default(1)
+  cap_nhat_luc      DateTime    @default(now()) @db.Timestamptz(6)
+  nguoi_cap_nhat    Int?
+  nguoi             nguoi_dung? @relation(fields: [nguoi_cap_nhat], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: NoAction)
 }

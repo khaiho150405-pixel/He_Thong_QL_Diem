@@ -96,7 +96,8 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       if (_subjectId != null && b.subjectId != _subjectId) return false;
       if (_termId != null && b.termId != _termId) return false;
       if (query.isNotEmpty) {
-        final match = b.className.toLowerCase().contains(query) ||
+        final match =
+            b.className.toLowerCase().contains(query) ||
             b.subjectName.toLowerCase().contains(query) ||
             b.termName.toLowerCase().contains(query);
         if (!match) return false;
@@ -108,8 +109,7 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
   Future<void> _exportExcel(GradebookDto book) async {
     setState(() => _exporting = true);
     try {
-      final bytes =
-          await ref.read(reportsRepositoryProvider).export(book.id);
+      final bytes = await ref.read(reportsRepositoryProvider).export(book.id);
       final path = await FilePicker.saveFile(
         dialogTitle: 'Lưu báo cáo Excel',
         fileName: 'tong-ket-${book.className}-${book.subjectName}.xlsx',
@@ -129,9 +129,9 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage(error))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage(error))));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -175,8 +175,10 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
               )
             : null,
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
       ),
     );
 
@@ -280,12 +282,7 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
           spacing: AppSpacing.md,
           runSpacing: AppSpacing.md,
           crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            yearFilter,
-            termDropdown,
-            classDropdown,
-            subjectDropdown,
-          ],
+          children: [yearFilter, termDropdown, classDropdown, subjectDropdown],
         ),
         const SizedBox(height: AppSpacing.md),
         searchField,
@@ -363,10 +360,14 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             const totalColumns = 5;
-            final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+            final hMargin = constraints.maxWidth >= 768
+                ? AppSpacing.xl
+                : AppSpacing.md;
             const colSpacing = 16.0;
             final availableTotalWidth =
-                constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+                constraints.maxWidth -
+                (hMargin * 2) -
+                ((totalColumns - 1) * colSpacing);
 
             const minLop = 80.0;
             const minMon = 140.0;
@@ -406,10 +407,7 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
                   horizontalMargin: hMargin,
                   columns: [
                     DataColumn(
-                      label: SizedBox(
-                        width: colLop,
-                        child: const Text('Lớp'),
-                      ),
+                      label: SizedBox(width: colLop, child: const Text('Lớp')),
                     ),
                     DataColumn(
                       label: SizedBox(
@@ -442,7 +440,8 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
                   rows: [
                     for (final b in pagedBooks)
                       DataRow(
-                        onSelectChanged: (_) => setState(() => _selectedBook = b),
+                        onSelectChanged: (_) =>
+                            setState(() => _selectedBook = b),
                         cells: [
                           DataCell(
                             SizedBox(
@@ -497,7 +496,8 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
                                 alignment: Alignment.centerRight,
                                 child: FilledButton.tonal(
                                   key: ValueKey('view-gradebook-${b.id}'),
-                                  onPressed: () => setState(() => _selectedBook = b),
+                                  onPressed: () =>
+                                      setState(() => _selectedBook = b),
                                   child: const Text('Xem'),
                                 ),
                               ),
@@ -717,16 +717,16 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
                     if (_selectedBook != null) {
                       return ListView(
                         padding: const EdgeInsets.all(AppSpacing.xl),
-                        children: [
-                          _detailView(context, _selectedBook!),
-                        ],
+                        children: [_detailView(context, _selectedBook!)],
                       );
                     }
 
                     // Chế độ danh sách
                     final filtered = _filtered(books);
-                    final totalPages =
-                        max(1, (filtered.length / _listPageSize).ceil());
+                    final totalPages = max(
+                      1,
+                      (filtered.length / _listPageSize).ceil(),
+                    );
                     if (_listPage >= totalPages) _listPage = totalPages - 1;
                     if (_listPage < 0) _listPage = 0;
 

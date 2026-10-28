@@ -88,10 +88,13 @@ class AppFilterDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final defaultWidth =
-        math.max(220.0, AppControlMetrics.responsiveFieldWidth(context));
-    final resolvedWidth =
-        width != null ? math.max(210.0, width!) : defaultWidth;
+    final defaultWidth = math.max(
+      220.0,
+      AppControlMetrics.responsiveFieldWidth(context),
+    );
+    final resolvedWidth = width != null
+        ? math.max(210.0, width!)
+        : defaultWidth;
     return AppSelectField<T>(
       value: value,
       label: label,

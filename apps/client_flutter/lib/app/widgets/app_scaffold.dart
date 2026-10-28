@@ -244,11 +244,11 @@ class AppScaffold extends ConsumerWidget {
       ),
       bottomNavigationBar: bottomBar != null
           ? (mobileNav != null
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [bottomBar!, mobileNav],
-                )
-              : bottomBar)
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [bottomBar!, mobileNav],
+                  )
+                : bottomBar)
           : mobileNav,
       body: AppEdgeScrollbar(child: body),
       floatingActionButton: floatingActionButton,

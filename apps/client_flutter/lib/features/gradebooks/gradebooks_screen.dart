@@ -206,7 +206,10 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                   ),
                 )
               : null,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 10,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             borderSide: BorderSide(color: t.line),
@@ -251,16 +254,11 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       value: _filterClassId,
       width: isMobile ? double.infinity : 220,
       items: [
-        const DropdownMenuItem(
-          value: null,
-          child: Text('Tất cả'),
-        ),
+        const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final c in _classes)
           DropdownMenuItem(
             value: c['ma_lop'] as num?,
-            child: Text(
-              c['ten_lop']?.toString() ?? 'Lớp ${c['ma_lop']}',
-            ),
+            child: Text(c['ten_lop']?.toString() ?? 'Lớp ${c['ma_lop']}'),
           ),
       ],
       onChanged: (val) => setState(() => _filterClassId = val),
@@ -272,16 +270,11 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       value: _filterSubjectId,
       width: isMobile ? double.infinity : 220,
       items: [
-        const DropdownMenuItem(
-          value: null,
-          child: Text('Tất cả'),
-        ),
+        const DropdownMenuItem(value: null, child: Text('Tất cả')),
         for (final s in _subjects)
           DropdownMenuItem(
             value: s['ma_mon'] as num?,
-            child: Text(
-              s['ten_mon']?.toString() ?? 'Môn ${s['ma_mon']}',
-            ),
+            child: Text(s['ten_mon']?.toString() ?? 'Môn ${s['ma_mon']}'),
           ),
       ],
       onChanged: (val) => setState(() => _filterSubjectId = val),
@@ -352,10 +345,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                   classControl,
                   const SizedBox(height: 10),
                   subjectControl,
-                  if (_hasFilter) ...[
-                    const SizedBox(height: 12),
-                    resetButton,
-                  ],
+                  if (_hasFilter) ...[const SizedBox(height: 12), resetButton],
                 ],
               ),
             ),
@@ -369,7 +359,11 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: Chip(
-                        label: Text(_filterStatus == 'DANG_NHAP_LIEU' ? 'Đang nhập' : 'Đã khóa'),
+                        label: Text(
+                          _filterStatus == 'DANG_NHAP_LIEU'
+                              ? 'Đang nhập'
+                              : 'Đã khóa',
+                        ),
                         deleteIcon: const Icon(Icons.close, size: 14),
                         onDeleted: () => setState(() => _filterStatus = null),
                         visualDensity: VisualDensity.compact,
@@ -391,14 +385,20 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                       child: Chip(
                         label: Text('Môn: $_filterSubjectId'),
                         deleteIcon: const Icon(Icons.close, size: 14),
-                        onDeleted: () => setState(() => _filterSubjectId = null),
+                        onDeleted: () =>
+                            setState(() => _filterSubjectId = null),
                         visualDensity: VisualDensity.compact,
                       ),
                     ),
                   TextButton(
                     onPressed: _clearFilters,
-                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-                    child: const Text('Xóa lọc', style: TextStyle(fontSize: 12)),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: const Text(
+                      'Xóa lọc',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -645,10 +645,14 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             const totalColumns = 6;
-            final hMargin = constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
+            final hMargin = constraints.maxWidth >= 768
+                ? AppSpacing.xl
+                : AppSpacing.md;
             const colSpacing = 16.0;
             final availableTotalWidth =
-                constraints.maxWidth - (hMargin * 2) - ((totalColumns - 1) * colSpacing);
+                constraints.maxWidth -
+                (hMargin * 2) -
+                ((totalColumns - 1) * colSpacing);
 
             const minLop = 76.0;
             const minMon = 130.0;
@@ -656,7 +660,8 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
             const minVersion = 70.0;
             const minStatus = 120.0;
             const minAction = 86.0;
-            const minRequired = minLop + minMon + minHk + minVersion + minStatus + minAction;
+            const minRequired =
+                minLop + minMon + minHk + minVersion + minStatus + minAction;
 
             final double colLop;
             final double colMon;
@@ -691,11 +696,33 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                   columnSpacing: colSpacing,
                   horizontalMargin: hMargin,
                   columns: [
-                    DataColumn(label: SizedBox(width: colLop, child: const Text('LỚP'))),
-                    DataColumn(label: SizedBox(width: colMon, child: const Text('MÔN HỌC'))),
-                    DataColumn(label: SizedBox(width: colHk, child: const Text('HỌC KỲ'))),
-                    DataColumn(label: SizedBox(width: colVersion, child: const Text('PHIÊN BẢN'))),
-                    DataColumn(label: SizedBox(width: colStatus, child: const Text('TRẠNG THÁI'))),
+                    DataColumn(
+                      label: SizedBox(width: colLop, child: const Text('LỚP')),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colMon,
+                        child: const Text('MÔN HỌC'),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colHk,
+                        child: const Text('HỌC KỲ'),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colVersion,
+                        child: const Text('PHIÊN BẢN'),
+                      ),
+                    ),
+                    DataColumn(
+                      label: SizedBox(
+                        width: colStatus,
+                        child: const Text('TRẠNG THÁI'),
+                      ),
+                    ),
                     DataColumn(
                       label: SizedBox(
                         width: colAction,
@@ -709,7 +736,8 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                   rows: [
                     for (final b in items)
                       DataRow(
-                        onSelectChanged: (_) => context.go('/gradebooks/${b.id}'),
+                        onSelectChanged: (_) =>
+                            context.go('/gradebooks/${b.id}'),
                         cells: [
                           DataCell(
                             SizedBox(
@@ -770,8 +798,13 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                                 alignment: Alignment.centerRight,
                                 child: FilledButton.tonal(
                                   key: ValueKey('view-gradebook-${b.id}'),
-                                  onPressed: () => context.go('/gradebooks/${b.id}'),
-                                  child: Text((teacher && b.status.value != 'DA_CHOT') ? 'Nhập điểm' : 'Xem'),
+                                  onPressed: () =>
+                                      context.go('/gradebooks/${b.id}'),
+                                  child: Text(
+                                    (teacher && b.status.value != 'DA_CHOT')
+                                        ? 'Nhập điểm'
+                                        : 'Xem',
+                                  ),
                                 ),
                               ),
                             ),

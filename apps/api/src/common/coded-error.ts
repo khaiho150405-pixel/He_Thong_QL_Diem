@@ -156,6 +156,21 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
     "Bảng điểm hoặc phiếu vừa thay đổi; tải lại rồi thử lại.",
   ],
   [
+    "SCHOOL_PROFILE_VERSION_CONFLICT",
+    "SCHOOL_PROFILE_VERSION_CONFLICT",
+    "Thông tin trường vừa được người khác thay đổi; tải lại rồi thử lại.",
+  ],
+  [
+    "INVALID_SCHOOL_PROFILE",
+    "INVALID_SCHOOL_PROFILE",
+    "Thông tin trường không hợp lệ.",
+  ],
+  [
+    "INVALID_LOGO_FILE",
+    "INVALID_LOGO_FILE",
+    "Logo phải là ảnh PNG hoặc JPEG hợp lệ, tối đa 1 MB.",
+  ],
+  [
     "TERM_ALREADY_PUBLISHED",
     "TERM_ALREADY_PUBLISHED",
     "Học kỳ đã công bố; không được thay đổi hoặc tính lại kết quả.",

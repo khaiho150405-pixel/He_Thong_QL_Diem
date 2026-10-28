@@ -10,5 +10,6 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **items** | [**List&lt;TimetableItemDto&gt;**](TimetableItemDto.md) |  |
 **total** | **num** |  |
+**semester** | [**TimetableSemesterDto**](TimetableSemesterDto.md) | Học kỳ mà danh sách đang dùng (semesterId hoặc học kỳ mặc định); null nếu không xác định được. |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

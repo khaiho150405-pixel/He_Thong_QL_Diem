@@ -9,10 +9,13 @@ import 'package:client_flutter/app/widgets/app_badge.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:client_flutter/features/connection/connection.dart';
 import 'package:client_flutter/features/final_results/student_results_screen.dart';
+import 'package:client_flutter/features/school_profile/school_profile.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/fake_school_profile.dart';
 
 /// Máy chủ giả cho bước 4: điểm của học sinh, chính sách xếp loại.
 class _FakeServer implements HttpClientAdapter {
@@ -158,6 +161,9 @@ Future<ProviderContainer> _pump(
       ),
       apiProvider.overrideWithValue(api),
       connectionProvider.overrideWith((ref) async {}),
+      schoolProfileRepositoryProvider.overrideWithValue(
+        FakeSchoolProfileRepository(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -336,7 +342,7 @@ void main() {
         ).extension<AppTokens>()!;
         expect(tokens.brightness, mode);
         expect(find.text('Bảng điểm cá nhân'), findsOneWidget);
-        expect(find.textContaining('THPT Bà Điểm · Học kỳ I'), findsOneWidget);
+        expect(find.textContaining('$fakeSchoolShortName · Học kỳ I'), findsOneWidget);
         expect(find.text('6.5'), findsWidgets);
         expect(find.text('3 / 38'), findsOneWidget);
         expect(find.text('5 / 6'), findsOneWidget);

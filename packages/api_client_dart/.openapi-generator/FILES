@@ -123,6 +123,8 @@ doc/ReviewApi.md
 doc/ReviewApprovalInput.md
 doc/ReviewApprovalResultDto.md
 doc/ReviewDecisionInput.md
+doc/SchoolApi.md
+doc/SchoolProfileDto.md
 doc/SemesterDeadlineDto.md
 doc/SemesterDeadlineInput.md
 doc/SemesterDeadlinesDto.md
@@ -166,11 +168,13 @@ doc/TemplateSummaryDto.md
 doc/TimetableApi.md
 doc/TimetableItemDto.md
 doc/TimetableListDto.md
+doc/TimetableSemesterDto.md
 doc/TransferInput.md
 doc/TransferResultDto.md
 doc/TryGradeDto.md
 doc/TryResultDto.md
 doc/TryRowDto.md
+doc/UpdateSchoolProfileInput.md
 doc/UpdatedCellDto.md
 doc/VersionedDefinitionInput.md
 doc/WithdrawInput.md
@@ -196,6 +200,7 @@ lib/src/api/recognition_api.dart
 lib/src/api/recognition_batches_api.dart
 lib/src/api/reports_api.dart
 lib/src/api/review_api.dart
+lib/src/api/school_api.dart
 lib/src/api/semester_weights_api.dart
 lib/src/api/semesters_api.dart
 lib/src/api/student_results_api.dart
@@ -316,6 +321,7 @@ lib/src/model/reenroll_input.dart
 lib/src/model/review_approval_input.dart
 lib/src/model/review_approval_result_dto.dart
 lib/src/model/review_decision_input.dart
+lib/src/model/school_profile_dto.dart
 lib/src/model/semester_deadline_dto.dart
 lib/src/model/semester_deadline_input.dart
 lib/src/model/semester_deadlines_dto.dart
@@ -352,11 +358,13 @@ lib/src/model/template_page_dto.dart
 lib/src/model/template_summary_dto.dart
 lib/src/model/timetable_item_dto.dart
 lib/src/model/timetable_list_dto.dart
+lib/src/model/timetable_semester_dto.dart
 lib/src/model/transfer_input.dart
 lib/src/model/transfer_result_dto.dart
 lib/src/model/try_grade_dto.dart
 lib/src/model/try_result_dto.dart
 lib/src/model/try_row_dto.dart
+lib/src/model/update_school_profile_input.dart
 lib/src/model/updated_cell_dto.dart
 lib/src/model/versioned_definition_input.dart
 lib/src/model/withdraw_input.dart

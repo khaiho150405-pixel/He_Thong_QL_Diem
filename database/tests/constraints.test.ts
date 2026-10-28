@@ -20,7 +20,7 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu','he_so_hoc_ky','he_so_hoc_ky_chung','chot_cot_diem','lich_nhap_diem','lich_nhap_hoc_ky','danh_sach_phieu','mau_bang_diem','cot_mau','lo_nhan_dien','trang_lo_nhan_dien','lich_su_mien_diem','phieu_dieu_chinh','dong_dieu_chinh','hoc_sinh_lop')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu','he_so_hoc_ky','he_so_hoc_ky_chung','chot_cot_diem','lich_nhap_diem','lich_nhap_hoc_ky','danh_sach_phieu','mau_bang_diem','cot_mau','lo_nhan_dien','trang_lo_nhan_dien','lich_su_mien_diem','phieu_dieu_chinh','dong_dieu_chinh','hoc_sinh_lop','truong')",
     );
     assert.equal(tables.rows[0].n, 16);
     const timetable = await owner.query(
@@ -43,6 +43,12 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     await denied("TRUNCATE hoc_sinh_lop");
     await denied(
       "INSERT INTO hoc_sinh_lop(ma_hoc_sinh,ma_lop,tu_ngay) VALUES(1,1,CURRENT_DATE)",
+    );
+    await denied("UPDATE truong SET ten_ngan=ten_ngan");
+    await denied("DELETE FROM truong");
+    await denied("TRUNCATE truong");
+    await denied(
+      "INSERT INTO truong(ma_truong,ten_truong,ten_ngan) VALUES(2,'Trường khác','Khác')",
     );
     await denied("UPDATE phieu_dieu_chinh SET ly_do=ly_do");
     await denied("DELETE FROM phieu_dieu_chinh");

@@ -131,10 +131,17 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
   }
 
   String _semesterLabel(Json s, Map<num, Json> yearMap) {
-    final semTen = (s['ten'] ?? s['label'] ?? (s['thu_tu'] != null ? 'Học kỳ ${s['thu_tu']}' : 'Học kỳ')).toString().trim();
+    final semTen =
+        (s['ten'] ??
+                s['label'] ??
+                (s['thu_tu'] != null ? 'Học kỳ ${s['thu_tu']}' : 'Học kỳ'))
+            .toString()
+            .trim();
     final yearId = s['ma_nam_hoc'];
     final yearRow = yearId is num ? yearMap[yearId] : null;
-    final yearName = (yearRow?['ten'] ?? yearRow?['label'] ?? '').toString().trim();
+    final yearName = (yearRow?['ten'] ?? yearRow?['label'] ?? '')
+        .toString()
+        .trim();
     if (yearName.isNotEmpty && !semTen.contains(yearName)) {
       return '$semTen · $yearName';
     }

@@ -4,6 +4,7 @@
 
 // ignore_for_file: unused_element
 import 'package:api_client_dart/src/model/timetable_item_dto.dart';
+import 'package:api_client_dart/src/model/timetable_semester_dto.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -18,7 +19,13 @@ part 'timetable_list_dto.g.dart';
 )
 class TimetableListDto {
   /// Returns a new [TimetableListDto] instance.
-  TimetableListDto({required this.items, required this.total});
+  TimetableListDto({
+    required this.items,
+
+    required this.total,
+
+    required this.semester,
+  });
 
   @JsonKey(name: r'items', required: true, includeIfNull: false)
   final List<TimetableItemDto> items;
@@ -26,13 +33,23 @@ class TimetableListDto {
   @JsonKey(name: r'total', required: true, includeIfNull: false)
   final num total;
 
+  /// Học kỳ mà danh sách đang dùng (semesterId hoặc học kỳ mặc định); null nếu không xác định được.
+  @JsonKey(name: r'semester', required: true, includeIfNull: true)
+  final TimetableSemesterDto? semester;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TimetableListDto && other.items == items && other.total == total;
+      other is TimetableListDto &&
+          other.items == items &&
+          other.total == total &&
+          other.semester == semester;
 
   @override
-  int get hashCode => items.hashCode + total.hashCode;
+  int get hashCode =>
+      items.hashCode +
+      total.hashCode +
+      (semester == null ? 0 : semester.hashCode);
 
   factory TimetableListDto.fromJson(Map<String, dynamic> json) =>
       _$TimetableListDtoFromJson(json);

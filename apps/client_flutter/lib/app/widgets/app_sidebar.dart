@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/authentication/session.dart';
 import '../design_tokens.dart';
+import '../../features/school_profile/school_profile.dart';
 import 'app_user_avatar_menu.dart';
 
 final sidebarCollapsedProvider = StateProvider<bool>((ref) => false);
@@ -430,15 +431,35 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
       );
     }
 
-    Widget logo() => Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: t.onPri.withAlpha(36),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Icon(Icons.school_outlined, size: 20, color: t.onPri),
-    );
+    final school = ref.watch(schoolProfileProvider).valueOrNull;
+
+    Widget logo() {
+      final icon = Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: t.onPri.withAlpha(36),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: Icon(Icons.school_outlined, size: 20, color: t.onPri),
+      );
+      if (school == null || !school.hasLogo) return icon;
+      // Logo đặt trên nền sáng để đọc được cả khi ảnh nền trong suốt.
+      return Container(
+        width: 36,
+        height: 36,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: t.onPri,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        child: SchoolLogoImage(
+          profile: school,
+          size: 30,
+          fallback: Icon(Icons.school_outlined, size: 20, color: t.navy),
+        ),
+      );
+    }
 
     Widget buildBrandHeader() {
       if (collapsed) {
@@ -492,16 +513,19 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Text(
-                      'THPT BÀ ĐIỂM',
-                      style: TextStyle(
-                        color: t.onNavy,
-                        fontSize: 11,
-                        height: 14 / 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.88,
+                    if (school != null)
+                      Text(
+                        school.shortName.toUpperCase(),
+                        style: TextStyle(
+                          color: t.onNavy,
+                          fontSize: 11,
+                          height: 14 / 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.88,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -671,178 +695,187 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
               child: ListView(
                 key: const PageStorageKey('app-sidebar-nav-list'),
                 controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 children: [
-                sectionLabel('ĐIỀU HƯỚNG CHÍNH', top: 10),
-                buildNavTile(
-                  icon: Icons.grid_view_outlined,
-                  title: 'Tổng quan',
-                  route: '/',
-                ),
-                buildNavTile(
-                  icon: Icons.calendar_month_outlined,
-                  title: timetableTitle,
-                  route: '/timetable',
-                ),
-                if (role == 'QUAN_TRI_VIEN') ...[
-                  buildNavGroup(
-                    groupKey: 'grades',
-                    icon: Icons.table_chart_outlined,
-                    title: 'Điểm & Đánh giá',
-                    items: [
-                      (
-                        icon: Icons.table_chart_outlined,
-                        title: 'Bảng điểm',
-                        route: '/gradebooks',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.fact_check_outlined,
-                        title: 'Duyệt điều chỉnh điểm',
-                        route: '/adjustments',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.rule_outlined,
-                        title: 'Chính sách',
-                        route: '/classification-policy',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.workspace_premium_outlined,
-                        title: 'Tổng kết & xếp loại',
-                        route: '/final-results',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.grid_on_outlined,
-                        title: 'Mẫu bảng điểm',
-                        route: '/admin/form-templates',
-                        countBadge: null,
-                      ),
-                    ],
+                  sectionLabel('ĐIỀU HƯỚNG CHÍNH', top: 10),
+                  buildNavTile(
+                    icon: Icons.grid_view_outlined,
+                    title: 'Tổng quan',
+                    route: '/',
                   ),
-                  buildNavGroup(
-                    groupKey: 'academic_structure',
-                    icon: Icons.school_outlined,
-                    title: 'Khung năm học & Lớp',
-                    items: [
-                      (
-                        icon: Icons.calendar_month_outlined,
-                        title: 'Năm học',
-                        route: '/catalog/years',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.date_range_outlined,
-                        title: 'Học kỳ',
-                        route: '/catalog/semesters',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.event_available_outlined,
-                        title: 'Lịch nhập điểm học kỳ',
-                        route: '/admin/semester-deadlines',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.meeting_room_outlined,
-                        title: 'Lớp học',
-                        route: '/catalog/classes',
-                        countBadge: null,
-                      ),
-                    ],
+                  buildNavTile(
+                    icon: Icons.calendar_month_outlined,
+                    title: timetableTitle,
+                    route: '/timetable',
                   ),
-                  buildNavGroup(
-                    groupKey: 'subjects_weights',
-                    icon: Icons.menu_book_outlined,
-                    title: 'Môn học & Hệ số',
-                    items: [
-                      (
-                        icon: Icons.menu_book_outlined,
-                        title: 'Môn học',
-                        route: '/catalog/subjects',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.percent_outlined,
-                        title: 'Hệ số học kỳ',
-                        route: '/catalog/semester-weights',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.tune_outlined,
-                        title: 'Thành phần điểm',
-                        route: '/catalog/components',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.account_tree_outlined,
-                        title: 'Môn học & hệ số',
-                        route: '/admin/subjects-weights',
-                        countBadge: null,
-                      ),
-                    ],
-                  ),
-                  buildNavGroup(
-                    groupKey: 'profiles_accounts',
-                    icon: Icons.people_alt_outlined,
-                    title: 'Hồ sơ & Tài khoản',
-                    items: [
-                      (
-                        icon: Icons.people_alt_outlined,
-                        title: 'Học sinh',
-                        route: '/catalog/students',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.badge_outlined,
-                        title: 'Giáo viên',
-                        route: '/catalog/teachers',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.assignment_ind_outlined,
-                        title: 'Phân công',
-                        route: '/catalog/assignments',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.groups_outlined,
-                        title: 'Giáo viên & phân công',
-                        route: '/admin/teaching-assignments',
-                        countBadge: null,
-                      ),
-                      (
-                        icon: Icons.manage_accounts_outlined,
-                        title: 'Tài khoản',
-                        route: '/catalog/accounts',
-                        countBadge: null,
-                      ),
-                    ],
-                  ),
+                  if (role == 'QUAN_TRI_VIEN') ...[
+                    buildNavGroup(
+                      groupKey: 'grades',
+                      icon: Icons.table_chart_outlined,
+                      title: 'Điểm & Đánh giá',
+                      items: [
+                        (
+                          icon: Icons.table_chart_outlined,
+                          title: 'Bảng điểm',
+                          route: '/gradebooks',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.fact_check_outlined,
+                          title: 'Duyệt điều chỉnh điểm',
+                          route: '/adjustments',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.rule_outlined,
+                          title: 'Chính sách',
+                          route: '/classification-policy',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.workspace_premium_outlined,
+                          title: 'Tổng kết & xếp loại',
+                          route: '/final-results',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.grid_on_outlined,
+                          title: 'Mẫu bảng điểm',
+                          route: '/admin/form-templates',
+                          countBadge: null,
+                        ),
+                      ],
+                    ),
+                    buildNavGroup(
+                      groupKey: 'academic_structure',
+                      icon: Icons.school_outlined,
+                      title: 'Khung năm học & Lớp',
+                      items: [
+                        (
+                          icon: Icons.account_balance_outlined,
+                          title: 'Thông tin trường',
+                          route: '/admin/school-profile',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.calendar_month_outlined,
+                          title: 'Năm học',
+                          route: '/catalog/years',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.date_range_outlined,
+                          title: 'Học kỳ',
+                          route: '/catalog/semesters',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.event_available_outlined,
+                          title: 'Lịch nhập điểm học kỳ',
+                          route: '/admin/semester-deadlines',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.meeting_room_outlined,
+                          title: 'Lớp học',
+                          route: '/catalog/classes',
+                          countBadge: null,
+                        ),
+                      ],
+                    ),
+                    buildNavGroup(
+                      groupKey: 'subjects_weights',
+                      icon: Icons.menu_book_outlined,
+                      title: 'Môn học & Hệ số',
+                      items: [
+                        (
+                          icon: Icons.menu_book_outlined,
+                          title: 'Môn học',
+                          route: '/catalog/subjects',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.percent_outlined,
+                          title: 'Hệ số học kỳ',
+                          route: '/catalog/semester-weights',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.tune_outlined,
+                          title: 'Thành phần điểm',
+                          route: '/catalog/components',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.account_tree_outlined,
+                          title: 'Môn học & hệ số',
+                          route: '/admin/subjects-weights',
+                          countBadge: null,
+                        ),
+                      ],
+                    ),
+                    buildNavGroup(
+                      groupKey: 'profiles_accounts',
+                      icon: Icons.people_alt_outlined,
+                      title: 'Hồ sơ & Tài khoản',
+                      items: [
+                        (
+                          icon: Icons.people_alt_outlined,
+                          title: 'Học sinh',
+                          route: '/catalog/students',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.badge_outlined,
+                          title: 'Giáo viên',
+                          route: '/catalog/teachers',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.assignment_ind_outlined,
+                          title: 'Phân công',
+                          route: '/catalog/assignments',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.groups_outlined,
+                          title: 'Giáo viên & phân công',
+                          route: '/admin/teaching-assignments',
+                          countBadge: null,
+                        ),
+                        (
+                          icon: Icons.manage_accounts_outlined,
+                          title: 'Tài khoản',
+                          route: '/catalog/accounts',
+                          countBadge: null,
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (role == 'GIAO_VIEN') ...[
+                    buildNavTile(
+                      icon: Icons.table_chart_outlined,
+                      title: 'Bảng điểm',
+                      route: '/gradebooks',
+                    ),
+                    buildNavTile(
+                      icon: Icons.workspace_premium_outlined,
+                      title: 'Tổng kết & xếp loại',
+                      route: '/final-results',
+                    ),
+                  ],
+                  if (role == 'HOC_SINH')
+                    buildNavTile(
+                      icon: Icons.fact_check_outlined,
+                      title: 'Điểm của tôi',
+                      route: '/my-results',
+                    ),
                 ],
-                if (role == 'GIAO_VIEN') ...[
-                  buildNavTile(
-                    icon: Icons.table_chart_outlined,
-                    title: 'Bảng điểm',
-                    route: '/gradebooks',
-                  ),
-                  buildNavTile(
-                    icon: Icons.workspace_premium_outlined,
-                    title: 'Tổng kết & xếp loại',
-                    route: '/final-results',
-                  ),
-                ],
-                if (role == 'HOC_SINH')
-                  buildNavTile(
-                    icon: Icons.fact_check_outlined,
-                    title: 'Điểm của tôi',
-                    route: '/my-results',
-                  ),
-              ],
+              ),
             ),
-          ),
           ),
           buildUserFooter(),
         ],

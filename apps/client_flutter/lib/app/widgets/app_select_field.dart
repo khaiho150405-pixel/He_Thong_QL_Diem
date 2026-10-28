@@ -586,7 +586,8 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         final double? effectiveWidth;
         if (widget.width != null && widget.width!.isFinite) {
           effectiveWidth = widget.width;
-        } else if (constraints.hasBoundedWidth && constraints.maxWidth.isFinite) {
+        } else if (constraints.hasBoundedWidth &&
+            constraints.maxWidth.isFinite) {
           effectiveWidth = constraints.maxWidth;
         } else {
           effectiveWidth = null;
@@ -656,9 +657,11 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
           ),
         );
 
-        final hasSelectedOption = widget.value != null &&
+        final hasSelectedOption =
+            widget.value != null &&
             !_isPlaceholder(widget.value, _getDisplayLabel(widget.value));
-        final isTypingQuery = _query.isNotEmpty && widget.enabled && widget.searchable;
+        final isTypingQuery =
+            _query.isNotEmpty && widget.enabled && widget.searchable;
 
         Widget trailingWidget;
         if (isTypingQuery) {
@@ -739,9 +742,7 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
             overflow: TextOverflow.ellipsis,
           ),
           menuStyle: MenuStyle(
-            minimumSize: WidgetStatePropertyAll(
-              Size(effectiveWidth ?? 200, 0),
-            ),
+            minimumSize: WidgetStatePropertyAll(Size(effectiveWidth ?? 200, 0)),
             maximumSize: WidgetStatePropertyAll(
               Size(
                 math.max(
@@ -803,10 +804,7 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
           );
         }
         if (widget.dense) {
-          return SizedBox(
-            height: 48.0,
-            child: interactiveMenu,
-          );
+          return SizedBox(height: 48.0, child: interactiveMenu);
         }
         return interactiveMenu;
       },

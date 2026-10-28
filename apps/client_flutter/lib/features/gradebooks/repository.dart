@@ -204,8 +204,9 @@ class GradebooksRepository {
   }
 
   Future<List<MissingStudentDto>> missingStudents(num bookId) async {
-    final res =
-        await api.getGradebooksApi().gradebooksMissingStudents(id: bookId);
+    final res = await api.getGradebooksApi().gradebooksMissingStudents(
+      id: bookId,
+    );
     return res.data?.items ?? [];
   }
 
@@ -215,8 +216,7 @@ class GradebooksRepository {
     required String reason,
   }) async {
     final input = LateStudentInput(studentId: studentId, reason: reason);
-    final key =
-        _key('late-student', '$bookId:$studentId:${jsonEncode(input)}');
+    final key = _key('late-student', '$bookId:$studentId:${jsonEncode(input)}');
     final result = (await api.getGradebooksApi().gradebooksLateStudent(
       xIdempotencyKey: key,
       id: bookId,

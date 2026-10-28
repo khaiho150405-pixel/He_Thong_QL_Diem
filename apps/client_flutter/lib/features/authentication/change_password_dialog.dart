@@ -8,10 +8,10 @@ class ChangePasswordDialog extends ConsumerStatefulWidget {
   const ChangePasswordDialog({super.key});
 
   static Future<void> show(BuildContext context) => showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const ChangePasswordDialog(),
-      );
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const ChangePasswordDialog(),
+  );
 
   @override
   ConsumerState<ChangePasswordDialog> createState() =>
@@ -59,7 +59,10 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
     });
 
     try {
-      await ref.read(apiProvider).getIdentityApi().identityPassword(
+      await ref
+          .read(apiProvider)
+          .getIdentityApi()
+          .identityPassword(
             passwordInput: PasswordInput(
               currentPassword: _current.text,
               newPassword: nextText,
@@ -171,7 +174,10 @@ class _ChangePasswordDialogState extends ConsumerState<ChangePasswordDialog> {
                 obscureText: _obscureConfirm,
                 decoration: InputDecoration(
                   labelText: 'Xác nhận mật khẩu mới',
-                  prefixIcon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+                  prefixIcon: const Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 20,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirm

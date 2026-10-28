@@ -68,9 +68,9 @@ Future<void> confirmLogout(
       await ref.read(sessionProvider.notifier).logout();
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage(e))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage(e))));
       }
     }
   }
@@ -224,8 +224,7 @@ class AppUserAvatarMenu extends ConsumerWidget {
                 ],
               ),
             ),
-          if (isStaff)
-            const PopupMenuDivider(height: 1),
+          if (isStaff) const PopupMenuDivider(height: 1),
           // 3. Đăng xuất (có hỏi trước khi đăng xuất)
           PopupMenuItem<String>(
             value: 'logout',

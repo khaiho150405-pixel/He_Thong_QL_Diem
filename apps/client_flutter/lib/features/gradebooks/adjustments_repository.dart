@@ -59,9 +59,9 @@ class AdjustmentsRepository {
 
   /// Lấy danh sách phiếu điều chỉnh của một bảng điểm (mới nhất trước, không kèm lines).
   Future<List<AdjustmentDto>> listForBook(num bookId) async {
-    final res = await api
-        .getAdjustmentsApi()
-        .gradebookAdjustmentsListForBook(id: bookId);
+    final res = await api.getAdjustmentsApi().gradebookAdjustmentsListForBook(
+      id: bookId,
+    );
     return res.data?.items.toList() ?? const [];
   }
 
@@ -79,10 +79,10 @@ class AdjustmentsRepository {
     );
     final key = _key('submit', '$bookId:${jsonEncode(input)}');
     final res = await api.getAdjustmentsApi().gradebookAdjustmentsSubmit(
-          xIdempotencyKey: key,
-          id: bookId,
-          adjustmentInput: input,
-        );
+      xIdempotencyKey: key,
+      id: bookId,
+      adjustmentInput: input,
+    );
     _complete('submit', key);
     return res.data!;
   }
@@ -93,16 +93,15 @@ class AdjustmentsRepository {
     String? cursor,
   }) async {
     final res = await api.getAdjustmentsApi().adjustmentsList(
-          status: status?.value,
-          cursor: cursor,
-        );
+      status: status?.value,
+      cursor: cursor,
+    );
     return res.data!;
   }
 
   /// Lấy chi tiết một phiếu điều chỉnh (kèm danh sách các dòng).
   Future<AdjustmentDto> getDetail(String adjId) async {
-    final res =
-        await api.getAdjustmentsApi().adjustmentsDetail(adjId: adjId);
+    final res = await api.getAdjustmentsApi().adjustmentsDetail(adjId: adjId);
     return res.data!;
   }
 
@@ -114,10 +113,10 @@ class AdjustmentsRepository {
     final input = AdjustmentVersionInput(expectedVersion: expectedVersion);
     final key = _key('approve', '$adjId:${jsonEncode(input)}');
     final res = await api.getAdjustmentsApi().adjustmentsApprove(
-          xIdempotencyKey: key,
-          adjId: adjId,
-          adjustmentVersionInput: input,
-        );
+      xIdempotencyKey: key,
+      adjId: adjId,
+      adjustmentVersionInput: input,
+    );
     _complete('approve', key);
     return res.data!;
   }
@@ -134,10 +133,10 @@ class AdjustmentsRepository {
     );
     final key = _key('reject', '$adjId:${jsonEncode(input)}');
     final res = await api.getAdjustmentsApi().adjustmentsReject(
-          xIdempotencyKey: key,
-          adjId: adjId,
-          adjustmentRejectInput: input,
-        );
+      xIdempotencyKey: key,
+      adjId: adjId,
+      adjustmentRejectInput: input,
+    );
     _complete('reject', key);
     return res.data!;
   }
@@ -150,10 +149,10 @@ class AdjustmentsRepository {
     final input = AdjustmentVersionInput(expectedVersion: expectedVersion);
     final key = _key('cancel', '$adjId:${jsonEncode(input)}');
     final res = await api.getAdjustmentsApi().adjustmentsCancel(
-          xIdempotencyKey: key,
-          adjId: adjId,
-          adjustmentVersionInput: input,
-        );
+      xIdempotencyKey: key,
+      adjId: adjId,
+      adjustmentVersionInput: input,
+    );
     _complete('cancel', key);
     return res.data!;
   }

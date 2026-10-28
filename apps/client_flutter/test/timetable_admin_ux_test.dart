@@ -98,7 +98,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      final empty = find.byKey(const ValueKey('add-slot-1-2-2'));
+      // Nhóm lớp 10A1: sáng thứ Hai đã có tiết 1 → tiết trống đầu tiên là 2.
+      final empty = find.byKey(const ValueKey('tt-add-2-0')).first;
       await tester.ensureVisible(empty);
       await tester.tap(empty);
       await tester.pumpAndSettle();

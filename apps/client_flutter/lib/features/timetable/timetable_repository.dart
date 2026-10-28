@@ -11,7 +11,7 @@ class TimetableRepository {
   final dynamic dio;
   TimetableRepository(this.dio);
 
-  Future<List<TimetableItem>> getTimetable({
+  Future<TimetableResult> getTimetable({
     num? classId,
     num? teacherId,
     num? semesterId,
@@ -26,9 +26,12 @@ class TimetableRepository {
     final response = await dio.get('/api/v1/timetable', queryParameters: query);
     final data = response.data as Map<String, dynamic>;
     final items = data['items'] as List<dynamic>? ?? [];
-    return items
-        .map((item) => TimetableItem.fromJson(item as Map<String, dynamic>))
-        .toList();
+    return TimetableResult(
+      items
+          .map((item) => TimetableItem.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      TimetableSemester.tryParse(data['semester']),
+    );
   }
 
   Future<void> createItem({

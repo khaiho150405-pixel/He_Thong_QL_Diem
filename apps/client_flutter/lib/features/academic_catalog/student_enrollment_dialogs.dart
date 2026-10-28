@@ -70,10 +70,12 @@ class _StudentTransferDialogState extends State<StudentTransferDialog> {
     _reasonController = TextEditingController();
 
     final currentClassId = widget.student['ma_lop'] as num?;
-    final currentClass = widget.allClasses.cast<Map<String, dynamic>?>().firstWhere(
-      (c) => c != null && c['ma_lop'] == currentClassId,
-      orElse: () => null,
-    );
+    final currentClass = widget.allClasses
+        .cast<Map<String, dynamic>?>()
+        .firstWhere(
+          (c) => c != null && c['ma_lop'] == currentClassId,
+          orElse: () => null,
+        );
 
     if (currentClass != null) {
       final currentYearId = currentClass['ma_nam_hoc'];
@@ -211,7 +213,10 @@ class _StudentTransferDialogState extends State<StudentTransferDialog> {
                 readOnly: true,
                 decoration: InputDecoration(
                   labelText: 'Ngày hiệu lực (YYYY-MM-DD)',
-                  suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+                  suffixIcon: const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 20,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
@@ -376,7 +381,10 @@ class _StudentWithdrawDialogState extends State<StudentWithdrawDialog> {
                 readOnly: true,
                 decoration: InputDecoration(
                   labelText: 'Ngày hiệu lực (YYYY-MM-DD)',
-                  suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+                  suffixIcon: const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 20,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
@@ -561,7 +569,8 @@ class _StudentReenrollDialogState extends State<StudentReenrollDialog> {
                 onChanged: _busy
                     ? null
                     : (v) => setState(() => _selectedClassId = v),
-                validator: (v) => v == null ? 'Vui lòng chọn lớp học lại' : null,
+                validator: (v) =>
+                    v == null ? 'Vui lòng chọn lớp học lại' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -569,7 +578,10 @@ class _StudentReenrollDialogState extends State<StudentReenrollDialog> {
                 readOnly: true,
                 decoration: InputDecoration(
                   labelText: 'Ngày hiệu lực (YYYY-MM-DD)',
-                  suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+                  suffixIcon: const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 20,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
@@ -861,7 +873,11 @@ Future<void> showAffectedGradebooksNotice(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
-                            Icon(Icons.book_outlined, size: 16, color: t.priLink),
+                            Icon(
+                              Icons.book_outlined,
+                              size: 16,
+                              color: t.priLink,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

@@ -47,7 +47,8 @@ String deadlineErrorMessage(Object error) {
     'TARGET_CLASS_WRONG_YEAR' => 'Lớp đích không thuộc năm học đích',
     'PROMOTION_GRADE_MISMATCH' =>
       'Khối của lớp đích không khớp với hành động lên lớp/lưu ban',
-    'GRADUATION_ONLY_GRADE_12' => 'Chỉ học sinh khối 12 mới được xét tốt nghiệp',
+    'GRADUATION_ONLY_GRADE_12' =>
+      'Chỉ học sinh khối 12 mới được xét tốt nghiệp',
     'TARGET_CLASS_REQUIRED' => 'Vui lòng chọn lớp đích',
     'TARGET_CLASS_NOT_ALLOWED' => 'Hành động này không được chọn lớp đích',
     'STUDENT_ALREADY_ENROLLED' =>
@@ -61,6 +62,11 @@ String deadlineErrorMessage(Object error) {
     'EFFECTIVE_DATE_OUT_OF_RANGE' =>
       'Ngày hiệu lực phải sau ngày bắt đầu ghi danh hiện tại và trong năm học',
     'DEADLINE_VERSION_CONFLICT' => 'Lịch vừa được thay đổi, hãy tải lại',
+    'SCHOOL_PROFILE_VERSION_CONFLICT' =>
+      'Thông tin trường vừa được người khác thay đổi, hãy tải lại',
+    'INVALID_SCHOOL_PROFILE' => 'Thông tin trường không hợp lệ',
+    'INVALID_LOGO_FILE' => 'Logo phải là ảnh PNG hoặc JPEG, tối đa 1 MB',
+    'FORBIDDEN' => 'Bạn không có quyền thực hiện thao tác này.',
     'COLUMN_LOCKED' => 'Lịch đã qua hạn, không sửa được',
     'INVALID_ENTRY_WINDOW' => 'Hạn nhập phải sau giờ mở và ở tương lai',
     'TERM_ALREADY_PUBLISHED' => 'Học kỳ đã công bố',
@@ -75,26 +81,24 @@ String deadlineErrorMessage(Object error) {
       'Chưa đến thời gian nhập hoặc đã hết hạn; không thể lưu điểm',
     'VERSION_OR_STATE_CONFLICT' =>
       'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
-    'VERSION_CONFLICT' =>
-      'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
+    'VERSION_CONFLICT' => 'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
     'CONFLICT' => () {
-        if (error is DioException) {
-          var data = error.response?.data;
-          if (data is String) {
-            try {
-              data = jsonDecode(data);
-            } catch (_) {}
-          }
-          if (data is Map<String, dynamic> &&
-              data['message'] is String &&
-              (data['message'] as String).isNotEmpty) {
-            return data['message'] as String;
-          }
+      if (error is DioException) {
+        var data = error.response?.data;
+        if (data is String) {
+          try {
+            data = jsonDecode(data);
+          } catch (_) {}
         }
-        return 'Dữ liệu vừa thay đổi hoặc đã chốt, hãy tải lại';
-      }(),
-    'GRADEBOOK_NOT_EDITABLE' =>
-      'Bảng điểm đã khóa, không thể sửa',
+        if (data is Map<String, dynamic> &&
+            data['message'] is String &&
+            (data['message'] as String).isNotEmpty) {
+          return data['message'] as String;
+        }
+      }
+      return 'Dữ liệu vừa thay đổi hoặc đã chốt, hãy tải lại';
+    }(),
+    'GRADEBOOK_NOT_EDITABLE' => 'Bảng điểm đã khóa, không thể sửa',
     _ => errorMessage(error),
   };
 }
@@ -127,9 +131,9 @@ class ApiSemesterDeadlinesRepository implements SemesterDeadlinesRepository {
     final seen = <String>{};
     do {
       final res = await _api.getSemestersApi().semestersList(
-            yearId: yearId,
-            cursor: cursor,
-          );
+        yearId: yearId,
+        cursor: cursor,
+      );
       final page = res.data;
       if (page != null) {
         items.addAll(page.items);
@@ -144,8 +148,9 @@ class ApiSemesterDeadlinesRepository implements SemesterDeadlinesRepository {
 
   @override
   Future<SemesterDeadlinesDto> getDeadlines(num semesterId) async {
-    final res =
-        await _api.getSemestersApi().semesterDeadlinesList(id: semesterId);
+    final res = await _api.getSemestersApi().semesterDeadlinesList(
+      id: semesterId,
+    );
     return res.data!;
   }
 

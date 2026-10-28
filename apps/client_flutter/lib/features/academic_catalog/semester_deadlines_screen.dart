@@ -24,7 +24,11 @@ String _deadlineTypeName(SemesterDeadlineDtoTypeEnum type) => switch (type) {
   SemesterDeadlineDtoTypeEnum.CK => 'Điểm cuối kỳ (CK)',
 };
 
-String _getYearName(SemestersDto s, List<Json> years, ViewingYear? viewingYear) {
+String _getYearName(
+  SemestersDto s,
+  List<Json> years,
+  ViewingYear? viewingYear,
+) {
   for (final y in years) {
     if (y['ma_nam_hoc'] == s.maNamHoc) {
       final name = y['ten'] ?? y['label'];
@@ -135,8 +139,9 @@ class _SemesterDeadlinesScreenState
           _selectedSemesterId = null;
           _deadlinesFuture = null;
         } else {
-          final isSelectedValid =
-              semesters.any((s) => s.maHocKy == _selectedSemesterId);
+          final isSelectedValid = semesters.any(
+            (s) => s.maHocKy == _selectedSemesterId,
+          );
           if (!isSelectedValid) {
             SemestersDto? defaultSem;
             for (final s in semesters) {
@@ -365,8 +370,8 @@ class _SemesterDeadlinesScreenState
 
           final selectedDropdownValue =
               semesters.any((s) => s.maHocKy == _selectedSemesterId)
-                  ? _selectedSemesterId
-                  : null;
+              ? _selectedSemesterId
+              : null;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -424,7 +429,8 @@ class _SemesterDeadlinesScreenState
                           ),
                         ),
                         FilledButton.icon(
-                          onPressed: _initializing || _selectedSemesterId == null
+                          onPressed:
+                              _initializing || _selectedSemesterId == null
                               ? null
                               : () => _initializeGradebooks(semesterYearLabel),
                           icon: _initializing
@@ -514,7 +520,8 @@ class _SemesterDeadlinesScreenState
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               for (int i = 0; i < cards.length; i++) ...[
-                                if (i > 0) const SizedBox(height: AppSpacing.md),
+                                if (i > 0)
+                                  const SizedBox(height: AppSpacing.md),
                                 cards[i],
                               ],
                             ],
@@ -566,8 +573,8 @@ class _SemesterDeadlinesScreenState
                   child: Text(
                     _deadlineTypeName(item.type),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 _semesterDeadlineStatusBadge(item),
@@ -576,10 +583,9 @@ class _SemesterDeadlinesScreenState
             const SizedBox(height: 12),
             Text(
               'Mở: ${formatDeadline(context, item.opensAt)}\nHạn: ${formatDeadline(context, item.closesAt)}',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: t.ink2, height: 1.5),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: t.ink2, height: 1.5),
             ),
             const SizedBox(height: 16),
             if (item.expired)
@@ -633,7 +639,8 @@ class _SemesterDeadlineEditDialogState
   void initState() {
     super.initState();
     opens = widget.item.opensAt?.toLocal() ?? DateTime.now();
-    closes = widget.item.closesAt?.toLocal() ??
+    closes =
+        widget.item.closesAt?.toLocal() ??
         DateTime.now().add(const Duration(days: 7));
   }
 
@@ -677,7 +684,9 @@ class _SemesterDeadlineEditDialogState
       error = null;
     });
     try {
-      await ref.read(semesterDeadlinesRepositoryProvider).setDeadline(
+      await ref
+          .read(semesterDeadlinesRepositoryProvider)
+          .setDeadline(
             semesterId: widget.semesterId,
             type: widget.item.type.value,
             opensAt: opens.toUtc(),
@@ -721,17 +730,13 @@ class _SemesterDeadlineEditDialogState
           OutlinedButton.icon(
             onPressed: busy ? null : () => pick(true),
             icon: const Icon(Icons.calendar_today),
-            label: Text(
-              'Mở nhập: ${formatDeadline(context, opens)}',
-            ),
+            label: Text('Mở nhập: ${formatDeadline(context, opens)}'),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: busy ? null : () => pick(false),
             icon: const Icon(Icons.timer_outlined),
-            label: Text(
-              'Hạn nhập: ${formatDeadline(context, closes)}',
-            ),
+            label: Text('Hạn nhập: ${formatDeadline(context, closes)}'),
           ),
           if (error != null)
             Padding(
@@ -744,4 +749,3 @@ class _SemesterDeadlineEditDialogState
     );
   }
 }
-

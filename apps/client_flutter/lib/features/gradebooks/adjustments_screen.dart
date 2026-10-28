@@ -19,14 +19,22 @@ String formatAdjustmentDateTime(DateTime dt) {
 
 Widget adjustmentStatusBadge(AdjustmentDtoStatusEnum status) {
   return switch (status) {
-    AdjustmentDtoStatusEnum.CHO_DUYET =>
-      const AppBadge('Chờ duyệt', tone: AppBadgeTone.warn),
-    AdjustmentDtoStatusEnum.DA_DUYET =>
-      const AppBadge('Đã duyệt', tone: AppBadgeTone.ok),
-    AdjustmentDtoStatusEnum.TU_CHOI =>
-      const AppBadge('Từ chối', tone: AppBadgeTone.bad),
-    AdjustmentDtoStatusEnum.DA_HUY =>
-      const AppBadge('Đã hủy', tone: AppBadgeTone.neutral),
+    AdjustmentDtoStatusEnum.CHO_DUYET => const AppBadge(
+      'Chờ duyệt',
+      tone: AppBadgeTone.warn,
+    ),
+    AdjustmentDtoStatusEnum.DA_DUYET => const AppBadge(
+      'Đã duyệt',
+      tone: AppBadgeTone.ok,
+    ),
+    AdjustmentDtoStatusEnum.TU_CHOI => const AppBadge(
+      'Từ chối',
+      tone: AppBadgeTone.bad,
+    ),
+    AdjustmentDtoStatusEnum.DA_HUY => const AppBadge(
+      'Đã hủy',
+      tone: AppBadgeTone.neutral,
+    ),
   };
 }
 
@@ -85,10 +93,9 @@ class _AdjustmentDetailDialogState
 
     setState(() => _acting = true);
     try {
-      await ref.read(adjustmentsRepositoryProvider).approve(
-            adjId: adj.id,
-            expectedVersion: adj.version,
-          );
+      await ref
+          .read(adjustmentsRepositoryProvider)
+          .approve(adjId: adj.id, expectedVersion: adj.version);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -102,9 +109,7 @@ class _AdjustmentDetailDialogState
       final msg = apiErrorCode(e) == 'ADJUSTMENT_STALE'
           ? 'Điểm đã thay đổi sau khi gửi phiếu; yêu cầu giáo viên soạn lại'
           : adjustmentErrorMessage(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
@@ -157,16 +162,16 @@ class _AdjustmentDetailDialogState
 
     setState(() => _acting = true);
     try {
-      await ref.read(adjustmentsRepositoryProvider).reject(
+      await ref
+          .read(adjustmentsRepositoryProvider)
+          .reject(
             adjId: adj.id,
             expectedVersion: adj.version,
             reason: confirmed,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Đã từ chối phiếu điều chỉnh #${adj.id}.'),
-        ),
+        SnackBar(content: Text('Đã từ chối phiếu điều chỉnh #${adj.id}.')),
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -175,9 +180,7 @@ class _AdjustmentDetailDialogState
       final msg = apiErrorCode(e) == 'ADJUSTMENT_STALE'
           ? 'Điểm đã thay đổi sau khi gửi phiếu; yêu cầu giáo viên soạn lại'
           : adjustmentErrorMessage(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
@@ -200,10 +203,9 @@ class _AdjustmentDetailDialogState
 
     setState(() => _acting = true);
     try {
-      await ref.read(adjustmentsRepositoryProvider).cancel(
-            adjId: adj.id,
-            expectedVersion: adj.version,
-          );
+      await ref
+          .read(adjustmentsRepositoryProvider)
+          .cancel(adjId: adj.id, expectedVersion: adj.version);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đã hủy phiếu điều chỉnh thành công.')),
@@ -212,9 +214,9 @@ class _AdjustmentDetailDialogState
     } catch (e) {
       if (!mounted) return;
       setState(() => _acting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(adjustmentErrorMessage(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adjustmentErrorMessage(e))));
     }
   }
 
@@ -302,16 +304,26 @@ class _AdjustmentDetailDialogState
                       spacing: 16,
                       runSpacing: 4,
                       children: [
-                        Text('Lớp: ${adj.className}',
-                            style: TextStyle(color: t.ink2, fontSize: 13)),
-                        Text('Môn: ${adj.subjectName}',
-                            style: TextStyle(color: t.ink2, fontSize: 13)),
-                        Text('Học kỳ: ${adj.termName}',
-                            style: TextStyle(color: t.ink2, fontSize: 13)),
-                        Text('Giáo viên: ${adj.submittedBy.name}',
-                            style: TextStyle(color: t.ink2, fontSize: 13)),
-                        Text('Gửi lúc: ${formatAdjustmentDateTime(adj.submittedAt)}',
-                            style: TextStyle(color: t.ink3, fontSize: 12)),
+                        Text(
+                          'Lớp: ${adj.className}',
+                          style: TextStyle(color: t.ink2, fontSize: 13),
+                        ),
+                        Text(
+                          'Môn: ${adj.subjectName}',
+                          style: TextStyle(color: t.ink2, fontSize: 13),
+                        ),
+                        Text(
+                          'Học kỳ: ${adj.termName}',
+                          style: TextStyle(color: t.ink2, fontSize: 13),
+                        ),
+                        Text(
+                          'Giáo viên: ${adj.submittedBy.name}',
+                          style: TextStyle(color: t.ink2, fontSize: 13),
+                        ),
+                        Text(
+                          'Gửi lúc: ${formatAdjustmentDateTime(adj.submittedAt)}',
+                          style: TextStyle(color: t.ink3, fontSize: 12),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -392,31 +404,49 @@ class _AdjustmentDetailDialogState
                           final oldText = line.oldStatus.value == 'MIEN'
                               ? 'Miễn'
                               : (line.oldValue ?? '—');
-                          final newText =
-                              line.newExempt ? 'Miễn' : (line.newValue ?? '—');
+                          final newText = line.newExempt
+                              ? 'Miễn'
+                              : (line.newValue ?? '—');
                           return DataRow(
                             cells: [
-                              DataCell(Text(line.studentName,
+                              DataCell(
+                                Text(
+                                  line.studentName,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: t.ink,
-                                  ))),
-                              DataCell(Text(line.componentName,
-                                  style: TextStyle(color: t.ink2))),
-                              DataCell(Text(oldText,
-                                  style: TextStyle(color: t.ink3))),
-                              DataCell(Text(newText,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  line.componentName,
+                                  style: TextStyle(color: t.ink2),
+                                ),
+                              ),
+                              DataCell(
+                                Text(oldText, style: TextStyle(color: t.ink3)),
+                              ),
+                              DataCell(
+                                Text(
+                                  newText,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: t.priLink,
-                                  ))),
-                              DataCell(Text(line.note ?? '—',
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  line.note ?? '—',
                                   style: TextStyle(
                                     color: t.ink2,
                                     fontStyle: line.note == null
                                         ? FontStyle.italic
                                         : FontStyle.normal,
-                                  ))),
+                                  ),
+                                ),
+                              ),
                             ],
                           );
                         }).toList(),
@@ -441,9 +471,7 @@ class _AdjustmentDetailDialogState
                         onPressed: _acting ? null : () => _cancel(adj),
                         icon: const Icon(Icons.cancel_outlined, size: 16),
                         label: const Text('Hủy phiếu'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: t.bad,
-                        ),
+                        style: OutlinedButton.styleFrom(foregroundColor: t.bad),
                       ),
                     if (widget.allowDecide) ...[
                       OutlinedButton.icon(
@@ -451,9 +479,7 @@ class _AdjustmentDetailDialogState
                         onPressed: _acting ? null : () => _reject(adj),
                         icon: const Icon(Icons.close_rounded, size: 16),
                         label: const Text('Từ chối'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: t.bad,
-                        ),
+                        style: OutlinedButton.styleFrom(foregroundColor: t.bad),
                       ),
                       const SizedBox(width: 8),
                       FilledButton.icon(
@@ -511,10 +537,9 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
     });
 
     try {
-      final page = await ref.read(adjustmentsRepositoryProvider).listAdjustments(
-            status: _status,
-            cursor: _nextCursor,
-          );
+      final page = await ref
+          .read(adjustmentsRepositoryProvider)
+          .listAdjustments(status: _status, cursor: _nextCursor);
       if (!mounted) return;
       setState(() {
         _items.addAll(page.items);
@@ -576,7 +601,9 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
                   selected: _status == AdjustmentDtoStatusEnum.CHO_DUYET,
                   onSelected: (val) {
                     if (val) {
-                      setState(() => _status = AdjustmentDtoStatusEnum.CHO_DUYET);
+                      setState(
+                        () => _status = AdjustmentDtoStatusEnum.CHO_DUYET,
+                      );
                       _fetchPage(refresh: true);
                     }
                   },
@@ -587,7 +614,9 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
                   selected: _status == AdjustmentDtoStatusEnum.DA_DUYET,
                   onSelected: (val) {
                     if (val) {
-                      setState(() => _status = AdjustmentDtoStatusEnum.DA_DUYET);
+                      setState(
+                        () => _status = AdjustmentDtoStatusEnum.DA_DUYET,
+                      );
                       _fetchPage(refresh: true);
                     }
                   },
@@ -659,9 +688,11 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
                   builder: (context, constraints) {
                     const totalColumns = 8;
                     const colSpacing = 16.0;
-                    final hMargin =
-                        constraints.maxWidth >= 768 ? AppSpacing.xl : AppSpacing.md;
-                    final availableTotalWidth = constraints.maxWidth -
+                    final hMargin = constraints.maxWidth >= 768
+                        ? AppSpacing.xl
+                        : AppSpacing.md;
+                    final availableTotalWidth =
+                        constraints.maxWidth -
                         (hMargin * 2) -
                         ((totalColumns - 1) * colSpacing);
 
@@ -673,7 +704,8 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
                     const minColGuiLuc = 120.0;
                     const minColTrangThai = 110.0;
                     const minColThaoTac = 90.0;
-                    const minRequired = minColLop +
+                    const minRequired =
+                        minColLop +
                         minColMon +
                         minColHk +
                         minColGv +
@@ -715,8 +747,9 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
                     return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: ConstrainedBox(
-                        constraints:
-                            BoxConstraints(minWidth: constraints.maxWidth),
+                        constraints: BoxConstraints(
+                          minWidth: constraints.maxWidth,
+                        ),
                         child: DataTable(
                           columnSpacing: colSpacing,
                           horizontalMargin: hMargin,
@@ -826,7 +859,9 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
                                   SizedBox(
                                     width: colGuiLuc,
                                     child: Text(
-                                      formatAdjustmentDateTime(item.submittedAt),
+                                      formatAdjustmentDateTime(
+                                        item.submittedAt,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -843,7 +878,8 @@ class _AdjustmentsScreenState extends ConsumerState<AdjustmentsScreen> {
                                       alignment: Alignment.centerRight,
                                       child: OutlinedButton(
                                         key: ValueKey(
-                                            'view-adjustment-${item.id}'),
+                                          'view-adjustment-${item.id}',
+                                        ),
                                         style: OutlinedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 10,

@@ -5,7 +5,9 @@ import '../../../../app/design_tokens.dart';
 import '../../../../app/widgets/empty_state.dart';
 import '../../../../app/widgets/role_badge.dart';
 import '../../../../app/widgets/stat_card.dart';
+import '../../../academic_catalog/academic_year_scope.dart';
 import '../../../reports/repository.dart';
+import '../../../school_profile/school_profile.dart';
 import '../../admin_charts.dart';
 import '../../session.dart';
 
@@ -61,6 +63,32 @@ final teacherOverviewProvider = FutureProvider.autoDispose<TeacherOverviewData>(
   },
 );
 
+/// "Học kỳ I, 2024-2025" của năm hiện hành; học kỳ lấy theo ngày hôm nay
+/// (API chưa có cờ học kỳ hiện hành). Không có học kỳ thì chỉ ghi năm học,
+/// không có năm học thì null.
+final currentTermLabelProvider = FutureProvider<String?>((ref) async {
+  final year = await ref.watch(currentYearProvider.future);
+  if (year == null) return null;
+  try {
+    final page = await ref
+        .watch(apiProvider)
+        .getSemestersApi()
+        .semestersList(yearId: year.id);
+    final now = DateTime.now();
+    for (final s in page.data?.items ?? const <SemestersDto>[]) {
+      final from = DateTime.tryParse(s.ngayBatDau);
+      final to = DateTime.tryParse(s.ngayKetThuc);
+      if (from != null &&
+          to != null &&
+          !now.isBefore(from) &&
+          now.isBefore(to.add(const Duration(days: 1)))) {
+        return '${s.ten}, ${year.name}';
+      }
+    }
+  } catch (_) {}
+  return year.name;
+});
+
 class HomeDashboardContent extends ConsumerWidget {
   const HomeDashboardContent({
     super.key,
@@ -108,19 +136,22 @@ class HomeDashboardContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.tokens;
+    final term = ref.watch(currentTermLabelProvider).valueOrNull;
+    final shortName = ref.watch(schoolProfileProvider).valueOrNull?.shortName;
+    String eyebrow(String tail) =>
+        [?term?.toUpperCase(), ?shortName?.toUpperCase(), tail].join(' · ');
     String roleEyebrow;
     String roleDesc;
     if (role == 'QUAN_TRI_VIEN') {
-      roleEyebrow =
-          'HỌC KỲ I, 2024–2025 · THPT BÀ ĐIỂM · BẢNG ĐIỀU HÀNH THỐNG KÊ';
+      roleEyebrow = eyebrow('BẢNG ĐIỀU HÀNH THỐNG KÊ');
       roleDesc =
           'Giám sát số liệu thống kê toàn trường, phân tích phổ điểm, quản lý danh mục và chính sách xếp loại.';
     } else if (role == 'GIAO_VIEN') {
-      roleEyebrow = 'HỌC KỲ I, 2024–2025 · THPT BÀ ĐIỂM · BỘ MÔN GIẢNG DẠY';
+      roleEyebrow = eyebrow('BỘ MÔN GIẢNG DẠY');
       roleDesc =
           'Quản lý bảng điểm lớp phân công, upload ảnh nhận diện 2 kênh (Số/Chữ), so sánh đối chiếu ô cắt và duyệt điểm chính thức.';
     } else {
-      roleEyebrow = 'HỌC KỲ I, 2024–2025 · THPT BÀ ĐIỂM · SỔ LIÊN LẠC ĐIỆN TỬ';
+      roleEyebrow = eyebrow('SỔ LIÊN LẠC ĐIỆN TỬ');
       roleDesc =
           'Tra cứu điểm thành phần, điểm tổng kết và xếp loại học lực của chính mình.';
     }

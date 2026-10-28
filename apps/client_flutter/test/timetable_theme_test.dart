@@ -1,8 +1,8 @@
 import 'package:api_client_dart/api_client_dart.dart';
-import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/app/theme.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:client_flutter/features/timetable/timetable_screen.dart';
+import 'package:client_flutter/features/timetable/web/timetable_block.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,22 +41,12 @@ Future<void> _pump(
         themeMode: brightness == Brightness.dark
             ? ThemeMode.dark
             : ThemeMode.light,
-        home: const TimetableScreen(),
+        // Thứ Hai cố định: dữ liệu giả có tiết ở Thứ Hai.
+        home: TimetableScreen(today: DateTime(2031, 9, 8)),
       ),
     ),
   );
   await tester.pumpAndSettle();
-}
-
-bool _hasColoredBox(WidgetTester tester, Color color) {
-  return find
-      .byWidgetPredicate((widget) {
-        if (widget is! Container) return false;
-        final decoration = widget.decoration;
-        return decoration is BoxDecoration && decoration.color == color;
-      })
-      .evaluate()
-      .isNotEmpty;
 }
 
 void main() {
@@ -68,11 +58,16 @@ void main() {
           await _pump(tester, role: role, width: width, brightness: brightness);
           expect(tester.takeException(), isNull);
           expect(find.text('Toán'), findsWidgets);
-          expect(find.text('TIẾT'), findsWidgets);
-          expect(find.text('BUỔI SÁNG'), findsWidgets);
-          expect(find.text('BUỔI CHIỀU'), findsWidgets);
-          // Dải tiết 1-10 không bị thu hẹp.
-          expect(find.text('T10'), findsWidgets);
+          if (width < 600) {
+            // Màn hẹp: chế độ Ngày (thẻ), không còn bảng 7 cột.
+            expect(find.text('Ngày'), findsOneWidget);
+            expect(find.text('TIẾT'), findsNothing);
+          } else {
+            // Lưới theo buổi: hai hàng Sáng/Chiều.
+            expect(find.text('Sáng'), findsWidgets);
+            expect(find.text('Chiều'), findsWidgets);
+            expect(find.text('Buổi'), findsWidgets);
+          }
           if (role == 'HOC_SINH') {
             expect(find.textContaining('P.10A'), findsNothing);
             expect(find.text('Thêm môn'), findsNothing);
@@ -85,12 +80,7 @@ void main() {
           } else {
             expect(find.text('Thêm môn vào lịch'), findsNothing);
           }
-          // Chip tiết dùng token đúng chế độ: nền priSoft (GV/QTV) hoặc hover (HS).
-          final tokens = brightness == Brightness.dark
-              ? AppTokens.dark
-              : AppTokens.light;
-          final chipBg = role == 'HOC_SINH' ? tokens.hover : tokens.priSoft;
-          expect(_hasColoredBox(tester, chipBg), isTrue);
+          if (width >= 600) expect(find.byType(TimetableBlock), findsWidgets);
           expect(tester.takeException(), isNull);
         });
       }
@@ -98,20 +88,16 @@ void main() {
   }
 
   for (final brightness in [Brightness.light, Brightness.dark]) {
-    testWidgets('xem theo ngày của học sinh ẩn phòng học, $brightness', (
+    testWidgets('thẻ ngày của học sinh ẩn phòng học, $brightness', (
       tester,
     ) async {
       await _pump(tester, role: 'HOC_SINH', width: 390, brightness: brightness);
-      await tester.tap(find.text('Theo ngày'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Thứ Hai'));
-      await tester.pumpAndSettle();
       expect(find.text('Toán'), findsOneWidget);
       expect(find.textContaining('P.10A'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('xem theo ngày của giáo viên hiện phòng học, $brightness', (
+    testWidgets('thẻ ngày của giáo viên hiện phòng học, $brightness', (
       tester,
     ) async {
       await _pump(
@@ -120,10 +106,6 @@ void main() {
         width: 390,
         brightness: brightness,
       );
-      await tester.tap(find.text('Theo ngày'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Thứ Hai'));
-      await tester.pumpAndSettle();
       expect(find.text('Toán'), findsOneWidget);
       expect(find.textContaining('P.10A'), findsWidgets);
       expect(tester.takeException(), isNull);

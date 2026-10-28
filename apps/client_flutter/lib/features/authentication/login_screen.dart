@@ -1,9 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_edge_scrollbar.dart';
 import '../../app/widgets/theme_mode_button.dart';
+import '../school_profile/school_profile.dart';
 import 'login_art_panel.dart';
 import 'session.dart';
 
@@ -248,25 +248,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 /// Đầu trang rút gọn khi màn hẹp (prototype `.m-login`): logo, tên, trường.
-class _CompactBrand extends StatelessWidget {
+class _CompactBrand extends ConsumerWidget {
   const _CompactBrand({required this.tokens});
   final AppTokens tokens;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = tokens;
     final theme = Theme.of(context);
+    final school = ref.watch(schoolProfileProvider).valueOrNull;
+    final icon = Icon(Icons.school_rounded, size: 32, color: t.onPri);
     return Column(
       children: [
         Container(
           width: 64,
           height: 64,
+          padding: school?.hasLogo == true ? const EdgeInsets.all(6) : null,
           decoration: BoxDecoration(
-            color: t.navy,
+            color: school?.hasLogo == true ? t.onPri : t.navy,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: t.navyLine),
           ),
-          child: Icon(Icons.school_rounded, size: 32, color: t.onPri),
+          child: SchoolLogoImage(profile: school, size: 52, fallback: icon),
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
@@ -280,11 +283,12 @@ class _CompactBrand extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
-        Text(
-          'Trường THPT Bà Điểm',
-          style: theme.textTheme.bodySmall,
-          textAlign: TextAlign.center,
-        ),
+        if (school != null)
+          Text(
+            school.name,
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
       ],
     );
   }

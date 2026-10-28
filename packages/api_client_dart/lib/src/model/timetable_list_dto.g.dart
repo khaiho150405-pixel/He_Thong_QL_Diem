@@ -11,13 +11,19 @@ abstract class _$TimetableListDtoCWProxy {
 
   TimetableListDto total(num total);
 
+  TimetableListDto semester(TimetableSemesterDto? semester);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `TimetableListDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
   /// ```dart
   /// TimetableListDto(...).copyWith(id: 12, name: "My name")
   /// ````
-  TimetableListDto call({List<TimetableItemDto> items, num total});
+  TimetableListDto call({
+    List<TimetableItemDto> items,
+    num total,
+    TimetableSemesterDto? semester,
+  });
 }
 
 /// Proxy class for `copyWith` functionality. This is a callable class and can be used as follows: `instanceOfTimetableListDto.copyWith(...)`. Additionally contains functions for specific fields e.g. `instanceOfTimetableListDto.copyWith.fieldName(...)`
@@ -33,6 +39,10 @@ class _$TimetableListDtoCWProxyImpl implements _$TimetableListDtoCWProxy {
   TimetableListDto total(num total) => this(total: total);
 
   @override
+  TimetableListDto semester(TimetableSemesterDto? semester) =>
+      this(semester: semester);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `TimetableListDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -42,6 +52,7 @@ class _$TimetableListDtoCWProxyImpl implements _$TimetableListDtoCWProxy {
   TimetableListDto call({
     Object? items = const $CopyWithPlaceholder(),
     Object? total = const $CopyWithPlaceholder(),
+    Object? semester = const $CopyWithPlaceholder(),
   }) {
     return TimetableListDto(
       items: items == const $CopyWithPlaceholder()
@@ -52,6 +63,10 @@ class _$TimetableListDtoCWProxyImpl implements _$TimetableListDtoCWProxy {
           ? _value.total
           // ignore: cast_nullable_to_non_nullable
           : total as num,
+      semester: semester == const $CopyWithPlaceholder()
+          ? _value.semester
+          // ignore: cast_nullable_to_non_nullable
+          : semester as TimetableSemesterDto?,
     );
   }
 }
@@ -68,7 +83,7 @@ extension $TimetableListDtoCopyWith on TimetableListDto {
 
 TimetableListDto _$TimetableListDtoFromJson(Map<String, dynamic> json) =>
     $checkedCreate('TimetableListDto', json, ($checkedConvert) {
-      $checkKeys(json, requiredKeys: const ['items', 'total']);
+      $checkKeys(json, requiredKeys: const ['items', 'total', 'semester']);
       final val = TimetableListDto(
         items: $checkedConvert(
           'items',
@@ -77,6 +92,12 @@ TimetableListDto _$TimetableListDtoFromJson(Map<String, dynamic> json) =>
               .toList(),
         ),
         total: $checkedConvert('total', (v) => v as num),
+        semester: $checkedConvert(
+          'semester',
+          (v) => v == null
+              ? null
+              : TimetableSemesterDto.fromJson(v as Map<String, dynamic>),
+        ),
       );
       return val;
     });
@@ -85,4 +106,5 @@ Map<String, dynamic> _$TimetableListDtoToJson(TimetableListDto instance) =>
     <String, dynamic>{
       'items': instance.items.map((e) => e.toJson()).toList(),
       'total': instance.total,
+      'semester': instance.semester?.toJson(),
     };

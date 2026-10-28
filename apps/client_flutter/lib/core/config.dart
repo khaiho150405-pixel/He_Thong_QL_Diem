@@ -28,15 +28,20 @@ class AppConfig {
 
       // Nếu đang mở trang web bằng HTTPS hoặc qua tên miền eduscore.id.vn
       if (scheme == 'https' || host.contains('eduscore.id.vn')) {
-        if (_apiFromDefine.isNotEmpty && _apiFromDefine.startsWith('https://')) {
+        if (_apiFromDefine.isNotEmpty &&
+            _apiFromDefine.startsWith('https://')) {
           return _apiFromDefine;
         }
         return 'https://api.eduscore.id.vn';
       }
 
       // Đang mở ở localhost hoặc 127.0.0.1
-      if (host == 'localhost' || host == '127.0.0.1' || host == '0.0.0.0' || host.isEmpty) {
-        if (_apiFromDefine.isNotEmpty && !_apiFromDefine.contains('api.eduscore.id.vn')) {
+      if (host == 'localhost' ||
+          host == '127.0.0.1' ||
+          host == '0.0.0.0' ||
+          host.isEmpty) {
+        if (_apiFromDefine.isNotEmpty &&
+            !_apiFromDefine.contains('api.eduscore.id.vn')) {
           return _apiFromDefine;
         }
         return 'http://localhost:3000';
@@ -63,4 +68,3 @@ class AppConfig {
     }
   }
 }
-

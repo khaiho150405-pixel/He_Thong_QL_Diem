@@ -18,6 +18,11 @@ const db = await pool.connect();
 try {
   await db.query("BEGIN");
 
+  // Thông tin trường mặc định (migration đã chèn sẵn; DB dựng lại bằng cách khác vẫn có dòng này).
+  await db.query(
+    "INSERT INTO truong(ma_truong, ten_truong, ten_ngan, co_quan_chu_quan) VALUES (1, 'Trường THPT Bà Điểm', 'THPT Bà Điểm', 'Sở Giáo dục và Đào tạo TP. Hồ Chí Minh') ON CONFLICT (ma_truong) DO NOTHING",
+  );
+
   // Seed adds fixtures without deleting existing accounts or academic records.
   // Single argon2id hash computation for all seed accounts
   const passwordHash = await hash(process.env.SEED_PASSWORD, {

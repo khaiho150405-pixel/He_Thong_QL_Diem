@@ -247,8 +247,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       return;
     }
 
-    final redRows =
-        data.rows.where((r) => r.exempt != true && r.reviewLevel.value == 'DO');
+    final redRows = data.rows.where(
+      (r) => r.exempt != true && r.reviewLevel.value == 'DO',
+    );
     if (!redRows.every(_isRowRedHandled)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -260,8 +261,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       return;
     }
 
-    final sttWarningRows =
-        data.rows.where((r) => r.exempt != true && _isSttWarning(r));
+    final sttWarningRows = data.rows.where(
+      (r) => r.exempt != true && _isSttWarning(r),
+    );
     if (!sttWarningRows.every((r) => sttConfirmed[r.rowId] == true)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -670,8 +672,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 return left.order.compareTo(right.order);
               });
 
-            final exemptRows =
-                orderedRows.where((r) => r.exempt == true).toList();
+            final exemptRows = orderedRows
+                .where((r) => r.exempt == true)
+                .toList();
             final needReviewRows = orderedRows
                 .where(
                   (r) =>
@@ -682,10 +685,12 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 )
                 .toList();
             final greenRows = orderedRows
-                .where((r) =>
-                    r.exempt != true &&
-                    r.reviewLevel.value == 'XANH' &&
-                    !_hasSttDiff(r))
+                .where(
+                  (r) =>
+                      r.exempt != true &&
+                      r.reviewLevel.value == 'XANH' &&
+                      !_hasSttDiff(r),
+                )
                 .toList();
 
             final totalNeedReview = needReviewRows.length;

@@ -144,6 +144,11 @@ Class | Method | HTTP request | Description
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsExport**](doc/ReportsApi.md#reportsexport) | **GET** /api/v1/reports/gradebooks/{gradebookId}/export.xlsx |
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsSummary**](doc/ReportsApi.md#reportssummary) | **GET** /api/v1/reports/gradebooks/{gradebookId}/summary |
 [*ReviewApi*](doc/ReviewApi.md) | [**reviewApprove**](doc/ReviewApi.md#reviewapprove) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve |
+[*SchoolApi*](doc/SchoolApi.md) | [**schoolProfileAdminRemoveLogo**](doc/SchoolApi.md#schoolprofileadminremovelogo) | **DELETE** /api/v1/admin/school-profile/logo |
+[*SchoolApi*](doc/SchoolApi.md) | [**schoolProfileAdminSetLogo**](doc/SchoolApi.md#schoolprofileadminsetlogo) | **PUT** /api/v1/admin/school-profile/logo |
+[*SchoolApi*](doc/SchoolApi.md) | [**schoolProfileAdminUpdate**](doc/SchoolApi.md#schoolprofileadminupdate) | **PUT** /api/v1/admin/school-profile |
+[*SchoolApi*](doc/SchoolApi.md) | [**schoolProfilePublicLogo**](doc/SchoolApi.md#schoolprofilepubliclogo) | **GET** /api/v1/school-profile/logo |
+[*SchoolApi*](doc/SchoolApi.md) | [**schoolProfilePublicProfile**](doc/SchoolApi.md#schoolprofilepublicprofile) | **GET** /api/v1/school-profile |
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsCreate**](doc/SemesterWeightsApi.md#semesterweightscreate) | **POST** /api/v1/catalog/semester-weights |
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsList**](doc/SemesterWeightsApi.md#semesterweightslist) | **GET** /api/v1/catalog/semester-weights |
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsRemove**](doc/SemesterWeightsApi.md#semesterweightsremove) | **DELETE** /api/v1/catalog/semester-weights/{id} |
@@ -290,6 +295,7 @@ Class | Method | HTTP request | Description
  - [ReviewApprovalInput](doc/ReviewApprovalInput.md)
  - [ReviewApprovalResultDto](doc/ReviewApprovalResultDto.md)
  - [ReviewDecisionInput](doc/ReviewDecisionInput.md)
+ - [SchoolProfileDto](doc/SchoolProfileDto.md)
  - [SemesterDeadlineDto](doc/SemesterDeadlineDto.md)
  - [SemesterDeadlineInput](doc/SemesterDeadlineInput.md)
  - [SemesterDeadlinesDto](doc/SemesterDeadlinesDto.md)
@@ -326,11 +332,13 @@ Class | Method | HTTP request | Description
  - [TemplateSummaryDto](doc/TemplateSummaryDto.md)
  - [TimetableItemDto](doc/TimetableItemDto.md)
  - [TimetableListDto](doc/TimetableListDto.md)
+ - [TimetableSemesterDto](doc/TimetableSemesterDto.md)
  - [TransferInput](doc/TransferInput.md)
  - [TransferResultDto](doc/TransferResultDto.md)
  - [TryGradeDto](doc/TryGradeDto.md)
  - [TryResultDto](doc/TryResultDto.md)
  - [TryRowDto](doc/TryRowDto.md)
+ - [UpdateSchoolProfileInput](doc/UpdateSchoolProfileInput.md)
  - [UpdatedCellDto](doc/UpdatedCellDto.md)
  - [VersionedDefinitionInput](doc/VersionedDefinitionInput.md)
  - [WithdrawInput](doc/WithdrawInput.md)

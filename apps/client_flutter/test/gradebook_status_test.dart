@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:api_client_dart/api_client_dart.dart';
+import 'package:client_flutter/features/gradebooks/widgets/grade_cell.dart';
 import 'package:client_flutter/app/app.dart';
 import 'package:client_flutter/app/theme_mode.dart';
 import 'package:client_flutter/app/design_tokens.dart';
@@ -450,15 +451,17 @@ void main() {
       mode: Brightness.light,
     );
     final tokens = AppTokens.light;
-    Color? fillOf(String key) => tester
-        .widget<InputDecorator>(
-          find.descendant(
-            of: find.byKey(ValueKey(key)),
-            matching: find.byType(InputDecorator),
-          ),
-        )
-        .decoration
-        .fillColor;
+    // Nền ô điểm do khung GradeCellFrame vẽ.
+    Color? fillOf(String key) {
+      final frame = find.ancestor(
+        of: find.byKey(ValueKey(key)),
+        matching: find.byType(GradeCellFrame),
+      );
+      final box = tester.widget<DecoratedBox>(
+        find.descendant(of: frame, matching: find.byType(DecoratedBox)).first,
+      );
+      return (box.decoration as BoxDecoration).color;
+    }
 
     expect(fillOf('grade-9001'), tokens.surface);
     await tester.enterText(find.byKey(const ValueKey('grade-9001')), '8.5');
@@ -470,7 +473,7 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('grade-9001')), '');
     await tester.pump();
     expect(fillOf('grade-9001'), tokens.surface);
-    expect(find.text('● AI'), findsOneWidget);
+    expect(find.byTooltip('Nhập từ ảnh'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
