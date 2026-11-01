@@ -80,9 +80,7 @@ void main() {
       SkippedStudentDto(
         studentId: 301,
         studentName: 'Phạm Thiếu 1',
-        missingComponents: [
-          MissingComponentDto(componentId: 10, name: 'CK'),
-        ],
+        missingComponents: [MissingComponentDto(componentId: 10, name: 'CK')],
       ),
     ],
   );
@@ -102,9 +100,7 @@ void main() {
     ],
     nextCursor: null,
     exemptedStudents: 1,
-    exempted: [
-      ExemptedStudentDto(studentId: 201, studentName: 'Trần Miễn 1'),
-    ],
+    exempted: [ExemptedStudentDto(studentId: 201, studentName: 'Trần Miễn 1')],
     skippedStudents: 0,
     skipped: [],
   );
@@ -114,9 +110,7 @@ void main() {
     (tester) async {
       final repo = _MockFinalResultsRepo(currentList: initialList);
       final container = ProviderContainer(
-        overrides: [
-          finalResultsRepositoryProvider.overrideWithValue(repo),
-        ],
+        overrides: [finalResultsRepositoryProvider.overrideWithValue(repo)],
       );
       addTearDown(container.dispose);
 
@@ -127,10 +121,7 @@ void main() {
             theme: AppTheme.light(),
             home: const Scaffold(
               body: SingleChildScrollView(
-                child: FinalResultsPanel(
-                  gradebookId: 10,
-                  gradebookVersion: 1,
-                ),
+                child: FinalResultsPanel(gradebookId: 10, gradebookVersion: 1),
               ),
             ),
           ),
@@ -161,9 +152,7 @@ void main() {
   testWidgets('Đóng và mở lại panel vẫn đúng số lượng', (tester) async {
     final repo = _MockFinalResultsRepo(currentList: initialList);
     final container = ProviderContainer(
-      overrides: [
-        finalResultsRepositoryProvider.overrideWithValue(repo),
-      ],
+      overrides: [finalResultsRepositoryProvider.overrideWithValue(repo)],
     );
     addTearDown(container.dispose);
 
@@ -225,9 +214,7 @@ void main() {
       final repo = _MockFinalResultsRepo(currentList: initialList);
       final container = ProviderContainer(
         overrides: [
-          sessionProvider.overrideWith(
-            (ref) => _FakeSessionController(),
-          ),
+          sessionProvider.overrideWith((ref) => _FakeSessionController()),
           finalResultsRepositoryProvider.overrideWithValue(repo),
         ],
       );
@@ -240,10 +227,7 @@ void main() {
             theme: AppTheme.light(),
             home: const Scaffold(
               body: SingleChildScrollView(
-                child: FinalResultsPanel(
-                  gradebookId: 10,
-                  gradebookVersion: 1,
-                ),
+                child: FinalResultsPanel(gradebookId: 10, gradebookVersion: 1),
               ),
             ),
           ),
@@ -258,7 +242,9 @@ void main() {
       repo.currentList = updatedListAfterCalculate;
 
       // Bấm "Tính kết quả"
-      final calculateButton = find.byKey(const ValueKey('calculate-final-results'));
+      final calculateButton = find.byKey(
+        const ValueKey('calculate-final-results'),
+      );
       expect(calculateButton, findsOneWidget);
       await tester.tap(calculateButton);
       await tester.pumpAndSettle();

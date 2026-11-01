@@ -116,36 +116,35 @@ GradeCellDto testCell({
   required String name,
   required bool requiredCol,
   GradeCellDtoDeadlineSourceEnum? source,
-}) =>
-    GradeCellDto.fromJson({
-      'id': id.toString(),
-      'studentId': 1,
-      'studentName': 'Nguyen Van A',
-      'stt': 1,
-      'active': true,
-      'componentId': id,
-      'componentName': name,
-      'coefficient': '1.00',
-      'required': requiredCol,
-      'displayOrder': id,
-      'value': null,
-      'status': 'CHUA_CO',
-      'exemptionReason': null,
-      'source': 'NHAP_TAY',
-      'deadlineSource': source?.value,
-      'deadlineVersion': 0,
-    });
+}) => GradeCellDto.fromJson({
+  'id': id.toString(),
+  'studentId': 1,
+  'studentName': 'Nguyen Van A',
+  'stt': 1,
+  'active': true,
+  'componentId': id,
+  'componentName': name,
+  'coefficient': '1.00',
+  'required': requiredCol,
+  'displayOrder': id,
+  'value': null,
+  'status': 'CHUA_CO',
+  'exemptionReason': null,
+  'source': 'NHAP_TAY',
+  'deadlineSource': source?.value,
+  'deadlineVersion': 0,
+});
 
 void main() {
   group('Lỗi tiếng Việt theo trường code', () {
     test('chuyển đúng mã lỗi quy định', () {
       DioException makeDioError(String code) => DioException(
-            requestOptions: RequestOptions(path: '/'),
-            response: Response(
-              requestOptions: RequestOptions(path: '/'),
-              data: {'code': code},
-            ),
-          );
+        requestOptions: RequestOptions(path: '/'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/'),
+          data: {'code': code},
+        ),
+      );
 
       expect(
         deadlineErrorMessage(makeDioError('DEADLINE_VERSION_CONFLICT')),
@@ -167,12 +166,11 @@ void main() {
   });
 
   group('GradeDeadlinesPanel', () {
-    testWidgets('hiện nhãn Bắt buộc / Không bắt buộc và câu giải thích hết hạn',
-        (tester) async {
-      final compRequired =
-          testCell(id: 1, name: 'Miệng', requiredCol: true);
-      final compOptional =
-          testCell(id: 2, name: 'Tự chọn', requiredCol: false);
+    testWidgets('hiện nhãn Bắt buộc / Không bắt buộc và câu giải thích hết hạn', (
+      tester,
+    ) async {
+      final compRequired = testCell(id: 1, name: 'Miệng', requiredCol: true);
+      final compOptional = testCell(id: 2, name: 'Tự chọn', requiredCol: false);
 
       await tester.pumpWidget(
         ProviderScope(
@@ -204,54 +202,53 @@ void main() {
       expect(find.text('Không bắt buộc'), findsOneWidget);
     });
 
-    testWidgets('hiện đúng nhãn nguồn lịch và nút Đặt lịch riêng cho bảng này',
-        (tester) async {
-      final cellHocKy = testCell(
-        id: 1,
-        name: 'Giữa kỳ',
-        requiredCol: true,
-        source: GradeCellDtoDeadlineSourceEnum.HOC_KY,
-      );
-      final cellRieng = testCell(
-        id: 2,
-        name: 'Cuối kỳ',
-        requiredCol: true,
-        source: GradeCellDtoDeadlineSourceEnum.RIENG,
-      );
-      final cellChuaCo = testCell(
-        id: 3,
-        name: 'TX 1',
-        requiredCol: true,
-        source: null,
-      );
+    testWidgets(
+      'hiện đúng nhãn nguồn lịch và nút Đặt lịch riêng cho bảng này',
+      (tester) async {
+        final cellHocKy = testCell(
+          id: 1,
+          name: 'Giữa kỳ',
+          requiredCol: true,
+          source: GradeCellDtoDeadlineSourceEnum.HOC_KY,
+        );
+        final cellRieng = testCell(
+          id: 2,
+          name: 'Cuối kỳ',
+          requiredCol: true,
+          source: GradeCellDtoDeadlineSourceEnum.RIENG,
+        );
+        final cellChuaCo = testCell(
+          id: 3,
+          name: 'TX 1',
+          requiredCol: true,
+          source: null,
+        );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GradeDeadlinesPanel(
-                bookId: 10,
-                components: [cellHocKy, cellRieng, cellChuaCo],
-                isAdmin: true,
-                locked: false,
-                onReload: () {},
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(
+                body: GradeDeadlinesPanel(
+                  bookId: 10,
+                  components: [cellHocKy, cellRieng, cellChuaCo],
+                  isAdmin: true,
+                  locked: false,
+                  onReload: () {},
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Theo lịch học kỳ'), findsOneWidget);
-      expect(find.text('Lịch riêng'), findsOneWidget);
-      expect(find.text('Chưa có lịch'), findsOneWidget);
+        expect(find.text('Theo lịch học kỳ'), findsOneWidget);
+        expect(find.text('Lịch riêng'), findsOneWidget);
+        expect(find.text('Chưa có lịch'), findsOneWidget);
 
-      // Nút QTV đổi chữ thành "Đặt lịch riêng cho bảng này"
-      expect(
-        find.text('Đặt lịch riêng cho bảng này'),
-        findsNWidgets(3),
-      );
-    });
+        // Nút QTV đổi chữ thành "Đặt lịch riêng cho bảng này"
+        expect(find.text('Đặt lịch riêng cho bảng này'), findsNWidgets(3));
+      },
+    );
   });
 
   group('SemesterDeadlinesScreen', () {
@@ -312,11 +309,11 @@ void main() {
         ProviderScope(
           overrides: [
             semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-            sessionProvider.overrideWith((ref) => FakeSessionController(session)),
+            sessionProvider.overrideWith(
+              (ref) => FakeSessionController(session),
+            ),
           ],
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
+          child: const MaterialApp(home: SemesterDeadlinesScreen()),
         ),
       );
       await tester.pumpAndSettle();
@@ -335,8 +332,9 @@ void main() {
       expect(find.text('Đặt lịch'), findsOneWidget); // Thẻ CK
     });
 
-    testWidgets('hộp thoại kết quả khởi tạo bảng điểm còn thiếu',
-        (tester) async {
+    testWidgets('hộp thoại kết quả khởi tạo bảng điểm còn thiếu', (
+      tester,
+    ) async {
       final repo = FakeSemesterDeadlinesRepository(
         semesters: mockSemesters,
         deadlines: mockDeadlines,
@@ -355,11 +353,11 @@ void main() {
         ProviderScope(
           overrides: [
             semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-            sessionProvider.overrideWith((ref) => FakeSessionController(session)),
+            sessionProvider.overrideWith(
+              (ref) => FakeSessionController(session),
+            ),
           ],
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
+          child: const MaterialApp(home: SemesterDeadlinesScreen()),
         ),
       );
       await tester.pumpAndSettle();
@@ -386,10 +384,7 @@ void main() {
       expect(find.text('Kết quả khởi tạo'), findsOneWidget);
       expect(find.text('Số bảng đã tạo: 2'), findsOneWidget);
       expect(find.text('Danh sách bỏ qua (2):'), findsOneWidget);
-      expect(
-        find.text('10A3 – Toán: Lớp chưa có học sinh'),
-        findsOneWidget,
-      );
+      expect(find.text('10A3 – Toán: Lớp chưa có học sinh'), findsOneWidget);
       expect(
         find.text('10A4 – Tin học: Môn chưa có thành phần điểm'),
         findsOneWidget,
@@ -469,8 +464,9 @@ void main() {
       csrf: 'csrf',
     );
 
-    testWidgets('chỉ hiện học kỳ của năm đang xem và nhãn có tên năm',
-        (tester) async {
+    testWidgets('chỉ hiện học kỳ của năm đang xem và nhãn có tên năm', (
+      tester,
+    ) async {
       final repo = FakeSemesterDeadlinesRepository(
         semesters: multiYearSemesters,
       );
@@ -489,9 +485,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
+          child: const MaterialApp(home: SemesterDeadlinesScreen()),
         ),
       );
       await tester.pumpAndSettle();
@@ -500,8 +494,7 @@ void main() {
       expect(find.text('Học kỳ 1 · 2026-2027'), findsNothing);
     });
 
-    testWidgets('mặc định chọn học kỳ chứa ngày hiện tại',
-        (tester) async {
+    testWidgets('mặc định chọn học kỳ chứa ngày hiện tại', (tester) async {
       final repo = FakeSemesterDeadlinesRepository(
         semesters: multiYearSemesters,
       );
@@ -514,193 +507,203 @@ void main() {
           academicYearsProvider.overrideWith((ref) => mockYears),
         ],
       );
-      container.read(viewingYearProvider.notifier).selectYear(
-            const ViewingYear(id: 2026, name: '2026-2027', isCurrent: true),
-          );
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Học kỳ 1 · 2026-2027'), findsWidgets);
-    });
-
-    testWidgets(
-        'không có học kỳ chứa ngày hiện tại thì chọn học kỳ đầu tiên của năm đó',
-        (tester) async {
-      final repo = FakeSemesterDeadlinesRepository(
-        semesters: multiYearSemesters,
-      );
-
-      // Năm 2024 không có học kỳ nào chứa ngày hiện tại -> chọn học kỳ đầu tiên (HK1 2024-2025)
-      final container = ProviderContainer(
-        overrides: [
-          semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith((ref) => FakeSessionController(session)),
-          academicYearsProvider.overrideWith((ref) => mockYears),
-        ],
-      );
-      container.read(viewingYearProvider.notifier).selectYear(
-            const ViewingYear(id: 2024, name: '2024-2025'),
-          );
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
-    });
-
-    testWidgets(
-        'đổi năm học thì danh sách đổi và năm không có học kỳ hiện thông báo',
-        (tester) async {
-      final repo = FakeSemesterDeadlinesRepository(
-        semesters: multiYearSemesters,
-      );
-
-      final container = ProviderContainer(
-        overrides: [
-          semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith((ref) => FakeSessionController(session)),
-          academicYearsProvider.overrideWith((ref) => mockYears),
-        ],
-      );
       container
           .read(viewingYearProvider.notifier)
-          .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
+          .selectYear(
+            const ViewingYear(id: 2026, name: '2026-2027', isCurrent: true),
+          );
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
+          child: const MaterialApp(home: SemesterDeadlinesScreen()),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
-
-      // Đổi sang năm 2026
-      container.read(viewingYearProvider.notifier).selectYear(
-            const ViewingYear(id: 2026, name: '2026-2027', isCurrent: true),
-          );
-      await tester.pumpAndSettle();
-
       expect(find.text('Học kỳ 1 · 2026-2027'), findsWidgets);
-      expect(find.text('Học kỳ 1 · 2024-2025'), findsNothing);
-
-      // Đổi sang năm 2028 không có học kỳ nào
-      container.read(viewingYearProvider.notifier).selectYear(
-            const ViewingYear(id: 2028, name: '2028-2029'),
-          );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Năm học này chưa có học kỳ'), findsOneWidget);
     });
 
     testWidgets(
-        'hộp thoại xác nhận khởi tạo và lưu lịch ghi rõ Học kỳ … · Năm học …',
-        (tester) async {
-      final repo = FakeSemesterDeadlinesRepository(
-        semesters: multiYearSemesters,
-        deadlines: SemesterDeadlinesDto(
-          items: [
-            SemesterDeadlineDto(
-              type: SemesterDeadlineDtoTypeEnum.TX,
-              opensAt: DateTime.utc(2026, 10, 1),
-              closesAt: DateTime.utc(2026, 10, 30),
-              version: 1,
-              expired: false,
+      'không có học kỳ chứa ngày hiện tại thì chọn học kỳ đầu tiên của năm đó',
+      (tester) async {
+        final repo = FakeSemesterDeadlinesRepository(
+          semesters: multiYearSemesters,
+        );
+
+        // Năm 2024 không có học kỳ nào chứa ngày hiện tại -> chọn học kỳ đầu tiên (HK1 2024-2025)
+        final container = ProviderContainer(
+          overrides: [
+            semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
+            sessionProvider.overrideWith(
+              (ref) => FakeSessionController(session),
             ),
+            academicYearsProvider.overrideWith((ref) => mockYears),
           ],
-        ),
-      );
+        );
+        container
+            .read(viewingYearProvider.notifier)
+            .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
 
-      final container = ProviderContainer(
-        overrides: [
-          semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith((ref) => FakeSessionController(session)),
-          academicYearsProvider.overrideWith((ref) => mockYears),
-        ],
-      );
-      container
-          .read(viewingYearProvider.notifier)
-          .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: SemesterDeadlinesScreen()),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Kiểm tra hộp thoại khởi tạo bảng điểm
-      final initBtn = find.text('Khởi tạo bảng điểm còn thiếu');
-      await tester.tap(initBtn);
-      await tester.pumpAndSettle();
+        expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
+      },
+    );
 
-      expect(find.text('Học kỳ 1 · Năm học 2024-2025'), findsOneWidget);
-      await tester.tap(find.text('Hủy'));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'đổi năm học thì danh sách đổi và năm không có học kỳ hiện thông báo',
+      (tester) async {
+        final repo = FakeSemesterDeadlinesRepository(
+          semesters: multiYearSemesters,
+        );
 
-      // Kiểm tra hộp thoại đặt/sửa lịch
-      final editBtn = find.text('Sửa lịch');
-      await tester.tap(editBtn);
-      await tester.pumpAndSettle();
+        final container = ProviderContainer(
+          overrides: [
+            semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
+            sessionProvider.overrideWith(
+              (ref) => FakeSessionController(session),
+            ),
+            academicYearsProvider.overrideWith((ref) => mockYears),
+          ],
+        );
+        container
+            .read(viewingYearProvider.notifier)
+            .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
 
-      expect(find.text('Học kỳ 1 · Năm học 2024-2025'), findsOneWidget);
-      await tester.tap(find.text('Hủy'));
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('nút Tải lại trên AppScaffold gọi lại API và cập nhật giao diện', (tester) async {
-      final repo = FakeSemesterDeadlinesRepository(
-        semesters: multiYearSemesters,
-      );
-
-      final container = ProviderContainer(
-        overrides: [
-          semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith((ref) => FakeSessionController(session)),
-          academicYearsProvider.overrideWith((ref) => mockYears),
-        ],
-      );
-      container
-          .read(viewingYearProvider.notifier)
-          .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
-
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: SemesterDeadlinesScreen()),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      final refreshBtn = find.byKey(const ValueKey('semester-deadlines-refresh-btn'));
-      expect(refreshBtn, findsOneWidget);
-      await tester.tap(refreshBtn);
-      await tester.pumpAndSettle();
+        expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
 
-      expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
-    });
+        // Đổi sang năm 2026
+        container
+            .read(viewingYearProvider.notifier)
+            .selectYear(
+              const ViewingYear(id: 2026, name: '2026-2027', isCurrent: true),
+            );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Học kỳ 1 · 2026-2027'), findsWidgets);
+        expect(find.text('Học kỳ 1 · 2024-2025'), findsNothing);
+
+        // Đổi sang năm 2028 không có học kỳ nào
+        container
+            .read(viewingYearProvider.notifier)
+            .selectYear(const ViewingYear(id: 2028, name: '2028-2029'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Năm học này chưa có học kỳ'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'hộp thoại xác nhận khởi tạo và lưu lịch ghi rõ Học kỳ … · Năm học …',
+      (tester) async {
+        final repo = FakeSemesterDeadlinesRepository(
+          semesters: multiYearSemesters,
+          deadlines: SemesterDeadlinesDto(
+            items: [
+              SemesterDeadlineDto(
+                type: SemesterDeadlineDtoTypeEnum.TX,
+                opensAt: DateTime.utc(2026, 10, 1),
+                closesAt: DateTime.utc(2026, 10, 30),
+                version: 1,
+                expired: false,
+              ),
+            ],
+          ),
+        );
+
+        final container = ProviderContainer(
+          overrides: [
+            semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
+            sessionProvider.overrideWith(
+              (ref) => FakeSessionController(session),
+            ),
+            academicYearsProvider.overrideWith((ref) => mockYears),
+          ],
+        );
+        container
+            .read(viewingYearProvider.notifier)
+            .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: SemesterDeadlinesScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Kiểm tra hộp thoại khởi tạo bảng điểm
+        final initBtn = find.text('Khởi tạo bảng điểm còn thiếu');
+        await tester.tap(initBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Học kỳ 1 · Năm học 2024-2025'), findsOneWidget);
+        await tester.tap(find.text('Hủy'));
+        await tester.pumpAndSettle();
+
+        // Kiểm tra hộp thoại đặt/sửa lịch
+        final editBtn = find.text('Sửa lịch');
+        await tester.tap(editBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Học kỳ 1 · Năm học 2024-2025'), findsOneWidget);
+        await tester.tap(find.text('Hủy'));
+        await tester.pumpAndSettle();
+      },
+    );
+
+    testWidgets(
+      'nút Tải lại trên AppScaffold gọi lại API và cập nhật giao diện',
+      (tester) async {
+        final repo = FakeSemesterDeadlinesRepository(
+          semesters: multiYearSemesters,
+        );
+
+        final container = ProviderContainer(
+          overrides: [
+            semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
+            sessionProvider.overrideWith(
+              (ref) => FakeSessionController(session),
+            ),
+            academicYearsProvider.overrideWith((ref) => mockYears),
+          ],
+        );
+        container
+            .read(viewingYearProvider.notifier)
+            .selectYear(const ViewingYear(id: 2024, name: '2024-2025'));
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: SemesterDeadlinesScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final refreshBtn = find.byKey(
+          const ValueKey('semester-deadlines-refresh-btn'),
+        );
+        expect(refreshBtn, findsOneWidget);
+        await tester.tap(refreshBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
+      },
+    );
   });
 }

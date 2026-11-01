@@ -58,7 +58,7 @@ class _CatalogImportDialogState extends State<CatalogImportDialog> {
 
   String get _hint => switch (widget.resource) {
     'accounts' =>
-      'Giáo viên/học sinh: username là số điện thoại 10 chữ số bắt đầu bằng 0, định dạng ô Excel là Văn bản để giữ số 0. role: QUAN_TRI_VIEN, GIAO_VIEN hoặc HOC_SINH. Mật khẩu từ 12 ký tự.',
+      'Giáo viên/học sinh: username là số điện thoại 10 chữ số bắt đầu bằng 0, định dạng ô Excel là Văn bản để giữ số 0. role: GIAO_VIEN hoặc HOC_SINH (hệ thống chỉ có một quản trị viên duy nhất). Mật khẩu từ 12 ký tự.',
     'teachers' =>
       'ma_giao_vien là mã của tài khoản GIAO_VIEN chưa liên kết hồ sơ.',
     'students' =>

@@ -150,13 +150,15 @@ void main() {
       addTearDown(container.dispose);
 
       // Đặt năm đang xem là Năm 2024-2025 (id: 1)
-      container.read(viewingYearProvider.notifier).selectYear(
-        const ViewingYear(
-          id: 1,
-          name: 'Năm học 2024-2025',
-          isCurrent: true,
-        ),
-      );
+      container
+          .read(viewingYearProvider.notifier)
+          .selectYear(
+            const ViewingYear(
+              id: 1,
+              name: 'Năm học 2024-2025',
+              isCurrent: true,
+            ),
+          );
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -204,13 +206,15 @@ void main() {
       );
 
       // Đổi năm đang xem sang Năm 2025-2026 (id: 2) -> chọn lại học kỳ mặc định của năm mới (ma_hoc_ky: 20)
-      container.read(viewingYearProvider.notifier).selectYear(
-        const ViewingYear(
-          id: 2,
-          name: 'Năm học 2025-2026',
-          isCurrent: false,
-        ),
-      );
+      container
+          .read(viewingYearProvider.notifier)
+          .selectYear(
+            const ViewingYear(
+              id: 2,
+              name: 'Năm học 2025-2026',
+              isCurrent: false,
+            ),
+          );
       await tester.pumpAndSettle();
 
       final updatedDropdown = tester.widget<AppFilterDropdown<num>>(

@@ -6,6 +6,7 @@ export type Row = Record<string, unknown>;
 export type Table =
   | "nguoi_dung"
   | "phien_lam_viec"
+  | "phien_ghi_nho"
   | "nhat_ky_bao_mat"
   | "gioi_han_dang_nhap"
   | "nam_hoc"

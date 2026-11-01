@@ -31,7 +31,10 @@ export function accountUsername(username: unknown, role: Role): boolean {
       : /^0[0-9]{9}$/.test(username))
   );
 }
+const ONLY_ADMIN_MESSAGE =
+  "Hệ thống chỉ có một tài khoản quản trị viên duy nhất, không thể cấp thêm vai trò này.";
 const idle = 30 * 60 * 1000;
+const rememberLifetime = 30 * 24 * 3600 * 1000;
 /** Chỉ ghi lại hoat_dong_cuoi khi giá trị cũ đã quá 60 giây (hạn idle 30 phút vẫn kiểm đúng như cũ). */
 const touchInterval = 60 * 1000;
 const publicUser = (u: Row) => ({
@@ -123,7 +126,12 @@ export class IdentityService {
   }
   private dummy = passwordHash(random());
   constructor(@Inject(STORE) private readonly store: Store) {}
-  async login(username: string, password: string, ip: string) {
+  async login(
+    username: string,
+    password: string,
+    ip: string,
+    remember = false,
+  ) {
     if (
       typeof username !== "string" ||
       username.length > 50 ||
@@ -159,6 +167,7 @@ export class IdentityService {
     );
     const token = random();
     const csrf = random();
+    const rememberToken = remember ? random() : null;
     const now = new Date();
     const result = await this.store.run(async (tx) => {
       const current = user
@@ -207,11 +216,57 @@ export class IdentityService {
         het_han: new Date(+now + 8 * 3600000),
         hoat_dong_cuoi: now,
       });
+      if (rememberToken)
+        await tx.create("phien_ghi_nho", {
+          ma_bam: digest(rememberToken),
+          ma_nguoi_dung: current.ma_nguoi_dung,
+          het_han: new Date(+now + rememberLifetime),
+        });
       await audit(tx, Number(current.ma_nguoi_dung), "LOGIN", "identity");
       return publicUser(current);
     });
     if (!result) throw new UnauthorizedException();
-    return { ...result, token, csrf };
+    return { ...result, token, csrf, remember: rememberToken };
+  }
+  /**
+   * Mở lại app di động: đổi mã ghi nhớ (dùng một lần) lấy phiên mới và mã ghi nhớ mới.
+   * Mã sai/hết hạn/đã dùng, hoặc tài khoản bị khóa → 401 (client xóa mã và về màn đăng nhập).
+   */
+  async resume(rememberToken: string) {
+    if (!/^[a-f0-9]{64}$/.test(rememberToken ?? ""))
+      throw new UnauthorizedException();
+    const token = random();
+    const csrf = random();
+    const next = random();
+    const now = new Date();
+    const result = await this.store.run(async (tx) => {
+      const key = digest(rememberToken);
+      const saved = await tx.find("phien_ghi_nho", { ma_bam: key });
+      if (!saved) return null;
+      await tx.remove("phien_ghi_nho", { ma_bam: key });
+      if ((saved.het_han as Date) <= now) return null;
+      const user = await tx.find("nguoi_dung", {
+        ma_nguoi_dung: saved.ma_nguoi_dung,
+      });
+      if (!user?.trang_thai || (user.khoa_den && (user.khoa_den as Date) > now))
+        return null;
+      await tx.create("phien_lam_viec", {
+        ma_bam: digest(token),
+        ma_nguoi_dung: user.ma_nguoi_dung,
+        csrf,
+        het_han: new Date(+now + 8 * 3600000),
+        hoat_dong_cuoi: now,
+      });
+      await tx.create("phien_ghi_nho", {
+        ma_bam: digest(next),
+        ma_nguoi_dung: user.ma_nguoi_dung,
+        het_han: new Date(+now + rememberLifetime),
+      });
+      await audit(tx, Number(user.ma_nguoi_dung), "SESSION_RESUME", "identity");
+      return publicUser(user);
+    });
+    if (!result) throw new UnauthorizedException();
+    return { ...result, token, csrf, remember: next };
   }
   /**
    * Gia hạn hoạt động của phiên bằng một UPDATE có điều kiện, ở mức ReadCommitted và ngoài giao dịch Serializable của request:
@@ -263,6 +318,7 @@ export class IdentityService {
     authenticated(actor);
     await this.store.run(async (tx) => {
       await tx.remove("phien_lam_viec", { ma_bam: actor.sessionHash });
+      await tx.remove("phien_ghi_nho", { ma_nguoi_dung: actor.id });
       await audit(tx, actor.id, "LOGOUT", "identity");
     });
   }
@@ -307,6 +363,8 @@ export class IdentityService {
       throw new BadRequestException(
         "Tài khoản giáo viên/học sinh phải dùng số điện thoại 10 chữ số, bắt đầu bằng 0.",
       );
+    if (input.role === "QUAN_TRI_VIEN")
+      throw new BadRequestException(ONLY_ADMIN_MESSAGE);
     const hashed = await passwordHash(input.password);
     return this.store.run(async (tx) => {
       const row = await tx.create("nguoi_dung", {
@@ -339,6 +397,8 @@ export class IdentityService {
           throw new BadRequestException(
             "Tài khoản nhập không hợp lệ: giáo viên/học sinh phải dùng số điện thoại 10 chữ số bắt đầu bằng 0; giữ cột username ở dạng văn bản.",
           );
+        if (input.role === "QUAN_TRI_VIEN")
+          throw new BadRequestException(ONLY_ADMIN_MESSAGE);
         return { ...input, hashed: await passwordHash(input.password) };
       }),
     );
@@ -378,6 +438,8 @@ export class IdentityService {
     return this.store.run(async (tx) => {
       const user = await tx.find("nguoi_dung", { ma_nguoi_dung: id });
       if (!user) throw new BadRequestException();
+      if (input.role === "QUAN_TRI_VIEN" && user.vai_tro !== "QUAN_TRI_VIEN")
+        throw new BadRequestException(ONLY_ADMIN_MESSAGE);
       await currentActor(tx, actor);
       if (
         user.vai_tro === "QUAN_TRI_VIEN" &&
@@ -407,6 +469,7 @@ export class IdentityService {
         },
       );
       await tx.remove("phien_lam_viec", { ma_nguoi_dung: id });
+      await tx.remove("phien_ghi_nho", { ma_nguoi_dung: id });
       await audit(tx, actor.id, "ACCOUNT_SECURITY_CHANGE", String(id));
       return publicUser(row);
     });
@@ -443,6 +506,7 @@ export class IdentityService {
         { mat_khau_ma_hoa: hashed },
       );
       await tx.remove("phien_lam_viec", { ma_nguoi_dung: actor.id });
+      await tx.remove("phien_ghi_nho", { ma_nguoi_dung: actor.id });
       await audit(tx, actor.id, "PASSWORD_CHANGE", String(actor.id));
     });
   }

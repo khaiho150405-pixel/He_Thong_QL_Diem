@@ -98,9 +98,7 @@ class _FakeAdapter implements HttpClientAdapter {
         'nextCursor': null,
       };
     } else if (options.path.endsWith('/gradebooks/10/missing-students')) {
-      body = {
-        'items': missingStudentsList,
-      };
+      body = {'items': missingStudentsList};
     } else {
       status = 404;
       body = {'code': 'NOT_FOUND'};
@@ -244,9 +242,7 @@ void main() {
         SkippedStudentDto(
           studentId: 1,
           studentName: 'Học sinh thiếu điểm',
-          missingComponents: [
-            MissingComponentDto(componentId: 1, name: 'CK'),
-          ],
+          missingComponents: [MissingComponentDto(componentId: 1, name: 'CK')],
         ),
       ],
       exempted: [
@@ -256,7 +252,9 @@ void main() {
 
     final container = ProviderContainer(
       overrides: [
-        finalResultsRepositoryProvider.overrideWithValue(FakeFinalResultsRepo()),
+        finalResultsRepositoryProvider.overrideWithValue(
+          FakeFinalResultsRepo(),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -411,7 +409,9 @@ void main() {
       );
 
       final container = ProviderContainer(
-        overrides: [semesterDeadlinesRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
+        ],
       );
       addTearDown(container.dispose);
 
@@ -420,9 +420,7 @@ void main() {
           container: container,
           child: MaterialApp(
             theme: AppTheme.light(),
-            home: const Scaffold(
-              body: PublishReadinessDialog(semesterId: 1),
-            ),
+            home: const Scaffold(body: PublishReadinessDialog(semesterId: 1)),
           ),
         ),
       );
@@ -503,4 +501,3 @@ void main() {
     },
   );
 }
-

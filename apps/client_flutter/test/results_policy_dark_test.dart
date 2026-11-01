@@ -342,7 +342,10 @@ void main() {
         ).extension<AppTokens>()!;
         expect(tokens.brightness, mode);
         expect(find.text('Bảng điểm cá nhân'), findsOneWidget);
-        expect(find.textContaining('$fakeSchoolShortName · Học kỳ I'), findsOneWidget);
+        expect(
+          find.textContaining('$fakeSchoolShortName · Học kỳ I'),
+          findsOneWidget,
+        );
         expect(find.text('6.5'), findsWidgets);
         expect(find.text('3 / 38'), findsOneWidget);
         expect(find.text('5 / 6'), findsOneWidget);

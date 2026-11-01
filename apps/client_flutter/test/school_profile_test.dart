@@ -45,7 +45,8 @@ Future<void> _pump(
         schoolProfileRepositoryProvider.overrideWithValue(repo),
         apiProvider.overrideWithValue(
           ApiClientDart(
-            dio: Dio()..httpClientAdapter = FakeCatalogServer(withTerm: withTerm),
+            dio: Dio()
+              ..httpClientAdapter = FakeCatalogServer(withTerm: withTerm),
           ),
         ),
         sessionProvider.overrideWith((ref) => _FakeSession(_session(role))),
@@ -70,14 +71,15 @@ void main() {
     expect(find.text('Thông tin trường'), findsWidgets);
   });
 
-  testWidgets('chưa tải được thông tin trường: sidebar không có dòng tên trường', (
-    tester,
-  ) async {
-    final repo = FakeSchoolProfileRepository()..failFetch = true;
-    await _pump(tester, repo: repo, location: '/admin/school-profile');
-    expect(find.text('EduScore'), findsWidgets);
-    expect(find.text(fakeSchoolShortName.toUpperCase()), findsNothing);
-  });
+  testWidgets(
+    'chưa tải được thông tin trường: sidebar không có dòng tên trường',
+    (tester) async {
+      final repo = FakeSchoolProfileRepository()..failFetch = true;
+      await _pump(tester, repo: repo, location: '/admin/school-profile');
+      expect(find.text('EduScore'), findsWidgets);
+      expect(find.text(fakeSchoolShortName.toUpperCase()), findsNothing);
+    },
+  );
 
   testWidgets('giáo viên và học sinh không vào được route Thông tin trường', (
     tester,

@@ -20,18 +20,18 @@ class GradebookConflictFakeServer implements HttpClientAdapter {
   void close({bool force = false}) {}
 
   Map<String, dynamic> get book => {
-        'id': 7,
-        'classId': 10,
-        'subjectId': 20,
-        'termId': 30,
-        'className': '10A1',
-        'subjectName': 'Toán',
-        'termName': 'Học kỳ I',
-        'status': 'DANG_NHAP_LIEU',
-        'version': version,
-        'pendingAdjustmentId': null,
-        'resultsOutdated': false,
-      };
+    'id': 7,
+    'classId': 10,
+    'subjectId': 20,
+    'termId': 30,
+    'className': '10A1',
+    'subjectName': 'Toán',
+    'termName': 'Học kỳ I',
+    'status': 'DANG_NHAP_LIEU',
+    'version': version,
+    'pendingAdjustmentId': null,
+    'resultsOutdated': false,
+  };
 
   @override
   Future<ResponseBody> fetch(
@@ -51,7 +51,8 @@ class GradebookConflictFakeServer implements HttpClientAdapter {
         'token': 'test-token',
         'csrf': 'test-csrf',
       };
-    } else if (options.path == '/api/v1/gradebooks' && options.method == 'GET') {
+    } else if (options.path == '/api/v1/gradebooks' &&
+        options.method == 'GET') {
       body = {
         'items': [book],
         'nextCursor': null,
@@ -158,78 +159,82 @@ Future<ProviderContainer> _pumpGradebook(
 
 void main() {
   testWidgets(
-      '409 code CELL_HAS_VALUE: không hiện banner xung đột, hiện thông báo "Ô đã có điểm…", giữ nguyên ô đang gõ',
-      (tester) async {
-    final server = GradebookConflictFakeServer()..nextErrorCode = 'CELL_HAS_VALUE';
-    final container = await _pumpGradebook(tester, server);
-    addTearDown(container.dispose);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    '409 code CELL_HAS_VALUE: không hiện banner xung đột, hiện thông báo "Ô đã có điểm…", giữ nguyên ô đang gõ',
+    (tester) async {
+      final server = GradebookConflictFakeServer()
+        ..nextErrorCode = 'CELL_HAS_VALUE';
+      final container = await _pumpGradebook(tester, server);
+      addTearDown(container.dispose);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    final inputFinder = find.byKey(const ValueKey('grade-9001'));
-    expect(inputFinder, findsOneWidget);
+      final inputFinder = find.byKey(const ValueKey('grade-9001'));
+      expect(inputFinder, findsOneWidget);
 
-    // Người dùng gõ điểm
-    await tester.enterText(inputFinder, '8.5');
-    await tester.pumpAndSettle();
+      // Người dùng gõ điểm
+      await tester.enterText(inputFinder, '8.5');
+      await tester.pumpAndSettle();
 
-    // Bấm lưu
-    await tester.tap(find.text('Lưu thay đổi'));
-    await tester.pumpAndSettle();
+      // Bấm lưu
+      await tester.tap(find.text('Lưu thay đổi'));
+      await tester.pumpAndSettle();
 
-    // Điền lý do và xác nhận
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Lý do thay đổi'),
-      'Nhập điểm miệng',
-    );
-    await tester.tap(find.text('Xác nhận lưu'));
-    await tester.pumpAndSettle();
+      // Điền lý do và xác nhận
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Lý do thay đổi'),
+        'Nhập điểm miệng',
+      );
+      await tester.tap(find.text('Xác nhận lưu'));
+      await tester.pumpAndSettle();
 
-    // Không hiện banner xung đột
-    expect(find.textContaining('đã thay đổi ở nơi khác'), findsNothing);
+      // Không hiện banner xung đột
+      expect(find.textContaining('đã thay đổi ở nơi khác'), findsNothing);
 
-    // Hiện thông báo "Ô đã có điểm…"
-    expect(find.textContaining('Ô đã có điểm'), findsOneWidget);
+      // Hiện thông báo "Ô đã có điểm…"
+      expect(find.textContaining('Ô đã có điểm'), findsOneWidget);
 
-    // Giữ nguyên ô người dùng đang gõ
-    final textFormField = tester.widget<TextFormField>(inputFinder);
-    expect(textFormField.controller?.text, '8.5');
+      // Giữ nguyên ô người dùng đang gõ
+      final textFormField = tester.widget<TextFormField>(inputFinder);
+      expect(textFormField.controller?.text, '8.5');
 
-    // Lưới vẫn mở để chỉnh sửa (Save button vẫn hiển thị)
-    expect(find.text('Lưu thay đổi'), findsOneWidget);
-  });
+      // Lưới vẫn mở để chỉnh sửa (Save button vẫn hiển thị)
+      expect(find.text('Lưu thay đổi'), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      '409 code VERSION_OR_STATE_CONFLICT: hiện banner xung đột và yêu cầu tải lại',
-      (tester) async {
-    final server = GradebookConflictFakeServer()
-      ..nextErrorCode = 'VERSION_OR_STATE_CONFLICT';
-    final container = await _pumpGradebook(tester, server);
-    addTearDown(container.dispose);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    '409 code VERSION_OR_STATE_CONFLICT: hiện banner xung đột và yêu cầu tải lại',
+    (tester) async {
+      final server = GradebookConflictFakeServer()
+        ..nextErrorCode = 'VERSION_OR_STATE_CONFLICT';
+      final container = await _pumpGradebook(tester, server);
+      addTearDown(container.dispose);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    final inputFinder = find.byKey(const ValueKey('grade-9001'));
-    await tester.enterText(inputFinder, '9.0');
-    await tester.pumpAndSettle();
+      final inputFinder = find.byKey(const ValueKey('grade-9001'));
+      await tester.enterText(inputFinder, '9.0');
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Lưu thay đổi'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Lưu thay đổi'));
+      await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Lý do thay đổi'),
-      'Sửa điểm',
-    );
-    await tester.tap(find.text('Xác nhận lưu'));
-    await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Lý do thay đổi'),
+        'Sửa điểm',
+      );
+      await tester.tap(find.text('Xác nhận lưu'));
+      await tester.pumpAndSettle();
 
-    // Bật banner xung đột
-    expect(find.textContaining('đã thay đổi ở nơi khác'), findsOneWidget);
-    expect(find.widgetWithText(TextButton, 'Tải lại'), findsOneWidget);
-  });
+      // Bật banner xung đột
+      expect(find.textContaining('đã thay đổi ở nơi khác'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Tải lại'), findsOneWidget);
+    },
+  );
 
-  testWidgets('409 không có code nghiệp vụ (raw 409): hiện banner xung đột',
-      (tester) async {
+  testWidgets('409 không có code nghiệp vụ (raw 409): hiện banner xung đột', (
+    tester,
+  ) async {
     final server = GradebookConflictFakeServer()..returnRawConflict = true;
     final container = await _pumpGradebook(tester, server);
     addTearDown(container.dispose);

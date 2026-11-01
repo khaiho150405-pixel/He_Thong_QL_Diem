@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:client_flutter/features/academic_catalog/academic_year_scope.dart';
 import 'package:client_flutter/features/academic_catalog/repository.dart';
+import 'package:client_flutter/core/remember_store.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:client_flutter/features/gradebooks/gradebooks_screen.dart';
 import 'package:dio/dio.dart';
@@ -99,6 +100,12 @@ class _FakeSessionController extends StateNotifier<SessionDto?>
 
   @override
   ApiClientDart get api => throw UnimplementedError();
+
+  @override
+  RememberStore get store => throw UnimplementedError();
+
+  @override
+  Future<bool> resume() async => false;
 
   @override
   Timer? get expiry => null;

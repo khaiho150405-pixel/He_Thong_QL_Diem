@@ -150,7 +150,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      GoRouter.of(tester.element(find.text('Đăng nhập').first)).push('/connection');
+      GoRouter.of(
+        tester.element(find.text('Đăng nhập').first),
+      ).push('/connection');
       await tester.pump();
       for (final ms in [40, 60, 60, 60]) {
         await tester.pump(Duration(milliseconds: ms));

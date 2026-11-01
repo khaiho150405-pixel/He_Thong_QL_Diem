@@ -642,17 +642,23 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         label: f.label,
         searchable: false,
         prefixIcon: const Icon(Icons.security_rounded, size: 20),
-        items: ['QUAN_TRI_VIEN', 'GIAO_VIEN', 'HOC_SINH']
-            .map(
-              (r) => DropdownMenuItem(
-                value: r,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: roleAppBadge(r),
-                ),
-              ),
-            )
-            .toList(),
+        // Chỉ có một quản trị viên duy nhất: không cấp vai trò này cho tài khoản khác.
+        items:
+            [
+                  if (widget.row?['role'] == 'QUAN_TRI_VIEN') 'QUAN_TRI_VIEN',
+                  'GIAO_VIEN',
+                  'HOC_SINH',
+                ]
+                .map(
+                  (r) => DropdownMenuItem(
+                    value: r,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: roleAppBadge(r),
+                    ),
+                  ),
+                )
+                .toList(),
         onChanged: locked ? null : (v) => values[f.key] = v,
       );
     }

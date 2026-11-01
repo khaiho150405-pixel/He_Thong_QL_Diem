@@ -131,6 +131,7 @@ Class | Method | HTTP request | Description
 [*IdentityApi*](doc/IdentityApi.md) | [**identityMe**](doc/IdentityApi.md#identityme) | **GET** /api/v1/identity/me |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityPassword**](doc/IdentityApi.md#identitypassword) | **POST** /api/v1/identity/password |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityProfile**](doc/IdentityApi.md#identityprofile) | **GET** /api/v1/identity/profile |
+[*IdentityApi*](doc/IdentityApi.md) | [**identityResume**](doc/IdentityApi.md#identityresume) | **POST** /api/v1/identity/resume |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateAccount**](doc/IdentityApi.md#identityupdateaccount) | **PUT** /api/v1/identity/accounts/{id} |
 [*IdentityApi*](doc/IdentityApi.md) | [**identityUpdateProfile**](doc/IdentityApi.md#identityupdateprofile) | **PUT** /api/v1/identity/profile |
 [*RecognitionApi*](doc/RecognitionApi.md) | [**recognitionCancel**](doc/RecognitionApi.md#recognitioncancel) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/cancel |

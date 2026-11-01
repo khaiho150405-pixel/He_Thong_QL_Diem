@@ -23,10 +23,7 @@ class _FakeSessionController extends StateNotifier<SessionDto?>
 }
 
 class _FakeDeadlinesRepo implements SemesterDeadlinesRepository {
-  _FakeDeadlinesRepo({
-    required this.semesters,
-    required this.deadlines,
-  });
+  _FakeDeadlinesRepo({required this.semesters, required this.deadlines});
 
   final List<SemestersDto> semesters;
   final SemesterDeadlinesDto deadlines;
@@ -47,34 +44,26 @@ class _FakeDeadlinesRepo implements SemesterDeadlinesRepository {
     required DateTime opensAt,
     required DateTime closesAt,
     required num expectedVersion,
-  }) async =>
-      SemesterDeadlineDto(
-        type: SemesterDeadlineDtoTypeEnum.values.firstWhere(
-          (e) => e.value == type,
-          orElse: () => SemesterDeadlineDtoTypeEnum.TX,
-        ),
-        opensAt: opensAt,
-        closesAt: closesAt,
-        version: expectedVersion + 1,
-        expired: false,
-      );
+  }) async => SemesterDeadlineDto(
+    type: SemesterDeadlineDtoTypeEnum.values.firstWhere(
+      (e) => e.value == type,
+      orElse: () => SemesterDeadlineDtoTypeEnum.TX,
+    ),
+    opensAt: opensAt,
+    closesAt: closesAt,
+    version: expectedVersion + 1,
+    expired: false,
+  );
 
   @override
   Future<InitializeGradebooksResultDto> initializeGradebooks({
     required num semesterId,
     required String idempotencyKey,
-  }) async =>
-      InitializeGradebooksResultDto(
-        created: [],
-        skipped: [],
-      );
+  }) async => InitializeGradebooksResultDto(created: [], skipped: []);
 
   @override
   Future<PublishReadinessDto> publishReadiness(num semesterId) async =>
-      PublishReadinessDto(
-        ready: true,
-        issues: [],
-      );
+      PublishReadinessDto(ready: true, issues: []);
 }
 
 class _GradebookFakeServer implements HttpClientAdapter {
@@ -85,18 +74,18 @@ class _GradebookFakeServer implements HttpClientAdapter {
   void close({bool force = false}) {}
 
   Map<String, dynamic> get book => {
-        'id': 7,
-        'classId': 10,
-        'subjectId': 20,
-        'termId': 30,
-        'className': '10A1',
-        'subjectName': 'Toán',
-        'termName': 'Học kỳ I',
-        'status': 'DANG_NHAP_LIEU',
-        'version': version,
-        'resultsOutdated': false,
-        'pendingAdjustmentId': null,
-      };
+    'id': 7,
+    'classId': 10,
+    'subjectId': 20,
+    'termId': 30,
+    'className': '10A1',
+    'subjectName': 'Toán',
+    'termName': 'Học kỳ I',
+    'status': 'DANG_NHAP_LIEU',
+    'version': version,
+    'resultsOutdated': false,
+    'pendingAdjustmentId': null,
+  };
 
   @override
   Future<ResponseBody> fetch(
@@ -206,7 +195,9 @@ void main() {
   ];
 
   group('Lỗi 1: Chọn giờ 23:40 ở chế độ gõ phím được chấp nhận', () {
-    testWidgets('trên màn Lịch học kỳ (SemesterDeadlinesScreen)', (tester) async {
+    testWidgets('trên màn Lịch học kỳ (SemesterDeadlinesScreen)', (
+      tester,
+    ) async {
       final repo = _FakeDeadlinesRepo(
         semesters: mockSemesters,
         deadlines: SemesterDeadlinesDto(
@@ -225,7 +216,9 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith((ref) => _FakeSessionController(session)),
+          sessionProvider.overrideWith(
+            (ref) => _FakeSessionController(session),
+          ),
           academicYearsProvider.overrideWith((ref) => mockYears),
         ],
       );
@@ -234,9 +227,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
+          child: const MaterialApp(home: SemesterDeadlinesScreen()),
         ),
       );
       await tester.pumpAndSettle();
@@ -378,7 +369,9 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith((ref) => _FakeSessionController(session)),
+          sessionProvider.overrideWith(
+            (ref) => _FakeSessionController(session),
+          ),
           academicYearsProvider.overrideWith((ref) => mockYears),
         ],
       );
@@ -387,9 +380,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
-          ),
+          child: const MaterialApp(home: SemesterDeadlinesScreen()),
         ),
       );
       await tester.pumpAndSettle();
@@ -447,51 +438,57 @@ void main() {
   });
 
   group('Lỗi 3: Ô chọn năm trên màn lịch học kỳ không có "Tất cả"', () {
-    testWidgets('không có mục "Tất cả các năm" và dùng năm hiện hành nếu viewingYear là all',
-        (tester) async {
-      final repo = _FakeDeadlinesRepo(
-        semesters: mockSemesters,
-        deadlines: SemesterDeadlinesDto(items: []),
-      );
+    testWidgets(
+      'không có mục "Tất cả các năm" và dùng năm hiện hành nếu viewingYear là all',
+      (tester) async {
+        final repo = _FakeDeadlinesRepo(
+          semesters: mockSemesters,
+          deadlines: SemesterDeadlinesDto(items: []),
+        );
 
-      final container = ProviderContainer(
-        overrides: [
-          semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
-          sessionProvider.overrideWith((ref) => _FakeSessionController(session)),
-          academicYearsProvider.overrideWith((ref) => mockYears),
-        ],
-      );
-      addTearDown(container.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
+            sessionProvider.overrideWith(
+              (ref) => _FakeSessionController(session),
+            ),
+            academicYearsProvider.overrideWith((ref) => mockYears),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      // Đặt viewingYear là ViewingYear.all
-      container.read(viewingYearProvider.notifier).selectYear(ViewingYear.all);
+        // Đặt viewingYear là ViewingYear.all
+        container
+            .read(viewingYearProvider.notifier)
+            .selectYear(ViewingYear.all);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(
-            home: SemesterDeadlinesScreen(),
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: SemesterDeadlinesScreen()),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Ô chọn năm không hiển thị "Tất cả các năm"
-      expect(
-        find.descendant(
-          of: find.byType(AcademicYearFilterControl),
-          matching: find.text('Tất cả các năm'),
-        ),
-        findsNothing,
-      );
+        // Ô chọn năm không hiển thị "Tất cả các năm"
+        expect(
+          find.descendant(
+            of: find.byType(AcademicYearFilterControl),
+            matching: find.text('Tất cả các năm'),
+          ),
+          findsNothing,
+        );
 
-      // Màn hình dùng năm hiện hành (2026-2027)
-      expect(find.textContaining('2026-2027'), findsWidgets);
-    });
+        // Màn hình dùng năm hiện hành (2026-2027)
+        expect(find.textContaining('2026-2027'), findsWidgets);
+      },
+    );
   });
 
   group('Lỗi 4: Lưới điểm xử lý 409 theo mã lỗi nghiệp vụ', () {
-    testWidgets('409 code CELL_HAS_VALUE không hiện banner xung đột', (tester) async {
+    testWidgets('409 code CELL_HAS_VALUE không hiện banner xung đột', (
+      tester,
+    ) async {
       final server = _GradebookFakeServer()..nextErrorCode = 'CELL_HAS_VALUE';
       final dio = Dio()..httpClientAdapter = server;
       final api = ApiClientDart(dio: dio);
@@ -534,12 +531,17 @@ void main() {
       await tester.pumpAndSettle();
 
       // Không hiện banner xung đột
-      expect(find.textContaining('Bảng điểm đã thay đổi ở nơi khác'), findsNothing);
+      expect(
+        find.textContaining('Bảng điểm đã thay đổi ở nơi khác'),
+        findsNothing,
+      );
       // Hiện thông báo tiếng Việt theo code
       expect(find.textContaining('Ô đã có điểm'), findsOneWidget);
     });
 
-    testWidgets('409 code VERSION_OR_STATE_CONFLICT có banner xung đột', (tester) async {
+    testWidgets('409 code VERSION_OR_STATE_CONFLICT có banner xung đột', (
+      tester,
+    ) async {
       final server = _GradebookFakeServer()
         ..nextErrorCode = 'VERSION_OR_STATE_CONFLICT';
       final dio = Dio()..httpClientAdapter = server;
@@ -583,15 +585,21 @@ void main() {
       await tester.pumpAndSettle();
 
       // Bật banner xung đột
-      expect(find.textContaining('Bảng điểm đã thay đổi ở nơi khác'), findsOneWidget);
+      expect(
+        find.textContaining('Bảng điểm đã thay đổi ở nơi khác'),
+        findsOneWidget,
+      );
     });
   });
 
   group('Lỗi 5: CHUA_CONG_BO hiện "Chưa công bố"', () {
-    test('classificationBadgeOf và classificationLabel trả về "Chưa công bố"', () {
-      final badge = classificationBadgeOf('CHUA_CONG_BO');
-      expect(badge.label, 'Chưa công bố');
-      expect(classificationLabel('CHUA_CONG_BO'), 'Chưa công bố');
-    });
+    test(
+      'classificationBadgeOf và classificationLabel trả về "Chưa công bố"',
+      () {
+        final badge = classificationBadgeOf('CHUA_CONG_BO');
+        expect(badge.label, 'Chưa công bố');
+        expect(classificationLabel('CHUA_CONG_BO'), 'Chưa công bố');
+      },
+    );
   });
 }

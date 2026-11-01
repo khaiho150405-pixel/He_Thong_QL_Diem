@@ -119,8 +119,10 @@ export class IdentityController {
       body?.username,
       body?.password,
       req.socket.remoteAddress ?? "unknown",
+      req.header("x-client-platform") === "native",
     );
     res.setHeader("Cache-Control", "no-store");
+    const { remember, ...session } = result;
     if (req.header("x-client-platform") === "web") {
       res.cookie("qld_session", result.token, {
         httpOnly: true,
@@ -129,9 +131,25 @@ export class IdentityController {
         path: "/api/v1",
         maxAge: 8 * 3600000,
       });
-      return { ...result, token: null };
+      return { ...session, token: null };
     }
-    return result;
+    if (remember) res.setHeader("x-remember-token", remember);
+    return session;
+  }
+  /** App di động: đổi mã ghi nhớ (header x-remember-token) lấy phiên mới; mã mới cũng trả qua header. */
+  @Post("resume")
+  @ApiHeader({ name: "x-client-platform", required: true, enum: ["native"] })
+  @ApiHeader({ name: "x-remember-token", required: true })
+  @HttpCode(200)
+  @ApiOkResponse({ type: SessionDto })
+  async resume(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const result = await this.service.resume(
+      req.header("x-remember-token") ?? "",
+    );
+    res.setHeader("Cache-Control", "no-store");
+    const { remember, ...session } = result;
+    res.setHeader("x-remember-token", remember);
+    return session;
   }
   @Get("me")
   @ApiOkResponse({ type: SessionDto })

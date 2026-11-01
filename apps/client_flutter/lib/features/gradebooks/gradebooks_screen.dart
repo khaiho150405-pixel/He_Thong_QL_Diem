@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_dialog.dart';
@@ -429,6 +430,9 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
     );
   }
 
+  /// Tạo bảng điểm thủ công chỉ có trên web; app di động (Android/iOS) không có tính năng này.
+  bool get canCreate => teacher && kIsWeb;
+
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
@@ -437,7 +441,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       title: teacher ? 'Bảng điểm' : 'Bảng điểm toàn trường',
       currentPath: '/gradebooks',
       showBackButton: true,
-      floatingActionButton: teacher
+      floatingActionButton: canCreate
           ? FloatingActionButton.extended(
               onPressed: create,
               icon: const Icon(Icons.add),
@@ -480,10 +484,12 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                           icon: Icons.table_chart_outlined,
                           title: 'Chưa có bảng điểm',
                           message: teacher
-                              ? 'Bạn chưa tạo bảng điểm nào cho các lớp phụ trách.'
+                              ? (canCreate
+                                    ? 'Bạn chưa tạo bảng điểm nào cho các lớp phụ trách.'
+                                    : 'Bạn chưa có bảng điểm nào. Tạo bảng điểm trên bản web.')
                               : 'Hệ thống chưa có bảng điểm nào được tạo.',
-                          actionLabel: teacher ? 'Tạo bảng điểm' : null,
-                          onAction: teacher ? create : null,
+                          actionLabel: canCreate ? 'Tạo bảng điểm' : null,
+                          onAction: canCreate ? create : null,
                         );
                       }
 

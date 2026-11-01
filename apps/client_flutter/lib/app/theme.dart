@@ -317,6 +317,27 @@ class AppTheme {
         trackBorderColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
       drawerTheme: DrawerThemeData(backgroundColor: t.surface, elevation: 4),
+      // Switch tắt phải thấy rõ: nền track xám + viền đậm + núm đậm (mặc định M3 gần như chìm vào nền thẻ).
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.disabled)
+              ? t.line2
+              : states.contains(WidgetState.selected)
+              ? Colors.white
+              : t.ink3,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? (states.contains(WidgetState.disabled) ? t.line2 : t.pri)
+              : t.subtle,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.transparent
+              : t.ink3,
+        ),
+        trackOutlineWidth: const WidgetStatePropertyAll(1.5),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: t.surface,
         elevation: 2,

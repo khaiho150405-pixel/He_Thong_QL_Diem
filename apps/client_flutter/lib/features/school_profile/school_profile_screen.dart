@@ -1,18 +1,13 @@
 import 'package:api_client_dart/api_client_dart.dart';
-import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design_tokens.dart';
-import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../academic_catalog/semester_deadlines_repository.dart';
 import 'school_profile.dart';
 
-const _maxLogoBytes = 1024 * 1024;
-
-/// Màn "Thông tin trường" (chỉ QTV): sửa tên, liên hệ và logo hiển thị toàn app.
+/// Màn "Thông tin trường" (chỉ QTV): sửa tên và thông tin liên hệ hiển thị toàn app.
 class SchoolProfileScreen extends ConsumerStatefulWidget {
   const SchoolProfileScreen({super.key});
 
@@ -176,59 +171,6 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
     );
   }
 
-  Future<void> _pickLogo() async {
-    final p = _profile;
-    if (p == null) return;
-    final picked = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['png', 'jpg', 'jpeg'],
-      withData: true,
-    );
-    final file = picked?.files.single;
-    if (file == null || !mounted) return;
-    final bytes = file.bytes;
-    if (bytes == null || bytes.length > _maxLogoBytes) {
-      _toast('Logo phải là ảnh PNG hoặc JPEG, tối đa 1 MB');
-      return;
-    }
-    final png = file.name.toLowerCase().endsWith('.png');
-    await _run(
-      () => ref
-          .read(schoolProfileRepositoryProvider)
-          .setLogo(
-            file: MultipartFile.fromBytes(
-              bytes,
-              filename: file.name,
-              contentType: DioMediaType('image', png ? 'png' : 'jpeg'),
-            ),
-            expectedVersion: p.version.toInt(),
-          ),
-      'Đã cập nhật logo',
-    );
-  }
-
-  Future<void> _removeLogo() async {
-    final p = _profile;
-    if (p == null) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => const AppDialog(
-        title: 'Gỡ logo',
-        confirmLabel: 'Gỡ logo',
-        danger: true,
-        maxWidth: 420,
-        child: Text(
-          'Gỡ logo của trường? Giao diện sẽ dùng biểu tượng mặc định.',
-        ),
-      ),
-    );
-    if (ok != true || !mounted) return;
-    await _run(
-      () => ref.read(schoolProfileRepositoryProvider).removeLogo(p.version),
-      'Đã gỡ logo',
-    );
-  }
-
   static String _two(int n) => n.toString().padLeft(2, '0');
 
   static String _formatTime(String iso) {
@@ -274,73 +216,6 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: child,
-      ),
-    );
-  }
-
-  Widget _logoCard(BuildContext context, SchoolProfileDto p) {
-    final t = context.tokens;
-    final preview = Container(
-      width: 88,
-      height: 88,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: t.subtle,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: t.line),
-      ),
-      child: SchoolLogoImage(
-        profile: p,
-        size: 72,
-        fallback: Icon(Icons.school_outlined, size: 36, color: t.ink3),
-      ),
-    );
-    return _card(
-      context,
-      child: Wrap(
-        spacing: AppSpacing.lg,
-        runSpacing: AppSpacing.md,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          preview,
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Logo trường',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  p.hasLogo
-                      ? 'Hiển thị ở thanh menu và màn đăng nhập.'
-                      : 'Chưa có logo. Ảnh PNG hoặc JPEG, tối đa 1 MB.',
-                  style: TextStyle(color: t.ink3, fontSize: 13),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: _busy ? null : _pickLogo,
-                      icon: const Icon(Icons.upload_outlined, size: 18),
-                      label: const Text('Tải logo'),
-                    ),
-                    if (p.hasLogo)
-                      OutlinedButton.icon(
-                        onPressed: _busy ? null : _removeLogo,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Gỡ logo'),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -448,7 +323,6 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _logoCard(context, p),
                 const SizedBox(height: AppSpacing.lg),
                 _formCard(context, p),
               ],

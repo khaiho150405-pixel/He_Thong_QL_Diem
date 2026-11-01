@@ -213,9 +213,7 @@ void main() {
     }
   }
 
-  testWidgets('sidebar thu gọn rộng 70, vẫn có avatar menu', (
-    tester,
-  ) async {
+  testWidgets('sidebar thu gọn rộng 70, vẫn có avatar menu', (tester) async {
     final container = await _pumpShell(
       tester,
       role: 'GIAO_VIEN',

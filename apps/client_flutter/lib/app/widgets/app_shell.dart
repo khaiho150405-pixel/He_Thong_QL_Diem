@@ -188,7 +188,12 @@ class AppBottomNav extends StatelessWidget {
           label: 'Lịch dạy',
           route: '/timetable',
         ),
-        profile,
+        (
+          icon: Icons.emoji_events_outlined,
+          activeIcon: Icons.emoji_events_rounded,
+          label: 'Tổng kết & xếp loại',
+          route: '/final-results',
+        ),
       ];
     }
     if (role == 'HOC_SINH') {
@@ -244,6 +249,7 @@ class AppBottomNav extends StatelessWidget {
     if (role == 'GIAO_VIEN') {
       if (gradebooks) return 1;
       if (path == '/timetable') return 2;
+      if (path == '/final-results') return 3;
       return 0;
     }
     if (role == 'HOC_SINH') {

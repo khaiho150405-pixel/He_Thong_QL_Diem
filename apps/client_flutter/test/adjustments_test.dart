@@ -37,18 +37,18 @@ class _FakeAdjustmentAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 
   Map<String, dynamic> get testBook => {
-        'id': 7,
-        'classId': 10,
-        'subjectId': 20,
-        'termId': 30,
-        'className': '10A1',
-        'subjectName': 'Toán',
-        'termName': 'Học kỳ I',
-        'status': 'DANG_NHAP_LIEU',
-        'version': 3,
-        'pendingAdjustmentId': pendingAdjustmentId,
-        'resultsOutdated': resultsOutdated,
-      };
+    'id': 7,
+    'classId': 10,
+    'subjectId': 20,
+    'termId': 30,
+    'className': '10A1',
+    'subjectName': 'Toán',
+    'termName': 'Học kỳ I',
+    'status': 'DANG_NHAP_LIEU',
+    'version': 3,
+    'pendingAdjustmentId': pendingAdjustmentId,
+    'resultsOutdated': resultsOutdated,
+  };
 
   @override
   Future<ResponseBody> fetch(
@@ -349,102 +349,105 @@ Widget _wrapWithScope({
 
 void main() {
   testWidgets(
-      'bật chế độ điều chỉnh chỉ mở ô cột đã chốt, đổi ô hiện cũ -> mới, gửi yêu cầu',
-      (tester) async {
-    final adapter = _FakeAdjustmentAdapter(role: 'GIAO_VIEN', userId: 2);
+    'bật chế độ điều chỉnh chỉ mở ô cột đã chốt, đổi ô hiện cũ -> mới, gửi yêu cầu',
+    (tester) async {
+      final adapter = _FakeAdjustmentAdapter(role: 'GIAO_VIEN', userId: 2);
 
-    tester.view.physicalSize = const Size(1280, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      _wrapWithScope(
-        child: const GradebookScreen(bookId: 7),
-        adapter: adapter,
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _wrapWithScope(
+          child: const GradebookScreen(bookId: 7),
+          adapter: adapter,
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    // Ban đầu cột Giữa kỳ (cell-2) bị khóa (disabled)
-    final cell2Finder = find.byKey(const ValueKey('grade-cell-2'));
-    expect(cell2Finder, findsOneWidget);
-    final fieldBefore = tester.widget<TextFormField>(cell2Finder);
-    expect(fieldBefore.enabled, isFalse);
+      // Ban đầu cột Giữa kỳ (cell-2) bị khóa (disabled)
+      final cell2Finder = find.byKey(const ValueKey('grade-cell-2'));
+      expect(cell2Finder, findsOneWidget);
+      final fieldBefore = tester.widget<TextFormField>(cell2Finder);
+      expect(fieldBefore.enabled, isFalse);
 
-    // Mở menu ⋮ để bấm "Yêu cầu điều chỉnh"
-    final moreMenu = find.byTooltip('Thao tác khác');
-    expect(moreMenu, findsOneWidget);
-    await tester.tap(moreMenu);
-    await tester.pumpAndSettle();
+      // Mở menu ⋮ để bấm "Yêu cầu điều chỉnh"
+      final moreMenu = find.byTooltip('Thao tác khác');
+      expect(moreMenu, findsOneWidget);
+      await tester.tap(moreMenu);
+      await tester.pumpAndSettle();
 
-    final reqAdjBtn = find.text('Yêu cầu điều chỉnh');
-    expect(reqAdjBtn, findsOneWidget);
-    await tester.tap(reqAdjBtn);
-    await tester.pumpAndSettle();
+      final reqAdjBtn = find.text('Yêu cầu điều chỉnh');
+      expect(reqAdjBtn, findsOneWidget);
+      await tester.tap(reqAdjBtn);
+      await tester.pumpAndSettle();
 
-    // Hiện banner chế độ điều chỉnh
-    expect(
-      find.byKey(const ValueKey('adjustment-mode-banner')),
-      findsOneWidget,
-    );
-    expect(
-      find.text(
-        'Đang soạn phiếu điều chỉnh — chỉ các cột đã chốt, chưa ghi vào điểm chính thức',
-      ),
-      findsOneWidget,
-    );
+      // Hiện banner chế độ điều chỉnh
+      expect(
+        find.byKey(const ValueKey('adjustment-mode-banner')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Đang soạn phiếu điều chỉnh — chỉ các cột đã chốt, chưa ghi vào điểm chính thức',
+        ),
+        findsOneWidget,
+      );
 
-    // Ô cell-2 giờ đã editable!
-    final fieldAfter = tester.widget<TextFormField>(cell2Finder);
-    expect(fieldAfter.enabled, isTrue);
+      // Ô cell-2 giờ đã editable!
+      final fieldAfter = tester.widget<TextFormField>(cell2Finder);
+      expect(fieldAfter.enabled, isTrue);
 
-    // Sửa điểm ô cell-2 từ 7.0 sang 8.5
-    await tester.enterText(cell2Finder, '8.5');
-    await tester.pumpAndSettle();
+      // Sửa điểm ô cell-2 từ 7.0 sang 8.5
+      await tester.enterText(cell2Finder, '8.5');
+      await tester.pumpAndSettle();
 
-    // Kiểm tra hiển thị "cũ -> mới" (7.0 -> 8.5)
-    expect(find.byTooltip('7.0 → 8.5'), findsOneWidget);
+      // Kiểm tra hiển thị "cũ -> mới" (7.0 -> 8.5)
+      expect(find.byTooltip('7.0 → 8.5'), findsOneWidget);
 
-    // Thanh dưới hiện "Đã đổi 1 ô"
-    expect(find.text('Đã đổi 1 ô'), findsOneWidget);
+      // Thanh dưới hiện "Đã đổi 1 ô"
+      expect(find.text('Đã đổi 1 ô'), findsOneWidget);
 
-    // Bấm nút "Gửi yêu cầu"
-    final submitBtn = find.byKey(const ValueKey('submit-adjustment-btn'));
-    expect(submitBtn, findsOneWidget);
-    await tester.tap(submitBtn);
-    await tester.pumpAndSettle();
+      // Bấm nút "Gửi yêu cầu"
+      final submitBtn = find.byKey(const ValueKey('submit-adjustment-btn'));
+      expect(submitBtn, findsOneWidget);
+      await tester.tap(submitBtn);
+      await tester.pumpAndSettle();
 
-    // Hộp thoại gửi hiện ra
-    expect(find.text('Gửi yêu cầu điều chỉnh điểm'), findsOneWidget);
-    expect(find.text('Tóm tắt các ô thay đổi (1 ô):'), findsOneWidget);
-    expect(find.text('7.0 → 8.5'), findsWidgets);
+      // Hộp thoại gửi hiện ra
+      expect(find.text('Gửi yêu cầu điều chỉnh điểm'), findsOneWidget);
+      expect(find.text('Tóm tắt các ô thay đổi (1 ô):'), findsOneWidget);
+      expect(find.text('7.0 → 8.5'), findsWidgets);
 
-    // Nhập lý do bắt buộc và gửi
-    final reasonInput =
-        find.byKey(const ValueKey('adjustment-reason-input'));
-    expect(reasonInput, findsOneWidget);
-    await tester.enterText(reasonInput, 'Chấm phúc khảo giữa kỳ theo đơn');
-    await tester.pumpAndSettle();
+      // Nhập lý do bắt buộc và gửi
+      final reasonInput = find.byKey(const ValueKey('adjustment-reason-input'));
+      expect(reasonInput, findsOneWidget);
+      await tester.enterText(reasonInput, 'Chấm phúc khảo giữa kỳ theo đơn');
+      await tester.pumpAndSettle();
 
-    final confirmBtn = find.text('Gửi yêu cầu');
-    await tester.tap(confirmBtn.last);
-    await tester.pumpAndSettle();
+      final confirmBtn = find.text('Gửi yêu cầu');
+      await tester.tap(confirmBtn.last);
+      await tester.pumpAndSettle();
 
-    // Kiểm tra đã gọi API POST đúng payload
-    expect(adapter.lastSubmittedAdjustment, isNotNull);
-    expect(adapter.lastSubmittedAdjustment!['reason'],
-        'Chấm phúc khảo giữa kỳ theo đơn');
-    final changes =
-        adapter.lastSubmittedAdjustment!['changes'] as List<dynamic>;
-    expect(changes.length, 1);
-    expect(changes[0]['cellId'], 'cell-2');
-    expect(changes[0]['value'], '8.5');
-    expect(changes[0]['exempt'], isFalse);
-  });
+      // Kiểm tra đã gọi API POST đúng payload
+      expect(adapter.lastSubmittedAdjustment, isNotNull);
+      expect(
+        adapter.lastSubmittedAdjustment!['reason'],
+        'Chấm phúc khảo giữa kỳ theo đơn',
+      );
+      final changes =
+          adapter.lastSubmittedAdjustment!['changes'] as List<dynamic>;
+      expect(changes.length, 1);
+      expect(changes[0]['cellId'], 'cell-2');
+      expect(changes[0]['value'], '8.5');
+      expect(changes[0]['exempt'], isFalse);
+    },
+  );
 
-  testWidgets('banner chờ duyệt hiển thị và cho phép hủy phiếu',
-      (tester) async {
+  testWidgets('banner chờ duyệt hiển thị và cho phép hủy phiếu', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -457,10 +460,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _wrapWithScope(
-        child: const GradebookScreen(bookId: 7),
-        adapter: adapter,
-      ),
+      _wrapWithScope(child: const GradebookScreen(bookId: 7), adapter: adapter),
     );
     await tester.pumpAndSettle();
 
@@ -475,10 +475,13 @@ void main() {
     );
 
     // Nút Xem và Hủy phiếu có mặt
-    expect(find.byKey(const ValueKey('view-pending-adjustment-btn')),
-        findsOneWidget);
-    final cancelBtn =
-        find.byKey(const ValueKey('cancel-pending-adjustment-btn'));
+    expect(
+      find.byKey(const ValueKey('view-pending-adjustment-btn')),
+      findsOneWidget,
+    );
+    final cancelBtn = find.byKey(
+      const ValueKey('cancel-pending-adjustment-btn'),
+    );
     expect(cancelBtn, findsOneWidget);
 
     // Bấm Hủy phiếu
@@ -495,9 +498,9 @@ void main() {
     expect(adapter.cancelCalled, isTrue);
   });
 
-  testWidgets(
-      'màn duyệt của QTV: duyệt thành công và từ chối yêu cầu lý do',
-      (tester) async {
+  testWidgets('màn duyệt của QTV: duyệt thành công và từ chối yêu cầu lý do', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1600, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -529,8 +532,7 @@ void main() {
 
     // Chi tiết phiếu hiện ra với các nút Duyệt và Từ chối
     expect(find.text('Chi tiết phiếu điều chỉnh'), findsOneWidget);
-    final approveBtn =
-        find.byKey(const ValueKey('adjustment-approve-btn'));
+    final approveBtn = find.byKey(const ValueKey('adjustment-approve-btn'));
     final rejectBtn = find.byKey(const ValueKey('adjustment-reject-btn'));
     expect(approveBtn, findsOneWidget);
     expect(rejectBtn, findsOneWidget);
@@ -540,8 +542,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Từ chối phiếu điều chỉnh'), findsOneWidget);
-    final rejectInput =
-        find.byKey(const ValueKey('adjustment-reject-reason-input'));
+    final rejectInput = find.byKey(
+      const ValueKey('adjustment-reject-reason-input'),
+    );
     expect(rejectInput, findsOneWidget);
 
     // Bấm xác nhận từ chối khi chưa nhập lý do -> báo lỗi
@@ -552,7 +555,9 @@ void main() {
 
     // Nhập lý do và từ chối
     await tester.enterText(
-        rejectInput, 'Bài thi không có chữ ký của tổ trưởng');
+      rejectInput,
+      'Bài thi không có chữ ký của tổ trưởng',
+    );
     await tester.pumpAndSettle();
     await tester.tap(confirmRejectBtn);
     await tester.pumpAndSettle();
@@ -560,8 +565,9 @@ void main() {
     expect(adapter.rejectReason, 'Bài thi không có chữ ký của tổ trưởng');
   });
 
-  testWidgets('lỗi ADJUSTMENT_STALE hiển thị thông báo tiếng Việt đúng',
-      (tester) async {
+  testWidgets('lỗi ADJUSTMENT_STALE hiển thị thông báo tiếng Việt đúng', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1600, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -585,8 +591,7 @@ void main() {
     await tester.tap(viewBtn);
     await tester.pumpAndSettle();
 
-    final approveBtn =
-        find.byKey(const ValueKey('adjustment-approve-btn'));
+    final approveBtn = find.byKey(const ValueKey('adjustment-approve-btn'));
     adapter.nextErrorCode = 'ADJUSTMENT_STALE';
     await tester.tap(approveBtn);
     await tester.pumpAndSettle();
@@ -599,13 +604,15 @@ void main() {
     // Thông báo lỗi tiếng Việt
     expect(
       find.text(
-          'Điểm đã thay đổi sau khi gửi phiếu; yêu cầu giáo viên soạn lại'),
+        'Điểm đã thay đổi sau khi gửi phiếu; yêu cầu giáo viên soạn lại',
+      ),
       findsOneWidget,
     );
   });
 
-  testWidgets('resultsOutdated == true hiện banner cần tính lại',
-      (tester) async {
+  testWidgets('resultsOutdated == true hiện banner cần tính lại', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -618,10 +625,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _wrapWithScope(
-        child: const GradebookScreen(bookId: 7),
-        adapter: adapter,
-      ),
+      _wrapWithScope(child: const GradebookScreen(bookId: 7), adapter: adapter),
     );
     await tester.pumpAndSettle();
 
@@ -661,46 +665,50 @@ void main() {
   });
 
   testWidgets(
-      'hộp thoại công bố hiện ADJUSTMENT_PENDING với nút Duyệt điều chỉnh điểm',
-      (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (ctx) => OutlinedButton(
-              onPressed: () {
-                showAppDialog<bool>(
-                  context: ctx,
-                  builder: (_) => AppDialog(
-                    title: 'Kiểm tra trước khi công bố',
-                    child: Column(
-                      children: [
-                        Text(publishIssueDescription(
-                            PublishIssueDtoCodeEnum.ADJUSTMENT_PENDING)),
-                        Text(publishIssueDescription(
-                            PublishIssueDtoCodeEnum.RESULTS_OUTDATED)),
-                      ],
+    'hộp thoại công bố hiện ADJUSTMENT_PENDING với nút Duyệt điều chỉnh điểm',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) => OutlinedButton(
+                onPressed: () {
+                  showAppDialog<bool>(
+                    context: ctx,
+                    builder: (_) => AppDialog(
+                      title: 'Kiểm tra trước khi công bố',
+                      child: Column(
+                        children: [
+                          Text(
+                            publishIssueDescription(
+                              PublishIssueDtoCodeEnum.ADJUSTMENT_PENDING,
+                            ),
+                          ),
+                          Text(
+                            publishIssueDescription(
+                              PublishIssueDtoCodeEnum.RESULTS_OUTDATED,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-              child: const Text('Open'),
+                  );
+                },
+                child: const Text('Open'),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
 
-    expect(
-      find.text('Còn phiếu điều chỉnh điểm chờ duyệt'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Đã điều chỉnh điểm, cần tính lại tổng kết'),
-      findsOneWidget,
-    );
-  });
+      expect(find.text('Còn phiếu điều chỉnh điểm chờ duyệt'), findsOneWidget);
+      expect(
+        find.text('Đã điều chỉnh điểm, cần tính lại tổng kết'),
+        findsOneWidget,
+      );
+    },
+  );
 }

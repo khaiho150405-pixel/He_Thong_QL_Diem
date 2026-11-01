@@ -89,6 +89,7 @@ enum TrangThaiLo {
 }
 
 model nguoi_dung {
+  phien_ghi_nho_rows      phien_ghi_nho[]
   ghi_danh_thuc_hien_rows hoc_sinh_lop[]
   truong_cap_nhat_rows    truong[]
   phieu_gui_rows          phieu_dieu_chinh[]  @relation("PhieuDieuChinhGui")
@@ -120,6 +121,16 @@ model nguoi_dung {
 }
 
 // Technical tables, not part of the sixteen business tables.
+model phien_ghi_nho {
+  ma_bam         String     @id @db.Char(64)
+  ma_nguoi_dung  Int
+  het_han        DateTime   @db.Timestamptz(6)
+  tao_luc        DateTime   @default(now()) @db.Timestamptz(6)
+  nguoi_dung_ref nguoi_dung @relation(fields: [ma_nguoi_dung], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([ma_nguoi_dung])
+}
+
 model phien_lam_viec {
   ma_bam         String     @id @db.Char(64)
   ma_nguoi_dung  Int

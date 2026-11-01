@@ -33,6 +33,14 @@ export class SessionGuard implements CanActivate {
       return true;
     if (
       handler === "IdentityController" &&
+      context.getHandler().name === "resume"
+    ) {
+      if (req.header("x-client-platform") !== "native")
+        throw new ForbiddenException();
+      return true;
+    }
+    if (
+      handler === "IdentityController" &&
       context.getHandler().name === "login"
     ) {
       if (!["web", "native"].includes(req.header("x-client-platform") ?? ""))
