@@ -231,6 +231,11 @@ async function fixture() {
   )
     throw Error("Isolated DB required");
   const owner = new Pool({ connectionString: migration });
+  // Các kịch bản này kiểm tra việc tạo bảng điểm thủ công/hàng loạt khi phân công chưa tạo sẵn bảng,
+  // nên tắt trigger tự tạo trong lúc chạy (trigger được kiểm riêng ở auto-gradebook.test.ts).
+  await owner.query(
+    "ALTER TABLE phan_cong_giang_day DISABLE TRIGGER tg_phan_cong_tao_bang_diem_them",
+  );
   const app = await createApp(
     { environment: "development", origins: [], databaseUrl: runtime },
     { check: async () => true, close: async () => {} },
@@ -357,6 +362,9 @@ async function fixture() {
     window,
     expire,
     done: async () => {
+      await owner.query(
+        "ALTER TABLE phan_cong_giang_day ENABLE TRIGGER tg_phan_cong_tao_bang_diem_them",
+      );
       await app.close();
       await owner.end();
     },

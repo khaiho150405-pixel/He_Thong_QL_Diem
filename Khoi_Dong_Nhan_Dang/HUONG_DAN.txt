@@ -1,0 +1,25 @@
+KHỞI ĐỘNG HỆ THỐNG QUẢN LÝ ĐIỂM (EDUSCORE)
+==========================================
+
+Chỉ cần nhớ 4 file, bấm đúp là chạy (cửa sổ hiện từng bước [OK]/[LỖI]):
+
+  Khoi-Dong.bat           Bản THỬ trên máy tính: Docker + database thử + 5 dịch vụ (nhận dạng, api, dispatcher, worker, web),
+                          mở http://localhost:8080. Đồng thời chạy app trên máy ảo Android Studio (không cần dây USB).
+  Khoi-Dong-Deploy.bat    Bản DEPLOY Cloudflare: database thật trong .env, build web production, 5 dịch vụ,
+                          kiểm tra tunnel (eduscore.id.vn / api / storage), mở https://eduscore.id.vn.
+  Tat-nhan-dang.bat       Tắt các dịch vụ (cả hai chế độ). Docker vẫn chạy.
+  Build-APK-Release.bat   Tạo Khoi_Dong_Nhan_Dang\APK\EduScore.apk (chỉ cần khi đổi code app).
+
+Khoi-Dong và Khoi-Dong-Deploy dùng chung cổng 3000/8080: chỉ chạy một trong hai.
+Thư mục này có thể đặt BÊN TRONG thư mục dự án hoặc cạnh He_Thong_QL_Diem. Không nằm trong git: sang máy khác thì chép cả thư mục.
+
+Thư mục NangCao\ (hiếm dùng, thử app debug):
+  Cai-app-dien-thoai.bat        build và cài app debug lên điện thoại cắm USB
+  Noi-lai-dien-thoai.bat        nối lại cổng khi rút/cắm lại dây USB
+  Bat-nhan-dang-dien-thoai.bat  bật hệ thống + nối USB (Khoi-Dong.bat đã tự làm việc này)
+  Bat-nhan-dang.bat             giống Khoi-Dong.bat
+  Bat-may-ao-android.bat        chạy app trên máy ảo Android (cần Android Studio + 1 máy ảo)
+
+Cài đặt một lần (Docker Desktop, .env, .local\venv-ml, 3 file trọng số .pth, lớp thử), cấu hình Cloudflare,
+cách build/cập nhật APK và xử lý lỗi: xem skill chay-he-thong
+  .claude\skills\chay-he-thong\SKILL.md

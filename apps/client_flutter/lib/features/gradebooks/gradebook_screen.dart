@@ -565,35 +565,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     }
   }
 
-  void showIdentifiers() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AppDialog(
-        title: 'Mã tham chiếu bảng điểm',
-        showFooter: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Mã bảng điểm: ${widget.data.book.id}\n'
-              'Mã lớp: ${widget.data.book.classId}\n'
-              'Mã môn: ${widget.data.book.subjectId}\n'
-              'Mã học kỳ: ${widget.data.book.termId}',
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Đóng'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Dải trạng thái dưới thanh tab: nhãn "Đang nhập liệu" / "Đã khóa" và, chỉ
   /// khi mọi cột đều có lịch đóng, "Khóa lúc" kèm giờ muộn nhất (kế hoạch 0.1).
   /// Không có nút chốt: điểm tự khóa theo hạn nhà trường đặt (ADR-0014).
@@ -912,9 +883,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                     case 'import_excel':
                       openExcelImport(students, orderedComponents);
                       break;
-                    case 'identifiers':
-                      showIdentifiers();
-                      break;
                   }
                 },
                 itemBuilder: (context) => [
@@ -960,17 +928,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                           Icon(Icons.table_chart_outlined, size: 20),
                           SizedBox(width: 10),
                           Expanded(child: Text('Nhập từ Excel')),
-                        ],
-                      ),
-                    ),
-                  if (admin)
-                    const PopupMenuItem(
-                      value: 'identifiers',
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 20),
-                          SizedBox(width: 10),
-                          Expanded(child: Text('Mã tham chiếu')),
                         ],
                       ),
                     ),

@@ -8,10 +8,12 @@ import '../../app/widgets/app_avatar.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_dialog.dart';
+import '../../app/widgets/app_list_footer.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../authentication/session.dart';
+import '../../core/progressive_loader.dart';
 import '../../core/vietnamese_sort.dart';
 import 'academic_year_scope.dart';
 import 'repository.dart';
@@ -41,11 +43,17 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   Timer? _searchDebounce;
-  List<String> _searchSuggestions = const [];
   String filter = '';
   String _studentSortBy = 'name'; // 'name' | 'class' | 'status'
   bool _sortAscending = true;
   int _clientPage = 0;
+  int _pageSize = appDefaultPageSize;
+  bool _dirty = false;
+  late final ProgressiveLoader<Json, String> _loader = ProgressiveLoader(
+    onChanged: () {
+      if (mounted) setState(() {});
+    },
+  );
   bool _mobileFiltersOpen = false;
 
   // System References cache
@@ -97,6 +105,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   /// Search, attendance and other sort modes show a subset/reordered list, so
   /// hiding it prevents users from treating a position in that subset as rank.
   bool get _showsStudentStt {
+    // STT chỉ đúng khi đã có đủ danh sách (đang tải nền thì chưa xếp hạng được).
+    if (_loader.loadingMore) return false;
     if (_studentSortBy == 'status') return false;
     if (_studentSortBy == 'class' || _filterClassId != null) return true;
     return _studentSortBy == 'name' && !_hasActiveFilter;
@@ -139,12 +149,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   void initState() {
     super.initState();
     _loadReferences();
-    _loadSearchSuggestions();
     reload();
   }
 
   @override
   void dispose() {
+    _loader.cancel();
     searchController.dispose();
     _searchFocusNode.dispose();
     _searchDebounce?.cancel();
@@ -155,15 +165,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   void didUpdateWidget(CatalogScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.resource != widget.resource) {
-      if (widget.resource == 'students') {
-        _fetchAll('students')
-            .then((items) {
-              if (mounted) setState(() => _calculateStudentOrders(items));
-            })
-            .catchError((_) {});
-      }
       _resetFilters();
-      _loadSearchSuggestions();
     }
   }
 
@@ -183,12 +185,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       final semesters = await _fetchAll(
         'semesters',
       ).catchError((_) => <Json>[]);
-      if (widget.resource == 'students') {
-        final allStudents = await _fetchAll(
-          'students',
-        ).catchError((_) => <Json>[]);
-        _calculateStudentOrders(allStudents);
-      }
       if (!mounted) return;
       setState(() {
         _references = {
@@ -229,22 +225,13 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     return items;
   }
 
-  Future<void> _loadSearchSuggestions() async {
-    try {
-      final rows = await _fetchAll(widget.resource);
-      if (!mounted) return;
-      setState(() {
-        _searchSuggestions = rows
-            .map(rowLabel)
-            .where((label) => label.trim().isNotEmpty)
-            .toSet()
-            .take(300)
-            .toList();
-      });
-    } catch (_) {
-      // Search still works against the loaded rows when suggestions are unavailable.
-    }
-  }
+  /// Gợi ý tìm kiếm lấy từ danh sách đã tải (không gọi thêm máy chủ).
+  List<String> get _searchSuggestions => _loader.items
+      .map(rowLabel)
+      .where((label) => label.trim().isNotEmpty)
+      .toSet()
+      .take(300)
+      .toList();
 
   String _normalized(String value) {
     const source =
@@ -279,6 +266,13 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     });
   }
 
+  /// Tải lại từ máy chủ (sau khi thêm/sửa/xóa); `reload` thường chỉ dựng lại
+  /// khi đổi năm học hoặc loại danh mục, còn đổi bộ lọc thì lọc trên dữ liệu đã tải.
+  void reloadFresh() {
+    _dirty = true;
+    reload();
+  }
+
   Future<CatalogPageData> _loadPage() async {
     num? scopedYearId;
     if (_yearScopedResources.contains(widget.resource)) {
@@ -310,27 +304,25 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       activeInYearId = viewingYear?.id;
     }
 
-    if (widget.resource == 'students' || _hasActiveFilter) {
-      final items = await _fetchAll(
-        widget.resource,
-        yearId: scopedYearId,
-        activeInYearId: activeInYearId,
-      );
-      if (widget.resource == 'students') {
-        _calculateStudentOrders(items);
-      }
-      return CatalogPageData(items, null);
-    } else {
-      return ref
+    final key = '${widget.resource}|$scopedYearId|$activeInYearId';
+    if (!_dirty && _loader.key == key) {
+      return CatalogPageData(_loader.items, null);
+    }
+    _dirty = false;
+    final resource = widget.resource;
+    // Trang đầu hiện ngay; các trang còn lại tải dưới nền (ProgressiveLoader).
+    await _loader.start(key, (cursor) async {
+      final res = await ref
           .read(catalogRepositoryProvider)
           .list(
-            widget.resource,
-            cursor: cursors.last,
-            q: filter,
+            resource,
+            cursor: cursor,
             yearId: scopedYearId,
             activeInYearId: activeInYearId,
           );
-    }
+      return LoadedChunk(res.items, res.nextCursor);
+    });
+    return CatalogPageData(_loader.items, null);
   }
 
   void _resetFilters() {
@@ -452,7 +444,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         _references.clear();
         await _loadReferences();
       }
-      setState(reload);
+      setState(reloadFresh);
     }
   }
 
@@ -469,8 +461,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       ),
     );
     if (changed == true && mounted) {
-      await _loadSearchSuggestions();
-      setState(reload);
+      setState(reloadFresh);
     }
   }
 
@@ -501,7 +492,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         _references.clear();
         await _loadReferences();
       }
-      if (mounted) setState(reload);
+      if (mounted) setState(reloadFresh);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -612,15 +603,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                           title: 'Lỗi tải dữ liệu',
                           message: errorMessage(snapshot.error!),
                           actionLabel: 'Thử lại',
-                          onAction: () => setState(reload),
+                          onAction: () => setState(reloadFresh),
                         );
                       }
                       final data = snapshot.data!;
-                      var rows = data.items.where(_matchesRow).toList();
+                      final loaded = _loader.items;
+                      var rows = loaded.where(_matchesRow).toList();
 
                       // Student Sorting Logic & STT Calculation
                       if (spec.key == 'students') {
-                        _calculateStudentOrders(data.items);
+                        _calculateStudentOrders(loaded);
                         rows.sort((a, b) {
                           int res = 0;
                           if (_studentSortBy == 'name') {
@@ -1537,34 +1529,28 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       const {'students', 'teachers', 'accounts'}.contains(spec.key);
 
   Widget _buildResults(CatalogPageData data, List<Json> rows) {
-    final isClientPaged = data.nextCursor == null;
-    const pageSize = 50;
-    final totalClientPages = (rows.length / pageSize).ceil();
-    final safeClientPage = _clientPage.clamp(
-      0,
-      (totalClientPages - 1).clamp(0, 9999),
-    );
-    final displayRows = isClientPaged && rows.length > pageSize
-        ? rows.skip(safeClientPage * pageSize).take(pageSize).toList()
-        : rows;
+    final pages = appPageCount(rows.length, _pageSize);
+    final currentPage = (_clientPage + 1).clamp(1, pages);
+    final displayRows = pageSlice(rows, currentPage, _pageSize);
 
-    Widget pagination(EdgeInsets padding) => _buildPagination(
-      data: data,
-      rowCount: rows.length,
-      isClientPaged: isClientPaged,
-      totalClientPages: totalClientPages,
-      safeClientPage: safeClientPage,
-      padding: padding,
+    Widget footer() => AppListFooter(
+      total: rows.length,
+      page: currentPage,
+      pageSize: _pageSize,
+      loadingMore: _loader.loadingMore,
+      itemLabel: 'mục',
+      onPageChanged: (p) => setState(() => _clientPage = p - 1),
+      onPageSizeChanged: (size) => setState(() {
+        _pageSize = size;
+        _clientPage = 0;
+      }),
     );
 
     return LayoutBuilder(
       builder: (context, box) {
         final wide = box.maxWidth >= 768;
         if (wide && _usesTable) {
-          return _buildTable(
-            displayRows,
-            pagination(const EdgeInsets.symmetric(vertical: AppSpacing.sm)),
-          );
+          return _buildTable(displayRows, footer());
         }
         final theme = Theme.of(context);
         return Column(
@@ -1585,81 +1571,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     )
                   : ListView.separated(
                       itemCount: displayRows.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, index) =>
                           _buildRowCard(context, displayRows[index], theme),
                     ),
             ),
-            pagination(const EdgeInsets.only(bottom: 24)),
+            footer(),
+            const SizedBox(height: AppSpacing.md),
           ],
         );
       },
-    );
-  }
-
-  Widget _buildPagination({
-    required CatalogPageData data,
-    required int rowCount,
-    required bool isClientPaged,
-    required int totalClientPages,
-    required int safeClientPage,
-    required EdgeInsets padding,
-  }) {
-    final t = context.tokens;
-    return Padding(
-      padding: padding,
-      child: DefaultTextStyle.merge(
-        style: TextStyle(color: t.ink2),
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            if (isClientPaged && totalClientPages > 1) ...[
-              TextButton(
-                onPressed: safeClientPage > 0
-                    ? () => setState(() => _clientPage = safeClientPage - 1)
-                    : null,
-                child: const Text('Trang trước'),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  'Trang ${safeClientPage + 1} / $totalClientPages ($rowCount mục)',
-                ),
-              ),
-              TextButton(
-                onPressed: safeClientPage < totalClientPages - 1
-                    ? () => setState(() => _clientPage = safeClientPage + 1)
-                    : null,
-                child: const Text('Trang sau'),
-              ),
-            ] else ...[
-              TextButton(
-                onPressed: cursors.length > 1
-                    ? () => setState(() {
-                        cursors.removeLast();
-                        reload();
-                      })
-                    : null,
-                child: const Text('Trang trước'),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text('Trang ${cursors.length} ($rowCount mục)'),
-              ),
-              TextButton(
-                onPressed: data.nextCursor != null
-                    ? () => setState(() {
-                        cursors.add(data.nextCursor);
-                        reload();
-                      })
-                    : null,
-                child: const Text('Trang sau'),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 
@@ -1827,13 +1748,18 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     ],
   );
 
-  Widget _textCell(AppTokens t, Object? value) {
+  /// Ô chữ một dòng. [digits] bật chữ số cùng bề rộng (số điện thoại 10 số
+  /// thẳng cột, mỗi chữ số chiếm cùng một chiều rộng).
+  Widget _textCell(AppTokens t, Object? value, {bool digits = false}) {
     final text = value?.toString() ?? '';
     return Text(
       text.isEmpty ? '—' : text,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(color: text.isEmpty ? t.ink3 : t.ink2),
+      style: TextStyle(
+        color: text.isEmpty ? t.ink3 : t.ink2,
+        fontFeatures: digits ? const [FontFeature.tabularFigures()] : null,
+      ),
     );
   }
 
@@ -1849,7 +1775,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           icon: Icon(Icons.school_outlined, size: 20, color: t.priLink),
           onPressed: () async {
             await context.push('/admin/classes/${row['ma_lop']}/promotion');
-            if (mounted) reload();
+            if (mounted) reloadFresh();
           },
         ),
       if (admin && !['accounts', 'students'].contains(spec.key))
@@ -1909,7 +1835,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     affectedGradebooks: result.affectedGradebooks,
                   );
                 }
-                reload();
+                reloadFresh();
               }
               break;
             case 'withdraw':
@@ -1921,7 +1847,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
               );
               if (result != null && mounted) {
-                reload();
+                reloadFresh();
               }
               break;
             case 'reenroll':
@@ -1934,7 +1860,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
               );
               if (result != null && mounted) {
-                reload();
+                reloadFresh();
               }
               break;
             case 'history':
@@ -2059,7 +1985,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           _CatalogColumn('Email', (row) => _textCell(t, row['email']), flex: 4),
           _CatalogColumn(
             'Điện thoại',
-            (row) => _textCell(t, row['dien_thoai']),
+            (row) => _textCell(t, row['dien_thoai'], digits: true),
             width: 120,
           ),
           _CatalogColumn(
@@ -2076,7 +2002,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               rowLabel(row),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontWeight: FontWeight.w600, color: t.ink),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: t.ink,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
             flex: 4,
           ),
@@ -2160,6 +2090,24 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         ],
       ],
     );
+  }
+
+  /// Dòng phụ của thẻ danh mục: thông tin có nghĩa với người dùng, không hiện mã nội bộ.
+  String? _plainSubtitle(Json row) {
+    String? range() {
+      final from = row['ngay_bat_dau']?.toString();
+      final to = row['ngay_ket_thuc']?.toString();
+      if (from == null || to == null) return null;
+      return '$from – $to';
+    }
+
+    return switch (spec.key) {
+      'years' || 'semesters' => range(),
+      'classes' => row['khoi'] == null ? null : 'Khối ${row['khoi']}',
+      'subjects' =>
+        row['so_tiet_tuan'] == null ? null : '${row['so_tiet_tuan']} tiết/tuần',
+      _ => null,
+    };
   }
 
   Widget _buildRowCard(BuildContext context, Json row, ThemeData theme) {
@@ -2301,17 +2249,19 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 3),
-          child:
-              badgeWidget ??
-              Text(
-                'Mã: ${row[spec.id]}',
-                style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        subtitle: (badgeWidget ?? _plainSubtitle(row)) == null
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child:
+                    badgeWidget ??
+                    Text(
+                      _plainSubtitle(row)!,
+                      style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
               ),
-        ),
         onTap: () => edit(row),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -2325,7 +2275,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   await context.push(
                     '/admin/classes/${row['ma_lop']}/promotion',
                   );
-                  if (mounted) reload();
+                  if (mounted) reloadFresh();
                 },
               ),
             if (admin && spec.key == 'students') _buildStudentMenu(t, row),

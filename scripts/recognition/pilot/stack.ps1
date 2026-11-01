@@ -18,7 +18,7 @@ New-Item -ItemType Directory -Force $pidDir, $logDir | Out-Null
 
 # Có thể đổi bằng biến môi trường PILOT_WEIGHTS_DIR / PILOT_DATABASE (máy khác đặt trọng số ở thư mục khác).
 $weights = if ($env:PILOT_WEIGHTS_DIR) { $env:PILOT_WEIGHTS_DIR } else { 'D:\HocTap\KhoaLuan\App\weights' }
-$crnnSha = '6ca4044d1b7a7c9a51e1b641eade1880461d0d85e5eb4fbf035e827f1afbef91'
+$crnnSha = 'a685425e61662ccfda06ca35db54d539ae8599accd4c48bbd4b394958c0e3e62'
 $vietocrSha = '32999513a94f822f4ba4c302749a8d97be0e065631cedceacc0134327f9a73c9'
 $nameSha = '0921503a41375a0584268e23ef3d414ea478a8fe8777865c7745d38f2d0bc5db'
 $testDatabase = if ($env:PILOT_DATABASE) { $env:PILOT_DATABASE } else { 'qld_phase7_test' }
@@ -38,13 +38,16 @@ function Set-PilotEnvironment {
   Import-DotEnv
   $m = $env:MIGRATION_PASSWORD; $r = $env:RUNTIME_PASSWORD
   $env:APP_ENV = 'development'
-  $env:DATABASE_URL = "postgresql://app_runtime:$r@127.0.0.1:5433/$testDatabase"
-  $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$m@127.0.0.1:5433/$testDatabase"
-  $env:TEST_MIGRATION_URL = $env:MIGRATION_DATABASE_URL
-  $env:TEST_RUNTIME_URL = $env:DATABASE_URL
+  # PILOT_DEPLOY=1 (up.ps1 -Deploy): chạy trên database thật trong .env, không phải database thử.
+  if ($env:PILOT_DEPLOY -ne '1') {
+    $env:DATABASE_URL = "postgresql://app_runtime:$r@127.0.0.1:5433/$testDatabase"
+    $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$m@127.0.0.1:5433/$testDatabase"
+    $env:TEST_MIGRATION_URL = $env:MIGRATION_DATABASE_URL
+    $env:TEST_RUNTIME_URL = $env:DATABASE_URL
+  }
   $env:RECOGNITION_SERVICE_URL = 'http://127.0.0.1:8000'
   $env:RECOGNITION_MODEL_MODE = 'weights'
-  $env:RECOGNITION_CRNN_WEIGHTS = Join-Path $weights 'crnn_num_best_dot5.pth'
+  $env:RECOGNITION_CRNN_WEIGHTS = Join-Path $weights 'crnn_num_best_dot6.pth'
   $env:RECOGNITION_CRNN_SHA256 = $crnnSha
   $env:RECOGNITION_VIETOCR_WEIGHTS = Join-Path $weights 'vietocr_best_tang4.pth'
   $env:RECOGNITION_VIETOCR_SHA256 = $vietocrSha

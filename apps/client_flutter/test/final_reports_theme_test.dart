@@ -189,16 +189,8 @@ const _reportsPanel = ReportsPanel(gradebookId: 7);
 
 /// Mọi `AppBadge` phải lấy màu chữ từ token đúng chế độ.
 Color _badgeDotColor(WidgetTester tester, String label) {
-  final badge = find.ancestor(
-    of: find.text(label),
-    matching: find.byType(AppBadge),
-  );
-  final dot = find.descendant(
-    of: badge.first,
-    matching: find.byKey(const ValueKey('app-badge-dot')),
-  );
-  final box = tester.widget<DecoratedBox>(dot).decoration as BoxDecoration;
-  return box.color!;
+  // Nhãn không còn chấm tròn: màu chữ của nhãn là màu token tương ứng.
+  return tester.widget<Text>(find.text(label).first).style!.color!;
 }
 
 void main() {

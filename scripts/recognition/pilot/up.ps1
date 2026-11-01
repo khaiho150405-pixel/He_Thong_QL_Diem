@@ -4,12 +4,14 @@
 #   -InstallApp  build và cài app Android (bản debug, API = localhost qua USB); cần -Usb
 #   -Serial      mã thiết bị khi cắm nhiều điện thoại
 #   -NoBrowser   không mở trình duyệt máy tính
+#   -Deploy      chế độ deploy Cloudflare: dùng database thật trong .env, build web production, bật tunnel cloudflared, mở https://eduscore.id.vn
 # Không sửa .env, không mở cổng ra mạng LAN. Chỉ tắt tiến trình node/python lạ đang chiếm cổng 3000/8080/8000.
 param(
   [switch]$Usb,
   [switch]$InstallApp,
   [string]$Serial = '',
-  [switch]$NoBrowser
+  [switch]$NoBrowser,
+  [switch]$Deploy
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -18,6 +20,7 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 Set-Location $root
 . (Join-Path $PSScriptRoot 'usb-common.ps1')
 $stack = Join-Path $PSScriptRoot 'stack.ps1'
+if ($Deploy) { $env:PILOT_DEPLOY = '1' } else { $env:PILOT_DEPLOY = '0' }
 $pilotDir = Join-Path $root '.local\pilot'
 $pidDir = Join-Path $pilotDir 'pids'
 $logDir = Join-Path $pilotDir 'logs'
@@ -141,7 +144,7 @@ try {
   if (-not $weights -and (Test-Path $wFile)) { $weights = (Get-Content $wFile -Raw).Trim() }
   if (-not $weights -and (Test-Path 'D:\HocTap\KhoaLuan\App\weights')) { $weights = 'D:\HocTap\KhoaLuan\App\weights' }
   if (-not $weights) { $weights = (Read-Host 'Nhập đường dẫn thư mục chứa 3 file trọng số (.pth)').Trim().Trim('"') }
-  $need = 'crnn_num_best_dot5.pth', 'vietocr_best_tang4.pth', 'vietocr_vgg_seq2seq_pretrained.pth'
+  $need = 'crnn_num_best_dot6.pth', 'vietocr_best_tang4.pth', 'vietocr_vgg_seq2seq_pretrained.pth'
   $missing = @($need | Where-Object { -not (Test-Path (Join-Path $weights $_)) })
   if ($missing.Count -gt 0) {
     if (Test-Path $wFile) { Remove-Item $wFile }
@@ -151,12 +154,16 @@ try {
   $env:PILOT_WEIGHTS_DIR = $weights
   Ok "Trọng số: $weights"
   if (-not (Test-Path (Join-Path $root '.local\venv-ml\Scripts\python.exe'))) {
-    throw 'Chưa có môi trường Python .local\venv-ml. Làm bước B1 trong docs/development/phase-7-huong-dan-chay.md.'
+    throw 'Chưa có môi trường Python .local\venv-ml. Làm bước B1 trong .claude/skills/chay-he-thong/references/cai-dat-nhan-dang.md.'
   }
   Ok 'Python venv-ml'
   $webIndex = Join-Path $root 'apps\client_flutter\build\web\index.html'
   # Build lại khi chưa có bản build HOẶC mã Flutter/client sinh mới hơn bản build (sau khi pull code).
   $needWeb = -not (Test-Path $webIndex)
+  $webMode = if ($Deploy) { 'production' } else { 'development' }
+  $webModeFile = Join-Path $pilotDir 'web-build-mode.txt'
+  $lastMode = if (Test-Path $webModeFile) { (Get-Content $webModeFile -Raw).Trim() } else { '' }
+  if (-not $needWeb -and $lastMode -ne $webMode) { $needWeb = $true; Warn "Bản build web là '$lastMode', cần '$webMode', build lại..." }
   if (-not $needWeb) {
     $builtAt = (Get-Item $webIndex).LastWriteTimeUtc
     $srcDirs = @('apps\client_flutter\lib', 'apps\client_flutter\web', 'packages\api_client_dart\lib') |
@@ -168,8 +175,10 @@ try {
     Warn 'Đang build web (vài phút)...'
     Push-Location (Join-Path $root 'apps\client_flutter')
     try {
-      & flutter build web --dart-define-from-file=config/development.json
+      if ($Deploy) { & flutter build web --release --dart-define-from-file=config/production.json --pwa-strategy=none }
+      else { & flutter build web --dart-define-from-file=config/development.json }
       if ($LASTEXITCODE -ne 0) { throw 'flutter build web thất bại.' }
+      [System.IO.File]::WriteAllText($webModeFile, $webMode, (New-Object System.Text.UTF8Encoding($false)))
     } finally { Pop-Location }
   }
   Ok 'Bản build web'
@@ -180,13 +189,47 @@ try {
   # (sau khi pull) không lỗi "table does not exist".
   Step 'Cập nhật database thử và Prisma client'
   $pilotDb = if ($env:PILOT_DATABASE) { $env:PILOT_DATABASE } else { 'qld_phase7_test' }
+  if ($Deploy) { $pilotDb = (Select-String -Path (Join-Path $root '.env') -Pattern '^\s*POSTGRES_DB=(.*)$' | Select-Object -First 1).Matches[0].Groups[1].Value.Trim() }
   $migPass = (Select-String -Path (Join-Path $root '.env') -Pattern '^\s*MIGRATION_PASSWORD=(.*)$' |
     Select-Object -First 1).Matches[0].Groups[1].Value.Trim()
+  # Database thử chưa có (Docker volume mới, máy mới): tạo như bước B2 của hướng dẫn. Nếu không, prisma migrate
+  # tự thử CREATE DATABASE bằng app_migration và lỗi "permission denied to create database".
+  $dbCreated = $false
+  if (-not $Deploy) {
+    $pgUserLine = Select-String -Path (Join-Path $root '.env') -Pattern '^\s*POSTGRES_USER=(.*)$' | Select-Object -First 1
+    $pgUser = if ($pgUserLine) { $pgUserLine.Matches[0].Groups[1].Value.Trim() } else { 'postgres' }
+    $compose = @('compose', '--env-file', '.env', '-f', 'infrastructure/compose.yaml', 'exec', '-T', 'postgres', 'psql', '-U', $pgUser)
+    $exists = (& docker @compose -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname = '$pilotDb'") -join ''
+    if ($exists.Trim() -ne '1') {
+      Warn "Chưa có database $pilotDb, đang tạo..."
+      & docker @compose -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $pilotDb"
+      if ($LASTEXITCODE -ne 0) { throw "Không tạo được database $pilotDb." }
+      & docker @compose -d $pilotDb -v ON_ERROR_STOP=1 -c "GRANT CONNECT, CREATE ON DATABASE $pilotDb TO app_migration; REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT USAGE, CREATE ON SCHEMA public TO app_migration; GRANT USAGE ON SCHEMA public TO app_runtime;"
+      if ($LASTEXITCODE -ne 0) { throw "Không cấp quyền được cho database $pilotDb." }
+      $dbCreated = $true
+    }
+  }
   $oldMigUrl = $env:MIGRATION_DATABASE_URL
   try {
     $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$migPass@127.0.0.1:5433/$pilotDb"
     & pnpm db:migrate
     if ($LASTEXITCODE -ne 0) { throw "pnpm db:migrate thất bại trên $pilotDb." }
+    if (-not $Deploy) {
+      # Đồng bộ dữ liệu mẫu cho mọi máy: database mới thì nạp dữ liệu nền; mỗi lần bật đều bổ sung
+      # giáo viên, phân công và thời khóa biểu mẫu còn thiếu (chạy lặp an toàn, không ghi đè dữ liệu đã có).
+      if ($dbCreated) {
+        & pnpm db:seed
+        if ($LASTEXITCODE -ne 0) { throw "pnpm db:seed thất bại trên $pilotDb." }
+      }
+      & pnpm db:seed:sample
+      if ($LASTEXITCODE -eq 2) {
+        Warn 'Database chưa có dữ liệu nền, đang nạp...'
+        & pnpm db:seed
+        if ($LASTEXITCODE -ne 0) { throw "pnpm db:seed thất bại trên $pilotDb." }
+        & pnpm db:seed:sample
+      }
+      if ($LASTEXITCODE -ne 0) { throw "pnpm db:seed:sample thất bại trên $pilotDb." }
+    }
     & pnpm db:generate
     if ($LASTEXITCODE -ne 0) { throw 'pnpm db:generate thất bại.' }
   } finally {
@@ -216,6 +259,20 @@ try {
   }
   if (-not $allOk) { throw 'Có dịch vụ lỗi (xem log ở trên). Thử chạy Tat-nhan-dang.bat rồi bấm lại.' }
 
+  if ($Deploy) {
+    Step 'Cloudflare Tunnel (eduscore.id.vn, api.eduscore.id.vn, storage.eduscore.id.vn)'
+    $svc = Get-Service cloudflared -ErrorAction SilentlyContinue
+    if (-not $svc) { Warn 'Chưa cài dịch vụ cloudflared: bên ngoài sẽ không truy cập được (xem hướng dẫn bước 5).' }
+    else {
+      if ($svc.Status -ne 'Running') {
+        try { Start-Service cloudflared -ErrorAction Stop } catch { Warn 'Không bật được cloudflared (cần chạy file .bat bằng Run as administrator).' }
+      }
+      foreach ($u in 'https://api.eduscore.id.vn/api/v1/health/ready', 'https://storage.eduscore.id.vn/minio/health/live', 'https://eduscore.id.vn/') {
+        if (Wait-Http $u 40) { Ok $u } else { Warn "Chưa vào được $u (kiểm tra route Cloudflare / tunnel)." }
+      }
+    }
+  }
+
   # ---------------------------------------------------------------- 6. Điện thoại USB
   $serialUsed = ''
   if ($Usb) {
@@ -237,6 +294,9 @@ try {
       [System.IO.File]::WriteAllText($usbConfig, '{"APP_ENV":"development","API_BASE_URL":"http://localhost:3000"}' + "`n",
         (New-Object System.Text.UTF8Encoding($false)))
     }
+    # Plugin Gradle của Flutter 3.35.7 đọc sai flutter_build.d khi đường dẫn có dấu cách (Ho Si Khai) nên build dừng.
+    # File này tự sinh lại mỗi lần build, nên xóa trước khi build (lỗi: ancestor C:/Users/Ho is not a directory).
+    Get-ChildItem (Join-Path $clientDir 'build\app\intermediates\flutter') -Recurse -Filter 'flutter_build.d' -ErrorAction SilentlyContinue | Remove-Item -Force
     Push-Location $clientDir
     try {
       & flutter build apk --debug --flavor development --dart-define-from-file=config/android-usb.json
@@ -252,6 +312,7 @@ try {
 
   # ---------------------------------------------------------------- 8. Tóm tắt
   Step 'SẴN SÀNG'
+  if ($Deploy) { Write-Host '  Công khai:  https://eduscore.id.vn   (API: https://api.eduscore.id.vn)' -ForegroundColor Green }
   Write-Host '  Máy tính:   http://localhost:8080' -ForegroundColor Green
   if ($Usb) { Write-Host '  Điện thoại: mở app, hoặc trình duyệt http://localhost:8080 (giữ dây USB)' -ForegroundColor Green }
   $pilotJson = Join-Path $pilotDir 'pilot.json'
@@ -260,7 +321,7 @@ try {
     Write-Host "  Tài khoản giáo viên thử: $($pilot.teacherUsername) (mật khẩu: teacherPassword trong .local\pilot\pilot.json)"
   }
   Write-Host '  Rút dây rồi cắm lại: bấm Noi-lai-dien-thoai.bat. Xong việc: bấm Tat-nhan-dang.bat.'
-  if (-not $NoBrowser) { Start-Process 'http://localhost:8080' | Out-Null }
+  if (-not $NoBrowser) { Start-Process $(if ($Deploy) { 'https://eduscore.id.vn' } else { 'http://localhost:8080' }) | Out-Null }
   exit 0
 } catch {
   Write-Host ''

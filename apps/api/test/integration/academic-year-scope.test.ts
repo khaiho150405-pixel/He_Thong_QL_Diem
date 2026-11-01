@@ -167,7 +167,7 @@ test("year scoped lists, current-year switching and pending summary", async () =
       [s1a, s2],
     );
     await owner.query(
-      "INSERT INTO bang_diem(ma_lop,ma_mon,ma_hoc_ky) VALUES($1,$2,$3),($4,$2,$3),($5,$2,$6)",
+      "INSERT INTO bang_diem(ma_lop,ma_mon,ma_hoc_ky) VALUES($1,$2,$3),($4,$2,$3),($5,$2,$6) ON CONFLICT (ma_lop,ma_mon,ma_hoc_ky) DO NOTHING",
       [y1Classes[0], subject, s1a, y1Classes[1], y2Classes[0], s2],
     );
 

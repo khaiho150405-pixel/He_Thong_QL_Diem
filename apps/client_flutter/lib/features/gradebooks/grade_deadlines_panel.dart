@@ -24,9 +24,9 @@ Widget _deadlineSourceBadge(GradeCellDtoDeadlineSourceEnum? source) {
     );
   }
   if (source == GradeCellDtoDeadlineSourceEnum.RIENG) {
-    return const AppBadge('Lịch riêng', tone: AppBadgeTone.ok, dot: false);
+    return const AppBadge('Lịch riêng', tone: AppBadgeTone.ok);
   }
-  return const AppBadge.warn('Chưa có lịch', dot: false);
+  return const AppBadge.warn('Chưa có lịch');
 }
 
 Widget? _columnDeadlineStatusBadge(GradeCellDto column) {
@@ -34,16 +34,16 @@ Widget? _columnDeadlineStatusBadge(GradeCellDto column) {
   final opensAt = DateTime.tryParse(column.opensAt ?? '')?.toLocal();
   final closesAt = DateTime.tryParse(column.closesAt ?? '')?.toLocal();
   if (closesAt == null || opensAt == null) {
-    return const AppBadge('Chưa đặt lịch', dot: false);
+    return const AppBadge('Chưa đặt lịch');
   }
   final now = DateTime.now();
   if (now.isBefore(opensAt)) {
-    return const AppBadge('Chưa mở', tone: AppBadgeTone.neutral, dot: false);
+    return const AppBadge('Chưa mở', tone: AppBadgeTone.neutral);
   }
   if (!now.isBefore(closesAt)) {
-    return const AppBadge.warn('Đã hết hạn', dot: false);
+    return const AppBadge.warn('Đã hết hạn');
   }
-  return const AppBadge.ok('Đang hiệu lực', dot: false);
+  return const AppBadge.ok('Đang hiệu lực');
 }
 
 class GradeDeadlinesPanel extends ConsumerStatefulWidget {

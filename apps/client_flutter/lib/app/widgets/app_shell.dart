@@ -191,7 +191,7 @@ class AppBottomNav extends StatelessWidget {
         (
           icon: Icons.emoji_events_outlined,
           activeIcon: Icons.emoji_events_rounded,
-          label: 'Tổng kết & xếp loại',
+          label: 'TK & ĐG',
           route: '/final-results',
         ),
       ];

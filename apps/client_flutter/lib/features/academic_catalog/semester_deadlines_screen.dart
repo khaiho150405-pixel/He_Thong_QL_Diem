@@ -542,16 +542,16 @@ class _SemesterDeadlinesScreenState
     final opensAt = item.opensAt?.toLocal();
     final closesAt = item.closesAt?.toLocal();
     if (closesAt == null || opensAt == null) {
-      return const AppBadge('Chưa đặt lịch', dot: false);
+      return const AppBadge('Chưa đặt lịch');
     }
     final now = DateTime.now();
     if (now.isBefore(opensAt)) {
-      return const AppBadge('Chưa mở', tone: AppBadgeTone.neutral, dot: false);
+      return const AppBadge('Chưa mở', tone: AppBadgeTone.neutral);
     }
     if (item.expired || !now.isBefore(closesAt)) {
-      return const AppBadge.warn('Đã hết hạn', dot: false);
+      return const AppBadge.warn('Đã hết hạn');
     }
-    return const AppBadge.ok('Đang hiệu lực', dot: false);
+    return const AppBadge.ok('Đang hiệu lực');
   }
 
   Widget _buildDeadlineCard(

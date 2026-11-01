@@ -150,5 +150,5 @@ Widget buildReviewLevelBadge(BuildContext context, String level) {
     'VANG' => AppBadgeTone.warn,
     _ => AppBadgeTone.bad,
   };
-  return AppBadge(reviewLevelLabel(level), tone: tone);
+  return AppBadge(reviewLevelLabel(level), tone: tone, dot: false);
 }

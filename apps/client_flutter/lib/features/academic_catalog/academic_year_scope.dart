@@ -178,7 +178,7 @@ class AcademicYearFilterControl extends ConsumerWidget {
     final isArchive =
         viewingYear != null && !viewingYear.isAll && !viewingYear.isCurrent;
 
-    final resolvedWidth = width != null ? math.max(260.0, width!) : 270.0;
+    final resolvedWidth = width != null ? math.max(300.0, width!) : 300.0;
 
     final dropdown = AppFilterDropdown<num?>(
       label: 'Năm học',

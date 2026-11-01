@@ -95,13 +95,14 @@ export async function createRosterFixture() {
   );
   const book = (
     await owner.query(
-      "INSERT INTO bang_diem(ma_lop,ma_mon,ma_hoc_ky) VALUES($1,$2,$3) RETURNING ma_bang_diem",
+      // Phân công đã tự tạo bảng điểm (trigger); lấy lại bảng đó thay vì chèn mới.
+      "INSERT INTO bang_diem(ma_lop,ma_mon,ma_hoc_ky) VALUES($1,$2,$3) ON CONFLICT (ma_lop,ma_mon,ma_hoc_ky) DO UPDATE SET ma_lop=EXCLUDED.ma_lop RETURNING ma_bang_diem",
       [cls, subject, term],
     )
   ).rows[0].ma_bang_diem as number;
   // Ô điểm cho học sinh đang học: cần khi duyệt phiếu.
   await owner.query(
-    "INSERT INTO diem_thanh_phan(ma_bang_diem,ma_hoc_sinh,ma_thanh_phan) SELECT $1,ma_hoc_sinh,$2 FROM hoc_sinh WHERE ma_lop=$3 AND dang_theo_hoc",
+    "INSERT INTO diem_thanh_phan(ma_bang_diem,ma_hoc_sinh,ma_thanh_phan) SELECT $1,ma_hoc_sinh,$2 FROM hoc_sinh WHERE ma_lop=$3 AND dang_theo_hoc ON CONFLICT (ma_bang_diem,ma_hoc_sinh,ma_thanh_phan) DO NOTHING",
     [book, component, cls],
   );
 

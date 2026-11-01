@@ -349,7 +349,7 @@ void main() {
           expect(find.byKey(const ValueKey('gradebooks-table')), findsNothing);
           expect(find.text('10A1 · Toán'), findsOneWidget);
         }
-        // Tạo bảng điểm thủ công chỉ có trên web; app di động (môi trường test không phải web) không hiện nút này.
+        // Bảng điểm tự tạo khi được phân công: không còn nút tạo thủ công.
         expect(find.text('Tạo bảng điểm'), findsNothing);
         expect(server.paths.any((p) => p.contains('lock')), isFalse);
         expect(tester.takeException(), isNull);

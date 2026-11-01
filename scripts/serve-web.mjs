@@ -79,5 +79,7 @@ createServer(async (req, res) => {
     res.end();
   }
 }).listen(8080, "0.0.0.0", () =>
-  console.log("Flutter web server running at: http://localhost:8080 (0.0.0.0:8080)"),
+  console.log(
+    "Flutter web server running at: http://localhost:8080 (0.0.0.0:8080)",
+  ),
 );

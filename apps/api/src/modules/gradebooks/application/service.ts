@@ -162,6 +162,9 @@ export class GradebooksService {
     const yearId = parseYearId(yearIdInput);
     return this.run(actor, async (tx) => {
       await gradebookActor(tx.authorization, actor);
+      // Bảng điểm do hệ thống tự tạo khi phân công; trang đầu bổ sung phần còn thiếu (ví dụ lớp có thêm học sinh sau phân công).
+      if (actor.role === "GIAO_VIEN" && after === 0)
+        await tx.ensureMine(actor.sessionHash);
       return page(
         await tx.list(
           actor.role === "QUAN_TRI_VIEN" ? null : actor.id,

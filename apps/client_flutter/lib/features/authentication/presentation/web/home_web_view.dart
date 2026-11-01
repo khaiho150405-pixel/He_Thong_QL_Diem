@@ -7,7 +7,6 @@ import '../../../../app/widgets/app_shell.dart';
 import '../../../../app/widgets/app_sidebar.dart';
 import '../../../../app/widgets/app_user_avatar_menu.dart';
 import '../../../../app/widgets/theme_mode_button.dart';
-import '../../profile_dialog.dart';
 import '../widgets/home_dashboard_content.dart';
 
 class HomeWebView extends ConsumerWidget {

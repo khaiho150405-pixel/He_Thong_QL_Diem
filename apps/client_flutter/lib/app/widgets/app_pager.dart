@@ -12,6 +12,7 @@ class AppPager extends StatelessWidget {
     required this.pageCount,
     required this.onChanged,
     this.maxButtons = 7,
+    this.padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
   });
 
   final int page;
@@ -20,6 +21,9 @@ class AppPager extends StatelessWidget {
 
   /// Số nút số tối đa trước khi rút gọn bằng dấu "…" (tối thiểu 5).
   final int maxButtons;
+
+  /// Lề quanh thanh phân trang.
+  final EdgeInsetsGeometry padding;
 
   /// Danh sách mục hiển thị; null là dấu "…".
   static List<int?> pagesToShow(int page, int count, int maxButtons) {
@@ -44,7 +48,7 @@ class AppPager extends StatelessWidget {
     final current = page.clamp(1, total);
     final textStyle = Theme.of(context).textTheme.bodyMedium;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: padding,
       child: Wrap(
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,

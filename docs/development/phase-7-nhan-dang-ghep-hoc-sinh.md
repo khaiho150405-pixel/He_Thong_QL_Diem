@@ -1,6 +1,6 @@
 # Giai đoạn 7 — Nhận dạng tự động và ghép đúng học sinh
 
-Kế hoạch chia nhỏ để AI agent (Codex hoặc agent khác) thực hiện tự động từng phần. **Prompt chi tiết, chia Phần A Backend (BE-xx) và Phần B Frontend (FE-xx), cùng mục Tiến độ chính thức nằm ở `docs/development/phase-7-prompts.md`; mục Tiến độ cuối file này chỉ để tham khảo.** Mỗi phần nhỏ, theo chiều dọc, kiểm thử được độc lập. Chủ dự án chốt phương án ngày 2026-10-06.
+Kế hoạch chia nhỏ để AI agent (Codex hoặc agent khác) thực hiện tự động từng phần. **Các file prompt giao việc BE-xx/FE-xx đã được gỡ khỏi repo (còn trong git history); trạng thái triển khai theo `docs/development/CONTINUE.md`.** Mỗi phần nhỏ, theo chiều dọc, kiểm thử được độc lập. Chủ dự án chốt phương án ngày 2026-10-06.
 
 ## 0. Bối cảnh bắt buộc đọc
 

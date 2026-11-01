@@ -551,7 +551,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                       }
 
                       final items = snapshot.data?.items ?? [];
-                      if (items.isEmpty || _weekStart == null) {
+                      // Chưa có tiết nào vẫn hiện bảng thời khóa biểu trống (lưới/lịch ngày).
+                      if (_weekStart == null) {
                         return const EmptyState(
                           title: 'Chưa có dữ liệu thời khóa biểu',
                           message:
@@ -772,6 +773,13 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         role == 'QUAN_TRI_VIEN' &&
         _selectedClassId == null &&
         _selectedTeacherId == null;
+    if (isWholeSchool && items.isEmpty) {
+      return SingleChildScrollView(
+        key: const ValueKey('timetable-weekly-vertical-scroll'),
+        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+        child: _buildGroupBoard(items, role, t),
+      );
+    }
     if (isWholeSchool) {
       final byClass = <String, List<TimetableItem>>{};
       for (final item in items) {

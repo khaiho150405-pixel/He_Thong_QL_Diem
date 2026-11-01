@@ -194,6 +194,12 @@ export class PrismaGradebookStore implements GradebookStore {
               throw createGridFailure(error) ?? error;
             }
           },
+          ensureMine: async (sessionHash) => {
+            const rows = await tx.$queryRaw<
+              Array<{ count: number }>
+            >`SELECT public.dam_bao_bang_diem_cua_toi(${sessionHash}::text) AS count`;
+            return rows[0]!.count;
+          },
           find: async (id) => {
             const rows = await tx.$queryRaw<BookRow[]>`
               SELECT b.*, l.ten_lop, m.ten_mon, h.ten AS ten_hoc_ky, (SELECT p.ma::text FROM public.phieu_dieu_chinh p WHERE p.ma_bang_diem = b.ma_bang_diem AND p.trang_thai = 'CHO_DUYET') AS ma_phieu_cho

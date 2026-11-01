@@ -16,7 +16,7 @@ Công cụ đọc `.pth` với `weights_only=True` trên CPU, tính SHA-256, l�
 ## Kết quả đọc checkpoint hiện tại
 
 - `crnn_num_best.pth` và `crnn_num_best_dot4.pth` đều báo validation accuracy 99.4872%, CER 0.0022663, epoch 49. Đây là ứng viên có accuracy được ghi cao nhất trong các CRNN hiện có.
-- `crnn_num_best_dot5.pth` báo 99.1453%, CER 0.0033994; tên đợt mới hơn không có nghĩa mô hình tốt hơn.
+- `crnn_num_best_dot6.pth` báo 99.1453%, CER 0.0033994; tên đợt mới hơn không có nghĩa mô hình tốt hơn.
 - File có thời điểm sửa local mới nhất là `vietocr_best_tang4_dev.pth`. Timestamp chỉ phản ánh bản sao trên máy, không chứng minh thời điểm huấn luyện.
 - Checkpoint VietOCR là state dict, chưa có kiến trúc/config/vocabulary/preprocessing đi kèm đủ để chạy đúng. Các lịch sử huấn luyện dùng tập dữ liệu khác nhau nên không xếp hạng trực tiếp bằng một con số.
 
@@ -37,7 +37,7 @@ Mô hình thật chỉ chạy khi `RECOGNITION_MODEL_MODE=weights` (mặc địn
 
 | Biến                                                              | Ý nghĩa                                                                                                |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `RECOGNITION_CRNN_WEIGHTS` / `RECOGNITION_CRNN_SHA256`            | CRNN đọc ô Đ.số và STT (`crnn_num_best_dot5.pth`)                                                      |
+| `RECOGNITION_CRNN_WEIGHTS` / `RECOGNITION_CRNN_SHA256`            | CRNN đọc ô Đ.số và STT (`crnn_num_best_dot6.pth`)                                                      |
 | `RECOGNITION_VIETOCR_WEIGHTS` / `RECOGNITION_VIETOCR_SHA256`      | VietOCR tinh chỉnh đọc ô Điểm chữ (`vietocr_best_tang4.pth`)                                           |
 | `RECOGNITION_NAME_WEIGHTS` / `RECOGNITION_NAME_SHA256`            | VietOCR GỐC đọc ô Họ tên in (`vietocr_vgg_seq2seq_pretrained.pth`)                                     |
 | `RECOGNITION_NUMERIC_THRESHOLD` / `RECOGNITION_WRITTEN_THRESHOLD` | τ riêng từng kênh của luật hợp nhất (kênh đủ tin cậy ≥ τ), mặc định 0.95 / 0.90 (khóa ở BE-22)         |
@@ -50,7 +50,7 @@ Cột Họ tên (BE-20b): họ tên trên mẫu là chữ IN, còn `vietocr_best
 
 Cột STT không được nhận dạng (quyết định của chủ dự án): dịch vụ luôn trả `stt.value = null`, `stt.confidence = 0`; ghép dòng dựa vào họ tên và thứ tự.
 
-Quy tắc an toàn: SHA-256 được kiểm trước khi nạp; trọng số chỉ nạp bằng `torch.load(weights_only=True)` (không nạp được thì `MODEL_UNAVAILABLE`, không hạ sang pickle tùy ý); cấu hình VietOCR (`src/adapters/vietocr_vgg_seq2seq.yml`) đã loại mọi URL tải mô hình; không tải gì từ Internet lúc chạy. `vietocr==0.3.13` phải cài `pip install --no-deps vietocr==0.3.13` (cùng `einops`), vì các phụ thuộc của nó không cần cho suy luận. Dùng `crnn_num_best_dot5.pth` và `vietocr_best_tang4.pth`, không dùng bản `*_dev.pth` (chỉ để dò ngưỡng). `modelVersion` = `crnn-dot5+vietocr-tang4+name-vgg:<12 ký tự đầu của SHA-256 ghép ba hash>`.
+Quy tắc an toàn: SHA-256 được kiểm trước khi nạp; trọng số chỉ nạp bằng `torch.load(weights_only=True)` (không nạp được thì `MODEL_UNAVAILABLE`, không hạ sang pickle tùy ý); cấu hình VietOCR (`src/adapters/vietocr_vgg_seq2seq.yml`) đã loại mọi URL tải mô hình; không tải gì từ Internet lúc chạy. `vietocr==0.3.13` phải cài `pip install --no-deps vietocr==0.3.13` (cùng `einops`), vì các phụ thuộc của nó không cần cho suy luận. Dùng `crnn_num_best_dot6.pth` và `vietocr_best_tang4.pth`, không dùng bản `*_dev.pth` (chỉ để dò ngưỡng). `modelVersion` = `crnn-dot5+vietocr-tang4+name-vgg:<12 ký tự đầu của SHA-256 ghép ba hash>`.
 
 Ảnh bị từ chối trả `422` với `{"detail": {"code", "message"}}`, mã ổn định: `IMAGE_UNREADABLE`, `IMAGE_QUALITY_LOW`, `GRID_NOT_FOUND`, `NOT_A_GRADEBOOK`, `SCORE_COLUMN_NOT_FOUND`; worker đánh dấu phiếu `LOI` đúng mã, không thử lại.
 

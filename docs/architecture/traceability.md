@@ -50,7 +50,7 @@ Mở rộng thời khóa biểu: `timetable_admin_ux_test.dart` kiểm thao tác
 
 ## Ghép dòng nhận dạng (ADR-0015)
 
-UC11–UC13 (nút 3.2, 4.1–4.9, 5.1–5.8; sơ đồ phân cấp chức năng không đổi): một hàm STT chung ở API (`common/student-order.ts`); phiếu nhận dạng chốt danh sách lớp STT → học sinh vào `danh_sach_phieu` (append-only); bỏ số dòng khai báo; ghép dòng theo STT + họ tên đọc trên giấy (`recognition/domain/row-matching.ts`); mức dòng là mức thấp hơn giữa mức điểm và mức ghép; ghép thất bại → phiếu `LOI` (`ROW_MATCH_FAILED`); màn hình kiểm tra riêng. Bất biến 5 trong AGENTS.md được diễn giải lại. Trạng thái triển khai theo `docs/development/phase-7-prompts.md`; test tương ứng được liệt kê khi từng bước BE/FE hoàn tất.
+UC11–UC13 (nút 3.2, 4.1–4.9, 5.1–5.8; sơ đồ phân cấp chức năng không đổi): một hàm STT chung ở API (`common/student-order.ts`); phiếu nhận dạng chốt danh sách lớp STT → học sinh vào `danh_sach_phieu` (append-only); bỏ số dòng khai báo; ghép dòng theo STT + họ tên đọc trên giấy (`recognition/domain/row-matching.ts`); mức dòng là mức thấp hơn giữa mức điểm và mức ghép; ghép thất bại → phiếu `LOI` (`ROW_MATCH_FAILED`); màn hình kiểm tra riêng. Bất biến 5 trong AGENTS.md được diễn giải lại. Trạng thái triển khai theo `docs/development/CONTINUE.md`; test tương ứng được liệt kê khi từng bước BE/FE hoàn tất.
 
 ## Mẫu bảng điểm (ADR-0016, P2)
 

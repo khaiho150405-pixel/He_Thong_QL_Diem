@@ -1,7 +1,7 @@
 # Giai đoạn 7 — Tổng hợp thay đổi chức năng nhận dạng bảng điểm từ ảnh
 
 Nhánh: `codex/recognition-row-matching` (tách từ `2612be9`, sau PR #10). Cập nhật: 2026-10-07.
-Hướng dẫn cài và chạy cho máy khác: [phase-7-huong-dan-chay.md](phase-7-huong-dan-chay.md).
+Hướng dẫn cài và chạy cho máy khác: skill `chay-he-thong` (`.claude/skills/chay-he-thong/references/cai-dat-nhan-dang.md`).
 
 ## 1. Mục tiêu và ràng buộc
 

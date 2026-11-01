@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_controls.dart';
-import '../../app/widgets/app_dialog.dart';
+import '../../app/widgets/app_list_footer.dart';
 import '../../app/widgets/app_scaffold.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
+import '../../core/progressive_loader.dart';
 import '../academic_catalog/academic_year_scope.dart';
-import '../academic_catalog/fields.dart';
 import '../academic_catalog/repository.dart';
 import '../authentication/session.dart';
 import 'gradebook_status.dart';
@@ -25,7 +24,13 @@ class GradebooksScreen extends ConsumerStatefulWidget {
 
 class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
   late Future<GradebookListDto> page;
-  final cursors = <num?>[null];
+  int _pageIndex = 1;
+  int _pageSize = appDefaultPageSize;
+  late final ProgressiveLoader<GradebookDto, num> _loader = ProgressiveLoader(
+    onChanged: () {
+      if (mounted) setState(() {});
+    },
+  );
 
   List<Json> _years = [];
   List<Json> _classes = [];
@@ -54,6 +59,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
 
   @override
   void dispose() {
+    _loader.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -110,39 +116,18 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       }
     }
     final yearId = viewingYear?.id;
-    if (teacher) {
-      return ref
-          .read(gradebooksRepositoryProvider)
-          .list(cursor: cursors.last, yearId: yearId);
+    final key = 'books|$yearId';
+    if (_loader.key == key) {
+      return GradebookListDto(items: _loader.items, nextCursor: null);
     }
-    return _allBooks(yearId: yearId);
-  }
-
-  Future<GradebookListDto> _allBooks({num? yearId}) async {
-    num? cursor;
-    final items = <GradebookDto>[];
-    final seen = <num>{};
-    do {
+    // Trang đầu hiện ngay; các trang còn lại tải dưới nền.
+    await _loader.start(key, (cursor) async {
       final result = await ref
           .read(gradebooksRepositoryProvider)
           .list(cursor: cursor, yearId: yearId);
-      items.addAll(result.items);
-      cursor = result.nextCursor;
-      if (cursor != null && !seen.add(cursor)) {
-        throw StateError('Không thể tải tiếp danh sách bảng điểm.');
-      }
-    } while (cursor != null);
-    return GradebookListDto(items: items, nextCursor: null);
-  }
-
-  Future<void> create() async {
-    if (!teacher) return;
-    final book = await showDialog<GradebookDto>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const CreateGradebookDialog(),
-    );
-    if (book != null && mounted) context.go('/gradebooks/${book.id}');
+      return LoadedChunk(result.items, result.nextCursor);
+    });
+    return GradebookListDto(items: _loader.items, nextCursor: null);
   }
 
   void _clearFilters() => setState(() {
@@ -179,7 +164,10 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       child: TextField(
         key: const ValueKey('gradebooks-search-input'),
         controller: _searchController,
-        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+        onChanged: (val) => setState(() {
+          _searchQuery = val.trim();
+          _pageIndex = 1;
+        }),
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
@@ -227,8 +215,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       years: _years,
       width: isMobile ? double.infinity : 270,
       onChanged: () {
-        cursors.clear();
-        cursors.add(null);
+        _pageIndex = 1;
         setState(reload);
       },
     );
@@ -246,7 +233,10 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
         ),
         DropdownMenuItem(value: 'DA_CHOT', child: Text('Đã khóa')),
       ],
-      onChanged: (val) => setState(() => _filterStatus = val),
+      onChanged: (val) => setState(() {
+        _filterStatus = val;
+        _pageIndex = 1;
+      }),
     );
 
     final classControl = AppFilterDropdown<num>(
@@ -262,7 +252,10 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
             child: Text(c['ten_lop']?.toString() ?? 'Lớp ${c['ma_lop']}'),
           ),
       ],
-      onChanged: (val) => setState(() => _filterClassId = val),
+      onChanged: (val) => setState(() {
+        _filterClassId = val;
+        _pageIndex = 1;
+      }),
     );
 
     final subjectControl = AppFilterDropdown<num>(
@@ -278,7 +271,10 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
             child: Text(s['ten_mon']?.toString() ?? 'Môn ${s['ma_mon']}'),
           ),
       ],
-      onChanged: (val) => setState(() => _filterSubjectId = val),
+      onChanged: (val) => setState(() {
+        _filterSubjectId = val;
+        _pageIndex = 1;
+      }),
     );
 
     final resetButton = OutlinedButton.icon(
@@ -430,9 +426,6 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
     );
   }
 
-  /// Tạo bảng điểm thủ công chỉ có trên web; app di động (Android/iOS) không có tính năng này.
-  bool get canCreate => teacher && kIsWeb;
-
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
@@ -441,13 +434,6 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       title: teacher ? 'Bảng điểm' : 'Bảng điểm toàn trường',
       currentPath: '/gradebooks',
       showBackButton: true,
-      floatingActionButton: canCreate
-          ? FloatingActionButton.extended(
-              onPressed: create,
-              icon: const Icon(Icons.add),
-              label: const Text('Tạo bảng điểm'),
-            )
-          : null,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1140),
@@ -477,23 +463,19 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                           onAction: () => setState(reload),
                         );
                       }
-                      final data = snapshot.data!;
+                      final allItems = _loader.items;
 
-                      if (data.items.isEmpty) {
+                      if (allItems.isEmpty) {
                         return EmptyState(
                           icon: Icons.table_chart_outlined,
                           title: 'Chưa có bảng điểm',
                           message: teacher
-                              ? (canCreate
-                                    ? 'Bạn chưa tạo bảng điểm nào cho các lớp phụ trách.'
-                                    : 'Bạn chưa có bảng điểm nào. Tạo bảng điểm trên bản web.')
+                              ? 'Bảng điểm được tạo tự động khi bạn được phân công lớp và môn. Hãy liên hệ quản trị viên nếu bạn chưa có phân công.'
                               : 'Hệ thống chưa có bảng điểm nào được tạo.',
-                          actionLabel: canCreate ? 'Tạo bảng điểm' : null,
-                          onAction: canCreate ? create : null,
                         );
                       }
 
-                      final filteredItems = data.items.where((book) {
+                      final filteredItems = allItems.where((book) {
                         if (_filterClassId != null &&
                             book.classId != _filterClassId) {
                           return false;
@@ -549,79 +531,52 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                         );
                       }
 
+                      final pageCount = appPageCount(
+                        filteredItems.length,
+                        _pageSize,
+                      );
+                      final currentPage = _pageIndex.clamp(1, pageCount);
+                      final pageItems = pageSlice(
+                        filteredItems,
+                        currentPage,
+                        _pageSize,
+                      );
+
                       return Column(
                         children: [
                           Expanded(
                             child: LayoutBuilder(
                               builder: (context, box) {
                                 if (box.maxWidth >= 768) {
-                                  return _buildTable(context, filteredItems);
+                                  return _buildTable(context, pageItems);
                                 }
                                 return ListView.separated(
-                                  itemCount: filteredItems.length,
+                                  itemCount: pageItems.length,
                                   separatorBuilder: (_, _) =>
                                       const SizedBox(height: 10),
                                   itemBuilder: (context, index) =>
                                       _buildGradebookCard(
                                         context,
-                                        filteredItems[index],
+                                        pageItems[index],
                                       ),
                                 );
                               },
                             ),
                           ),
-
-                          // Pagination
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.md,
-                            ),
-                            child: Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: AppSpacing.sm,
-                              runSpacing: AppSpacing.xs,
-                              children: [
-                                Text(
-                                  'Hiển thị ${filteredItems.length} bảng điểm',
-                                  style: TextStyle(color: t.ink3, fontSize: 13),
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      tooltip: 'Trang trước',
-                                      onPressed: cursors.length > 1
-                                          ? () => setState(() {
-                                              cursors.removeLast();
-                                              reload();
-                                            })
-                                          : null,
-                                      icon: const Icon(Icons.chevron_left),
-                                    ),
-                                    Text(
-                                      'Trang ${cursors.length}',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: t.ink,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      tooltip: 'Trang sau',
-                                      onPressed: data.nextCursor == null
-                                          ? null
-                                          : () => setState(() {
-                                              cursors.add(data.nextCursor);
-                                              reload();
-                                            }),
-                                      icon: const Icon(Icons.chevron_right),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                          AppListFooter(
+                            total: filteredItems.length,
+                            page: currentPage,
+                            pageSize: _pageSize,
+                            loadingMore: _loader.loadingMore,
+                            itemLabel: 'bảng điểm',
+                            onPageChanged: (p) =>
+                                setState(() => _pageIndex = p),
+                            onPageSizeChanged: (size) => setState(() {
+                              _pageSize = size;
+                              _pageIndex = 1;
+                            }),
                           ),
+                          const SizedBox(height: AppSpacing.md),
                         ],
                       );
                     },
@@ -650,7 +605,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
         borderRadius: radius,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            const totalColumns = 6;
+            const totalColumns = 5;
             final hMargin = constraints.maxWidth >= 768
                 ? AppSpacing.xl
                 : AppSpacing.md;
@@ -663,16 +618,13 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
             const minLop = 76.0;
             const minMon = 130.0;
             const minHk = 96.0;
-            const minVersion = 70.0;
             const minStatus = 120.0;
             const minAction = 86.0;
-            const minRequired =
-                minLop + minMon + minHk + minVersion + minStatus + minAction;
+            const minRequired = minLop + minMon + minHk + minStatus + minAction;
 
             final double colLop;
             final double colMon;
             final double colHk;
-            final double colVersion;
             final double colStatus;
             final double colAction;
 
@@ -681,143 +633,133 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
               colLop = minLop + extra * 0.12;
               colMon = minMon + extra * 0.30;
               colHk = minHk + extra * 0.18;
-              colVersion = minVersion + extra * 0.10;
               colStatus = minStatus + extra * 0.18;
               colAction = minAction + extra * 0.12;
             } else {
               colLop = minLop;
               colMon = minMon;
               colHk = minHk;
-              colVersion = minVersion;
               colStatus = minStatus;
               colAction = minAction;
             }
 
+            // Cuộn dọc khi nhiều dòng, cuộn ngang khi bảng rộng hơn khung.
             return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                child: DataTable(
-                  showCheckboxColumn: false,
-                  columnSpacing: colSpacing,
-                  horizontalMargin: hMargin,
-                  columns: [
-                    DataColumn(
-                      label: SizedBox(width: colLop, child: const Text('LỚP')),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: colMon,
-                        child: const Text('MÔN HỌC'),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: colHk,
-                        child: const Text('HỌC KỲ'),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: colVersion,
-                        child: const Text('PHIÊN BẢN'),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: colStatus,
-                        child: const Text('TRẠNG THÁI'),
-                      ),
-                    ),
-                    DataColumn(
-                      label: SizedBox(
-                        width: colAction,
-                        child: const Align(
-                          alignment: Alignment.centerRight,
-                          child: Text('THAO TÁC'),
+              key: const ValueKey('gradebooks-table-vertical-scroll'),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: DataTable(
+                    showCheckboxColumn: false,
+                    columnSpacing: colSpacing,
+                    horizontalMargin: hMargin,
+                    columns: [
+                      DataColumn(
+                        label: SizedBox(
+                          width: colLop,
+                          child: const Text('LỚP'),
                         ),
                       ),
-                    ),
-                  ],
-                  rows: [
-                    for (final b in items)
-                      DataRow(
-                        onSelectChanged: (_) =>
-                            context.go('/gradebooks/${b.id}'),
-                        cells: [
-                          DataCell(
-                            SizedBox(
-                              width: colLop,
-                              child: Text(
-                                b.className,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: t.ink,
-                                ),
-                              ),
-                            ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: colMon,
+                          child: const Text('MÔN HỌC'),
+                        ),
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: colHk,
+                          child: const Text('HỌC KỲ'),
+                        ),
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: colStatus,
+                          child: const Text('TRẠNG THÁI'),
+                        ),
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: colAction,
+                          child: const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text('THAO TÁC'),
                           ),
-                          DataCell(
-                            SizedBox(
-                              width: colMon,
-                              child: Text(
-                                b.subjectName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: t.ink),
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            SizedBox(
-                              width: colHk,
-                              child: Text(
-                                b.termName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: t.ink2),
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            SizedBox(
-                              width: colVersion,
-                              child: Text(
-                                'v${b.version}',
-                                style: TextStyle(color: t.ink3, fontSize: 13),
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            SizedBox(
-                              width: colStatus,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: GradebookStatusBadge(b.status.value),
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            SizedBox(
-                              width: colAction,
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: FilledButton.tonal(
-                                  key: ValueKey('view-gradebook-${b.id}'),
-                                  onPressed: () =>
-                                      context.go('/gradebooks/${b.id}'),
-                                  child: Text(
-                                    (teacher && b.status.value != 'DA_CHOT')
-                                        ? 'Nhập điểm'
-                                        : 'Xem',
+                        ),
+                      ),
+                    ],
+                    rows: [
+                      for (final b in items)
+                        DataRow(
+                          onSelectChanged: (_) =>
+                              context.go('/gradebooks/${b.id}'),
+                          cells: [
+                            DataCell(
+                              SizedBox(
+                                width: colLop,
+                                child: Text(
+                                  b.className,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: t.ink,
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                  ],
+                            DataCell(
+                              SizedBox(
+                                width: colMon,
+                                child: Text(
+                                  b.subjectName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: t.ink),
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: colHk,
+                                child: Text(
+                                  b.termName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: t.ink2),
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: colStatus,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: GradebookStatusBadge(b.status.value),
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              SizedBox(
+                                width: colAction,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: FilledButton.tonal(
+                                    key: ValueKey('view-gradebook-${b.id}'),
+                                    onPressed: () =>
+                                        context.go('/gradebooks/${b.id}'),
+                                    child: Text(
+                                      (teacher && b.status.value != 'DA_CHOT')
+                                          ? 'Nhập điểm'
+                                          : 'Xem',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -856,7 +798,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${b.termName} · v${b.version}',
+                      b.termName,
                       style: TextStyle(color: t.ink2, fontSize: 13),
                     ),
                     const SizedBox(height: 6),
@@ -880,407 +822,4 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
       ),
     );
   }
-}
-
-class CreateGradebookDialog extends ConsumerStatefulWidget {
-  const CreateGradebookDialog({super.key});
-
-  @override
-  ConsumerState<CreateGradebookDialog> createState() =>
-      _CreateGradebookDialogState();
-}
-
-class _CreateGradebookDialogState extends ConsumerState<CreateGradebookDialog> {
-  late Future<List<List<Json>>> options;
-  num? classId;
-  num? subjectId;
-  num? termId;
-  bool busy = false;
-  String? error;
-  bool _initializedDefaults = false;
-
-  List<Json> _allClasses = [];
-  List<Json> _allSubjects = [];
-  List<Json> _allSemesters = [];
-  List<Json> _assignments = [];
-
-  @override
-  void initState() {
-    super.initState();
-    options = _loadOptions();
-  }
-
-  Future<List<List<Json>>> _loadOptions() async {
-    final viewingYear = ref.read(viewingYearProvider);
-    final yId = viewingYear?.id;
-
-    final results = await Future.wait([
-      _allCatalogItems('classes'),
-      _allCatalogItems('subjects'),
-      _allCatalogItems('semesters'),
-      _allCatalogItems('assignments', yearId: yId),
-    ]);
-
-    _allClasses = results[0];
-    _allSubjects = results[1];
-    _allSemesters = results[2];
-    _assignments = results[3];
-
-    if (yId != null) {
-      int compareWithYear(Json a, Json b) {
-        final aMatch = a['ma_nam_hoc'] == yId ? 0 : 1;
-        final bMatch = b['ma_nam_hoc'] == yId ? 0 : 1;
-        return aMatch.compareTo(bMatch);
-      }
-
-      _allClasses.sort(compareWithYear);
-      _allSemesters.sort(compareWithYear);
-    }
-
-    if (!_initializedDefaults) {
-      _initializedDefaults = true;
-      final validClasses = _availableClasses;
-      if (validClasses.isNotEmpty) {
-        if (validClasses.length == 1) {
-          classId = validClasses.first['ma_lop'] as num?;
-        } else if (yId != null) {
-          final matchingClass = validClasses.firstWhere(
-            (c) => c['ma_nam_hoc'] == yId,
-            orElse: () => <String, dynamic>{},
-          );
-          if (matchingClass.isNotEmpty) {
-            classId = matchingClass['ma_lop'] as num?;
-          }
-        }
-
-        if (classId != null) {
-          final validSubjects = _availableSubjects;
-          if (validSubjects.length == 1) {
-            subjectId = validSubjects.first['ma_mon'] as num?;
-          }
-
-          if (subjectId != null) {
-            final validTerms = _availableSemesters;
-            if (validTerms.length == 1) {
-              termId = validTerms.first['ma_hoc_ky'] as num?;
-            } else if (yId != null) {
-              final matchingTerm = validTerms.firstWhere(
-                (s) => s['ma_nam_hoc'] == yId,
-                orElse: () => <String, dynamic>{},
-              );
-              if (matchingTerm.isNotEmpty) {
-                termId = matchingTerm['ma_hoc_ky'] as num?;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return results;
-  }
-
-  Future<List<Json>> _allCatalogItems(String resource, {num? yearId}) async {
-    String? cursor;
-    final items = <Json>[];
-    final seen = <String>{};
-    do {
-      final page = await ref
-          .read(catalogRepositoryProvider)
-          .list(resource, cursor: cursor, yearId: yearId);
-      items.addAll(page.items);
-      cursor = page.nextCursor;
-      if (cursor != null && !seen.add(cursor)) {
-        throw StateError('Cursor danh mục bị lặp.');
-      }
-    } while (cursor != null);
-    return items;
-  }
-
-  List<Json> get _availableClasses {
-    final assignedClassIds = _assignments
-        .map((a) => a['ma_lop'])
-        .whereType<num>()
-        .toSet();
-    return _allClasses
-        .where((c) => assignedClassIds.contains(c['ma_lop']))
-        .toList();
-  }
-
-  List<Json> get _availableSubjects {
-    if (classId == null) return const [];
-    final assignedSubjectIds = _assignments
-        .where((a) => a['ma_lop'] == classId)
-        .map((a) => a['ma_mon'])
-        .whereType<num>()
-        .toSet();
-    return _allSubjects
-        .where((s) => assignedSubjectIds.contains(s['ma_mon']))
-        .toList();
-  }
-
-  List<Json> get _availableSemesters {
-    if (classId == null || subjectId == null) return const [];
-    final assignedTermIds = _assignments
-        .where((a) => a['ma_lop'] == classId && a['ma_mon'] == subjectId)
-        .map((a) => a['ma_hoc_ky'])
-        .whereType<num>()
-        .toSet();
-    return _allSemesters
-        .where((s) => assignedTermIds.contains(s['ma_hoc_ky']))
-        .toList();
-  }
-
-  void _onClassChanged(num? value) {
-    setState(() {
-      classId = value;
-      error = null;
-
-      final validSubjects = _availableSubjects;
-      if (subjectId != null &&
-          !validSubjects.any((s) => s['ma_mon'] == subjectId)) {
-        subjectId = null;
-      }
-      if (subjectId == null && validSubjects.length == 1) {
-        subjectId = validSubjects.first['ma_mon'] as num?;
-      }
-
-      final validTerms = _availableSemesters;
-      if (termId != null && !validTerms.any((t) => t['ma_hoc_ky'] == termId)) {
-        termId = null;
-      }
-      if (termId == null && validTerms.length == 1) {
-        termId = validTerms.first['ma_hoc_ky'] as num?;
-      }
-    });
-  }
-
-  void _onSubjectChanged(num? value) {
-    setState(() {
-      subjectId = value;
-      error = null;
-
-      final validTerms = _availableSemesters;
-      if (termId != null && !validTerms.any((t) => t['ma_hoc_ky'] == termId)) {
-        termId = null;
-      }
-      if (termId == null && validTerms.length == 1) {
-        termId = validTerms.first['ma_hoc_ky'] as num?;
-      }
-    });
-  }
-
-  void _onTermChanged(num? value) {
-    setState(() {
-      termId = value;
-      error = null;
-    });
-  }
-
-  Future<void> submit() async {
-    if (classId == null || subjectId == null || termId == null) {
-      setState(() => error = 'Chọn đủ lớp, môn học và học kỳ.');
-      return;
-    }
-    setState(() {
-      busy = true;
-      error = null;
-    });
-    try {
-      final book = await ref
-          .read(gradebooksRepositoryProvider)
-          .create(classId: classId!, subjectId: subjectId!, termId: termId!);
-      if (mounted) Navigator.pop(context, book);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          error = errorMessage(e);
-          busy = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tokens;
-    final canSubmit =
-        !busy &&
-        _availableClasses.isNotEmpty &&
-        classId != null &&
-        subjectId != null &&
-        termId != null;
-
-    return AppDialog(
-      title: 'Tạo bảng điểm',
-      confirmLabel: 'Tạo',
-      confirmEnabled: canSubmit,
-      onConfirm: submit,
-      onCancel: () {
-        if (!busy) Navigator.pop(context);
-      },
-      child: FutureBuilder<List<List<Json>>>(
-        future: options,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const SizedBox(
-              height: 120,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 12),
-                    Text('Đang tải danh mục…'),
-                  ],
-                ),
-              ),
-            );
-          }
-          if (snapshot.hasError) {
-            return Text(errorMessage(snapshot.error!));
-          }
-
-          final hasNoAssignments = _availableClasses.isEmpty;
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (hasNoAssignments) ...[
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: t.badSoft,
-                    borderRadius: BorderRadius.circular(AppRadius.sm + 2),
-                    border: Border.all(color: t.badLine),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline, color: t.bad, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Bạn chưa được phân công giảng dạy lớp nào trong năm học này.',
-                            style: TextStyle(
-                              color: t.bad,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-              ],
-              _ReferenceDropdown(
-                label: 'Lớp',
-                items: _availableClasses,
-                idKey: 'ma_lop',
-                initialValue: classId,
-                enabled: !hasNoAssignments,
-                onChanged: _onClassChanged,
-              ),
-              const SizedBox(height: 14),
-              _ReferenceDropdown(
-                label: 'Môn học',
-                items: _availableSubjects,
-                idKey: 'ma_mon',
-                initialValue: subjectId,
-                enabled: classId != null,
-                hintText: classId == null ? 'Chọn lớp trước' : null,
-                helperText: classId == null ? 'Chọn lớp trước' : null,
-                onChanged: _onSubjectChanged,
-              ),
-              const SizedBox(height: 14),
-              _ReferenceDropdown(
-                label: 'Học kỳ',
-                items: _availableSemesters,
-                idKey: 'ma_hoc_ky',
-                initialValue: termId,
-                enabled: classId != null && subjectId != null,
-                hintText: classId == null
-                    ? 'Chọn lớp trước'
-                    : (subjectId == null ? 'Chọn môn học trước' : null),
-                helperText: classId == null
-                    ? 'Chọn lớp trước'
-                    : (subjectId == null ? 'Chọn môn học trước' : null),
-                onChanged: _onTermChanged,
-              ),
-              if (error != null) ...[
-                const SizedBox(height: 14),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: t.badSoft,
-                    borderRadius: BorderRadius.circular(AppRadius.sm + 2),
-                    border: Border.all(color: t.badLine),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: t.bad, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            error!,
-                            style: TextStyle(color: t.bad, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ReferenceDropdown extends StatelessWidget {
-  const _ReferenceDropdown({
-    required this.label,
-    required this.items,
-    required this.idKey,
-    required this.onChanged,
-    this.initialValue,
-    this.enabled = true,
-    this.hintText,
-    this.helperText,
-  });
-
-  final String label;
-  final List<Json> items;
-  final String idKey;
-  final ValueChanged<num?> onChanged;
-  final num? initialValue;
-  final bool enabled;
-  final String? hintText;
-  final String? helperText;
-
-  @override
-  Widget build(BuildContext context) => AppSelectField<num>(
-    value: initialValue != null && items.any((i) => i[idKey] == initialValue)
-        ? initialValue
-        : null,
-    label: label,
-    enabled: enabled,
-    hintText: hintText,
-    helperText: helperText,
-    items: items
-        .map(
-          (item) => DropdownMenuItem<num>(
-            value: item[idKey] as num,
-            child: Text(rowLabel(item), overflow: TextOverflow.ellipsis),
-          ),
-        )
-        .toList(),
-    onChanged: onChanged,
-  );
 }

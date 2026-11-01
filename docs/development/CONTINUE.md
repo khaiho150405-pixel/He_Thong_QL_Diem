@@ -2,6 +2,29 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Tự tạo bảng điểm khi phân công (xong; chưa commit, 2026-11-02)
+
+- Migration `202611020001_auto_gradebook_on_assignment`: hàm `dam_bao_bang_diem` + trigger trên `phan_cong_giang_day` (thêm hoặc đổi lớp/môn/học kỳ) tạo lưới điểm trống qua `tao_luoi_diem_noi_bo` (nhật ký tác nhân NULL). Bỏ qua, không làm hỏng phân công, khi học kỳ đã công bố, lớp chưa có học sinh đang học hoặc môn chưa có thành phần điểm. Bù mọi phân công cũ chưa có bảng.
+- `dam_bao_bang_diem_cua_toi(phiên)` cho runtime; `GradebooksService.list` gọi ở trang đầu của giáo viên để bổ sung bảng còn thiếu (lớp có thêm học sinh sau phân công).
+- Flutter: bỏ nút "Tạo bảng điểm", hộp thoại tạo và test của nó; trạng thái rỗng giải thích bảng điểm tự tạo khi được phân công. API `POST /gradebooks` vẫn còn (idempotent, trả bảng đã có) nhưng giao diện không dùng.
+- Test: thêm `auto-gradebook.test.ts`; fixture `roster-fixture`, `academic-year-scope`, `gradebooks`, `grade-deadlines` đã chỉnh vì phân công giờ tự tạo bảng (hai test sau tắt trigger trong lúc chạy). Tích hợp 56/57 đạt; `recognition-infra` lỗi không do đợt này (chưa điều tra). `database/tests/constraints.test.ts` dừng ở khẳng định đếm 16 bảng (đã lệch từ trước).
+
+## Đồng bộ giao diện danh sách, tải dần, dữ liệu mẫu (xong phần chính; chưa commit, 2026-11-01)
+
+- **Nhãn trạng thái** (`AppBadge`): bỏ chấm đầu dòng; nhãn trạng thái (mặc định `dot: true`) rộng tối thiểu 112, chữ căn giữa nên các ô cùng cột bằng nhau, không bị cắt chữ. Nhãn thông tin (số lượng, tên lớp) truyền `dot: false` để vừa khít.
+- **Phân trang chung**: `app/widgets/app_list_footer.dart` (`AppListFooter`, `pageSlice`, cỡ trang 10/30/50, mặc định 10) dùng ở danh mục (`catalog_screen`) và danh sách bảng điểm. Chưa áp dụng cho: giáo viên & phân công, lịch nhập điểm, tổng kết, điều chỉnh, mẫu bảng điểm.
+- **Tải dần**: `core/progressive_loader.dart`. Trang đầu hiện ngay, phần còn lại tải nền; lọc/sắp xếp/đổi trang chạy trên dữ liệu đã tải (không gọi lại máy chủ), chỉ tải lại khi đổi năm học/loại danh mục hoặc sau thêm/sửa/xóa (`reloadFresh`). STT học sinh ẩn khi còn đang tải nền.
+- Bỏ: mã nội bộ trên thẻ danh mục và hộp "Mã tham chiếu" của bảng điểm; huy hiệu "Trực tiếp (10s)" ở tổng quan quản trị; cột Phiên bản ở danh sách bảng điểm. Số điện thoại/tên đăng nhập dùng chữ số cùng bề rộng.
+- **Dữ liệu mẫu**: `database/seeds/sample-school.ts` (`pnpm db:seed:sample`, `pnpm db:sync`) thêm giáo viên bộ môn (tên đăng nhập là số điện thoại giả 0900xxxxxx), phân công đủ 10 môn cho 15 lớp và thời khóa biểu 15 lớp (khối 10 học chiều, còn lại học sáng, không trùng giáo viên). Chạy lặp an toàn. `scripts/recognition/pilot/up.ps1` tự tạo DB thử, migrate, nạp nền khi DB mới và bổ sung dữ liệu mẫu mỗi lần bật (không chạm bản deploy).
+- Test Flutter: còn 11 test lỗi có sẵn từ trước (dashboard, theme_toggle, semester_deadlines, contract, phase2 mobile, academic_year_scope); không do đợt này.
+- Chưa làm: rà các nút điều hướng ở header của từng màn so với màn học sinh; kiểm tra bằng mắt trên máy ảo (dropdown "hiện hành" mới chỉ nới rộng ô lên 300).
+
+## Dọn repo và gom hướng dẫn vào skill (xong; chưa commit, 2026-11-01)
+
+- Đã xóa khỏi repo (còn trong git history): `hinh/`, `chuong_4_phan_tich_thiet_ke_he_thong.md`, `generate_diagrams.py`, `render_additional_diagrams.py`, `implementation_plan1.md`, `UI/` (prototype Vite/Figma), `ui-auto-pack-v3.zip`, `.agents/`, `.windsurf/`, và các file prompt/quy trình cũ `docs/development/{phase-7-fe-prompt,phase-7-prompts,agent-cross-review,phase-1-onboarding,phase-7-khoi-dong-nhanh}.md`. Đã sửa các tham chiếu (README, CODEOWNERS, .prettierignore, ADR-0001, traceability, phase-1/phase-7 docs).
+- Skill duy nhất ở `.claude/skills/` (trước đây `.claude`/`.windsurf` là symlink tới `.agents`; nay là bản thật). Thêm `chay-he-thong` (SKILL.md + references: cài nhận dạng `cai-dat-nhan-dang.md` (trước là phase-7-huong-dan-chay), `may-moi.md`, `toolchain.md`) và chuyển `gradebook-ui-ux` sang đây.
+- Chưa dọn được: file nháp trong `.local/` (158 `.log`, 60 `.py`, vài `.mjs`) vì thao tác xóa file không có trong git bị chặn; xóa tay nếu muốn.
+
 ## Đợt chỉnh sửa app + deploy Cloudflare (xong; chưa commit, 2026-11-01)
 
 - Khởi động: thư mục `Khoi_Dong_Nhan_Dang` (ngoài git, `*.bat` bị ignore) có `Khoi-Dong.bat` (dev một click), `Khoi-Dong-Deploy.bat` (production sau Cloudflare), `Build-APK-Release.bat` (APK ký khóa release → `APK\EduScore.apk`). Đã xóa `run-local/run-deploy/stop-all.bat` ở gốc. Khóa ký `apps/client_flutter/android/app-release.jks` + `key.properties` (ngoài git, PHẢI sao lưu). `config/production.json` trỏ `https://api.eduscore.id.vn`. Cần thêm `S3_PUBLIC_ENDPOINT=https://storage.eduscore.id.vn` trong `.env` (đã thêm) và route Cloudflare `storage` → `http://localhost:9000`.

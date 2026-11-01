@@ -1,6 +1,6 @@
 # Hệ thống Quản lý Điểm
 
-Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. [Phase 3](docs/development/phase-3.md) đã merge qua PR #5, gồm upload private, outbox/worker BullMQ, contract FastAPI hai kênh, chặn lệch lưới, signed URL và giao diện theo dõi phiếu. [Phase 4](docs/development/phase-4.md) đã merge qua PR #6 với đối chiếu và duyệt nguyên tử có con người quyết định. [Phase 5](docs/development/phase-5.md) đã merge qua PR #7 với tổng kết, xếp loại có phiên bản, thống kê, Excel và tra cứu cá nhân. [Phase 6](docs/development/phase-6.md) đang hardening và chuẩn bị phát hành. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). [Plan Giai đoạn 0](implementation_plan1.md) được giữ để báo cáo lịch sử. Mô hình OCR thật vẫn chờ file trọng số.
+Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [kế hoạch Phase 1](docs/development/phase-1.md). [Phase 2](docs/development/phase-2.md) đã merge qua PR #3, gồm API và giao diện Flutter cho danh sách/lưới, nhập hàng loạt, lịch sử, đồng bộ sĩ số và chốt bảng. [Phase 3](docs/development/phase-3.md) đã merge qua PR #5, gồm upload private, outbox/worker BullMQ, contract FastAPI hai kênh, chặn lệch lưới, signed URL và giao diện theo dõi phiếu. [Phase 4](docs/development/phase-4.md) đã merge qua PR #6 với đối chiếu và duyệt nguyên tử có con người quyết định. [Phase 5](docs/development/phase-5.md) đã merge qua PR #7 với tổng kết, xếp loại có phiên bản, thống kê, Excel và tra cứu cá nhân. [Phase 6](docs/development/phase-6.md) đang hardening và chuẩn bị phát hành. Nhắn `continue` trong Codex để tiếp tục từ [note bàn giao](docs/development/CONTINUE.md) theo [AGENTS.md](AGENTS.md). Mô hình OCR thật vẫn chờ file trọng số.
 
 ## Báo cáo thực nghiệm
 
@@ -20,7 +20,7 @@ Giai đoạn 1 đã triển khai tài khoản và danh mục UC01–08 theo [k�
 
 Node 24.19.0, pnpm 11.19.0, Flutter 3.35.7 (Dart 3.9.2), Java 17+ (Android Studio JBR 21 dùng được), Docker Engine/Desktop với Compose v2. Node trên PATH của terminal và scripts phải cùng phiên bản. iOS cần macOS/Xcode; Windows không build/chạy iOS simulator.
 
-Dependencies được khóa bằng pnpm-lock.yaml và pubspec.lock. Xem [toolchain](docs/development/toolchain.md), [onboarding](docs/development/onboarding.md), [quy trình đóng góp](CONTRIBUTING.md).
+Dependencies được khóa bằng pnpm-lock.yaml và pubspec.lock. Xem skill [chay-he-thong](.claude/skills/chay-he-thong/SKILL.md) (cài máy mới, toolchain, khởi động một click, deploy, build APK) và [quy trình đóng góp](CONTRIBUTING.md).
 
 ## Chạy lần đầu
 
@@ -31,15 +31,14 @@ pnpm install --frozen-lockfile
 pnpm setup:local
 pnpm infra:up
 pnpm db:generate
-pnpm db:migrate
-pnpm db:seed
+pnpm db:sync   # = db:migrate + db:seed + db:seed:sample (giáo viên, phân công, thời khóa biểu mẫu); chạy lặp an toàn
 python -m pip install -e apps/recognition-service
 # Chỉ khi chạy mô hình thật (chế độ weights); chế độ fake không cần torch:
 # python -m pip install -e "apps/recognition-service[ml]" && python -m pip install --no-deps vietocr==0.3.13
 pnpm dev:api
 ```
 
-Để chạy pipeline nhận dạng development, mở thêm ba terminal tại root và chạy `pnpm dev:recognition-service`, `pnpm dev:recognition-dispatcher`, `pnpm dev:recognition-worker`. Fake adapter chỉ được bật trong development/test; production thiếu weights trả `MODEL_UNAVAILABLE`. Chạy nhận dạng bằng mô hình thật trên máy mới: xem [hướng dẫn Giai đoạn 7](docs/development/phase-7-huong-dan-chay.md); tóm tắt thay đổi tại [phase-7-tong-hop-thay-doi.md](docs/development/phase-7-tong-hop-thay-doi.md).
+Để chạy pipeline nhận dạng development, mở thêm ba terminal tại root và chạy `pnpm dev:recognition-service`, `pnpm dev:recognition-dispatcher`, `pnpm dev:recognition-worker`. Fake adapter chỉ được bật trong development/test; production thiếu weights trả `MODEL_UNAVAILABLE`. Chạy nhận dạng bằng mô hình thật trên máy mới: xem [hướng dẫn Giai đoạn 7](.claude/skills/chay-he-thong/references/cai-dat-nhan-dang.md); tóm tắt thay đổi tại [phase-7-tong-hop-thay-doi.md](docs/development/phase-7-tong-hop-thay-doi.md).
 
 Giáo viên mở một bảng điểm đang nhập liệu và bung mục **Nhận dạng bảng điểm từ ảnh** để chọn thành phần, chụp trên điện thoại hoặc chọn ảnh PNG/JPEG, xem trước/phóng to rồi gửi job. Client kiểm ảnh trước khi gửi, hiển thị tiến độ và tự kiểm tra trạng thái mỗi 3 giây khi phiếu còn xử lý. Chi tiết chỉ dùng signed URL 5 phút cho ảnh gốc/ảnh ô và vẫn là dữ liệu đề xuất; giáo viên phải đối chiếu, duyệt rồi chốt bảng. Xem [hướng dẫn chụp và kiểm thử mobile](docs/ux/recognition-capture.md). Mô hình thật chạy ở chế độ `weights` (xem [kiểm kê và cấu hình mô hình](docs/development/recognition-checkpoints.md)): dịch vụ nhận dạng nắn ảnh, dò bảng, đọc điểm số bằng CRNN, điểm chữ bằng VietOCR tinh chỉnh và họ tên in bằng VietOCR gốc (`RECOGNITION_NAME_WEIGHTS`, bắt buộc) rồi API ghép từng dòng với danh sách lớp đã chốt của phiếu (ADR-0015); màu Xanh/Vàng/Đỏ theo luật hợp nhất hai kênh (hai kênh độc lập đồng thuận → Xanh; chỉ một kênh đủ tin cậy → Vàng và gợi ý giá trị kênh đó; mâu thuẫn hoặc cùng yếu → Đỏ, không gợi ý), đã đo trên mẫu E0330113 của trường đại học, chưa đo trên bảng điểm cấp 3 thật; phiếu phải có cột Đ.số và Điểm chữ (ADR-0015). Bảng đã chốt có khối tổng kết, thống kê và xuất Excel. Học sinh dùng **Điểm của tôi** để chỉ xem điểm đã duyệt của chính tài khoản.
 
@@ -67,7 +66,7 @@ API dùng app_runtime; migrations dùng app_migration với mật khẩu riêng.
 
 POSTGRES_PASSWORD chỉ có tác dụng khởi tạo volume mới; thay .env không tự đổi mật khẩu role của volume hiện hữu. Muốn đổi cần ALTER ROLE trên đúng cụm và cập nhật URL tương ứng, không xóa volume để đổi mật khẩu. Khi password có ký tự đặc biệt, URL phải percent-encode password. Script setup dùng chuỗi hex để tránh lỗi này.
 
-Máy chưa có Docker vẫn có thể chạy unit/build/client và dùng PostgreSQL riêng để test (xem onboarding); chưa thể coi readiness stack hoàn tất. Không tự dùng database cá nhân cho automated tests.
+Máy chưa có Docker vẫn có thể chạy unit/build/client và dùng PostgreSQL riêng để test (xem skill chay-he-thong); chưa thể coi readiness stack hoàn tất. Không tự dùng database cá nhân cho automated tests.
 
 ## Kiểm tra
 

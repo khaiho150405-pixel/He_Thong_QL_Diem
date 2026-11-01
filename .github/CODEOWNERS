@@ -16,5 +16,4 @@
 # CI, collaboration policy and architecture-wide changes require both reviewers.
 /.github/ @trongv2310 @caohaidang157
 /AGENTS.md @trongv2310 @caohaidang157
-/implementation_plan1.md @trongv2310 @caohaidang157
 /docs/adr/ @trongv2310 @caohaidang157

@@ -41,7 +41,6 @@ class AdminChartsSection extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const AppBadge.ok('Trực tiếp (10s)'),
               ],
             ),
             const SizedBox(height: 2),

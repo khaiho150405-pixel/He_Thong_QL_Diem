@@ -19,7 +19,7 @@ Migration kỹ thuật → identity/authorization → danh mục → OpenAPI/cli
 
 Web thực tế: đăng nhập bằng tài khoản giả trên DB test riêng, tạo năm học qua cookie/CSRF và hiển thị lại danh sách. Bố cục danh sách được kiểm ở 390 px và desktop. Test dữ liệu bổ sung kiểm hồ sơ cá nhân chống thay lớp, tìm kiếm không vượt scope và rollback cả dữ liệu/audit sau lỗi chủ động.
 
-[Onboarding và kịch bản review](phase-1-onboarding.md). Migration đã chạy nâng cấp trên DB test có Phase 0 và chạy từ rỗng trên DB test riêng. PostgreSQL integration đã kiểm chứng đăng nhập, CSRF, khóa/mở, phân quyền dữ liệu, thu hồi và hết phiên. API connection bắt buộc timezone UTC; test idle expiry phát hiện lỗi timezone trên PostgreSQL Windows và đã được sửa.
+Onboarding: skill `chay-he-thong`. Migration đã chạy nâng cấp trên DB test có Phase 0 và chạy từ rỗng trên DB test riêng. PostgreSQL integration đã kiểm chứng đăng nhập, CSRF, khóa/mở, phân quyền dữ liệu, thu hồi và hết phiên. API connection bắt buộc timezone UTC; test idle expiry phát hiện lỗi timezone trên PostgreSQL Windows và đã được sửa.
 
 Đã chạy thành công: `pnpm check`, `pnpm contracts:check`, `pnpm test:db`, test API `identity-catalog.test.ts`, Flutter analyze, 8 unit/widget tests và `flutter build web`. Test giao diện kiểm tra hai kích thước 390/1280 px, lỗi đăng nhập/thử lại, tạo năm học, logout và menu học sinh; test cấu hình bảo đảm endpoint được kiểm tra trước khi mở màn hình đăng nhập. CI native được bổ sung cùng luồng UI qua HTTP adapter test; kiểm tra kết nối native vẫn dùng API thật.
 

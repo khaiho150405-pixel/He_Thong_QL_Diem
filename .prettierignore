@@ -6,13 +6,9 @@ database/migrations/
 database/prisma/
 PHAN_TICH_THIET_KE_HE_THONG.html
 AGENTS.md
-implementation_plan1.md
 .local/
 apps/api/src/generated/
 dist/
-.agents/
 .claude/
-.windsurf/
-UI/
 docs/design/*.html
 automation/runs/

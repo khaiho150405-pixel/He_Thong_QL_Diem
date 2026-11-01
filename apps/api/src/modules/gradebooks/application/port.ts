@@ -171,6 +171,8 @@ export interface GradebookUnit {
     sessionHash: string,
     scope: GradebookScope,
   ): Promise<Gradebook>;
+  /** Bổ sung bảng điểm còn thiếu cho các phân công của giáo viên đang đăng nhập; trả về số bảng vừa tạo. */
+  ensureMine(sessionHash: string): Promise<number>;
   find(id: number): Promise<Gradebook | null>;
   list(
     teacherId: number | null,

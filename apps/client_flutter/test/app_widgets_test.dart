@@ -209,13 +209,25 @@ void main() {
         expect(tester.widget<Text>(find.text('ok')).style!.color, tk.ok);
         expect(tester.widget<Text>(find.text('info')).style!.color, tk.priLink);
         expect(tester.widget<Text>(find.text('ok')).style!.fontSize, 12);
-        // 5 chấm tròn; tắt chấm thì không còn.
-        expect(find.byKey(const ValueKey('app-badge-dot')), findsNWidgets(5));
+        // Nhãn không có chấm tròn đầu dòng.
+        expect(find.byKey(const ValueKey('app-badge-dot')), findsNothing);
       });
 
-      testWidgets('AppBadge nodot không có chấm', (tester) async {
-        await _pump(tester, theme, const AppBadge.ok('x', dot: false));
-        expect(find.byKey(const ValueKey('app-badge-dot')), findsNothing);
+      testWidgets('AppBadge: mọi nhãn cùng chiều rộng tối thiểu', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          theme,
+          const Column(
+            children: [AppBadge.ok('Ok'), AppBadge('Một nhãn dài hơn nhiều')],
+          ),
+        );
+        expect(
+          tester.getSize(find.byType(AppBadge).first).width,
+          greaterThanOrEqualTo(AppBadge.minWidth),
+        );
+        expect(find.text('Một nhãn dài hơn nhiều'), findsOneWidget);
       });
 
       testWidgets('AppProgress và AppConfidenceBar: chiều cao, màu, ngưỡng', (

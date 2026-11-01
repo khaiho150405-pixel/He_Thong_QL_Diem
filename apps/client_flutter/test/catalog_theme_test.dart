@@ -212,9 +212,10 @@ void main() {
         expect(inContent('Trần Thị Bình'), findsOneWidget);
         expect(inContent('Đang theo học'), findsOneWidget);
         expect(inContent('Ngừng theo dõi'), findsOneWidget);
-        // Phân trang hiện có giữ nguyên.
-        expect(find.text('Trang trước'), findsOneWidget);
-        expect(find.text('Trang sau'), findsOneWidget);
+        // Chân danh sách dùng chung: cỡ trang 10/30/50 và thanh phân trang.
+        expect(find.byKey(const ValueKey('app-page-size')), findsOneWidget);
+        expect(find.byKey(const ValueKey('app-pager-prev')), findsOneWidget);
+        expect(find.byKey(const ValueKey('app-pager-next')), findsOneWidget);
         // Thanh lọc và sắp xếp hiện có vẫn còn.
         expect(find.text('Sắp xếp:'), findsOneWidget);
         if (wide) {
@@ -267,7 +268,8 @@ void main() {
           expect(find.byTooltip('Xóa'), findsNWidgets(2));
         } else {
           expect(table, findsNothing);
-          expect(find.text('Mã: 10'), findsOneWidget);
+          // Không hiện mã nội bộ.
+          expect(find.text('Mã: 10'), findsNothing);
         }
         expect(tester.takeException(), isNull);
       });
@@ -315,7 +317,8 @@ void main() {
         );
         expect(tester.takeException(), isNull);
         expect(find.text('2026-2027'), findsOneWidget);
-        expect(find.text('Mã: 1'), findsOneWidget);
+        // Không hiện mã nội bộ.
+        expect(find.text('Mã: 1'), findsNothing);
         expect(find.byType(Card), findsWidgets);
         expect(find.byKey(const ValueKey('catalog-table-years')), findsNothing);
         expect(find.text('Thêm mới'), findsOneWidget);
