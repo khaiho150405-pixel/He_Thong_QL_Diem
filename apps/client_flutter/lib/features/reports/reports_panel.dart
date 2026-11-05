@@ -234,7 +234,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
   Widget _stats(GradebookSummaryDto data) {
     final cards = <Widget>[
       StatCard(
-        title: 'Sĩ số học sinh',
+        title: 'HS đã tổng kết',
         value: '${data.students}',
         icon: Icons.people_alt_outlined,
       ),

@@ -11,6 +11,7 @@ import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../authentication/session.dart';
+import '../gradebooks/adjustments_screen.dart' show formatAdjustmentDateTime;
 import '../school_profile/school_profile.dart';
 
 /// Màu và nhãn của mã xếp loại do backend trả về. Chỉ ánh xạ theo MÃ, không
@@ -842,7 +843,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                         if (items[i].calculatedAt != null) ...[
                           const SizedBox(height: AppSpacing.md),
                           Text(
-                            'Đã chốt & tính ĐTB lúc ${items[i].calculatedAt!.toLocal()}',
+                            'Đã chốt & tính ĐTB lúc ${formatAdjustmentDateTime(items[i].calculatedAt!)}',
                             style: theme.textTheme.bodySmall,
                           ),
                         ],

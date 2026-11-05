@@ -8,14 +8,11 @@ import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../academic_catalog/semester_deadlines_repository.dart'
     show apiErrorCode;
+import '../../core/date_format.dart';
 import '../authentication/session.dart';
 import 'adjustments_repository.dart';
 
-String formatAdjustmentDateTime(DateTime dt) {
-  final d = dt.toLocal();
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${two(d.day)}/${two(d.month)}/${d.year} ${two(d.hour)}:${two(d.minute)}';
-}
+String formatAdjustmentDateTime(DateTime dt) => formatDateTimeVi(dt);
 
 Widget adjustmentStatusBadge(AdjustmentDtoStatusEnum status) {
   return switch (status) {
@@ -98,9 +95,7 @@ class _AdjustmentDetailDialogState
           .approve(adjId: adj.id, expectedVersion: adj.version);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Đã duyệt phiếu điều chỉnh #${adj.id} thành công.'),
-        ),
+        SnackBar(content: const Text('Đã duyệt phiếu điều chỉnh thành công.')),
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -146,7 +141,12 @@ class _AdjustmentDetailDialogState
                 maxLength: 500,
                 maxLines: 3,
                 key: const ValueKey('adjustment-reject-reason-input'),
-                onChanged: (val) => reason = val,
+                onChanged: (val) {
+                  reason = val;
+                  if (error != null && val.trim().isNotEmpty) {
+                    setDialogState(() => error = null);
+                  }
+                },
                 decoration: InputDecoration(
                   labelText: 'Lý do từ chối *',
                   hintText: 'Nhập lý do từ chối phiếu...',
@@ -171,7 +171,7 @@ class _AdjustmentDetailDialogState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đã từ chối phiếu điều chỉnh #${adj.id}.')),
+        const SnackBar(content: Text('Đã từ chối phiếu điều chỉnh.')),
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -279,7 +279,7 @@ class _AdjustmentDetailDialogState
                     Row(
                       children: [
                         Text(
-                          'Phiếu #${adj.id}',
+                          '${adj.className} · ${adj.subjectName}',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: t.ink,

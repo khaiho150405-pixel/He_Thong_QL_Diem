@@ -7,9 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_controls.dart';
+import '../../app/widgets/app_list_footer.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
+import '../../core/text_search.dart';
 import '../academic_catalog/academic_year_scope.dart';
 import '../authentication/session.dart';
 import '../gradebooks/gradebook_status.dart';
@@ -45,7 +47,7 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   int _listPage = 0;
-  static const int _listPageSize = 20;
+  int _listPageSize = appDefaultPageSize;
   bool _mobileFiltersOpen = false;
   bool _exporting = false;
 
@@ -90,19 +92,15 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
   }
 
   List<GradebookDto> _filtered(List<GradebookDto> books) {
-    final query = _searchQuery.trim().toLowerCase();
     return books.where((b) {
       if (_classId != null && b.classId != _classId) return false;
       if (_subjectId != null && b.subjectId != _subjectId) return false;
       if (_termId != null && b.termId != _termId) return false;
-      if (query.isNotEmpty) {
-        final match =
-            b.className.toLowerCase().contains(query) ||
-            b.subjectName.toLowerCase().contains(query) ||
-            b.termName.toLowerCase().contains(query);
-        if (!match) return false;
-      }
-      return true;
+      return matchesSearch(_searchQuery, [
+        b.className,
+        b.subjectName,
+        b.termName,
+      ]);
     }).toList();
   }
 
@@ -515,52 +513,6 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
     );
   }
 
-  Widget _listPagination(BuildContext context, int totalItems) {
-    final t = context.tokens;
-    final totalPages = max(1, (totalItems / _listPageSize).ceil());
-    final start = totalItems == 0 ? 0 : _listPage * _listPageSize + 1;
-    final end = min((_listPage + 1) * _listPageSize, totalItems);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Hiển thị $start–$end / $totalItems bảng điểm',
-            style: TextStyle(color: t.ink3, fontSize: 13),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                tooltip: 'Trang trước',
-                onPressed: _listPage > 0
-                    ? () => setState(() => _listPage--)
-                    : null,
-              ),
-              Text(
-                'Trang ${_listPage + 1} / $totalPages',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: t.ink,
-                  fontSize: 13,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                tooltip: 'Trang sau',
-                onPressed: _listPage < totalPages - 1
-                    ? () => setState(() => _listPage++)
-                    : null,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _detailHeader(BuildContext context, GradebookDto book) {
     final t = context.tokens;
     final theme = Theme.of(context);
@@ -752,8 +704,18 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
                           )
                         else ...[
                           _gradebookListTable(context, pagedBooks, isMobile),
-                          if (filtered.length > _listPageSize)
-                            _listPagination(context, filtered.length),
+                          AppListFooter(
+                            total: filtered.length,
+                            page: _listPage + 1,
+                            pageSize: _listPageSize,
+                            itemLabel: 'bảng điểm',
+                            onPageChanged: (p) =>
+                                setState(() => _listPage = p - 1),
+                            onPageSizeChanged: (s) => setState(() {
+                              _listPageSize = s;
+                              _listPage = 0;
+                            }),
+                          ),
                         ],
                       ],
                     );

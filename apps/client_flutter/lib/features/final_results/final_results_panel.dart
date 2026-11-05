@@ -9,7 +9,9 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/app_dialog.dart';
+import '../../app/widgets/app_list_footer.dart';
 import '../../app/widgets/empty_state.dart';
+import '../../core/text_search.dart';
 import '../authentication/session.dart';
 import '../gradebooks/repository.dart';
 import 'repository.dart';
@@ -66,7 +68,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
   _ResultGroup _activeGroup = _ResultGroup.all;
   _ResultSort _sort = _ResultSort.sttAsc;
   int _page = 0;
-  static const int _pageSize = 25;
+  int _pageSize = appDefaultPageSize;
   bool _mobileFiltersOpen = false;
 
   bool get teacher => ref.read(sessionProvider)?.role.value == 'GIAO_VIEN';
@@ -591,10 +593,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
               item.studentName,
               style: TextStyle(fontWeight: FontWeight.w600, color: t.ink),
             ),
-            subtitle: Text(
-              'Học sinh #${item.studentId}',
-              style: TextStyle(color: t.ink3, fontSize: 12),
-            ),
             trailing: const AppBadge(
               'Miễn môn',
               tone: AppBadgeTone.neutral,
@@ -650,10 +648,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                               fontWeight: FontWeight.w600,
                               color: t.ink,
                             ),
-                          ),
-                          Text(
-                            'Học sinh #${item.studentId}',
-                            style: TextStyle(color: t.ink3, fontSize: 12),
                           ),
                         ],
                       ),
@@ -973,50 +967,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
     );
   }
 
-  Widget _pagination(BuildContext context, int totalItems) {
-    final t = context.tokens;
-    final totalPages = max(1, (totalItems / _pageSize).ceil());
-    final start = totalItems == 0 ? 0 : _page * _pageSize + 1;
-    final end = min((_page + 1) * _pageSize, totalItems);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Hiển thị $start–$end / $totalItems học sinh',
-            style: TextStyle(color: t.ink3, fontSize: 13),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                tooltip: 'Trang trước',
-                onPressed: _page > 0 ? () => setState(() => _page--) : null,
-              ),
-              Text(
-                'Trang ${_page + 1} / $totalPages',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: t.ink,
-                  fontSize: 13,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                tooltip: 'Trang sau',
-                onPressed: _page < totalPages - 1
-                    ? () => setState(() => _page++)
-                    : null,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _summaryCard(BuildContext context, CalculateFinalResultsDto summary) {
     final t = context.tokens;
     final theme = Theme.of(context);
@@ -1173,10 +1123,8 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                         : const SizedBox.shrink();
 
                     // Lọc và sắp xếp nhóm "Tất cả"
-                    final query = _searchQuery.trim().toLowerCase();
                     final filteredAll = rawItems.where((item) {
-                      if (query.isNotEmpty &&
-                          !item.studentName.toLowerCase().contains(query)) {
+                      if (!matchesSearch(_searchQuery, [item.studentName])) {
                         return false;
                       }
                       if (_classificationFilter != null &&
@@ -1219,8 +1167,17 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                           _skippedList(context, skippedList)
                         else ...[
                           _table(context, pagedItems, sttMap, isMobile),
-                          if (filteredAll.length > _pageSize)
-                            _pagination(context, filteredAll.length),
+                          AppListFooter(
+                            total: filteredAll.length,
+                            page: _page + 1,
+                            pageSize: _pageSize,
+                            itemLabel: 'học sinh',
+                            onPageChanged: (p) => setState(() => _page = p - 1),
+                            onPageSizeChanged: (s) => setState(() {
+                              _pageSize = s;
+                              _page = 0;
+                            }),
+                          ),
                         ],
                       ],
                     );
@@ -1278,6 +1235,19 @@ class _FinalResultHistoryDialog extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                  child: Center(
+                    child: Text(
+                      'Chưa có lịch sử tính điểm cho học sinh này.',
+                      key: const ValueKey('final-result-history-empty'),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: t.ink2,
+                      ),
+                    ),
+                  ),
+                ),
               for (var i = 0; i < items.length; i++) ...[
                 if (i > 0) Divider(color: t.line, height: AppSpacing.xxl),
                 _historyEntry(context, items[i]),
@@ -1318,8 +1288,7 @@ class _FinalResultHistoryDialog extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.xxs),
         Text(
-          'Người tính #${item.calculatorId} · '
-          '${_formatDateTime(item.calculatedAt)}',
+          'Tính lúc ${_formatDateTime(item.calculatedAt)}',
           style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
         ),
       ],

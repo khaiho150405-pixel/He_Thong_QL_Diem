@@ -29,6 +29,15 @@ import 'gradebook_status.dart';
 import 'widgets/grade_cell.dart';
 import 'repository.dart';
 
+/// Chuẩn hóa điểm gõ tay: "8,5" → "8.5", "9" → "9.0", "7." → "7.0".
+/// Chỉ đổi cách viết; giá trị cuối vẫn được kiểm 0.0–10.0 (bước 0.1) ở API và DB.
+String normalizeGradeText(String input) {
+  final value = input.trim().replaceAll(',', '.');
+  if (RegExp(r'^\d{1,2}$').hasMatch(value)) return '$value.0';
+  if (RegExp(r'^\d{1,2}\.$').hasMatch(value)) return '${value}0';
+  return value;
+}
+
 class GradebookScreen extends ConsumerStatefulWidget {
   const GradebookScreen({super.key, required this.bookId});
 
@@ -52,12 +61,22 @@ class _GradebookScreenState extends ConsumerState<GradebookScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant GradebookScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Đổi sang bảng điểm khác qua địa chỉ hoặc nút Back/Forward: tải lại dữ liệu,
+    // nếu không màn hình vẫn hiện bảng điểm cũ dưới địa chỉ mới.
+    if (oldWidget.bookId != widget.bookId) {
+      setState(reload);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => FutureBuilder<CellsResponseDto>(
     future: data,
     builder: (context, snapshot) {
       if (snapshot.connectionState != ConnectionState.done) {
         return AppScaffold(
-          title: 'Bảng điểm #${widget.bookId}',
+          title: 'Bảng điểm',
           currentPath: '/gradebooks',
           showBackButton: true,
           onBack: () => context.go('/gradebooks'),
@@ -66,7 +85,7 @@ class _GradebookScreenState extends ConsumerState<GradebookScreen> {
       }
       if (snapshot.hasError) {
         return AppScaffold(
-          title: 'Bảng điểm #${widget.bookId}',
+          title: 'Bảng điểm',
           currentPath: '/gradebooks',
           showBackButton: true,
           onBack: () => context.go('/gradebooks'),
@@ -337,7 +356,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
   }
 
   String? validateGrade(String? input) {
-    final value = input?.trim() ?? '';
+    final value = normalizeGradeText(input ?? '');
     if (value.isEmpty) return null;
     if (!RegExp(r'^(?:[0-9]\.[0-9]|10\.0)$').hasMatch(value)) {
       return 'Dùng 0.0–10.0';
@@ -345,11 +364,16 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     return null;
   }
 
+  /// Giá trị gửi lên API của một ô (null = để trống).
+  String? gradeValueOf(String cellId) {
+    final text = normalizeGradeText(controllers[cellId]?.text ?? '');
+    return text.isEmpty ? null : text;
+  }
+
   List<GradeCellDto> changedCells() => widget.data.items.where((cell) {
     if (cell.openForInput == false || cell.columnLocked == true) return false;
     if (cell.status.value == 'MIEN' || cell.active == false) return false;
-    final text = controllers[cell.id]?.text.trim() ?? '';
-    return (text.isEmpty ? null : text) != cell.value;
+    return gradeValueOf(cell.id) != cell.value;
   }).toList();
 
   Future<String?> askReason(int count) async {
@@ -375,7 +399,13 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             autofocus: true,
             maxLength: 500,
             maxLines: 3,
-            onChanged: (value) => reason = value,
+            onChanged: (value) {
+              reason = value;
+              // Gõ lại thì bỏ thông báo lỗi cũ ("Cần nhập lý do.").
+              if (error != null && value.trim().isNotEmpty) {
+                setDialogState(() => error = null);
+              }
+            },
             decoration: InputDecoration(
               labelText: 'Lý do thay đổi',
               hintText: 'Ví dụ: Nhập điểm kiểm tra giữa kỳ',
@@ -391,7 +421,12 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
 
   Future<void> save() async {
     setState(() => conflict = false);
-    if (!(formKey.currentState?.validate() ?? false)) return;
+    if (!(formKey.currentState?.validate() ?? false)) {
+      showMessage(
+        'Có ô điểm không hợp lệ (dùng 0.0–10.0). Hãy sửa các ô màu đỏ rồi lưu lại.',
+      );
+      return;
+    }
     final changed = changedCells();
     if (changed.isEmpty) {
       showMessage('Chưa có ô điểm nào thay đổi.');
@@ -413,9 +448,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 .map(
                   (cell) => GradeChangeInput(
                     cellId: cell.id,
-                    value: controllers[cell.id]!.text.trim().isEmpty
-                        ? null
-                        : controllers[cell.id]!.text.trim(),
+                    value: gradeValueOf(cell.id),
                     reason: reason,
                   ),
                 )
@@ -469,9 +502,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         .map(
                           (cell) => GradeChangeInput(
                             cellId: cell.id,
-                            value: controllers[cell.id]!.text.trim().isEmpty
-                                ? null
-                                : controllers[cell.id]!.text.trim(),
+                            value: gradeValueOf(cell.id),
                             reason: reason,
                           ),
                         )
@@ -531,6 +562,28 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Hỏi lại khi rời màn bảng điểm mà còn ô điểm đã sửa nhưng chưa lưu.
+  Future<bool> confirmLeave() async {
+    final pending = changedCells().length;
+    if (pending == 0) return true;
+    final leave = await showAppDialog<bool>(
+      context: context,
+      builder: (ctx) => AppDialog(
+        title: 'Bỏ các thay đổi chưa lưu?',
+        confirmLabel: 'Rời đi',
+        cancelLabel: 'Ở lại',
+        danger: true,
+        onConfirm: () => Navigator.pop(ctx, true),
+        onCancel: () => Navigator.pop(ctx, false),
+        child: Text(
+          'Có $pending ô điểm đã sửa nhưng chưa lưu. Nếu rời đi, các thay đổi này sẽ mất.',
+          style: const TextStyle(fontSize: 14),
+        ),
+      ),
+    );
+    return leave == true;
   }
 
   Future<void> showAllHistory() async {
@@ -820,7 +873,12 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 '${widget.data.book.className} · ${widget.data.book.subjectName}',
             currentPath: '/gradebooks',
             showBackButton: true,
-            onBack: () => context.go('/gradebooks'),
+            onBack: () async {
+              if (await confirmLeave() && context.mounted) {
+                context.go('/gradebooks');
+              }
+            },
+            onBeforeLeave: confirmLeave,
             titleWidget: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -834,34 +892,12 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        widget.data.book.termName,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: context.tokens.ink2,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      ' · ',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.tokens.ink2,
-                      ),
-                    ),
-                    Flexible(
-                      child: Text(
-                        'Phiên bản ${widget.data.book.version}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: context.tokens.ink2,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                Text(
+                  widget.data.book.termName,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: context.tokens.ink2),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -2089,7 +2125,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     }
 
     final isEnabled = editable && cell.active && !isLocked && !isPending;
-    final currentText = controllers[cell.id]!.text.trim();
+    final currentText = normalizeGradeText(controllers[cell.id]!.text);
     final isChanged =
         isEnabled && (currentText.isEmpty ? null : currentText) != cell.value;
     final isInvalid = isEnabled && validateGrade(currentText) != null;
@@ -2356,7 +2392,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 setDialogState(() => error = gradeErr);
                 return;
               }
-              Navigator.pop(ctx, val);
+              Navigator.pop(ctx, normalizeGradeText(val));
             }
           },
           onCancel: () => Navigator.pop(ctx),
@@ -2394,7 +2430,10 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                     hintText: 'Ví dụ: 8.5',
                     errorText: error,
                   ),
-                  onChanged: (v) => enteredValue = v,
+                  onChanged: (v) {
+                    enteredValue = v;
+                    if (error != null) setDialogState(() => error = null);
+                  },
                 ),
             ],
           ),
@@ -2655,7 +2694,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       );
     }
 
-    final currentText = controllers[cell.id]!.text.trim();
+    final currentText = normalizeGradeText(controllers[cell.id]!.text);
     final invalidGrade =
         currentText.isEmpty || validateGrade(currentText) != null;
     return GradeCellFrame(
@@ -2678,7 +2717,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         onChanged: (val) {
           final v = val.trim();
           draft.newExempt = false;
-          draft.newValue = v.isEmpty ? null : v;
+          draft.newValue = v.isEmpty ? null : normalizeGradeText(v);
           setState(() {});
         },
       ),
@@ -2780,7 +2819,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                               Row(
                                 children: [
                                   Text(
-                                    'Phiếu #${adj.id}',
+                                    'Phiếu điều chỉnh',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,

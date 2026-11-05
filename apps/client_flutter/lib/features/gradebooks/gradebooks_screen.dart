@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../../core/progressive_loader.dart';
+import '../../core/text_search.dart';
 import '../academic_catalog/academic_year_scope.dart';
 import '../academic_catalog/repository.dart';
 import '../authentication/session.dart';
@@ -488,20 +489,12 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
                             book.status.value != _filterStatus) {
                           return false;
                         }
-                        if (_searchQuery.isNotEmpty) {
-                          final q = _searchQuery.toLowerCase();
-                          final matchClass = book.className
-                              .toLowerCase()
-                              .contains(q);
-                          final matchSubject = book.subjectName
-                              .toLowerCase()
-                              .contains(q);
-                          final matchTerm = book.termName
-                              .toLowerCase()
-                              .contains(q);
-                          if (!matchClass && !matchSubject && !matchTerm) {
-                            return false;
-                          }
+                        if (!matchesSearch(_searchQuery, [
+                          book.className,
+                          book.subjectName,
+                          book.termName,
+                        ])) {
+                          return false;
                         }
                         return true;
                       }).toList();

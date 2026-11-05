@@ -9,6 +9,7 @@ import 'package:client_flutter/app/theme_mode.dart';
 import 'package:client_flutter/app/design_tokens.dart';
 import 'package:client_flutter/app/theme.dart';
 import 'package:client_flutter/app/widgets/app_badge.dart';
+import 'package:client_flutter/core/date_format.dart';
 import 'package:client_flutter/features/authentication/session.dart';
 import 'package:client_flutter/features/gradebooks/excel_import_dialog.dart';
 import 'package:client_flutter/features/gradebooks/grade_deadlines_panel.dart';
@@ -373,14 +374,11 @@ void main() {
         final strip = find.byKey(const ValueKey('gradebook-close-time'));
         expect(strip, findsOneWidget);
         final local = DateTime.parse('2026-10-25T10:30:00.000Z').toLocal();
-        final loc = MaterialLocalizations.of(
-          tester.element(find.byKey(const ValueKey('gradebook-status-strip'))),
-        );
-        final expected =
-            'Khóa lúc ${loc.formatShortDate(local)} '
-            '${loc.formatTimeOfDay(TimeOfDay.fromDateTime(local), alwaysUse24HourFormat: true)}';
+        final expected = 'Khóa lúc ${formatDateTimeVi(local)}';
         expect(find.text(expected), findsOneWidget);
-        expect(find.text('Phiên bản 2'), findsOneWidget);
+        // Định dạng dd/MM/yyyy HH:mm, không dùng "thg" của Material.
+        expect(find.textContaining('thg'), findsNothing);
+        expect(find.textContaining('Phiên bản'), findsNothing);
         expect(find.text('Lưu thay đổi'), findsOneWidget);
         expect(
           find.byKey(const ValueKey('gradebook-readonly-notice')),

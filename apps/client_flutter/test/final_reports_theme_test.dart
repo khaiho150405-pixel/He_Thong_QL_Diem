@@ -290,7 +290,7 @@ void main() {
         expect(find.text('Xuất Excel'), findsOneWidget);
         expect(find.byType(StatCard), findsNWidgets(6));
         for (final entry in {
-          'Sĩ số học sinh': '40',
+          'HS đã tổng kết': '40',
           'ĐTB lớp': '7.2',
           'Cao nhất': '9.8',
           'Thấp nhất': '2.5',

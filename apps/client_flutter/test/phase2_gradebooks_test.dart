@@ -245,7 +245,7 @@ void main() {
     expect((changes.first as Map)['cellId'], '9001');
     expect((changes.first as Map)['value'], '0.0');
     expect((changes.first as Map)['reason'], 'Nhập điểm kiểm tra');
-    expect(find.text('Phiên bản 3'), findsOneWidget);
+    expect(find.textContaining('Phiên bản'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -277,6 +277,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('rời bảng điểm khi còn ô chưa lưu thì hỏi lại', (tester) async {
+    final server = GradebookFakeServer();
+    final container = await pumpGradebooks(tester, server, width: 1280);
+    addTearDown(container.dispose);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.tap(find.textContaining('10A1'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('grade-9001')), '8,5');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Quay lại'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bỏ các thay đổi chưa lưu?'), findsOneWidget);
+    expect(find.textContaining('1 ô điểm đã sửa'), findsOneWidget);
+
+    // Ở lại: vẫn trên bảng điểm, giá trị gõ được giữ nguyên.
+    await tester.tap(find.text('Ở lại'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bỏ các thay đổi chưa lưu?'), findsNothing);
+    expect(find.byKey(const ValueKey('grade-9001')), findsOneWidget);
+
+    // Rời đi: về danh sách bảng điểm.
+    await tester.tap(find.byTooltip('Quay lại'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rời đi'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('grade-9001')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rời bảng điểm qua thanh bên: Rời đi thì điều hướng', (
+    tester,
+  ) async {
+    final server = GradebookFakeServer();
+    final container = await pumpGradebooks(tester, server, width: 1280);
+    addTearDown(container.dispose);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.tap(find.textContaining('10A1'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('grade-9001')), '8,5');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Bảng điểm').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Bỏ các thay đổi chưa lưu?'), findsOneWidget);
+    await tester.tap(find.text('Rời đi'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('grade-9001')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('network retry reuses the idempotency key for the same batch', (
     tester,
   ) async {
@@ -303,7 +358,7 @@ void main() {
 
     expect(server.batchKeys, hasLength(2));
     expect(server.batchKeys[1], server.batchKeys[0]);
-    expect(find.text('Phiên bản 3'), findsOneWidget);
+    expect(find.textContaining('Phiên bản'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -318,7 +373,7 @@ void main() {
 
     await tester.tap(find.textContaining('10A1'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byTooltip('Thao tác khác'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Lịch sử cập nhật'));
     await tester.pumpAndSettle();
@@ -329,11 +384,11 @@ void main() {
     await tester.tap(find.text('Đóng'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(find.byTooltip('Thao tác khác'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Đồng bộ sĩ số'));
     await tester.pumpAndSettle();
-    expect(find.text('Phiên bản 3'), findsOneWidget);
+    expect(find.textContaining('Phiên bản'), findsNothing);
 
     await tester.tap(find.text('Báo cáo & Tiện ích'));
     await tester.pumpAndSettle();
@@ -341,7 +396,10 @@ void main() {
     expect(find.text('Lịch nhập điểm của nhà trường'), findsOneWidget);
     server.locked = true;
     server.version++;
-    await tester.tap(find.byTooltip('Tải lại').first);
+    // Màn bảng điểm không còn nút tải lại riêng: đồng bộ sĩ số cũng tải lại dữ liệu.
+    await tester.tap(find.byTooltip('Thao tác khác'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Đồng bộ sĩ số'));
     await tester.pumpAndSettle();
     expect(server.locked, true);
     expect(find.text('Đã khóa'), findsWidgets);

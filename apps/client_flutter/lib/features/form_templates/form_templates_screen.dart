@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/design_tokens.dart';
+import '../../app/widgets/app_list_footer.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
@@ -64,15 +65,25 @@ class FormTemplatesScreen extends ConsumerWidget {
   }
 }
 
-class _Content extends StatelessWidget {
+class _Content extends StatefulWidget {
   const _Content({required this.items, required this.onCreate});
 
   final List<TemplateSummaryDto> items;
   final VoidCallback onCreate;
 
   @override
+  State<_Content> createState() => _ContentState();
+}
+
+class _ContentState extends State<_Content> {
+  int _page = 1;
+  int _pageSize = appDefaultPageSize;
+
+  @override
   Widget build(BuildContext context) {
     final t = context.tokens;
+    final onCreate = widget.onCreate;
+    final shown = pageSlice(widget.items, _page, _pageSize);
     return ListView(
       padding: templatePagePadding(context),
       children: [
@@ -101,11 +112,22 @@ class _Content extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
-        for (final item in items)
+        for (final item in shown)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
             child: _TemplateTile(item: item),
           ),
+        AppListFooter(
+          total: widget.items.length,
+          page: _page,
+          pageSize: _pageSize,
+          itemLabel: 'mẫu',
+          onPageChanged: (p) => setState(() => _page = p),
+          onPageSizeChanged: (s) => setState(() {
+            _pageSize = s;
+            _page = 1;
+          }),
+        ),
       ],
     );
   }

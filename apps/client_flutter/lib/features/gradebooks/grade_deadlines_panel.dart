@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
+import '../../core/date_format.dart';
 import '../academic_catalog/semester_deadlines_repository.dart'
     show deadlineErrorMessage;
 import '../authentication/session.dart';
@@ -11,8 +12,7 @@ import '../authentication/session.dart';
 String deadlineLabel(BuildContext context, String? value) {
   final date = value == null ? null : DateTime.tryParse(value)?.toLocal();
   if (date == null) return 'Chưa đặt lịch';
-  final local = MaterialLocalizations.of(context);
-  return '${local.formatShortDate(date)} ${local.formatTimeOfDay(TimeOfDay.fromDateTime(date), alwaysUse24HourFormat: true)}';
+  return formatDateTimeVi(date);
 }
 
 Widget _deadlineSourceBadge(GradeCellDtoDeadlineSourceEnum? source) {
