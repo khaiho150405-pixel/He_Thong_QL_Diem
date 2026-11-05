@@ -19,7 +19,7 @@ class AppConfig {
   /// Tự động xác định API Base URL phù hợp:
   /// - Khi mở ở tên miền https://eduscore.id.vn -> tự động trỏ về https://api.eduscore.id.vn
   /// - Khi mở ở localhost / 127.0.0.1 -> tự động trỏ về http://localhost:3000
-  /// - Khi mở qua mạng LAN (http://192.168.x.x:8080) -> trỏ về http://<host>:3000
+  /// - Khi mở qua mạng LAN (http://192.168.x.x:8080) -> trỏ về `http://<host>:3000`
   /// - Không bao giờ để lỗi Mixed Content (trang HTTPS gọi API HTTP) làm trắng màn hình
   static String get apiBaseUrl {
     if (kIsWeb) {

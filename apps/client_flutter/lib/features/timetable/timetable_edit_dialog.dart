@@ -141,6 +141,7 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
       onCancel: _saving ? () {} : null,
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

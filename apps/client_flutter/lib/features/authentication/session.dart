@@ -196,6 +196,15 @@ class SessionController extends StateNotifier<SessionDto?> {
   }
 }
 
+/// Máy chủ trả câu chung chung (hoặc rỗng) khi không chỉ rõ nguyên nhân.
+bool _isGenericServerMessage(String? message) {
+  final normalized = message?.trim().toLowerCase() ?? '';
+  return normalized.isEmpty ||
+      normalized == 'yêu cầu không hợp lệ.' ||
+      normalized == 'bad request' ||
+      normalized == 'conflict';
+}
+
 String errorMessage(Object error) {
   if (error is DioException) {
     final responseData = error.response?.data;
@@ -203,16 +212,19 @@ String errorMessage(Object error) {
         ? responseData['message']?.toString()
         : null;
     return switch (error.response?.statusCode) {
+      // Máy chủ trả câu chung "Yêu cầu không hợp lệ." khi không chỉ rõ trường nào:
+      // dùng gợi ý cụ thể hơn thay vì hiện nguyên câu đó.
       400 =>
-        serverMessage ??
-            'Thông tin chưa hợp lệ. Kiểm tra các trường và khoảng ngày.',
+        _isGenericServerMessage(serverMessage)
+            ? 'Thông tin chưa hợp lệ. Kiểm tra các trường và khoảng ngày.'
+            : serverMessage!,
       401 =>
         'Thông tin đăng nhập không đúng, tài khoản tạm khóa hoặc phiên đã hết hạn.',
       403 => serverMessage ?? 'Bạn không có quyền thực hiện thao tác này.',
       409 =>
-        serverMessage?.isNotEmpty == true
-            ? serverMessage!
-            : 'Dữ liệu trùng, đã được sử dụng hoặc vừa thay đổi. Tải lại và kiểm tra.',
+        _isGenericServerMessage(serverMessage)
+            ? 'Dữ liệu trùng, đang được sử dụng hoặc vừa thay đổi (ví dụ môn đã có bảng điểm thì không đổi được thành phần điểm). Kiểm tra lại rồi thử lại.'
+            : serverMessage!,
       429 => 'Bạn thử quá nhiều lần. Vui lòng chờ một phút.',
       final code when code != null && code >= 500 =>
         'Máy chủ đang bận hoặc đang khởi động lại (mã $code). Vui lòng thử lại sau ít phút.',

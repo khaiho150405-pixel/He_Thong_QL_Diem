@@ -15,6 +15,25 @@ import 'fields.dart';
 import 'repository.dart';
 import 'semester_deadlines_repository.dart';
 
+/// Giá trị tối đa của các trường số nguyên (khớp `apps/api/src/modules/*`);
+/// trường không có trong bảng chỉ yêu cầu số nguyên từ 1.
+const _intFieldMax = <String, int>{
+  'khoi': 12,
+  'so_tiet_tuan': 50,
+  'thu_tu_hien_thi': 100,
+  'thu_tu': 3,
+};
+
+/// Chuẩn hóa hệ số nhập tay thành dạng máy chủ yêu cầu `d.dd` (0.01–9.99):
+/// "2" → "2.00", "1,5" → "1.50". Trả null khi không hợp lệ.
+String? normalizeCoefficientText(String input) {
+  final value = double.tryParse(input.trim().replaceAll(',', '.'));
+  if (value == null || value < 0.01 || value >= 10) return null;
+  final text = value.toStringAsFixed(2);
+  // 9.995 làm tròn thành "10.00" nên loại.
+  return text.length == 4 ? text : null;
+}
+
 class EditDialog extends ConsumerStatefulWidget {
   const EditDialog({super.key, required this.spec, this.row});
   final ResourceSpec spec;
@@ -30,6 +49,10 @@ class _EditDialogState extends ConsumerState<EditDialog> {
   final choices = <String, List<Json>>{};
   bool loading = true, busy = false;
   String? error;
+
+  /// Lỗi hiện tại do tải danh mục liên kết thất bại (mới có nút "Tải lại");
+  /// lỗi khi lưu (dữ liệu sai, trùng...) thì không có nút này.
+  bool loadFailed = false;
   bool get editable => ref.read(sessionProvider)?.role.value == 'QUAN_TRI_VIEN';
   List<FormFieldSpec> get fields => widget.spec.fields
       .where(
@@ -117,21 +140,32 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     setState(() {
       loading = true;
       error = null;
+      loadFailed = false;
     });
     try {
       if (editable) {
-        for (final reference
-            in fields.map((f) => f.reference).whereType<String>().toSet()) {
-          final rows = <Json>[];
-          String? cursor;
-          do {
-            final page = await ref
-                .read(catalogRepositoryProvider)
-                .list(reference, cursor: cursor);
-            rows.addAll(page.items);
-            cursor = page.nextCursor;
-          } while (cursor != null);
-          choices[reference] = rows;
+        // Các danh mục liên kết độc lập nhau nên tải song song (trước đây tuần tự nên
+        // hộp thoại mở chậm khi có nhiều tài khoản/lớp).
+        final references = fields
+            .map((f) => f.reference)
+            .whereType<String>()
+            .toSet();
+        final loaded = await Future.wait(
+          references.map((reference) async {
+            final rows = <Json>[];
+            String? cursor;
+            do {
+              final page = await ref
+                  .read(catalogRepositoryProvider)
+                  .list(reference, cursor: cursor);
+              rows.addAll(page.items);
+              cursor = page.nextCursor;
+            } while (cursor != null);
+            return MapEntry(reference, rows);
+          }),
+        );
+        for (final entry in loaded) {
+          choices[entry.key] = entry.value;
         }
 
         // Preload teachers to prevent duplicate teacher creation
@@ -233,6 +267,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
       }
     } catch (e) {
       error = errorMessage(e);
+      loadFailed = true;
     }
     if (mounted) setState(() => loading = false);
   }
@@ -253,6 +288,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         },
         child: Form(
           key: accountForm,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -470,6 +506,8 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           ? null
           : f.kind == 'int'
           ? int.parse(text)
+          : f.kind == 'decimal'
+          ? (normalizeCoefficientText(text) ?? text)
           : text;
     }
 
@@ -1082,8 +1120,17 @@ class _EditDialogState extends ConsumerState<EditDialog> {
               ? null
               : 'Nhập ${f.label.toLowerCase()}';
         }
-        if (f.kind == 'int' && int.tryParse(value) == null) {
-          return 'Nhập số nguyên';
+        if (f.kind == 'int') {
+          final n = int.tryParse(value);
+          if (n == null) return 'Nhập số nguyên';
+          // Cùng giới hạn với API (số nguyên từ 1 đến mức tối đa của từng trường).
+          final max = _intFieldMax[f.key];
+          if (n < 1 || (max != null && n > max)) {
+            return max == null ? 'Nhập số từ 1' : 'Nhập số từ 1 đến $max';
+          }
+        }
+        if (f.kind == 'decimal' && normalizeCoefficientText(value) == null) {
+          return 'Nhập từ 0.01 đến 9.99 (ví dụ 1.00)';
         }
         if (f.kind == 'password' && value.length < 12) {
           return 'Ít nhất 12 ký tự';
@@ -1131,6 +1178,8 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             )
           : Form(
               key: form,
+              // Sau lần Lưu lỗi đầu tiên, sửa trường nào thì lỗi trường đó tự cập nhật.
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1181,10 +1230,11 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                               style: TextStyle(color: t.bad, fontSize: 13),
                             ),
                           ),
-                          TextButton(
-                            onPressed: busy ? null : loadChoices,
-                            child: const Text('Tải lại'),
-                          ),
+                          if (loadFailed)
+                            TextButton(
+                              onPressed: busy ? null : loadChoices,
+                              child: const Text('Tải lại'),
+                            ),
                         ],
                       ),
                     ),

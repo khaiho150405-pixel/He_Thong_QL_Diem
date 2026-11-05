@@ -259,7 +259,13 @@ void main() {
           ),
           findsOneWidget,
         );
-        expect(find.byTooltip('Đăng xuất'), findsOneWidget);
+        // Đăng xuất nằm trong menu tài khoản (avatar) chứ không còn là nút riêng.
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is Tooltip && (w.message ?? '').startsWith('Tài khoản'),
+          ),
+          findsOneWidget,
+        );
         expect(tester.takeException(), isNull);
 
         await tester.tap(find.byKey(_toggleKey));

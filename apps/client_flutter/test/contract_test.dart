@@ -1,6 +1,6 @@
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:client_flutter/main.dart' as app;
+import 'package:client_flutter/core/config.dart';
 
 void main() {
   test('grade contract preserves bigint strings and nullable decimals', () {
@@ -25,8 +25,10 @@ void main() {
     });
     expect(batch.toJson()['expectedVersion'], 7);
   });
-  test('startup rejects missing environment before rendering login', () {
-    expect(app.main, throwsStateError);
+  test('thiếu cấu hình môi trường thì dùng mặc định, không làm chết app', () {
+    expect(AppConfig.validate, returnsNormally);
+    expect(AppConfig.environment, 'development');
+    expect(AppConfig.apiBaseUrl, 'http://localhost:3000');
   });
   test('generated health and nullable error models round-trip', () {
     final health = HealthDto.fromJson({'status': 'ok'});

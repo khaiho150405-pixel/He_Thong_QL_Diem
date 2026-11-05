@@ -172,16 +172,29 @@ const resources = <ResourceSpec>[
     FormFieldSpec('active', 'Cho phép đăng nhập', 'boolean'),
   ]),
 ];
-String rowLabel(Map<String, dynamic> row) =>
-    (row['label'] ??
-            row['ho_ten'] ??
-            row['ten_lop'] ??
-            row['ten_mon'] ??
-            row['ten_thanh_phan'] ??
-            row['ten'] ??
-            row['username'] ??
-            'Phân công')
-        .toString();
+String rowLabel(Map<String, dynamic> row) {
+  final label = row['label']?.toString();
+  final componentName = row['ten_thanh_phan']?.toString();
+  // Thành phần điểm: máy chủ ghép nhãn theo nhóm hệ số ("Thường xuyên · Toán học")
+  // nên nhiều cột cùng nhóm trùng tên. Thay đoạn đầu bằng tên thành phần
+  // ("ĐĐGtx 1 · Toán học") để phân biệt được từng cột.
+  if (label != null &&
+      componentName != null &&
+      componentName.isNotEmpty &&
+      label.contains(' · ')) {
+    return '$componentName${label.substring(label.indexOf(' · '))}';
+  }
+  return (label ??
+          row['ho_ten'] ??
+          row['ten_lop'] ??
+          row['ten_mon'] ??
+          row['ten_thanh_phan'] ??
+          row['ten'] ??
+          row['username'] ??
+          'Phân công')
+      .toString();
+}
+
 String roleLabel(String role) => switch (role) {
   'QUAN_TRI_VIEN' => 'Quản trị viên',
   'GIAO_VIEN' => 'Giáo viên',

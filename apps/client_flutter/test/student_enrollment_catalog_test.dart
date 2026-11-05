@@ -951,6 +951,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Lịch sử xếp lớp: Nguyễn Văn A'), findsOneWidget);
+      // Chỉ một nút "Đóng" ở chân hộp thoại (không lặp Hủy/Đóng) và ngày dd/MM/yyyy.
+      expect(find.widgetWithText(FilledButton, 'Đóng'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Đóng'), findsNothing);
+      expect(find.textContaining('01/09/2025'), findsWidgets);
+      expect(find.textContaining('2025-09-01'), findsNothing);
       expect(find.text('Đang học'), findsOneWidget);
       expect(find.text('Lên lớp'), findsOneWidget);
       expect(find.text('Lưu ban'), findsOneWidget);

@@ -448,6 +448,17 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         _controller.text = expected;
       }
     }
+    // FormField chỉ đọc initialValue một lần: khi nơi gọi đổi `value` bằng mã
+    // (ví dụ vừa tạo xong tài khoản rồi tự chọn) thì giá trị bên trong Form phải
+    // theo sau, nếu không validator vẫn thấy giá trị cũ và chặn Lưu dù ô đã hiển thị.
+    if (oldWidget.value != widget.value &&
+        widget.fieldState.value != widget.value) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.fieldState.value != widget.value) {
+          widget.fieldState.didChange(widget.value);
+        }
+      });
+    }
   }
 
   @override

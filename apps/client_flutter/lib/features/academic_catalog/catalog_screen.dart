@@ -7,6 +7,7 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_avatar.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_controls.dart';
+import '../../app/widgets/app_date_field.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_list_footer.dart';
 import '../../app/widgets/app_scaffold.dart';
@@ -1808,6 +1809,14 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final isAttending = row['dang_theo_hoc'] == true;
     final classes = (_references['classes'] ?? <Json>[])
         .cast<Map<String, dynamic>>();
+    // Năm học đang xem: dùng để chọn ngày hiệu lực mặc định nằm trong năm học.
+    final viewingYear = ref.read(viewingYearProvider);
+    final yearStart = AppDateField.parseIsoDate(
+      viewingYear?['ngay_bat_dau']?.toString(),
+    );
+    final yearEnd = AppDateField.parseIsoDate(
+      viewingYear?['ngay_ket_thuc']?.toString(),
+    );
 
     return SizedBox(
       width: 40,
@@ -1826,6 +1835,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   student: row,
                   api: ref.read(apiProvider),
                   allClasses: classes,
+                  yearStart: yearStart,
+                  yearEnd: yearEnd,
                 ),
               );
               if (result != null && mounted) {
@@ -1844,6 +1855,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 builder: (ctx) => StudentWithdrawDialog(
                   student: row,
                   api: ref.read(apiProvider),
+                  yearStart: yearStart,
+                  yearEnd: yearEnd,
                 ),
               );
               if (result != null && mounted) {
@@ -1857,6 +1870,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   student: row,
                   api: ref.read(apiProvider),
                   allClasses: classes,
+                  yearStart: yearStart,
+                  yearEnd: yearEnd,
                 ),
               );
               if (result != null && mounted) {
@@ -1947,7 +1962,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           ),
           _CatalogColumn(
             'Ngày sinh',
-            (row) => _textCell(t, row['ngay_sinh']),
+            (row) => _textCell(t, _viDate(row['ngay_sinh'])),
             flex: 2,
           ),
           _CatalogColumn(
@@ -2095,8 +2110,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   /// Dòng phụ của thẻ danh mục: thông tin có nghĩa với người dùng, không hiện mã nội bộ.
   String? _plainSubtitle(Json row) {
     String? range() {
-      final from = row['ngay_bat_dau']?.toString();
-      final to = row['ngay_ket_thuc']?.toString();
+      final from = _viDate(row['ngay_bat_dau']);
+      final to = _viDate(row['ngay_ket_thuc']);
       if (from == null || to == null) return null;
       return '$from – $to';
     }
@@ -2141,7 +2156,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     } else if (isStudent) {
       final attending = row['dang_theo_hoc'] == true;
       final className = _extractClassName(row);
-      final dob = row['ngay_sinh']?.toString();
+      final dob = _viDate(row['ngay_sinh']);
 
       badgeWidget = Wrap(
         spacing: 6,
@@ -2305,3 +2320,11 @@ class _CatalogColumn {
 }
 
 typedef _Stt = ({int? visible, int? classStt, bool classScope, bool show});
+
+/// Ngày `yyyy-MM-dd` từ API → `dd/MM/yyyy` như các ô nhập ngày; giá trị lạ giữ nguyên.
+String? _viDate(Object? value) {
+  final raw = value?.toString().trim();
+  if (raw == null || raw.isEmpty) return null;
+  final parsed = AppDateField.parseIsoDate(raw);
+  return parsed == null ? raw : AppDateField.formatDisplay(parsed);
+}

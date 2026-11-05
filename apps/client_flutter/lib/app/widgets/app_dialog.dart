@@ -21,6 +21,7 @@ class AppDialog extends StatelessWidget {
     this.danger = false,
     this.confirmEnabled = true,
     this.showFooter = true,
+    this.showCancel = true,
     this.maxWidth = 520,
   });
 
@@ -37,6 +38,10 @@ class AppDialog extends StatelessWidget {
   final bool danger;
   final bool confirmEnabled;
   final bool showFooter;
+
+  /// Tắt nút Hủy ở chân hộp thoại (hộp chỉ để xem: một nút "Đóng" là đủ, X ở
+  /// tiêu đề vẫn đóng được).
+  final bool showCancel;
   final double maxWidth;
 
   @override
@@ -135,11 +140,12 @@ class AppDialog extends StatelessWidget {
                         spacing: 10,
                         runSpacing: 10,
                         children: [
-                          OutlinedButton(
-                            key: const ValueKey('app-dialog-cancel'),
-                            onPressed: cancel,
-                            child: Text(cancelLabel),
-                          ),
+                          if (showCancel)
+                            OutlinedButton(
+                              key: const ValueKey('app-dialog-cancel'),
+                              onPressed: cancel,
+                              child: Text(cancelLabel),
+                            ),
                           FilledButton(
                             key: const ValueKey('app-dialog-confirm'),
                             style: confirmStyle,

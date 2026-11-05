@@ -7,15 +7,14 @@ import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
 import '../../app/widgets/app_select_field.dart';
+import '../../core/date_format.dart';
 import 'academic_year_scope.dart';
 import 'repository.dart';
 import 'semester_deadlines_repository.dart';
 
 String formatDeadline(BuildContext context, DateTime? date) {
   if (date == null) return 'Chưa đặt lịch';
-  final local = MaterialLocalizations.of(context);
-  final localDate = date.toLocal();
-  return '${local.formatShortDate(localDate)} ${local.formatTimeOfDay(TimeOfDay.fromDateTime(localDate), alwaysUse24HourFormat: true)}';
+  return formatDateTimeVi(date);
 }
 
 String _deadlineTypeName(SemesterDeadlineDtoTypeEnum type) => switch (type) {
@@ -107,14 +106,6 @@ class _SemesterDeadlinesScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) ref.invalidate(academicYearsProvider);
     });
-    final viewingYear = ref.read(viewingYearProvider);
-    final years = ref.read(academicYearsProvider).valueOrNull ?? const [];
-    final effectiveYearId = _resolveEffectiveYearId(viewingYear, years);
-    _loadSemesters(yearId: effectiveYearId);
-  }
-
-  void _refresh() {
-    ref.invalidate(academicYearsProvider);
     final viewingYear = ref.read(viewingYearProvider);
     final years = ref.read(academicYearsProvider).valueOrNull ?? const [];
     final effectiveYearId = _resolveEffectiveYearId(viewingYear, years);

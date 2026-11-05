@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
+import '../../app/widgets/app_date_field.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_select_field.dart';
 import 'semester_deadlines_repository.dart';
@@ -29,11 +30,34 @@ AppBadgeTone enrollmentStatusTone(EnrollmentDtoStatusEnum status) {
   };
 }
 
+/// `yyyy-MM-dd` từ API → `dd/MM/yyyy` (giá trị lạ giữ nguyên).
+String _viDateText(Object? iso) {
+  final raw = iso?.toString() ?? '';
+  final parsed = AppDateField.parseIsoDate(raw);
+  return parsed == null ? raw : AppDateField.formatDisplay(parsed);
+}
+
 String _formatDate(DateTime dt) {
   final y = dt.year.toString().padLeft(4, '0');
   final m = dt.month.toString().padLeft(2, '0');
   final d = dt.day.toString().padLeft(2, '0');
   return '$y-$m-$d';
+}
+
+/// Ngày hiệu lực mặc định: hôm nay, nhưng kẹp vào khoảng năm học đang xem vì
+/// máy chủ từ chối ngày nằm ngoài năm học (ví dụ xem năm học đã kết thúc).
+DateTime defaultEffectiveDate({
+  DateTime? yearStart,
+  DateTime? yearEnd,
+  DateTime? today,
+}) {
+  var date = today ?? DateTime.now();
+  if (yearEnd != null && date.isAfter(yearEnd)) date = yearEnd;
+  if (yearStart != null && !date.isAfter(yearStart)) {
+    // Phải sau ngày bắt đầu ghi danh nên lấy ngày kế tiếp.
+    date = yearStart.add(const Duration(days: 1));
+  }
+  return date;
 }
 
 /// Hộp thoại Chuyển lớp
@@ -43,11 +67,17 @@ class StudentTransferDialog extends StatefulWidget {
     required this.student,
     required this.api,
     required this.allClasses,
+    this.yearStart,
+    this.yearEnd,
   });
 
   final Map<String, dynamic> student;
   final ApiClientDart api;
   final List<Map<String, dynamic>> allClasses;
+
+  /// Khoảng năm học đang xem (nếu có) để chọn ngày hiệu lực mặc định hợp lệ.
+  final DateTime? yearStart;
+  final DateTime? yearEnd;
 
   @override
   State<StudentTransferDialog> createState() => _StudentTransferDialogState();
@@ -66,7 +96,14 @@ class _StudentTransferDialogState extends State<StudentTransferDialog> {
   @override
   void initState() {
     super.initState();
-    _dateController = TextEditingController(text: _formatDate(DateTime.now()));
+    _dateController = TextEditingController(
+      text: _formatDate(
+        defaultEffectiveDate(
+          yearStart: widget.yearStart,
+          yearEnd: widget.yearEnd,
+        ),
+      ),
+    );
     _reasonController = TextEditingController();
 
     final currentClassId = widget.student['ma_lop'] as num?;
@@ -153,6 +190,7 @@ class _StudentTransferDialogState extends State<StudentTransferDialog> {
       onConfirm: _submit,
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           child: Column(
@@ -208,35 +246,16 @@ class _StudentTransferDialogState extends State<StudentTransferDialog> {
                   validator: (v) => v == null ? 'Vui lòng chọn lớp đích' : null,
                 ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _dateController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Ngày hiệu lực (YYYY-MM-DD)',
-                  suffixIcon: const Icon(
-                    Icons.calendar_today_outlined,
-                    size: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                ),
-                onTap: _busy
-                    ? null
-                    : () async {
-                        final now = DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: now,
-                          firstDate: DateTime(now.year - 5),
-                          lastDate: DateTime(now.year + 5),
-                        );
-                        if (picked != null) {
-                          _dateController.text = _formatDate(picked);
-                        }
-                      },
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Nhập ngày hiệu lực' : null,
+              AppDateField(
+                label: 'Ngày hiệu lực',
+                value: _dateController.text,
+                enabled: !_busy,
+                firstDate: DateTime(DateTime.now().year - 5),
+                lastDate: DateTime(DateTime.now().year + 5),
+                onChanged: (v) => setState(() {
+                  _dateController.text = v ?? '';
+                  _error = null;
+                }),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -275,10 +294,16 @@ class StudentWithdrawDialog extends StatefulWidget {
     super.key,
     required this.student,
     required this.api,
+    this.yearStart,
+    this.yearEnd,
   });
 
   final Map<String, dynamic> student;
   final ApiClientDart api;
+
+  /// Khoảng năm học đang xem (nếu có) để chọn ngày hiệu lực mặc định hợp lệ.
+  final DateTime? yearStart;
+  final DateTime? yearEnd;
 
   @override
   State<StudentWithdrawDialog> createState() => _StudentWithdrawDialogState();
@@ -295,7 +320,14 @@ class _StudentWithdrawDialogState extends State<StudentWithdrawDialog> {
   @override
   void initState() {
     super.initState();
-    _dateController = TextEditingController(text: _formatDate(DateTime.now()));
+    _dateController = TextEditingController(
+      text: _formatDate(
+        defaultEffectiveDate(
+          yearStart: widget.yearStart,
+          yearEnd: widget.yearEnd,
+        ),
+      ),
+    );
     _reasonController = TextEditingController();
   }
 
@@ -356,6 +388,7 @@ class _StudentWithdrawDialogState extends State<StudentWithdrawDialog> {
       onConfirm: _submit,
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           child: Column(
@@ -376,35 +409,16 @@ class _StudentWithdrawDialogState extends State<StudentWithdrawDialog> {
                 ),
                 const SizedBox(height: 16),
               ],
-              TextFormField(
-                controller: _dateController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Ngày hiệu lực (YYYY-MM-DD)',
-                  suffixIcon: const Icon(
-                    Icons.calendar_today_outlined,
-                    size: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                ),
-                onTap: _busy
-                    ? null
-                    : () async {
-                        final now = DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: now,
-                          firstDate: DateTime(now.year - 5),
-                          lastDate: DateTime(now.year + 5),
-                        );
-                        if (picked != null) {
-                          _dateController.text = _formatDate(picked);
-                        }
-                      },
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Nhập ngày hiệu lực' : null,
+              AppDateField(
+                label: 'Ngày hiệu lực',
+                value: _dateController.text,
+                enabled: !_busy,
+                firstDate: DateTime(DateTime.now().year - 5),
+                lastDate: DateTime(DateTime.now().year + 5),
+                onChanged: (v) => setState(() {
+                  _dateController.text = v ?? '';
+                  _error = null;
+                }),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -444,11 +458,17 @@ class StudentReenrollDialog extends StatefulWidget {
     required this.student,
     required this.api,
     required this.allClasses,
+    this.yearStart,
+    this.yearEnd,
   });
 
   final Map<String, dynamic> student;
   final ApiClientDart api;
   final List<Map<String, dynamic>> allClasses;
+
+  /// Khoảng năm học đang xem (nếu có) để chọn ngày hiệu lực mặc định hợp lệ.
+  final DateTime? yearStart;
+  final DateTime? yearEnd;
 
   @override
   State<StudentReenrollDialog> createState() => _StudentReenrollDialogState();
@@ -466,7 +486,14 @@ class _StudentReenrollDialogState extends State<StudentReenrollDialog> {
   @override
   void initState() {
     super.initState();
-    _dateController = TextEditingController(text: _formatDate(DateTime.now()));
+    _dateController = TextEditingController(
+      text: _formatDate(
+        defaultEffectiveDate(
+          yearStart: widget.yearStart,
+          yearEnd: widget.yearEnd,
+        ),
+      ),
+    );
     _reasonController = TextEditingController();
   }
 
@@ -531,6 +558,7 @@ class _StudentReenrollDialogState extends State<StudentReenrollDialog> {
       onConfirm: _submit,
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
           child: Column(
@@ -573,35 +601,16 @@ class _StudentReenrollDialogState extends State<StudentReenrollDialog> {
                     v == null ? 'Vui lòng chọn lớp học lại' : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _dateController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Ngày hiệu lực (YYYY-MM-DD)',
-                  suffixIcon: const Icon(
-                    Icons.calendar_today_outlined,
-                    size: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                ),
-                onTap: _busy
-                    ? null
-                    : () async {
-                        final now = DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: now,
-                          firstDate: DateTime(now.year - 5),
-                          lastDate: DateTime(now.year + 5),
-                        );
-                        if (picked != null) {
-                          _dateController.text = _formatDate(picked);
-                        }
-                      },
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Nhập ngày hiệu lực' : null,
+              AppDateField(
+                label: 'Ngày hiệu lực',
+                value: _dateController.text,
+                enabled: !_busy,
+                firstDate: DateTime(DateTime.now().year - 5),
+                lastDate: DateTime(DateTime.now().year + 5),
+                onChanged: (v) => setState(() {
+                  _dateController.text = v ?? '';
+                  _error = null;
+                }),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -671,8 +680,8 @@ class _StudentEnrollmentHistoryDialogState
 
     return AppDialog(
       title: 'Lịch sử xếp lớp: $studentName',
-      cancelLabel: 'Đóng',
       confirmLabel: 'Đóng',
+      showCancel: false,
       maxWidth: 720,
       showFooter: true,
       onConfirm: () => Navigator.of(context).pop(),
@@ -763,7 +772,7 @@ class _StudentEnrollmentHistoryDialogState
                           horizontal: 6,
                         ),
                         child: Text(
-                          '${item.fromDate} → ${item.toDate ?? 'nay'}',
+                          '${_viDateText(item.fromDate)} → ${item.toDate == null ? 'nay' : _viDateText(item.toDate)}',
                           style: TextStyle(fontSize: 12, color: t.ink2),
                         ),
                       ),

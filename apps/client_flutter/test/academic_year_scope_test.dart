@@ -596,7 +596,9 @@ void main() {
       // Topbar year label on mobile exists
       expect(find.textContaining('2025-2026'), findsWidgets);
 
-      // Year filter control exists
+      // Trên màn hẹp bộ lọc được thu gọn sau nút lọc; mở ra thì thấy ô lọc năm học.
+      await tester.tap(find.byIcon(Icons.filter_alt_outlined));
+      await tester.pumpAndSettle();
       expect(find.text('2025-2026 (hiện hành)'), findsWidgets);
     });
   });

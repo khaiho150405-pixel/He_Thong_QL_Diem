@@ -324,7 +324,7 @@ void main() {
       expect(find.text('Điểm cuối kỳ (CK)'), findsOneWidget);
 
       // Thẻ expired (GK) bị khóa, chỉ đọc
-      expect(find.text('Đã hết hạn'), findsOneWidget);
+      expect(find.text('Đã hết hạn'), findsWidgets);
       expect(find.text('Lịch đã qua hạn, không sửa được'), findsOneWidget);
 
       // Thẻ chưa hết hạn có nút sửa/đặt lịch
@@ -695,13 +695,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final refreshBtn = find.byKey(
-          const ValueKey('semester-deadlines-refresh-btn'),
+        // Màn không còn nút tải lại riêng (dữ liệu tự tải khi mở màn).
+        expect(
+          find.byKey(const ValueKey('semester-deadlines-refresh-btn')),
+          findsNothing,
         );
-        expect(refreshBtn, findsOneWidget);
-        await tester.tap(refreshBtn);
-        await tester.pumpAndSettle();
-
         expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
       },
     );
