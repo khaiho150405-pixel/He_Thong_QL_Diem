@@ -309,7 +309,7 @@ class _GradeDistributionCard extends StatelessWidget {
       body: Center(
         child: SingleChildScrollView(
           child: AppHBars(
-            labelWidth: 64,
+            labelWidth: 80,
             valueWidth: 96,
             items: [
               for (final item in items)

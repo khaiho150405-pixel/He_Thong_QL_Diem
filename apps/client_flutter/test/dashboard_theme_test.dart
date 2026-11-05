@@ -327,8 +327,8 @@ void main() {
           AppBadgeTone.ok,
         );
         expect(find.text('Đang nhập'), findsOneWidget);
-        expect(find.text('Trực tiếp (10s)'), findsOneWidget);
-        expect(find.byTooltip('Làm mới dữ liệu ngay'), findsOneWidget);
+        expect(find.text('Trực tiếp (10s)'), findsNothing);
+        expect(find.byTooltip('Làm mới dữ liệu ngay'), findsNothing);
 
         expect(tester.takeException(), isNull);
         await _unmount(tester);

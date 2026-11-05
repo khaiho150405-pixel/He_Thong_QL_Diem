@@ -681,7 +681,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
 
     final timetableTitle = role == 'QUAN_TRI_VIEN'
         ? 'Thời khóa biểu'
-        : (role == 'GIAO_VIEN' ? 'Lịch dạy của tôi' : 'Thời khóa biểu của tôi');
+        : (role == 'GIAO_VIEN' ? 'Lịch dạy của tôi' : 'Lịch học của tôi');
 
     return Material(
       key: const ValueKey('app-sidebar'),
