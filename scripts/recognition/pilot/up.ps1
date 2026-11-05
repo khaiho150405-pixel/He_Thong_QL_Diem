@@ -72,8 +72,12 @@ try {
     return $ok
   }
   if (-not (Test-Docker)) {
-    $desktop = Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'
-    if (-not (Test-Path $desktop)) { throw "Docker chưa chạy và không thấy $desktop. Hãy mở Docker Desktop." }
+    # Docker Desktop cài cho cả máy (Program Files) hoặc riêng người dùng (LocalAppData\Programs).
+    $desktop = @(
+      (Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'),
+      (Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\Docker Desktop.exe')
+    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $desktop) { throw 'Docker chưa chạy và không thấy Docker Desktop.exe. Hãy mở Docker Desktop.' }
     Warn 'Docker chưa chạy, đang mở Docker Desktop (có thể mất 1–2 phút)...'
     Start-Process $desktop | Out-Null
     $deadline = (Get-Date).AddSeconds(180)
