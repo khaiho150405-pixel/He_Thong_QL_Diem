@@ -35,7 +35,6 @@ test("parseYearId: absent means no filter, anything but a positive int32 is a 40
     );
 });
 
-// --- validateYear với Unit giả: chỉ theo dõi các lần ghi ---
 function fakeUnit(years: Array<{ ma_nam_hoc: number; hien_hanh: boolean }>) {
   const writes: Array<[string, Row, Row]> = [];
   const audits: Row[] = [];
@@ -141,7 +140,6 @@ test("turning off the only current year is refused with the Vietnamese message",
   assert.deepEqual(writes, []);
 });
 
-// --- Học kỳ mặc định của thời khóa biểu ---
 const semester = (id: number, order: number, from: string, to: string) => ({
   ma_hoc_ky: id,
   thu_tu: order,
@@ -156,7 +154,6 @@ const semesters = [
 test("default semester is the one running today, whatever the array order", () => {
   assert.equal(pickDefaultSemester(semesters, "2026-10-17"), 11);
   assert.equal(pickDefaultSemester(semesters, "2027-03-01"), 12);
-  // Ngày đầu và ngày cuối đều thuộc học kỳ.
   assert.equal(pickDefaultSemester(semesters, "2026-09-05"), 11);
   assert.equal(pickDefaultSemester(semesters, "2027-01-10"), 11);
   assert.equal(pickDefaultSemester(semesters, "2027-01-15"), 12);

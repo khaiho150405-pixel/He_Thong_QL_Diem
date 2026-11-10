@@ -3,9 +3,6 @@ import { createHash, randomBytes } from "node:crypto";
 import { test } from "node:test";
 import { createRosterFixture } from "../../apps/api/test/integration/roster-fixture.js";
 
-// Hủy mềm phiếu nhận dạng (ADR-0015): hàm huy_phieu_nhan_dien, ràng buộc cột hủy, chỉ mục duy nhất một phần theo checksum.
-// Dữ liệu hoàn toàn giả; chỉ chạy trên DB có tên kết thúc _test (fixture tự kiểm).
-
 type Fixture = Awaited<ReturnType<typeof createRosterFixture>>;
 type Failure = { code?: string; message?: string };
 
@@ -61,7 +58,6 @@ const channel = (value: string) => ({
   isBlank: false,
 });
 
-// Kết quả nhận dạng giả cho các dòng 1..count (thứ tự STT hệ thống).
 const recognitionRows = (ticket: string, count: number) =>
   Array.from({ length: count }, (_, index) => ({
     order: index + 1,
@@ -175,9 +171,7 @@ test("cancel works from DANG_XU_LY, keeps every row of evidence and stops the ou
     assert.equal(after.ly_do_huy, "Chụp nhầm bảng điểm");
     assert.equal(after.nguoi_huy, f.teacherId);
     assert.ok(after.thoi_diem_huy instanceof Date);
-    // Không xóa cứng: danh sách lớp đã chốt vẫn còn đủ 4 học sinh.
     assert.equal(await countOf(f, "danh_sach_phieu", ticketId), 4);
-    // Dispatcher không gửi lại sự kiện của phiếu đã hủy.
     const outbox = (
       await f.owner.query(
         "SELECT da_gui_luc IS NOT NULL AS sent, loi_cuoi FROM recognition_outbox WHERE ma_phieu=$1",
@@ -217,7 +211,6 @@ test("cancel works from CHO_DOI_CHIEU without touching rows or official grades",
     assert.equal((await stateOf(f, ticketId)).status, "DA_HUY");
     assert.equal(await countOf(f, "ket_qua_dong", ticketId), 3);
     assert.equal(await countOf(f, "danh_sach_phieu", ticketId), 4);
-    // Máy chỉ đề xuất: hủy không ghi điểm, không tạo lịch sử.
     assert.equal(
       (
         await f.owner.query(
@@ -227,7 +220,6 @@ test("cancel works from CHO_DOI_CHIEU without touching rows or official grades",
       ).rows[0].count,
       gradesBefore,
     );
-    // Phiếu đã hủy không còn duyệt được.
     await assert.rejects(
       approve(f, ticketId),
       failsWith("23514", "TICKET_VERSION_OR_STATE_CONFLICT"),
@@ -270,7 +262,6 @@ test("an approved ticket cannot be cancelled and stays untouched", async () => {
       cancel(f, ticketId, before.version),
       failsWith("23514", "TICKET_ALREADY_APPROVED"),
     );
-    // Cả khi gửi sai version: trạng thái đã duyệt được báo trước.
     await assert.rejects(
       cancel(f, ticketId, before.version + 7),
       failsWith("23514", "TICKET_ALREADY_APPROVED"),
@@ -292,7 +283,6 @@ test("cancelling twice is idempotent: the first reason, actor and time are kept"
       reason: "Lý do đầu tiên",
     });
     const cancelled = await stateOf(f, ticketId);
-    // Cùng khóa + cùng yêu cầu: trả đúng kết quả đã lưu.
     assert.deepEqual(
       await cancel(f, ticketId, version, {
         key: "same-key",
@@ -301,7 +291,6 @@ test("cancelling twice is idempotent: the first reason, actor and time are kept"
       }),
       first,
     );
-    // Cùng khóa nhưng nội dung khác: từ chối.
     await assert.rejects(
       cancel(f, ticketId, version, {
         key: "same-key",
@@ -310,7 +299,6 @@ test("cancelling twice is idempotent: the first reason, actor and time are kept"
       }),
       failsWith("23505", "IDEMPOTENCY_MISMATCH"),
     );
-    // Khóa mới, version cũ lẫn mới, lý do khác: phiếu đã hủy được trả lại nguyên trạng.
     for (const staleVersion of [version, version + 1, version + 9]) {
       const again = await cancel(f, ticketId, staleVersion, {
         reason: "Lý do thứ hai",
@@ -384,13 +372,11 @@ test("after a cancel the same image can be uploaded again and cancelled repeated
   try {
     const checksum = randomBytes(32).toString("hex");
     const first = await f.createTicket(f.valid, "again-1", hash(5), checksum);
-    // Đang có phiếu chưa hủy cùng ảnh: DUPLICATE_FILE.
     await assert.rejects(
       f.createTicket(f.valid, "again-dup", hash(6), checksum),
       failsWith("23505", "DUPLICATE_FILE"),
     );
     await cancel(f, first.ticketId, (await stateOf(f, first.ticketId)).version);
-    // Phiếu DA_HUY không gây DUPLICATE_FILE lẫn RECOGNITION_ALREADY_PENDING.
     const second = await f.createTicket(f.valid, "again-2", hash(7), checksum);
     assert.notEqual(second.ticketId, first.ticketId);
     await cancel(
@@ -406,7 +392,6 @@ test("after a cancel the same image can be uploaded again and cancelled repeated
       )
     ).rows.map((row) => row.status);
     assert.deepEqual(sameChecksum, ["DA_HUY", "DA_HUY", "DANG_XU_LY"]);
-    // Chỉ mục duy nhất một phần chặn cả ghi trực tiếp một phiếu chưa hủy thứ hai.
     await assert.rejects(
       f.owner.query(
         `INSERT INTO phieu_nhan_dien(ma_bang_diem,ma_thanh_phan,nguoi_tai,ma_bam_tep,duong_dan_anh_goc,so_dong_khai_bao)
@@ -495,7 +480,6 @@ test("saving worker results for a cancelled ticket is a silent no-op", async () 
     await saveResults(f, ticketId, 3);
     assert.equal(await countOf(f, "ket_qua_dong", ticketId), 0);
     assert.deepEqual(await stateOf(f, ticketId), before);
-    // Dù kết quả sai hình dạng nhưng đã qua kiểm tra chung thì vẫn không ghi gì (không raise TICKET_NOT_PROCESSING).
     await f.serializable((query) =>
       query("SELECT public.luu_ket_qua_nhan_dien($1,$2,$3::jsonb)", [
         ticketId,
@@ -504,7 +488,6 @@ test("saving worker results for a cancelled ticket is a silent no-op", async () 
       ]),
     );
     assert.equal(await countOf(f, "ket_qua_dong", ticketId), 0);
-    // Đánh dấu lỗi sau khi hủy cũng không đổi trạng thái.
     await f.serializable((query) =>
       query("SELECT public.danh_dau_phieu_nhan_dien_loi($1,$2)", [
         ticketId,
@@ -527,12 +510,10 @@ test("only the assigned teacher or the uploader may cancel; others get 42501, un
       cancel(f, ticketId, version, { session: stranger.session }),
       (error: Failure) => error.code === "42501",
     );
-    // Phiên hết hạn hoặc không tồn tại.
     await assert.rejects(
       cancel(f, ticketId, version, { session: hash(9) }),
       (error: Failure) => error.code === "42501",
     );
-    // Bảng điểm không tồn tại / phiếu không thuộc bảng điểm.
     await assert.rejects(
       cancel(f, ticketId, version, { book: 2_000_000_000 }),
       (error: Failure) => error.code === "P0002",
@@ -575,23 +556,19 @@ test("cancel columns are all-or-nothing and tied to DA_HUY by a CHECK constraint
         ),
         (error: Failure) => error.code === "23514",
       );
-    // DA_HUY thiếu một trong ba cột.
     await attempt(
       "UPDATE phieu_nhan_dien SET trang_thai='DA_HUY' WHERE ma_phieu=$1",
     );
     await attempt(
       "UPDATE phieu_nhan_dien SET trang_thai='DA_HUY', ly_do_huy='x', nguoi_huy=$2 WHERE ma_phieu=$1",
     );
-    // Có cột hủy nhưng không ở DA_HUY.
     await attempt(
       "UPDATE phieu_nhan_dien SET ly_do_huy='x', nguoi_huy=$2, thoi_diem_huy=now() WHERE ma_phieu=$1",
     );
-    // Lý do chỉ gồm khoảng trắng.
     await attempt(
       "UPDATE phieu_nhan_dien SET trang_thai='DA_HUY', ly_do_huy='   ', nguoi_huy=$2, thoi_diem_huy=now() WHERE ma_phieu=$1",
     );
     assert.equal((await stateOf(f, ticketId)).status, "DANG_XU_LY");
-    // Người hủy phải là người dùng có thật.
     await assert.rejects(
       f.owner.query(
         "UPDATE phieu_nhan_dien SET trang_thai='DA_HUY', ly_do_huy='x', nguoi_huy=2000000000, thoi_diem_huy=now() WHERE ma_phieu=$1",

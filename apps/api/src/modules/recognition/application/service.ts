@@ -57,7 +57,6 @@ export class RecognitionService {
     gradebookIdInput: unknown,
     includeCancelledInput?: unknown,
   ): Promise<RecognitionTicket[]> {
-    // Chỉ nhận "true"/"false" (hoặc vắng); giá trị khác là yêu cầu sai.
     if (
       includeCancelledInput !== undefined &&
       includeCancelledInput !== "true" &&
@@ -71,10 +70,6 @@ export class RecognitionService {
     );
   }
 
-  /**
-   * Hủy mềm phiếu (ADR-0015). Giao dịch SQL không xóa dòng nào; ảnh gốc và ảnh ô bị xóa khỏi object storage sau khi commit
-   * (best-effort: lỗi chỉ ghi log, gọi lại cùng khóa idempotency sẽ dọn tiếp).
-   */
   async cancel(
     actor: Actor,
     gradebookIdInput: unknown,
@@ -133,7 +128,6 @@ export class RecognitionService {
       objectKeys.map((key) => this.storage.remove(key)),
     );
     const failed = results.filter((result) => result.status === "rejected");
-    // Chỉ ghi số lượng: khóa object không chứa họ tên nhưng log không cần chi tiết hơn.
     if (failed.length)
       this.logger.warn(
         JSON.stringify({
@@ -156,7 +150,6 @@ export class RecognitionService {
     const ticket = await this.store.detail(actor, gradebookId, ticketId);
     if (!ticket) throw new NotFoundException();
     const expiresInSeconds = 300;
-    // Phiếu đã hủy: ảnh gốc và ảnh ô đã bị xóa khỏi object storage nên không ký URL (chuỗi rỗng / null).
     const imagesRemoved = ticket.status === "DA_HUY";
     const [sourceImageUrl, rows] = await Promise.all([
       imagesRemoved
@@ -274,9 +267,7 @@ export class RecognitionService {
       if (stored.storedObjectKey !== objectKey) {
         try {
           await this.storage.remove(objectKey);
-        } catch {
-          // A replay is already durable; cleanup failure must not change its receipt.
-        }
+        } catch {}
       }
       return {
         ticketId: stored.ticketId,
@@ -286,9 +277,7 @@ export class RecognitionService {
     } catch (error) {
       try {
         await this.storage.remove(objectKey);
-      } catch {
-        // The deterministic checksum remains in PostgreSQL; orphan cleanup is operational.
-      }
+      } catch {}
       throw error;
     }
   }

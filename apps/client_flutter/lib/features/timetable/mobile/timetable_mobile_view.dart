@@ -8,7 +8,6 @@ import '../timetable_week.dart';
 
 enum TimetableMobileMode { day, week, month }
 
-/// Chế độ và ngày đang xem; do màn hình giữ để tải lại dữ liệu không mất vị trí.
 class TimetableMobileController extends ChangeNotifier {
   TimetableMobileMode mode = TimetableMobileMode.day;
   DateTime? date;
@@ -26,7 +25,6 @@ class TimetableMobileController extends ChangeNotifier {
   }
 }
 
-/// Giao diện thời khóa biểu cho màn hẹp: chế độ Ngày / Tuần / Tháng.
 class TimetableMobileView extends StatelessWidget {
   const TimetableMobileView({
     super.key,
@@ -45,10 +43,8 @@ class TimetableMobileView extends StatelessWidget {
   final String role;
   final DateTime today;
 
-  /// Chỉ QTV: bấm thẻ để sửa/chuyển/xóa.
   final ValueChanged<TimetableSlot>? onSlotTap;
 
-  /// Chỉ QTV: hàng "Bộ lọc" và "Thêm môn", nhận ngày đang chọn.
   final Widget Function(DateTime selected)? adminBar;
 
   @override
@@ -115,7 +111,6 @@ class TimetableMobileView extends StatelessWidget {
             ),
           },
         );
-        // Màn rất thấp (chữ lớn, bàn phím): cuộn cả khối thay vì tràn dọc.
         return LayoutBuilder(
           builder: (context, box) {
             if (box.maxHeight < 560) {
@@ -143,7 +138,6 @@ class TimetableMobileView extends StatelessWidget {
   }
 }
 
-/// Ngày đích khi chuyển trước/sau theo [mode]; null nếu vượt biên học kỳ.
 DateTime? _move(
   TimetableMobileMode mode,
   DateTime date,
@@ -235,7 +229,6 @@ class _TopBar extends StatelessWidget {
             ),
           ),
         ),
-        // Chữ phóng to quá mức thì thu nhỏ cả nút thay vì tràn ngang.
         FittedBox(
           fit: BoxFit.scaleDown,
           child: DecoratedBox(
@@ -591,7 +584,6 @@ class _MonthGrid extends StatelessWidget {
     final days = daysInMonth(date.year, date.month);
     final rows = ((lead + days) / 7).ceil();
     final cellHeight = MediaQuery.textScalerOf(context).scale(52).clamp(52, 84);
-    // Số tiết khác nhau trong ngày (QTV xem nhiều lớp cùng tiết chỉ đếm một lần).
     int periods(int thu) =>
         items.where((i) => i.thu == thu).map((i) => i.tiet).toSet().length;
 
@@ -743,7 +735,6 @@ class _SlotCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Sọc màu theo buổi: sáng = màu chính, chiều = màu "ok".
                 SizedBox(
                   width: 4,
                   child: ColoredBox(color: morning ? t.pri : t.ok),

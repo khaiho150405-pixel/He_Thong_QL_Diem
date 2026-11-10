@@ -41,7 +41,6 @@ Future<void> _pump(
         themeMode: brightness == Brightness.dark
             ? ThemeMode.dark
             : ThemeMode.light,
-        // Thứ Hai cố định: dữ liệu giả có tiết ở Thứ Hai.
         home: TimetableScreen(today: DateTime(2031, 9, 8)),
       ),
     ),
@@ -59,11 +58,9 @@ void main() {
           expect(tester.takeException(), isNull);
           expect(find.text('Toán'), findsWidgets);
           if (width < 600) {
-            // Màn hẹp: chế độ Ngày (thẻ), không còn bảng 7 cột.
             expect(find.text('Ngày'), findsOneWidget);
             expect(find.text('TIẾT'), findsNothing);
           } else {
-            // Lưới theo buổi: hai hàng Sáng/Chiều.
             expect(find.text('Sáng'), findsWidgets);
             expect(find.text('Chiều'), findsWidgets);
             expect(find.text('Buổi'), findsWidgets);

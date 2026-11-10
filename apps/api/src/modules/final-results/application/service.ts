@@ -196,7 +196,6 @@ export class FinalResultsService {
       });
       return {
         ...result,
-        // Kết quả idempotency của lần tính cũ chưa có hai trường này.
         exemptedStudents: result.exemptedStudents ?? 0,
         exempted: result.exempted ?? [],
         results: result.results.map((r) => ({

@@ -6,8 +6,6 @@ import { Pool } from "pg";
 import { createApp } from "../../src/app.js";
 import { createGridFailure } from "../../src/modules/gradebooks/infrastructure/prisma-store.js";
 
-// Tạo bảng điểm: thông báo tiếng Việt rõ ràng, giữ nguyên mã trạng thái 403/409. Dữ liệu giả, chỉ trên DB *_test.
-
 test("create gradebook reports exactly what is wrong", async () => {
   const ownerUrl = process.env.TEST_MIGRATION_URL;
   const runtimeUrl = process.env.TEST_RUNTIME_URL;
@@ -158,7 +156,6 @@ test("create gradebook reports exactly what is wrong", async () => {
         ).rows[0].count,
       );
 
-    // 1) Không phải giáo viên (kể cả quản trị viên).
     const asAdmin = await create(admin.token, {
       classId: fullClass,
       subjectId: subject,
@@ -169,7 +166,6 @@ test("create gradebook reports exactly what is wrong", async () => {
       asAdmin.body.message,
       "Chỉ giáo viên được phân công mới tạo được bảng điểm.",
     );
-    // 2) Giáo viên không có phân công khớp.
     const unassigned = await create(other.token, {
       classId: fullClass,
       subjectId: subject,
@@ -180,7 +176,6 @@ test("create gradebook reports exactly what is wrong", async () => {
       unassigned.body.message,
       "Bạn chưa được phân công dạy môn này cho lớp và học kỳ đã chọn.",
     );
-    // 3) Học kỳ khác năm học của lớp.
     const mismatch = await create(teacher.token, {
       classId: fullClass,
       subjectId: subject,
@@ -191,7 +186,6 @@ test("create gradebook reports exactly what is wrong", async () => {
       mismatch.body.message,
       "Học kỳ đã chọn không thuộc năm học của lớp.",
     );
-    // 4) Lớp không có học sinh đang học, hoặc môn chưa có thành phần điểm.
     for (const scope of [
       { classId: emptyClass, subjectId: subject, termId: term },
       { classId: fullClass, subjectId: bareSubject, termId: term },
@@ -231,7 +225,6 @@ test("SQL error names map to messages, everything else is left to the generic ha
   );
   assert.equal(createGridFailure(sql("SOMETHING_ELSE")), null);
   assert.equal(createGridFailure(new Error("boom")), null);
-  // Không lộ chi tiết SQL/phiên trong message trả ra.
   assert.doesNotMatch(
     String(createGridFailure(sql("GRADEBOOK_YEAR_MISMATCH"))?.message),
     /ERROR|SELECT|public\./,

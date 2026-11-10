@@ -92,9 +92,7 @@ void main() {
           Brightness.dark,
         );
 
-        // Pill đúng nhãn.
         expect(find.text('10A1 · Toán · Giữa kỳ'), findsOneWidget);
-        // Nút đóng, chụp, thư viện đủ cỡ chạm.
         expect(find.byTooltip('Đóng'), findsOneWidget);
         expect(
           tester.getSize(find.byKey(const ValueKey('capture-guide-close'))),
@@ -112,14 +110,11 @@ void main() {
               .shortestSide,
           greaterThanOrEqualTo(48),
         );
-        // Mẹo lấy từ hướng dẫn chụp có sẵn.
         expect(find.textContaining('Họ tên, Điểm số, Điểm chữ'), findsWidgets);
-        // Ghi chú không hứa khung trên camera thật.
         expect(
           find.textContaining('không hiện trên màn camera'),
           findsOneWidget,
         );
-        // Không có "Trang 1/2" hay flash.
         expect(find.textContaining('Trang 1'), findsNothing);
         expect(find.byIcon(Icons.flash_on), findsNothing);
         expect(find.byIcon(Icons.flash_off), findsNothing);
@@ -149,7 +144,6 @@ void main() {
       solidSides += sides.length;
     }
     expect(solidSides, 8);
-    // Bốn góc nằm ở bốn phía khác nhau của khung.
     final view = tester.getRect(
       find.byKey(const ValueKey('capture-guide-view')),
     );
@@ -187,7 +181,6 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('capture-guide-gallery')));
     await tester.pump();
     expect((captures, picks), (1, 1));
-    // Callback trả false (hủy): màn ở lại.
     expect(find.byKey(const ValueKey('capture-guide')), findsOneWidget);
   });
 
@@ -215,7 +208,6 @@ void main() {
     await tester.tap(find.text('mở'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('capture-guide')), findsOneWidget);
-    // Không có nhãn thì không có pill.
     expect(find.byKey(const ValueKey('capture-guide-pill')), findsNothing);
     await tester.tap(find.byKey(const ValueKey('capture-guide-shutter')));
     await tester.pumpAndSettle();
@@ -303,7 +295,6 @@ void main() {
       TargetPlatform.android,
       const Size(390, 1400),
     );
-    // 'Chụp bảng điểm' vẫn có mặt và gọi camera ngay như cũ.
     expect(find.byKey(const ValueKey('recognition-camera')), findsOneWidget);
     final guideButton = find.byKey(const ValueKey('recognition-capture-guide'));
     expect(guideButton, findsOneWidget);

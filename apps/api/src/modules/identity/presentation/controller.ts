@@ -136,7 +136,6 @@ export class IdentityController {
     if (remember) res.setHeader("x-remember-token", remember);
     return session;
   }
-  /** App di động: đổi mã ghi nhớ (header x-remember-token) lấy phiên mới; mã mới cũng trả qua header. */
   @Post("resume")
   @ApiHeader({ name: "x-client-platform", required: true, enum: ["native"] })
   @ApiHeader({ name: "x-remember-token", required: true })

@@ -63,9 +63,6 @@ final teacherOverviewProvider = FutureProvider.autoDispose<TeacherOverviewData>(
   },
 );
 
-/// "Học kỳ I, 2024-2025" của năm hiện hành; học kỳ lấy theo ngày hôm nay
-/// (API chưa có cờ học kỳ hiện hành). Không có học kỳ thì chỉ ghi năm học,
-/// không có năm học thì null.
 final currentTermLabelProvider = FutureProvider<String?>((ref) async {
   final year = await ref.watch(currentYearProvider.future);
   if (year == null) return null;
@@ -162,7 +159,6 @@ class HomeDashboardContent extends ConsumerWidget {
         vertical: AppSpacing.md,
       ),
       children: [
-        // Tiêu đề trang (pagehead): vai trò, lời chào, mô tả.
         DecoratedBox(
           decoration: BoxDecoration(
             color: t.surface,
@@ -224,7 +220,6 @@ class HomeDashboardContent extends ConsumerWidget {
 
         const SizedBox(height: AppSpacing.md),
 
-        // Các ô chỉ số theo vai trò.
         if (role == 'QUAN_TRI_VIEN')
           Builder(
             builder: (context) {
@@ -250,7 +245,6 @@ class HomeDashboardContent extends ConsumerWidget {
 
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  // Dưới 720: nhãn rút gọn như bản cũ.
                   final wide = constraints.maxWidth >= 720;
                   return StatCardGrid(
                     children: [
@@ -370,7 +364,6 @@ class HomeDashboardContent extends ConsumerWidget {
             },
           ),
 
-        // Biểu đồ thống kê của quản trị (web và mobile).
         if (role == 'QUAN_TRI_VIEN') ...[
           const SizedBox(height: AppSpacing.xl),
           const AdminChartsSection(),

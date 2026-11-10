@@ -14,7 +14,6 @@ import '../authentication/session.dart';
 import 'merged_view_widgets.dart';
 import 'repository.dart';
 
-/// Dữ liệu thô của màn: đọc từ `catalogRepositoryProvider.list`, không ghi.
 class _Source {
   const _Source({
     required this.teachers,
@@ -31,7 +30,6 @@ class _Source {
   final List<Json> semesters;
 }
 
-/// Một dòng ghép cho một giáo viên.
 class _TeacherRow {
   const _TeacherRow({
     required this.name,
@@ -48,8 +46,6 @@ class _TeacherRow {
   final List<String> homeroomNames;
 }
 
-/// QT · Giáo viên & phân công (`ad-teachers`). Chỉ đọc: ghép client-side danh
-/// sách giáo viên, phân công và lớp; thêm, sửa, xóa nằm ở màn danh mục.
 class TeachingAssignmentsScreen extends ConsumerStatefulWidget {
   const TeachingAssignmentsScreen({super.key});
 

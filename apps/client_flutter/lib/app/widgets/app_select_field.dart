@@ -6,47 +6,148 @@ import 'package:flutter/services.dart';
 import '../design_tokens.dart';
 
 const Map<String, String> _vietnameseCharMap = {
-  // a
-  'à': 'a', 'á': 'a', 'ạ': 'a', 'ả': 'a', 'ã': 'a',
-  'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ậ': 'a', 'ẩ': 'a', 'ẫ': 'a',
-  'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ặ': 'a', 'ẳ': 'a', 'ẵ': 'a',
-  'À': 'a', 'Á': 'a', 'Ạ': 'a', 'Ả': 'a', 'Ã': 'a',
-  'Â': 'a', 'Ầ': 'a', 'Ấ': 'a', 'Ậ': 'a', 'Ẩ': 'a', 'Ẫ': 'a',
-  'Ă': 'a', 'Ằ': 'a', 'Ắ': 'a', 'Ặ': 'a', 'Ẳ': 'a', 'Ẵ': 'a',
+  'à': 'a',
+  'á': 'a',
+  'ạ': 'a',
+  'ả': 'a',
+  'ã': 'a',
+  'â': 'a',
+  'ầ': 'a',
+  'ấ': 'a',
+  'ậ': 'a',
+  'ẩ': 'a',
+  'ẫ': 'a',
+  'ă': 'a',
+  'ằ': 'a',
+  'ắ': 'a',
+  'ặ': 'a',
+  'ẳ': 'a',
+  'ẵ': 'a',
+  'À': 'a',
+  'Á': 'a',
+  'Ạ': 'a',
+  'Ả': 'a',
+  'Ã': 'a',
+  'Â': 'a',
+  'Ầ': 'a',
+  'Ấ': 'a',
+  'Ậ': 'a',
+  'Ẩ': 'a',
+  'Ẫ': 'a',
+  'Ă': 'a',
+  'Ằ': 'a',
+  'Ắ': 'a',
+  'Ặ': 'a',
+  'Ẳ': 'a',
+  'Ẵ': 'a',
 
-  // e
-  'è': 'e', 'é': 'e', 'ẹ': 'e', 'ẻ': 'e', 'ẽ': 'e',
-  'ê': 'e', 'ề': 'e', 'ế': 'e', 'ệ': 'e', 'ể': 'e', 'ễ': 'e',
-  'È': 'e', 'É': 'e', 'Ẹ': 'e', 'Ẻ': 'e', 'Ẽ': 'e',
-  'Ê': 'e', 'Ề': 'e', 'Ế': 'e', 'Ệ': 'e', 'Ể': 'e', 'Ễ': 'e',
+  'è': 'e',
+  'é': 'e',
+  'ẹ': 'e',
+  'ẻ': 'e',
+  'ẽ': 'e',
+  'ê': 'e',
+  'ề': 'e',
+  'ế': 'e',
+  'ệ': 'e',
+  'ể': 'e',
+  'ễ': 'e',
+  'È': 'e',
+  'É': 'e',
+  'Ẹ': 'e',
+  'Ẻ': 'e',
+  'Ẽ': 'e',
+  'Ê': 'e',
+  'Ề': 'e',
+  'Ế': 'e',
+  'Ệ': 'e',
+  'Ể': 'e',
+  'Ễ': 'e',
 
-  // i
-  'ì': 'i', 'í': 'i', 'ị': 'i', 'ỉ': 'i', 'ĩ': 'i',
-  'Ì': 'i', 'Í': 'i', 'Ị': 'i', 'Ỉ': 'i', 'Ĩ': 'i',
+  'ì': 'i',
+  'í': 'i',
+  'ị': 'i',
+  'ỉ': 'i',
+  'ĩ': 'i',
+  'Ì': 'i',
+  'Í': 'i',
+  'Ị': 'i',
+  'Ỉ': 'i',
+  'Ĩ': 'i',
 
-  // o
-  'ò': 'o', 'ó': 'o', 'ọ': 'o', 'ỏ': 'o', 'õ': 'o',
-  'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ộ': 'o', 'ổ': 'o', 'ỗ': 'o',
-  'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ợ': 'o', 'ở': 'o', 'ỡ': 'o',
-  'Ò': 'o', 'Ó': 'o', 'Ọ': 'o', 'Ỏ': 'o', 'Õ': 'o',
-  'Ô': 'o', 'Ồ': 'o', 'Ố': 'o', 'Ộ': 'o', 'Ổ': 'o', 'Ỗ': 'o',
-  'Ơ': 'o', 'Ờ': 'o', 'Ớ': 'o', 'Ợ': 'o', 'Ở': 'o', 'Ỡ': 'o',
+  'ò': 'o',
+  'ó': 'o',
+  'ọ': 'o',
+  'ỏ': 'o',
+  'õ': 'o',
+  'ô': 'o',
+  'ồ': 'o',
+  'ố': 'o',
+  'ộ': 'o',
+  'ổ': 'o',
+  'ỗ': 'o',
+  'ơ': 'o',
+  'ờ': 'o',
+  'ớ': 'o',
+  'ợ': 'o',
+  'ở': 'o',
+  'ỡ': 'o',
+  'Ò': 'o',
+  'Ó': 'o',
+  'Ọ': 'o',
+  'Ỏ': 'o',
+  'Õ': 'o',
+  'Ô': 'o',
+  'Ồ': 'o',
+  'Ố': 'o',
+  'Ộ': 'o',
+  'Ổ': 'o',
+  'Ỗ': 'o',
+  'Ơ': 'o',
+  'Ờ': 'o',
+  'Ớ': 'o',
+  'Ợ': 'o',
+  'Ở': 'o',
+  'Ỡ': 'o',
 
-  // u
-  'ù': 'u', 'ú': 'u', 'ụ': 'u', 'ủ': 'u', 'ũ': 'u',
-  'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ự': 'u', 'ử': 'u', 'ữ': 'u',
-  'Ù': 'u', 'Ú': 'u', 'Ụ': 'u', 'Ủ': 'u', 'Ũ': 'u',
-  'Ư': 'u', 'Ừ': 'u', 'Ứ': 'u', 'Ự': 'u', 'Ử': 'u', 'Ữ': 'u',
+  'ù': 'u',
+  'ú': 'u',
+  'ụ': 'u',
+  'ủ': 'u',
+  'ũ': 'u',
+  'ư': 'u',
+  'ừ': 'u',
+  'ứ': 'u',
+  'ự': 'u',
+  'ử': 'u',
+  'ữ': 'u',
+  'Ù': 'u',
+  'Ú': 'u',
+  'Ụ': 'u',
+  'Ủ': 'u',
+  'Ũ': 'u',
+  'Ư': 'u',
+  'Ừ': 'u',
+  'Ứ': 'u',
+  'Ự': 'u',
+  'Ử': 'u',
+  'Ữ': 'u',
 
-  // y
-  'ỳ': 'y', 'ý': 'y', 'ỵ': 'y', 'ỷ': 'y', 'ỹ': 'y',
-  'Ỳ': 'y', 'Ý': 'y', 'Ỵ': 'y', 'Ỷ': 'y', 'Ỹ': 'y',
+  'ỳ': 'y',
+  'ý': 'y',
+  'ỵ': 'y',
+  'ỷ': 'y',
+  'ỹ': 'y',
+  'Ỳ': 'y',
+  'Ý': 'y',
+  'Ỵ': 'y',
+  'Ỷ': 'y',
+  'Ỹ': 'y',
 
-  // d
-  'đ': 'd', 'Đ': 'd',
+  'đ': 'd',
+  'Đ': 'd',
 };
 
-/// Chuyển đổi chuỗi tiếng Việt có dấu thành không dấu để tìm kiếm không phân biệt dấu và hoa/thường.
 String _stripDiacritics(String text) {
   final buffer = StringBuffer();
   for (int i = 0; i < text.length; i++) {
@@ -63,16 +164,16 @@ String _stripDiacritics(String text) {
 
 int _matchRank(String cleanLabel, String cleanQuery) {
   if (cleanLabel.startsWith(cleanQuery)) {
-    return 0; // Khớp đầu chuỗi
+    return 0;
   }
   if (cleanLabel.contains(' $cleanQuery')) {
-    return 1; // Khớp đầu từ
+    return 1;
   }
   final delimiterPattern = RegExp(r'[\s\-_/().,]' + RegExp.escape(cleanQuery));
   if (cleanLabel.contains(delimiterPattern)) {
     return 1;
   }
-  return 2; // Khớp bên trong từ
+  return 2;
 }
 
 Widget _buildHighlightedLabel({
@@ -253,8 +354,6 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
   bool _hasUserTyped = false;
   String _query = '';
   int _highlightedIndex = -1;
-  // Hoãn việc trả lại label khi rời ô: nếu làm ngay (setState + đổi text) giữa lúc
-  // đang bấm vào một mục của menu thì menu bị dựng lại và lần bấm đầu bị mất.
   Timer? _blurResetTimer;
 
   bool _isPlaceholder(T? val, String text) {
@@ -386,8 +485,6 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
   }
 
   void _onFocusChange() {
-    // KHÔNG setState ở đây: _isOpen chỉ dùng cho xử lý phím, không ảnh hưởng giao diện.
-    // setState đúng lúc DropdownMenu đang mở menu / nhận lượt bấm làm mất lần bấm đầu.
     _isOpen = _focusNode.hasFocus;
     if (_focusNode.hasFocus) {
       _blurResetTimer?.cancel();
@@ -413,7 +510,6 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         }
       }
     } else {
-      // Đợi lượt bấm vào mục (nếu có) hoàn tất rồi mới trả lại label cũ.
       _blurResetTimer?.cancel();
       _blurResetTimer = Timer(const Duration(milliseconds: 300), () {
         if (!mounted || _focusNode.hasFocus) return;
@@ -448,9 +544,6 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         _controller.text = expected;
       }
     }
-    // FormField chỉ đọc initialValue một lần: khi nơi gọi đổi `value` bằng mã
-    // (ví dụ vừa tạo xong tài khoản rồi tự chọn) thì giá trị bên trong Form phải
-    // theo sau, nếu không validator vẫn thấy giá trị cũ và chặn Lưu dù ô đã hiển thị.
     if (oldWidget.value != widget.value &&
         widget.fieldState.value != widget.value) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -784,8 +877,6 @@ class _AppSelectFieldWidgetState<T> extends State<_AppSelectFieldWidget<T>> {
         final interactiveMenu = Listener(
           behavior: HitTestBehavior.translucent,
           onPointerDown: (_) {
-            // Chỉ ghi nhận trạng thái, KHÔNG setState: dựng lại widget đúng lúc
-            // DropdownMenu đang xử lý lượt bấm khiến lần bấm đầu không mở menu.
             if (!_isOpen && widget.enabled) {
               _isOpen = true;
               if (!_hasUserTyped) {

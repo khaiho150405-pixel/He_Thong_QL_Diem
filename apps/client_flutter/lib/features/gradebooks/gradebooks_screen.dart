@@ -40,7 +40,7 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
 
   num? _filterClassId;
   num? _filterSubjectId;
-  String? _filterStatus; // null | 'DANG_NHAP_LIEU' | 'DA_CHOT'
+  String? _filterStatus;
   String _searchQuery = '';
   final _searchController = TextEditingController();
 
@@ -121,7 +121,6 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
     if (_loader.key == key) {
       return GradebookListDto(items: _loader.items, nextCursor: null);
     }
-    // Trang đầu hiện ngay; các trang còn lại tải dưới nền.
     await _loader.start(key, (cursor) async {
       final result = await ref
           .read(gradebooksRepositoryProvider)
@@ -636,7 +635,6 @@ class _GradebooksScreenState extends ConsumerState<GradebooksScreen> {
               colAction = minAction;
             }
 
-            // Cuộn dọc khi nhiều dòng, cuộn ngang khi bảng rộng hơn khung.
             return SingleChildScrollView(
               key: const ValueKey('gradebooks-table-vertical-scroll'),
               child: SingleChildScrollView(

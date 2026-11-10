@@ -137,7 +137,6 @@ class _TimetableEditDialogState extends State<TimetableEditDialog> {
       confirmLabel: _saving ? 'Đang lưu…' : confirmLabel,
       confirmEnabled: !_saving,
       onConfirm: _save,
-      // Đang lưu thì Hủy / X không đóng hộp thoại (như nút Hủy bị tắt trước đây).
       onCancel: _saving ? () {} : null,
       child: Form(
         key: _formKey,

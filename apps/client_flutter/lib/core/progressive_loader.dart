@@ -1,20 +1,12 @@
-/// Một trang dữ liệu trả về từ máy chủ: các phần tử và con trỏ trang kế tiếp
-/// (`null` khi đã hết).
 class LoadedChunk<T, C> {
   const LoadedChunk(this.items, this.next);
   final List<T> items;
   final C? next;
 }
 
-/// Tải danh sách lớn theo kiểu "trang đầu trước, phần còn lại dưới nền".
-///
-/// [start] hoàn tất ngay khi có trang đầu tiên để màn hình hiển thị sớm; các
-/// trang sau tiếp tục được nối vào [items] và gọi [onChanged] sau mỗi trang.
-/// Gọi [start] lần nữa (hoặc [cancel]) thì phần tải nền cũ tự dừng.
 class ProgressiveLoader<T, C> {
   ProgressiveLoader({required this.onChanged});
 
-  /// Gọi mỗi khi [items], [loadingMore] hoặc [error] đổi (sau trang đầu tiên).
   final void Function() onChanged;
 
   List<T> _items = const [];
@@ -25,13 +17,10 @@ class ProgressiveLoader<T, C> {
 
   List<T> get items => _items;
 
-  /// Còn trang chưa tải xong (đang chạy nền).
   bool get loadingMore => _loadingMore;
 
-  /// Lỗi khi tải các trang sau; trang đầu lỗi thì [start] ném lỗi.
   Object? get error => _error;
 
-  /// Khóa của lần tải gần nhất; cùng khóa thì không cần tải lại.
   String? get key => _key;
 
   void cancel() {

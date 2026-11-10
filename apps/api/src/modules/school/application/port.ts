@@ -32,7 +32,6 @@ export interface SchoolUnit {
     data: Record<string, string | null>,
     call: IdempotentCall,
   ): Promise<void>;
-  /** `logo = null` là gỡ logo. */
   setLogo(
     sessionHash: string,
     expectedVersion: number,
@@ -41,7 +40,6 @@ export interface SchoolUnit {
   ): Promise<void>;
 }
 export interface SchoolStore {
-  /** Đọc công khai, không cần phiên. */
   profile(): Promise<SchoolProfile>;
   logoRef(): Promise<SchoolLogoRef | null>;
   run<T>(work: (tx: SchoolUnit) => Promise<T>): Promise<T>;

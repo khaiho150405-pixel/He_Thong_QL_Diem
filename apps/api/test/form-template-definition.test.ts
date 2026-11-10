@@ -12,8 +12,6 @@ import {
   type TemplateColumn,
 } from "../src/modules/form-templates/domain/definition.js";
 
-// Luật hợp lệ của mẫu và ánh xạ (nhóm, thứ tự) -> thành phần (ADR-0016 mục 1). Dữ liệu hoàn toàn giả.
-
 const col = (
   index: number,
   role: TemplateColumn["role"],
@@ -28,7 +26,6 @@ const col = (
   ...extra,
 });
 
-// STT | Họ tên | TX1 số | TX1 chữ | GK1 số | Ghi chú
 const valid = (): TemplateColumn[] => [
   col(0, "STT"),
   col(1, "HO_TEN"),
@@ -240,7 +237,6 @@ test("(group, order) maps to the n-th component of the group by display order", 
     col(5, "DIEM", { group: "GK", order: 1 }),
     col(6, "DIEM", { group: "CK", order: 1 }),
   ];
-  // Id không theo thứ tự hiển thị: thứ tự phải theo displayOrder rồi id.
   const components = [
     { id: 30, group: "CK", displayOrder: 6 },
     { id: 12, group: "TX", displayOrder: 2 },
@@ -258,13 +254,11 @@ test("(group, order) maps to the n-th component of the group by display order", 
     [
       [1, "TX1", "CHI_SO", 11],
       [2, "TX2", "SO_VA_CHU", 12],
-      // Hai thành phần cùng displayOrder 2 xếp theo id: 12 rồi 13.
       [3, "TX3", "CHI_SO", 13],
       [5, "GK1", "CHI_SO", 20],
       [6, "CK1", "CHI_SO", 30],
     ],
   );
-  // Môn thiếu thành phần tương ứng: không ánh xạ được (null), không đoán sang thành phần khác.
   const missing = mapColumnsToComponents(columns, [
     { id: 11, group: "TX", displayOrder: 1 },
   ]);

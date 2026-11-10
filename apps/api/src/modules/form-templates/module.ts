@@ -14,10 +14,6 @@ import { PrismaFormTemplateStore } from "./infrastructure/prisma-store.js";
 import { FormTemplatesController } from "./presentation/controller.js";
 import { FormTemplateMappingController } from "./presentation/mapping-controller.js";
 
-/**
- * Mẫu bảng điểm (ADR-0016). Client dịch vụ nhận dạng v2 được cấu hình ở app.ts (như FilesModule.configure) để test thay
- * bằng fake và để xuất OpenAPI không cần dịch vụ.
- */
 @Module({})
 export class FormTemplatesModule {
   static configure(recognizer?: RecognitionV2Client): DynamicModule {
@@ -28,7 +24,6 @@ export class FormTemplatesModule {
         FormTemplatesService,
         FormTemplateMappingService,
         { provide: FORM_TEMPLATE_STORE, useClass: PrismaFormTemplateStore },
-        // Cùng một đối tượng store phục vụ cả CRUD mẫu và gợi ý ánh xạ.
         {
           provide: FORM_TEMPLATE_MAPPING_STORE,
           useExisting: FORM_TEMPLATE_STORE,

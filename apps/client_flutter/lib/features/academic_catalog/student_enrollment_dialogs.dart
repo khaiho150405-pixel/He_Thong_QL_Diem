@@ -30,7 +30,6 @@ AppBadgeTone enrollmentStatusTone(EnrollmentDtoStatusEnum status) {
   };
 }
 
-/// `yyyy-MM-dd` từ API → `dd/MM/yyyy` (giá trị lạ giữ nguyên).
 String _viDateText(Object? iso) {
   final raw = iso?.toString() ?? '';
   final parsed = AppDateField.parseIsoDate(raw);
@@ -44,8 +43,6 @@ String _formatDate(DateTime dt) {
   return '$y-$m-$d';
 }
 
-/// Ngày hiệu lực mặc định: hôm nay, nhưng kẹp vào khoảng năm học đang xem vì
-/// máy chủ từ chối ngày nằm ngoài năm học (ví dụ xem năm học đã kết thúc).
 DateTime defaultEffectiveDate({
   DateTime? yearStart,
   DateTime? yearEnd,
@@ -54,13 +51,11 @@ DateTime defaultEffectiveDate({
   var date = today ?? DateTime.now();
   if (yearEnd != null && date.isAfter(yearEnd)) date = yearEnd;
   if (yearStart != null && !date.isAfter(yearStart)) {
-    // Phải sau ngày bắt đầu ghi danh nên lấy ngày kế tiếp.
     date = yearStart.add(const Duration(days: 1));
   }
   return date;
 }
 
-/// Hộp thoại Chuyển lớp
 class StudentTransferDialog extends StatefulWidget {
   const StudentTransferDialog({
     super.key,
@@ -75,7 +70,6 @@ class StudentTransferDialog extends StatefulWidget {
   final ApiClientDart api;
   final List<Map<String, dynamic>> allClasses;
 
-  /// Khoảng năm học đang xem (nếu có) để chọn ngày hiệu lực mặc định hợp lệ.
   final DateTime? yearStart;
   final DateTime? yearEnd;
 
@@ -288,7 +282,6 @@ class _StudentTransferDialogState extends State<StudentTransferDialog> {
   }
 }
 
-/// Hộp thoại Cho nghỉ học
 class StudentWithdrawDialog extends StatefulWidget {
   const StudentWithdrawDialog({
     super.key,
@@ -301,7 +294,6 @@ class StudentWithdrawDialog extends StatefulWidget {
   final Map<String, dynamic> student;
   final ApiClientDart api;
 
-  /// Khoảng năm học đang xem (nếu có) để chọn ngày hiệu lực mặc định hợp lệ.
   final DateTime? yearStart;
   final DateTime? yearEnd;
 
@@ -451,7 +443,6 @@ class _StudentWithdrawDialogState extends State<StudentWithdrawDialog> {
   }
 }
 
-/// Hộp thoại Học lại
 class StudentReenrollDialog extends StatefulWidget {
   const StudentReenrollDialog({
     super.key,
@@ -466,7 +457,6 @@ class StudentReenrollDialog extends StatefulWidget {
   final ApiClientDart api;
   final List<Map<String, dynamic>> allClasses;
 
-  /// Khoảng năm học đang xem (nếu có) để chọn ngày hiệu lực mặc định hợp lệ.
   final DateTime? yearStart;
   final DateTime? yearEnd;
 
@@ -643,7 +633,6 @@ class _StudentReenrollDialogState extends State<StudentReenrollDialog> {
   }
 }
 
-/// Hộp thoại Lịch sử xếp lớp
 class StudentEnrollmentHistoryDialog extends StatefulWidget {
   const StudentEnrollmentHistoryDialog({
     super.key,
@@ -839,7 +828,6 @@ class _StudentEnrollmentHistoryDialogState
   }
 }
 
-/// Thông báo sau khi chuyển lớp thành công nếu có affectedGradebooks
 Future<void> showAffectedGradebooksNotice(
   BuildContext context, {
   required List<AffectedGradebookDto> affectedGradebooks,

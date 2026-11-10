@@ -22,13 +22,12 @@ import numpy as np
 
 from .errors import PipelineError
 
-# Hằng số biểu mẫu (giống v2/v3 để kết quả so sánh được).
 DPI = 200
-A4 = (int(8.27 * DPI), int(11.69 * DPI))  # 1654 x 2338
+A4 = (int(8.27 * DPI), int(11.69 * DPI))
 PX_MM = A4[0] / 210.0
-MAU_VIEN = (255, 255, 255)  # tô phần nằm ngoài ảnh gốc (giấy thiếu góc) bằng trắng
-SO_VONG_NAN = 3  # số vòng lặp nắn theo lưới
-LECH_CONG_TOI_DA = 12.0  # px — độ cong tối đa chấp nhận khi nắn cục bộ
+MAU_VIEN = (255, 255, 255)
+SO_VONG_NAN = 3
+LECH_CONG_TOI_DA = 12.0
 
 MAX_IMAGE_PIXELS = 100_000_000
 
@@ -53,7 +52,6 @@ def _sap_xep_4_goc(p):
                      p[np.argmax(s)], p[np.argmax(d)]], np.float32)
 
 
-# ═══════════════════ 1. Dò tờ giấy theo màu + Hough từng cạnh ══════════════════
 def _mat_na_giay(img, canh_dai=1000):
     """Mặt nạ giấy trên ảnh thu nhỏ. Trả (mask uint8 0/255, hệ số thu, thông tin)."""
     h, w = img.shape[:2]
@@ -64,14 +62,14 @@ def _mat_na_giay(img, canh_dai=1000):
     H, W = L.shape
     y0, y1, x0, x1 = int(H * .3), int(H * .7), int(W * .3), int(W * .7)
     Lg = L[y0:y1, x0:x1]
-    L_giay = max(float(np.percentile(Lg, 75)), 1.0)       # độ sáng nền giấy (bỏ qua mực)
+    L_giay = max(float(np.percentile(Lg, 75)), 1.0)
     la_giay = Lg > 0.85 * L_giay
     a_giay = float(np.median(A[y0:y1, x0:x1][la_giay]))
     b_giay = float(np.median(B[y0:y1, x0:x1][la_giay]))
-    lech_mau = np.hypot(A - a_giay, B - b_giay)             # khác sắc độ so với giấy
+    lech_mau = np.hypot(A - a_giay, B - b_giay)
     ty_sang = L / L_giay
     manh = ((ty_sang > 0.72) & (lech_mau < 10)).astype(np.uint8)
-    yeu = ((ty_sang > 0.42) & (lech_mau < 9)).astype(np.uint8)   # vùng giấy bị bóng đổ
+    yeu = ((ty_sang > 0.42) & (lech_mau < 9)).astype(np.uint8)
     manh = cv2.morphologyEx(manh, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
     hop = cv2.morphologyEx(cv2.bitwise_or(manh, yeu), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     n, nhan, _, _ = cv2.connectedComponentsWithStats(hop, connectivity=8)
@@ -89,7 +87,7 @@ def _mat_na_giay(img, canh_dai=1000):
         return None, s, dict(L_giay=L_giay)
     c = max(cnts, key=cv2.contourArea)
     day = np.zeros_like(m)
-    cv2.drawContours(day, [c], -1, 255, -1)                 # lấp lỗ (chữ, bảng)
+    cv2.drawContours(day, [c], -1, 255, -1)
     return day, s, dict(L_giay=L_giay, a_giay=a_giay, b_giay=b_giay, contour=c)
 
 
@@ -133,7 +131,7 @@ def _khop_canh_hough(pts, goc0, bin_px=2.0, dai_toi_thieu=60):
     trong = pts[np.abs(pts @ n - rho0) <= 3.0]
     if len(trong) < 15:
         return None
-    for _ in range(2):                                     # tinh chỉnh bằng PCA + cắt ngoại lai
+    for _ in range(2):
         tb = trong.mean(0)
         _, vec = np.linalg.eigh(np.cov((trong - tb).T))
         u, nn = vec[:, 1], vec[:, 0]
@@ -189,15 +187,13 @@ def do_to_giay_chi_tiet(img):
     N = len(c)
     tren_mep = (c[:, 0] <= 1) | (c[:, 0] >= W - 2) | (c[:, 1] <= 1) | (c[:, 1] >= H - 2)
     cham_bien = bool(tren_mep.mean() > 0.02)
-    if ty_le > 0.97 or N < 100:                       # giấy phủ kín khung (ảnh đã crop sẵn)
+    if ty_le > 0.97 or N < 100:
         return dict(quad=khung, ty_le=ty_le, cham_bien=True, nguon='khung_anh', canh_thieu=['tat_ca'])
 
-    # hướng tiếp tuyến tại mỗi điểm biên
     k = 5
     tiep = c[(np.arange(N) + k) % N] - c[(np.arange(N) - k) % N]
     goc = np.mod(np.arctan2(tiep[:, 1], tiep[:, 0]), np.pi)
     hop_le = ~tren_mep
-    # hướng trục ngang của tờ giấy: trung bình vòng theo 4θ (gập mọi cạnh về một hướng)
     g4 = 4.0 * goc[hop_le]
     alpha = float(np.arctan2(np.sin(g4).sum(), np.cos(g4).sum()) / 4.0) if hop_le.any() else 0.0
     ux = np.array([np.cos(alpha), np.sin(alpha)])
@@ -206,7 +202,7 @@ def do_to_giay_chi_tiet(img):
     tam = np.array([M['m10'] / M['m00'], M['m01'] / M['m00']])
     rel = c - tam
     px, py = rel @ ux, rel @ uy
-    lech = np.abs(np.mod(goc - alpha + np.pi / 2, np.pi) - np.pi / 2)   # 0 = song song trục ngang
+    lech = np.abs(np.mod(goc - alpha + np.pi / 2, np.pi) - np.pi / 2)
     ngang = hop_le & (lech < np.radians(30))
     doc = hop_le & (lech > np.radians(60))
 
@@ -221,7 +217,6 @@ def do_to_giay_chi_tiet(img):
         kq = _khop_canh_hough(c[chon], goc0, dai_toi_thieu=max(60.0, 0.22 * dai_ky_vong))
         canh[ten] = None if kq is None else (kq[0], kq[1])
 
-    # cạnh không thấy (nằm ngoài khung) -> dùng mép khung ảnh phía đó
     mep = {'tren': (np.array([0., 0.]), np.array([1., 0.])),
            'duoi': (np.array([0., H - 1.]), np.array([1., 0.])),
            'trai': (np.array([0., 0.]), np.array([0., 1.])),
@@ -238,7 +233,6 @@ def do_to_giay_chi_tiet(img):
             return dict(quad=q / s, ty_le=ty_le, cham_bien=cham_bien or bool(canh_thieu),
                         nguon='mau_giay_hough', canh_thieu=canh_thieu)
 
-    # dự phòng: xấp xỉ đa giác lồi 4 đỉnh
     hull = cv2.convexHull(tt['contour'])
     peri = cv2.arcLength(hull, True)
     for eps in np.arange(0.010, 0.12, 0.004):
@@ -310,7 +304,7 @@ def _do_vach(bw, huong, nhan_mo=41, dai_toi_thieu=250, bien=0.015):
         t0, t1 = float(tt[giu].min()), float(tt[giu].max())
         v_giua = float(np.polyval(p, (t0 + t1) / 2))
         if v_giua < bien * gioi_han or v_giua > (1 - bien) * gioi_han:
-            continue                                        # mép giấy / mép trang
+            continue
         if abs(p[0]) > np.tan(np.radians(12)):
             continue
         ra.append(dict(a=float(p[0]), b=float(p[1]), t0=t0, t1=t1, dai=t1 - t0,
@@ -324,9 +318,9 @@ def _diem_tu(vach, huong, cx, cy, S=1000.0):
     L, w = [], []
     for d in vach:
         a, b = d['a'], d['b']
-        if huong == 'ngang':      # a·x − y + b = 0
+        if huong == 'ngang':
             l = np.array([a, -1.0, (a * cx + b - cy) / S])
-        else:                     # −x + a·y + b = 0
+        else:
             l = np.array([-1.0, a, (a * cy + b - cx) / S])
         L.append(l / np.hypot(l[0], l[1]))
         w.append(d['dai'] / (1.0 + d['rms']))
@@ -362,7 +356,7 @@ def _H_nan_theo_diem_tu(vp_ngang, vp_doc):
     if dd[1] < 0:
         dd = -dd
     B = np.column_stack([dn / np.linalg.norm(dn), dd / np.linalg.norm(dd)])
-    if abs(np.linalg.det(B)) < 0.5:          # hai họ vạch gần song song nhau: vô lý
+    if abs(np.linalg.det(B)) < 0.5:
         return None
     Ha = np.eye(3)
     Ha[:2, :2] = np.linalg.inv(B)
@@ -385,8 +379,6 @@ def _H_chinh_theo_luoi(page, nhan_ngang=41, nhan_doc=41):
     vp_d, giu_d = _diem_tu(vd, 'doc', cx, cy, S)
     vn_g = [d for d, g in zip(vn, giu_n) if g]
     vd_g = [d for d, g in zip(vd, giu_d) if g]
-    # Họ vạch ngắn/ít (trang sau chỉ 3 dòng) không đo nổi độ hội tụ -> coi như song song
-    # (điểm tụ ở vô cực theo hướng trung bình), tránh khuếch đại nhiễu thành phối cảnh ảo.
     def ve_vo_cuc(vach, huong):
         w = np.array([d['dai'] for d in vach])
         a = float(np.sum(w * np.array([d['a'] for d in vach])) / w.sum())
@@ -401,7 +393,7 @@ def _H_chinh_theo_luoi(page, nhan_ngang=41, nhan_doc=41):
         info['ly_do'] = 'điểm tụ suy biến'
         return None, info
     Hn, do_lon_pc = kq
-    if do_lon_pc > 0.25:                     # phối cảnh ảo quá mạnh -> chỉ nắn affine
+    if do_lon_pc > 0.25:
         kq = _H_nan_theo_diem_tu(ve_vo_cuc(vn_g, 'ngang'), ve_vo_cuc(vd_g, 'doc'))
         if kq is None:
             return None, info
@@ -410,8 +402,6 @@ def _H_chinh_theo_luoi(page, nhan_ngang=41, nhan_doc=41):
     Nm = np.array([[1 / S, 0, -cx / S], [0, 1 / S, -cy / S], [0, 0, 1]])
     Hpx = np.linalg.inv(Nm) @ Hn @ Nm
 
-    # Giữ nguyên vị trí + kích thước bảng: 4 góc bảng = giao 2 vạch ngang ngoài cùng
-    # với 2 vạch dọc ngoài cùng.
     vn_g.sort(key=lambda d: d['a'] * cx + d['b'])
     vd_g.sort(key=lambda d: d['a'] * cy + d['b'])
     def giao(dn, dd):
@@ -455,7 +445,7 @@ def nan_theo_luoi(img, H0):
         dich = float(np.abs(cv2.perspectiveTransform(moc, Hf) - moc).max())
         info['dich_px'] = round(dich, 2)
         nhat_ky.append(info)
-        if dich > 250:                        # vòng nắn làm biến dạng quá lớn -> bỏ
+        if dich > 250:
             info['ly_do'] = 'dịch chuyển quá lớn, bỏ vòng này'
             break
         if goc_dau is None:
@@ -476,7 +466,7 @@ def _mau_trung_vi(t, v, buoc=32.0):
         if chon.sum() >= 0.4 * buoc:
             ra_t.append(float(t[chon].mean()))
             ra_v.append(float(np.median(v[chon])))
-    if len(ra_v) >= 3:                                  # làm trơn 3 điểm
+    if len(ra_v) >= 3:
         vv = np.array(ra_v)
         tron = vv.copy()
         tron[1:-1] = (vv[:-2] + 2 * vv[1:-1] + vv[2:]) / 4.0
@@ -490,7 +480,7 @@ def _truong_lech(page, buoc=16, doan_mo=150.0):
     bw = _nhi_phan(page)
     Hh, Ww = bw.shape
     nx, ny = Ww // buoc, Hh // buoc
-    xc = (np.arange(nx) + 0.5) * Ww / nx - 0.5        # tâm ô lưới thô (khớp quy ước cv2.resize)
+    xc = (np.arange(nx) + 0.5) * Ww / nx - 0.5
     yc = (np.arange(ny) + 0.5) * Hh / ny - 0.5
 
     def lay_duong(huong):
@@ -507,7 +497,6 @@ def _truong_lech(page, buoc=16, doan_mo=150.0):
                 continue
             ra.append((goc, tk, lech))
         ra.sort(key=lambda r: r[0])
-        # loại vạch có dạng cong khác hẳn hai vạch kề (vạch lạ, nét gạch tay...)
         tot = []
         for i, (goc, tk, lech) in enumerate(ra):
             ke = [ra[j] for j in (i - 1, i + 1) if 0 <= j < len(ra)]
@@ -545,15 +534,15 @@ def _truong_lech(page, buoc=16, doan_mo=150.0):
         co = np.where(np.isfinite(F[0]))[0]
         if len(co) == 0:
             return None
-        for j in range(len(truc_ngang)):                   # cột thiếu -> lấy cột gần nhất, giảm dần
+        for j in range(len(truc_ngang)):
             if not np.isfinite(F[0, j]):
                 jj = co[np.argmin(np.abs(co - j))]
                 kc = abs(truc_ngang[jj] - truc_ngang[j])
                 F[:, j] = F[:, jj] * max(0.0, 1.0 - kc / doan_mo)
         return F
 
-    Fy = dung_truong(ngang, yc, xc)                         # (ny, nx): lệch dọc do vạch ngang cong
-    Fx = dung_truong(doc, xc, yc)                           # (nx, ny): lệch ngang do vạch dọc cong
+    Fy = dung_truong(ngang, yc, xc)
+    Fx = dung_truong(doc, xc, yc)
     if Fy is None and Fx is None:
         return None
     dy = cv2.resize(Fy, (Ww, Hh), interpolation=cv2.INTER_LINEAR) if Fy is not None \
@@ -573,9 +562,9 @@ def nan_anh(img, H, truong=None):
         return cv2.warpPerspective(img, H, A4, flags=cv2.INTER_LINEAR,
                                    borderMode=cv2.BORDER_CONSTANT, borderValue=MAU_VIEN)
     Ww, Hh = A4
-    px = truong['dx'] + np.arange(Ww, dtype=np.float32)[None, :]      # toạ độ trên trang đã nắn homography
+    px = truong['dx'] + np.arange(Ww, dtype=np.float32)[None, :]
     py = truong['dy'] + np.arange(Hh, dtype=np.float32)[:, None]
-    Hi = np.linalg.inv(H).astype(np.float32)                           # trang -> ảnh gốc
+    Hi = np.linalg.inv(H).astype(np.float32)
     den = Hi[2, 0] * px + Hi[2, 1] * py + Hi[2, 2]
     mx = (Hi[0, 0] * px + Hi[0, 1] * py + Hi[0, 2]) / den
     my = (Hi[1, 0] * px + Hi[1, 1] * py + Hi[1, 2]) / den
@@ -659,7 +648,7 @@ def nan_trang(img, nan_cong=True, mo_rong=(0.0, 0.0)):
                               info_nan=info_nan, nan_cong=True, lech_cong_max=truong['lech_max'])
         if tot is None or pa['diem'] > tot['diem']:
             tot = pa
-        if tot['diem'] > 25:              # lưới đã rõ, không cần thử phương án khác
+        if tot['diem'] > 25:
             break
     if tot is None:
         raise PipelineError(

@@ -31,10 +31,6 @@ export interface CatalogSpec {
   ): Promise<void>;
 }
 
-/**
- * Điều kiện lọc danh sách theo năm học (query `yearId`; giáo viên: `activeInYearId`), áp dụng ở server trước khi phân trang.
- * Bảng không có trong danh sách thì bỏ qua tham số năm.
- */
 const YEAR_SCOPES: Partial<Record<Table, (yearId: number) => Row>> = {
   lop: (yearId) => ({ ma_nam_hoc: yearId }),
   hoc_ky: (yearId) => ({ ma_nam_hoc: yearId }),
@@ -45,7 +41,6 @@ const YEAR_SCOPES: Partial<Record<Table, (yearId: number) => Row>> = {
   he_so_hoc_ky_chung: (yearId) => ({
     ma_hoc_ky_ref: { ma_nam_hoc: yearId },
   }),
-  // Chỉ giáo viên có phân công trong năm đó.
   giao_vien: (yearId) => ({
     phan_cong_giang_day_rows: {
       some: { ma_hoc_ky_ref: { ma_nam_hoc: yearId } },
@@ -53,7 +48,6 @@ const YEAR_SCOPES: Partial<Record<Table, (yearId: number) => Row>> = {
   }),
 };
 
-/** Tham số năm học của query: vắng → null (không lọc); không phải số nguyên dương hợp lệ → 400. */
 export function parseYearId(value: unknown): number | null {
   if (value === undefined) return null;
   if (
@@ -225,7 +219,6 @@ export class CatalogService {
     };
   }
 
-  /** Lớp hiện tại của học sinh (ma_lop được trigger ghi danh giữ đồng bộ với ghi danh DANG_HOC mới nhất). */
   private async currentClass(tx: Unit, row: Row) {
     const klass = row.ma_lop
       ? await tx.find("lop", { ma_lop: row.ma_lop })
@@ -376,7 +369,6 @@ export class CatalogService {
     });
   }
 
-  /** Điều kiện xóa riêng của từng danh mục (ném ngoại lệ nếu không được xóa); mặc định không có. */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async guardRemove(_tx: Unit, _row: Row): Promise<void> {}
 

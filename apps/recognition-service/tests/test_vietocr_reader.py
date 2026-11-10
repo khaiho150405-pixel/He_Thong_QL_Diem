@@ -48,9 +48,9 @@ class ConfigTest(unittest.TestCase):
 
     def test_shipped_yaml_only_references_urls_that_are_overridden(self) -> None:
         text = vr.DEFAULT_CONFIG.read_text(encoding="utf-8")
-        self.assertIn("vocr.vn", text)  # present in the file ...
+        self.assertIn("vocr.vn", text)
         cfg = vr.build_config(vr.DEFAULT_CONFIG, Path("w.pth"), "cpu")
-        self.assertNotIn("vocr.vn", str(cfg["weights"]))  # ... and gone from the effective configuration
+        self.assertNotIn("vocr.vn", str(cfg["weights"]))
 
     def test_a_config_that_keeps_a_url_is_refused(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -79,7 +79,6 @@ final routerProvider = Provider.family<GoRouter, String>((
         path: '/admin/form-templates',
         builder: (_, state) => const FormTemplatesScreen(),
       ),
-      // `new` = trình hướng dẫn tạo mẫu; còn lại là mã mẫu (màn chi tiết).
       GoRoute(
         path: '/admin/form-templates/:id',
         builder: (_, state) {
@@ -127,7 +126,6 @@ final routerProvider = Provider.family<GoRouter, String>((
                 );
         },
       ),
-      // Kết quả lô nhận dạng theo mẫu (ADR-0016 mục 5): tab theo thành phần.
       GoRoute(
         path: '/gradebooks/:id/recognition-batches/:batchId',
         builder: (_, state) {
@@ -164,20 +162,17 @@ final routerProvider = Provider.family<GoRouter, String>((
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }
-      // Route mới (bước 13): chỉ thêm điều kiện, không sửa điều kiện cũ.
       if ((state.uri.path == '/admin/teaching-assignments' ||
               state.uri.path == '/admin/subjects-weights' ||
               state.uri.path == '/admin/semester-deadlines') &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }
-      // Lên lớp cuối năm (QTV)
       if (state.uri.path.startsWith('/admin/classes/') &&
           state.uri.path.endsWith('/promotion') &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }
-      // Mẫu bảng điểm (ADR-0016): chỉ QTV, cả màn danh sách lẫn chi tiết.
       if (state.uri.path.startsWith('/admin/form-templates') &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
@@ -218,8 +213,6 @@ class GradebookApp extends ConsumerWidget {
   final String initialLocation;
   @override
   Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(
-    // Title của MaterialApp đi qua SystemChrome.setApplicationSwitcherDescription
-    // (tiêu đề tab trình duyệt trên web).
     title: switch (ref.watch(schoolProfileProvider).valueOrNull?.shortName) {
       final short? => 'EduScore - $short',
       _ => 'EduScore',

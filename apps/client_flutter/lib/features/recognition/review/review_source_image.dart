@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../../app/design_tokens.dart';
 import '../image_preview.dart';
 
-/// Widget hiển thị ảnh gốc của phiếu nhận dạng (ở cột phải trên Web hoặc đầu trang trên Mobile).
 class ReviewSourceImage extends StatelessWidget {
   const ReviewSourceImage({
     super.key,

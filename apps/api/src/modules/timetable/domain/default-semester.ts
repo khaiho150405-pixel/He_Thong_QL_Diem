@@ -5,15 +5,10 @@ export interface SemesterRange {
   ngay_ket_thuc: Date;
 }
 
-/** Ngày hiện tại theo giờ Việt Nam (UTC+7) dạng YYYY-MM-DD; học kỳ chỉ lưu ngày, không lưu giờ. */
 export function vietnamToday(now: Date = new Date()): string {
   return new Date(now.getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
 }
 
-/**
- * Học kỳ mặc định của thời khóa biểu trong năm học hiện hành: học kỳ có ngày bắt đầu <= hôm nay <= ngày kết thúc;
- * không có (nghỉ hè, giữa hai học kỳ, chưa/đã qua) thì học kỳ đầu tiên theo thứ tự như trước đây.
- */
 export function pickDefaultSemester(
   semesters: SemesterRange[],
   today: string,

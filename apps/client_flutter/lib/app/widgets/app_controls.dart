@@ -5,7 +5,6 @@ import 'app_select_field.dart';
 
 export 'app_select_field.dart';
 
-/// Kích thước chuẩn cho control trong thanh lọc và thanh thao tác.
 abstract final class AppControlMetrics {
   static const double height = 48;
   static const double fieldWidth = 300;
@@ -13,7 +12,6 @@ abstract final class AppControlMetrics {
   static const double radius = 10;
   static const double spacing = 12;
 
-  /// Giữ control vừa màn hình nhỏ sau khi trừ padding trang và padding thẻ.
   static double responsiveFieldWidth(BuildContext context) {
     return math.min(fieldWidth, MediaQuery.sizeOf(context).width - 72);
   }

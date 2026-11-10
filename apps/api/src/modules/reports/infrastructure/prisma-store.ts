@@ -122,7 +122,6 @@ export class PrismaReportStore implements ReportStore {
           }
         },
         adminOverview: async () => {
-          // 1. KPI
           const totalStudents = await tx.hoc_sinh.count({
             where: { dang_theo_hoc: true },
           });
@@ -140,7 +139,6 @@ export class PrismaReportStore implements ReportStore {
             where: { trang_thai: "CHO_DOI_CHIEU" },
           });
 
-          // 2. Grade Distribution
           const distRows = await tx.$queryRaw<
             { xep_loai: string; count: number }[]
           >`
@@ -180,7 +178,6 @@ export class PrismaReportStore implements ReportStore {
             },
           );
 
-          // 3. Grade Level Progress (Khối 10, 11, 12)
           const classes = await tx.lop.findMany({
             select: { ma_lop: true, khoi: true },
           });
@@ -215,7 +212,6 @@ export class PrismaReportStore implements ReportStore {
             }),
           );
 
-          // 4. OCR Accuracy (ket_qua_dong)
           const ocrRows = await tx.$queryRaw<
             { muc_phan_loai: string; count: number }[]
           >`
@@ -235,7 +231,6 @@ export class PrismaReportStore implements ReportStore {
           const accuracyRate =
             totalCells > 0 ? Math.round((greenCount / totalCells) * 100) : 0;
 
-          // 5. Recent Activities
           const recentBooks = await tx.$queryRaw<
             {
               ten_lop: string;

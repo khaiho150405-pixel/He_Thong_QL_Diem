@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Owns the page scroll position outside its content padding and width limit.
-/// Dialogs and navigation panels retain independent scroll controllers.
 class AppEdgeScrollbar extends StatefulWidget {
   const AppEdgeScrollbar({super.key, required this.child});
   final Widget child;

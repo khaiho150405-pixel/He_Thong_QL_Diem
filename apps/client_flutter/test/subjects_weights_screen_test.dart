@@ -94,7 +94,7 @@ void main() {
             'loai_he_so': 'CK',
           },
         ],
-        weights: [], // RỖNG: chưa cấu hình hệ số riêng
+        weights: [],
         years: [
           {
             'ma_nam_hoc': 1,
@@ -149,7 +149,6 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      // Đặt năm đang xem là Năm 2024-2025 (id: 1)
       container
           .read(viewingYearProvider.notifier)
           .selectYear(
@@ -173,23 +172,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Kiểm tra thẻ Hệ số học kỳ hiển thị
       expect(find.byKey(const ValueKey('weights-card')), findsOneWidget);
 
-      // Ô học kỳ tự động chọn học kỳ thuộc năm 2024-2025 (học kỳ 1, ma_hoc_ky: 10)
       final dropdown = tester.widget<AppFilterDropdown<num>>(
         find.byKey(const ValueKey('weights-semester-filter')),
       );
       expect(dropdown.value, 10);
 
-      // Danh sách học kỳ trong dropdown chỉ gồm học kỳ của năm 2024-2025
-      // và có nhãn định dạng "Học kỳ 1 · 2024-2025"
       expect(dropdown.items.length, 2);
       expect(dropdown.items.any((i) => i.value == 10), isTrue);
       expect(dropdown.items.any((i) => i.value == 11), isTrue);
       expect(dropdown.items.any((i) => i.value == 20), isFalse);
 
-      // Hiển thị TX ×1, GK ×2, CK ×3 mặc định
       expect(find.byKey(const ValueKey('weight-TX')), findsOneWidget);
       expect(find.byKey(const ValueKey('weight-GK')), findsOneWidget);
       expect(find.byKey(const ValueKey('weight-CK')), findsOneWidget);
@@ -197,7 +191,6 @@ void main() {
       expect(find.text('×2'), findsOneWidget);
       expect(find.text('×3'), findsOneWidget);
 
-      // Có dòng ghi chú nhỏ màu mờ
       expect(
         find.text(
           'Đang dùng hệ số mặc định (chưa cấu hình riêng cho học kỳ này).',
@@ -205,7 +198,6 @@ void main() {
         findsOneWidget,
       );
 
-      // Đổi năm đang xem sang Năm 2025-2026 (id: 2) -> chọn lại học kỳ mặc định của năm mới (ma_hoc_ky: 20)
       container
           .read(viewingYearProvider.notifier)
           .selectYear(

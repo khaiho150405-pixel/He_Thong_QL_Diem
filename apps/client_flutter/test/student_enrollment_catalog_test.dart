@@ -480,7 +480,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Expect the hint text to appear
         expect(
           find.text(
             'Chuyển lớp, nghỉ học, học lại: dùng menu thao tác trên danh mục học sinh',
@@ -488,7 +487,6 @@ void main() {
           findsWidgets,
         );
 
-        // Check Lớp dropdown is disabled
         final selectField = tester.widget<AppSelectField<num>>(
           find.byWidgetPredicate(
             (w) =>
@@ -497,7 +495,6 @@ void main() {
         );
         expect(selectField.enabled, isFalse);
 
-        // Check Đang theo học switch is disabled (onChanged is null)
         final switchTile = tester.widget<SwitchListTile>(
           find.byWidgetPredicate(
             (w) =>
@@ -536,7 +533,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Hint text must NOT appear for new student creation
         expect(
           find.text(
             'Đổi lớp, lên lớp, nghỉ học: dùng chức năng Xếp lớp (sắp có)',
@@ -544,7 +540,6 @@ void main() {
           findsNothing,
         );
 
-        // Lớp field is enabled for creation
         final selectField = tester.widget<AppSelectField<num>>(
           find.byWidgetPredicate(
             (w) =>
@@ -553,7 +548,6 @@ void main() {
         );
         expect(selectField.enabled, isTrue);
 
-        // Đang theo học switch is enabled
         final switchTile = tester.widget<SwitchListTile>(
           find.byWidgetPredicate(
             (w) =>
@@ -582,17 +576,14 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // 1. Verify initial API call requested without yearId (Tất cả năm học)
         final initialRequests = server.requests
             .where((r) => r.path.endsWith('/students/me/results'))
             .toList();
         expect(initialRequests, isNotEmpty);
         expect(initialRequests.last.queryParameters['yearId'], isNull);
 
-        // Check dropdown shows "Tất cả năm học" by default
         expect(find.text('Tất cả năm học'), findsOneWidget);
 
-        // Check grouped headers display class name if available
         expect(find.textContaining('10A1'), findsWidgets);
       },
     );
@@ -624,7 +615,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Inactive student row should have label 'Đã chuyển/nghỉ'
         expect(find.textContaining('Đã chuyển/nghỉ'), findsWidgets);
         expect(find.textContaining('Ngừng theo học'), findsNothing);
       },
@@ -658,7 +648,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // 1. Select target year (2026-2027)
         await tester.tap(
           find.byKey(const ValueKey('promotion-target-year-select')),
         );
@@ -666,7 +655,6 @@ void main() {
         await tester.tap(find.text('2026-2027').last);
         await tester.pumpAndSettle();
 
-        // Preview loads. Row 1 has LEN_LOP. Target class dropdown should have 11A1 and 11A2, but not 10A2
         final targetClassDropdownFinder = find.byKey(
           const ValueKey('promotion-target-class-1'),
         );
@@ -677,17 +665,14 @@ void main() {
         expect(find.text('11A2'), findsWidgets);
         expect(find.text('10A2'), findsNothing);
 
-        // Close dropdown by selecting 11A1
         await tester.tap(find.text('11A1').last);
         await tester.pumpAndSettle();
 
-        // Change action to LUU_BAN
         await tester.tap(find.byKey(const ValueKey('promotion-action-1')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Lưu ban').last);
         await tester.pumpAndSettle();
 
-        // Target class dropdown should now show 10A2, but not 11A1 or 11A2
         await tester.tap(
           find.byKey(const ValueKey('promotion-target-class-1')),
         );
@@ -726,7 +711,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Select target year
         await tester.tap(
           find.byKey(const ValueKey('promotion-target-year-select')),
         );
@@ -734,22 +718,18 @@ void main() {
         await tester.tap(find.text('2026-2027').last);
         await tester.pumpAndSettle();
 
-        // Student 2 is already enrolled -> displays badge
         expect(find.text('Đã có ghi danh'), findsOneWidget);
 
-        // Submit promotion
         await tester.ensureVisible(
           find.byKey(const ValueKey('promotion-submit-btn')),
         );
         await tester.tap(find.byKey(const ValueKey('promotion-submit-btn')));
         await tester.pumpAndSettle();
 
-        // Confirmation dialog appears
         expect(find.text('Xác nhận lên lớp cuối năm'), findsOneWidget);
         await tester.tap(find.text('Xác nhận thực hiện'));
         await tester.pumpAndSettle();
 
-        // Verify request payload only sent student 1
         final promoRequests = server.requests
             .where((r) => r.path.contains('/promotion') && r.method == 'POST')
             .toList();
@@ -761,7 +741,6 @@ void main() {
         expect(items.length, 1);
         expect(items.first['studentId'], 1);
 
-        // Displays success card
         expect(find.text('Lên lớp cuối năm thành công!'), findsOneWidget);
       },
     );
@@ -795,7 +774,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Select target year
       await tester.tap(
         find.byKey(const ValueKey('promotion-target-year-select')),
       );
@@ -803,7 +781,6 @@ void main() {
       await tester.tap(find.text('2026-2027').last);
       await tester.pumpAndSettle();
 
-      // Submit promotion
       await tester.ensureVisible(
         find.byKey(const ValueKey('promotion-submit-btn')),
       );
@@ -812,7 +789,6 @@ void main() {
       await tester.tap(find.text('Xác nhận thực hiện'));
       await tester.pumpAndSettle();
 
-      // Error message displayed
       expect(
         find.text(
           'Học sinh đã có ghi danh trong năm học đích hoặc từng học lớp này',
@@ -820,7 +796,6 @@ void main() {
         findsWidgets,
       );
 
-      // Row for student 1 has error indication
       expect(find.text('Lỗi dòng này'), findsOneWidget);
     });
 
@@ -885,24 +860,20 @@ void main() {
 
         expect(find.text('Chuyển lớp: Nguyễn Văn A'), findsOneWidget);
 
-        // Select class 10A2
         await tester.tap(find.byType(AppSelectField<num>));
         await tester.pumpAndSettle();
         await tester.tap(find.text('10A2').last);
         await tester.pumpAndSettle();
 
-        // Enter reason
         await tester.enterText(
           find.widgetWithText(TextFormField, 'Lý do chuyển lớp *'),
           'Chuyển lớp theo nguyện vọng gia đình',
         );
         await tester.pumpAndSettle();
 
-        // Tap confirm
         await tester.tap(find.text('Chuyển lớp').last);
         await tester.pumpAndSettle();
 
-        // Notice dialog appears
         expect(find.text('Bảng điểm bị ảnh hưởng'), findsOneWidget);
         expect(find.text('Toán · Học kỳ I'), findsOneWidget);
         expect(
@@ -951,7 +922,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Lịch sử xếp lớp: Nguyễn Văn A'), findsOneWidget);
-      // Chỉ một nút "Đóng" ở chân hộp thoại (không lặp Hủy/Đóng) và ngày dd/MM/yyyy.
       expect(find.widgetWithText(FilledButton, 'Đóng'), findsOneWidget);
       expect(find.widgetWithText(OutlinedButton, 'Đóng'), findsNothing);
       expect(find.textContaining('01/09/2025'), findsWidgets);
@@ -981,14 +951,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Check dropdown shows "Tất cả năm học" by default
         expect(find.text('Tất cả năm học'), findsOneWidget);
 
-        // Grouping header displays Year name with Class name
         expect(find.text('Năm học 2025-2026'), findsOneWidget);
         expect(find.text('Lớp 10A1'), findsWidgets);
 
-        // Open year dropdown to verify new items from results.years
         await tester.tap(
           find.byKey(const ValueKey('student-results-year-select')),
         );
@@ -1192,7 +1159,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Target year select
         await tester.tap(
           find.byKey(const ValueKey('promotion-target-year-select')),
         );
@@ -1200,21 +1166,18 @@ void main() {
         await tester.tap(find.text('2026-2027').last);
         await tester.pumpAndSettle();
 
-        // Verify badges
         expect(find.text('Đã lên lớp → 11A1'), findsOneWidget);
         expect(find.text('Đã lưu ban → 10A1'), findsOneWidget);
         expect(find.text('Đã tốt nghiệp'), findsOneWidget);
         expect(find.text('Đã nghỉ học'), findsOneWidget);
         expect(find.text('Đã chuyển lớp'), findsOneWidget);
 
-        // Disabled dropdowns on processed rows
         expect(find.byKey(const ValueKey('promotion-action-1')), findsNothing);
         expect(
           find.byKey(const ValueKey('promotion-action-6')),
           findsOneWidget,
         );
 
-        // Active count only counts unhandled row (studentId 6)
         expect(find.text('Số học sinh sẽ thực hiện: 1'), findsOneWidget);
       },
     );
@@ -1248,7 +1211,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Target year select
         await tester.tap(
           find.byKey(const ValueKey('promotion-target-year-select')),
         );
@@ -1256,13 +1218,11 @@ void main() {
         await tester.tap(find.text('2026-2027').last);
         await tester.pumpAndSettle();
 
-        // Check banner
         expect(
           find.text('Tất cả học sinh của lớp đã được xử lý cho năm 2026-2027'),
           findsOneWidget,
         );
 
-        // Check submit button is disabled
         final submitBtn = tester.widget<FilledButton>(
           find.byKey(const ValueKey('promotion-submit-btn')),
         );

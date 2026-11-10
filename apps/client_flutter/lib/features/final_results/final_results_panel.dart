@@ -18,14 +18,12 @@ import 'repository.dart';
 import 'student_results_screen.dart'
     show classificationBadgeOf, classificationLabel;
 
-/// Định dạng `dd/MM/yyyy HH:mm` theo giờ máy (không thêm package `intl`).
 String _formatDateTime(DateTime value) {
   final d = value.toLocal();
   String two(int n) => n.toString().padLeft(2, '0');
   return '${two(d.day)}/${two(d.month)}/${d.year} ${two(d.hour)}:${two(d.minute)}';
 }
 
-/// Xếp loại hiển thị theo MÃ backend trả về, ánh xạ nhãn tiếng Việt qua [classificationBadgeOf].
 Widget _classificationBadge(String code) {
   final badge = classificationBadgeOf(code);
   return AppBadge(badge.label, tone: badge.tone);
@@ -317,7 +315,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
     );
   }
 
-  /// Thông tin phiên bản hệ số, chính sách và thời điểm tính duy nhất của bảng điểm.
   Widget _metaSummary(BuildContext context, FinalResultDto first) {
     final t = context.tokens;
     return Container(
@@ -352,7 +349,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
     );
   }
 
-  /// Thanh công cụ: tìm tên, lọc xếp loại, nhóm (Tất cả / Miễn môn / Thiếu điểm), sắp xếp.
   Widget _toolbar(
     BuildContext context, {
     required int totalCount,
@@ -707,7 +703,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       );
     }
 
-    // Mobile layout: Danh sách thẻ
     if (isMobile) {
       return ListView.separated(
         shrinkWrap: true,
@@ -793,7 +788,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
       );
     }
 
-    // Desktop/Tablet layout: Bảng kết quả gọn có tiêu đề cố định
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1109,7 +1103,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                   builder: (context, sttSnapshot) {
                     final sttMap = sttSnapshot.data ?? const {};
 
-                    // Thu thập danh sách mã xếp loại có sẵn để lọc
                     final availableClassifications =
                         rawItems
                             .map((i) => i.classification.trim().toUpperCase())
@@ -1117,12 +1110,10 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                             .toList()
                           ..sort();
 
-                    // Dòng thông tin chung duy nhất phía trên bảng
                     final metaSummaryWidget = rawItems.isNotEmpty
                         ? _metaSummary(context, rawItems.first)
                         : const SizedBox.shrink();
 
-                    // Lọc và sắp xếp nhóm "Tất cả"
                     final filteredAll = rawItems.where((item) {
                       if (!matchesSearch(_searchQuery, [item.studentName])) {
                         return false;

@@ -20,7 +20,7 @@ from synthetic import encode_png, make_page, photograph
 from test_pipeline_grid import SCORE_HEADERS, SCORE_SHEET
 
 ROWS = 6
-STRUCK = 2  # zero-based
+STRUCK = 2
 BLANK = 4
 
 
@@ -94,7 +94,7 @@ class StubNameReader:
         self.calls.append(len(images))
         out = []
         for image in images:
-            if image.shape[1] < 100:  # ô STT (60 px) hẹp hơn ô họ tên (480 px) và ô điểm
+            if image.shape[1] < 100:
                 value = self.stt_values[self.stt_cells_read] if self.stt_values else None
                 self.stt_cells_read += 1
                 out.append(TextRead("" if value is None else str(value), 0.95))
@@ -153,13 +153,11 @@ class WeightsModelTest(unittest.TestCase):
             self.assertIsNone(row.stt_from_position)
 
     def test_stt_check_reads_the_printed_number_with_the_stock_model_and_infers_it_from_position(self) -> None:
-        # Hàng đọc: mọi dòng trừ dòng bị gạch (không đọc) — 39, 40, 41, (42 bị gạch), 43...
-        # Dòng trống có ô STT in nên vẫn được đọc.
         reads = [39 + i for i in range(ROWS) if i != STRUCK]
         name = StubNameReader(stt_values=reads)
         crnn = StubCrnn()
         result = build(crnn=crnn, name=name, stt_check=True).recognize(self.image)
-        self.assertEqual(crnn.stt_calls, 0)  # STT không bao giờ qua CRNN
+        self.assertEqual(crnn.stt_calls, 0)
         self.assertEqual(name.stt_cells_read, len(reads))
         for index, row in enumerate(result.rows):
             self.assertEqual(row.stt_from_position, 39 + index)
@@ -167,12 +165,12 @@ class WeightsModelTest(unittest.TestCase):
                 self.assertIsNone(row.stt_read)
                 continue
             self.assertEqual(row.stt_read, 39 + index)
-            self.assertEqual(row.stt.value, 39 + index)  # hai nguồn trùng nhau
+            self.assertEqual(row.stt.value, 39 + index)
             self.assertEqual(row.stt.confidence, Decimal("0.9500"))
 
     def test_stt_on_paper_is_empty_when_the_two_sources_disagree(self) -> None:
         reads = [39 + i for i in range(ROWS) if i != STRUCK]
-        reads[1] = 88  # một ô STT đọc sai; bỏ phiếu vẫn suy đúng STT đầu trang
+        reads[1] = 88
         result = build(name=StubNameReader(stt_values=reads), stt_check=True).recognize(self.image)
         self.assertEqual(result.rows[1].stt_read, 88)
         self.assertEqual(result.rows[1].stt_from_position, 40)
@@ -214,13 +212,13 @@ class WeightsModelTest(unittest.TestCase):
         row = noisy.rows[0]
         self.assertEqual(row.written.raw_output, "qqqq zzzz xx")
         self.assertIsNone(row.written.value)
-        self.assertFalse(row.written.is_blank)  # ink present, text unreadable
+        self.assertFalse(row.written.is_blank)
         self.assertEqual(row.numeric.value, Decimal("8.5"))
 
     def test_one_edit_typo_is_snapped_but_value_comes_from_the_dictionary(self) -> None:
         typo = build(vietocr=StubVietOcr(written="tám rưởi")).recognize(self.image)
         self.assertEqual(typo.rows[0].written.value, Decimal("8.5"))
-        self.assertEqual(typo.rows[0].written.raw_output, "tám rưởi")  # raw output is preserved
+        self.assertEqual(typo.rows[0].written.raw_output, "tám rưởi")
 
     def test_invalid_numeric_text_is_unreadable_not_clamped(self) -> None:
         for text in ("11", "7.55", "", "."):
@@ -228,7 +226,6 @@ class WeightsModelTest(unittest.TestCase):
             self.assertIsNone(result.rows[0].numeric.value, text)
 
     def test_stt_is_never_read(self) -> None:
-        # Project decision (BE-19b): the goal is the score and written-score columns; STT is not recognised.
         crnn = StubCrnn()
         result = build(crnn=crnn).recognize(self.image)
         self.assertEqual(crnn.stt_calls, 0)
@@ -284,17 +281,16 @@ class ConfiguredModelTest(unittest.TestCase):
             "RECOGNITION_NAME_SHA256": "c" * 64,
         }
         cases = [
-            {"APP_ENV": "production"},  # default mode is weights, nothing configured
+            {"APP_ENV": "production"},
             {k: v for k, v in good.items() if k != "RECOGNITION_VIETOCR_WEIGHTS"},
             {k: v for k, v in good.items() if k != "RECOGNITION_CRNN_WEIGHTS"},
             {**good, "RECOGNITION_CRNN_SHA256": ""},
             {**good, "RECOGNITION_VIETOCR_SHA256": "xyz"},
-            # thiếu mô hình tên thì báo không dùng được, KHÔNG lặng lẽ dùng mô hình điểm chữ
             {k: v for k, v in good.items() if k != "RECOGNITION_NAME_WEIGHTS"},
             {**good, "RECOGNITION_NAME_WEIGHTS": ""},
             {k: v for k, v in good.items() if k != "RECOGNITION_NAME_SHA256"},
             {**good, "RECOGNITION_NAME_SHA256": "xyz"},
-            good,  # files do not exist
+            good,
             {**good, "RECOGNITION_DEVICE": "tpu"},
             {**good, "RECOGNITION_MODEL_MODE": "other"},
         ]
@@ -345,7 +341,6 @@ class ConfiguredModelTest(unittest.TestCase):
             second = configured_model(env)
         self.assertIs(first, second)
         self.assertEqual((load_crnn.call_count, load_ocr.call_count), (1, 2))
-        # mô hình điểm chữ và mô hình tên là hai tệp riêng, nạp theo đường dẫn riêng
         self.assertEqual(
             [call.args[0] for call in load_ocr.call_args_list], [Path("/m/v.pth"), Path("/m/n.pth")]
         )
@@ -400,8 +395,6 @@ class HttpErrorContractTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(caught.exception.status_code, 503)
 
     async def test_floors_from_the_environment_demote_an_agreement_to_yellow(self) -> None:
-        # Fake rows read 0.95 (numeric) and 0.93 (written), with the same value on both channels: the research
-        # rule makes them green; only the optional agreement floors (default 0) can demote them.
         base = {"APP_ENV": "test", "RECOGNITION_MODEL_MODE": "fake"}
         with patch.dict(os.environ, base, clear=True):
             green = await recognize(image=self.upload())

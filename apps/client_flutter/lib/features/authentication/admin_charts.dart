@@ -146,7 +146,6 @@ class AdminChartsSection extends ConsumerWidget {
   }
 }
 
-// ── Khung thẻ biểu đồ dùng chung ─────────────────────────────────────────────
 class _ChartCard extends StatelessWidget {
   const _ChartCard({
     required this.eyebrow,
@@ -262,7 +261,6 @@ class _ChartCard extends StatelessWidget {
   }
 }
 
-// ── Biểu đồ 1: phân bố học lực ───────────────────────────────────────────────
 class _GradeDistributionCard extends StatelessWidget {
   const _GradeDistributionCard({
     required this.items,
@@ -272,8 +270,6 @@ class _GradeDistributionCard extends StatelessWidget {
   final List<AdminGradeDistributionItem> items;
   final int totalStudents;
 
-  /// Màu cột theo mã xếp loại, lấy từ token thay cho mã hex backend trả về:
-  /// Giỏi `pri`, Khá xanh nhạt hơn, Đạt `neu`, Chưa đạt `bad`.
   static Color colorOf(AppTokens t, String code) {
     switch (code) {
       case 'GIOI':
@@ -330,7 +326,6 @@ class _GradeDistributionCard extends StatelessWidget {
   }
 }
 
-// ── Biểu đồ 2: độ chính xác OCR hai kênh ─────────────────────────────────────
 class _OcrAccuracyCard extends StatelessWidget {
   const _OcrAccuracyCard({required this.data});
 
@@ -395,7 +390,6 @@ class _OcrAccuracyCard extends StatelessWidget {
   }
 }
 
-/// Một dòng Xanh/Vàng/Đỏ: nhãn, mô tả, phần trăm và thanh [AppProgress].
 class _OcrRow extends StatelessWidget {
   const _OcrRow({
     required this.badge,
@@ -448,7 +442,6 @@ class _OcrRow extends StatelessWidget {
   }
 }
 
-// ── Biểu đồ 3: tiến độ theo khối ─────────────────────────────────────────────
 class _GradeLevelProgressCard extends StatelessWidget {
   const _GradeLevelProgressCard({
     required this.items,
@@ -500,7 +493,6 @@ class _GradeLevelProgressCard extends StatelessWidget {
   }
 }
 
-// ── Biểu đồ 4: hoạt động nộp điểm gần đây ────────────────────────────────────
 class _RecentGradebookActivityCard extends StatelessWidget {
   const _RecentGradebookActivityCard({
     required this.activities,

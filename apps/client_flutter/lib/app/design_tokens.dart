@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens lấy từ `docs/design/Hệ thống quản lý điểm.html`
-/// (`:root` cho sáng, `prefers-color-scheme: dark` cho tối).
-///
-/// Component dùng chung đọc token qua `context.tokens` thay vì viết màu cứng,
-/// để tự đổi theo chế độ sáng/tối của hệ thống.
-
-/// Tên family khai báo trong `pubspec.yaml` (file nằm ở `assets/fonts/`).
 const String kAppFontFamily = 'BeVietnamPro';
 
-/// Font dự phòng cho ký tự mà Be Vietnam Pro không có.
 const List<String> kAppFontFallback = ['Roboto', 'Arial', 'Noto Sans'];
 
-/// Khoảng cách theo lưới 4/8 của prototype.
 abstract final class AppSpacing {
   static const double xxs = 2;
   static const double xs = 4;
@@ -23,15 +14,12 @@ abstract final class AppSpacing {
   static const double xxl = 24;
   static const double xxxl = 32;
 
-  /// Lề trang: 24 trên màn rộng, 16 trên màn hẹp.
   static const double page = 24;
   static const double pageCompact = 16;
 
-  /// Khoảng cách giữa các ô lưới và giữa các hàng trong prototype.
   static const double gridGap = 16;
   static const double rowGap = 12;
 
-  /// Thẻ: tiêu đề `16 20`, nội dung 20.
   static const EdgeInsets cardHeader = EdgeInsets.symmetric(
     horizontal: 20,
     vertical: 16,
@@ -39,28 +27,20 @@ abstract final class AppSpacing {
   static const EdgeInsets cardBody = EdgeInsets.all(20);
 }
 
-/// Bo góc của prototype.
 abstract final class AppRadius {
-  /// Chip nhỏ trong bảng, ô điểm.
   static const double xs = 6;
 
-  /// Nút, ô nhập, select.
   static const double sm = 8;
 
-  /// Thẻ.
   static const double md = 12;
 
-  /// Hộp thoại.
   static const double lg = 14;
 
-  /// Khung ứng dụng, trang đăng nhập.
   static const double xl = 16;
 
-  /// Badge, progress, chip lọc.
   static const double pill = 999;
 }
 
-/// Bộ màu và đổ bóng của một chế độ (sáng hoặc tối).
 @immutable
 class AppTokens extends ThemeExtension<AppTokens> {
   const AppTokens({
@@ -108,7 +88,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
 
   final Brightness brightness;
 
-  // Nền và đường kẻ.
   final Color bg;
   final Color surface;
   final Color subtle;
@@ -116,18 +95,15 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color line;
   final Color line2;
 
-  // Chữ.
   final Color ink;
   final Color ink2;
   final Color ink3;
 
-  // Navy (thanh bên, hero).
   final Color navy;
   final Color navy2;
   final Color onNavy;
   final Color navyLine;
 
-  // Primary.
   final Color pri;
   final Color priHover;
   final Color priLink;
@@ -135,12 +111,10 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color priLine;
   final Color onPri;
 
-  // Nhấn amber.
   final Color acc;
   final Color accSoft;
   final Color onAcc;
 
-  // Trạng thái: thành công, cảnh báo, lỗi, trung tính.
   final Color ok;
   final Color okSoft;
   final Color okLine;
@@ -153,14 +127,12 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color neu;
   final Color neuSoft;
 
-  // Tờ giấy mô phỏng bảng điểm.
   final Color paper;
   final Color pen;
   final Color paperLine;
 
   final Color focus;
 
-  /// Đổ bóng thẻ (`--shadow`) và lớp nổi như hộp thoại, toast (`--pop`).
   final List<BoxShadow> shadow;
   final List<BoxShadow> pop;
 
@@ -213,8 +185,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
     ],
   );
 
-  /// Chỉ các biến mà prototype ghi đè ở chế độ tối được đổi; `acc` và `onAcc`
-  /// giữ nguyên như trong HTML.
   static const AppTokens dark = AppTokens(
     brightness: Brightness.dark,
     bg: Color(0xFF0B1220),
@@ -263,7 +233,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
     ],
   );
 
-  /// Màu chữ cho tiêu đề: navy ở chế độ sáng, `ink` ở chế độ tối.
   Color get heading => brightness == Brightness.light ? navy : ink;
 
   @override
@@ -403,8 +372,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
 }
 
 extension AppTokensContext on BuildContext {
-  /// Token của theme hiện tại; nếu theme không gắn token (ví dụ test dùng
-  /// `ThemeData()` thuần) thì suy ra từ độ sáng.
   AppTokens get tokens {
     final theme = Theme.of(this);
     return theme.extension<AppTokens>() ??

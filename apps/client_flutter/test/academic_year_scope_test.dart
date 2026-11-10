@@ -219,14 +219,12 @@ void main() {
         initialLocation: '/catalog/classes',
       );
 
-      // Check requests to /catalog/classes
       final classRequests = server.requests.where(
         (r) => r.path.endsWith('/catalog/classes'),
       );
       expect(classRequests, isNotEmpty);
       expect(classRequests.last.queryParameters['yearId'], 1);
 
-      // Verify the dropdown shows "2025-2026 (hiện hành)"
       expect(find.text('2025-2026 (hiện hành)'), findsWidgets);
     });
 
@@ -240,17 +238,14 @@ void main() {
         initialLocation: '/catalog/classes',
       );
 
-      // Tap the year filter dropdown
       final yearDropdown = find.text('2025-2026 (hiện hành)').first;
       await tester.tap(yearDropdown);
       await tester.pumpAndSettle();
 
-      // Tap "Tất cả các năm"
       final allYearsOption = find.text('Tất cả các năm').last;
       await tester.tap(allYearsOption);
       await tester.pumpAndSettle();
 
-      // Check latest class request
       final classRequests = server.requests.where(
         (r) => r.path.endsWith('/catalog/classes'),
       );
@@ -267,20 +262,16 @@ void main() {
         initialLocation: '/catalog/classes',
       );
 
-      // Tap the year filter dropdown
       final yearDropdown = find.text('2025-2026 (hiện hành)').first;
       await tester.tap(yearDropdown);
       await tester.pumpAndSettle();
 
-      // Tap "2024-2025" (non-current year)
       final oldYearOption = find.text('2024-2025').last;
       await tester.tap(oldYearOption);
       await tester.pumpAndSettle();
 
-      // Check for "Năm lưu trữ" badge
       expect(find.text('Năm lưu trữ'), findsWidgets);
 
-      // Request sent with yearId: 2
       final classRequests = server.requests.where(
         (r) => r.path.endsWith('/catalog/classes'),
       );
@@ -297,7 +288,6 @@ void main() {
         initialLocation: '/catalog/teachers',
       );
 
-      // Initially, teacher request does NOT have activeInYearId
       var teacherRequests = server.requests.where(
         (r) => r.path.endsWith('/catalog/teachers'),
       );
@@ -306,20 +296,16 @@ void main() {
         isFalse,
       );
 
-      // Open the "Phân công" dropdown (currently displaying "Tất cả giáo viên")
-      // AppSelectField (DropdownMenu) hiển thị nhãn ở cả ô chọn lẫn menu ẩn.
       final assignmentDropdown = find.text('Tất cả giáo viên').first;
       expect(find.text('Tất cả giáo viên'), findsWidgets);
       await tester.tap(assignmentDropdown);
       await tester.pumpAndSettle();
 
-      // Tap the option "Có phân công..."
       final activeOption = find.textContaining('Có phân công').last;
       expect(activeOption, findsOneWidget);
       await tester.tap(activeOption);
       await tester.pumpAndSettle();
 
-      // Next teacher request sends activeInYearId = 1
       teacherRequests = server.requests.where(
         (r) => r.path.endsWith('/catalog/teachers'),
       );
@@ -367,19 +353,16 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Find switch for "Năm hiện hành" and toggle it
         final switchFinder = find.byType(Switch);
         expect(switchFinder, findsOneWidget);
         await tester.tap(switchFinder);
         await tester.pumpAndSettle();
 
-        // Confirmation dialog should be displayed with pending summary counts
         expect(find.textContaining('Chuyển năm hiện hành từ'), findsOneWidget);
         expect(find.textContaining('3 bảng điểm chưa chốt'), findsOneWidget);
         expect(find.textContaining('1 phiếu chờ đối chiếu'), findsOneWidget);
         expect(find.textContaining('1 học kỳ chưa công bố'), findsOneWidget);
 
-        // Tap "Hủy"
         await tester.tap(find.text('Hủy'));
         await tester.pumpAndSettle();
         expect(find.textContaining('Chuyển năm hiện hành từ'), findsNothing);
@@ -427,15 +410,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Toggle switch
         await tester.tap(find.byType(Switch));
         await tester.pumpAndSettle();
 
-        // Confirmation dialog should appear WITHOUT warning counts
         expect(find.textContaining('Chuyển năm hiện hành từ'), findsOneWidget);
         expect(find.textContaining('bảng điểm chưa chốt'), findsNothing);
 
-        // Tap "Hủy"
         await tester.tap(find.text('Hủy'));
         await tester.pumpAndSettle();
       },
@@ -478,11 +458,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Toggle switch
       await tester.tap(find.byType(Switch));
       await tester.pumpAndSettle();
 
-      // Dialog still shows
       expect(find.textContaining('Chuyển năm hiện hành từ'), findsOneWidget);
 
       await tester.tap(find.text('Hủy'));
@@ -526,15 +504,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Switch off hien_hanh
       await tester.tap(find.byType(Switch));
       await tester.pumpAndSettle();
 
-      // Tap Lưu
       await tester.tap(find.text('Lưu'));
       await tester.pumpAndSettle();
 
-      // Error banner with 409 message
       expect(
         find.textContaining(
           'Phải có một năm học hiện hành; hãy bật năm khác để chuyển.',
@@ -555,18 +530,15 @@ void main() {
           initialLocation: '/catalog/years',
         );
 
-        // Click delete (delete icon) on the first row
         final deleteButtons = find.byIcon(Icons.delete_outline);
         expect(deleteButtons, findsWidgets);
         await tester.tap(deleteButtons.first);
         await tester.pumpAndSettle();
 
-        // Confirmation dialog pops up, click "Xóa"
         expect(find.textContaining('Xóa bản ghi'), findsOneWidget);
         await tester.tap(find.widgetWithText(FilledButton, 'Xóa'));
         await tester.pumpAndSettle();
 
-        // SnackBar shows 409 message
         expect(
           find.textContaining(
             'Không thể xóa năm học hiện hành; hãy chuyển năm hiện hành sang năm khác trước.',
@@ -587,16 +559,12 @@ void main() {
         size: const Size(360, 800),
       );
 
-      // Verify no overflow exception was thrown
       expect(tester.takeException(), isNull);
 
-      // Title exists
       expect(find.text('Lớp học'), findsOneWidget);
 
-      // Topbar year label on mobile exists
       expect(find.textContaining('2025-2026'), findsWidgets);
 
-      // Trên màn hẹp bộ lọc được thu gọn sau nút lọc; mở ra thì thấy ô lọc năm học.
       await tester.tap(find.byIcon(Icons.filter_alt_outlined));
       await tester.pumpAndSettle();
       expect(find.text('2025-2026 (hiện hành)'), findsWidgets);

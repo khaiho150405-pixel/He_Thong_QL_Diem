@@ -18,13 +18,10 @@ const db = await pool.connect();
 try {
   await db.query("BEGIN");
 
-  // Thông tin trường mặc định (migration đã chèn sẵn; DB dựng lại bằng cách khác vẫn có dòng này).
   await db.query(
     "INSERT INTO truong(ma_truong, ten_truong, ten_ngan, co_quan_chu_quan) VALUES (1, 'Trường THPT Bà Điểm', 'THPT Bà Điểm', 'Sở Giáo dục và Đào tạo TP. Hồ Chí Minh') ON CONFLICT (ma_truong) DO NOTHING",
   );
 
-  // Seed adds fixtures without deleting existing accounts or academic records.
-  // Single argon2id hash computation for all seed accounts
   const passwordHash = await hash(process.env.SEED_PASSWORD, {
     type: argon2id,
     memoryCost: 65536,
@@ -32,19 +29,15 @@ try {
     parallelism: 1,
   });
 
-  // 1. BASELINE PRODUCTION USERS FOR THPT BÀ ĐIỂM
   const usersToSeed: [string, string][] = [
-    // Quản trị viên
     ["admin", "QUAN_TRI_VIEN"],
 
-    // 5 Giáo viên bộ môn cốt lõi
     ["giaovien_toan", "GIAO_VIEN"],
     ["giaovien_van", "GIAO_VIEN"],
     ["giaovien_anh", "GIAO_VIEN"],
     ["giaovien_ly", "GIAO_VIEN"],
     ["giaovien_hoa", "GIAO_VIEN"],
 
-    // Học sinh thật của các khối (đại diện học sinh tra cứu kết quả)
     ["hocsinh_a", "HOC_SINH"],
     ["hocsinh.anh", "HOC_SINH"],
     ["hocsinh_10a2", "HOC_SINH"],
@@ -72,7 +65,6 @@ try {
     userMap.set(name, id);
   }
 
-  // 2. TEACHER PROFILES (5 Giáo viên chính thức THPT Bà Điểm)
   const teacherProfiles = [
     {
       userId: userMap.get("giaovien_toan")!,
@@ -124,7 +116,6 @@ try {
     );
   }
 
-  // 3. ACADEMIC YEAR 2024–2025 (THPT Bà Điểm)
   await db.query(
     `INSERT INTO nam_hoc (ten, ngay_bat_dau, ngay_ket_thuc, hien_hanh)
      VALUES ('2024-2025', '2024-09-01', '2025-05-31', true)
@@ -157,7 +148,6 @@ try {
     )
   ).rows[0].ma_hoc_ky as number;
 
-  // 4. CORE SUBJECTS & EVALUATION COMPONENTS (Theo Thông tư 22/BGDĐT)
   const coreSubjects = [
     { name: "Toán học", periods: 4 },
     { name: "Ngữ văn", periods: 4 },
@@ -181,7 +171,6 @@ try {
     ).rows[0].ma_mon as number;
     subjectMap.set(s.name, subId);
 
-    // 4 thành phần đánh giá chuẩn
     const components = [
       { name: "ĐĐGtx 1", weight: 1.0, order: 1 },
       { name: "ĐĐGtx 2", weight: 1.0, order: 2 },
@@ -214,7 +203,6 @@ try {
     componentMap.set(s.name, compIds);
   }
 
-  // 5. 15 LỚP HỌC CHUẨN: 5 LỚP MỖI KHỐI (10A1-10A5, 11A1-11A5, 12A1-12A5)
   const gvToanId = userMap.get("giaovien_toan")!;
   const gvVanId = userMap.get("giaovien_van")!;
   const gvAnhId = userMap.get("giaovien_anh")!;
@@ -268,7 +256,6 @@ try {
     }
   }
 
-  // 6. SEED 41 HỌC SINH MỖI LỚP (15 * 41 = 615 HỌC SINH THỰC TẾ)
   const lastNames = [
     "Nguyễn",
     "Trần",
@@ -403,7 +390,6 @@ try {
     }
   }
 
-  // Gán tài khoản học sinh chuẩn xác cho từng học sinh cụ thể
   const s10A1 = studentsByClass.get("10A1")!;
   if (s10A1.length > 0) {
     await db.query(
@@ -439,7 +425,6 @@ try {
     );
   }
 
-  // 7. PHÂN CÔNG GIẢNG DẠY (5 GIÁO VIÊN QUA CÁC LỚP HỌC KỲ 1)
   const mathId = subjectMap.get("Toán học")!;
   const litId = subjectMap.get("Ngữ văn")!;
   const engId = subjectMap.get("Tiếng Anh")!;
@@ -447,35 +432,30 @@ try {
   const chemId = subjectMap.get("Hóa học")!;
 
   const teachingAssignments = [
-    // Cô Phạm Thu Hà (Toán): 10A1, 10A2, 10A3, 11A1, 12A1
     { t: gvToanId, c: "10A1", sub: mathId },
     { t: gvToanId, c: "10A2", sub: mathId },
     { t: gvToanId, c: "10A3", sub: mathId },
     { t: gvToanId, c: "11A1", sub: mathId },
     { t: gvToanId, c: "12A1", sub: mathId },
 
-    // Cô Trần Minh Anh (Ngữ văn): 10A1, 10A2, 11A1, 11A2, 12A1
     { t: gvVanId, c: "10A1", sub: litId },
     { t: gvVanId, c: "10A2", sub: litId },
     { t: gvVanId, c: "11A1", sub: litId },
     { t: gvVanId, c: "11A2", sub: litId },
     { t: gvVanId, c: "12A1", sub: litId },
 
-    // Cô Nguyễn Mai Linh (Tiếng Anh): 10A1, 10A2, 11A1, 12A1, 12A2
     { t: gvAnhId, c: "10A1", sub: engId },
     { t: gvAnhId, c: "10A2", sub: engId },
     { t: gvAnhId, c: "11A1", sub: engId },
     { t: gvAnhId, c: "12A1", sub: engId },
     { t: gvAnhId, c: "12A2", sub: engId },
 
-    // Thầy Lê Quốc Bảo (Vật lý): 10A1, 10A2, 10A3, 11A1, 12A1
     { t: gvLyId, c: "10A1", sub: physId },
     { t: gvLyId, c: "10A2", sub: physId },
     { t: gvLyId, c: "10A3", sub: physId },
     { t: gvLyId, c: "11A1", sub: physId },
     { t: gvLyId, c: "12A1", sub: physId },
 
-    // Thầy Đinh Văn Thắng (Hóa học): 10A1, 10A2, 11A1, 11A2, 12A1
     { t: gvHoaId, c: "10A1", sub: chemId },
     { t: gvHoaId, c: "10A2", sub: chemId },
     { t: gvHoaId, c: "11A1", sub: chemId },
@@ -493,10 +473,7 @@ try {
     );
   }
 
-  // 8. BẢNG ĐIỂM VÀ DỮ LIỆU ĐIỂM MẪU SỐNG ĐỘNG
-  // Định nghĩa các bảng điểm cần khởi tạo
   const gradebookDefinitions = [
-    // Lớp 10A1: Đầy đủ 5 môn chính
     {
       className: "10A1",
       subjectName: "Toán học",
@@ -528,7 +505,6 @@ try {
       version: 0,
     },
 
-    // Lớp 10A2: Toán, Văn, Anh
     {
       className: "10A2",
       subjectName: "Toán học",
@@ -548,7 +524,6 @@ try {
       version: 0,
     },
 
-    // Lớp 11A1: Toán, Văn
     {
       className: "11A1",
       subjectName: "Toán học",
@@ -562,7 +537,6 @@ try {
       version: 0,
     },
 
-    // Lớp 12A1: Toán, Anh
     {
       className: "12A1",
       subjectName: "Toán học",
@@ -577,7 +551,6 @@ try {
     },
   ];
 
-  // Mẫu điểm thực tế phân phối tự nhiên (6.0 - 9.8)
   const baseScores = [
     8.5, 9.0, 7.5, 8.0, 9.5, 8.5, 7.0, 9.0, 10.0, 8.0, 7.5, 8.5, 9.0, 8.0, 6.5,
     7.5, 8.5, 9.0, 8.0, 8.5, 9.5, 7.5, 8.0, 8.5, 9.0, 7.0, 8.5, 9.0, 8.0, 7.5,
@@ -601,16 +574,13 @@ try {
     );
     const gbId = gbRes.rows[0].ma_bang_diem as number;
 
-    // Chèn điểm thành phần cho từng học sinh
     for (let sIdx = 0; sIdx < studentIds.length; sIdx++) {
       const studentId = studentIds[sIdx];
       const base = baseScores[sIdx % baseScores.length]!;
 
-      // ĐĐGtx 1 (1.0), ĐĐGtx 2 (1.0), ĐĐGgk (2.0), ĐĐGck (3.0)
       const compScores: number[] = [];
       for (let cIdx = 0; cIdx < compIds.length; cIdx++) {
         const compId = compIds[cIdx];
-        // Dao động tự nhiên giữa các lần kiểm tra
         const delta =
           cIdx === 2 ? 0.3 : cIdx === 3 ? -0.2 : cIdx % 2 === 0 ? 0.2 : -0.3;
         const scoreVal = Math.min(
@@ -629,9 +599,7 @@ try {
         );
       }
 
-      // Nếu là lớp 10A1 (hoặc bảng điểm DA_CHOT), tạo thêm kết quả tổng kết cho học sinh!
       if (def.className === "10A1" && compScores.length === 4) {
-        // Công thức Thông tư 22: (ĐĐGtx1*1 + ĐĐGtx2*1 + ĐĐGgk*2 + ĐĐGck*3) / 7.0
         const finalScore = Number(
           (
             (compScores[0]! * 1.0 +
@@ -686,7 +654,6 @@ try {
     }
   }
 
-  // 9. TỪ ĐIỂN ĐIỂM CHỮ (HỖ TRỢ OCR HAI KÊNH UC11–UC13)
   const scoreWords: [string, number][] = [
     ["không", 0.0],
     ["một", 1.0],

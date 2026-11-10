@@ -79,7 +79,6 @@ function call(key: string, payload: unknown): IdempotentCall {
       .digest("hex"),
   };
 }
-/** Hậu tố tên lớp sau số khối: 10A1 → a1. */
 const suffix = (name: string) => name.replace(/^\d+/, "").trim().toLowerCase();
 
 @Injectable()

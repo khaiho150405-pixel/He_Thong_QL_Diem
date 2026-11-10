@@ -31,8 +31,6 @@ class HomeWebView extends ConsumerWidget {
       body: AppEdgeScrollbar(
         child: Row(
           children: [
-            // Sidebar navy cố định bên trái (thu gọn được); đăng xuất nằm ở
-            // cuối sidebar.
             AppSidebarFrame(
               role: role,
               collapsed: isCollapsed,

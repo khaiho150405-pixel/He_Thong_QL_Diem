@@ -126,14 +126,11 @@ test("list reports the semester in use: explicit, default, or null", async () =>
       endDate: "2027-05-31",
     },
   );
-  // Không có năm hiện hành và không truyền semesterId → null.
   assert.equal((await build(null).getTimetable(admin, {})).semester, null);
-  // semesterId không tồn tại → null, không lỗi.
   assert.equal(
     (await build(null).getTimetable(admin, { semesterId: 99 })).semester,
     null,
   );
-  // Năm hiện hành có học kỳ nhưng ngoài mọi khoảng ngày → học kỳ đầu (thu_tu nhỏ nhất).
   const year = {
     hoc_ky_rows: [
       {

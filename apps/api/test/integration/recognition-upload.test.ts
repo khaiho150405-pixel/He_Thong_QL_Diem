@@ -182,7 +182,6 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       (error: { getStatus?: () => number }) => error.getStatus?.() === 409,
     );
     assert.equal(objects.size, 1);
-    // Client cũ vẫn gửi declaredRows (sai sĩ số): bị bỏ qua, replay cùng khóa trả lại phiếu cũ.
     const legacyForm = new FormData();
     legacyForm.set("componentId", String(component));
     legacyForm.set("declaredRows", "3");
@@ -205,7 +204,6 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     assert.equal(legacy.status, 202);
     assert.deepEqual(await legacy.json(), receipt);
     assert.equal(objects.size, 1);
-    // Snapshot theo STT: Lê Thị An (mã lớn hơn) là STT 1, Trần Văn Bình là STT 2.
     const roster = await owner.query(
       "SELECT d.stt,h.ho_ten FROM danh_sach_phieu d JOIN hoc_sinh h USING(ma_hoc_sinh) WHERE d.ma_phieu=$1 ORDER BY d.stt",
       [receipt.ticketId],
@@ -368,7 +366,6 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     assert.equal("sourceObjectKey" in detail, false);
     assert.equal("numericCropKey" in detail.rows[0]!, false);
     assert.equal("nameCropKey" in detail.rows[0]!, false);
-    // Thông tin ghép học sinh (ADR-0015): sắp theo STT hệ thống, tên theo danh sách lớp đã chốt.
     assert.deepEqual(
       detail.rows.map((row) => [row.stt, row.sttOnPaper, row.studentName]),
       [
@@ -393,7 +390,6 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
       [2, 0, 0],
     );
 
-    // IDOR: giáo viên không được phân công và học sinh đều bị chặn ở cả danh sách lẫn chi tiết.
     const studentToken = randomBytes(32).toString("hex");
     const studentUser = (
       await owner.query(
@@ -545,7 +541,6 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     assert.deepEqual(committed.rows[0], {
       status: "DA_DUYET",
       approved_rows: "2",
-      // Sắp theo mã học sinh: Trần Văn Bình (mã nhỏ, STT 2) nhận 7.5; Lê Thị An (STT 1) nhận 0.0 → "7.5,0.0".
       grades: "7.5,0.0",
       official: "2",
       history: "2",
@@ -578,8 +573,6 @@ test("UC11-13 runs upload, recognition evidence and atomic review with race prot
     });
     assert.equal(mismatchedReplay.status, 409);
 
-    // Approve and lock share the gradebook lock. A pending review prevents the
-    // lock from winning; after approval its stale version must still conflict.
     const secondReceipt = await recognition.upload(
       teacher,
       book.id,

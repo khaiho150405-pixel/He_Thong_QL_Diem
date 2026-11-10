@@ -59,8 +59,6 @@ if (process.exitCode === 0) {
       break;
     }
   }
-  // On Windows, Dart may exit 0 even when a mapped file prevented a write.
-  // Verify the actual files and retry formatting instead of publishing drift.
   if (process.exitCode === 0) {
     for (let attempt = 0; ; attempt += 1) {
       const options = {

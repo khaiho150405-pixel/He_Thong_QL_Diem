@@ -279,18 +279,14 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Kiểm tra Web layout: AppBar không có nút Icons.arrow_back
         expect(find.byIcon(Icons.arrow_back), findsNothing);
 
-        // Có breadcrumb "Bảng điểm #7" và " › Phiếu #42"
         expect(find.text('Bảng điểm #7'), findsOneWidget);
         expect(find.text(' › Phiếu #42'), findsOneWidget);
 
-        // Bấm vào "Bảng điểm #7" để quay lại bảng điểm
         await tester.tap(find.text('Bảng điểm #7'));
         await tester.pumpAndSettle();
 
-        // Xác nhận đã về bảng điểm
         expect(find.text('10A1 · Toán'), findsOneWidget);
       },
     );
@@ -320,19 +316,15 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Mobile layout: Có nút Icons.arrow_back
         expect(find.byIcon(Icons.arrow_back), findsOneWidget);
         expect(find.byTooltip('Quay lại bảng điểm'), findsOneWidget);
 
-        // Không hiện breadcrumb, AppBar có tiêu đề "Phiếu #42"
         expect(find.text(' › Phiếu #42'), findsNothing);
         expect(find.widgetWithText(AppBar, 'Phiếu #42'), findsOneWidget);
 
-        // Bấm quay lại
         await tester.tap(find.byIcon(Icons.arrow_back));
         await tester.pumpAndSettle();
 
-        // Xác nhận đã về bảng điểm
         expect(find.text('10A1 · Toán'), findsOneWidget);
       },
     );
@@ -396,26 +388,21 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Sửa điểm của dòng
         await tester.enterText(find.byType(TextFormField).first, '9.5');
         await tester.pumpAndSettle();
 
-        // Bấm breadcrumb quay lại
         await tester.tap(find.text('Bảng điểm #7'));
         await tester.pumpAndSettle();
 
-        // Hiện dialog xác nhận
         expect(find.text('Bỏ các thay đổi chưa duyệt?'), findsOneWidget);
         expect(find.text('Ở lại'), findsOneWidget);
         expect(find.text('Rời đi'), findsOneWidget);
 
-        // Bấm "Ở lại" -> vẫn ở màn hình đối chiếu
         await tester.tap(find.text('Ở lại'));
         await tester.pumpAndSettle();
         expect(find.text('Bảng điểm #7'), findsOneWidget);
         expect(find.text('10A1 · Toán'), findsNothing);
 
-        // Bấm lại breadcrumb -> bấm "Rời đi" -> về bảng điểm
         await tester.tap(find.text('Bảng điểm #7'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Rời đi'));
@@ -449,15 +436,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Sửa điểm
         await tester.enterText(find.byType(TextFormField).first, '9.0');
         await tester.pumpAndSettle();
 
-        // Bấm nút back trên AppBar
         await tester.tap(find.byIcon(Icons.arrow_back));
         await tester.pumpAndSettle();
 
-        // Hiện Modal Bottom Sheet
         expect(
           find.byKey(const ValueKey('discard-changes-bottom-sheet')),
           findsOneWidget,
@@ -466,7 +450,6 @@ void main() {
         expect(find.text('Ở lại'), findsOneWidget);
         expect(find.text('Rời đi'), findsOneWidget);
 
-        // Bấm "Rời đi"
         await tester.tap(find.text('Rời đi'));
         await tester.pumpAndSettle();
         expect(find.text('10A1 · Toán'), findsOneWidget);
@@ -517,7 +500,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Chọn ảnh
       final pickAction = find.byKey(const ValueKey('recognition-pick'));
       await tester.ensureVisible(pickAction);
       await tester.runAsync(() async {
@@ -527,23 +509,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('bang-diem.png'), findsOneWidget);
 
-      // Bấm Tải ảnh & Nhận dạng
       await tester.tap(find.byKey(const ValueKey('recognition-upload')));
       await tester.pump();
 
-      // Đang upload -> Hiện nút "Hủy tải lên"
       final cancelUploadBtn = find.byKey(
         const ValueKey('recognition-cancel-upload'),
       );
       expect(cancelUploadBtn, findsOneWidget);
       await tester.ensureVisible(cancelUploadBtn);
 
-      // Bấm Hủy tải lên
       await tester.tap(cancelUploadBtn);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Hiện snackbar "Đã hủy tải lên" và ảnh vẫn được giữ nguyên
       expect(find.text('Đã hủy tải lên'), findsOneWidget);
       expect(find.text('bang-diem.png'), findsOneWidget);
     });
@@ -561,7 +539,6 @@ void main() {
       final server = CancelNavigationTestServer();
       server.ticketStatus = 'CHO_DOI_CHIEU';
 
-      // 1. GIAO_VIEN
       final teacherContainer = await setupAuthenticatedContainer(
         tester,
         server: server,
@@ -592,18 +569,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Mở menu ⋮ của phiếu
       await tester.tap(find.byKey(const ValueKey('ticket-menu-42')));
       await tester.pumpAndSettle();
 
       expect(find.text('Xem phiếu'), findsOneWidget);
       expect(find.text('Hủy phiếu'), findsOneWidget);
 
-      // Đóng menu
       await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();
 
-      // 2. QTV
       final adminContainer = await setupAuthenticatedContainer(
         tester,
         server: server,
@@ -724,20 +698,17 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Bấm Hủy phiếu từ menu ⋮
         await tester.tap(find.byKey(const ValueKey('ticket-menu-42')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Hủy phiếu'));
         await tester.pumpAndSettle();
 
-        // Kiểm tra dialog xuất hiện
         expect(find.text('Hủy phiếu #42?'), findsOneWidget);
         expect(find.text('Chọn nhầm ảnh'), findsOneWidget);
         expect(find.text('Nhầm thành phần điểm'), findsOneWidget);
         expect(find.text('Ảnh mờ / chụp lại'), findsOneWidget);
         expect(find.text('Khác…'), findsOneWidget);
 
-        // Nút Hủy phiếu ban đầu bị disable
         final confirmBtnFinder = find.byKey(
           const ValueKey('confirm-cancel-ticket-button'),
         );
@@ -745,18 +716,15 @@ void main() {
         final btn = tester.widget<FilledButton>(confirmBtnFinder);
         expect(btn.onPressed, isNull);
 
-        // Chọn chip "Chọn nhầm ảnh"
         await tester.tap(find.text('Chọn nhầm ảnh'));
         await tester.pumpAndSettle();
 
         final btnEnabled = tester.widget<FilledButton>(confirmBtnFinder);
         expect(btnEnabled.onPressed, isNotNull);
 
-        // Xác nhận hủy
         await tester.tap(confirmBtnFinder);
         await tester.pumpAndSettle();
 
-        // Xác nhận đã gửi body
         expect(server.lastCancelBody?['reason'], 'Chọn nhầm ảnh');
         expect(server.lastCancelBody?['expectedVersion'], 1);
         expect(find.text('Đã hủy phiếu #42'), findsOneWidget);
@@ -811,23 +779,19 @@ void main() {
         await tester.tap(find.text('Hủy phiếu'));
         await tester.pumpAndSettle();
 
-        // Trên mobile là BottomSheet
         expect(
           find.byKey(const ValueKey('cancel-ticket-bottom-sheet')),
           findsOneWidget,
         );
 
-        // Chọn "Ảnh mờ / chụp lại"
         await tester.tap(find.text('Ảnh mờ / chụp lại'));
         await tester.pumpAndSettle();
 
-        // Bấm Hủy phiếu
         await tester.tap(
           find.byKey(const ValueKey('confirm-cancel-ticket-button')),
         );
         await tester.pumpAndSettle();
 
-        // Lỗi 409 hiển thị message tiếng Việt từ server
         expect(
           find.text('Phiếu nhận dạng đã được duyệt trước đó'),
           findsOneWidget,
@@ -878,23 +842,19 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Mặc định công tắc tắt -> Không có phiếu nào trong danh sách
         expect(find.text('Chưa có phiếu nhận dạng nào.'), findsOneWidget);
 
-        // Bật công tắc "Hiện phiếu đã hủy"
         await tester.tap(
           find.byKey(const ValueKey('recognition-show-cancelled-switch')),
         );
         await tester.pumpAndSettle();
 
-        // Phiếu DA_HUY xuất hiện kèm nhãn "Đã hủy" và lý do
         expect(find.text('Đã hủy'), findsOneWidget);
         expect(
           find.textContaining('Lý do: Ảnh chụp bị bóng mờ'),
           findsOneWidget,
         );
 
-        // Mở màn hình đối chiếu của phiếu đã hủy
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container,
@@ -905,16 +865,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Banner "Phiếu đã hủy — Ảnh chụp bị bóng mờ"
         expect(
           find.textContaining('Phiếu đã hủy — Ảnh chụp bị bóng mờ'),
           findsOneWidget,
         );
 
-        // Ảnh gốc và ảnh ô hiển thị "Ảnh đã xóa"
         expect(find.text('Ảnh đã xóa'), findsAtLeastNWidgets(1));
 
-        // Không có nút duyệt hoặc lưu
         expect(find.text('Duyệt và ghi điểm chính thức'), findsNothing);
       },
     );
@@ -939,7 +896,6 @@ void main() {
         );
         addTearDown(container.dispose);
 
-        // 1. Kiểm tra RecognitionPanel
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container,
@@ -965,7 +921,6 @@ void main() {
 
         expect(tester.takeException(), isNull);
 
-        // 2. Kiểm tra ReviewScreen
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container,
@@ -1005,22 +960,17 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Mở tab Quét ảnh OCR
         await tester.tap(find.text('Quét ảnh OCR'));
         await tester.pumpAndSettle();
 
-        // Kiểm tra thẻ phiếu xuất hiện và KHÔNG có nút "Đối chiếu ngay"
         expect(find.text('Phiếu #42 · Kiểm tra 1'), findsOneWidget);
         expect(find.text('Đối chiếu ngay'), findsNothing);
 
-        // Bấm trực tiếp vào thẻ phiếu (ListTile)
         await tester.tap(find.text('Phiếu #42 · Kiểm tra 1'));
         await tester.pumpAndSettle();
 
-        // Đã mở màn hình đối chiếu của phiếu #42
         expect(find.text('Bảng điểm #7'), findsOneWidget);
         expect(find.text('Phiếu #42'), findsOneWidget);
-        // Xác nhận dòng tiến độ không còn xuất hiện
         expect(find.textContaining('dòng cần xem'), findsNothing);
       },
     );

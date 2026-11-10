@@ -1,6 +1,5 @@
 import { ConflictException } from "@nestjs/common";
 
-/** Lỗi nghiệp vụ 409 mang mã ổn định (`code`) và `details` cho envelope lỗi; ErrorFilter toàn cục đọc hai trường này. */
 export class CodedException extends ConflictException {
   constructor(
     readonly code: string,
@@ -11,7 +10,6 @@ export class CodedException extends ConflictException {
   }
 }
 
-/** Mã lỗi hàm SQL (RAISE EXCEPTION '<tên>') → mã API và thông báo tiếng Việt. */
 const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
   [
     "CELL_HAS_VALUE",
@@ -177,7 +175,6 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
   ],
 ];
 
-/** Đọc lỗi nghiệp vụ có mã từ lỗi Prisma/PostgreSQL (tên trong thông điệp, DETAIL nếu có); null nếu không khớp. */
 export function codedFailure(error: unknown): CodedException | null {
   const diagnostic =
     String(error) + JSON.stringify((error as { meta?: unknown }).meta ?? {});
@@ -190,7 +187,6 @@ export function codedFailure(error: unknown): CodedException | null {
     );
   }
   for (const [sql, code, message] of SQL_ERRORS) {
-    // Lỗi theo học sinh có dạng 'MA_LOI:<ma_hoc_sinh>' → details { studentId, reason }.
     const found = new RegExp(`(?<![A-Z_])${sql}(?![A-Z_])(?::([0-9]+))?`).exec(
       diagnostic,
     );
@@ -204,7 +200,6 @@ export function codedFailure(error: unknown): CodedException | null {
   return null;
 }
 
-/** DETAIL của RAISE EXCEPTION chứa JSON các mục cần xử lý; không đọc được thì trả mảng rỗng. */
 function issuesOf(error: unknown): unknown[] {
   const candidates: unknown[] = [];
   const e = error as {
@@ -222,9 +217,7 @@ function issuesOf(error: unknown): unknown[] {
     try {
       const parsed: unknown = JSON.parse(text.slice(start, end + 2));
       if (Array.isArray(parsed)) return parsed;
-    } catch {
-      /* thử nguồn khác */
-    }
+    } catch {}
   }
   return [];
 }

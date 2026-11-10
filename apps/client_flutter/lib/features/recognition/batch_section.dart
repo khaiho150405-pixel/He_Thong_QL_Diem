@@ -16,9 +16,6 @@ import 'batch_result_screen.dart';
 import 'cancel_batch_dialog.dart';
 import 'image_picker.dart';
 
-/// Phần "nhận dạng theo mẫu" của panel nhận dạng (ADR-0016 mục 5, giáo viên):
-/// 1–4 ảnh trang → xác nhận cột → gửi lô → theo dõi lô. Khi xong mở màn kết quả
-/// lô; mỗi phiếu vẫn đối chiếu bằng màn đối chiếu hiện có.
 class BatchRecognitionSection extends ConsumerStatefulWidget {
   const BatchRecognitionSection({
     super.key,
@@ -34,7 +31,6 @@ class BatchRecognitionSection extends ConsumerStatefulWidget {
   final String templateName;
   final bool enabled;
 
-  /// Gọi khi lô được tạo hoặc đổi trạng thái, để panel tải lại danh sách phiếu.
   final VoidCallback onChanged;
 
   @override
@@ -103,9 +99,6 @@ class _BatchRecognitionSectionState
     context,
   ).showSnackBar(SnackBar(content: Text(message)));
 
-  // ---- Ánh xạ cột ---------------------------------------------------------
-
-  /// Lý do cột không chọn được; `null` nếu chọn được.
   static String? unavailableReason(MappingItemDto item) {
     if (item.locked) {
       return 'Cột đã khóa, ngoài thời gian nhập hoặc không nhận ảnh.';
@@ -150,8 +143,6 @@ class _BatchRecognitionSectionState
       });
     }
   }
-
-  // ---- Ảnh các trang ------------------------------------------------------
 
   Future<void> _ensureDecodable(RecognitionImage image) async {
     recognitionImageMime(image);
@@ -219,8 +210,6 @@ class _BatchRecognitionSectionState
     pages.removeAt(index);
     tooManyPages = false;
   });
-
-  // ---- Gửi lô -------------------------------------------------------------
 
   bool get _canSubmit =>
       widget.enabled &&
@@ -323,8 +312,6 @@ class _BatchRecognitionSectionState
     }
   }
 
-  // ---- Theo dõi lô --------------------------------------------------------
-
   void _schedulePoll() {
     _pollTimer?.cancel();
     _pollTimer = Timer(_pollInterval, _poll);
@@ -408,8 +395,6 @@ class _BatchRecognitionSectionState
       pollError = null;
     });
   }
-
-  // ---- Giao diện ----------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {

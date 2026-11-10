@@ -10,9 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Sáu học sinh × ba cột. Cột 201 phủ các trạng thái của ô: nhập từ ảnh, nhập tay,
-/// trống, chờ đối chiếu, miễn. Cột 202 ngoài lịch nhập (bảng chưa khóa). Cột 203
-/// là Đạt/Không đạt.
 class _Server implements HttpClientAdapter {
   _Server({required this.locked});
   final bool locked;
@@ -129,7 +126,7 @@ Future<void> _pump(
   required double width,
   bool locked = false,
 }) async {
-  tester.view.physicalSize = Size(width, 8000); // đủ cao để dựng đủ 6 hàng
+  tester.view.physicalSize = Size(width, 8000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -165,14 +162,13 @@ Rect _rect(WidgetTester tester, String key) {
   return tester.getRect(_frameOf(key));
 }
 
-/// Khóa widget "giá trị" của ô tương ứng từng trạng thái ở cột 201.
 const _col201 = [
-  'grade-c1_201', // nhập từ ảnh
-  'grade-c2_201', // nhập tay
-  'grade-c3_201', // trống
-  'grade-c4_201', // chờ đối chiếu
-  'grade-exempt-c5_201', // miễn
-  'grade-c6_201', // nhập từ ảnh
+  'grade-c1_201',
+  'grade-c2_201',
+  'grade-c3_201',
+  'grade-c4_201',
+  'grade-exempt-c5_201',
+  'grade-c6_201',
 ];
 
 void main() {
@@ -187,7 +183,6 @@ void main() {
           expect(r.width, closeTo(rects.first.width, .5));
           expect(r.height, closeTo(gradeCellHeight, .01));
         }
-        // Cột 202 (ngoài lịch nhập) và cột Đạt/Không đạt cũng cùng khung.
         final out = [
           for (var s = 1; s <= 6; s++) _rect(tester, 'grade-c${s}_202'),
         ];
@@ -220,7 +215,6 @@ void main() {
       }
       final exempt = find.byKey(const ValueKey('grade-exempt-c5_201'));
       expect(offset('grade-exempt-c5_201', exempt), closeTo(0, 1));
-      // Số của hai ô khác nhau (có/không AI) cùng một tâm ngang tuyệt đối.
       final a = tester.getCenter(
         find.descendant(
           of: find.byKey(const ValueKey('grade-c1_201')),
@@ -250,7 +244,6 @@ void main() {
       expect(find.byTooltip('Chờ đối chiếu'), findsWidgets);
       expect(find.byTooltip('Ngoài lịch nhập'), findsWidgets);
       expect(find.byTooltip('Nhập từ ảnh'), findsWidgets);
-      // Chấm AI nằm trong khung ô, không còn nhãn "● AI" bên ngoài.
       expect(find.text('● AI'), findsNothing);
       expect(
         find.descendant(
@@ -259,7 +252,6 @@ void main() {
         ),
         findsOneWidget,
       );
-      // Ô trống hiện "—" mờ ở giữa.
       expect(
         find.descendant(
           of: find.byKey(const ValueKey('grade-c3_201')),
@@ -284,7 +276,6 @@ void main() {
         final lefts = {for (final k in _col201) _rect(tester, k).left.round()};
         expect(lefts.length, 1);
         expect(find.byTooltip('Cột đã chốt'), findsWidgets);
-        // Biểu tượng khóa đã có ở tiêu đề cột: trong ô không lặp lại.
         expect(
           find.descendant(
             of: find.byType(GradeCellFrame),
@@ -323,7 +314,6 @@ void main() {
     testWidgets('không overflow ở $width px', (tester) async {
       await _pump(tester, width: width);
       expect(tester.takeException(), isNull);
-      // Bảng đã khóa: nút "Yêu cầu điều chỉnh" xuống dòng, không tràn ngang.
       await _pump(tester, width: width, locked: true);
       expect(
         find.byKey(const ValueKey('request-adjustment-btn')),

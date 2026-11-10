@@ -39,7 +39,6 @@ const roles = ["STT", "HO_TEN", "DIEM", "DIEM_CHU", "BO_QUA"];
 const groups = ["TX", "GK", "CK"];
 const statuses = ["NHAP", "DANG_DUNG", "NGUNG"];
 
-/** Envelope lỗi ổn định (`code`, `message`, `details`, `requestId`) với mã lỗi riêng của mẫu bảng điểm. */
 @Catch(TemplateException)
 export class TemplateErrorFilter implements ExceptionFilter {
   catch(error: TemplateException, host: ArgumentsHost): void {
@@ -214,10 +213,6 @@ const imageInterceptor = () =>
 
 type Authed = Request & { actor: Actor };
 
-/**
- * Mẫu bảng điểm (ADR-0016). Quyền ghi chỉ QTV; giáo viên chỉ đọc mẫu DANG_DUNG; học sinh bị từ chối ở service và store
- * (không tin UI). Mọi nghiệp vụ nằm ở FormTemplatesService, controller chỉ chuyển tham số.
- */
 @ApiTags("form-templates")
 @UseFilters(TemplateErrorFilter)
 @Controller("catalog/form-templates")

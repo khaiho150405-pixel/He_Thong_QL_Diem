@@ -60,7 +60,6 @@ function adjustment(row: Row, lines?: AdjustmentLine[]): Adjustment {
   };
 }
 
-/** Phiếu điều chỉnh kèm tên lớp/môn/học kỳ và tên người gửi/xử lý; `filter` chọn phiếu, `limit` giới hạn số dòng. */
 async function selectAdjustments(
   tx: Prisma.TransactionClient,
   filter: Prisma.Sql,
@@ -168,7 +167,6 @@ export class PrismaAdjustmentStore implements AdjustmentStore {
         }),
       );
     } catch (error) {
-      // Chuẩn hóa lỗi driver adapter; không lộ SQL/phiên.
       const e = error as { code?: string };
       const state = sqlStateOf(error);
       if (e.code === "P2010" && state === "42501")

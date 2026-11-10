@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../app/design_tokens.dart';
 import 'repository.dart';
 
-/// Đọc đủ mọi trang của một danh mục bằng `CatalogRepository.list` có sẵn
-/// (cùng cách `catalog_screen` đang làm); cursor lặp thì dừng để không treo.
 Future<List<Json>> fetchAllCatalogRows(
   CatalogRepository repository,
   String resource,
@@ -22,10 +20,8 @@ Future<List<Json>> fetchAllCatalogRows(
   return items;
 }
 
-/// Một nút điều hướng sang màn danh mục hiện có (`/catalog/...`).
 typedef MergedViewLink = ({String label, IconData icon, String route});
 
-/// Đầu trang của màn gộp chỉ đọc: dòng mô tả và các nút sang màn quản lý.
 class MergedViewHeader extends StatelessWidget {
   const MergedViewHeader({
     super.key,
@@ -72,7 +68,6 @@ class MergedViewHeader extends StatelessWidget {
   }
 }
 
-/// Cột của [MergedTable]: [flex] chia phần còn lại, [width] cố định.
 class MergedColumn {
   const MergedColumn(
     this.label, {
@@ -87,9 +82,6 @@ class MergedColumn {
   final bool alignEnd;
 }
 
-/// Bảng chỉ đọc kiểu `.tbl` của prototype: thanh tiêu đề nền `subtle`, hàng
-/// kẻ ngang bằng `line`, bo góc `AppRadius.md`. Mỗi hàng là danh sách ô đúng
-/// thứ tự cột.
 class MergedTable extends StatelessWidget {
   const MergedTable({super.key, required this.columns, required this.rows});
 
@@ -175,7 +167,6 @@ class MergedTable extends StatelessWidget {
   }
 }
 
-/// Thẻ cho màn hẹp: nền surface, viền `line`, bo góc `AppRadius.md`.
 class MergedCard extends StatelessWidget {
   const MergedCard({super.key, required this.child});
 
@@ -198,13 +189,11 @@ class MergedCard extends StatelessWidget {
   }
 }
 
-/// Chip nhỏ (`.chip.sm`): nền `subtle`, viền `line`, chữ `ink2`.
 class MergedChip extends StatelessWidget {
   const MergedChip({super.key, required this.text, this.strongText});
 
   final String text;
 
-  /// Phần in đậm đặt sau [text] (ví dụ hệ số).
   final String? strongText;
 
   @override

@@ -16,33 +16,21 @@ from typing import Any, Sequence
 import cv2
 import numpy as np
 
-# Đo trên gần TRỌN chiều cao từng dòng dữ liệu, chỉ chừa bề dày (kể cả viền mờ) của vạch ngang ở hai đầu: nếu để viền mờ
-# lọt vào dải thì bước lấp khe nối nó với chữ số thành một "vạch" liền. Vạch dọc thật phủ ~100% chiều cao dòng; chữ số
-# viết tay hoặc chữ in (kể cả "8", STT "10"–"19") chỉ chiếm 55–75% chiều cao dòng nên không đạt PHU_DOC_TOI_THIEU.
 LE_DONG = 0.11
 LE_DONG_TOI_THIEU_PX = 4
 DONG_TOI_THIEU_PX = 6
-# Điểm ảnh coi là mực khi tối hơn nền cục bộ của dải (trung vị) ngần này mức xám.
 DO_TUONG_PHAN = 30
-# Khe dọc nhỏ hơn mức này (px) trong một nét tối được lấp trước khi đo (vạch đứt do mờ, chữ đè).
 KHE_LAP_TOI_DA = 11
-# Vạch mảnh: các x0 cùng đạt ngưỡng quanh đường tốt nhất không rộng quá ngần này px (loại mảng tối như bóng đổ).
 BE_RONG_VACH_TOI_DA = 14
-# Một dòng "ủng hộ" tại x khi nét tối phủ ít nhất ngần này chiều cao dải ở x đó.
 PHU_DOC_TOI_THIEU = 0.90
 LECH_NGANG_TOI_DA = 2
-# Đường thẳng x = x0 + độ_dốc·(y − y_giữa): thử các độ dốc trong ±DOC_NGHIENG_TOI_DA (trang đã nắn phẳng nên rất nhỏ).
 DOC_NGHIENG_TOI_DA = 0.03
 SO_DOC_NGHIENG = 13
-# Phần dòng tối thiểu cùng ủng hộ một đường thẳng, và độ trải theo chiều dọc của các dòng đó.
 PHAN_DONG_TOI_THIEU = 0.6
 SO_DONG_TOI_THIEU = 3
 TRAI_DOC_TOI_THIEU = 0.5
-# Hai ứng viên cách nhau hơn mức này (px) là hai đường khác nhau → mơ hồ, từ chối.
 KHOANG_TACH_UNG_VIEN = 6
-# Quanh các vạch đã dò được (đã có trong lưới) bỏ ngần này px: chúng là vạch khác, không phải vạch cần tìm lại.
 LOAI_TRU_QUANH_VACH = 6
-# Lề trang: sát mép giấy thường là mép bàn/bóng đổ, không phải vạch bảng.
 LE_TRANG = 0.015
 
 
@@ -84,22 +72,20 @@ def tim_vach_doc(
     for x in tranh:
         excluded |= np.abs(columns - x) <= LOAI_TRU_QUANH_VACH
     closing = cv2.getStructuringElement(cv2.MORPH_RECT, (1, KHE_LAP_TOI_DA))
-    support = np.zeros((len(bands), len(columns)), bool)  # support[b, k]: dòng b có nét tối phủ gần hết dải tại x = xa + k
+    support = np.zeros((len(bands), len(columns)), bool)
     for b, (top, bottom) in enumerate(bands):
         band = gray[top:bottom, xa:xb]
         dark = (band.astype(np.int16) < int(np.median(band)) - DO_TUONG_PHAN).astype(np.uint8)
-        # Đệm dòng trống trước khi lấp khe: mặc định OpenCV coi ngoài biên là mực nên phép đóng lan mực ra tận mép dải.
         padded = cv2.copyMakeBorder(dark, KHE_LAP_TOI_DA, KHE_LAP_TOI_DA, 0, 0, cv2.BORDER_CONSTANT, value=0)
         closed = cv2.morphologyEx(padded, cv2.MORPH_CLOSE, closing)[KHE_LAP_TOI_DA:-KHE_LAP_TOI_DA]
         covered = closed.mean(axis=0) >= PHU_DOC_TOI_THIEU
-        for shift in range(1, LECH_NGANG_TOI_DA + 1):  # vạch hơi cong sau khi nắn: chịu lệch ±LECH_NGANG_TOI_DA px
+        for shift in range(1, LECH_NGANG_TOI_DA + 1):
             covered = covered | np.roll(covered, shift) | np.roll(covered, -shift)
-        covered[:LECH_NGANG_TOI_DA] = covered[-LECH_NGANG_TOI_DA:] = False  # np.roll quấn vòng: bỏ hai đầu
+        covered[:LECH_NGANG_TOI_DA] = covered[-LECH_NGANG_TOI_DA:] = False
         support[b] = covered & ~excluded
     middle = np.array([(top + bottom) / 2.0 for top, bottom in bands])
     reference = (middle[0] + middle[-1]) / 2.0
     need = max(SO_DONG_TOI_THIEU, int(np.ceil(PHAN_DONG_TOI_THIEU * len(bands))))
-    # Đếm số dòng ủng hộ từng đường thẳng (độ dốc, x0): x_b = x0 + độ_dốc·(y_b − y_giữa).
     slopes = np.linspace(-DOC_NGHIENG_TOI_DA, DOC_NGHIENG_TOI_DA, SO_DOC_NGHIENG)
     rows = np.arange(len(bands))[:, None]
     counts = np.zeros((len(slopes), len(columns)), int)
@@ -111,7 +97,6 @@ def tim_vach_doc(
     good = counts >= need
     if not good.any():
         return None
-    # Gom các ứng viên thành nhóm theo x0; hơn một nhóm tách biệt → mơ hồ.
     candidate_x = np.flatnonzero(good.any(axis=0))
     groups = np.split(candidate_x, np.flatnonzero(np.diff(candidate_x) > KHOANG_TACH_UNG_VIEN) + 1)
     if len(groups) != 1:
@@ -121,8 +106,7 @@ def tim_vach_doc(
     slope = float(np.mean(slopes[cells[:, 0]]))
     x0 = float(np.mean(groups[0][cells[:, 1]]))
     if int((counts[int(cells[0, 0])] >= need).sum()) > BE_RONG_VACH_TOI_DA:
-        return None  # mảng tối rộng (bóng đổ, mép bàn), không phải nét kẻ
-    # Các dòng ủng hộ phải trải theo chiều dọc bảng (không dồn vào một góc).
+        return None
     shift = np.round(slope * (middle - reference)).astype(int)
     supported = [
         middle[b]

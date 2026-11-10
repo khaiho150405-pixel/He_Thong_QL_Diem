@@ -54,7 +54,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: AppEdgeScrollbar(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // Breakpoint 960 giống màn Trang chủ: từ 960 trở lên có nửa trái.
               final wide = constraints.maxWidth >= 960;
               return SingleChildScrollView(
                 primary: true,
@@ -63,7 +62,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     minHeight: constraints.maxHeight,
                     minWidth: constraints.maxWidth,
                   ),
-                  // Nút đổi sáng/tối nằm góc trên phải, cuộn cùng nội dung.
                   child: Stack(
                     fit: StackFit.passthrough,
                     children: [
@@ -128,8 +126,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       key: form,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        // Kéo giãn hết cột form (tối đa 380) ở mọi breakpoint để ô nhập và
-        // hai nút luôn rộng bằng nhau; tiêu đề màn rộng vẫn căn trái.
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (wide) ...[
@@ -247,7 +243,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-/// Đầu trang rút gọn khi màn hẹp (prototype `.m-login`): logo, tên, trường.
 class _CompactBrand extends ConsumerWidget {
   const _CompactBrand({required this.tokens});
   final AppTokens tokens;

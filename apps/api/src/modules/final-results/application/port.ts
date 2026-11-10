@@ -138,7 +138,6 @@ export interface StudentResultSummary {
   classSize: number;
 }
 
-/** Nhóm "miễn" và "thiếu điểm" tính theo dữ liệu hiện tại của bảng điểm (không lưu lần tính). */
 export interface GradebookGroups {
   exempted: ExemptedStudent[];
   skipped: SkippedStudent[];

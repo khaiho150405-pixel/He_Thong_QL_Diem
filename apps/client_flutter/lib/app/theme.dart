@@ -7,38 +7,31 @@ import 'page_transitions.dart';
 class AppTheme {
   AppTheme._();
 
-  // Hằng màu dùng trực tiếp trong các màn hình hiện có. Giá trị là bảng màu
-  // SÁNG của prototype (xem `design_tokens.dart`). Tên giữ nguyên để không
-  // phải sửa màn hình; code mới nên dùng `context.tokens` để tự đổi theo
-  // chế độ sáng/tối.
-  static const Color primarySeed = Color(0xFF1F5FD1); // --pri
-  static const Color primaryDark = Color(0xFF0F2B5B); // --navy
+  static const Color primarySeed = Color(0xFF1F5FD1);
+  static const Color primaryDark = Color(0xFF0F2B5B);
   static const Color primaryLight = Color(0xFF5C8DE6);
-  static const Color warmIvoryBg = Color(0xFFF3F6FB); // --bg
-  static const Color cardBg = Color(0xFFFFFFFF); // --surface
-  static const Color sidebarBg = Color(0xFFFFFFFF); // sidebar navy: bước 5
-  static const Color widgetBg = Color(0xFFEEF3FA); // --hover
-  static const Color navActiveBg = Color(0xFFE8F0FD); // --prisoft
-  static const Color borderSubtle = Color(0xFFDDE4EE); // --line
-  static const Color borderSidebar = Color(0xFFDDE4EE); // --line
-  // Tên "gold" là di sản; giá trị vẫn là xanh primary. Màu amber thật của
-  // prototype nằm ở `AppTokens.acc`.
-  static const Color goldAccent = Color(0xFF1F5FD1); // --pri
+  static const Color warmIvoryBg = Color(0xFFF3F6FB);
+  static const Color cardBg = Color(0xFFFFFFFF);
+  static const Color sidebarBg = Color(0xFFFFFFFF);
+  static const Color widgetBg = Color(0xFFEEF3FA);
+  static const Color navActiveBg = Color(0xFFE8F0FD);
+  static const Color borderSubtle = Color(0xFFDDE4EE);
+  static const Color borderSidebar = Color(0xFFDDE4EE);
+  static const Color goldAccent = Color(0xFF1F5FD1);
   static const Color goldBright = Color(0xFF5C8DE6);
-  static const Color goldText = Color(0xFF1A4FB0); // --prih
-  static const Color textMain = Color(0xFF14213D); // --ink
-  static const Color textMuted = Color(0xFF44546F); // --ink2
-  static const Color textSubtle = Color(0xFF62728F); // --ink3
+  static const Color goldText = Color(0xFF1A4FB0);
+  static const Color textMain = Color(0xFF14213D);
+  static const Color textMuted = Color(0xFF44546F);
+  static const Color textSubtle = Color(0xFF62728F);
 
-  // Màu trạng thái (nền / chữ), bảng sáng của prototype.
-  static const Color greenBadgeBg = Color(0xFFE3F6EE); // --oksoft
-  static const Color greenBadgeText = Color(0xFF12805C); // --ok
-  static const Color yellowBadgeBg = Color(0xFFFFF3D1); // --warnsoft
-  static const Color yellowBadgeText = Color(0xFF8A5600); // --warn
-  static const Color redBadgeBg = Color(0xFFFDE8E8); // --badsoft
-  static const Color redBadgeText = Color(0xFFC23B3B); // --bad
-  static const Color blueBadgeBg = Color(0xFFE8F0FD); // --prisoft
-  static const Color blueBadgeText = Color(0xFF1F5FD1); // --pri
+  static const Color greenBadgeBg = Color(0xFFE3F6EE);
+  static const Color greenBadgeText = Color(0xFF12805C);
+  static const Color yellowBadgeBg = Color(0xFFFFF3D1);
+  static const Color yellowBadgeText = Color(0xFF8A5600);
+  static const Color redBadgeBg = Color(0xFFFDE8E8);
+  static const Color redBadgeText = Color(0xFFC23B3B);
+  static const Color blueBadgeBg = Color(0xFFE8F0FD);
+  static const Color blueBadgeText = Color(0xFF1F5FD1);
 
   static ThemeData light() => _build(AppTokens.light);
 
@@ -49,8 +42,6 @@ class AppTheme {
     final isLight = brightness == Brightness.light;
     final heading = t.heading;
 
-    // Chỉ ghi đè các vai trò đang được widget dùng; secondary giữ do fromSeed
-    // sinh ra để không đổi giao diện các màn hiện có. Amber nằm ở tertiary.
     final colorScheme = ColorScheme.fromSeed(
       seedColor: t.pri,
       brightness: brightness,
@@ -78,8 +69,6 @@ class AppTheme {
       surfaceContainerHighest: isLight ? const Color(0xFFE2E8F0) : t.line,
     );
 
-    // Font đóng gói trong assets/fonts (không tải từ mạng); các font nền tảng
-    // chỉ làm dự phòng cho ký tự Be Vietnam Pro không có.
     final baseTextTheme = ThemeData(brightness: brightness, useMaterial3: true)
         .textTheme
         .apply(
@@ -317,7 +306,6 @@ class AppTheme {
         trackBorderColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
       drawerTheme: DrawerThemeData(backgroundColor: t.surface, elevation: 4),
-      // Switch tắt phải thấy rõ: nền track xám + viền đậm + núm đậm (mặc định M3 gần như chìm vào nền thẻ).
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.disabled)

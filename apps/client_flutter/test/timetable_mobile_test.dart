@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Học kỳ 03/09/2031 – 30/09/2031. Hôm nay cố định: thứ Hai 08/09/2031.
 const _semester = {
   'id': 1,
   'name': 'Học kỳ I',
@@ -45,7 +44,6 @@ class _Server implements HttpClientAdapter {
     } else if (options.path.endsWith('/timetable')) {
       body = {
         'items': [
-          // Thứ Hai: Ngữ văn tiết 1-3 (gộp), Toán tiết 4, Hóa tiết 7 (chiều).
           for (final p in [1, 2, 3]) _slot(p, 'Ngữ văn', 2, p, 'P.101'),
           _slot(4, 'Toán', 2, 4, 'P.102'),
           _slot(7, 'Hóa học', 2, 7, null),
@@ -137,14 +135,14 @@ void main() {
     await _pump(tester);
     expect(find.text('Th 2, 08/09/2031'), findsOneWidget);
     expect(_caption(tester), 'Thứ Hai · Tuần 2');
-    expect(find.text('Ngữ văn'), findsOneWidget); // 3 tiết → 1 thẻ
+    expect(find.text('Ngữ văn'), findsOneWidget);
     expect(find.text('1 - 3'), findsOneWidget);
     expect(find.text('Toán'), findsOneWidget);
-    expect(find.text('4'), findsOneWidget); // một tiết ghi "4"
+    expect(find.text('4'), findsOneWidget);
     expect(find.text('7'), findsOneWidget);
     expect(find.text('Buổi sáng'), findsNWidgets(2));
     expect(find.text('Buổi chiều'), findsOneWidget);
-    expect(find.text('Phòng:'), findsNWidgets(2)); // Hóa không có phòng
+    expect(find.text('Phòng:'), findsNWidgets(2));
     expect(
       find.byKey(const ValueKey('timetable-weekly-vertical-scroll')),
       findsNothing,
@@ -175,7 +173,7 @@ void main() {
     expect(_caption(tester), 'Tuần 2 · 08/09 – 14/09/2031');
     expect(find.text('Thứ Hai, 08/09'), findsOneWidget);
     expect(find.text('Thứ Ba, 09/09'), findsOneWidget);
-    expect(find.text('Hôm nay'), findsOneWidget); // huy hiệu của nhóm hôm nay
+    expect(find.text('Hôm nay'), findsOneWidget);
     expect(find.text('Ngữ văn'), findsOneWidget);
     await tester.drag(
       find.byKey(const ValueKey('tt-week-list')),
@@ -192,9 +190,9 @@ void main() {
     await _mode(tester, 'month');
     expect(_caption(tester), 'Tháng 9/2031');
     expect(find.text('T2'), findsOneWidget);
-    expect(find.text('5 tiết'), findsWidgets); // thứ Hai có 5 tiết khác nhau
+    expect(find.text('5 tiết'), findsWidgets);
 
-    await tester.tap(find.byKey(const ValueKey('tt-month-day-1'))); // ngoài kỳ
+    await tester.tap(find.byKey(const ValueKey('tt-month-day-1')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('tt-month-grid')), findsOneWidget);
 
@@ -255,7 +253,7 @@ void main() {
     expect(find.text('Sắp xếp tiết học'), findsOneWidget);
     expect(find.text('Sửa môn / giáo viên'), findsWidgets);
     expect(find.text('Xóa khỏi lịch'), findsWidgets);
-    await tester.tapAt(const Offset(10, 10)); // chạm nền mờ để đóng
+    await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Bộ lọc'));

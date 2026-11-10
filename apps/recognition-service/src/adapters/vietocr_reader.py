@@ -115,7 +115,6 @@ class VietOcrReader:
         try:
             state = torch.load(weights, map_location=torch.device(device), weights_only=True)
         except Exception as error:
-            # Không hạ sang chế độ pickle tùy ý.
             raise ModelUnavailableError("VietOCR checkpoint cannot be loaded safely") from error
         try:
             model, vocab = translate.build_model(config)

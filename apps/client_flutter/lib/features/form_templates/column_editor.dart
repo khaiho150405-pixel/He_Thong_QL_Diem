@@ -6,9 +6,6 @@ import '../../app/widgets/app_select_field.dart';
 import 'column_draft.dart';
 import 'common.dart';
 
-/// Danh sách cột của mẫu: tiêu đề đọc được, vai trò, nhóm TX/GK/CK, thứ tự và
-/// "điểm chữ của cột …". Lỗi hiện ngay dưới cột sai; lỗi chung ở đầu danh sách.
-/// Widget không giữ trạng thái: mọi thay đổi đi qua [onChanged].
 class TemplateColumnEditor extends StatelessWidget {
   const TemplateColumnEditor({
     super.key,

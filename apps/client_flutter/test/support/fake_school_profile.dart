@@ -26,7 +26,6 @@ SchoolProfileDto fakeSchoolProfile({
   updatedAt: '2026-10-01T03:00:00.000Z',
 );
 
-/// Lỗi API dạng envelope `{code, message, details}`.
 DioException apiError(
   String code, {
   int status = 409,
@@ -90,7 +89,6 @@ class FakeSchoolProfileRepository implements SchoolProfileRepository {
       );
 }
 
-/// Máy chủ giả: chỉ trả năm học/học kỳ hiện hành, mọi đường dẫn khác 404.
 class FakeCatalogServer implements HttpClientAdapter {
   FakeCatalogServer({this.withTerm = true});
   final bool withTerm;

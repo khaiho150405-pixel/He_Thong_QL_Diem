@@ -7,10 +7,8 @@ import '../timetable_slot_group.dart';
 import '../timetable_week.dart';
 import 'timetable_block.dart';
 
-/// Buổi trong ngày: (nhãn, tiết đầu, tiết cuối).
 const _sessions = [('Sáng', 1, 5), ('Chiều', 6, 10)];
 
-/// Lưới tuần theo buổi: 2 hàng (Sáng/Chiều) × 7 ngày, mỗi ô là các khối môn.
 class TimetableWeekBoard extends StatelessWidget {
   const TimetableWeekBoard({
     super.key,
@@ -34,7 +32,6 @@ class TimetableWeekBoard extends StatelessWidget {
   final bool showRoom;
   final ValueChanged<TimetableSlot>? onBlockTap;
 
-  /// Chỉ QTV: thêm tiết vào (thứ, tiết đầu tiên còn trống của buổi).
   final void Function(int thu, int period)? onAdd;
 
   static const _labelWidth = 84.0;
@@ -166,7 +163,6 @@ class TimetableWeekBoard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, box) {
         const minTotal = _labelWidth + 7 * _minDayWidth;
-        // 720–1100 px: cuộn ngang trong khung lưới.
         if (box.maxWidth >= minTotal) return table;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -209,7 +205,6 @@ class _BoardCellState extends State<_BoardCell> {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
-    // Không có chuột (cảm ứng) thì không có hover: luôn hiện nút "+".
     final showAdd =
         _hover || !RendererBinding.instance.mouseTracker.mouseIsConnected;
     return MouseRegion(
@@ -271,7 +266,6 @@ class _BoardCellState extends State<_BoardCell> {
   }
 }
 
-/// Danh sách khối môn của một ngày, chia theo buổi (tab "Theo ngày" trên web).
 class TimetableDayList extends StatelessWidget {
   const TimetableDayList({
     super.key,

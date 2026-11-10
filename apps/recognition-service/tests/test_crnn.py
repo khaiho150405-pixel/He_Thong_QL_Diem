@@ -10,7 +10,7 @@ import numpy as np
 
 try:
     import torch
-except ImportError:  # CI/máy không cài nhóm [ml]
+except ImportError:
     raise unittest.SkipTest("torch is not installed (pip install -e apps/recognition-service[ml])")
 
 from src.adapters import crnn
@@ -37,7 +37,6 @@ class PreprocessTest(unittest.TestCase):
         self.assertEqual(out.shape, (32, 128))
         self.assertEqual(out.dtype, np.float32)
         self.assertTrue(-1.0 <= out.min() and out.max() <= 1.0)
-        # narrow cells are centred on white padding (value 1.0 after normalisation)
         self.assertEqual(float(out[0, 0]), 1.0)
         self.assertEqual(float(out[0, -1]), 1.0)
 
@@ -62,7 +61,6 @@ class DecodeTest(unittest.TestCase):
         return steps
 
     def test_greedy_ctc_collapses_repeats_and_blanks(self) -> None:
-        # blank 8 8 blank . blank 5 5 -> "8.5"
         idx = {c: i + 1 for i, c in enumerate(crnn.CHARSET)}
         path = [0, idx["8"], idx["8"], 0, idx["."], 0, idx["5"], idx["5"]]
         read = decode_ctc(self.probs(path))[0]
@@ -101,7 +99,7 @@ class LoadingTest(unittest.TestCase):
 
     def test_pickled_object_is_rejected_without_downgrading_weights_only(self) -> None:
         class Evil:
-            def __reduce__(self):  # would run on an unsafe pickle load
+            def __reduce__(self):
                 return (os.getcwd, ())
 
         path = Path(self.directory.name) / "evil.pth"
@@ -144,9 +142,9 @@ class LoadingTest(unittest.TestCase):
             "41": 41,
             "7": 7,
             "500": 500,
-            "501": None,  # out of range
+            "501": None,
             "0": None,
-            "8.5": None,  # not an integer
+            "8.5": None,
             "": None,
         }
         original = reader.read_cells

@@ -102,7 +102,6 @@ export interface EnrollmentUnit {
   ): Promise<{ enrollmentId: string }>;
   enrollment(id: string): Promise<Enrollment | null>;
   enrollmentsOf(studentId: number): Promise<Enrollment[]>;
-  /** Giáo viên chủ nhiệm hoặc được phân công lớp mà em đang hoặc đã học. */
   teacherMaySee(studentId: number, teacherId: number): Promise<boolean>;
 }
 

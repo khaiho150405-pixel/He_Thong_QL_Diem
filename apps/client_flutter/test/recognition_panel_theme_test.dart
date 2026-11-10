@@ -16,7 +16,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'phase3_recognition_test.dart' show FakeRecognitionPicker;
 
-/// Server giả cho danh sách phiếu: trả đúng các phiếu được truyền vào.
 class _TicketsServer implements HttpClientAdapter {
   _TicketsServer(this.tickets);
 
@@ -74,7 +73,6 @@ Map<String, Object?> _ticket(
   'cancelledAt': cancelledAt,
 };
 
-/// Đủ năm trạng thái phiếu; phiếu 41 mới nhất (đang đối chiếu).
 List<Map<String, Object?>> _allStatuses() => [
   _ticket(
     '41',
@@ -158,12 +156,10 @@ Future<void> _pumpPanel(
       ),
     ),
   );
-  // Phiếu DANG_XU_LY có vòng xoay chạy mãi nên không dùng pumpAndSettle.
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-/// Gỡ cây widget để hủy hẹn giờ polling 3 giây còn treo.
 Future<void> _teardown(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
 }
@@ -191,7 +187,6 @@ void main() {
         );
         expect(tester.takeException(), isNull);
 
-        // Tiêu đề giữ nguyên, stepper 4 bước.
         expect(find.text('Nhận dạng bảng điểm từ ảnh'), findsOneWidget);
         for (final label in [
           'Chọn bảng điểm',
@@ -202,7 +197,6 @@ void main() {
           expect(find.text(label), findsOneWidget);
         }
 
-        // Chip chọn cột điểm thay cho dropdown.
         expect(find.byType(AppSelectField<num>), findsNothing);
         for (final c in _components) {
           expect(find.text(c.name), findsOneWidget);
@@ -212,7 +206,6 @@ void main() {
           findsOneWidget,
         );
 
-        // Dropzone và các nút giữ chuỗi/key.
         expect(find.byKey(const ValueKey('recognition-pick')), findsOneWidget);
         expect(find.text('Chọn ảnh bảng điểm'), findsOneWidget);
         expect(
@@ -225,7 +218,6 @@ void main() {
         );
         expect(find.text('Tải ảnh & Nhận dạng'), findsOneWidget);
 
-        // Ba phiếu đầu, rồi mở rộng để thấy cả năm trạng thái.
         await tester.tap(find.text('Xem tất cả phiếu'));
         await tester.pump();
         expect(tester.takeException(), isNull);
@@ -243,7 +235,6 @@ void main() {
           find.textContaining('Ảnh mờ hoặc độ phân giải thấp'),
           findsOneWidget,
         );
-        // Phiếu không có dữ liệu tiến độ nên không có thanh phần trăm.
         expect(find.byKey(const ValueKey('app-progress-fill')), findsNothing);
         expect(find.byType(AppBadge), findsWidgets);
         expect(find.byKey(const ValueKey('ticket-menu-41')), findsOneWidget);
@@ -252,7 +243,6 @@ void main() {
           findsOneWidget,
         );
 
-        // Màu thẻ lấy từ token của chế độ hiện tại, không còn trắng cứng.
         expect(_cardDecoration(tester, '43').color, tokens.surface);
         expect(_cardDecoration(tester, '45').color, tokens.subtle);
         expect(
@@ -270,7 +260,6 @@ void main() {
   testWidgets('stepper suy ra từ phiếu mới nhất, không thêm state', (
     tester,
   ) async {
-    // Không có phiếu: bước 1 đã qua (dấu tích), bước 2 đang chọn.
     await _pumpPanel(
       tester,
       tickets: const [],
@@ -281,7 +270,6 @@ void main() {
     expect(find.text('Chưa có phiếu nhận dạng nào.'), findsOneWidget);
     await _teardown(tester);
 
-    // Phiếu mới nhất đang xử lý: tới bước 3 (2 dấu tích).
     await _pumpPanel(
       tester,
       tickets: [_ticket('1', 'DANG_XU_LY')],
@@ -291,7 +279,6 @@ void main() {
     expect(find.byIcon(Icons.check_rounded), findsNWidgets(2));
     await _teardown(tester);
 
-    // Phiếu mới nhất chờ đối chiếu: tới bước 4 (3 dấu tích).
     await _pumpPanel(
       tester,
       tickets: [_ticket('2', 'CHO_DOI_CHIEU', detectedRows: 3, greenRows: 3)],
@@ -301,7 +288,6 @@ void main() {
     expect(find.byIcon(Icons.check_rounded), findsNWidgets(3));
     await _teardown(tester);
 
-    // Phiếu đã duyệt: quay lại bước 2.
     await _pumpPanel(
       tester,
       tickets: [_ticket('3', 'DA_DUYET', detectedRows: 3, greenRows: 3)],
@@ -333,7 +319,6 @@ void main() {
         find.byKey(const ValueKey('recognition-filename')),
         findsOneWidget,
       );
-      // Ảnh đã qua kiểm tra định dạng nên có nhãn; chưa chọn cột thì nhắc.
       expect(find.text('Định dạng hợp lệ'), findsOneWidget);
       expect(find.text('Chọn ảnh khác'), findsOneWidget);
       expect(find.text('Phóng to ảnh'), findsOneWidget);
@@ -467,7 +452,6 @@ void main() {
             find.byKey(const ValueKey('cancel-reason-other-input')),
             findsOneWidget,
           );
-          // Nút xác nhận lấy màu lỗi từ token.
           final style = tester.widget<FilledButton>(confirm).style!;
           expect(style.backgroundColor!.resolve(<WidgetState>{}), tokens.bad);
           expect(tester.takeException(), isNull);

@@ -115,7 +115,6 @@ export class GradebooksService {
       return await this.store.run(work);
     } catch (error) {
       if (error instanceof ForbiddenException) {
-        // The denied transaction is rolled back; persist denial separately without point values.
         await this.store.run(async (tx) => {
           await currentActor(tx.authorization, actor);
           await audit(
@@ -136,7 +135,6 @@ export class GradebooksService {
       termId: { kind: "int" },
     }) as unknown as GradebookScope;
     return this.run(actor, async (tx) => {
-      // Thông báo rõ cho riêng luồng tạo bảng điểm; gradebookActor/gradebookAccess dùng chung giữ nguyên hành vi.
       await currentActor(tx.authorization, actor);
       if (actor.role !== "GIAO_VIEN")
         throw new ForbiddenException(
@@ -162,7 +160,6 @@ export class GradebooksService {
     const yearId = parseYearId(yearIdInput);
     return this.run(actor, async (tx) => {
       await gradebookActor(tx.authorization, actor);
-      // Bảng điểm do hệ thống tự tạo khi phân công; trang đầu bổ sung phần còn thiếu (ví dụ lớp có thêm học sinh sau phân công).
       if (actor.role === "GIAO_VIEN" && after === 0)
         await tx.ensureMine(actor.sessionHash);
       return page(
@@ -330,21 +327,6 @@ export class GradebooksService {
       );
       const rows = await tx.semesterDeadlines(termId);
       return rows.find((row) => row.type === type)!;
-    });
-  }
-  initializeSemesterGradebooks(actor: Actor, termId: number, key: unknown) {
-    id(termId);
-    if (typeof key !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(key))
-      throw new BadRequestException();
-    const hash = createHash("sha256")
-      .update(JSON.stringify({ termId }))
-      .digest("hex");
-    return this.run(actor, async (tx) => {
-      await currentActor(tx.authorization, actor);
-      administrator(actor);
-      if (!(await tx.authorization.find("hoc_ky", { ma_hoc_ky: termId })))
-        throw new NotFoundException();
-      return tx.initializeSemester(actor.sessionHash, termId, key, hash);
     });
   }
   exemptions(actor: Actor, bookId: number, key: unknown, input: unknown) {

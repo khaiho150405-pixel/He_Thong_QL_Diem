@@ -134,11 +134,9 @@ test("app di động: mã ghi nhớ đổi được phiên mới, dùng một l�
   assert.notEqual(resumed.remember, first.remember);
   assert.equal(resumed.id, teacher.id);
 
-  // Mã cũ đã dùng một lần: không đổi lại được nữa.
   await assert.rejects(service.resume(first.remember!), UnauthorizedException);
   await assert.rejects(service.resume("không-hợp-lệ"), UnauthorizedException);
 
-  // Đăng xuất xóa mọi mã ghi nhớ của tài khoản.
   await service.logout({
     id: teacher.id,
     username: teacher.username,

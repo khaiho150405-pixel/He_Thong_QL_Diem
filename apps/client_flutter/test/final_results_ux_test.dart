@@ -266,7 +266,6 @@ void main() {
     (tester) async {
       await _pumpApp(tester);
 
-      // Chế độ danh sách: các cột của bảng điểm
       expect(find.text('Tổng kết & xếp loại'), findsWidgets);
       expect(find.text('Lớp'), findsOneWidget);
       expect(find.text('Môn học'), findsWidgets);
@@ -279,11 +278,9 @@ void main() {
       expect(find.text('Toán'), findsOneWidget);
       expect(find.text('Ngữ văn'), findsOneWidget);
 
-      // Bấm nút "Xem" của bảng điểm 10A1
       await tester.tap(find.byKey(const ValueKey('view-gradebook-1')));
       await tester.pumpAndSettle();
 
-      // Vào chế độ chi tiết
       expect(find.text('10A1 – Toán – Học kỳ I'), findsOneWidget);
       expect(
         find.byKey(const ValueKey('back-to-gradebook-list')),
@@ -292,11 +289,9 @@ void main() {
       expect(find.text('Nguyễn Văn An'), findsOneWidget);
       expect(find.text('Trần Thị Bích'), findsOneWidget);
 
-      // Bấm nút quay lại danh sách
       await tester.tap(find.byKey(const ValueKey('back-to-gradebook-list')));
       await tester.pumpAndSettle();
 
-      // Trở về chế độ danh sách
       expect(find.text('10A1'), findsOneWidget);
       expect(find.text('10A2'), findsOneWidget);
     },
@@ -307,20 +302,16 @@ void main() {
     (tester) async {
       await _pumpApp(tester);
 
-      // Mở chi tiết bảng điểm 1
       await tester.tap(find.byKey(const ValueKey('view-gradebook-1')));
       await tester.pumpAndSettle();
 
-      // "Hệ số W-" chỉ hiển thị đúng 1 lần ở dòng thông tin chung đầu bảng
       expect(find.textContaining('Hệ số W-012345678901234567'), findsOneWidget);
       expect(find.textContaining('Chính sách DEV-2026-01'), findsOneWidget);
       expect(find.textContaining('Tính lúc '), findsOneWidget);
 
-      // CHUA_CONG_BO ánh xạ thành nhãn tiếng Việt "Chưa công bố"
       expect(find.text('Chưa công bố'), findsWidgets);
       expect(find.text('CHUA_CONG_BO'), findsNothing);
 
-      // Điểm số và xếp loại của từng dòng hiển thị gọn
       expect(find.text('8.5'), findsWidgets);
       expect(find.text('6.5'), findsWidgets);
       expect(find.text('Giỏi'), findsWidgets);
@@ -336,7 +327,6 @@ void main() {
     expect(find.text('Nguyễn Văn An'), findsOneWidget);
     expect(find.text('Trần Thị Bích'), findsOneWidget);
 
-    // Nhập tìm 'Bích'
     await tester.enterText(
       find.byKey(const ValueKey('final-results-search')),
       'Bích',
@@ -346,7 +336,6 @@ void main() {
     expect(find.text('Trần Thị Bích'), findsOneWidget);
     expect(find.text('Nguyễn Văn An'), findsNothing);
 
-    // Xóa tìm kiếm
     await tester.enterText(
       find.byKey(const ValueKey('final-results-search')),
       '',
@@ -365,7 +354,6 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('view-gradebook-1')));
       await tester.pumpAndSettle();
 
-      // Bấm tính kết quả
       await tester.tap(
         find.byKey(const ValueKey('calculate-final-results')).first,
       );
@@ -377,7 +365,6 @@ void main() {
       await tester.tap(find.text('Tính kết quả').last);
       await tester.pumpAndSettle();
 
-      // Chọn nhóm "Miễn môn"
       await tester.ensureVisible(
         find.byKey(const ValueKey('group-tab-exempted')),
       );
@@ -387,7 +374,6 @@ void main() {
       expect(find.text('Lê Văn Miễn'), findsOneWidget);
       expect(find.text('Miễn môn'), findsWidgets);
 
-      // Chọn nhóm "Thiếu điểm"
       await tester.ensureVisible(
         find.byKey(const ValueKey('group-tab-skipped')),
       );
@@ -398,7 +384,6 @@ void main() {
       expect(find.text('Thiếu điểm'), findsWidgets);
       expect(find.text('Điểm miệng'), findsOneWidget);
 
-      // Chọn lại "Tất cả"
       await tester.ensureVisible(find.byKey(const ValueKey('group-tab-all')));
       await tester.tap(find.byKey(const ValueKey('group-tab-all')));
       await tester.pumpAndSettle();

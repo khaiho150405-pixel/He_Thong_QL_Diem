@@ -11,8 +11,6 @@ import { FinalResultsService } from "../../src/modules/final-results/application
 import { GradebooksService } from "../../src/modules/gradebooks/application/service.js";
 import { StudentsService } from "../../src/modules/students/application/students.js";
 
-// Ghi danh học sinh theo lớp/năm học (migration 202610230001). Dữ liệu giả, chỉ chạy trên DB *_test.
-
 const uniqueKey = (tag: string) => `${tag}-${randomBytes(4).toString("hex")}`;
 const codeIs = (code: string) => (e: { code?: string }) => e.code === code;
 
@@ -112,7 +110,6 @@ async function fixture() {
     );
     return gradebooks.create(teacher, { classId: cls, subjectId, termId });
   };
-  /** Điền điểm cho mọi ô còn trống, chốt cột bằng lịch đã hết hạn và tính tổng kết. */
   const finish = async (bookId: number, component: number, value = 6) => {
     await owner.query(
       "UPDATE diem_thanh_phan SET gia_tri=$2,trang_thai='DA_DUYET' WHERE ma_bang_diem=$1 AND trang_thai='CHUA_CO'",
@@ -157,8 +154,6 @@ async function fixture() {
 test("every student has exactly one enrollment that mirrors the legacy class columns", async () => {
   const f = await fixture();
   try {
-    // Mọi hồ sơ có ghi danh; cột lớp hiện tại khớp ghi danh (DANG_HOC ⇔ dang_theo_hoc; ma_lop thuộc các ghi danh của em).
-    // Học sinh từng lên lớp/chuyển lớp ở các test khác có nhiều ghi danh nên không đòi "đúng một" cho mọi hồ sơ.
     const bad = await f.owner.query(`
       SELECT h.ma_hoc_sinh FROM hoc_sinh h
       WHERE NOT EXISTS (SELECT 1 FROM hoc_sinh_lop g WHERE g.ma_hoc_sinh=h.ma_hoc_sinh)
@@ -169,7 +164,6 @@ test("every student has exactly one enrollment that mirrors the legacy class col
       SELECT count(*)::int AS n FROM hoc_sinh h
       WHERE (SELECT count(*) FROM hoc_sinh_lop g WHERE g.ma_hoc_sinh=h.ma_hoc_sinh) = 1`);
     assert.ok(single.rows[0].n > 0);
-    // Hồ sơ tạo mới (tương thích ngược) tự có ghi danh đầu tiên.
     const y = await f.year("Năm ghi danh", "2026-09-01", "2027-06-01");
     const cls = await f.klass(y, "gd");
     const id = await f.student(cls, "Học sinh mới");
@@ -202,7 +196,6 @@ test("a promoted student stays in last year's gradebook, results and publication
     const first = await f.finish(bookX.id, subject.component, 6);
     assert.equal(first.calculatedStudents, 2);
 
-    // Lên lớp: đóng ghi danh 10A (LEN_LOP) và mở ghi danh 11B.
     await f.owner.query(
       "UPDATE hoc_sinh_lop SET trang_thai='LEN_LOP',den_ngay='2027-06-01' WHERE ma_hoc_sinh=$1 AND ma_lop=$2",
       [s1, a10],
@@ -217,14 +210,12 @@ test("a promoted student stays in last year's gradebook, results and publication
     );
     assert.deepEqual(legacy.rows[0], { ma_lop: b11, dang_theo_hoc: true });
 
-    // Bảng điểm năm cũ vẫn có em với điểm cũ, còn học, có STT.
     const oldView = await f.gradebooks.cells(f.teacher, bookX.id);
     const oldCell = oldView.items.find((c) => c.studentId === s1)!;
     assert.equal(oldCell.value, "6.0");
     assert.equal(oldCell.active, true);
     assert.equal(oldCell.stt !== null, true);
     assert.equal(oldView.items.length, 2);
-    // Tổng kết lại vẫn có em; danh sách kết quả và nhóm thiếu/miễn không mất em.
     const again = await f.finalResults.calculate(
       f.teacher,
       bookX.id,
@@ -244,7 +235,6 @@ test("a promoted student stays in last year's gradebook, results and publication
       [s1, s2].sort(),
     );
     assert.deepEqual(list.skipped, []);
-    // Công bố học kỳ năm X không báo thiếu học sinh đã lên lớp.
     assert.deepEqual(await f.gradebooks.publishReadiness(f.admin, termX), {
       ready: true,
       issues: [],
@@ -254,7 +244,6 @@ test("a promoted student stays in last year's gradebook, results and publication
       [],
     );
 
-    // Năm Y: bảng 11B có em.
     const bookY = await f.book(b11, subject.id, termY);
     const viewY = await f.gradebooks.cells(f.teacher, bookY.id);
     assert.deepEqual(
@@ -263,7 +252,6 @@ test("a promoted student stays in last year's gradebook, results and publication
     );
     await f.finish(bookY.id, subject.component, 9);
 
-    // Em đăng nhập xem điểm cả hai năm; lọc theo năm học.
     const account = await f.actor("HOC_SINH", "s");
     await f.owner.query(
       "UPDATE hoc_sinh SET ma_nguoi_dung=$1 WHERE ma_hoc_sinh=$2",
@@ -294,7 +282,6 @@ test("a promoted student stays in last year's gradebook, results and publication
       [bookY.id],
     );
     assert.equal(onlyY.summary!.className.startsWith("11B"), true);
-    // Năm chưa có kết quả: 200 với đủ trường, summary = null; không lọc thì như cũ.
     const w = await f.year("Năm chưa có", "2029-09-01", "2030-06-01");
     const noResults = await f.finalResults.myOverview(
       account,
@@ -334,7 +321,6 @@ test("a student who transfers mid-term is no longer counted (no zero-fill, no re
       before.items.find((c) => c.studentId === mover)!.active,
       false,
     );
-    // Hết hạn: ô của học sinh còn học bị ghi 0, ô của em đã chuyển giữ NULL; tổng kết không đòi kết quả của em.
     await f.owner.query(
       "UPDATE diem_thanh_phan SET gia_tri=8,trang_thai='DA_DUYET' WHERE ma_bang_diem=$1 AND ma_hoc_sinh=$2",
       [book1.id, stay],
@@ -366,7 +352,6 @@ test("a student who transfers mid-term is no longer counted (no zero-fill, no re
       readiness.issues.map((i) => i.code),
       [],
     );
-    // Lớp mới có em.
     const book2 = await f.book(c2, subject.id, termX);
     const view2 = await f.gradebooks.cells(f.teacher, book2.id);
     assert.deepEqual(
@@ -417,7 +402,6 @@ test("enrollment rules: one active enrollment per year, class changes only via e
       ),
       (e: { code?: string }) => ["23514", "23503"].includes(e.code ?? ""),
     );
-    // Runtime chỉ đọc.
     const denied = (e: { code?: string }) => e.code === "42501";
     await assert.rejects(
       f.runtimePool.query(
@@ -449,7 +433,6 @@ test("enrollment rules: one active enrollment per year, class changes only via e
       1,
     );
 
-    // Danh mục học sinh: đổi lớp / trạng thái bị từ chối, lưu không đổi vẫn được; DTO có lớp hiện tại.
     const students = f.app.get(StudentsService);
     const input = {
       ma_nguoi_dung: null,
@@ -474,7 +457,6 @@ test("enrollment rules: one active enrollment per year, class changes only via e
     assert.equal(saved.currentClassId, c1);
     assert.equal(saved.currentYearId, x);
     assert.match(String(saved.currentClassName), /^L1/);
-    // Lọc danh mục theo năm học dùng ghi danh.
     const page = await students.list(f.admin, undefined, undefined, String(x));
     assert.ok(
       page.items.some(

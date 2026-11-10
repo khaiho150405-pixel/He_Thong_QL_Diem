@@ -7,7 +7,6 @@ import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_controls.dart';
 import 'repository.dart';
 
-/// Đại diện cho năm học đang xem trong phiên làm việc.
 class ViewingYear {
   const ViewingYear({
     this.id,
@@ -62,7 +61,6 @@ class ViewingYear {
       'ViewingYear(id: $id, name: $name, isCurrent: $isCurrent)';
 }
 
-/// Tải danh sách tất cả năm học (có cache, làm mới khi tạo/sửa/xóa năm).
 final academicYearsProvider = FutureProvider<List<Json>>((ref) async {
   try {
     final repo = ref.watch(catalogRepositoryProvider);
@@ -81,7 +79,6 @@ final academicYearsProvider = FutureProvider<List<Json>>((ref) async {
   }
 });
 
-/// Lấy năm hiện hành từ danh sách năm học.
 final currentYearProvider = FutureProvider<ViewingYear?>((ref) async {
   final years = await ref.watch(academicYearsProvider.future);
   for (final y in years) {
@@ -92,7 +89,6 @@ final currentYearProvider = FutureProvider<ViewingYear?>((ref) async {
   return null;
 });
 
-/// Quản lý năm học đang xem trong phiên làm việc. Mặc định là năm hiện hành.
 class ViewingYearNotifier extends StateNotifier<ViewingYear?> {
   ViewingYearNotifier(this.ref) : super(null) {
     _sub = ref.listen<AsyncValue<ViewingYear?>>(currentYearProvider, (
@@ -142,7 +138,6 @@ final viewingYearProvider =
       return ViewingYearNotifier(ref);
     });
 
-/// Dropdown lọc theo năm học dùng chung cho các màn hình danh mục và bảng điểm.
 class AcademicYearFilterControl extends ConsumerWidget {
   const AcademicYearFilterControl({
     super.key,

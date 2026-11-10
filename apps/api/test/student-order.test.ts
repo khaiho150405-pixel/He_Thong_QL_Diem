@@ -47,10 +47,8 @@ test("class order breaks ties by full name, then by student id", () => {
     active(30, 1, "Hoàng Minh Châu"),
     active(21, 1, "Hoàng Minh Châu"),
   ]);
-  // Cùng tên "Bình": họ tên đầy đủ phân định (Lê < Trần).
   assert.equal(order.get(11), 1);
   assert.equal(order.get(10), 2);
-  // Trùng hoàn toàn họ tên: mã nhỏ trước.
   assert.equal(order.get(21), 3);
   assert.equal(order.get(30), 4);
 });

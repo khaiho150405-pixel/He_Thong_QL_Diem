@@ -8,8 +8,6 @@ import {
 import type { Actor } from "../../src/modules/authorization/application/policy.js";
 import type { GradebooksService } from "../../src/modules/gradebooks/application/service.js";
 import type { Gradebook } from "../../src/modules/gradebooks/application/port.js";
-// Simulate a column closed under ADR-0013 before the new deadline policy.
-// This helper uses the isolated test migration role; runtime execute is revoked.
 export async function closedFixture(
   owner: Pool,
   service: GradebooksService,

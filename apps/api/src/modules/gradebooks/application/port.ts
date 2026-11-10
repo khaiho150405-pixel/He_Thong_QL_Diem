@@ -19,7 +19,6 @@ export interface GradeCell {
   id: string;
   studentId: number;
   studentName: string;
-  /** STT trong lớp (common/student-order); null khi học sinh đã nghỉ/chuyển lớp. */
   stt: number | null;
   active: boolean;
   componentId: number;
@@ -110,18 +109,6 @@ export interface SemesterDeadline {
   version: number;
   expired: boolean;
 }
-export interface InitializeScope {
-  classId: number;
-  className: string;
-  subjectId: number;
-  subjectName: string;
-}
-export interface InitializeResult {
-  created: Array<InitializeScope & { gradebookId: number }>;
-  skipped: Array<
-    InitializeScope & { reason: "EMPTY_ROSTER" | "NO_COMPONENTS" }
-  >;
-}
 export interface GradebookUnit {
   authorization: Unit;
   setExemptions(
@@ -152,12 +139,6 @@ export interface GradebookUnit {
     closesAt: string,
     version: number,
   ): Promise<void>;
-  initializeSemester(
-    sessionHash: string,
-    termId: number,
-    idempotencyKey: string,
-    requestHash: string,
-  ): Promise<InitializeResult>;
   processDue(): Promise<number>;
   setDeadline(
     sessionHash: string,
@@ -171,7 +152,6 @@ export interface GradebookUnit {
     sessionHash: string,
     scope: GradebookScope,
   ): Promise<Gradebook>;
-  /** Bổ sung bảng điểm còn thiếu cho các phân công của giáo viên đang đăng nhập; trả về số bảng vừa tạo. */
   ensureMine(sessionHash: string): Promise<number>;
   find(id: number): Promise<Gradebook | null>;
   list(

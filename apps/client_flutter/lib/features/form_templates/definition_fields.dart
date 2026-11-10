@@ -5,7 +5,6 @@ import '../../app/design_tokens.dart';
 const int kMaxTemplateName = 100;
 const int kMaxTemplateDescription = 500;
 
-/// Cùng giới hạn với backend: tên 1..100 ký tự, mô tả tối đa 500.
 String? templateNameError(String value) {
   final name = value.trim();
   if (name.isEmpty) return 'Nhập tên mẫu.';
@@ -20,7 +19,6 @@ String? templateDescriptionError(String value) =>
     ? 'Mô tả tối đa $kMaxTemplateDescription ký tự.'
     : null;
 
-/// Ô tên và mô tả của mẫu. Lỗi hiện sau khi người dùng đã chạm vào ô.
 class TemplateDefinitionFields extends StatelessWidget {
   const TemplateDefinitionFields({
     super.key,

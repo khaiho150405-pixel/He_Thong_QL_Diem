@@ -5,9 +5,6 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens.dart';
 
-/// Biểu đồ đường của prototype (`lineChart`): lưới ngang, vùng tô nhạt, chấm
-/// cuối đặc, tooltip nền navy khi rê chuột hoặc chạm. Vẽ bằng [CustomPainter];
-/// dữ liệu truyền qua tham số, widget không tự lấy dữ liệu.
 class AppLineChart extends StatefulWidget {
   const AppLineChart({
     super.key,
@@ -26,12 +23,10 @@ class AppLineChart extends StatefulWidget {
   final double min;
   final double max;
 
-  /// Hậu tố của giá trị trong tooltip.
   final String unit;
   final double height;
   final String semanticLabel;
 
-  /// Định dạng giá trị trong tooltip; mặc định bỏ ".0" với số nguyên.
   final String Function(double value)? valueFormatter;
 
   @override
@@ -152,7 +147,6 @@ class _ChartGeometry {
   double y(double v) => top + innerH - (v - min) / span * innerH;
 }
 
-/// Công khai để test đọc được `hoverIndex`; không dùng trực tiếp ngoài file này.
 @visibleForTesting
 class AppLineChartPainter extends CustomPainter {
   AppLineChartPainter({
@@ -220,7 +214,6 @@ class AppLineChartPainter extends CustomPainter {
     );
     final axis = textStyle.copyWith(color: t.ink3, fontSize: 11, height: 1);
 
-    // Lưới ngang và nhãn trục Y.
     final gridPaint = Paint()
       ..color = t.line
       ..strokeWidth = 1;
@@ -241,7 +234,6 @@ class AppLineChartPainter extends CustomPainter {
       );
     }
 
-    // Nhãn trục X.
     for (var i = 0; i < n; i++) {
       _text(
         canvas,
@@ -253,7 +245,6 @@ class AppLineChartPainter extends CustomPainter {
     }
     if (n == 0) return;
 
-    // Đường và vùng tô.
     final line = Path();
     for (var i = 0; i < n; i++) {
       final p = Offset(g.x(i), g.y(values[i]));
@@ -275,7 +266,6 @@ class AppLineChartPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // Đường chỉ dọc nét đứt ở điểm đang chọn.
     final h = hoverIndex;
     if (h != null && h >= 0 && h < n) {
       final cross = Paint()
@@ -291,7 +281,6 @@ class AppLineChartPainter extends CustomPainter {
       }
     }
 
-    // Chấm dữ liệu; chấm cuối đặc.
     for (var i = 0; i < n; i++) {
       final c = Offset(g.x(i), g.y(values[i]));
       final last = i == n - 1;
@@ -310,7 +299,6 @@ class AppLineChartPainter extends CustomPainter {
       );
     }
 
-    // Tooltip nền navy.
     if (h != null && h >= 0 && h < n) {
       const tw = 96.0;
       const th = 36.0;
@@ -373,7 +361,6 @@ class AppLineChartPainter extends CustomPainter {
   }
 }
 
-/// Một cột của [AppHBars].
 class AppHBarItem {
   const AppHBarItem({
     required this.label,
@@ -385,14 +372,11 @@ class AppHBarItem {
   final String label;
   final double value;
 
-  /// Chữ hiển thị bên phải; mặc định là [value] (bỏ ".0" nếu là số nguyên).
   final String? valueText;
 
-  /// Màu cột; mặc định `pri`.
   final Color? color;
 }
 
-/// Cột ngang có nhãn và giá trị (`hbars`). [max] mặc định là giá trị lớn nhất.
 class AppHBars extends StatelessWidget {
   const AppHBars({
     super.key,

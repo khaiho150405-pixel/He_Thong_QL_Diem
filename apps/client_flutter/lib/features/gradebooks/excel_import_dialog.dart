@@ -32,9 +32,8 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
   bool _isProcessing = false;
   String? _errorMessage;
 
-  // Parsed results
   int _matchedStudentsCount = 0;
-  final Map<String, String> _parsedScores = {}; // cellId -> normalized score
+  final Map<String, String> _parsedScores = {};
   final List<String> _skippedLockedColumns = [];
   final List<String> _skippedExemptCells = [];
   final List<Map<String, dynamic>> _previewRows = [];
@@ -46,7 +45,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
       excel.rename('Sheet1', sheetName);
       final sheet = excel[sheetName];
 
-      // Header row
       final headers = <CellValue>[
         TextCellValue('STT'),
         TextCellValue('Mã HS'),
@@ -63,7 +61,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
       }
       sheet.appendRow(headers);
 
-      // Data rows (sorted by STT from API, stt null at end, tie-break by studentId)
       final sortedStudents = widget.students.values.toList()
         ..sort((a, b) {
           final sttA = a.isNotEmpty ? a.first.stt : null;
@@ -210,7 +207,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
   }
 
   void _processRows(List<String> headers, List<List<String>> rows) {
-    // Map column index to Component ID
     int? idColIndex;
     int? nameColIndex;
     final compColMap = <int, GradeCellDto>{};
@@ -296,7 +292,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
         final rawVal = row[colIdx].trim();
         if (rawVal.isEmpty) continue;
 
-        // Check if Admin locked this column
         if (comp.openForInput == false || comp.columnLocked == true) {
           if (!_skippedLockedColumns.contains(comp.componentName)) {
             _skippedLockedColumns.add(comp.componentName);
@@ -304,7 +299,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
           continue;
         }
 
-        // Validate score
         final text = rawVal.toLowerCase();
         final double? parsedNum;
         if (comp.passFail == true) {
@@ -397,7 +391,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
           ),
           const SizedBox(height: 16),
 
-          // Action buttons: Download template & Upload file
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -466,7 +459,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
             ),
           ],
 
-          // Preview Section
           if (_parsedScores.isNotEmpty) ...[
             const SizedBox(height: 20),
             DecoratedBox(
@@ -559,7 +551,6 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
     );
   }
 
-  /// Khung báo lỗi / cảnh báo trong hộp thoại (nền, viền, chữ theo token).
   Widget _notice({
     required IconData icon,
     required String text,

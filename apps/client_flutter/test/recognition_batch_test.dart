@@ -14,9 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'phase3_recognition_test.dart'
     show FakeRecognitionPicker, RecognitionFakeServer;
 
-/// Máy chủ giả của luồng cũ, thêm phiếu "43" dùng chung dữ liệu với phiếu "42".
 class _TwoTicketServer implements HttpClientAdapter {
-  // Danh sách phiếu của máy chủ cũ luôn có phiếu "42" (lô giả không gọi nó).
   final RecognitionFakeServer inner = RecognitionFakeServer()..uploaded = true;
 
   @override
@@ -319,7 +317,6 @@ Future<void> _pumpPanel(
   await tester.pumpAndSettle();
 }
 
-/// Thay `pumpAndSettle` khi trên màn có vòng quay tiến độ chạy mãi (lô đang xử lý).
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 100));
@@ -343,7 +340,6 @@ Future<void> _expandGreenGroup(WidgetTester tester) async {
 Future<void> _addPage(WidgetTester tester) async {
   await tester.runAsync(() async {
     await tester.tap(find.byKey(const ValueKey('batch-add-page')));
-    // Bộ giải mã ảnh của engine chạy ngoài đồng hồ giả.
     await Future<void>.delayed(const Duration(milliseconds: 100));
   });
   await _settle(tester);
@@ -374,7 +370,6 @@ void main() {
           ]);
         await _pumpPanel(tester, repo);
 
-        // Mặc định chưa chọn mẫu: luồng cũ, có ô chọn mẫu "Không dùng mẫu".
         expect(find.text('Không dùng mẫu (mẫu E0330113 cũ)'), findsOneWidget);
         expect(find.byKey(const ValueKey('recognition-pick')), findsOneWidget);
         expect(find.byKey(const ValueKey('batch-section')), findsNothing);
@@ -384,7 +379,6 @@ void main() {
         expect(find.byKey(const ValueKey('recognition-pick')), findsNothing);
         expect(repo.mappingCalls, 1);
 
-        // Danh sách cột: "Cột TX1 → Kiểm tra thường xuyên 1 · số + chữ".
         expect(
           find.text('Cột TX1 → Kiểm tra thường xuyên 1 · số + chữ'),
           findsOneWidget,
@@ -394,11 +388,9 @@ void main() {
           findsOneWidget,
         );
 
-        // AC-3: chưa có ảnh, chưa chọn cột → không gửi được.
         expect(_enabled(tester), isFalse);
         expect(find.byKey(const ValueKey('batch-submit-hint')), findsOneWidget);
 
-        // Có ảnh nhưng chưa chọn cột → vẫn không gửi được.
         await _addPage(tester);
         expect(
           find.byKey(const ValueKey('batch-page-label-0')),
@@ -406,7 +398,6 @@ void main() {
         );
         expect(_enabled(tester), isFalse);
 
-        // Có cột nhưng bỏ hết ảnh → không gửi được.
         await tester.tap(find.byKey(const ValueKey('batch-column-3')));
         await tester.pumpAndSettle();
         expect(_enabled(tester), isTrue);
@@ -415,7 +406,6 @@ void main() {
         expect(find.byKey(const ValueKey('batch-page-0')), findsNothing);
         expect(_enabled(tester), isFalse);
 
-        // 2 ảnh, mỗi ảnh có thẻ "Trang n", đổi thứ tự được.
         await _addPage(tester);
         await _addPage(tester);
         expect(find.text('Trang 1'), findsOneWidget);
@@ -444,7 +434,6 @@ void main() {
           [(3, 201), (4, 202)],
         );
         expect(find.byKey(const ValueKey('batch-status-card')), findsOneWidget);
-        // Thẻ phiếu trong danh sách gần đây: "N ảnh · tên mẫu".
         await tester.pump(const Duration(milliseconds: 50));
         expect(
           find.byKey(const ValueKey('recognition-ticket-batch-42')),
@@ -452,7 +441,6 @@ void main() {
         );
         expect(find.text('2 ảnh · Mẫu THPT mô phỏng'), findsOneWidget);
 
-        // Polling 3 giây: lần đầu còn DANG_XU_LY, lần sau XONG và tự mở kết quả.
         expect(repo.detailCalls, 0);
         await tester.pump(const Duration(seconds: 3));
         await tester.pump();
@@ -462,7 +450,6 @@ void main() {
         await tester.pumpAndSettle();
         expect(repo.detailCalls, greaterThanOrEqualTo(2));
 
-        // Màn kết quả: 2 tab theo thành phần, mỗi tab có số Xanh/Vàng/Đỏ.
         expect(
           find.byKey(const ValueKey('batch-result-screen')),
           findsOneWidget,
@@ -476,14 +463,12 @@ void main() {
         expect(find.text('3 Vàng'), findsOneWidget);
         expect(find.text('0 Đỏ'), findsOneWidget);
 
-        // AC-4: bấm tab mở đúng màn đối chiếu hiện có của phiếu đó.
         await tester.tap(find.byKey(const ValueKey('batch-tab-43')));
         await tester.pumpAndSettle();
         final review = tester.widget<ReviewScreen>(find.byType(ReviewScreen));
         expect(review.ticketId, '43');
         expect(review.gradebookId, 7);
         expect(review.showPageLabels, isTrue);
-        // Dòng của phiếu thuộc lô có nhãn trang trong thẻ dòng.
         await _expandGreenGroup(tester);
         expect(find.textContaining('Trang 1'), findsWidgets);
       },
@@ -516,7 +501,6 @@ void main() {
         expect(find.textContaining('Đang có phiếu chờ'), findsOneWidget);
         expect(find.textContaining('không có thành phần điểm'), findsOneWidget);
 
-        // Bấm vào cột khóa không làm gì: vẫn không gửi được.
         await tester.tap(
           find.byKey(const ValueKey('batch-column-5')),
           warnIfMissed: false,
@@ -578,7 +562,6 @@ void main() {
         error.data,
         'Trang 2: Ảnh không khớp lưới của mẫu đã chọn. Chọn đúng loại tờ hoặc đổi sang mẫu khác.',
       );
-      // Đóng thông báo để gửi lại.
       await tester.tap(find.byKey(const ValueKey('batch-dismiss')));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('batch-status-card')), findsNothing);
@@ -647,7 +630,6 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('batch-cancel')));
       await _settle(tester);
       expect(find.byKey(const ValueKey('cancel-batch-dialog')), findsOneWidget);
-      // Chưa chọn lý do thì chưa hủy được.
       expect(
         tester
             .widget<FilledButton>(

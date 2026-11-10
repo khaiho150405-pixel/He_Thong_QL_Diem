@@ -5,7 +5,6 @@ export interface AppConfig {
   databaseUrl: string;
   redisUrl: string;
   s3Endpoint: string;
-  /** Host công khai dùng để KÝ URL ảnh trả cho client (điện thoại qua LAN); API vẫn upload/đọc MinIO qua s3Endpoint. */
   s3PublicEndpoint?: string;
   s3AccessKey: string;
   s3SecretKey: string;
@@ -37,7 +36,6 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
     uploadRateLimitPerMinute > 1000
   )
     throw new Error("Invalid UPLOAD_RATE_LIMIT_PER_MINUTE");
-  // Thời gian chờ dịch vụ nhận dạng cho mỗi ảnh; chờ OCR trên CPU có thể lâu (đo thật ở BE-20).
   const recognitionTimeoutMs = Number(env.RECOGNITION_TIMEOUT_MS ?? "120000");
   if (
     !Number.isInteger(recognitionTimeoutMs) ||
@@ -80,7 +78,6 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
   }
   const redisUrl = url("REDIS_URL", ["redis:", "rediss:"]);
   const s3Endpoint = url("S3_ENDPOINT", ["http:", "https:"]);
-  // Tùy chọn: bỏ trống/không đặt thì URL ký dùng chính S3_ENDPOINT. Kiểm như S3_ENDPOINT (http/https; ngoài development phải https).
   const s3PublicEndpoint = env.S3_PUBLIC_ENDPOINT?.trim()
     ? url("S3_PUBLIC_ENDPOINT", ["http:", "https:"])
     : undefined;

@@ -60,7 +60,6 @@ class RecoveryBase(unittest.TestCase):
 
 class MiddleRuleTest(RecoveryBase):
     def test_a_broken_rule_between_two_wanted_columns_is_found_again(self) -> None:
-        # (a) The rule between TX3 (column 4) and TX4 (column 5) is dashed: the grid drops it, the ink is still there.
         page, _ = make_thpt_page(dashed_lines=(5,))
         image = photo(page)
         self.assertEqual(len(phan_tich_bo_cuc(image, None).columns), 8, "the grid must have lost the rule")
@@ -84,7 +83,6 @@ class MiddleRuleTest(RecoveryBase):
                 self.assertAlmostEqual(a.numeric_ink, b.numeric_ink, delta=3.0)
 
     def test_without_any_ink_in_the_gap_the_page_is_still_rejected(self) -> None:
-        # (b) Same situation but the rule is simply not there: nothing to find, nothing to guess.
         page, _ = make_thpt_page(missing_lines=(5,))
         details = mismatch(self, photo(page), self.stt_name_tx)
         self.assertEqual(details["unmappedColumns"], [4, 5])
@@ -96,7 +94,6 @@ class MiddleRuleTest(RecoveryBase):
         self.assertEqual(sorted(chuan_bi_doc(photo(page), wanted, None, MIN_SCORE).column_map), [0, 1, 2, 3, 6, 7, 8])
 
     def test_a_rule_that_is_not_where_the_template_expects_it_is_not_accepted(self) -> None:
-        # The dashed rule is 40% of a column away from the expected place: the search window does not reach it.
         shifted = (60, 380, 105, 105, 105 + 45, 105 - 45, 116, 128, 326)
         page, _ = make_thpt_page(columns=shifted, dashed_lines=(5,))
         mismatch(self, photo(page), self.stt_name_tx)
@@ -126,11 +123,9 @@ class EdgeRuleTest(RecoveryBase):
         self.assertEqual(details["unmappedColumns"], [0])
 
     def test_two_lost_left_columns_need_two_real_rules(self) -> None:
-        # Rules 0 and 1 are both lost, so STT and the name column are outside the grid.
         wanted = layout_for(self.template, (0, "STT"), (1, "HO_TEN"), (4, "DIEM", "TX3"))
         both = make_thpt_page(dashed_lines=(0, 1))[0]
         self.assertTrue({0, 1, 4} <= set(chuan_bi_doc(photo(both), wanted, None, MIN_SCORE).column_map))
-        # Only one of the two rules has ink: the other cannot be invented.
         one_ink = make_thpt_page(dashed_lines=(0,), missing_lines=(1,))[0]
         mismatch(self, photo(one_ink), wanted)
 
@@ -192,7 +187,6 @@ class PaperEdgeCutTest(RecoveryBase):
         self.assertEqual(sorted(result.column_map), list(range(9)))
 
     def test_a_page_really_cut_off_in_the_photo_is_still_rejected(self) -> None:
-        # The STT column is physically outside the picture: widening the paper quad finds only background, no rules.
         cropped = self.clean[:, 150:]
         details = mismatch(self, photo(cropped), self.stt_name_tx)
         self.assertEqual(details["unmappedColumns"], [0])
@@ -223,7 +217,6 @@ class OtherFormTest(RecoveryBase):
         )[0]
 
     def test_another_form_is_rejected(self) -> None:
-        # (c) Different column count and widths, with or without broken rules.
         for kwargs in ({}, {"dashed_lines": (3,)}, {"dashed_lines": (0,)}, {"missing_lines": (0,)}):
             with self.subTest(**kwargs):
                 mismatch(self, photo(self.other_page(**kwargs)), self.stt_name_tx)
@@ -263,7 +256,6 @@ class EdgeAlignmentTest(unittest.TestCase):
         self.assertEqual((ket_qua.cat_trai, ket_qua.cat_phai, ket_qua.score), (0, 0, 1.0))
 
     def test_equally_plausible_cuts_are_not_guessed(self) -> None:
-        # Nine equal columns: dropping the first or the last one explains an eight column image equally well.
         equal = [1 / 9] * 9
         ket_qua = tm.khop_mau_chi_tiet(self.sig([1 / 8] * 8), self.sig(equal))
         self.assertEqual((ket_qua.cat_trai, ket_qua.cat_phai), (0, 0))

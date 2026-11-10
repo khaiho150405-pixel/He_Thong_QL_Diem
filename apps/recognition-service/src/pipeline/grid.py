@@ -33,16 +33,13 @@ import numpy as np
 from .errors import PipelineError
 from .page import A4, PX_MM, _do_vach, _nhi_phan  # noqa: F401  (A4 giữ để đối chiếu với bản gốc)
 
-# ── Từ khoá tiêu đề (đã bỏ dấu, bỏ khoảng trắng) ─────────────────────────────
 TU_KHOA = {
     'diem_so':        ['dtk', 'diemtk', 'diemtongket', 'dso', 'diemso', 'diemthi', 'diemck',
                        'diemcuoiky', 'diemtb', 'diemtrungbinh', 'tbmh', 'diemketthuc',
-                       # cấp 3
                        'ddggk', 'ddgck', 'giuaky', 'diemgiuaky', 'cuoiky'],
     'diem_chu':       ['diemchu', 'bangchu', 'diembangchu', 'ghibangchu'],
     'diem_qua_trinh': ['diemquatrinh', 'diemthanhphan', 'diemtp', 'diemqt', 'diemthuongky',
                        'diemkiemtra', 'diemkt', 'diemchuyencan',
-                       # cấp 3
                        'kiemtra15phut', 'mieng', 'ddgtx'],
     'stt':            ['stt', 'sott', 'tt'],
     'ma_sv':          ['masv', 'mssv', 'masosv', 'maso', 'masinhvien'],
@@ -54,11 +51,10 @@ TU_KHOA = {
     'ghi_chu':        ['ghichu', 'ghichep'],
 }
 VAI_TRO_DIEM = ('diem_so', 'diem_qua_trinh')
-NGUONG_GIONG = 0.76          # ngưỡng giống nhau tối thiểu khi khớp mờ
+NGUONG_GIONG = 0.76
 
 
 
-# ═══════════════════════ 1. Chuẩn hoá & khớp từ khoá ═══════════════════════
 def bo_dau(s):
     """'Điểm Chữ' -> 'diemchu' (bỏ dấu, bỏ khoảng trắng và ký tự lạ)."""
     if not s:
@@ -70,7 +66,6 @@ def bo_dau(s):
     return re.sub(r'[^a-z0-9]', '', s)
 
 
-# Nhầm lẫn chữ/số hay gặp của OCR: "Đ.số" -> "D.s6", "Điểm" -> "Dlém"
 _LEET = str.maketrans('0163458', 'oibeasg')
 _DAU_DIEM = ('diem', 'dlem', 'diern', 'dienm', 'dtem', 'dem', 'dinm', 'dim')
 
@@ -80,7 +75,7 @@ def _duoi_sau_diem(t):
     for p in _DAU_DIEM:
         if t.startswith(p):
             return t[len(p):]
-    if t.startswith('d') and len(t) <= 6:          # 'dtk', 'dso', 'dsd', 'ds6'...
+    if t.startswith('d') and len(t) <= 6:
         return t[1:]
     return None
 
@@ -92,19 +87,19 @@ def _luat_vai_tro(t):
     if duoi is None:
         return None, 0.0
     if duoi.startswith('ch') or duoi.startswith('bangchu') or duoi.startswith('chu'):
-        return 'diem_chu', 0.95                                   # Điểm chữ / bằng chữ
+        return 'diem_chu', 0.95
     for k in ('quatrinh', 'thanhphan', 'thuongky', 'chuyencan', 'kiemtra'):
         if k in duoi:
             return 'diem_qua_trinh', 0.95
     if duoi in ('qt', 'tp', 'kt', 'tx') or duoi.startswith('qt'):
         return 'diem_qua_trinh', 0.9
     if duoi.startswith('tk') or 'tongket' in duoi or duoi.startswith('tb') or 'trungbinh' in duoi:
-        return 'diem_so', 0.95                                    # ĐTK / điểm trung bình
+        return 'diem_so', 0.95
     if duoi.startswith('so') or 'sothap' in duoi:
-        return 'diem_so', 0.95                                    # Đ.số / Điểm số
+        return 'diem_so', 0.95
     if duoi.startswith('thi') or duoi.startswith('ck') or 'cuoiky' in duoi or 'ketthuc' in duoi:
         return 'diem_so', 0.9
-    if duoi[:1] == 's' and len(duoi) <= 3:                        # 'sd', 's6' — OCR hỏng của 'số'
+    if duoi[:1] == 's' and len(duoi) <= 3:
         return 'diem_so', 0.85
     return None, 0.0
 
@@ -116,7 +111,7 @@ def khop_tu_khoa(text, nguong=NGUONG_GIONG):
     if len(t) < 2:
         return None, 0.0
     tot = _luat_vai_tro(t)
-    if tot[0] is None:                       # thử từng từ (ô tiêu đề nhiều dòng/chữ)
+    if tot[0] is None:
         for tu in re.split(r'[\s/|,;:.]+', str(text)):
             r = _luat_vai_tro(bo_dau(tu))
             if r[1] > tot[1]:
@@ -125,17 +120,16 @@ def khop_tu_khoa(text, nguong=NGUONG_GIONG):
         return tot
     for vai_tro, ds in TU_KHOA.items():
         for k in ds:
-            if k in t:                                   # khớp thẳng
+            if k in t:
                 diem = 1.0 if len(t) <= len(k) + 4 else 0.92
             else:
                 diem = difflib.SequenceMatcher(None, t, k).ratio()
-                if len(t) > len(k) + 2:                  # khớp cửa sổ trượt (tiêu đề dài)
+                if len(t) > len(k) + 2:
                     for i in range(0, len(t) - len(k) + 1):
                         diem = max(diem, difflib.SequenceMatcher(None, t[i:i + len(k)], k).ratio())
                 if diem < nguong or len(k) < 3:
                     continue
                 diem *= 0.9
-            # từ khoá dài khớp được thì tin hơn từ khoá ngắn
             diem += 0.01 * len(k)
             if diem > tot[1]:
                 tot = (vai_tro, diem)
@@ -156,7 +150,6 @@ def _anh_cho_ocr(o, phong=2.0):
 
 
 
-# ═══════════════════════════ 3. Trích lưới bảng ════════════════════════════
 def _doan_vach(bw, huong, nhan_mo=41, dai_toi_thieu=120):
     """Vạch kẻ -> list dict(vi_tri, t0, t1, dai) (vi_tri = y nếu ngang, x nếu dọc)."""
     ra = []
@@ -193,7 +186,7 @@ def _cum_bang(ngang, rong_trang):
     if len(dai) < 4:
         return None
     tot = None
-    for moc in dai:                                   # thử từng vạch làm chuẩn bề ngang
+    for moc in dai:
         nhom = [v for v in dai
                 if abs(v['t0'] - moc['t0']) < 0.06 * rong_trang and
                    abs(v['t1'] - moc['t1']) < 0.06 * rong_trang]
@@ -205,16 +198,8 @@ def _cum_bang(ngang, rong_trang):
     return tot[1] if tot else None
 
 
-# ── THAY ĐỔI SO VỚI THUẬT TOÁN GỐC (chủ dự án chốt cho BE-16, ADR-0015) ──────────────────────────────────────
-# Bản gốc chỉ nhận bảng khi có ≥ 4 vạch ngang suốt bề ngang cùng nằm trong một cụm (``_cum_bang``). Trang cuối
-# của một lớp chỉ có tiêu đề + vài dòng nên chỉ còn 4–5 vạch ngang, thường đứt thành nhiều đoạn (chữ in/viết đè lên
-# vạch) → không có cụm bảng → ``GRID_NOT_FOUND``; hoặc lấy nhầm vạch ngoài bảng → thừa/thiếu dòng.
-# ``_luoi_theo_vach_doc`` đảo thứ tự suy luận: các vạch DỌC cột đủ dài cùng khoảng y xác định khoảng y và bề ngang
-# của bảng (≥ 4 vạch dọc), rồi nhận vạch ngang NẰM TRONG khoảng đó theo độ phủ cộng dồn của các đoạn (không đòi một
-# đoạn liền suốt bề ngang) — nên chỉ cần ≥ 3 vạch ngang. Mép trên/dưới bảng được suy từ đầu mút các vạch dọc khi
-# thiếu. Không tìm được theo cách này thì quay về thuật toán gốc (``_trich_luoi_goc``).
-PHU_NGANG_TOI_THIEU = 0.55      # độ phủ cộng dồn tối thiểu của một vạch ngang trên bề ngang bảng
-SO_VACH_DOC_TOI_THIEU = 4       # số vạch dọc cùng khoảng y để coi là một bảng
+PHU_NGANG_TOI_THIEU = 0.55
+SO_VACH_DOC_TOI_THIEU = 4
 
 
 def _nhom_vach_doc(doc, W, H):
@@ -278,7 +263,6 @@ def _luoi_theo_vach_doc(bw, doc):
     cao_bang, rong_bang = y_bang1 - y_bang0, x1 - x0
     if cao_bang < 60 or rong_bang < 0.25 * W:
         return None
-    # đoạn vạch ngang ngắn hơn bản gốc (đoạn đứt vẫn tính), chỉ trong khoảng y của bảng
     doan = [v for v in _doan_vach(bw, 'ngang', nhan_mo=max(25, W // 40), dai_toi_thieu=int(0.08 * W))
             if y_bang0 - 10 <= v['vi_tri'] <= y_bang1 + 10]
     nhom_y = []
@@ -289,7 +273,6 @@ def _luoi_theo_vach_doc(bw, doc):
         else:
             nhom_y.append([v['vi_tri'], [v]])
     hang_y = sorted(y for y, ds in nhom_y if _phu_ngang(ds, x0, x1) >= PHU_NGANG_TOI_THIEU)
-    # mép trên/dưới bảng: đầu mút các vạch dọc (vạch ngang mép có thể mờ hoặc dính chữ)
     if not hang_y or hang_y[0] - y_bang0 > 12:
         hang_y.insert(0, y_bang0)
     if hang_y[-1] < y_bang1 - 12:
@@ -322,7 +305,6 @@ def trich_luoi(page, bw=None):
     if bw is None:
         bw = _nhi_phan(page)
     H, W = bw.shape[:2]
-    # Bảng chỉ có tiêu đề + 1 dòng cao ~90 px: ngưỡng độ dài vạch dọc thấp hơn bản gốc (0.04H ≈ 93 px).
     doc_ngan = _gop_vach(_doan_vach(bw, 'doc', nhan_mo=max(25, H // 60), dai_toi_thieu=int(0.022 * H)))
     if len(doc_ngan) >= SO_VACH_DOC_TOI_THIEU:
         luoi = _luoi_theo_vach_doc(bw, doc_ngan)
@@ -350,8 +332,6 @@ def _trich_luoi_goc(page, bw=None):
     if cao_bang < 100 or x1 - x0 < 0.25 * W:
         return None
 
-    # các đường ngang của bảng (thêm cả vạch ngắn hơn nhưng nằm trong thân bảng
-    # và phủ ≥ 55% bề ngang bảng — vd vạch dưới hàng tiêu đề bị chữ đè)
     rong_bang = x1 - x0
     hang_y = []
     for v in ngang:
@@ -362,7 +342,7 @@ def _trich_luoi_goc(page, bw=None):
     hang_y = sorted(hang_y)
     gop = [hang_y[0]]
     for y in hang_y[1:]:
-        if y - gop[-1] < 12:                 # vạch kẻ đúp
+        if y - gop[-1] < 12:
             gop[-1] = (gop[-1] + y) / 2.0
         else:
             gop.append(y)
@@ -370,7 +350,6 @@ def _trich_luoi_goc(page, bw=None):
     if len(hang_y) < 3:
         return None
 
-    # vạch dọc trong bảng: phủ toàn bảng (cột chính) hoặc chỉ một phần (cột con)
     cot = []
     for v in doc:
         if not (x0 - 12 <= v['vi_tri'] <= x1 + 12):
@@ -380,7 +359,6 @@ def _trich_luoi_goc(page, bw=None):
             continue
         cot.append(dict(x=v['vi_tri'], y0=max(v['t0'], y_bang0), y1=min(v['t1'], y_bang1), phu=phu))
     cot.sort(key=lambda c: c['x'])
-    # bảo đảm có hai mép bảng
     if not cot or cot[0]['x'] > x0 + 12:
         cot.insert(0, dict(x=x0, y0=y_bang0, y1=y_bang1, phu=1.0))
     if cot[-1]['x'] < x1 - 12:
@@ -421,7 +399,6 @@ def cat_o(page, luoi, i_hang, x_trai, x_phai, le=2):
 
 
 
-# ═════════════════ 4. Định danh cột theo tiêu đề (semantic anchoring) ═══════
 def _o_co_chu_in(o):
     """Ô có chữ in hay không (dùng để đoán hàng tiêu đề)."""
     if o is None or o.size == 0:
@@ -471,10 +448,8 @@ def dinh_danh_cot(page, luoi, ocr_ham=None):
              hang_du_lieu_dau=i0, tieu_de=[...]).
     """
     tieu_de = doc_hang_tieu_de(page, luoi, ocr_ham)
-    # hàng tiêu đề = hàng có nhiều từ khoá khớp nhất (mặc định hàng 0)
     diem_hang = [sum(1 for o in h['o'] if o['vai_tro']) for h in tieu_de]
     i_td = int(np.argmax(diem_hang)) if diem_hang and max(diem_hang) > 0 else 0
-    # tiêu đề 2 tầng: hàng ngay dưới cũng là chữ in và có từ khoá -> gộp nhãn
     hai_tang = (i_td + 1 < len(tieu_de) and diem_hang[i_td + 1] > 0 and
                 len(tieu_de[i_td + 1]['o']) > len(tieu_de[i_td]['o']))
     i_du_lieu = i_td + (2 if hai_tang else 1)
@@ -499,7 +474,6 @@ def dinh_danh_cot(page, luoi, ocr_ham=None):
 
 
 
-# ═════════════════ 5. Chọn cột điểm (có đường lui khi thiếu OCR) ═══════════
 def _diem_hinh_hoc(c, rong_bang):
     """Cột ĐIỂM SỐ viết tay luôn hẹp (~6–13mm); cột 'Điểm chữ' rộng hơn hẳn (>15mm)."""
     r_mm = (c['x1'] - c['x0']) / PX_MM
@@ -539,13 +513,11 @@ def chon_cot_diem(luoi, dinh_danh, cham_noi_dung=None):
         d['diem_chon'] += 0.6 * _diem_hinh_hoc(c, rong)
         ket.append(d)
 
-    # Cột ngay TRƯỚC cột "Điểm chữ" gần như luôn là cột điểm số -> cộng điểm
     for i, c in enumerate(cot):
         if c['vai_tro'] == 'diem_chu' and i > 0 and ket[i - 1]['vai_tro'] != 'diem_chu':
             ket[i - 1]['diem_chon'] += 1.5
             ket[i - 1]['canh_diem_chu'] = True
 
-    # Chấm nội dung (CRNN) cho các cột còn khả năng — đường lui khi OCR không ra
     if cham_noi_dung is not None:
         can_cham = [d for d in ket if d['vai_tro'] in (None, 'diem_so', 'diem_qua_trinh')
                     and 5 * PX_MM <= (d['x1'] - d['x0']) <= 30 * PX_MM]
@@ -571,7 +543,6 @@ def chon_cot_diem(luoi, dinh_danh, cham_noi_dung=None):
 
 
 
-# ═══════════════════ 6. Bảng điểm hay không phải bảng điểm ═════════════════
 def kiem_tra_la_bang_diem(luoi, dinh_danh=None):
     """Lưới dò được có giống một bảng điểm không. Trả (bool, ly_do_chan, chi_so).
 
@@ -614,7 +585,6 @@ def kiem_tra_la_bang_diem(luoi, dinh_danh=None):
 
 
 
-# ═════════ 7. Lớp bao: mã lỗi ổn định và đường lui hình học (không có trong bản gốc) ═════════
 def phat_hien_luoi(page, bw=None):
     """``trich_luoi`` hoặc ``PipelineError("GRID_NOT_FOUND")`` khi trang không có bảng kẻ ô đủ lớn."""
     luoi = trich_luoi(page, bw)

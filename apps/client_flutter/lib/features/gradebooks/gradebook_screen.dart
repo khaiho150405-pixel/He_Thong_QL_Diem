@@ -29,8 +29,6 @@ import 'gradebook_status.dart';
 import 'widgets/grade_cell.dart';
 import 'repository.dart';
 
-/// Chuẩn hóa điểm gõ tay: "8,5" → "8.5", "9" → "9.0", "7." → "7.0".
-/// Chỉ đổi cách viết; giá trị cuối vẫn được kiểm 0.0–10.0 (bước 0.1) ở API và DB.
 String normalizeGradeText(String input) {
   final value = input.trim().replaceAll(',', '.');
   if (RegExp(r'^\d{1,2}$').hasMatch(value)) return '$value.0';
@@ -63,8 +61,6 @@ class _GradebookScreenState extends ConsumerState<GradebookScreen> {
   @override
   void didUpdateWidget(covariant GradebookScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Đổi sang bảng điểm khác qua địa chỉ hoặc nút Back/Forward: tải lại dữ liệu,
-    // nếu không màn hình vẫn hiện bảng điểm cũ dưới địa chỉ mới.
     if (oldWidget.bookId != widget.bookId) {
       setState(reload);
     }
@@ -364,7 +360,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     return null;
   }
 
-  /// Giá trị gửi lên API của một ô (null = để trống).
   String? gradeValueOf(String cellId) {
     final text = normalizeGradeText(controllers[cellId]?.text ?? '');
     return text.isEmpty ? null : text;
@@ -401,7 +396,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             maxLines: 3,
             onChanged: (value) {
               reason = value;
-              // Gõ lại thì bỏ thông báo lỗi cũ ("Cần nhập lý do.").
               if (error != null && value.trim().isNotEmpty) {
                 setDialogState(() => error = null);
               }
@@ -517,8 +511,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Xác định lỗi 409 có phải là xung đột phiên bản bảng điểm (cần hiện banner vàng và khóa lưới) hay không.
-  /// Chỉ bật xung đột khi 409 KHÔNG có code nghiệp vụ, hoặc code là VERSION_OR_STATE_CONFLICT / CONFLICT (lệch phiên bản).
   bool isGradebookConflict(Object error) {
     if (error is! DioException || error.response?.statusCode != 409) {
       return false;
@@ -564,7 +556,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// Hỏi lại khi rời màn bảng điểm mà còn ô điểm đã sửa nhưng chưa lưu.
   Future<bool> confirmLeave() async {
     final pending = changedCells().length;
     if (pending == 0) return true;
@@ -618,9 +609,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     }
   }
 
-  /// Dải trạng thái dưới thanh tab: nhãn "Đang nhập liệu" / "Đã khóa" và, chỉ
-  /// khi mọi cột đều có lịch đóng, "Khóa lúc" kèm giờ muộn nhất (kế hoạch 0.1).
-  /// Không có nút chốt: điểm tự khóa theo hạn nhà trường đặt (ADR-0014).
   Widget _buildStatusStrip(List<GradeCellDto> orderedComponents) {
     final t = context.tokens;
     final theme = Theme.of(context);
@@ -1297,8 +1285,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Thông báo chỉ-đọc khi bảng đã khóa (`.alert.ok` của `gv-grid`). Chữ theo
-  /// ADR-0014: điểm tự khóa theo hạn nhà trường đặt, không hướng dẫn "chốt".
   Widget _buildReadOnlyNotice() {
     final t = context.tokens;
     return Padding(
@@ -1346,7 +1332,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 size: 18,
                 color: t.ok,
               );
-              // Màn hẹp: nút xuống dòng dưới chữ thay vì tràn ngang.
               if (box.maxWidth < 560) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1384,8 +1369,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Chú giải màu ô điểm (`.legend` của prototype); chỉ giải thích kiểu hiển thị
-  /// của ô đã sửa, nhập từ ảnh và điểm không hợp lệ.
   Widget _buildLegend() {
     final t = context.tokens;
     final style = Theme.of(
@@ -1555,7 +1538,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Vòng tròn STT của hàng học sinh (thẻ mobile và chế độ một cột).
   Widget _sttAvatar(num? stt, {required double radius}) {
     final t = context.tokens;
     return CircleAvatar(
@@ -1618,8 +1600,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Thẻ hành động trong tab "Báo cáo & Tiện ích": ô biểu tượng, tiêu đề, mô tả
-  /// và một nút bên phải.
   Widget _actionCard({
     required IconData icon,
     required Color iconBackground,
@@ -1932,8 +1912,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Nhãn xếp loại: chữ giữ nguyên như bản cũ ([classificationLabel]), màu theo
-  /// ánh xạ MÃ của [classificationBadgeOf] (không so ngưỡng ở client).
   Widget _classificationBadge(String code) => AppBadge(
     classificationLabel(code),
     tone: classificationBadgeOf(code).tone,
@@ -2026,8 +2004,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Ô nhập số trong khung [GradeCellFrame]: giữ `TextFormField` (và `ValueKey`)
-  /// để nhập bằng bàn phím, Tab/Enter sang ô kế và validate như cũ.
   Widget _gradeTextField({
     required GradeCellDto cell,
     required bool enabled,
@@ -2051,9 +2027,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  /// Vùng trái của ô: biểu tượng trạng thái (đồng hồ chờ đối chiếu / khóa ngoài
-  /// lịch nhập) và chấm "nhập từ ảnh". Cột đã chốt không lặp biểu tượng khóa vì
-  /// tiêu đề cột đã có.
   Widget? _gradeLeading(GradeCellDto cell) {
     final t = context.tokens;
     final Widget? icon;
@@ -2154,7 +2127,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         : !isEnabled
         ? GradeCellTone.readOnly
         : GradeCellTone.normal;
-    // Mô tả trạng thái nay là tooltip, không còn helperText dưới ô.
     final status = cell.columnLocked == true
         ? 'Cột đã chốt'
         : cell.openForInput == false
@@ -2176,8 +2148,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         width: width,
         tone: tone,
         tooltip: status,
-        // Nhấn giữ ở ô trống đang nhập dùng để đánh dấu miễn: tooltip chỉ hiện
-        // khi rê chuột ở các ô đó.
         tooltipTrigger: canMarkExempt
             ? TooltipTriggerMode.manual
             : TooltipTriggerMode.longPress,
@@ -3120,9 +3090,6 @@ class _GradebookLoadError extends StatelessWidget {
   );
 }
 
-/// Độ rộng các cột của lưới nhập điểm màn rộng. Phần dư của khung (sau khi trừ
-/// lề) được chia cho cột "Học sinh" (gấp đôi) và các cột điểm/tổng kết; cột STT
-/// giữ hẹp. Khi nhiều cột không còn phần dư, giữ độ rộng gốc và cuộn ngang.
 class _GridColumnSizes {
   const _GridColumnSizes({
     required this.student,
@@ -3144,7 +3111,6 @@ class _GridColumnSizes {
   final double total;
   final double classification;
 
-  /// Mọi ô điểm trong cột rộng bằng cột.
   double get field => component;
 
   factory _GridColumnSizes.fit({
@@ -3160,7 +3126,6 @@ class _GridColumnSizes {
         _baseStudent +
         _baseComponent * components +
         (withResults ? _baseTotal + _baseClassification : 0);
-    // Trừ 1 px dự phòng sai số làm tròn để không sinh thanh cuộn ngang thừa.
     final extra = available - natural - 1;
     final weights = 2 + components + (withResults ? 2 : 0);
     final unit = extra > 0 ? extra / weights : 0.0;

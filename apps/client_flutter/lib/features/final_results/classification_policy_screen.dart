@@ -25,7 +25,6 @@ class _ClassificationPolicyScreenState
   bool saving = false;
   String? loadError;
 
-  /// Phiên bản đang áp dụng do backend trả về (chỉ để hiển thị badge).
   String? activeVersion;
   bool activeFlag = false;
 

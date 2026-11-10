@@ -1,5 +1,3 @@
-# Kiem tra JSON chi tiet phieu nhan dang so voi openapi (chi in ten truong, khong in ho ten).
-# Dung: powershell -NoProfile -File scripts/recognition/pilot/check-ticket.ps1 <ma phieu>
 param([Parameter(Mandatory = $true)][int]$TicketId)
 $ErrorActionPreference = 'Stop'
 Set-Location (Resolve-Path "$PSScriptRoot\..\..\..")

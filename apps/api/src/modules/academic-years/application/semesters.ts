@@ -26,10 +26,6 @@ export class SemestersService extends CatalogService {
     });
   }
 
-  /**
-   * Bật da_cong_bo bị trigger chặn (TERM_RESULTS_INCOMPLETE): lỗi Prisma của update theo model không mang DETAIL của
-   * PostgreSQL, nên danh sách mục cần xử lý được dựng lại bằng kiem_san_sang_cong_bo (cùng nguồn với trigger).
-   */
   override async save(actor: Actor, input: unknown, id?: number) {
     try {
       return await super.save(actor, input, id);

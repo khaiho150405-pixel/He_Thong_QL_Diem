@@ -10,7 +10,6 @@ final adjustmentsRepositoryProvider = Provider(
   (ref) => AdjustmentsRepository(ref.watch(apiProvider)),
 );
 
-/// Thông điệp tiếng Việt thân thiện theo trường code lỗi của nghiệp vụ điều chỉnh điểm.
 String adjustmentErrorMessage(Object error) {
   final code = apiErrorCode(error);
   return switch (code) {
@@ -57,7 +56,6 @@ class AdjustmentsRepository {
     }
   }
 
-  /// Lấy danh sách phiếu điều chỉnh của một bảng điểm (mới nhất trước, không kèm lines).
   Future<List<AdjustmentDto>> listForBook(num bookId) async {
     final res = await api.getAdjustmentsApi().gradebookAdjustmentsListForBook(
       id: bookId,
@@ -65,7 +63,6 @@ class AdjustmentsRepository {
     return res.data?.items.toList() ?? const [];
   }
 
-  /// Giáo viên gửi phiếu điều chỉnh điểm cho các ô thuộc cột đã chốt.
   Future<AdjustmentDto> submitAdjustment({
     required num bookId,
     required num expectedVersion,
@@ -87,7 +84,6 @@ class AdjustmentsRepository {
     return res.data!;
   }
 
-  /// Quản trị viên lấy danh sách phiếu điều chỉnh (có lọc trạng thái, phân trang cursor).
   Future<AdjustmentPageDto> listAdjustments({
     AdjustmentDtoStatusEnum? status,
     String? cursor,
@@ -99,13 +95,11 @@ class AdjustmentsRepository {
     return res.data!;
   }
 
-  /// Lấy chi tiết một phiếu điều chỉnh (kèm danh sách các dòng).
   Future<AdjustmentDto> getDetail(String adjId) async {
     final res = await api.getAdjustmentsApi().adjustmentsDetail(adjId: adjId);
     return res.data!;
   }
 
-  /// Quản trị viên duyệt cả phiếu điều chỉnh.
   Future<AdjustmentDto> approve({
     required String adjId,
     required num expectedVersion,
@@ -121,7 +115,6 @@ class AdjustmentsRepository {
     return res.data!;
   }
 
-  /// Quản trị viên từ chối phiếu điều chỉnh (lý do bắt buộc).
   Future<AdjustmentDto> reject({
     required String adjId,
     required num expectedVersion,
@@ -141,7 +134,6 @@ class AdjustmentsRepository {
     return res.data!;
   }
 
-  /// Giáo viên đã gửi hủy phiếu điều chỉnh đang chờ duyệt.
   Future<AdjustmentDto> cancel({
     required String adjId,
     required num expectedVersion,

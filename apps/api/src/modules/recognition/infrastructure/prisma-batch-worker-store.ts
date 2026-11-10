@@ -66,7 +66,6 @@ export class PrismaRecognitionBatchWorkerStore
     modelVersion: string,
     tickets: Array<{ ticketId: string; rows: unknown[] }>,
   ): Promise<void> {
-    // Một giao dịch SERIALIZABLE cho cả lô: mọi phiếu có kết quả hoặc không phiếu nào có.
     return transaction(this.db, async (tx) => {
       await tx.$queryRaw`
         SELECT public.luu_ket_qua_lo(

@@ -1,5 +1,4 @@
 import { Pool } from "pg";
-// Explicitly targets an isolated test cluster, never DATABASE_URL or personal databases.
 const url = process.env.TEST_ADMIN_URL;
 if (!url || !new URL(url).pathname.endsWith("/postgres"))
   throw new Error("TEST_ADMIN_URL ending /postgres required");

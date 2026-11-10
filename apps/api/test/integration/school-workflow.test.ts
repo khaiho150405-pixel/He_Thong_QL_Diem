@@ -327,7 +327,6 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
       ngay_ket_thuc: "2027-01-01",
       da_cong_bo: true,
     };
-    // Pass/fail grades use identical semester-wide coefficients, never numeric partial values.
     const passSubject = (
       await owner.query(
         "INSERT INTO mon_hoc(ten_mon,so_tiet_tuan,danh_gia_dat) VALUES($1,2,true) RETURNING ma_mon",
@@ -394,7 +393,6 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
       { expectedVersion: pfBook.version, reason: "Weighted pass/fail" },
     );
     assert.ok(pfResult.results.every((r) => r.finalScore === "10.0"));
-    // The second student passes only CK: 4/(2+2+4) is exactly 50%.
     await semesters.save(admin, termInput, term);
     const pfSummary = await reports.summary(teacher, pf.id);
     assert.equal(pfSummary.average, null);

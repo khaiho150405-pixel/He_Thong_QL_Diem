@@ -105,9 +105,6 @@ class HomeScreen extends ConsumerWidget {
     final role = user.role.value;
     final width = MediaQuery.sizeOf(context).width;
 
-    // Chuẩn Responsive UI/UX đa màn hình:
-    // - Màn hình lớn (width >= 960): Giao diện Web Desktop chuyên dụng với Sidebar cố định và bảng điều khiển rộng.
-    // - Màn hình vừa và nhỏ (width < 960): Giao diện Mobile/Tablet linh hoạt với Drawer và Bottom Navigation, tự động thích ứng mượt mà khi co giãn trình duyệt.
     if (width >= 960) {
       return HomeWebView(
         user: user,

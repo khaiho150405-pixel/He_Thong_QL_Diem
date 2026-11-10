@@ -2,16 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens.dart';
 
-/// Biến thể màu của [AppBadge] (class `.badge.ok/.warn/.bad/.info/.neu`).
 enum AppBadgeTone { ok, warn, bad, info, neutral }
 
-/// Nhãn trạng thái dạng pill: nền nhạt, viền, chữ 12, căn giữa.
-///
-/// Không có chấm tròn đầu dòng. Nhãn trạng thái (mặc định, [dot] = true) có cùng
-/// chiều rộng tối thiểu [AppBadge.minWidth] nên các ô trạng thái trong một cột
-/// luôn bằng nhau dù chữ dài hay ngắn; chữ dài hơn thì nhãn nở ra, không bao
-/// giờ bị cắt. Nhãn thông tin như số lượng, tên lớp truyền `dot: false` để vừa
-/// khít chữ.
 class AppBadge extends StatelessWidget {
   const AppBadge(
     this.label, {
@@ -30,18 +22,13 @@ class AppBadge extends StatelessWidget {
   const AppBadge.info(this.label, {super.key, this.dot = true, this.width})
     : tone = AppBadgeTone.info;
 
-  /// Chiều rộng tối thiểu chung của mọi nhãn trạng thái.
   static const double minWidth = 112;
 
   final String label;
   final AppBadgeTone tone;
 
-  /// Không còn vẽ chấm tròn. `true` (mặc định) = nhãn trạng thái, rộng tối thiểu
-  /// [minWidth]; `false` = nhãn thông tin, vừa khít chữ.
   final bool dot;
 
-  /// Chiều rộng cố định, thay cho [minWidth] khi cần (chữ vẫn không bị cắt
-  /// nếu vượt quá: nhãn co chữ về một dòng bằng `FittedBox`).
   final double? width;
 
   @override

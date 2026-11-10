@@ -9,15 +9,12 @@ import cv2
 import numpy as np
 
 A4_W, A4_H = 1654, 2338
-BACKGROUND = (55, 90, 135)  # BGR, a brown surface clearly different from white paper
+BACKGROUND = (55, 90, 135)
 PAPER = (246, 246, 242)
 INK = (35, 35, 35)
-# A dashed rule: 26 px of ink then an 8 px gap; the gaps survive the "photograph" and the dashes are shorter than the
-# vertical opening kernel of the grid detector, so the grid loses the rule while 76% of its length is still ink.
 DASH_PERIOD = 34
 DASH_GAP = 8
 
-# Column widths in pixels on the 1654 px wide page: STT | Họ tên | Mã/ghi chú | Đ.số | Điểm chữ | Ký tên
 DEFAULT_COLUMNS = (90, 470, 150, 190, 330, 214)
 DEFAULT_HEADERS = ("STT", "Ho va ten", "Ghi chu", "D.so", "Diem chu", "Ky ten")
 
@@ -61,14 +58,13 @@ def make_page(
     for y in ys:
         cv2.line(page, (xs[0], y), (xs[-1], y), INK, line)
     if line_gaps > 0:
-        # Inner row lines broken in two places (ink over the rule, faded scan): erase `line_gaps` of the width.
         width = xs[-1] - xs[0]
         for y in ys[1:-1]:
             for start in (0.25, 0.62):
                 x0 = int(xs[0] + start * width)
                 x1 = int(x0 + line_gaps / 2 * width)
                 cv2.rectangle(page, (x0, y - line - 1), (x1, y + line + 1), PAPER, -1)
-        for x in drawn:  # the column rules stay intact; only the row rules are broken
+        for x in drawn:
             cv2.line(page, (x, ys[0]), (x, ys[-1]), INK, line)
     if headers:
         for index, text in enumerate(headers):
@@ -115,13 +111,10 @@ def make_page(
     return page, {"xs": xs, "ys": ys, "rows": rows}
 
 
-# High-school sheet (cấp 3): STT | Họ tên | TX1 | TX2 | TX3 | TX4 | GK | CK | Ghi chú. One-channel (no written-grade
-# column), printed headers. Widths in px on the 1654 px wide page.
 THPT_COLUMNS = (60, 380, 105, 105, 105, 105, 116, 128, 326)
 THPT_HEADERS = ("STT", "Ho va ten", "TX1", "TX2", "TX3", "TX4", "GK", "CK", "Ghi chu")
 THPT_OCR = ("STT", "Họ và tên", "TX1", "TX2", "TX3", "TX4", "GK", "CK", "Ghi chú")
 THPT_SCORE_COLUMNS = (2, 3, 4, 5, 6, 7)
-# A different printed form: STT | Mã HS | Họ tên | Miệng | 15 phút | 1 tiết | Học kỳ | Ghi chú (other column count and widths).
 OTHER_COLUMNS = (70, 140, 360, 130, 130, 130, 130, 340)
 OTHER_HEADERS = ("STT", "Ma HS", "Ho va ten", "Mieng", "15 phut", "1 tiet", "Hoc ky", "Ghi chu")
 OTHER_OCR = ("STT", "Mã HS", "Họ và tên", "Miệng", "15 phút", "1 tiết", "Học kỳ", "Ghi chú")
@@ -176,7 +169,6 @@ def photograph(
         [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]], np.float32
     )
     placed = ((corners - np.array([pw / 2.0, ph / 2.0], np.float32)) * scale) @ rot.T + centre
-    # perspective: the far (top) edge is a little shorter than the near (bottom) edge
     shrink = perspective * pw * scale
     placed[0, 0] += shrink
     placed[1, 0] -= shrink
@@ -208,7 +200,7 @@ def scan(
     out = cv2.warpAffine(
         page, matrix, (width, height), flags=cv2.INTER_AREA, borderValue=PAPER
     )
-    out = (out.astype(np.float32) * 0.93).clip(0, 255)  # greyish paper
+    out = (out.astype(np.float32) * 0.93).clip(0, 255)
     rng = np.random.RandomState(seed)
     out = out + rng.normal(0, noise, out.shape)
     out = np.clip(out, 0, 255).astype(np.uint8)

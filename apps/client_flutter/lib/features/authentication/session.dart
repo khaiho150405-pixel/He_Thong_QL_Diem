@@ -18,7 +18,6 @@ final Provider<ApiClientDart> apiProvider = Provider<ApiClientDart>((ref) {
     ),
   );
   configureBrowser(dio);
-  // Tunnel/API khởi động lại hoặc mạng chập chờn: tự thử lại yêu cầu đọc (GET) tối đa 2 lần trước khi báo lỗi.
   dio.interceptors.add(
     InterceptorsWrapper(
       onError: (error, handler) async {
@@ -51,7 +50,6 @@ final Provider<ApiClientDart> apiProvider = Provider<ApiClientDart>((ref) {
             !path.endsWith('/resume');
         if (!unauthorized) return handler.next(error);
         final session = ref.read(sessionProvider.notifier);
-        // App di động: phiên hết hạn → đổi mã ghi nhớ lấy phiên mới rồi gửi lại đúng yêu cầu đó một lần.
         if (!kIsWeb && error.requestOptions.extra['resumed'] != true) {
           if (await session.resume()) {
             try {
@@ -103,8 +101,6 @@ class SessionController extends StateNotifier<SessionDto?> {
   Timer? expiry;
   Future<bool>? _resuming;
 
-  /// App di động: mở lại app (hoặc phiên hết hạn) → đổi mã ghi nhớ đã lưu lấy phiên mới.
-  /// Gọi đồng thời dùng chung một lần đổi vì mã chỉ dùng được một lần.
   Future<bool> resume() =>
       _resuming ??= _resume().whenComplete(() => _resuming = null);
 
@@ -120,7 +116,6 @@ class SessionController extends StateNotifier<SessionDto?> {
       await _accept(response);
       return true;
     } on DioException catch (e) {
-      // Chỉ bỏ mã khi server từ chối; mất mạng thì giữ để thử lại lần sau.
       if (e.response?.statusCode == 401) await store.delete();
       return false;
     } catch (_) {
@@ -150,7 +145,6 @@ class SessionController extends StateNotifier<SessionDto?> {
   }
 
   void touch() {
-    // App di động giữ đăng nhập qua mã ghi nhớ; phiên hết hạn được tự đổi mới ở interceptor.
     if (!kIsWeb) return;
     if (state != null) {
       expiry?.cancel();
@@ -196,7 +190,6 @@ class SessionController extends StateNotifier<SessionDto?> {
   }
 }
 
-/// Máy chủ trả câu chung chung (hoặc rỗng) khi không chỉ rõ nguyên nhân.
 bool _isGenericServerMessage(String? message) {
   final normalized = message?.trim().toLowerCase() ?? '';
   return normalized.isEmpty ||
@@ -212,8 +205,6 @@ String errorMessage(Object error) {
         ? responseData['message']?.toString()
         : null;
     return switch (error.response?.statusCode) {
-      // Máy chủ trả câu chung "Yêu cầu không hợp lệ." khi không chỉ rõ trường nào:
-      // dùng gợi ý cụ thể hơn thay vì hiện nguyên câu đó.
       400 =>
         _isGenericServerMessage(serverMessage)
             ? 'Thông tin chưa hợp lệ. Kiểm tra các trường và khoảng ngày.'

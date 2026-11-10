@@ -35,7 +35,6 @@ const ONLY_ADMIN_MESSAGE =
   "Hệ thống chỉ có một tài khoản quản trị viên duy nhất, không thể cấp thêm vai trò này.";
 const idle = 30 * 60 * 1000;
 const rememberLifetime = 30 * 24 * 3600 * 1000;
-/** Chỉ ghi lại hoat_dong_cuoi khi giá trị cũ đã quá 60 giây (hạn idle 30 phút vẫn kiểm đúng như cũ). */
 const touchInterval = 60 * 1000;
 const publicUser = (u: Row) => ({
   id: Number(u.ma_nguoi_dung),
@@ -157,7 +156,6 @@ export class IdentityService {
       return count <= 30;
     });
     if (!allowed) throw new HttpException("Rate limited", 429);
-    // Expensive hashing is outside the transaction; recheck the hash before issuing a session.
     const user = await this.store.run((tx) =>
       tx.find("nguoi_dung", { ten_dang_nhap: username }),
     );
@@ -228,10 +226,6 @@ export class IdentityService {
     if (!result) throw new UnauthorizedException();
     return { ...result, token, csrf, remember: rememberToken };
   }
-  /**
-   * Mở lại app di động: đổi mã ghi nhớ (dùng một lần) lấy phiên mới và mã ghi nhớ mới.
-   * Mã sai/hết hạn/đã dùng, hoặc tài khoản bị khóa → 401 (client xóa mã và về màn đăng nhập).
-   */
   async resume(rememberToken: string) {
     if (!/^[a-f0-9]{64}$/.test(rememberToken ?? ""))
       throw new UnauthorizedException();
@@ -268,11 +262,6 @@ export class IdentityService {
     if (!result) throw new UnauthorizedException();
     return { ...result, token, csrf, remember: next };
   }
-  /**
-   * Gia hạn hoạt động của phiên bằng một UPDATE có điều kiện, ở mức ReadCommitted và ngoài giao dịch Serializable của request:
-   * nhiều request song song của cùng phiên không còn ghi–đọc chéo nhau trên một dòng (nguồn của 40001 → 409). Request đến
-   * sau thấy giá trị mới và không ghi gì. Điều kiện nằm trong WHERE nên không bao giờ lùi hoat_dong_cuoi.
-   */
   private async touchSession(key: string): Promise<void> {
     const now = new Date();
     await this.store.run(
@@ -307,7 +296,6 @@ export class IdentityService {
       return {
         actor: { ...publicUser(user), sessionHash: key },
         csrf: String(session.csrf),
-        // Chỉ cần chạm phiên khi giá trị cũ đã quá touchInterval; phần lớn request không ghi gì.
         stale: +(session.hoat_dong_cuoi as Date) + touchInterval <= +now,
       };
     });

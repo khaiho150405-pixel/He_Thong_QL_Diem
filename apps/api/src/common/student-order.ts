@@ -1,7 +1,5 @@
 import type { Row } from "./store.js";
 
-// Nguồn duy nhất cho thứ tự học sinh trong lớp (ADR-0015): tên (từ cuối) →
-// họ tên đầy đủ → ma_hoc_sinh. Mọi nơi cần STT phải dùng các hàm ở đây.
 const viCollator = new Intl.Collator("vi", { sensitivity: "variant" });
 
 export function compareStudents(first: Row, second: Row): number {
@@ -16,7 +14,6 @@ export function compareStudents(first: Row, second: Row): number {
   );
 }
 
-/** Đánh STT 1..n theo từng lớp cho các hàng đã được gọi là "đang xét". */
 export function numberByClass(students: Row[]): Map<number, number> {
   const groups = new Map<number, Row[]>();
   for (const row of students) {
@@ -34,10 +31,6 @@ export function numberByClass(students: Row[]): Map<number, number> {
   return numbers;
 }
 
-/**
- * STT trong lớp: chỉ học sinh `dang_theo_hoc`, STT bắt đầu từ 1 và độc lập
- * giữa các lớp. Học sinh đã nghỉ không có trong kết quả.
- */
 export function classStudentOrder(students: Row[]): Map<number, number> {
   return numberByClass(students.filter((row) => row.dang_theo_hoc === true));
 }

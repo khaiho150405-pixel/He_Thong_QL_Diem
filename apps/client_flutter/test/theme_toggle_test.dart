@@ -19,7 +19,6 @@ const _toggleKey = ValueKey('theme-mode-toggle');
 const _toDark = 'Chuyển sang giao diện tối';
 const _toLight = 'Chuyển sang giao diện sáng';
 
-/// Server giả chỉ biết đăng nhập; mọi API khác trả 404.
 class _Server implements HttpClientAdapter {
   _Server(this.role);
   final String role;
@@ -80,8 +79,6 @@ Future<void> _pumpLogin(
   await tester.pumpAndSettle();
 }
 
-/// Ứng dụng tối giản có khung điều hướng thật (`AppScaffold`) và đọc
-/// `themeModeProvider` giống `GradebookApp`.
 class _FrameApp extends ConsumerWidget {
   const _FrameApp();
 
@@ -115,7 +112,6 @@ ProviderScope _scope(String role, Widget child) => ProviderScope(
   child: child,
 );
 
-/// Khung `AppScaffold` đã đăng nhập (topbar ở màn rộng, AppBar ở màn hẹp).
 Future<void> _pumpFrame(
   WidgetTester tester, {
   required String role,
@@ -127,7 +123,6 @@ Future<void> _pumpFrame(
   await _login(tester, find.byType(_FrameApp), role);
 }
 
-/// Trang chủ thật (`/`) đã đăng nhập.
 Future<void> _pumpHome(
   WidgetTester tester, {
   required String role,
@@ -141,7 +136,6 @@ Future<void> _pumpHome(
   await _login(tester, find.byType(GradebookApp), role);
 }
 
-/// Tháo cây widget để huỷ timer 10 giây của các provider báo cáo.
 Future<void> _unmount(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump();
@@ -211,8 +205,6 @@ void main() {
           await _pumpLogin(
             tester,
             size: Size(width, width >= 960 ? 900 : 720),
-            // Nửa trái trang trí của màn rộng tràn dọc ở chữ 1.5x (không liên
-            // quan tới nút), nên chỉ thử 1.5x ở màn hẹp.
             textScale: width < 960 ? 1.5 : 1.0,
           );
           _expectOneToggle(tester, maxRight: width);
@@ -259,7 +251,6 @@ void main() {
           ),
           findsOneWidget,
         );
-        // Đăng xuất nằm trong menu tài khoản (avatar) chứ không còn là nút riêng.
         expect(
           find.byWidgetPredicate(
             (w) => w is Tooltip && (w.message ?? '').startsWith('Tài khoản'),

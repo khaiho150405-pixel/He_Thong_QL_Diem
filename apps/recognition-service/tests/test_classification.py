@@ -51,9 +51,9 @@ class ResearchRuleTest(TestCase):
 
     def test_only_the_numeric_channel_is_trusted_takes_the_numeric_value(self) -> None:
         for written in (
-            prediction("7.0", "0.30"),  # khác giá trị, yếu
-            prediction("7.0", "0.89"),  # khác giá trị, sát ngưỡng chữ
-            prediction(None, None, blank=True),  # không đọc được
+            prediction("7.0", "0.30"),
+            prediction("7.0", "0.89"),
+            prediction(None, None, blank=True),
         ):
             result = self.classify(prediction("8.0", "0.95"), written)
             self.assertEqual(result.level, YELLOW, written)
@@ -61,7 +61,7 @@ class ResearchRuleTest(TestCase):
 
     def test_only_the_written_channel_is_trusted_takes_the_written_value(self) -> None:
         for numeric in (
-            prediction("8.0", "0.94"),  # khác giá trị, sát ngưỡng số
+            prediction("8.0", "0.94"),
             prediction("8.0", "0.10"),
             prediction(None, None, blank=True),
         ):

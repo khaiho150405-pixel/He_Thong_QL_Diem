@@ -5,10 +5,6 @@ export interface TimetableSlot {
 
 const sessionOf = (period: number) => (period <= 5 ? "morning" : "afternoon");
 
-/**
- * Validates one class/day after a timetable mutation.
- * A day with fewer than three periods is treated as an unfinished draft.
- */
 export function validateClassDaySchedule(slots: TimetableSlot[]): void {
   for (const session of ["morning", "afternoon"] as const) {
     const sessionSlots = slots.filter(

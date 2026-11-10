@@ -1,9 +1,5 @@
 import { HttpException } from "@nestjs/common";
 
-/**
- * Mã lỗi ổn định của module mẫu bảng điểm (ADR-0016 mục 4) và của luồng gọi dịch vụ nhận dạng. `status` là mã HTTP;
- * envelope lỗi dùng chính `code` thay cho mã chung theo status (xem TemplateErrorFilter).
- */
 export const TEMPLATE_ERRORS = {
   INVALID_TEMPLATE_DEFINITION: 400,
   TEMPLATE_COLUMN_COUNT_MISMATCH: 400,
@@ -11,14 +7,12 @@ export const TEMPLATE_ERRORS = {
   TEMPLATE_IN_USE: 409,
   TEMPLATE_INACTIVE: 409,
   VERSION_CONFLICT: 409,
-  // Dịch vụ nhận dạng từ chối ảnh (HTTP 422): phải chụp/chọn ảnh khác.
   TEMPLATE_MISMATCH: 422,
   IMAGE_UNREADABLE: 422,
   IMAGE_QUALITY_LOW: 422,
   GRID_NOT_FOUND: 422,
   NOT_A_GRADEBOOK: 422,
   SCORE_COLUMN_NOT_FOUND: 422,
-  // Hạ tầng nhận dạng: có thể thử lại.
   MODEL_UNAVAILABLE: 503,
   RECOGNITION_TIMEOUT: 504,
   RECOGNITION_SERVICE_ERROR: 502,

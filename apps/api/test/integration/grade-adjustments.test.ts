@@ -13,8 +13,6 @@ import type {
 import { FinalResultsService } from "../../src/modules/final-results/application/service.js";
 import { GradebooksService } from "../../src/modules/gradebooks/application/service.js";
 
-// Điều chỉnh điểm sau chốt (migration 202610220001): dữ liệu giả, chỉ chạy trên DB *_test.
-
 const codeIs = (code: string) => (e: { code?: string }) => e.code === code;
 const uniqueKey = (tag: string) => `${tag}-${randomBytes(4).toString("hex")}`;
 
@@ -77,7 +75,6 @@ async function fixture() {
       [year],
     )
   ).ma_hoc_ky!;
-  /** Lớp + môn + phân công + bảng điểm cho `teacher`, mọi ô có điểm 6.0 (cột TX) / 7.0 (cột GK). */
   const gradebook = async (
     name: string,
     comps: Array<[type: string, required: boolean]>,
@@ -130,7 +127,6 @@ async function fixture() {
       );
     return { book, cls, subject, components };
   };
-  /** Chốt các cột bằng lịch riêng đã hết hạn rồi để hệ thống tự khóa. */
   const lock = async (bookId: number, componentIds: number[]) => {
     for (const componentId of componentIds)
       await owner.query(
@@ -216,7 +212,6 @@ test("teacher submits adjustments only for locked columns, one pending per grade
     const v = await f.view(book.id);
     const [s1, s2] = v.students as [number, number];
 
-    // Ô của cột còn mở, giá trị sai, không đổi gì: lỗi có mã.
     await assert.rejects(
       f.submit(f.teacher, book.id, [
         { cellId: v.cell(s1, gk).id, value: "5.0", exempt: false },
@@ -256,7 +251,7 @@ test("teacher submits adjustments only for locked columns, one pending per grade
       "Phúc khảo bài giữa kỳ",
     );
     assert.equal(sent.status, "CHO_DUYET");
-    assert.equal(sent.lineCount, 1); // dòng không đổi bị bỏ
+    assert.equal(sent.lineCount, 1);
     assert.equal(sent.lines![0]!.oldValue, "6.0");
     assert.equal(sent.lines![0]!.newValue, "8.0");
     assert.equal(sent.lines![0]!.note, "Chấm lại câu 3");
@@ -281,7 +276,6 @@ test("teacher submits adjustments only for locked columns, one pending per grade
       ForbiddenException,
     );
 
-    // Hủy: GV khác không hủy được; GV đã gửi hủy được, rồi gửi lại được.
     await assert.rejects(
       f.adjustments.cancel(f.other, sent.id, uniqueKey("c"), {
         expectedVersion: sent.version,
@@ -405,7 +399,6 @@ test("admin approval rewrites the locked cells atomically, audits them and outda
       `Điều chỉnh sau chốt #${sent.id}: Chấm lại sau phúc khảo; Phúc khảo — duyệt bởi ${f.admin.username}`,
     );
 
-    // Công bố bị chặn đến khi tính lại tổng kết.
     const outdated = await f.gradebooks.publishReadiness(f.admin, f.term);
     assert.equal(outdated.ready, false);
     assert.deepEqual(
@@ -447,7 +440,6 @@ test("a cell changed between submission and approval makes the whole approval fa
       { cellId: v.cell(s1, tx).id, value: "8.0", exempt: false },
       { cellId: v.cell(s2, tx).id, value: "9.0", exempt: false },
     ]);
-    // Đổi ô thứ hai ngoài luồng thường (chủ DB tắt trigger tạm thời) để mô phỏng thay đổi giữa lúc gửi và duyệt.
     await f.owner.query(
       "ALTER TABLE diem_thanh_phan DISABLE TRIGGER grade_column_policy",
     );
@@ -467,7 +459,7 @@ test("a cell changed between submission and approval makes the whole approval fa
       codeIs("ADJUSTMENT_STALE"),
     );
     const after = await f.view(book.id);
-    assert.equal(after.cell(s1, tx).value, "6.0"); // dòng đầu không bị ghi
+    assert.equal(after.cell(s1, tx).value, "6.0");
     assert.equal(after.cell(s2, tx).value, "3.0");
     assert.equal(after.book.version, versionBefore);
     assert.equal(after.book.resultsOutdated, false);
@@ -481,7 +473,6 @@ test("a cell changed between submission and approval makes the whole approval fa
       "CHO_DUYET",
     );
 
-    // Từ chối: lý do bắt buộc, chỉ QTV; sau đó GV không hủy được nữa.
     await assert.rejects(
       f.adjustments.reject(f.teacher, sent.id, uniqueKey("r"), {
         expectedVersion: sent.version,
@@ -593,7 +584,6 @@ test("a published term accepts no new adjustment and approves none", async () =>
     const waiting = await f.submit(f.teacher, book.id, [
       { cellId: v.cell(s1, components[0]!).id, value: "8.0", exempt: false },
     ]);
-    // Phiếu còn chờ nên công bố thường bị chặn (ADJUSTMENT_PENDING); tắt trigger để dựng đúng tình huống đã công bố.
     await f.owner.query("ALTER TABLE hoc_ky DISABLE TRIGGER term_publication");
     try {
       await f.owner.query(
@@ -625,7 +615,6 @@ test("the runtime role cannot write locked cells directly, with or without the t
   try {
     const { book, components } = await f.gradebook("rt", [["TX", true]]);
     const [tx] = components as [number];
-    // Cột chốt kiểu cũ (không có lịch) để cap_nhat_diem không bị chặn bởi khung giờ.
     await f.owner.query(
       "INSERT INTO chot_cot_diem(ma_bang_diem,ma_thanh_phan,nguoi_chot) VALUES($1,$2,$3)",
       [book.id, tx, f.admin.id],
@@ -657,11 +646,9 @@ test("the runtime role cannot write locked cells directly, with or without the t
         denied,
       );
       await client.query("ROLLBACK");
-      // Cờ giả không cho ghi giá trị khác phiếu, hay ô không có trong phiếu, qua hàm nhập điểm.
       for (const [cell, value] of [
         [v.cell(s1, tx).id, "9.0"],
         [v.cell(s2, tx).id, "8.0"],
-        // Đúng ô và đúng giá trị của phiếu chờ: trigger sẽ cho qua, nhưng cap_nhat_diem tự chặn cột đã chốt.
         [v.cell(s1, tx).id, "8.0"],
       ] as const) {
         await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
@@ -737,13 +724,11 @@ test("a pending adjustment blocks publication until it is approved or cancelled"
       ["ADJUSTMENT_PENDING"],
     );
 
-    // Hủy phiếu: hết vấn đề.
     await f.adjustments.cancel(f.teacher, sent.id, uniqueKey("c"), {
       expectedVersion: sent.version,
     });
     assert.deepEqual(await issues(), []);
 
-    // Duyệt phiếu: chỉ còn kết quả lỗi thời (không còn phiếu chờ); tính lại thì công bố được.
     const second = await f.submit(f.teacher, book.id, [
       { cellId: v.cell(s2, tx).id, value: "9.0", exempt: false },
     ]);

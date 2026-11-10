@@ -47,8 +47,6 @@ class RecognitionPanel extends ConsumerStatefulWidget {
   final VoidCallback onApproved;
   final bool embedded;
 
-  /// Nhãn "Lớp · Môn" (ví dụ `10A1 · Toán`) cho màn hướng dẫn chụp; chỉ để
-  /// hiển thị, `null` thì pill chỉ có tên cột điểm.
   final String? classSubjectLabel;
 
   @override
@@ -70,23 +68,18 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   String? _uploadedTicketId;
   bool _navigating = false;
 
-  /// Phiếu thuộc lô biết được trong phiên này và danh sách mẫu đang dùng; đọc
-  /// bằng `ref.watch` ở đầu `build` để các hàm dựng thẻ phiếu dùng lại.
   Map<String, BatchTicketInfo> _batchInfo = const {};
   List<TemplateSummaryDto> _templates = const [];
 
-  /// Giá trị "Không dùng mẫu" trong ô chọn mẫu (id mẫu thật luôn > 0).
   static const num _noTemplate = 0;
 
   @override
   void initState() {
     super.initState();
-    // Bắt buộc chọn cột điểm nếu có nhiều hơn 1 thành phần
     componentId = widget.components.length == 1
         ? widget.components.first.id
         : null;
     reload();
-    // Danh sách mẫu đã tải ở lần mở trước: làm mới để thấy mẫu QTV vừa kích hoạt.
     final templatesStale = ref.exists(activeTemplatesProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (templatesStale && mounted) ref.invalidate(activeTemplatesProvider);
@@ -191,9 +184,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
           );
         }
       }
-    } catch (_) {
-      /* The explicit capture/pick action provides retry and errors. */
-    }
+    } catch (_) {}
   }
 
   Future<void> pickImage({bool camera = false}) async {
@@ -231,9 +222,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     }
   }
 
-  /// Chọn ảnh từ màn hướng dẫn chụp bằng đúng `pickImage`. Trả `true` khi có
-  /// ảnh mới hoặc thông báo lỗi để panel hiển thị (màn hướng dẫn tự đóng);
-  /// `false` khi bị chặn hoặc người dùng hủy (màn ở lại).
   Future<bool> _pickFromGuide({required bool camera}) async {
     final before = image;
     await pickImage(camera: camera);
@@ -382,7 +370,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS);
 
-    // Phiếu của lô nhiều trang được duyệt ở màn kết quả lô: tải lại bảng điểm.
     ref.listen<int>(batchApprovalTickProvider(widget.gradebookId), (
       previous,
       next,
@@ -399,8 +386,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
         .firstOrNull;
 
     final legacyControls = _buildUploadControls(context, enabled, camera);
-    // Không có mẫu nào đang dùng (hoặc chưa tải được danh sách): panel y hệt
-    // luồng một ảnh cũ, không có ô chọn mẫu.
     final controls = _templates.isEmpty
         ? legacyControls
         : Column(
@@ -545,9 +530,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     ),
   );
 
-  /// Ô chọn mẫu ở đầu panel (ADR-0016 mục 5): các mẫu `DANG_DUNG` cùng mục
-  /// "Không dùng mẫu" (luồng một ảnh cũ). Lựa chọn nhớ theo bảng điểm trong
-  /// phiên chạy (`selectedTemplateProvider`), không lưu ra đĩa.
   Widget _buildTemplateSelector(TemplateSummaryDto? chosen, bool enabled) {
     final t = context.tokens;
     return Column(
@@ -592,8 +574,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     );
   }
 
-  /// Chỉ báo 4 bước, suy ra từ trạng thái đã có: đang tải ảnh lên, hoặc phiếu
-  /// mới nhất trong danh sách. Không thêm trạng thái nghiệp vụ nào.
   Widget _buildStepper() {
     return FutureBuilder<List<RecognitionTicketDto>>(
       future: tickets,
@@ -685,7 +665,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     );
   }
 
-  /// Khung thông báo nhỏ theo tông màu (nền nhạt, viền, biểu tượng).
   Widget _notice(
     BuildContext context, {
     required AppBadgeTone tone,
@@ -736,7 +715,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Chọn thành phần điểm (chip).
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
@@ -783,7 +761,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                 ),
               ),
             const SizedBox(height: AppSpacing.lg),
-            // Vùng chọn ảnh (dropzone nét đứt).
             CustomPaint(
               foregroundPainter: _DashedRRectPainter(
                 color: enabled ? t.line2 : t.line,
@@ -1058,8 +1035,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                // Ảnh chỉ vào được đây sau khi qua kiểm tra nội dung PNG/JPEG,
-                // dung lượng, kích thước và giải mã; chưa có kiểm tra độ rõ.
                 const AppBadge.ok('Định dạng hợp lệ'),
               ],
             ),
@@ -1371,8 +1346,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     );
   }
 
-  /// "N ảnh · tên mẫu" cho phiếu thuộc lô (chỉ phiên này biết; xem
-  /// `docs/design/open-questions.md`).
   Widget _buildBatchInfoLine(
     BuildContext context,
     RecognitionTicketDto item,
@@ -1417,8 +1390,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     return '$h:$m $d/$mo/$y';
   }
 
-  /// Nhãn trạng thái (AppBadge) và thông tin kèm theo của một phiếu. Phiếu
-  /// không có dữ liệu tiến độ nên không vẽ thanh phần trăm.
   Widget _buildTicketStatus(BuildContext context, RecognitionTicketDto item) {
     final theme = Theme.of(context);
     final t = context.tokens;
@@ -1520,8 +1491,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
   }
 }
 
-/// Chip chọn thành phần điểm (`.chip` của prototype): pill, cao tối thiểu 44,
-/// mục đang chọn nền `priSoft` viền `pri`.
 class _ComponentChip extends StatelessWidget {
   const _ComponentChip({
     super.key,
@@ -1588,7 +1557,6 @@ class _ComponentChip extends StatelessWidget {
   }
 }
 
-/// Đường viền nét đứt bo góc của vùng chọn ảnh (`.drop` của prototype).
 class _DashedRRectPainter extends CustomPainter {
   const _DashedRRectPainter({required this.color, required this.radius});
 
@@ -1627,8 +1595,6 @@ class _DashedRRectPainter extends CustomPainter {
       old.color != color || old.radius != radius;
 }
 
-/// Chỉ báo 4 bước (`.steps`). Chỉ trình bày: `current` (1 đến 4) do màn cha
-/// suy ra từ trạng thái đã có; bước trước `current` hiện dấu tích.
 class _OcrStepper extends StatelessWidget {
   const _OcrStepper({required this.current});
 

@@ -33,7 +33,6 @@ function nullableText(value: unknown, max: number): string | null {
   return value;
 }
 
-// Grades are decimal strings with at most one fractional digit, 0.0–10.0.
 function grade(value: unknown): string | null {
   if (value === null) return null;
   if (typeof value !== "string" || !/^(10(\.0)?|[0-9](\.[0-9])?)$/.test(value))
@@ -41,7 +40,6 @@ function grade(value: unknown): string | null {
   return value;
 }
 
-// Confidence is a decimal string in 0..1 with up to four fractional digits.
 function confidence(value: unknown): string | null {
   if (value === null) return null;
   if (
@@ -97,8 +95,6 @@ function name(value: unknown): NameResult {
   };
 }
 
-// Ảnh xem trước trang (/v2/layout/analyze) là cả trang rộng 1400 px; ảnh điện thoại có thể 4–5 MiB PNG,
-// nên có giới hạn riêng, lớn hơn giới hạn ảnh ô cắt.
 const MAX_PREVIEW_BYTES = 12 * 1024 * 1024;
 
 function cropBase64(value: unknown, maxBytes: number = MAX_CROP_BYTES): string {
@@ -114,10 +110,6 @@ function cropBase64(value: unknown, maxBytes: number = MAX_CROP_BYTES): string {
   return value;
 }
 
-/**
- * Kiểm phân loại của một ô khớp luật hợp nhất hai kênh (ADR-0015) với giá trị hai kênh; dùng chung cho v1 (`row`) và v2
- * (`gradeCell`). Ném MALFORMED_RESPONSE khi không khớp. Kênh chữ vắng (cột một kênh v2) truyền vào là kênh trống.
- */
 function checkedClassification(
   input: Record<string, unknown>,
   numeric: ChannelResult,
@@ -149,8 +141,6 @@ function checkedClassification(
       numeric.value !== written.value) ||
     (comparison === "MOT_KENH" && numericReadable !== writtenReadable) ||
     (comparison === "KHONG_DOC_DUOC" && !numericReadable && !writtenReadable);
-  // Luật hợp nhất hai kênh: Xanh chỉ khi hai kênh đồng thuận; Đỏ không gợi ý giá trị; Xanh/Vàng gợi ý giá trị của một
-  // kênh ĐỌC ĐƯỢC (SO = điểm số, CHU = điểm chữ).
   const suggestedSource = input.suggestedSource as SuggestedSource | null;
   if (
     suggestedSource !== null &&
@@ -234,7 +224,6 @@ export class HttpRecognitionModel implements RecognitionModelClient {
   ) {}
 
   async recognize(image: Uint8Array) {
-    // The service only receives the photo: no class roster and no declared row count.
     const form = new FormData();
     form.set(
       "image",
@@ -253,7 +242,6 @@ export class HttpRecognitionModel implements RecognitionModelClient {
     }
     if (response.status === 503) throw new Error("MODEL_UNAVAILABLE");
     if (response.status === 422) {
-      // Ảnh bị từ chối kèm mã ổn định: {"detail": {"code": "...", "message": "..."}}.
       let code: unknown;
       try {
         code = (
@@ -278,8 +266,6 @@ export class HttpRecognitionModel implements RecognitionModelClient {
   }
 }
 
-// ── Contract v2 (ADR-0016): phân tích bố cục và đọc nhiều cột theo mẫu. v1 ở trên không đổi. ──
-
 export type LayoutSignature = {
   version: 1;
   columnWidths: number[];
@@ -294,12 +280,10 @@ export type GradeGroup = "TX" | "GK" | "CK";
 
 export type AnalyzedColumn = {
   index: number;
-  /** Tỉ lệ 0–1 theo bề rộng bảng. */
   x0: number;
   x1: number;
   widthMm: number;
   headerText: string;
-  /** null khi không đọc được tiêu đề. */
   suggestedRole: SuggestedRole | null;
   suggestedGroup: GradeGroup | null;
   suggestedOrder: number | null;
@@ -311,7 +295,6 @@ export type LayoutAnalysis = {
   previewPngBase64: string;
 };
 
-/** `layout` gửi tới POST /v2/recognize: `index` là chỉ số cột của MẪU, chỉ gồm cột cần đọc. */
 export type V2Layout = {
   signature: LayoutSignature;
   columns: Array<{
@@ -325,7 +308,6 @@ export type V2Layout = {
 export type V2Grade = {
   key: string;
   numeric: ChannelResult;
-  /** null với cột chỉ có kênh số (tối đa Vàng, D-01). */
   written: ChannelResult | null;
   numericCropBase64: string;
   writtenCropBase64: string | null;
@@ -352,7 +334,6 @@ export type V2Result = {
   rows: V2Row[];
 };
 
-/** Mã lỗi 422 của contract v2: mã v1 cộng TEMPLATE_MISMATCH (kèm details) và INVALID_LAYOUT. */
 const V2_ERROR_CODES = new Set<string>([
   "IMAGE_UNREADABLE",
   "IMAGE_QUALITY_LOW",
@@ -363,7 +344,6 @@ const V2_ERROR_CODES = new Set<string>([
   "INVALID_LAYOUT",
 ]);
 
-/** Lỗi của dịch vụ nhận dạng v2. `code` ổn định; `details` chỉ có ở TEMPLATE_MISMATCH. */
 export class RecognitionV2Error extends Error {
   constructor(
     readonly code: string,
@@ -477,7 +457,6 @@ function gradeCell(value: unknown): V2Grade {
     input.writtenCropBase64 === null
       ? null
       : cropBase64(input.writtenCropBase64);
-  // Ô một kênh: không có kênh chữ lẫn ảnh cắt chữ; ô hai kênh có cả hai.
   if ((written === null) !== (writtenCrop === null)) return malformed();
   const { comparison, reviewLevel, suggestedSource } = checkedClassification(
     input,
@@ -489,7 +468,6 @@ function gradeCell(value: unknown): V2Grade {
       isBlank: true,
     },
   );
-  // Cột một kênh không bao giờ Xanh và chỉ gợi ý từ kênh số (D-01).
   if (written === null && (reviewLevel === "XANH" || suggestedSource === "CHU"))
     return malformed();
   return {
@@ -555,13 +533,10 @@ export function parseRecognitionV2Response(body: unknown): V2Result {
 }
 
 export interface RecognitionV2Client {
-  /** POST /v2/layout/analyze: không lưu gì, không đọc điểm. */
   analyzeLayout(image: Uint8Array): Promise<LayoutAnalysis>;
-  /** POST /v2/recognize đồng bộ với `layout` dựng từ cột mẫu. */
   recognize(image: Uint8Array, layout: V2Layout): Promise<V2Result>;
 }
 
-/** Client v2 chưa cấu hình dịch vụ nhận dạng (export OpenAPI, test): mọi lời gọi báo MODEL_UNAVAILABLE. */
 export class UnconfiguredRecognitionV2Client implements RecognitionV2Client {
   async analyzeLayout(): Promise<LayoutAnalysis> {
     throw new RecognitionV2Error("MODEL_UNAVAILABLE");
@@ -572,10 +547,6 @@ export class UnconfiguredRecognitionV2Client implements RecognitionV2Client {
 }
 
 export class HttpRecognitionV2Client implements RecognitionV2Client {
-  /**
-   * @param analyzeTimeoutMs chờ `/v2/layout/analyze` (cấu hình chung của dịch vụ nhận dạng)
-   * @param recognizeTimeoutMs chờ `/v2/recognize` đồng bộ của "thử mẫu" (mặc định 90 s, cấu hình được)
-   */
   constructor(
     private readonly url: string,
     private readonly request: Fetch = fetch,
@@ -621,7 +592,6 @@ export class HttpRecognitionV2Client implements RecognitionV2Client {
     parse: (body: unknown) => T,
   ): Promise<T> {
     const signal = AbortSignal.timeout(timeoutMs);
-    // Hết hạn có thể xảy ra khi chờ header lẫn khi đọc body: cả hai đều là RECOGNITION_TIMEOUT.
     const timedOut = (error: unknown) =>
       signal.aborted ||
       (error instanceof Error &&
@@ -641,8 +611,6 @@ export class HttpRecognitionV2Client implements RecognitionV2Client {
     if (response.status === 503)
       throw new RecognitionV2Error("MODEL_UNAVAILABLE");
     if (response.status === 422) {
-      // {"detail": {"code": "...", "message": "...", "details": {...}}}: chỉ chuyển tiếp mã đã biết và `details` của
-      // TEMPLATE_MISMATCH; bỏ message tự do.
       let code: unknown;
       let details: unknown;
       try {

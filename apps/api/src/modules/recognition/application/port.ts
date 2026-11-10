@@ -49,10 +49,6 @@ export interface RecognitionStore {
     gradebookId: number,
     ticketId: string,
   ): Promise<RecognitionTicketDetail | null>;
-  /**
-   * Hủy mềm phiếu (huy_phieu_nhan_dien). Trả các object key của ảnh gốc và ảnh ô để service xóa khỏi object storage
-   * sau khi giao dịch đã commit; phiếu và ket_qua_dong không bị xóa.
-   */
   cancel(input: CancelRecognitionTicket): Promise<{ objectKeys: string[] }>;
 }
 
@@ -75,11 +71,8 @@ export interface RecognitionTicket {
   modelVersion: string | null;
   version: number;
   createdAt: string;
-  /** Lý do hủy; null khi phiếu chưa hủy. */
   cancelReason: string | null;
-  /** Thời điểm hủy (ISO 8601); null khi phiếu chưa hủy. */
   cancelledAt: string | null;
-  /** Số dòng theo mức cuối (điểm + ghép học sinh); 0 khi chưa có kết quả. */
   greenRows: number;
   yellowRows: number;
   redRows: number;
@@ -89,19 +82,13 @@ export type SuggestedSource = "SO" | "CHU";
 
 export interface RecognitionEvidenceRow {
   rowId: string;
-  /** Vị trí dòng trên ảnh. */
   order: number;
-  /** STT hệ thống trong danh sách lớp đã chốt của phiếu; null với phiếu cũ không có snapshot. */
   stt: number | null;
-  /** STT in trên giấy đọc được. */
   sttOnPaper: number | null;
   studentId: number;
   studentName: string;
-  /** Ô điểm của học sinh ở cột này đang được miễn (MIEN). */
   exempt: boolean;
-  /** Họ tên máy đọc được trên giấy (để so với studentName). */
   nameRead: string | null;
-  /** 0..1, 4 chữ số thập phân. */
   matchConfidence: string | null;
   matchNote: string | null;
   numericRaw: string | null;
@@ -112,11 +99,8 @@ export interface RecognitionEvidenceRow {
   writtenConfidence: string | null;
   comparison: "KHOP" | "LECH" | "MOT_KENH" | "KHONG_DOC_DUOC";
   reviewLevel: "XANH" | "VANG" | "DO";
-  /** Kênh cho giá trị gợi ý (SO = điểm số, CHU = điểm chữ); null khi Đỏ: không gợi ý giá trị. */
   suggestedSource: SuggestedSource | null;
-  /** Mức ghép học sinh (row-matching); null với phiếu cũ không lưu mức ghép riêng. */
   matchLevel: "XANH" | "VANG" | "DO" | null;
-  /** Mức điểm của hai kênh (trước khi hợp với mức ghép), suy từ comparison/suggestedSource. */
   gradeLevel: "XANH" | "VANG" | "DO" | null;
   finalValue: string | null;
   numericCropKey: string | null;
@@ -131,8 +115,6 @@ export interface RecognitionTicketDetail extends RecognitionTicket {
 
 export const RECOGNITION_STORE = Symbol("RECOGNITION_STORE");
 
-// Contract with the recognition service (POST /v1/recognize, ADR-0015). The service
-// never receives the class roster; the API matches rows to students itself.
 export type ChannelResult = {
   rawOutput: string | null;
   value: string | null;
@@ -154,7 +136,6 @@ export type NameResult = {
 };
 
 export type RecognitionRowResult = {
-  /** Position of the row on the photo, starting at 1. */
   rowIndex: number;
   struck: boolean;
   stt: SttResult;
@@ -166,21 +147,15 @@ export type RecognitionRowResult = {
   nameCropBase64: string;
   comparison: "KHOP" | "LECH" | "MOT_KENH" | "KHONG_DOC_DUOC";
   reviewLevel: "XANH" | "VANG" | "DO";
-  /** Kênh có giá trị được gợi ý theo luật hợp nhất hai kênh; null khi Đỏ. */
   suggestedSource: SuggestedSource | null;
 };
 
 export type RecognitionResult = {
   modelVersion: string;
-  /** First STT printed on this page, when the model could infer it. */
   pageStartStt: number | null;
   rows: RecognitionRowResult[];
 };
 
-/**
- * Mã lỗi ổn định khi dịch vụ nhận dạng từ chối ảnh (HTTP 422): ảnh không dùng được, phải chụp lại.
- * Khác lỗi hạ tầng (MODEL_UNAVAILABLE, RECOGNITION_TIMEOUT, ...) có thể thử lại.
- */
 export const PIPELINE_ERROR_CODES = [
   "IMAGE_UNREADABLE",
   "IMAGE_QUALITY_LOW",

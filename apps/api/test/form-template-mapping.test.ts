@@ -14,7 +14,6 @@ import type {
 import { TemplateException } from "../src/modules/form-templates/application/errors.js";
 import type { TemplateColumn } from "../src/modules/form-templates/public.js";
 
-// GET gradebooks/:id/form-templates/:templateId/mapping (ADR-0016 mục 4): gợi ý ánh xạ cột -> thành phần, dữ liệu giả.
 const teacher: Actor = {
   id: 7,
   username: "giaovien_gia",
@@ -36,7 +35,6 @@ const column = (
   ...extra,
 });
 
-// STT | Họ tên | TX1 số | TX1 chữ | TX2 số (một kênh) | GK1 số (môn không có thành phần GK)
 const columns: TemplateColumn[] = [
   column(0, "STT"),
   column(1, "HO_TEN"),
@@ -53,7 +51,6 @@ function context(overrides: Partial<MappingContext> = {}): MappingContext {
     templateStatus: "DANG_DUNG",
     columns,
     components: [
-      // Thứ tự khai báo ngược với thứ tự hiển thị: ánh xạ phải theo thu_tu_hien_thi, rồi mã thành phần.
       {
         id: 22,
         name: "Thường xuyên 2",
@@ -116,7 +113,6 @@ test("each grade column maps to the component at its (group, order) with lock, p
       pending: false,
     },
     {
-      // Môn không có thành phần GK: không ánh xạ được, giáo viên không chọn.
       templateColumnIndex: 5,
       key: "GK1",
       group: "GK",

@@ -1,12 +1,3 @@
-/**
- * Thêm một lớp minh họa nhập điểm vào năm học hiện hành của DATABASE TEST CỤC BỘ, từ danh sách học sinh trong tệp JSON
- * (mặc định `.local/pilot/class-10A10.json`, git ignore; dạng [{ stt, name }]). Không có họ tên nào nằm trong mã nguồn.
- *
- *   pnpm exec tsx scripts/recognition/pilot/add-class.ts [tên lớp] [đường dẫn json]
- *
- * Cần TEST_MIGRATION_URL (hoặc MIGRATION_DATABASE_URL) trỏ database tên kết thúc `_test`. Chạy lặp an toàn: lớp đã có thì dừng.
- * Lớp được giao cho giáo viên Toán của học kỳ 1 để mở bảng điểm và nhập điểm; học sinh giữ nguyên thứ tự STT trong tệp.
- */
 import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { Pool } from "pg";

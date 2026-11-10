@@ -2,7 +2,6 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { createRosterFixture } from "./roster-fixture.js";
 
-// Dữ liệu hoàn toàn giả cho lô nhận dạng nhiều trang (ADR-0016 mục 3): mẫu, thành phần TX2, hàm tạo lô và dựng dòng kết quả.
 export type BatchComponent = {
   templateColumnIndex: number;
   componentId: number;
@@ -29,7 +28,6 @@ type TemplateColumn = {
   headerText?: string | null;
 };
 
-/** STT | Họ tên | TX1 số | TX1 chữ | TX2 số (một kênh) | Ghi chú. */
 export const batchTemplateColumns = (): TemplateColumn[] => [
   { index: 0, role: "STT" },
   { index: 1, role: "HO_TEN" },
@@ -92,7 +90,6 @@ export async function makeSession(
   return { id, session };
 }
 
-/** Tạo mẫu qua hàm SQL của runtime bằng phiên QTV; `activate` đưa mẫu sang DANG_DUNG. */
 export async function createTemplate(
   owner: Pool,
   runtime: Pool,
@@ -140,7 +137,6 @@ const channel = (value: string | null) => ({
   isBlank: value === null,
 });
 
-/** Dòng hai kênh (cột có cột chữ đi kèm); `order` = (trang-1)*1000 + vị trí dòng trên trang. */
 export function twoChannelRow(
   ticket: string,
   page: number,
@@ -171,7 +167,6 @@ export function twoChannelRow(
   };
 }
 
-/** Dòng cột một kênh: kênh chữ trống, không ảnh ô chữ, tối đa Vàng (D-01). */
 export function oneChannelRow(
   ticket: string,
   page: number,
@@ -190,11 +185,9 @@ export function oneChannelRow(
   });
 }
 
-/** Lớp 4 học sinh (STT 1–4) trên hai trang: STT 1–2 ở trang 1, STT 3–4 ở trang 2. */
 export const PAGE_OF_STT = [1, 1, 2, 2] as const;
 const POSITION_OF_STT = [1, 2, 1, 2] as const;
 
-/** Giá trị KHÁC NHAU giữa hai cột của cùng học sinh để bắt nhầm cột (AC-4). */
 export const TX1_VALUES = ["6.0", "7.0", "8.0", "9.0"] as const;
 export const TX2_VALUES = ["1.0", "2.0", "3.0", "4.0"] as const;
 
@@ -239,7 +232,6 @@ export async function createBatchFixture() {
       f.book,
     ])
   ).rows[0].ma_mon;
-  // Thành phần TX thứ 2 của môn: (TX, 2) ánh xạ tới thành phần này; có ô điểm cho học sinh đang học để duyệt được.
   const component2: number = (
     await f.owner.query(
       "INSERT INTO thanh_phan_diem(ma_mon,ten_thanh_phan,he_so,thu_tu_hien_thi) VALUES($1,'Ảnh roster 2',1,2) RETURNING ma_thanh_phan",
@@ -366,7 +358,6 @@ export async function createBatchFixture() {
 
   const count = async (sql: string, params: unknown[] = []) =>
     Number((await f.owner.query(sql, params)).rows[0].count);
-  // Số bản ghi theo bảng điểm / giáo viên của fixture (các file test có thể chạy song song trên cùng DB).
   const totals = async () => ({
     batches: await count(
       "SELECT count(*) FROM lo_nhan_dien WHERE ma_bang_diem=$1",
@@ -442,7 +433,6 @@ export async function createBatchFixture() {
     ticketStatus,
     batchRow,
     close: async () => {
-      // Không để lại sự kiện outbox chưa gửi: dispatcher của test khác lấy theo lô sự kiện cũ nhất.
       await f.owner.query(
         "UPDATE recognition_outbox SET da_gui_luc=now() WHERE da_gui_luc IS NULL AND ma_lo IN (SELECT ma_lo FROM lo_nhan_dien WHERE ma_bang_diem=$1)",
         [f.book],

@@ -143,7 +143,6 @@ test("school deadlines enforce windows, atomically zero missing grades, preserve
       }),
       ConflictException,
     );
-    // An enrolled student without grid cells must also receive audited zeros.
     await owner.query(
       "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,'New','2010-01-01')",
       [cls],
@@ -163,7 +162,6 @@ test("school deadlines enforce windows, atomically zero missing grades, preserve
       }),
       ConflictException,
     );
-    // Force audit failure: no partial fill/lock survives.
     const name = "deadline_audit_" + suffix;
     await owner.query(
       `CREATE FUNCTION ${name}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.ma_diem IN (SELECT ma_diem FROM public.diem_thanh_phan WHERE ma_bang_diem=${book.id}) THEN RAISE EXCEPTION 'AUDIT_FAILURE' USING ERRCODE='23514'; END IF; RETURN NEW; END $$`,
@@ -218,8 +216,6 @@ test("school deadlines enforce windows, atomically zero missing grades, preserve
   }
 });
 
-// ── Lịch theo học kỳ, cột không bắt buộc và khởi tạo hàng loạt (migration 202610210001) ──
-
 async function fixture() {
   const migration = process.env.TEST_MIGRATION_URL,
     runtime = process.env.TEST_RUNTIME_URL;
@@ -231,8 +227,6 @@ async function fixture() {
   )
     throw Error("Isolated DB required");
   const owner = new Pool({ connectionString: migration });
-  // Các kịch bản này kiểm tra việc tạo bảng điểm thủ công/hàng loạt khi phân công chưa tạo sẵn bảng,
-  // nên tắt trigger tự tạo trong lúc chạy (trigger được kiểm riêng ở auto-gradebook.test.ts).
   await owner.query(
     "ALTER TABLE phan_cong_giang_day DISABLE TRIGGER tg_phan_cong_tao_bang_diem_them",
   );
@@ -468,12 +462,10 @@ test("a semester schedule alone gates entry and locks by coefficient type; a per
       }),
       ConflictException,
     );
-    // Lịch riêng cho cột GK ghi đè lịch học kỳ.
     await f.service.setDeadline(f.admin, book.id, gk, f.window(-1, 120));
     cells = (await f.service.cells(f.teacher, book.id)).items;
     assert.equal(cellOf(gk).deadlineSource, "RIENG");
     assert.equal(cellOf(gk).deadlineVersion, 1);
-    // Hết hạn lịch học kỳ của TX và GK: chỉ TX bị chốt (GK có lịch riêng còn hạn); CK không có lịch nên vẫn mở.
     await f.expire("TX");
     await f.expire("GK");
     await f.service.processDue();
@@ -487,7 +479,6 @@ test("a semester schedule alone gates entry and locks by coefficient type; a per
       (await f.service.cells(f.teacher, book.id)).book.status,
       "DANG_NHAP_LIEU",
     );
-    // Lịch riêng của GK hết hạn thì cột GK bị chốt; CK không có lịch nên không bao giờ bị chốt.
     await f.owner.query(
       "UPDATE lich_nhap_diem SET mo_luc=now()-interval '2 hours',dong_luc=now()-interval '1 hour' WHERE ma_bang_diem=$1",
       [book.id],
@@ -561,80 +552,6 @@ test("semester deadline setter: admin only, optimistic version, no editing after
   }
 });
 
-test("initialize creates missing gradebooks, is safe to repeat and reports skipped pairs", async () => {
-  const f = await fixture();
-  try {
-    const full = await f.klass("full", 2);
-    const empty = await f.klass("empty", 0);
-    const withComponents = await f.subject("with", [["TX", true]]);
-    const bare = await f.subject("bare", []);
-    await f.assign(full, withComponents.id);
-    await f.assign(empty, withComponents.id);
-    await f.assign(full, bare.id);
-    await assert.rejects(
-      f.service.initializeSemesterGradebooks(f.teacher, f.term, "k-teacher"),
-      ForbiddenException,
-    );
-    const first = await f.service.initializeSemesterGradebooks(
-      f.admin,
-      f.term,
-      "k-1",
-    );
-    assert.equal(first.created.length, 1);
-    assert.equal(first.created[0]!.classId, full);
-    assert.equal(first.created[0]!.subjectId, withComponents.id);
-    assert.deepEqual(
-      first.skipped
-        .map((s) => `${s.classId}:${s.subjectId}:${s.reason}`)
-        .sort(),
-      [
-        `${empty}:${withComponents.id}:EMPTY_ROSTER`,
-        `${full}:${bare.id}:NO_COMPONENTS`,
-      ].sort(),
-    );
-    const count = async () =>
-      Number(
-        (
-          await f.owner.query(
-            "SELECT count(*) FROM bang_diem WHERE ma_hoc_ky=$1",
-            [f.term],
-          )
-        ).rows[0].count,
-      );
-    assert.equal(await count(), 1);
-    // Cùng khóa idempotency: cùng kết quả. Khóa mới: không tạo trùng, chỉ báo lại các cặp bị bỏ qua.
-    assert.deepEqual(
-      await f.service.initializeSemesterGradebooks(f.admin, f.term, "k-1"),
-      first,
-    );
-    const again = await f.service.initializeSemesterGradebooks(
-      f.admin,
-      f.term,
-      "k-2",
-    );
-    assert.equal(again.created.length, 0);
-    assert.equal(again.skipped.length, 2);
-    assert.equal(await count(), 1);
-    // Lớp có học sinh sau đó thì lần chạy sau tạo thêm bảng còn thiếu.
-    await f.owner.query(
-      "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,'Học sinh giả mới','2010-01-01')",
-      [empty],
-    );
-    const third = await f.service.initializeSemesterGradebooks(
-      f.admin,
-      f.term,
-      "k-3",
-    );
-    assert.equal(third.created.length, 1);
-    assert.equal(third.created[0]!.classId, empty);
-    assert.equal(await count(), 2);
-  } finally {
-    await f.done();
-  }
-});
-
-// ── Ô "Miễn", học sinh vào lớp sau chốt và điều kiện công bố học kỳ (migration 202610210002–4) ──
-
 type Fixture = Awaited<ReturnType<typeof fixture>>;
 const codeIs = (code: string) => (e: { code?: string }) => e.code === code;
 const uniqueKey = (tag: string) => `${tag}-${randomBytes(4).toString("hex")}`;
@@ -655,7 +572,6 @@ async function bookView(f: Fixture, bookId: number) {
   };
 }
 
-/** Điền điểm 7.0 cho mọi ô, đặt lịch riêng đã hết hạn cho mọi cột, chốt và tính tổng kết. */
 async function finishBook(f: Fixture, bookId: number, componentIds: number[]) {
   await f.owner.query(
     "UPDATE diem_thanh_phan SET gia_tri=7.0,trang_thai='DA_DUYET' WHERE ma_bang_diem=$1 AND trang_thai='CHUA_CO'",
@@ -729,7 +645,6 @@ test("teacher exempts and un-exempts empty cells; expiry never zero-fills an exe
     assert.equal(done.version, view.version + 1);
     assert.equal((await bookView(f, book.id)).version, done.version);
 
-    // Ô đã có điểm không miễn được; ô MIEN không nhận điểm.
     view = await bookView(f, book.id);
     await f.service.batchUpdate(f.teacher, book.id, uniqueKey("grade"), {
       expectedVersion: view.version,
@@ -748,7 +663,6 @@ test("teacher exempts and un-exempts empty cells; expiry never zero-fills an exe
       }),
       codeIs("CELL_EXEMPT"),
     );
-    // Bỏ miễn → chưa có điểm; bỏ miễn ô không miễn → CELL_NOT_EXEMPT.
     const undone = await send(f.teacher, [
       change(view.cell(s1, tx).id, false, "Nhầm"),
     ]);
@@ -758,7 +672,6 @@ test("teacher exempts and un-exempts empty cells; expiry never zero-fills an exe
       send(f.teacher, [change(view.cell(s1, tx).id, false, "Nhầm")]),
       codeIs("CELL_NOT_EXEMPT"),
     );
-    // Miễn lại hai ô của học sinh 1; gửi lặp cùng khóa không đổi gì thêm.
     view = await bookView(f, book.id);
     const key = uniqueKey("again");
     const payload = {
@@ -781,7 +694,6 @@ test("teacher exempts and un-exempts empty cells; expiry never zero-fills an exe
       ["MIEN", "BO_MIEN", "MIEN", "MIEN"],
     );
 
-    // Hết hạn cột GK: ô MIEN giữ NULL, ô trống khác bị ghi 0; cột đã chốt thì không đặt miễn được nữa.
     await f.expire("GK");
     await f.service.processDue();
     view = await bookView(f, book.id);
@@ -863,7 +775,6 @@ test("final results leave exempt cells out of numerator, denominator and missing
       result.exempted.map((s) => s.studentId),
       [b],
     );
-    // Học sinh xem điểm của mình: ô MIEN vẫn được trả về, giá trị null.
     const student = await f.actor("HOC_SINH", "s");
     await f.owner.query(
       "UPDATE hoc_sinh SET ma_nguoi_dung=$1 WHERE ma_hoc_sinh=$2",
@@ -1045,7 +956,6 @@ test("publication needs every assignment to have a locked gradebook with results
         i.severity,
         i.classId,
       ]);
-    // Phân công của lớp B chưa có bảng điểm: trước đây vẫn công bố được.
     assert.deepEqual(await codes(), [["GRADEBOOK_MISSING", "BLOCKING", clsB]]);
     const missing = await f.http(
       "PUT",
@@ -1055,7 +965,6 @@ test("publication needs every assignment to have a locked gradebook with results
     assert.equal(missing.status, 409);
     assert.equal(missing.body.code, "TERM_RESULTS_INCOMPLETE");
     assert.equal(missing.body.details.issues[0].code, "GRADEBOOK_MISSING");
-    // Có bảng nhưng chưa chốt.
     const bookB = await f.service.create(f.teacher, {
       classId: clsB,
       subjectId: subjectB.id,
@@ -1075,7 +984,6 @@ test("publication needs every assignment to have a locked gradebook with results
       (await f.http("PUT", `/catalog/semesters/${f.term}`, publishBody)).status,
       409,
     );
-    // Đủ điều kiện.
     await finishBook(f, bookB.id, subjectB.ids);
     assert.deepEqual(await f.service.publishReadiness(f.admin, f.term), {
       ready: true,
@@ -1178,7 +1086,6 @@ test("final-results list returns the current exempted and skipped groups on ever
       ],
       counts: [1, 2],
     });
-    // Miễn thêm một học sinh (cột còn mở), chỉ GET lại: nhóm miễn cập nhật mà không tính lại.
     await exempt([d]);
     assert.deepEqual(await groups(), {
       exempted: [b, d],
@@ -1187,7 +1094,6 @@ test("final-results list returns the current exempted and skipped groups on ever
     });
     assert.deepEqual(await groups(f.admin), await groups());
 
-    // Hết hạn (ô GK của c bị ghi 0), thêm học sinh vào lớp sau chốt: học sinh đó không có ô nên bị liệt kê thiếu.
     await f.expire("TX");
     await f.expire("GK");
     await f.service.processDue();
@@ -1220,7 +1126,6 @@ test("final-results list returns the current exempted and skipped groups on ever
     );
     assert.equal(result.skippedStudents, after.counts[1]);
 
-    // Giáo viên không được phân công không xem được.
     const other = await f.actor("GIAO_VIEN", "x");
     await f.owner.query(
       "INSERT INTO giao_vien(ma_giao_vien,ho_ten) VALUES($1,'Giáo viên khác')",

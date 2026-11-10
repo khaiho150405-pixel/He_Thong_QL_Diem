@@ -18,16 +18,10 @@ class FakeSessionController extends StateNotifier<SessionDto?>
 }
 
 class FakeSemesterDeadlinesRepository implements SemesterDeadlinesRepository {
-  FakeSemesterDeadlinesRepository({
-    this.semesters = const [],
-    this.deadlines,
-    this.initResult,
-  });
+  FakeSemesterDeadlinesRepository({this.semesters = const [], this.deadlines});
 
   final List<SemestersDto> semesters;
   final SemesterDeadlinesDto? deadlines;
-  final InitializeGradebooksResultDto? initResult;
-  bool initializeCalled = false;
 
   @override
   Future<List<SemestersDto>> listSemesters({num? yearId}) async {
@@ -65,49 +59,6 @@ class FakeSemesterDeadlinesRepository implements SemesterDeadlinesRepository {
   @override
   Future<PublishReadinessDto> publishReadiness(num semesterId) async {
     return PublishReadinessDto(ready: true, issues: []);
-  }
-
-  @override
-  Future<InitializeGradebooksResultDto> initializeGradebooks({
-    required num semesterId,
-    required String idempotencyKey,
-  }) async {
-    initializeCalled = true;
-    return initResult ??
-        InitializeGradebooksResultDto(
-          created: [
-            InitializedGradebookDto(
-              gradebookId: 1,
-              classId: 101,
-              className: '10A1',
-              subjectId: 201,
-              subjectName: 'Toán',
-            ),
-            InitializedGradebookDto(
-              gradebookId: 2,
-              classId: 102,
-              className: '10A2',
-              subjectId: 202,
-              subjectName: 'Văn',
-            ),
-          ],
-          skipped: [
-            SkippedGradebookDto(
-              classId: 103,
-              className: '10A3',
-              subjectId: 201,
-              subjectName: 'Toán',
-              reason: SkippedGradebookDtoReasonEnum.EMPTY_ROSTER,
-            ),
-            SkippedGradebookDto(
-              classId: 104,
-              className: '10A4',
-              subjectId: 203,
-              subjectName: 'Tin học',
-              reason: SkippedGradebookDtoReasonEnum.NO_COMPONENTS,
-            ),
-          ],
-        );
   }
 }
 
@@ -189,7 +140,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Kiểm tra câu chú thích hết hạn
       expect(
         find.text(
           'Hết hạn: cột bắt buộc còn trống sẽ ghi 0; cột không bắt buộc để trống, không tính vào điểm trung bình.',
@@ -197,7 +147,6 @@ void main() {
         findsOneWidget,
       );
 
-      // Kiểm tra nhãn Bắt buộc và Không bắt buộc
       expect(find.text('Bắt buộc'), findsOneWidget);
       expect(find.text('Không bắt buộc'), findsOneWidget);
     });
@@ -245,7 +194,6 @@ void main() {
         expect(find.text('Lịch riêng'), findsOneWidget);
         expect(find.text('Chưa có lịch'), findsOneWidget);
 
-        // Nút QTV đổi chữ thành "Đặt lịch riêng cho bảng này"
         expect(find.text('Đặt lịch riêng cho bảng này'), findsNWidgets(3));
       },
     );
@@ -318,23 +266,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 3 thẻ TX/GK/CK
       expect(find.text('Điểm thường xuyên (TX)'), findsOneWidget);
       expect(find.text('Điểm giữa kỳ (GK)'), findsOneWidget);
       expect(find.text('Điểm cuối kỳ (CK)'), findsOneWidget);
 
-      // Thẻ expired (GK) bị khóa, chỉ đọc
       expect(find.text('Đã hết hạn'), findsWidgets);
       expect(find.text('Lịch đã qua hạn, không sửa được'), findsOneWidget);
 
-      // Thẻ chưa hết hạn có nút sửa/đặt lịch
-      expect(find.text('Sửa lịch'), findsOneWidget); // Thẻ TX
-      expect(find.text('Đặt lịch'), findsOneWidget); // Thẻ CK
+      expect(find.text('Sửa lịch'), findsOneWidget);
+      expect(find.text('Đặt lịch'), findsOneWidget);
     });
 
-    testWidgets('hộp thoại kết quả khởi tạo bảng điểm còn thiếu', (
-      tester,
-    ) async {
+    testWidgets('không còn nút tạo bảng điểm thủ công', (tester) async {
       final repo = FakeSemesterDeadlinesRepository(
         semesters: mockSemesters,
         deadlines: mockDeadlines,
@@ -362,38 +305,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Bấm nút khởi tạo
-      final initButton = find.text('Khởi tạo bảng điểm còn thiếu');
-      expect(initButton, findsOneWidget);
-      await tester.tap(initButton);
-      await tester.pumpAndSettle();
-
-      // Hộp thoại xác nhận
-      expect(
-        find.text(
-          'Sau khi có bảng điểm, cấu trúc thành phần điểm của môn sẽ không sửa được.',
-        ),
-        findsOneWidget,
-      );
-
-      // Bấm Khởi tạo
-      await tester.tap(find.text('Khởi tạo'));
-      await tester.pumpAndSettle();
-
-      // Hộp thoại kết quả
-      expect(find.text('Kết quả khởi tạo'), findsOneWidget);
-      expect(find.text('Số bảng đã tạo: 2'), findsOneWidget);
-      expect(find.text('Danh sách bỏ qua (2):'), findsOneWidget);
-      expect(find.text('10A3 – Toán: Lớp chưa có học sinh'), findsOneWidget);
-      expect(
-        find.text('10A4 – Tin học: Môn chưa có thành phần điểm'),
-        findsOneWidget,
-      );
-
-      // Đóng hộp thoại
-      await tester.tap(find.text('Đóng'));
-      await tester.pumpAndSettle();
-      expect(find.text('Kết quả khởi tạo'), findsNothing);
+      expect(find.text('Khởi tạo bảng điểm còn thiếu'), findsNothing);
+      expect(find.text('Sửa lịch'), findsWidgets);
     });
   });
 
@@ -409,7 +322,6 @@ void main() {
         .substring(0, 10);
 
     final multiYearSemesters = [
-      // Năm 2024
       SemestersDto(
         maHocKy: 10,
         ten: 'Học kỳ 1',
@@ -428,7 +340,6 @@ void main() {
         ngayKetThuc: '2025-05-30',
         label: 'HK2 (2024-2025)',
       ),
-      // Năm 2026 (chứa ngày hiện tại ở HK1)
       SemestersDto(
         maHocKy: 20,
         ten: 'Học kỳ 1',
@@ -499,7 +410,6 @@ void main() {
         semesters: multiYearSemesters,
       );
 
-      // Năm 2026 có HK1 chứa ngày hiện tại -> mặc định chọn HK1 năm 2026
       final container = ProviderContainer(
         overrides: [
           semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
@@ -531,7 +441,6 @@ void main() {
           semesters: multiYearSemesters,
         );
 
-        // Năm 2024 không có học kỳ nào chứa ngày hiện tại -> chọn học kỳ đầu tiên (HK1 2024-2025)
         final container = ProviderContainer(
           overrides: [
             semesterDeadlinesRepositoryProvider.overrideWithValue(repo),
@@ -587,7 +496,6 @@ void main() {
 
         expect(find.text('Học kỳ 1 · 2024-2025'), findsWidgets);
 
-        // Đổi sang năm 2026
         container
             .read(viewingYearProvider.notifier)
             .selectYear(
@@ -598,7 +506,6 @@ void main() {
         expect(find.text('Học kỳ 1 · 2026-2027'), findsWidgets);
         expect(find.text('Học kỳ 1 · 2024-2025'), findsNothing);
 
-        // Đổi sang năm 2028 không có học kỳ nào
         container
             .read(viewingYearProvider.notifier)
             .selectYear(const ViewingYear(id: 2028, name: '2028-2029'));
@@ -647,16 +554,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Kiểm tra hộp thoại khởi tạo bảng điểm
-        final initBtn = find.text('Khởi tạo bảng điểm còn thiếu');
-        await tester.tap(initBtn);
-        await tester.pumpAndSettle();
-
-        expect(find.text('Học kỳ 1 · Năm học 2024-2025'), findsOneWidget);
-        await tester.tap(find.text('Hủy'));
-        await tester.pumpAndSettle();
-
-        // Kiểm tra hộp thoại đặt/sửa lịch
         final editBtn = find.text('Sửa lịch');
         await tester.tap(editBtn);
         await tester.pumpAndSettle();
@@ -695,7 +592,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Màn không còn nút tải lại riêng (dữ liệu tự tải khi mở màn).
         expect(
           find.byKey(const ValueKey('semester-deadlines-refresh-btn')),
           findsNothing,

@@ -68,7 +68,7 @@ def _signature(raw: Any) -> dict[str, Any]:
         if isinstance(width, bool) or not isinstance(width, (int, float)):
             raise InvalidLayoutError("signature.columnWidths chỉ gồm số dương.")
         try:
-            value = float(width)  # số nguyên quá lớn không đổi được sang float → OverflowError
+            value = float(width)
         except OverflowError as error:
             raise InvalidLayoutError("signature.columnWidths chỉ gồm số dương.") from error
         if not math.isfinite(value) or value <= 0:

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../../app/design_tokens.dart';
 import 'review_row_content.dart';
 
-/// Thẻ hiển thị một dòng cần đối chiếu (Đỏ / Vàng) trên Web hoặc Mobile.
 class ReviewRowCard extends StatelessWidget {
   const ReviewRowCard({
     super.key,
@@ -51,8 +50,6 @@ class ReviewRowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Thẻ `.rv`: viền, bo góc và thanh tiêu đề đổi màu theo mức nằm trong
-    // [ReviewRowContent]; ở đây chỉ chọn bố cục theo bề rộng và chừa khoảng cách.
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: LayoutBuilder(

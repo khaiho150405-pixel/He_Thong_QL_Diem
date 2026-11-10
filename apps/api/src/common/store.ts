@@ -34,7 +34,6 @@ export interface Unit {
   count(table: Table, where: Row): Promise<number>;
   create(table: Table, data: Row): Promise<Row>;
   update(table: Table, where: Row, data: Row): Promise<Row>;
-  /** Cập nhật mọi dòng khớp điều kiện; trả số dòng đã đổi (0 là hợp lệ, không ném lỗi). */
   updateMany(table: Table, where: Row, data: Row): Promise<number>;
   remove(table: Table, where: Row): Promise<void>;
 }

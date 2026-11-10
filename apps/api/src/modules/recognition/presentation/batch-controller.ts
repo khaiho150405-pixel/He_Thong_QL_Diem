@@ -45,7 +45,6 @@ const ticketStatuses = [
   "DA_HUY",
 ] as const;
 
-/** Envelope lỗi ổn định (`code`, `message`, `details`, `requestId`) với mã lỗi riêng của lô nhận dạng. */
 @Catch(BatchException)
 export class BatchErrorFilter implements ExceptionFilter {
   catch(error: BatchException, host: ArgumentsHost): void {
@@ -150,10 +149,6 @@ export class CancelBatchInput {
 
 type Authed = Request & { actor: Actor };
 
-/**
- * Lô nhận dạng nhiều trang, nhiều thành phần theo mẫu (ADR-0016). Mọi nghiệp vụ nằm ở RecognitionBatchService và hàm SQL;
- * controller chỉ chuyển tham số. Duyệt từng phiếu của lô dùng endpoint phiếu hiện có.
- */
 @ApiTags("recognition-batches")
 @UseFilters(BatchErrorFilter)
 @Controller("gradebooks/:gradebookId/recognition-batches")
@@ -191,7 +186,6 @@ export class RecognitionBatchController {
   })
   @ApiResponse({ status: 202, type: RecognitionBatchReceiptDto })
   @ApiResponse({ status: 413, description: "Image exceeds upload limit" })
-  // Nhận tối đa MAX_BATCH_PAGES + 1 tệp để trang thứ 5 được báo TOO_MANY_PAGES (mã ổn định) thay vì lỗi multipart chung.
   @UseInterceptors(
     FilesInterceptor("images", MAX_BATCH_PAGES + 1, {
       storage: memoryStorage(),

@@ -78,7 +78,6 @@ class ShortTableTest(unittest.TestCase):
 
     def test_lines_outside_the_vertical_rules_are_not_rows(self) -> None:
         page = short_sheet(3)
-        # A ruled signature line well below the table must not extend it.
         cv2.line(page, (200, 900), (1200, 900), (35, 35, 35), 3)
         cv2.line(page, (200, 940), (1200, 940), (35, 35, 35), 3)
         luoi = gd.trich_luoi(scan(page))

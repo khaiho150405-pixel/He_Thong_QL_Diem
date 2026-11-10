@@ -1,11 +1,4 @@
-﻿# Quản lý stack thử nhận dạng cục bộ (BE-20): dịch vụ nhận dạng (weights), API, dispatcher, worker, web.
-# Dùng:  powershell -File scripts/recognition/pilot/stack.ps1 <start|stop|status|restart> [service|all]
-# service: recognition | api | dispatcher | worker | web
-#
-# - Đọc .env ở root (không in giá trị); API/worker dùng DATABASE test `qld_phase7_test` (KHÔNG dùng quan_ly_diem_dev).
-# - Mô hình thật: .local/venv-ml (Python 3.12) với trọng số trong D:\HocTap\KhoaLuan\App\weights, kiểm SHA-256.
-# - PID: .local/pilot/pids/<service>.pid ; log: .local/pilot/logs/<service>.{out,err}.log (không chứa họ tên).
-param(
+﻿param(
   [Parameter(Mandatory = $true)][ValidateSet('start', 'stop', 'status', 'restart')][string]$Action,
   [string]$Service = 'all'
 )
@@ -16,7 +9,6 @@ $pidDir = Join-Path $root '.local\pilot\pids'
 $logDir = Join-Path $root '.local\pilot\logs'
 New-Item -ItemType Directory -Force $pidDir, $logDir | Out-Null
 
-# Có thể đổi bằng biến môi trường PILOT_WEIGHTS_DIR / PILOT_DATABASE (máy khác đặt trọng số ở thư mục khác).
 $weights = if ($env:PILOT_WEIGHTS_DIR) { $env:PILOT_WEIGHTS_DIR } else { 'D:\HocTap\KhoaLuan\App\weights' }
 $crnnSha = 'a685425e61662ccfda06ca35db54d539ae8599accd4c48bbd4b394958c0e3e62'
 $vietocrSha = '32999513a94f822f4ba4c302749a8d97be0e065631cedceacc0134327f9a73c9'
@@ -38,7 +30,6 @@ function Set-PilotEnvironment {
   Import-DotEnv
   $m = $env:MIGRATION_PASSWORD; $r = $env:RUNTIME_PASSWORD
   $env:APP_ENV = 'development'
-  # PILOT_DEPLOY=1 (up.ps1 -Deploy): chạy trên database thật trong .env, không phải database thử.
   if ($env:PILOT_DEPLOY -ne '1') {
     $env:DATABASE_URL = "postgresql://app_runtime:$r@127.0.0.1:5433/$testDatabase"
     $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$m@127.0.0.1:5433/$testDatabase"

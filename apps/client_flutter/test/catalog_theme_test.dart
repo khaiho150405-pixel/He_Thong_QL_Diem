@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Server giả cho màn danh mục quản trị: đăng nhập QTV và vài tài nguyên.
 class _CatalogServer implements HttpClientAdapter {
   @override
   void close({bool force = false}) {}
@@ -212,11 +211,9 @@ void main() {
         expect(inContent('Trần Thị Bình'), findsOneWidget);
         expect(inContent('Đang theo học'), findsOneWidget);
         expect(inContent('Ngừng theo dõi'), findsOneWidget);
-        // Chân danh sách dùng chung: cỡ trang 10/30/50 và thanh phân trang.
         expect(find.byKey(const ValueKey('app-page-size')), findsOneWidget);
         expect(find.byKey(const ValueKey('app-pager-prev')), findsOneWidget);
         expect(find.byKey(const ValueKey('app-pager-next')), findsOneWidget);
-        // Thanh lọc và sắp xếp hiện có vẫn còn.
         expect(find.text('Sắp xếp:'), findsOneWidget);
         if (wide) {
           expect(table, findsOneWidget);
@@ -262,13 +259,10 @@ void main() {
           expect(inContent('Tổ Toán'), findsOneWidget);
           expect(find.text('cuc.le@truong.test'), findsOneWidget);
           expect(find.text('0901234567'), findsOneWidget);
-          // Thiếu dữ liệu thì hiện dấu gạch, không bịa.
           expect(find.text('—'), findsNWidgets(3));
-          // Nút xóa giữ nguyên cho giáo viên.
           expect(find.byTooltip('Xóa'), findsNWidgets(2));
         } else {
           expect(table, findsNothing);
-          // Không hiện mã nội bộ.
           expect(find.text('Mã: 10'), findsNothing);
         }
         expect(tester.takeException(), isNull);
@@ -284,7 +278,6 @@ void main() {
         );
         expect(tester.takeException(), isNull);
         final table = find.byKey(const ValueKey('catalog-table-accounts'));
-        // Vùng nội dung (bỏ thanh bên, cũng hiện tên đăng nhập và vai trò).
         final content = wide ? table : find.byType(ListView);
         Finder inContent(String text) =>
             find.descendant(of: content, matching: find.text(text));
@@ -298,7 +291,6 @@ void main() {
           expect(table, findsOneWidget);
           expect(find.text('VAI TRÒ'), findsOneWidget);
           expect(find.text('TRẠNG THÁI'), findsOneWidget);
-          // Backend không có "đăng nhập gần nhất" nên không có cột đó.
           expect(find.textContaining('ĐĂNG NHẬP'), findsNothing);
           expect(find.text('GIỚI TÍNH'), findsNothing);
         } else {
@@ -317,7 +309,6 @@ void main() {
         );
         expect(tester.takeException(), isNull);
         expect(find.text('2026-2027'), findsOneWidget);
-        // Không hiện mã nội bộ.
         expect(find.text('Mã: 1'), findsNothing);
         expect(find.byType(Card), findsWidgets);
         expect(find.byKey(const ValueKey('catalog-table-years')), findsNothing);

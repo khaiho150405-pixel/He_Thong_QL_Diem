@@ -1,6 +1,3 @@
-/// Tìm kiếm cục bộ trong danh sách: không phân biệt hoa thường và dấu tiếng
-/// Việt, và mỗi từ của ô tìm kiếm có thể khớp ở bất kỳ trường nào (ví dụ
-/// "11a1 toan" khớp bảng điểm "11A1 · Toán học").
 library;
 
 const _accented =
@@ -29,7 +26,6 @@ final Map<int, String> _foldMap = () {
   };
 }();
 
-/// Chữ thường, bỏ dấu tiếng Việt ("Toán học" → "toan hoc").
 String foldVietnamese(String text) {
   final buffer = StringBuffer();
   for (final rune in text.toLowerCase().runes) {
@@ -38,8 +34,6 @@ String foldVietnamese(String text) {
   return buffer.toString();
 }
 
-/// Đúng khi mọi từ trong [query] xuất hiện (không dấu) ở ít nhất một trong
-/// [fields]. [query] rỗng thì khớp tất cả.
 bool matchesSearch(String query, Iterable<String?> fields) {
   final tokens = foldVietnamese(
     query,

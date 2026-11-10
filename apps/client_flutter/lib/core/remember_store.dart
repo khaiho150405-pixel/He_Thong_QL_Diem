@@ -1,9 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Nơi giữ mã ghi nhớ đăng nhập trên app di động (Keychain iOS / Keystore Android).
-/// Web dùng cookie HttpOnly do backend quản lý nên không lưu gì ở đây.
-/// Mọi lỗi lưu trữ được nuốt: thiếu kho an toàn chỉ có nghĩa là phải đăng nhập lại.
 abstract class RememberStore {
   Future<String?> read();
   Future<void> write(String token);

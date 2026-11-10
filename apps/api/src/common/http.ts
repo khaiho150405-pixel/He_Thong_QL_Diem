@@ -53,7 +53,6 @@ export function requestContext(
   res.setHeader("x-request-id", requestId);
   const started = performance.now();
   res.on("finish", () => {
-    // Deliberate allowlist: no URL query, body, cookies, auth headers or exception text.
     process.stdout.write(
       JSON.stringify({
         event: "http_request",
@@ -72,7 +71,6 @@ export class ErrorFilter implements ExceptionFilter {
     const response = host.switchToHttp().getResponse<Response>();
     const status = error instanceof HttpException ? error.getStatus() : 500;
     if (status >= 500) {
-      // Ghi lý do lỗi 500 để vận hành tìm được nguyên nhân; không ghi body request (có thể chứa dữ liệu điểm).
       const err = error instanceof Error ? error : new Error(String(error));
       process.stderr.write(
         JSON.stringify({
@@ -110,7 +108,6 @@ export class ErrorFilter implements ExceptionFilter {
       ].includes(message)
         ? message
         : null;
-    // Lỗi nghiệp vụ có mã ổn định riêng (CodedException, DeadlineException, ...) giữ nguyên code/details của chúng.
     const coded =
       error instanceof HttpException &&
       typeof (error as { code?: unknown }).code === "string"

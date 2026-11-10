@@ -202,7 +202,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
         ).json()) as Array<{ ticketId: string; status: string }>
       ).map((item) => `${item.ticketId}:${item.status}`);
 
-    // --- Tải ảnh lên, rồi hủy khi phiếu còn DANG_XU_LY ---
     const bytes = png(randomBytes(8));
     const uploaded = await upload(bytes, "up-1");
     assert.equal(uploaded.status, 202);
@@ -210,7 +209,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
     const ticketId = receipt.ticketId;
     assert.equal(objects.size, 1);
 
-    // Bị từ chối trước khi đụng tới dữ liệu: thiếu khóa idempotency, thân sai, lý do sai, giáo viên không được phân công.
     assert.equal(
       (
         await cancel(
@@ -276,11 +274,9 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
         .status,
       404,
     );
-    // Phiếu vẫn nguyên và chưa mất ảnh.
     assert.deepEqual(await listIds(), [`${ticketId}:DANG_XU_LY`]);
     assert.equal(objects.size, 1);
 
-    // Sai version → 409 với thông báo tiếng Việt, phiếu không đổi.
     const stale = await cancel(ticketId, { expectedVersion: 5, reason: "x" });
     assert.equal(stale.status, 409);
     assert.match(
@@ -301,7 +297,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
     assert.equal(detail.cancelReason, "Chụp nhầm bảng");
     assert.equal(typeof detail.cancelledAt, "string");
     assert.equal(Number.isNaN(Date.parse(String(detail.cancelledAt))), false);
-    // Ảnh gốc đã bị xóa khỏi kho; chi tiết vẫn trả được nhưng không còn URL ảnh.
     assert.equal(detail.sourceImageUrl, "");
     assert.equal(objects.size, 0);
     const row = (
@@ -317,7 +312,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
       has_time: true,
     });
 
-    // Cùng khóa → cùng kết quả; khóa khác → vẫn là phiếu đã hủy, không đổi lý do/version.
     const replay = await cancel(ticketId, {
       expectedVersion: 0,
       reason: "Chụp nhầm bảng",
@@ -336,14 +330,12 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
     };
     assert.equal(againBody.version, 1);
     assert.equal(againBody.cancelReason, "Chụp nhầm bảng");
-    // Cùng khóa nhưng nội dung khác bị từ chối.
     assert.equal(
       (await cancel(ticketId, { expectedVersion: 0, reason: "Nội dung khác" }))
         .status,
       409,
     );
 
-    // Danh sách: mặc định ẩn DA_HUY; includeCancelled=true hiện; giá trị lạ → 400. Chi tiết vẫn đọc được.
     assert.deepEqual(await listIds(), []);
     assert.deepEqual(await listIds("?includeCancelled=false"), []);
     assert.deepEqual(await listIds("?includeCancelled=true"), [
@@ -361,7 +353,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
     assert.equal(readBody.cancelReason, "Chụp nhầm bảng");
     assert.equal(readBody.sourceImageUrl, "");
 
-    // Dispatcher không gửi sự kiện của phiếu đã hủy.
     const database = app.get<PrismaClient>("DATABASE");
     const queued: string[] = [];
     const dispatcher = new RecognitionDispatcher(
@@ -374,7 +365,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
     await dispatcher.dispatchOnce();
     assert.equal(queued.includes(ticketId), false);
 
-    // Worker nhận job của phiếu đã hủy: kết thúc thành công, không gọi mô hình, không ghi kết quả.
     let modelCalls = 0;
     const worker = (
       rows = [modelRow(1, "Lê Thị An"), modelRow(2, "Trần Văn Bình")],
@@ -424,14 +414,12 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
     );
     assert.equal(objects.size, 0);
 
-    // Hủy xong tải lại đúng ảnh đó được (không còn DUPLICATE_FILE) và không bị coi là có phiếu chờ.
     const second = await upload(bytes, "up-2");
     assert.equal(second.status, 202);
     const secondTicket = ((await second.json()) as { ticketId: string })
       .ticketId;
     assert.notEqual(secondTicket, ticketId);
     assert.equal(objects.size, 1);
-    // Khi đang có phiếu chưa hủy cùng ảnh / cùng thành phần: thông báo tiếng Việt rõ ràng.
     const duplicate = await upload(bytes, "up-3");
     assert.equal(duplicate.status, 409);
     assert.match(
@@ -446,7 +434,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
     );
     assert.equal(objects.size, 1);
 
-    // Hủy giữa lúc worker đang nhận dạng: kết quả bị bỏ qua, ảnh ô vừa tải lên được dọn, không có dòng nào được ghi.
     let cancelDuringModel: Response | undefined;
     const racing = new RecognitionJobProcessor(
       new PrismaRecognitionWorkerStore(database),
@@ -499,7 +486,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
       `${ticketId}:DA_HUY`,
     ]);
 
-    // Phiếu đã duyệt không hủy được (409, thông báo tiếng Việt) và không bị đổi.
     const third = await upload(png(randomBytes(8)), "up-5");
     assert.equal(third.status, 202);
     const thirdTicket = ((await third.json()) as { ticketId: string }).ticketId;
@@ -526,7 +512,6 @@ test("cancelling a ticket is a soft, idempotent, authorised operation that stops
       ).rows[0].status,
       "DA_DUYET",
     );
-    // Dọn: không để sự kiện outbox chưa gửi cho test khác.
     await owner.query(
       "UPDATE recognition_outbox SET da_gui_luc=now() WHERE da_gui_luc IS NULL AND ma_phieu IN (SELECT ma_phieu FROM phieu_nhan_dien WHERE ma_bang_diem=$1)",
       [book.id],

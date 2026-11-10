@@ -56,7 +56,6 @@ export class PrismaFinalResultStore implements FinalResultStore {
             return rows[0] ? mapBook(rows[0]) : null;
           },
           groups: async (gradebookId) => {
-            // Cùng quy tắc với tinh_ket_qua_bang_diem: học sinh miễn mọi ô → exempted; còn lại thiếu cột bắt buộc → skipped.
             const rows = await tx.$queryRaw<
               Array<{
                 ma_hoc_sinh: number;

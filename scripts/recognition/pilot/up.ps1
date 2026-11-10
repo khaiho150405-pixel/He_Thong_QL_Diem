@@ -1,12 +1,4 @@
-﻿# Bật toàn bộ môi trường thử nhận dạng bằng một lệnh (Docker, 5 dịch vụ, kiểm tra sức khỏe, điện thoại USB).
-# Dùng:  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/recognition/pilot/up.ps1 [-Usb] [-InstallApp] [-Serial <id>] [-NoBrowser]
-#   -Usb         chuyển cổng 8080/3000/9000 sang điện thoại cắm USB (adb reverse)
-#   -InstallApp  build và cài app Android (bản debug, API = localhost qua USB); cần -Usb
-#   -Serial      mã thiết bị khi cắm nhiều điện thoại
-#   -NoBrowser   không mở trình duyệt máy tính
-#   -Deploy      chế độ deploy Cloudflare: dùng database thật trong .env, build web production, bật tunnel cloudflared, mở https://eduscore.id.vn
-# Không sửa .env, không mở cổng ra mạng LAN. Chỉ tắt tiến trình node/python lạ đang chiếm cổng 3000/8080/8000.
-param(
+﻿param(
   [switch]$Usb,
   [switch]$InstallApp,
   [string]$Serial = '',
@@ -56,7 +48,6 @@ try {
   if (-not (Test-Path (Join-Path $root '.env'))) { throw 'Chưa có file .env ở thư mục gốc. Chạy "pnpm setup:local" trước.' }
   if ($InstallApp -and -not $Usb) { $Usb = $true }
 
-  # ---------------------------------------------------------------- 1. Docker
   Step 'Docker (PostgreSQL, Redis, MinIO)'
   $docker = (Get-Command docker -ErrorAction SilentlyContinue).Source
   if (-not $docker) {
@@ -72,7 +63,6 @@ try {
     return $ok
   }
   if (-not (Test-Docker)) {
-    # Docker Desktop cài cho cả máy (Program Files) hoặc riêng người dùng (LocalAppData\Programs).
     $desktop = @(
       (Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'),
       (Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\Docker Desktop.exe')
@@ -91,7 +81,6 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Không bật được PostgreSQL/Redis/MinIO (docker compose).' }
   Ok 'PostgreSQL / Redis / MinIO sẵn sàng'
 
-  # ---------------------------------------------------------------- 2. Dọn cổng bị tiến trình lạ chiếm
   Step 'Kiểm tra cổng 3000 / 8080 / 8000'
   $ourPids = @()
   if (Test-Path $pidDir) {
@@ -101,7 +90,6 @@ try {
     }
   }
   function Test-Ours([int]$procId) {
-    # Tiến trình (hoặc tổ tiên của nó, vd python.exe của venv sinh tiến trình con) do stack.ps1 bật.
     $cur = $procId
     for ($i = 0; $i -lt 6 -and $cur -gt 0; $i++) {
       if ($ourPids -contains $cur) { return $true }
@@ -141,7 +129,6 @@ try {
   }
   if ($killed) { Start-Sleep -Seconds 2 } else { Ok 'Không có tiến trình lạ' }
 
-  # ---------------------------------------------------------------- 3. Trọng số, venv, bản build web
   Step 'Trọng số mô hình và môi trường'
   $wFile = Join-Path $pilotDir 'weights-dir.txt'
   $weights = $env:PILOT_WEIGHTS_DIR
@@ -162,7 +149,6 @@ try {
   }
   Ok 'Python venv-ml'
   $webIndex = Join-Path $root 'apps\client_flutter\build\web\index.html'
-  # Build lại khi chưa có bản build HOẶC mã Flutter/client sinh mới hơn bản build (sau khi pull code).
   $needWeb = -not (Test-Path $webIndex)
   $webMode = if ($Deploy) { 'production' } else { 'development' }
   $webModeFile = Join-Path $pilotDir 'web-build-mode.txt'
@@ -187,17 +173,11 @@ try {
   }
   Ok 'Bản build web'
 
-  # ---------------------------------------------------------------- 3b. Database thử + Prisma client
-  # Dịch vụ chạy trên database thử (mặc định qld_phase7_test, xem stack.ps1), KHÔNG phải DB trong .env.
-  # Mỗi lần bật: áp migration còn thiếu cho đúng database đó và sinh lại Prisma client, để code mới
-  # (sau khi pull) không lỗi "table does not exist".
   Step 'Cập nhật database thử và Prisma client'
   $pilotDb = if ($env:PILOT_DATABASE) { $env:PILOT_DATABASE } else { 'qld_phase7_test' }
   if ($Deploy) { $pilotDb = (Select-String -Path (Join-Path $root '.env') -Pattern '^\s*POSTGRES_DB=(.*)$' | Select-Object -First 1).Matches[0].Groups[1].Value.Trim() }
   $migPass = (Select-String -Path (Join-Path $root '.env') -Pattern '^\s*MIGRATION_PASSWORD=(.*)$' |
     Select-Object -First 1).Matches[0].Groups[1].Value.Trim()
-  # Database thử chưa có (Docker volume mới, máy mới): tạo như bước B2 của hướng dẫn. Nếu không, prisma migrate
-  # tự thử CREATE DATABASE bằng app_migration và lỗi "permission denied to create database".
   $dbCreated = $false
   if (-not $Deploy) {
     $pgUserLine = Select-String -Path (Join-Path $root '.env') -Pattern '^\s*POSTGRES_USER=(.*)$' | Select-Object -First 1
@@ -219,8 +199,6 @@ try {
     & pnpm db:migrate
     if ($LASTEXITCODE -ne 0) { throw "pnpm db:migrate thất bại trên $pilotDb." }
     if (-not $Deploy) {
-      # Đồng bộ dữ liệu mẫu cho mọi máy: database mới thì nạp dữ liệu nền; mỗi lần bật đều bổ sung
-      # giáo viên, phân công và thời khóa biểu mẫu còn thiếu (chạy lặp an toàn, không ghi đè dữ liệu đã có).
       if ($dbCreated) {
         & pnpm db:seed
         if ($LASTEXITCODE -ne 0) { throw "pnpm db:seed thất bại trên $pilotDb." }
@@ -241,12 +219,10 @@ try {
   }
   Ok "Database $pilotDb đã đủ migration, Prisma client mới"
 
-  # ---------------------------------------------------------------- 4. Bật 5 dịch vụ
   Step 'Bật dịch vụ (recognition, api, dispatcher, worker, web)'
   & powershell -NoProfile -ExecutionPolicy Bypass -File $stack start
   if ($LASTEXITCODE -ne 0) { throw 'stack.ps1 start thất bại.' }
 
-  # ---------------------------------------------------------------- 5. Kiểm tra sức khỏe
   Step 'Kiểm tra sức khỏe (lần đầu có thể mất ~30 giây)'
   $allOk = $true
   $checks = @(
@@ -277,7 +253,6 @@ try {
     }
   }
 
-  # ---------------------------------------------------------------- 6. Điện thoại USB
   $serialUsed = ''
   if ($Usb) {
     Step 'Điện thoại qua USB'
@@ -289,7 +264,6 @@ try {
     $list | ForEach-Object { Write-Host "      $_" -ForegroundColor DarkGray }
   }
 
-  # ---------------------------------------------------------------- 7. Cài app Android (tùy chọn)
   if ($InstallApp) {
     Step 'Build và cài app Android (lần đầu mất vài phút)'
     $clientDir = Join-Path $root 'apps\client_flutter'
@@ -298,8 +272,6 @@ try {
       [System.IO.File]::WriteAllText($usbConfig, '{"APP_ENV":"development","API_BASE_URL":"http://localhost:3000"}' + "`n",
         (New-Object System.Text.UTF8Encoding($false)))
     }
-    # Plugin Gradle của Flutter 3.35.7 đọc sai flutter_build.d khi đường dẫn có dấu cách (Ho Si Khai) nên build dừng.
-    # File này tự sinh lại mỗi lần build, nên xóa trước khi build (lỗi: ancestor C:/Users/Ho is not a directory).
     Get-ChildItem (Join-Path $clientDir 'build\app\intermediates\flutter') -Recurse -Filter 'flutter_build.d' -ErrorAction SilentlyContinue | Remove-Item -Force
     Push-Location $clientDir
     try {
@@ -314,7 +286,6 @@ try {
     Ok 'Đã cài app lên điện thoại'
   }
 
-  # ---------------------------------------------------------------- 8. Tóm tắt
   Step 'SẴN SÀNG'
   if ($Deploy) { Write-Host '  Công khai:  https://eduscore.id.vn   (API: https://api.eduscore.id.vn)' -ForegroundColor Green }
   Write-Host '  Máy tính:   http://localhost:8080' -ForegroundColor Green

@@ -21,7 +21,6 @@ import 'web/timetable_toolbar.dart';
 import 'web/timetable_week_board.dart';
 
 class TimetableScreen extends ConsumerStatefulWidget {
-  /// [today] chỉ để test cố định ngày; mặc định lấy giờ thiết bị.
   const TimetableScreen({super.key, this.today});
 
   final DateTime? today;
@@ -33,9 +32,9 @@ class TimetableScreen extends ConsumerStatefulWidget {
 class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   bool _isWeeklyView = true;
   bool _groupByRoom = false;
-  bool _byPeriod = false; // QTV: lưới chi tiết từng tiết thay vì theo buổi
+  bool _byPeriod = false;
   String? _studentClass;
-  int _selectedDay = 2; // Thứ 2 default, or current weekday
+  int _selectedDay = 2;
   num? _selectedClassId;
   num? _selectedTeacherId;
   num? _selectedSemesterId;
@@ -48,7 +47,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
 
   late Future<TimetableResult> _timetableFuture;
 
-  // Tuần đang xem (thứ Hai) và học kỳ của danh sách; đặt khi dữ liệu về.
   DateTime? _weekStart;
   TimetableSemester? _semester;
   num? _weekSemesterId;
@@ -65,8 +63,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
   @override
   void initState() {
     super.initState();
-    final nowWeekday = _today.weekday; // 1 = Monday, ..., 7 = Sunday
-    _selectedDay = nowWeekday + 1; // 2 = Thứ Hai, ..., 8 = Chủ nhật
+    final nowWeekday = _today.weekday;
+    _selectedDay = nowWeekday + 1;
     _loadMetadata();
     _loadTimetable();
   }
@@ -136,15 +134,12 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
           )
           .then((result) {
             final adopted = _adoptWeek(result);
-            // Thanh công cụ nằm ngoài FutureBuilder: cần dựng lại khi có tuần/học kỳ.
             if (mounted) setState(() {});
             return adopted;
           });
     });
   }
 
-  /// Về tuần mặc định khi lần đầu có dữ liệu hoặc học kỳ đổi; tải lại sau khi
-  /// sửa/xóa tiết thì giữ nguyên tuần đang xem.
   TimetableResult _adoptWeek(TimetableResult result) {
     _semester = result.semester;
     _studentClass = result.items.isEmpty ? null : result.items.first.tenLop;
@@ -241,8 +236,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     );
   }
 
-  /// Cờ hiển thị trên khối môn theo vai trò: GV thấy Lớp, HS thấy GV (và không
-  /// thấy phòng), QTV thấy Lớp khi xem theo giáo viên/phòng, GV khi xem theo lớp.
   ({bool cls, bool teacher, bool room}) _blockFlags(String role) {
     if (role == 'HOC_SINH') return (cls: false, teacher: true, room: false);
     if (role == 'GIAO_VIEN') return (cls: true, teacher: false, room: true);
@@ -423,8 +416,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     }
   }
 
-  /// Khung thẻ của prototype (`.card`): nền surface, viền `line`, bo
-  /// [AppRadius.md], đổ bóng nhẹ.
   BoxDecoration _cardDecoration(AppTokens t) => BoxDecoration(
     color: t.surface,
     borderRadius: BorderRadius.circular(AppRadius.md),
@@ -462,7 +453,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
 
     final hintStyle = TextStyle(fontSize: 12, color: t.ink3);
     final controls = <Widget>[
-      // Admin Class/Teacher Filter
       if (role == 'QUAN_TRI_VIEN') ...[
         if (_loadingMeta)
           const SizedBox(width: 120, child: LinearProgressIndicator())
@@ -535,7 +525,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
 
                 const SizedBox(height: 14),
 
-                // Main Content
                 Expanded(
                   child: FutureBuilder<TimetableResult>(
                     future: _timetableFuture,
@@ -551,7 +540,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                       }
 
                       final items = snapshot.data?.items ?? [];
-                      // Chưa có tiết nào vẫn hiện bảng thời khóa biểu trống (lưới/lịch ngày).
                       if (_weekStart == null) {
                         return const EmptyState(
                           title: 'Chưa có dữ liệu thời khóa biểu',
@@ -660,7 +648,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     );
   }
 
-  // ── MOBILE (màn < 600): chế độ Ngày / Tuần / Tháng ──────────────────────────
   Widget _buildMobile(String role, String title, AppTokens t) {
     final isAdmin = role == 'QUAN_TRI_VIEN';
     return AppScaffold(
@@ -762,7 +749,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     ),
   );
 
-  // ── 1. WEEKLY GRID VIEW ───────────────────────────────────────────────────
   Widget _buildWeeklyGrid(
     List<TimetableItem> items,
     String role,
@@ -820,7 +806,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     );
   }
 
-  /// Lưới theo buổi (mặc định); QTV bật "Theo tiết" thì dùng lưới từng tiết.
   Widget _buildGroupBoard(
     List<TimetableItem> items,
     String role,
@@ -862,7 +847,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     );
   }
 
-  /// Tiêu đề thẻ (`.hd`) của từng nhóm lớp/phòng: tên nhóm và số tiết.
   Widget _buildGroupHeader(
     String label,
     String count,
@@ -910,13 +894,11 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     final slotClassId =
         _selectedClassId ??
         (!_groupByRoom && items.isNotEmpty ? items.first.maLop : null);
-    // Map items by [thu][tiet]
     final matrix = <int, Map<int, List<TimetableItem>>>{};
     for (var thu = 2; thu <= 8; thu++) {
       matrix[thu] = {};
     }
     for (final item in items) {
-      // TKB chỉ áp dụng trong học kỳ: ngày ngoài học kỳ không hiện tiết.
       if (!inSemester(_semester, _dateOf(item.thu))) continue;
       matrix.putIfAbsent(item.thu, () => {});
       matrix[item.thu]!.putIfAbsent(item.tiet, () => []).add(item);
@@ -937,7 +919,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             8: 'Chủ nhật',
           };
 
-    // Tiêu đề cột: chữ 12 hoa, đậm vừa, màu ink3 (`th` của prototype).
     TextStyle headStyle({Color? color}) => TextStyle(
       fontSize: 12,
       fontWeight: FontWeight.w600,
@@ -945,8 +926,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
       color: color ?? t.ink3,
     );
 
-    // Hàng phân cách buổi (`.sep`): nền subtle, chữ hoa. Nhãn tràn sang các ô
-    // trống bên cạnh để không làm rộng cột "Tiết".
     DataRow separatorRow(String label) => DataRow(
       color: WidgetStatePropertyAll(t.subtle),
       cells: [
@@ -1017,7 +996,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
             if (tiet == 6) separatorRow('BUỔI CHIỀU'),
             DataRow(
               cells: [
-                // Period column
                 DataCell(
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: isMobile ? 52 : 56),
@@ -1034,7 +1012,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                     ),
                   ),
                 ),
-                // Day columns
                 for (final d in days)
                   DataCell(
                     _buildGridCell(
@@ -1079,7 +1056,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     final cellWidth = isMobile ? 102.0 : 140.0;
 
     if (cellItems.isEmpty) {
-      // Ngày ngoài học kỳ không xếp lịch; thêm tiết ở tuần khác trong học kỳ.
       if (role == 'QUAN_TRI_VIEN' && inSemester(_semester, _dateOf(day))) {
         return SizedBox(
           width: cellWidth,
@@ -1115,8 +1091,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
 
     final item = cellItems.first;
     final isStudent = role == 'HOC_SINH';
-    // Chip tiết (`.tc`): giáo viên/quản trị nền primary nhạt; học sinh nền
-    // trung tính (`.tc.sub`).
     final chipBg = isStudent ? t.hover : t.priSoft;
     final chipFg = isStudent ? t.ink : t.priLink;
     final chipLine = isStudent ? t.line : t.priLine;
@@ -1210,7 +1184,6 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     );
   }
 
-  // ── 2. DAY-BY-DAY AGENDA VIEW ─────────────────────────────────────────────
   Widget _buildDayAgenda(
     List<TimetableItem> allItems,
     String role,

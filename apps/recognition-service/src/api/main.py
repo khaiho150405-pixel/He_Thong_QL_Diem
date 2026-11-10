@@ -53,10 +53,7 @@ class RowResponse(BaseModel):
     nameCropBase64: str
     comparison: str
     reviewLevel: str
-    # Kênh cho giá trị gợi ý: "SO" | "CHU"; null khi Đỏ (không gợi ý giá trị).
     suggestedSource: str | None = None
-    # Đối chiếu STT (RECOGNITION_STT_CHECK=1): STT đọc ở ô STT in, STT suy theo vị trí dòng; null khi tắt/không có. `stt.value` là
-    # STT trên giấy = giá trị khi hai nguồn trùng nhau.
     sttRead: int | None = None
     sttFromPosition: int | None = None
 
@@ -106,7 +103,6 @@ def live() -> dict[str, str]:
 @app.post("/v1/recognize", response_model=RecognitionResponse)
 async def recognize(
     image: UploadFile = File(),
-    # Deprecated: callers no longer declare a row count (ADR-0015); ignored.
     declaredRows: int | None = Form(default=None),
 ) -> RecognitionResponse:
     """Read every row of a gradebook photo. The service never receives a roster."""
@@ -119,12 +115,10 @@ async def recognize(
         )
     try:
         model = configured_model()
-        # Suy luận nặng CPU: chạy ngoài vòng lặp sự kiện để /health vẫn trả lời khi đang xử lý ảnh.
         result = await run_in_threadpool(model.recognize, content)
     except ModelUnavailableError as error:
         raise HTTPException(status_code=503, detail="MODEL_UNAVAILABLE") from error
     except PipelineError as error:
-        # Ảnh không dùng được (mờ, không có bảng, không phải bảng điểm...): 422 kèm mã ổn định để API đánh dấu LOI.
         raise HTTPException(
             status_code=422, detail={"code": error.code, "message": error.detail}
         ) from error
@@ -170,7 +164,6 @@ async def recognize(
     )
 
 
-# ── Contract v2 (ADR-0016): phân tích bố cục, khớp mẫu, đọc nhiều cột. /v1/recognize ở trên không đổi. ──
 
 
 class SignatureResponse(BaseModel):
@@ -184,14 +177,11 @@ class SignatureResponse(BaseModel):
 
 class LayoutColumnResponse(BaseModel):
     index: int
-    # Tỉ lệ 0–1 theo bề rộng bảng.
     x0: float
     x1: float
     widthMm: float
     headerText: str
-    # STT | HO_TEN | DIEM | DIEM_CHU | BO_QUA; null khi không đọc được tiêu đề.
     suggestedRole: str | None
-    # TX | GK | CK cho cột DIEM; null khi không suy ra được.
     suggestedGroup: str | None
     suggestedOrder: int | None
 
@@ -205,7 +195,6 @@ class LayoutAnalyzeResponse(BaseModel):
 class GradeResponse(BaseModel):
     key: str
     numeric: ChannelResponse
-    # null khi cột chỉ có kênh số; khi đó tối đa Vàng (D-01).
     written: ChannelResponse | None
     numericCropBase64: str
     writtenCropBase64: str | None
@@ -227,7 +216,6 @@ class RowV2Response(BaseModel):
 
 class TemplateMatchResponse(BaseModel):
     score: float
-    # {chỉ số cột mẫu: chỉ số cột ảnh}
     columnMap: dict[int, int]
 
 
@@ -319,7 +307,6 @@ async def recognize_v2(
         for cell in item.grades:
             classification = classify_channels(
                 cell.numeric,
-                # Cột một kênh: kênh chữ coi như trống → chỉ có thể Vàng (kênh số đủ tin cậy) hoặc Đỏ, không bao giờ Xanh.
                 cell.written
                 if cell.written is not None
                 else ChannelPrediction(None, None, None, is_blank=True),

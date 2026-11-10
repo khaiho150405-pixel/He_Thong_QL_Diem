@@ -1,11 +1,4 @@
-﻿# Chạy app Android trên MÁY ẢO (emulator) của máy tính, tự build lại khi code đổi — giống Bat-nhan-dang.bat.
-# Dùng:  powershell -NoProfile -ExecutionPolicy Bypass -File may-ao-android.ps1 [-Avd <tên máy ảo>] [-Rebuild] [-NoStack]
-#   -Avd      chọn máy ảo (mặc định: máy ảo đã dùng lần trước, hoặc máy ảo đầu tiên tìm thấy)
-#   -Rebuild  bắt buộc build lại APK dù code không đổi
-#   -NoStack  không bật lại 5 dịch vụ (khi đã bật bằng Bat-nhan-dang.bat)
-# Thứ tự: build APK (khi máy còn nhiều RAM) -> bật hệ thống (up.ps1) -> bật máy ảo -> nối cổng -> cài app -> mở app.
-# App dùng cùng cấu hình với điện thoại USB (config/android-usb.json, API = localhost) và adb reverse cổng 8080/3000/9000.
-param(
+﻿param(
   [string]$Avd = '',
   [switch]$Rebuild,
   [switch]$NoStack
@@ -18,7 +11,6 @@ function Step([string]$t) { Write-Host ''; Write-Host "== $t ==" -ForegroundColo
 function Ok([string]$t) { Write-Host "[OK]  $t" -ForegroundColor Green }
 function Warn([string]$t) { Write-Host "[!]   $t" -ForegroundColor Yellow }
 
-# Chạy lệnh ngoài mà không để chữ in ra stderr làm dừng script (PowerShell 5.1).
 function Invoke-Quiet([scriptblock]$block) {
   $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
   try { return (& $block 2>&1 | ForEach-Object { "$_" }) } finally { $ErrorActionPreference = $old }
@@ -38,7 +30,6 @@ try {
   $apk = Join-Path $client 'build\app\outputs\flutter-apk\app-development-debug.apk'
   $configFile = Join-Path $client 'config\android-usb.json'
 
-  # ---------------------------------------------------------------- 1. Android SDK và máy ảo
   Step 'Android SDK và máy ảo'
   $sdk = @($env:ANDROID_HOME, $env:ANDROID_SDK_ROOT, (Join-Path $env:LOCALAPPDATA 'Android\Sdk')) |
     Where-Object { $_ -and (Test-Path (Join-Path $_ 'platform-tools\adb.exe')) } | Select-Object -First 1
@@ -64,9 +55,6 @@ try {
   [System.IO.File]::WriteAllText($avdFile, $Avd, (New-Object System.Text.UTF8Encoding($false)))
   Ok "Máy ảo: $Avd   (có: $($avds -join ', '); đổi bằng: Bat-may-ao-android.bat -Avd <tên>)"
 
-  # ---------------------------------------------------------------- 2. Giới hạn RAM cho Gradle
-  # Máy 16 GB: Gradle mặc định của dự án xin tới 8 GB nên dễ treo khi hệ thống + máy ảo cùng chạy.
-  # Chỉ thêm vào file của NGƯỜI DÙNG (~/.gradle/gradle.properties) khi file đó chưa đặt jvmargs; không sửa file dự án.
   $userGradle = Join-Path $env:USERPROFILE '.gradle\gradle.properties'
   $hasJvm = (Test-Path $userGradle) -and (Select-String -Path $userGradle -Pattern '^\s*org\.gradle\.jvmargs' -Quiet)
   if (-not $hasJvm) {
@@ -75,7 +63,6 @@ try {
     Warn "Đã giới hạn RAM Gradle 3 GB trong $userGradle"
   }
 
-  # ---------------------------------------------------------------- 3. Build APK khi code mới hơn bản build
   Step 'Build app Android (chỉ khi code thay đổi)'
   $needApk = $Rebuild -or -not (Test-Path $apk)
   if (-not $needApk) {
@@ -94,8 +81,6 @@ try {
         (New-Object System.Text.UTF8Encoding($false)))
     }
     Warn 'Đang build APK (lần đầu 5–15 phút; sau đó 1–3 phút). Nếu đứng yên quá 20 phút: Ctrl+C, đóng bớt chương trình rồi bấm lại.'
-    # Plugin Gradle của Flutter 3.35.7 đọc sai flutter_build.d khi đường dẫn có dấu cách (Ho Si Khai) nên build dừng.
-    # File này tự sinh lại mỗi lần build, nên xóa trước khi build (lỗi: ancestor C:/Users/Ho is not a directory).
     Get-ChildItem (Join-Path $client 'build\app\intermediates\flutter') -Recurse -Filter 'flutter_build.d' -ErrorAction SilentlyContinue | Remove-Item -Force
     Push-Location $client
     try {
@@ -106,7 +91,6 @@ try {
   if (-not (Test-Path $apk)) { throw "Không thấy file APK: $apk" }
   Ok "APK: $apk"
 
-  # ---------------------------------------------------------------- 4. Bật hệ thống (Docker, migrate, build web, 5 dịch vụ)
   if ($NoStack) {
     Warn 'Bỏ qua bước bật hệ thống (-NoStack).'
   } else {
@@ -115,7 +99,6 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Bật hệ thống thất bại (xem [LỖI] ở trên). Thử Tat-nhan-dang.bat rồi bấm lại.' }
   }
 
-  # ---------------------------------------------------------------- 5. Bật máy ảo
   Step 'Bật máy ảo Android'
   $emuDevice = @(Get-AdbDevices $adb | Where-Object { $_.Serial -like 'emulator-*' }) | Select-Object -First 1
   if (-not $emuDevice) {
@@ -135,12 +118,10 @@ try {
   }
   Ok "Máy ảo sẵn sàng: $serial"
 
-  # ---------------------------------------------------------------- 6. Nối cổng như điện thoại USB
   $list = Set-UsbReverse $adb $serial
   Ok 'Đã nối cổng 8080/3000/9000 từ máy ảo về máy tính'
   $list | ForEach-Object { Write-Host "      $_" -ForegroundColor DarkGray }
 
-  # ---------------------------------------------------------------- 7. Cài app (bỏ qua nếu bản đã cài trùng)
   Step 'Cài app lên máy ảo'
   $sha = if (Test-Path "$apk.sha1") { (Get-Content "$apk.sha1" -Raw).Trim() } else { (Get-FileHash $apk -Algorithm SHA1).Hash }
   $stamp = Join-Path $pilotDir "emulator-$Avd.sha1"
@@ -161,7 +142,6 @@ try {
     Ok 'Đã cài app'
   }
 
-  # ---------------------------------------------------------------- 8. Mở app
   Invoke-Quiet { & $adb -s $serial shell am force-stop $package } | Out-Null
   Invoke-Quiet { & $adb -s $serial shell monkey -p $package -c android.intent.category.LAUNCHER 1 } | Out-Null
   Step 'SẴN SÀNG'

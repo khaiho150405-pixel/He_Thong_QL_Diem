@@ -1,7 +1,4 @@
-﻿# Build APK release (production, API = https://api.eduscore.id.vn) và chép vào thư mục APK\ cạnh file này.
-# Lần đầu tự tạo khóa ký (android\app-release.jks + android\key.properties, cả hai nằm ngoài git). HÃY SAO LƯU 2 file này:
-# mất khóa thì không thể cập nhật app đã cài, phải gỡ và cài lại.
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 function Ok([string]$t) { Write-Host "[OK]  $t" -ForegroundColor Green }
 function Warn([string]$t) { Write-Host "[!]   $t" -ForegroundColor Yellow }
@@ -33,8 +30,6 @@ try {
     Ok "Đã tạo khóa: $jks  (SAO LƯU file này và key.properties ra nơi an toàn)"
   }
 
-  # Cache build ghi cứng đường dẫn tuyệt đối. Đổi tên/chuyển thư mục dự án thì cache cũ làm Gradle lỗi
-  # "ancestor 'C:\Users\Ho' is not a directory", nên xóa cache khi đường dẫn đã ghi khác thư mục hiện tại.
   $buildDir = Join-Path $client 'build'
   $pathMark = Join-Path $client '.dart_tool\build-root.txt'
   $lastRoot = if (Test-Path $pathMark) { (Get-Content $pathMark -Raw).Trim() } else { $null }
@@ -46,8 +41,6 @@ try {
   }
 
   Warn 'Đang build APK release (vài phút)...'
-  # Plugin Gradle của Flutter 3.35.7 đọc sai flutter_build.d khi đường dẫn có dấu cách (Ho Si Khai) nên build dừng.
-  # File này tự sinh lại mỗi lần build, nên xóa trước khi build (lỗi: ancestor C:/Users/Ho is not a directory).
   Get-ChildItem (Join-Path $client 'build\app\intermediates\flutter') -Recurse -Filter 'flutter_build.d' -ErrorAction SilentlyContinue | Remove-Item -Force
   Push-Location $client
   try {

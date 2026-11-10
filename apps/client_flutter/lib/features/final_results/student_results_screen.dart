@@ -14,9 +14,6 @@ import '../authentication/session.dart';
 import '../gradebooks/adjustments_screen.dart' show formatAdjustmentDateTime;
 import '../school_profile/school_profile.dart';
 
-/// Màu và nhãn của mã xếp loại do backend trả về. Chỉ ánh xạ theo MÃ, không
-/// so ngưỡng điểm ở client (AGENTS.md); mã không nhận ra thì giữ nguyên chuỗi
-/// và dùng tông trung tính.
 ({AppBadgeTone tone, String label}) classificationBadgeOf(String code) {
   switch (code.trim().toUpperCase()) {
     case 'GIOI':
@@ -48,14 +45,8 @@ import '../school_profile/school_profile.dart';
   }
 }
 
-/// Nhãn tiếng Việt tương ứng với mã xếp loại.
 String classificationLabel(String code) => classificationBadgeOf(code).label;
 
-/// ĐTB chung và trạng thái tổng kết học kỳ, tính ở client từ danh sách môn.
-/// GIỮ NGUYÊN hành vi của màn cũ (quy tắc "không đổi công thức"): chỉ tính khi
-/// MỌI môn đã có xếp loại (`allLocked`); ĐTB là trung bình cộng `finalScore`
-/// của các môn không phải Đạt/Không đạt. Xem docs/design/open-questions.md
-/// (Bước 4b): nên chuyển cho backend ở lần sau.
 ({int totalSubjects, int lockedSubjects, bool allLocked, double? gpa})
 semesterOverviewOf(List<StudentSubjectResultDto> items) {
   final totalSubjects = items.length;
@@ -81,8 +72,6 @@ semesterOverviewOf(List<StudentSubjectResultDto> items) {
   );
 }
 
-/// Mã xếp loại chung theo ngưỡng cũ (>= 8.0 Giỏi, >= 6.5 Khá, còn lại Đạt);
-/// giữ nguyên hành vi màn cũ, xem ghi chú ở [semesterOverviewOf].
 String overallClassificationCodeOf(double gpa) => gpa >= 8.0
     ? 'GIOI'
     : gpa >= 6.5
@@ -130,7 +119,6 @@ class StudentResultsScreen extends ConsumerStatefulWidget {
 class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
   late Future<StudentResultsDto> data;
 
-  /// 0 = 'Thẻ theo môn', 1 = 'Bảng tổng hợp'.
   int _viewIndex = 0;
   num? _selectedYearId;
 
@@ -279,7 +267,6 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                   totalSubjects > 0 && publishedSubjects >= totalSubjects;
               final average = _formatAverage(summary.averageScore);
 
-              // Nhóm theo năm học -> học kỳ
               final grouped =
                   <
                     String,
@@ -431,14 +418,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
     );
   }
 
-  /// Điểm TB học kỳ do backend tính; chỉ định dạng một chữ số thập phân để
-  /// hiển thị (cùng cách với thanh bên), không tính lại ở client.
   String? _formatAverage(String? raw) {
     final value = raw == null ? null : double.tryParse(raw);
     return value?.toStringAsFixed(1);
   }
 
-  /// Bảng tổng hợp điểm các môn (DataTable).
   Widget _buildUnifiedGradeTable({
     required BuildContext context,
     required List<StudentSubjectResultDto> items,
@@ -650,8 +634,6 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                         ],
                       ),
 
-                    // Hàng tổng kết học kỳ: giữ nguyên hành vi màn cũ (ĐTB chung và
-                    // xếp loại chung tính ở client, chỉ khi mọi môn đã có xếp loại).
                     DataRow(
                       color: WidgetStateProperty.all(t.subtle),
                       cells: [
@@ -733,7 +715,6 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
     return AppBadge(badge.label, tone: badge.tone);
   }
 
-  /// Dạng thẻ theo môn (accordion).
   Widget _buildSubjectCards({
     required BuildContext context,
     required List<StudentSubjectResultDto> items,
@@ -858,7 +839,6 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
     );
   }
 
-  /// Điểm TB môn kèm mã xếp loại; tông màu theo mã (chuỗi giữ nguyên).
   Widget _scoreBadge(StudentSubjectResultDto item) {
     final score = item.passFail == true
         ? (item.finalScore == '10.0' ? 'Đạt' : 'Không đạt')
@@ -892,8 +872,6 @@ class _Chip extends StatelessWidget {
   }
 }
 
-/// Khối tóm tắt đầu trang: avatar, lớp, ĐTB, xếp hạng, số môn đã có điểm.
-/// Màn hẹp (dưới 600) dùng hero navy như `m-hs`, màn rộng dùng thẻ như `hs-hero`.
 class _ResultsHero extends StatelessWidget {
   const _ResultsHero({
     required this.className,
@@ -1065,7 +1043,6 @@ class _ResultsHero extends StatelessWidget {
   }
 }
 
-/// Số liệu của hero rộng (`.hs-k`): vạch kẻ bên trái, nhãn nhỏ, số lớn.
 class _HeroStat extends StatelessWidget {
   const _HeroStat({required this.label, required this.value});
 
@@ -1109,7 +1086,6 @@ class _HeroStat extends StatelessWidget {
   }
 }
 
-/// Ô điểm trên hero navy của mobile (`.mscore > div`).
 class _NavyScore extends StatelessWidget {
   const _NavyScore({required this.label, required this.value});
 

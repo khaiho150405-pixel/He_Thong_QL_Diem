@@ -54,20 +54,16 @@ test("signed URLs are signed directly with S3_PUBLIC_ENDPOINT, not rewritten aft
     const parsed = new URL(url);
     assert.equal(parsed.host, "192.168.0.10:9000");
     assert.equal(parsed.pathname, `/gradebook-images/${KEY}`);
-    // Chữ ký tính trực tiếp cho host công khai (host nằm trong chữ ký)...
     assert.equal(url, await reference(publicEndpoint));
-    // ...nên khác với URL ký cho host nội bộ rồi chỉ thay chuỗi host.
     const internal = await reference("http://localhost:9000");
     assert.notEqual(
       parsed.searchParams.get("X-Amz-Signature"),
       new URL(internal).searchParams.get("X-Amz-Signature"),
     );
-    // Thay host bằng chuỗi sau khi ký sẽ cho URL khác (chữ ký sai), nên không làm như vậy.
     assert.notEqual(
       url,
       internal.replace("http://localhost:9000", publicEndpoint),
     );
-    // Hết hạn vẫn bị giới hạn như cũ.
     await assert.rejects(storage.signedGetUrl(KEY, 301));
     await assert.rejects(storage.signedGetUrl(KEY, 0));
   } finally {

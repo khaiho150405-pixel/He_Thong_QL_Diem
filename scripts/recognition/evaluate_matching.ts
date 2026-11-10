@@ -1,11 +1,3 @@
-/**
- * Phụ trợ cho evaluate_pages.py (BE-21/22): chạy bộ ghép dòng THẬT của API trên kết quả nhận dạng đã lưu.
- *
- *   pnpm exec tsx scripts/recognition/evaluate_matching.ts <match-input.json>
- *
- * Đầu vào: { rosters: { S01: [họ tên theo thứ tự giấy...] }, pages: [{ key, sheet, rows }] }. Đầu ra (stdout): JSON mảng
- * { key, ok, reason?, matches: [{ rowIndex, paperIndex, level }] }. Họ tên chỉ nằm trong tệp đầu vào cục bộ, không in ra.
- */
 import { readFileSync } from "node:fs";
 import { classStudentOrder } from "../../apps/api/src/common/student-order.ts";
 import { matchRows } from "../../apps/api/src/modules/recognition/domain/row-matching.ts";
@@ -23,12 +15,9 @@ interface Row {
 const input = JSON.parse(readFileSync(process.argv[2]!, "utf8")) as {
   rosters: Record<string, string[]>;
   sttCheck?: boolean;
-  /** true: học sinh ở dòng bị gạch vẫn đang theo học (có trong danh sách lớp); false: đã nghỉ (không có). */
   struckStudentsActive?: boolean;
-  /** `start` = STT trên giấy của dòng đầu trang (p1 = 1, p2 = 39). */
   pages: Array<{ key: string; sheet: string; start: number; rows: Row[] }>;
 };
-// Hai trang của cùng một người/tờ/nguồn dùng chung một danh sách lớp.
 const groupOf = (key: string): string => {
   const [person, sheet, , source] = key.split("|");
   return `${person}|${sheet}|${source}`;
@@ -42,8 +31,6 @@ for (const page of input.pages) {
 }
 const output = input.pages.map((page) => {
   const names = input.rosters[page.sheet]!;
-  // Mô phỏng danh sách lớp đã chốt của hệ thống: học sinh ở dòng bị gạch (ở BẤT KỲ trang nào của cùng bộ ảnh) là học sinh đã
-  // nghỉ nên không có trong danh sách, còn STT in trên giấy vẫn tính họ. Mã học sinh = vị trí trong danh sách trên giấy + 1.
   const struckPaperIndexes =
     struckByGroup.get(groupOf(page.key)) ?? new Set<number>();
   const students = names
@@ -88,7 +75,6 @@ const output = input.pages.map((page) => {
       rowIndex: m.rowIndex,
       paperIndex: m.studentId - 1,
       level: m.matchLevel,
-      // Chỉ loại ghi chú (không có họ tên): STT lệch / không xác nhận được / trùng họ tên.
       note: m.note.startsWith("STT trên giấy")
         ? "STT_MISMATCH"
         : m.note.startsWith("Không xác nhận được STT")

@@ -20,14 +20,11 @@ export async function validateYear(
     }))
   )
     throw new ConflictException();
-  // Luôn phải có một năm học hiện hành: không tắt trực tiếp năm hiện hành duy nhất, chỉ chuyển bằng cách bật năm khác.
   if (previous?.hien_hanh && !data.hien_hanh)
     throw new ConflictException(
       "Phải có một năm học hiện hành; hãy bật năm khác để chuyển.",
     );
   if (data.hien_hanh) {
-    // Chuyển năm hiện hành: tắt năm đang hiện hành rồi bật năm này trong cùng giao dịch (validate chạy trong giao dịch lưu;
-    // chỉ mục duy nhất một phần nam_hoc_mot_hien_hanh không bao giờ thấy hai năm cùng hiện hành).
     const others = await tx.list(
       "nam_hoc",
       {

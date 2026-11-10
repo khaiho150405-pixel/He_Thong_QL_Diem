@@ -120,7 +120,6 @@ model nguoi_dung {
   gioi_han_tac_vu_rows    gioi_han_tac_vu[]
 }
 
-// Technical tables, not part of the sixteen business tables.
 model phien_ghi_nho {
   ma_bam         String     @id @db.Char(64)
   ma_nguoi_dung  Int
@@ -156,8 +155,6 @@ model gioi_han_dang_nhap {
   het_han DateTime @db.Timestamptz(6)
 }
 
-// Shared technical rate limit state. Runtime access is only through a
-// SECURITY DEFINER function so every API instance observes the same counter.
 model gioi_han_tac_vu {
   ma_nguoi_dung  Int
   thao_tac       String     @db.VarChar(32)
@@ -382,7 +379,6 @@ model ket_qua_tong_ket {
   @@index([ma_hoc_ky])
 }
 
-// Versioned school policy. The seeded DEV policy is not a final production decision.
 model chinh_sach_xep_loai {
   ma_chinh_sach      Int                 @id @default(autoincrement())
   phien_ban          String              @unique @db.VarChar(20)
@@ -407,7 +403,6 @@ model tieu_chi_xep_loai {
   @@unique([ma_chinh_sach, thu_tu])
 }
 
-// Technical append-only evidence for every initial calculation and recalculation.
 model lich_su_tong_ket {
   ma_lich_su     BigInt           @id @default(autoincrement())
   ma_ket_qua     BigInt
@@ -432,7 +427,6 @@ model phieu_nhan_dien {
   ma_bang_diem      Int
   ma_thanh_phan     Int
   nguoi_tai         Int
-  // UNIQUE một phần (WHERE trang_thai <> 'DA_HUY') nằm trong migration 202610120002; Prisma không biểu diễn được.
   ma_bam_tep        String              @db.VarChar(64)
   duong_dan_anh_goc String              @db.VarChar(512)
   so_dong_khai_bao  Int
@@ -445,10 +439,8 @@ model phieu_nhan_dien {
   ly_do_huy         String?             @db.VarChar(200)
   nguoi_huy         Int?
   thoi_diem_huy     DateTime?           @db.Timestamptz(6)
-  // Mẫu bảng điểm (ADR-0016). Chỉ phiếu thuộc lô (P3) ghi cột này; phiếu cũ (một ảnh, không mẫu) để NULL.
   ma_mau            Int?
   ma_mau_ref        mau_bang_diem?      @relation(fields: [ma_mau], references: [ma_mau], onDelete: Restrict, onUpdate: Restrict)
-  // Lô nhận dạng nhiều trang (migration 202610200001): ma_lo và chi_so_cot_mau cùng NULL hoặc cùng có giá trị.
   ma_lo             BigInt?
   chi_so_cot_mau    Int?
   ma_lo_ref         lo_nhan_dien?       @relation(fields: [ma_lo], references: [ma_lo], onDelete: Restrict, onUpdate: Restrict)
@@ -469,9 +461,6 @@ model phieu_nhan_dien {
   @@index([ma_mau])
 }
 
-// Lô nhận dạng: 1–4 ảnh trang cùng một mẫu, một phiếu cho mỗi thành phần được chọn (ADR-0016 mục 3). Technical table, not part of
-// the sixteen business tables. Runtime chỉ SELECT; ghi qua tao_lo_nhan_dien / luu_ket_qua_lo / danh_dau_lo_nhan_dien_loi /
-// huy_lo_nhan_dien. Không hard-delete.
 model lo_nhan_dien {
   ma_lo             BigInt               @id @default(autoincrement())
   ma_bang_diem      Int
@@ -501,7 +490,6 @@ model lo_nhan_dien {
   @@index([nguoi_huy])
 }
 
-// Technical table, not part of the sixteen business tables. Ảnh từng trang của lô, bất biến.
 model trang_lo_nhan_dien {
   ma_lo         BigInt
   so_trang      Int
@@ -513,8 +501,6 @@ model trang_lo_nhan_dien {
   @@unique([ma_lo, ma_bam_tep], map: "trang_lo_ma_bam_key")
 }
 
-// Mẫu bảng điểm do QTV khai báo (ADR-0016 mục 1). Runtime chỉ SELECT; ghi qua luu_mau_bang_diem / doi_trang_thai_mau_bang_diem.
-// UNIQUE theo chuỗi phiên bản (coalesce(ma_mau_goc, ma_mau), phien_ban) là chỉ mục biểu thức trong migration 202610190001.
 model mau_bang_diem {
   ma_mau            Int               @id @default(autoincrement())
   ten_mau           String            @db.VarChar(100)
@@ -555,11 +541,9 @@ model cot_mau {
   @@unique([ma_mau, cot_diem_di_kem])
 }
 
-// Technical table, not part of the sixteen business tables.
 model recognition_outbox {
   ma_su_kien   BigInt           @id @default(autoincrement())
   loai_su_kien String           @db.VarChar(64)
-  // Sự kiện RECOGNITION_REQUESTED có ma_phieu; RECOGNITION_BATCH_REQUESTED (một sự kiện cho cả lô) có ma_lo. Đúng một trong hai.
   ma_phieu     BigInt?          @unique
   ma_lo        BigInt?          @unique
   du_lieu      Json
@@ -602,7 +586,6 @@ model ket_qua_dong {
   duong_dan_anh_o_ten String?          @db.VarChar(512)
   ghi_chu_ghep        String?          @db.VarChar(200)
   ly_do_duyet         String?          @db.VarChar(500)
-  // Số trang trong lô (1..4); NULL với phiếu cũ không thuộc lô.
   so_trang            Int?
   kenh_goi_y          String?          @db.VarChar(3)
   muc_ghep            MucPhanLoai?
@@ -616,7 +599,6 @@ model ket_qua_dong {
   @@index([nguoi_duyet])
 }
 
-// Technical table, not part of the sixteen business tables. Append-only roster snapshot (ADR-0015).
 model danh_sach_phieu {
   ma_phieu        BigInt
   stt             Int
@@ -636,7 +618,6 @@ model tu_dien_diem_chu {
   gia_tri     Decimal @db.Decimal(3, 1)
 }
 
-// Technical table, not part of the sixteen business tables.
 model khoa_idempotency {
   khoa           String     @db.VarChar(64)
   ma_nguoi_dung  Int
@@ -805,7 +786,6 @@ model hoc_sinh_lop {
   @@index([ma_nam_hoc])
 }
 
-/// Thông tin trường (ADR-0019). CHECK ma_truong = 1: mức 1 là mỗi trường một bản cài; nới CHECK để mở nhiều trường.
 model truong {
   ma_truong         Int         @id @default(1) @db.SmallInt
   ten_truong        String      @db.VarChar(200)

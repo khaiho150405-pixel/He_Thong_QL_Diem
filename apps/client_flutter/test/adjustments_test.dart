@@ -366,13 +366,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Ban đầu cột Giữa kỳ (cell-2) bị khóa (disabled)
       final cell2Finder = find.byKey(const ValueKey('grade-cell-2'));
       expect(cell2Finder, findsOneWidget);
       final fieldBefore = tester.widget<TextFormField>(cell2Finder);
       expect(fieldBefore.enabled, isFalse);
 
-      // Mở menu ⋮ để bấm "Yêu cầu điều chỉnh"
       final moreMenu = find.byTooltip('Thao tác khác');
       expect(moreMenu, findsOneWidget);
       await tester.tap(moreMenu);
@@ -383,7 +381,6 @@ void main() {
       await tester.tap(reqAdjBtn);
       await tester.pumpAndSettle();
 
-      // Hiện banner chế độ điều chỉnh
       expect(
         find.byKey(const ValueKey('adjustment-mode-banner')),
         findsOneWidget,
@@ -395,32 +392,25 @@ void main() {
         findsOneWidget,
       );
 
-      // Ô cell-2 giờ đã editable!
       final fieldAfter = tester.widget<TextFormField>(cell2Finder);
       expect(fieldAfter.enabled, isTrue);
 
-      // Sửa điểm ô cell-2 từ 7.0 sang 8.5
       await tester.enterText(cell2Finder, '8.5');
       await tester.pumpAndSettle();
 
-      // Kiểm tra hiển thị "cũ -> mới" (7.0 -> 8.5)
       expect(find.byTooltip('7.0 → 8.5'), findsOneWidget);
 
-      // Thanh dưới hiện "Đã đổi 1 ô"
       expect(find.text('Đã đổi 1 ô'), findsOneWidget);
 
-      // Bấm nút "Gửi yêu cầu"
       final submitBtn = find.byKey(const ValueKey('submit-adjustment-btn'));
       expect(submitBtn, findsOneWidget);
       await tester.tap(submitBtn);
       await tester.pumpAndSettle();
 
-      // Hộp thoại gửi hiện ra
       expect(find.text('Gửi yêu cầu điều chỉnh điểm'), findsOneWidget);
       expect(find.text('Tóm tắt các ô thay đổi (1 ô):'), findsOneWidget);
       expect(find.text('7.0 → 8.5'), findsWidgets);
 
-      // Nhập lý do bắt buộc và gửi
       final reasonInput = find.byKey(const ValueKey('adjustment-reason-input'));
       expect(reasonInput, findsOneWidget);
       await tester.enterText(reasonInput, 'Chấm phúc khảo giữa kỳ theo đơn');
@@ -430,7 +420,6 @@ void main() {
       await tester.tap(confirmBtn.last);
       await tester.pumpAndSettle();
 
-      // Kiểm tra đã gọi API POST đúng payload
       expect(adapter.lastSubmittedAdjustment, isNotNull);
       expect(
         adapter.lastSubmittedAdjustment!['reason'],
@@ -464,7 +453,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Banner phiếu chờ duyệt hiển thị
     expect(
       find.byKey(const ValueKey('adjustment-pending-banner')),
       findsOneWidget,
@@ -474,7 +462,6 @@ void main() {
       findsOneWidget,
     );
 
-    // Nút Xem và Hủy phiếu có mặt
     expect(
       find.byKey(const ValueKey('view-pending-adjustment-btn')),
       findsOneWidget,
@@ -484,11 +471,9 @@ void main() {
     );
     expect(cancelBtn, findsOneWidget);
 
-    // Bấm Hủy phiếu
     await tester.tap(cancelBtn);
     await tester.pumpAndSettle();
 
-    // Hỏi xác nhận
     expect(find.text('Hủy phiếu điều chỉnh'), findsOneWidget);
     final confirmCancel = find.text('Xác nhận hủy');
     expect(confirmCancel, findsOneWidget);
@@ -518,11 +503,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Thấy phiếu trong danh sách
     expect(find.text('10A1'), findsOneWidget);
     expect(find.text('Toán'), findsOneWidget);
 
-    // Bấm Duyệt / Xem
     final viewBtn = find.byKey(const ValueKey('view-adjustment-adj-100'));
     expect(viewBtn, findsOneWidget);
     await tester.ensureVisible(viewBtn);
@@ -530,14 +513,12 @@ void main() {
     await tester.tap(viewBtn);
     await tester.pumpAndSettle();
 
-    // Chi tiết phiếu hiện ra với các nút Duyệt và Từ chối
     expect(find.text('Chi tiết phiếu điều chỉnh'), findsOneWidget);
     final approveBtn = find.byKey(const ValueKey('adjustment-approve-btn'));
     final rejectBtn = find.byKey(const ValueKey('adjustment-reject-btn'));
     expect(approveBtn, findsOneWidget);
     expect(rejectBtn, findsOneWidget);
 
-    // Thử từ chối: bấm Từ chối
     await tester.tap(rejectBtn);
     await tester.pumpAndSettle();
 
@@ -547,13 +528,11 @@ void main() {
     );
     expect(rejectInput, findsOneWidget);
 
-    // Bấm xác nhận từ chối khi chưa nhập lý do -> báo lỗi
     final confirmRejectBtn = find.text('Từ chối phiếu');
     await tester.tap(confirmRejectBtn);
     await tester.pumpAndSettle();
     expect(find.text('Cần nhập lý do từ chối.'), findsOneWidget);
 
-    // Nhập lý do và từ chối
     await tester.enterText(
       rejectInput,
       'Bài thi không có chữ ký của tổ trưởng',
@@ -596,12 +575,10 @@ void main() {
     await tester.tap(approveBtn);
     await tester.pumpAndSettle();
 
-    // Xác nhận duyệt
     final confirmApprove = find.text('Xác nhận duyệt');
     await tester.tap(confirmApprove);
     await tester.pumpAndSettle();
 
-    // Thông báo lỗi tiếng Việt
     expect(
       find.text(
         'Điểm đã thay đổi sau khi gửi phiếu; yêu cầu giáo viên soạn lại',
@@ -629,7 +606,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Banner ở màn bảng điểm
     expect(
       find.byKey(const ValueKey('gradebook-results-outdated-banner')),
       findsOneWidget,
@@ -639,7 +615,6 @@ void main() {
       findsOneWidget,
     );
 
-    // Trong panel tổng kết cũng hiện banner
     await tester.pumpWidget(
       _wrapWithScope(
         child: const Scaffold(

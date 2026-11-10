@@ -72,7 +72,6 @@ export class ReportsService {
       }));
       if (!rawRows.length) throw new NotFoundException();
 
-      // STT dùng chung với lưới điểm và nhận dạng (common/student-order).
       const order = classStudentOrder(
         rawRows.map((r) => ({
           ma_hoc_sinh: r.studentId,

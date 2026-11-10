@@ -232,7 +232,6 @@ test("UC14 semester coefficients are isolated, authorized, snapshotted and froze
       ),
       { code: "23514" },
     );
-    // A different semester is still editable after this one is locked.
     await weights.save(admin, { ...input, ma_hoc_ky: term2, he_so: "5.00" });
     const result = await finalResults.calculate(
       teacher,

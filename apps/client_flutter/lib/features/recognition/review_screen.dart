@@ -32,7 +32,6 @@ class ReviewScreen extends ConsumerStatefulWidget {
   final String ticketId;
   final num? gradebookVersion;
 
-  /// `true` khi phiếu thuộc lô nhiều trang: thẻ dòng hiện nhãn "Trang n".
   final bool showPageLabels;
 
   @override
@@ -54,7 +53,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   String? _versionError;
   bool confirmed = false;
   bool busy = false;
-  String _reviewLevelFilter = 'ALL'; // 'ALL' | 'DO' | 'VANG' | 'XANH'
+  String _reviewLevelFilter = 'ALL';
   bool _mobileShowList = false;
 
   @override
@@ -176,7 +175,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   }
 
   bool _isRowHandled(RecognitionEvidenceRowDto row) {
-    // Nếu là cảnh báo STT, bắt buộc phải tích "Đúng học sinh này"
     if (_isSttWarning(row) && (sttConfirmed[row.rowId] != true)) {
       return false;
     }
@@ -651,7 +649,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             final data = snapshot.data!;
             final canApprove = data.status.value == 'CHO_DOI_CHIEU';
 
-            // Sắp xếp thứ tự: Đỏ -> Vàng -> Xanh, sau đó theo STT
             final orderedRows = [...data.rows]
               ..sort((left, right) {
                 const priority = {'DO': 0, 'VANG': 1, 'XANH': 2};
@@ -704,7 +701,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 .where((r) => r.exempt != true && _isSttWarning(r))
                 .every((r) => sttConfirmed[r.rowId] == true);
 
-            // Bộ lọc: danh sách các dòng cần hiển thị
             final filteredNeedReviewRows = needReviewRows.where((r) {
               if (_reviewLevelFilter == 'ALL') return true;
               if (_reviewLevelFilter == 'STT_DIFF') return _hasSttDiff(r);
@@ -723,7 +719,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 key: formKey,
                 child: Column(
                   children: [
-                    // Lỗi version nếu có
                     if (_versionError != null)
                       Container(
                         key: const ValueKey('review-version-error'),
@@ -767,7 +762,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                         ),
                       ),
 
-                    // Nội dung chính
                     Expanded(
                       child:
                           isMobile &&
@@ -833,7 +827,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                             ),
                     ),
 
-                    // Sticky bottom bar khi ở chế độ danh sách
                     if (!isMobile || _mobileShowList || totalNeedReview == 0)
                       ReviewBottomBar(
                         confirmed: confirmed,
@@ -880,12 +873,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cột chính (danh sách các dòng)
           Expanded(
             child: ListView(
               cacheExtent: 5000,
               children: [
-                // Thanh tóm tắt dính đầu
                 ReviewHeader(
                   ticket: ticket,
                   currentFilter: _reviewLevelFilter,
@@ -896,10 +887,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Banner trạng thái khi phiếu không ở trạng thái CHO_DOI_CHIEU
                 if (!canApprove) _buildStatusBanner(context, ticket),
 
-                // Nút chuyển lại PageView trên mobile nếu có dòng cần xem
                 if (isMobile && totalNeedReview > 0 && canApprove) ...[
                   Align(
                     alignment: Alignment.centerLeft,
@@ -912,13 +901,11 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   const SizedBox(height: 8),
                 ],
 
-                // Ảnh gốc ở đầu trang khi ở Tablet hoặc Mobile List
                 if (!isDesktop) ...[
                   ReviewSourceImage(ticket: ticket, onRefresh: refreshEvidence),
                   const SizedBox(height: 12),
                 ],
 
-                // Danh sách dòng Đỏ / Vàng
                 for (final row in needReviewRows)
                   ReviewRowCard(
                     row: row,
@@ -945,7 +932,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     isCancelled: ticket.status.value == 'DA_HUY',
                   ),
 
-                // Danh sách dòng Miễn (không tính vào số dòng cần xử lý)
                 for (final row in exemptRows)
                   ReviewRowCard(
                     row: row,
@@ -969,7 +955,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     isCancelled: ticket.status.value == 'DA_HUY',
                   ),
 
-                // Mục thu gọn dòng Xanh
                 if (showGreenCollapsible)
                   ReviewGreenGroup(
                     rows: greenRows,
@@ -984,7 +969,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             ),
           ),
 
-          // Cột phải dính cho ảnh gốc trên Web (≥1024px)
           if (isDesktop) ...[
             const SizedBox(width: 14),
             ReviewSourceImage(
@@ -998,9 +982,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  /// Banner trạng thái khi phiếu không còn ở CHO_DOI_CHIEU (chế độ chỉ xem),
-  /// màu lấy từ token: DA_DUYET ok, DANG_XU_LY warn, LOI bad, DA_HUY trung
-  /// tính, còn lại thông tin.
   Widget _buildStatusBanner(
     BuildContext context,
     RecognitionTicketDetailDto ticket,

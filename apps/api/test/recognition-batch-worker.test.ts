@@ -22,7 +22,6 @@ import {
 import type { RosterEntry } from "../src/modules/recognition/domain/row-matching.js";
 import type { TemplateColumn } from "../src/modules/form-templates/public.js";
 
-// Worker lô nhiều trang (ADR-0016 mục 3): dữ liệu và họ tên hoàn toàn giả, lưu trữ/mô hình/DB giả.
 const pixel =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
@@ -35,7 +34,6 @@ const signature = {
   tableWidthMm: 180,
 };
 
-// STT | Họ tên | TX1 số | TX1 chữ | GK1 số (một kênh) | Ghi chú
 const columns: TemplateColumn[] = [
   {
     index: 0,
@@ -87,7 +85,6 @@ const columns: TemplateColumn[] = [
   },
 ];
 
-// Họ tên giả, khác nhau rõ rệt để ghép theo tên không nhầm.
 const NAMES = [
   "Nguyễn Văn An",
   "Trần Thị Bình",
@@ -127,7 +124,6 @@ const channel = (value: string | null): ChannelResult => ({
   isBlank: value === null,
 });
 
-/** Ô hai kênh: hai kênh khớp → Xanh. */
 const twoChannel = (key: string, value: string | null): V2Grade => ({
   key,
   numeric: channel(value),
@@ -139,7 +135,6 @@ const twoChannel = (key: string, value: string | null): V2Grade => ({
   suggestedSource: value === null ? null : "SO",
 });
 
-/** Ô một kênh: tối đa Vàng, gợi ý từ kênh số (D-01). */
 const oneChannel = (key: string, value: string | null): V2Grade => ({
   key,
   numeric: channel(value),
@@ -151,7 +146,6 @@ const oneChannel = (key: string, value: string | null): V2Grade => ({
   suggestedSource: value === null ? null : "SO",
 });
 
-// Giá trị KHÁC NHAU giữa hai cột của cùng một học sinh để bắt nhầm cột.
 const TX = ["6.0", "7.0", "8.0", "9.0"];
 const GK = ["1.0", "2.0", "3.0", "4.0"];
 
@@ -303,7 +297,6 @@ test("a ticket chosen for one column never reads the other column or an unchosen
     ],
   });
   await processor.process("7");
-  // Không chọn TX1 thì cả cột số lẫn cột chữ của TX1 không được gửi đi đọc.
   assert.deepEqual(
     state.layouts[0]!.columns.map((column) => column.index),
     [0, 1, 4],
@@ -323,7 +316,6 @@ test("each ticket stores only the values of its own key, with the page of every 
     rows.map((row) => (row.numeric as ChannelResult).value);
   assert.deepEqual(numericOf(tx!.rows), TX);
   assert.deepEqual(numericOf(gk!.rows), GK);
-  // Hai tập giá trị khác nhau hoàn toàn: nếu worker lấy nhầm cột thì hai dãy trùng nhau.
   assert.notDeepEqual(numericOf(tx!.rows), numericOf(gk!.rows));
   assert.deepEqual(
     tx!.rows.map((row) => [row.page, row.order, row.stt]),
@@ -335,7 +327,6 @@ test("each ticket stores only the values of its own key, with the page of every 
     ],
   );
   assert.equal(state.modelVersion, "fake-v2");
-  // Ảnh ô nằm dưới tiền tố đúng phiếu; ảnh ô số của hai phiếu là hai khóa khác nhau.
   assert.equal(
     tx!.rows[2]!.numericCropKey,
     "recognition/crops/11/1001-numeric.png",
@@ -363,7 +354,6 @@ test("a one-channel column never produces a green row and keeps the written chan
     assert.equal(row.comparison, "MOT_KENH");
     assert.equal(row.suggestedSource, "SO");
   }
-  // Cột hai kênh có ảnh ô chữ; cột một kênh thì không.
   assert.ok(tx!.rows.every((row) => typeof row.writtenCropKey === "string"));
 });
 
@@ -397,7 +387,6 @@ test("a rejected page marks the whole batch with the same code and page, and sto
   await processor.process("7");
   assert.deepEqual(state.failed, { code: "TEMPLATE_MISMATCH", page: 2 });
   assert.equal(state.completed, undefined);
-  // Không ảnh ô nào được lưu: chỉ còn hai ảnh trang gốc.
   assert.deepEqual(cropKeys(storage), []);
   assert.equal(storage.objects.size, 2);
 });
@@ -440,7 +429,6 @@ test("a student on two pages fails the batch with ROW_MATCH_FAILED and writes no
     classSize: 4,
     pages: [
       pageResult([v2Row(1, 1, bothGrades(1)), v2Row(2, 2, bothGrades(2))]),
-      // Học sinh 2 xuất hiện lần nữa ở trang 2.
       pageResult([v2Row(1, 2, bothGrades(2)), v2Row(2, 3, bothGrades(3))]),
     ],
   });
@@ -609,7 +597,6 @@ test("logs never contain student names", async () => {
   const original = console.log;
   console.log = (...args: unknown[]) => void lines.push(args.join(" "));
   try {
-    // Đường thành công (có log mô hình STT) và đường ghép thất bại (có log lý do).
     await harness({ sttCheck: true }).processor.process("7");
     await harness({
       pages: [

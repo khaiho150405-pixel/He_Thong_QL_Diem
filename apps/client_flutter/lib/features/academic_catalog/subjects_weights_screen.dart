@@ -13,7 +13,6 @@ import 'academic_year_scope.dart';
 import 'merged_view_widgets.dart';
 import 'repository.dart';
 
-/// Dữ liệu thô của màn: đọc từ `catalogRepositoryProvider.list`, không ghi.
 class _Source {
   const _Source({
     required this.subjects,
@@ -30,7 +29,6 @@ class _Source {
   final List<Json> years;
 }
 
-/// Hiển thị số hệ số lấy từ dữ liệu ("1.00" thành "1"); không tính toán.
 String _formatCoefficient(String raw) {
   final value = double.tryParse(raw);
   if (value == null) return raw;
@@ -39,7 +37,6 @@ String _formatCoefficient(String raw) {
       : value.toString();
 }
 
-/// Tên đầy đủ của mã nhóm điểm, chỉ để hiển thị; mã lạ giữ nguyên.
 String _groupName(String code) => switch (code) {
   'TX' => 'Thường xuyên',
   'GK' => 'Giữa kỳ',
@@ -47,9 +44,6 @@ String _groupName(String code) => switch (code) {
   _ => code,
 };
 
-/// QT · Môn học & hệ số (`ad-subjects`). Chỉ đọc: ghép client-side môn học,
-/// thành phần điểm và hệ số học kỳ; không nêu công thức tính điểm. Sửa ở các
-/// màn danh mục.
 class SubjectsWeightsScreen extends ConsumerStatefulWidget {
   const SubjectsWeightsScreen({super.key});
 
@@ -155,11 +149,6 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
     return null;
   }
 
-  /// Thứ tự ưu tiên chọn học kỳ:
-  /// 1. Học kỳ người dùng đã chọn (nếu có trong validSemesters).
-  /// 2. Học kỳ của năm đang xem đang diễn ra theo ngày hôm nay.
-  /// 3. Học kỳ có thu_tu nhỏ nhất của năm đang xem.
-  /// 4. Học kỳ đầu danh sách.
   num? _activeSemester(List<Json> validSemesters) {
     if (validSemesters.isEmpty) return null;
 
@@ -202,7 +191,6 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
     return null;
   }
 
-  /// Nhóm điểm (TX/GK/CK) thành chuỗi hệ số của học kỳ đang chọn.
   Map<String, String> _weightsOf(_Source data, num? semester) => {
     if (semester != null)
       for (final w in data.weights)
@@ -231,7 +219,6 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
     );
   }
 
-  /// "TX ×1" khi có hệ số trong dữ liệu; chỉ "TX" khi học kỳ chưa có hệ số.
   String? _chipSuffix(String? group, Map<String, String> weights) {
     if (group == null || group.isEmpty) return null;
     final coefficient = weights[group];

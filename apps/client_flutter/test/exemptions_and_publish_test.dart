@@ -203,10 +203,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Kiểm tra ô Miễn
       expect(find.text('Miễn'), findsWidgets);
 
-      // Kiểm tra banner QTV missing-students
       expect(
         find.text('Có 1 học sinh vào lớp sau khi cột đã chốt'),
         findsOneWidget,
@@ -214,12 +212,10 @@ void main() {
       expect(find.text('Lê Văn Muộn'), findsOneWidget);
       expect(find.text('Xử lý'), findsOneWidget);
 
-      // Bấm Xử lý mở hộp thoại lý do bắt buộc
       await tester.tap(find.text('Xử lý'));
       await tester.pumpAndSettle();
 
       expect(find.text('Xử lý học sinh vào muộn'), findsOneWidget);
-      // Bấm Xác nhận khi chưa nhập lý do -> validator báo lỗi
       await tester.tap(find.text('Xác nhận'));
       await tester.pumpAndSettle();
       expect(find.text('Cần nhập lý do.'), findsOneWidget);
@@ -357,10 +353,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Kiểm tra nhãn Miễn
       expect(find.text('Miễn'), findsOneWidget);
       expect(find.text('Học sinh được miễn'), findsOneWidget);
-      // Kiểm tra lý do điền sẵn
       expect(find.text('Học sinh được miễn cột này'), findsWidgets);
     },
   );
@@ -426,11 +420,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Kiểm tra các nhóm và mô tả
       expect(find.text('Chưa có bảng điểm'), findsOneWidget);
       expect(
         find.text(
-          'Chưa có bảng điểm — dùng Khởi tạo bảng điểm ở màn Lịch nhập điểm học kỳ',
+          'Chưa có bảng điểm — bảng điểm tự tạo khi phân công giáo viên cho lớp–môn, hãy kiểm tra phân công',
         ),
         findsOneWidget,
       );
@@ -446,10 +439,8 @@ void main() {
       expect(find.text('Cột chưa có lịch nhập (Cảnh báo)'), findsOneWidget);
       expect(find.text('Có cột chưa có lịch nhập'), findsOneWidget);
 
-      // Có nút Mở bảng điểm cho dòng có gradebookId
       expect(find.byKey(const ValueKey('open-gradebook-102')), findsOneWidget);
 
-      // Nút Xác nhận công bố bị disable khi ready == false
       final confirmBtn = tester.widget<FilledButton>(
         find.byKey(const ValueKey('app-dialog-confirm')),
       );
@@ -485,7 +476,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // cell-2 là ô trống của cột mở -> có menu Đánh dấu miễn
       await tester.tap(find.byKey(const ValueKey('cell-menu-cell-2')));
       await tester.pumpAndSettle();
 
@@ -494,7 +484,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Đánh dấu miễn'), findsWidgets);
-      // Bấm Xác nhận khi chưa có lý do -> báo lỗi
       await tester.tap(find.text('Xác nhận'));
       await tester.pumpAndSettle();
       expect(find.text('Cần nhập lý do.'), findsOneWidget);

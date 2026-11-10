@@ -1,12 +1,3 @@
-/**
- * Dựng lớp thử nhận dạng (BE-20) trong DATABASE TEST CỤC BỘ. Không có họ tên nào trong mã nguồn này.
- *
- *   pnpm exec tsx scripts/recognition/pilot/setup.ts db     # lớp + học sinh + giáo viên + phân công (cần TEST_MIGRATION_URL *_test)
- *   pnpm exec tsx scripts/recognition/pilot/setup.ts book   # bảng điểm + lịch nhập đang mở (cần API đang chạy, SEED_PASSWORD)
- *
- * Danh sách học sinh đọc từ `.local/pilot/class.json` (git ignore): [{ stt, name, num, txt }]. Kết quả ghi vào
- * `.local/pilot/pilot.json` (id, tên đăng nhập và mật khẩu giáo viên thử). Gỡ bằng `cleanup.ts`.
- */
 import { randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { argon2id, hash } from "argon2";
@@ -114,7 +105,6 @@ async function setupDb(): Promise<void> {
         dang_theo_hoc: true,
       });
     }
-    // Thứ tự STT hệ thống (theo tên) phải trùng thứ tự in trên giấy, nếu không thuật toán ghép theo thứ tự sẽ lệch.
     const order = classStudentOrder(studentRows);
     const mismatched = students.filter(
       (student, index) =>
@@ -242,7 +232,6 @@ async function setupBook(): Promise<void> {
   );
 }
 
-// Thêm thành phần điểm để mỗi ảnh mẫu có phiếu chờ đối chiếu riêng (mỗi bảng điểm + thành phần chỉ có một phiếu đang chờ).
 async function setupMore(): Promise<void> {
   const base = process.env.API_BASE_URL ?? "http://localhost:3000";
   const pilot = JSON.parse(readFileSync(`${DIR}/pilot.json`, "utf8")) as Pilot;

@@ -13,7 +13,6 @@ test("gradebook policy requires exact assignment, rejects student/admin writes a
     sessionHash: "a".repeat(64),
   };
   let active = true;
-  // Pure policy fixture only; business transactions use PostgreSQL in integration tests.
   const tx = {
     find: async (table, where) => {
       if (table === "phien_lam_viec")

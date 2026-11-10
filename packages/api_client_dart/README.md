@@ -110,7 +110,6 @@ Class | Method | HTTP request | Description
 [*FormTemplatesApi*](doc/FormTemplatesApi.md) | [**formTemplatesUpdate**](doc/FormTemplatesApi.md#formtemplatesupdate) | **PUT** /api/v1/catalog/form-templates/{id} |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksBatchUpdate**](doc/GradebooksApi.md#gradebooksbatchupdate) | **PUT** /api/v1/gradebooks/{id}/grades |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCells**](doc/GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
-[*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksCreate**](doc/GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksExemptions**](doc/GradebooksApi.md#gradebooksexemptions) | **PUT** /api/v1/gradebooks/{id}/exemptions |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksHistory**](doc/GradebooksApi.md#gradebookshistory) | **GET** /api/v1/gradebooks/{id}/cells/{cellId}/history |
 [*GradebooksApi*](doc/GradebooksApi.md) | [**gradebooksHistoryAll**](doc/GradebooksApi.md#gradebookshistoryall) | **GET** /api/v1/gradebooks/{id}/history |
@@ -154,7 +153,6 @@ Class | Method | HTTP request | Description
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsList**](doc/SemesterWeightsApi.md#semesterweightslist) | **GET** /api/v1/catalog/semester-weights |
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsRemove**](doc/SemesterWeightsApi.md#semesterweightsremove) | **DELETE** /api/v1/catalog/semester-weights/{id} |
 [*SemesterWeightsApi*](doc/SemesterWeightsApi.md) | [**semesterWeightsUpdate**](doc/SemesterWeightsApi.md#semesterweightsupdate) | **PUT** /api/v1/catalog/semester-weights/{id} |
-[*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesInitialize**](doc/SemestersApi.md#semesterdeadlinesinitialize) | **POST** /api/v1/catalog/semesters/{id}/gradebooks/initialize |
 [*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesList**](doc/SemestersApi.md#semesterdeadlineslist) | **GET** /api/v1/catalog/semesters/{id}/deadlines |
 [*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesPublishReadiness**](doc/SemestersApi.md#semesterdeadlinespublishreadiness) | **GET** /api/v1/catalog/semesters/{id}/publish-readiness |
 [*SemestersApi*](doc/SemestersApi.md) | [**semesterDeadlinesSet**](doc/SemestersApi.md#semesterdeadlinesset) | **PUT** /api/v1/catalog/semesters/{id}/deadlines/{type} |
@@ -235,7 +233,6 @@ Class | Method | HTTP request | Description
  - [ComponentsDto](doc/ComponentsDto.md)
  - [ComponentsInput](doc/ComponentsInput.md)
  - [ComponentsPage](doc/ComponentsPage.md)
- - [CreateGradebookInput](doc/CreateGradebookInput.md)
  - [CreateTimetableItemInput](doc/CreateTimetableItemInput.md)
  - [DistributionItemDto](doc/DistributionItemDto.md)
  - [EnrollmentDto](doc/EnrollmentDto.md)
@@ -260,8 +257,6 @@ Class | Method | HTTP request | Description
  - [GradebookListDto](doc/GradebookListDto.md)
  - [GradebookSummaryDto](doc/GradebookSummaryDto.md)
  - [HealthDto](doc/HealthDto.md)
- - [InitializeGradebooksResultDto](doc/InitializeGradebooksResultDto.md)
- - [InitializedGradebookDto](doc/InitializedGradebookDto.md)
  - [LateStudentInput](doc/LateStudentInput.md)
  - [LateStudentResultDto](doc/LateStudentResultDto.md)
  - [LockInput](doc/LockInput.md)
@@ -307,7 +302,6 @@ Class | Method | HTTP request | Description
  - [SemestersInput](doc/SemestersInput.md)
  - [SemestersPage](doc/SemestersPage.md)
  - [SessionDto](doc/SessionDto.md)
- - [SkippedGradebookDto](doc/SkippedGradebookDto.md)
  - [SkippedStudentDto](doc/SkippedStudentDto.md)
  - [StudentApprovedComponentDto](doc/StudentApprovedComponentDto.md)
  - [StudentResultSummaryDto](doc/StudentResultSummaryDto.md)

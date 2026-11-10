@@ -59,7 +59,6 @@ export class PrismaRecognitionStore implements RecognitionStore {
       const rows = await tx.phieu_nhan_dien.findMany({
         where: {
           ma_bang_diem: gradebookId,
-          // Phiếu đã hủy mặc định bị ẩn khỏi danh sách (vẫn đọc được qua GET chi tiết).
           ...(includeCancelled ? {} : { trang_thai: { not: "DA_HUY" } }),
         },
         include: { ma_thanh_phan_ref: { select: { ten_thanh_phan: true } } },
@@ -114,7 +113,6 @@ export class PrismaRecognitionStore implements RecognitionStore {
         },
       });
       if (!row) return null;
-      // Danh sách lớp đã chốt khi tạo phiếu: STT và họ tên tại thời điểm đó (ADR-0015).
       const roster = new Map(
         (
           await tx.danh_sach_phieu.findMany({
@@ -155,7 +153,6 @@ export class PrismaRecognitionStore implements RecognitionStore {
           writtenConfidence: item.do_tin_cay_b?.toFixed(4) ?? null,
           comparison: item.ket_luan_doi_chieu,
           reviewLevel: item.muc_phan_loai,
-          // Mức cuối Đỏ (kể cả do ghép học sinh) không gợi ý giá trị.
           suggestedSource:
             item.muc_phan_loai === "DO"
               ? null
@@ -171,7 +168,6 @@ export class PrismaRecognitionStore implements RecognitionStore {
           nameCropKey: item.duong_dan_anh_o_ten,
         }),
       );
-      // Sắp theo STT hệ thống (phiếu cũ không có STT xếp cuối theo vị trí trên ảnh).
       evidence.sort(
         (a, b) =>
           (a.stt ?? Number.MAX_SAFE_INTEGER) -
@@ -275,7 +271,6 @@ export class PrismaRecognitionStore implements RecognitionStore {
             ${input.idempotencyKey}::text,
             ${input.requestHash}::text
           ) AS result`;
-        // Hàm SQL đã chặn phiếu không thuộc bảng điểm/không ở DA_HUY; đọc khóa ảnh để dọn object storage sau khi commit.
         const ticket = await tx.phieu_nhan_dien.findFirst({
           where: {
             ma_phieu: BigInt(input.ticketId),
@@ -295,7 +290,6 @@ export class PrismaRecognitionStore implements RecognitionStore {
           },
         });
         if (!ticket) throw new NotFoundException();
-        // Phiếu thuộc lô dùng chung ảnh các trang với phiếu khác của lô: chỉ xóa ảnh trang khi mọi phiếu của lô đã hủy.
         let sourceKeys: string[] = [ticket.duong_dan_anh_goc];
         if (ticket.ma_lo !== null) {
           const stillUsed = await tx.phieu_nhan_dien.count({
@@ -337,7 +331,6 @@ export class PrismaRecognitionStore implements RecognitionStore {
   ): Promise<StoredRecognitionReceipt> {
     try {
       return await transaction(this.db, async (tx) => {
-        // Danh sách lớp được chốt vào phiếu ngay trong giao dịch tạo phiếu (ADR-0015).
         const students = await tx.$queryRaw<
           Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
         >`

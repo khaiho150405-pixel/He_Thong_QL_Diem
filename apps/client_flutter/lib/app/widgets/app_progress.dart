@@ -4,7 +4,6 @@ import '../design_tokens.dart';
 
 enum AppProgressTone { primary, ok, warn, bad }
 
-/// Thanh tiến độ (`.progress`): cao 8, pill, nền `hover`.
 class AppProgress extends StatelessWidget {
   const AppProgress({
     super.key,
@@ -13,7 +12,6 @@ class AppProgress extends StatelessWidget {
     this.minWidth = 70,
   });
 
-  /// 0..1; giá trị ngoài khoảng được cắt về khoảng này.
   final double value;
   final AppProgressTone tone;
   final double minWidth;
@@ -24,7 +22,6 @@ class AppProgress extends StatelessWidget {
     final fill = switch (tone) {
       AppProgressTone.primary => t.pri,
       AppProgressTone.ok => t.ok,
-      // Prototype dùng #D99A00 (không có token); lấy amber `acc` gần nhất.
       AppProgressTone.warn => t.acc,
       AppProgressTone.bad => t.bad,
     };
@@ -39,11 +36,9 @@ class AppProgress extends StatelessWidget {
   }
 }
 
-/// Thanh độ tin cậy (`.conf`): cao 5; >= 0,85 xanh, >= 0,6 vàng, còn lại đỏ.
 class AppConfidenceBar extends StatelessWidget {
   const AppConfidenceBar({super.key, required this.value});
 
-  /// 0..1.
   final double value;
 
   @override

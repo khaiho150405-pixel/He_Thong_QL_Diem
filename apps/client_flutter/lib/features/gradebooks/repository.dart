@@ -41,18 +41,6 @@ class GradebooksRepository {
         yearId: yearId,
       )).data!;
 
-  Future<GradebookDto> create({
-    required num classId,
-    required num subjectId,
-    required num termId,
-  }) async => (await api.getGradebooksApi().gradebooksCreate(
-    createGradebookInput: CreateGradebookInput(
-      classId: classId,
-      subjectId: subjectId,
-      termId: termId,
-    ),
-  )).data!;
-
   Future<CellsResponseDto> cells(num bookId) async {
     String? cursor;
     GradebookDto? book;

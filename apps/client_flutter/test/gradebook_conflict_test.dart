@@ -171,15 +171,12 @@ void main() {
       final inputFinder = find.byKey(const ValueKey('grade-9001'));
       expect(inputFinder, findsOneWidget);
 
-      // Người dùng gõ điểm
       await tester.enterText(inputFinder, '8.5');
       await tester.pumpAndSettle();
 
-      // Bấm lưu
       await tester.tap(find.text('Lưu thay đổi'));
       await tester.pumpAndSettle();
 
-      // Điền lý do và xác nhận
       await tester.enterText(
         find.widgetWithText(TextField, 'Lý do thay đổi'),
         'Nhập điểm miệng',
@@ -187,17 +184,13 @@ void main() {
       await tester.tap(find.text('Xác nhận lưu'));
       await tester.pumpAndSettle();
 
-      // Không hiện banner xung đột
       expect(find.textContaining('đã thay đổi ở nơi khác'), findsNothing);
 
-      // Hiện thông báo "Ô đã có điểm…"
       expect(find.textContaining('Ô đã có điểm'), findsOneWidget);
 
-      // Giữ nguyên ô người dùng đang gõ
       final textFormField = tester.widget<TextFormField>(inputFinder);
       expect(textFormField.controller?.text, '8.5');
 
-      // Lưới vẫn mở để chỉnh sửa (Save button vẫn hiển thị)
       expect(find.text('Lưu thay đổi'), findsOneWidget);
     },
   );
@@ -226,7 +219,6 @@ void main() {
       await tester.tap(find.text('Xác nhận lưu'));
       await tester.pumpAndSettle();
 
-      // Bật banner xung đột
       expect(find.textContaining('đã thay đổi ở nơi khác'), findsOneWidget);
       expect(find.widgetWithText(TextButton, 'Tải lại'), findsOneWidget);
     },
@@ -255,7 +247,6 @@ void main() {
     await tester.tap(find.text('Xác nhận lưu'));
     await tester.pumpAndSettle();
 
-    // Bật banner xung đột
     expect(find.textContaining('đã thay đổi ở nơi khác'), findsOneWidget);
     expect(find.widgetWithText(TextButton, 'Tải lại'), findsOneWidget);
   });

@@ -6,7 +6,6 @@ import '../../features/authentication/session.dart';
 import '../design_tokens.dart';
 import 'app_avatar.dart';
 
-/// Hộp thoại xác nhận đăng xuất thống nhất toàn hệ thống
 Future<void> confirmLogout(
   BuildContext context,
   WidgetRef ref, [
@@ -76,10 +75,6 @@ Future<void> confirmLogout(
   }
 }
 
-/// Menu Avatar gom toàn bộ thao tác tài khoản:
-/// 1. Thông tin cá nhân (ad, gv)
-/// 2. Đổi mật khẩu (ad, gv)
-/// 3. Đăng xuất (có hỏi trước khi đăng xuất)
 class AppUserAvatarMenu extends ConsumerWidget {
   const AppUserAvatarMenu({
     super.key,
@@ -139,7 +134,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
           }
         },
         itemBuilder: (ctx) => [
-          // Header tóm tắt tài khoản
           PopupMenuItem<String>(
             enabled: false,
             child: Column(
@@ -186,7 +180,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
               ],
             ),
           ),
-          // 1. Thông tin cá nhân (ad, gv)
           if (isStaff)
             PopupMenuItem<String>(
               value: 'profile',
@@ -205,7 +198,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
                 ],
               ),
             ),
-          // 2. Đổi mật khẩu (ad, gv)
           if (isStaff)
             PopupMenuItem<String>(
               value: 'password',
@@ -225,7 +217,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
               ),
             ),
           if (isStaff) const PopupMenuDivider(height: 1),
-          // 3. Đăng xuất (có hỏi trước khi đăng xuất)
           PopupMenuItem<String>(
             value: 'logout',
             child: Row(

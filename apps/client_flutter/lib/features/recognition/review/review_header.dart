@@ -5,9 +5,6 @@ import '../../../app/design_tokens.dart';
 import '../../../app/widgets/app_badge.dart';
 import '../../../app/widgets/stat_card.dart';
 
-/// Thanh tóm tắt đầu trang: dải 3 chỉ số Xanh / Vàng / Đỏ (số dòng của phiếu),
-/// tên phiếu + thành phần điểm + trạng thái, và chip lọc
-/// Tất cả / Đỏ / Vàng / Xanh / STT khác kèm số đếm.
 class ReviewHeader extends StatelessWidget {
   const ReviewHeader({
     super.key,
@@ -25,8 +22,6 @@ class ReviewHeader extends StatelessWidget {
   final bool canCancel;
   final VoidCallback? onCancel;
 
-  /// Hiện dải 3 chỉ số phía trên (tắt ở chế độ trượt trên điện thoại cho đỡ
-  /// chiếm chỗ; số đếm vẫn nằm trên các chip lọc).
   final bool showSummary;
 
   @override
@@ -249,9 +244,6 @@ class ReviewHeader extends StatelessWidget {
   }
 }
 
-/// Dải 3 chỉ số Xanh / Vàng / Đỏ (số dòng của phiếu, lấy từ dữ liệu phiếu).
-/// Từ 560 px là ba [StatCard] trên một hàng; hẹp hơn là ba ô gọn với
-/// [AppBadge] và số dòng.
 class _ReviewSummaryStrip extends StatelessWidget {
   const _ReviewSummaryStrip({
     required this.green,

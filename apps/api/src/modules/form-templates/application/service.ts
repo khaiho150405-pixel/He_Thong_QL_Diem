@@ -69,7 +69,6 @@ function expectedVersionOf(value: unknown): number {
   return value;
 }
 
-/** Định nghĩa không hợp lệ -> INVALID_TEMPLATE_DEFINITION (không kèm dữ liệu người dùng, chỉ lý do ổn định). */
 function invalidDefinition(error: InvalidTemplateDefinition) {
   return templateError(
     "INVALID_TEMPLATE_DEFINITION",
@@ -81,7 +80,6 @@ function invalidDefinition(error: InvalidTemplateDefinition) {
 function checkedDefinition(raw: unknown, expectedColumns?: number) {
   try {
     const definition = parseDefinition(raw);
-    // Tự nhất quán trước (chưa biết số cột của ảnh): mọi cột 0..n-1 theo đúng luật.
     validateColumns(
       definition.columns,
       expectedColumns ?? definition.columns.length,
@@ -108,7 +106,6 @@ function parseJsonObject(text: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-/** Thân JSON của PUT/versions: `expectedVersion` cộng các trường của `definition`. */
 function versionedBody(body: unknown): {
   expectedVersion: number;
   definition: TemplateDefinition;
@@ -133,7 +130,6 @@ export class FormTemplatesService {
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
-  /** Quản trị viên và giáo viên được đọc; học sinh bị từ chối (AGENTS mục 7, bất biến 9/10). */
   private reader(actor: Actor | undefined): asserts actor is Actor {
     authenticated(actor);
     if (actor.role === "HOC_SINH") throw new ForbiddenException();
@@ -177,7 +173,6 @@ export class FormTemplatesService {
     };
   }
 
-  /** Proxy `/v2/layout/analyze`; không lưu gì. */
   async analyze(actor: Actor | undefined, upload: ImageUpload) {
     administrator(actor);
     inspectImage(upload.bytes, upload.claimedType);
@@ -201,7 +196,6 @@ export class FormTemplatesService {
     const definition = checkedDefinition(parseJsonObject(definitionText));
     const image = inspectImage(upload.bytes, upload.claimedType);
     await this.consume(actor, "FORM_TEMPLATE_ANALYZE");
-    // Server tự phân tích lại ảnh để tính chữ ký; không tin chữ ký/số cột do client gửi.
     const analysis = await this.callRecognizer(() =>
       this.recognizer.analyzeLayout(upload.bytes),
     );
@@ -271,10 +265,6 @@ export class FormTemplatesService {
     return this.changeStatus(actor, idInput, body, "NGUNG");
   }
 
-  /**
-   * "Thử nhận dạng": `/v2/recognize` đồng bộ với layout dựng từ cột mẫu. Không ghép học sinh, không tạo phiếu hay kết quả
-   * dòng, không lưu ảnh; chỉ ghi một dòng nhật ký "thử mẫu" (và bộ đếm hạn mức). Không log họ tên đọc được.
-   */
   async tryTemplate(
     actor: Actor | undefined,
     idInput: unknown,
@@ -377,7 +367,6 @@ export class FormTemplatesService {
       );
   }
 
-  /** Dịch lỗi của client v2 sang mã lỗi ổn định của API. Không để lộ thông điệp tự do của dịch vụ. */
   private async callRecognizer<T>(call: () => Promise<T>): Promise<T> {
     try {
       return await call();
@@ -396,7 +385,6 @@ export class FormTemplatesService {
     try {
       await this.storage.remove(objectKey);
     } catch {
-      // Ảnh mồ côi không chứa họ tên; dọn dẹp là việc vận hành, không đổi kết quả lỗi gốc.
       this.logger.warn(
         JSON.stringify({ event: "form_template_cleanup_failed" }),
       );

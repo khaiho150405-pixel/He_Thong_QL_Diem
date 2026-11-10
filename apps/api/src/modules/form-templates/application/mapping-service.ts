@@ -25,10 +25,6 @@ function positiveInt(value: unknown): number {
   return parsed;
 }
 
-/**
- * Gợi ý ánh xạ (nhóm, thứ tự) của cột mẫu -> thành phần điểm của môn trong một bảng điểm (ADR-0016 mục 1, 4). Chỉ gợi ý: khi
- * tạo lô, backend kiểm lại ánh xạ ở tầng SQL nên giáo viên không thể bỏ qua kết quả này bằng cách sửa UI.
- */
 @Injectable()
 export class FormTemplateMappingService {
   constructor(
@@ -51,7 +47,6 @@ export class FormTemplateMappingService {
       templateId,
     );
     if (!context) throw templateError("TEMPLATE_NOT_FOUND");
-    // Giáo viên chỉ dùng mẫu đang dùng; mẫu nháp/ngừng được báo như chưa tồn tại với họ ở danh sách, ở đây báo rõ lý do.
     if (context.templateStatus !== "DANG_DUNG")
       throw templateError("TEMPLATE_INACTIVE");
     const byId = new Map(context.components.map((item) => [item.id, item]));

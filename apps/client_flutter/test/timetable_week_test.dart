@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Học kỳ 03/09/2031 (thứ Tư) – 30/09/2031 (thứ Ba): 5 tuần, tuần đầu/cuối lẻ.
 const _semester = {
   'id': 1,
   'name': 'Học kỳ I',
@@ -18,7 +17,6 @@ const _semester = {
   'endDate': '2031-09-30',
 };
 
-// Hôm nay cố định: thứ Tư 10/09/2031, tuần 2 (08/09 – 14/09).
 final _today = DateTime(2031, 9, 10, 15, 30);
 
 class _Server implements HttpClientAdapter {
@@ -120,7 +118,6 @@ VoidCallback? _onPressed(WidgetTester tester, String label) => tester
     )
     .onPressed;
 
-/// Chữ trong tiêu đề cột (tránh trùng nhãn ô chọn ngày trên thanh công cụ).
 Finder _head(String text) =>
     find.descendant(of: find.byType(Table), matching: find.text(text));
 
@@ -188,20 +185,19 @@ void main() {
     );
     expect(_headColor(tester, '09/09/2031'), _headColor(tester, '11/09/2031'));
 
-    await _tap(tester, 'Tuần sau'); // 15/09 – 21/09
+    await _tap(tester, 'Tuần sau');
     expect(_headColor(tester, '17/09/2031'), _headColor(tester, '16/09/2031'));
     expect(_headColor(tester, '15/09/2031'), _headColor(tester, '16/09/2031'));
   });
 
   testWidgets('ngày ngoài học kỳ mờ đi và không hiện tiết', (tester) async {
     await _pump(tester);
-    // Tuần 2: cả Toán (thứ Hai) lẫn Ngữ văn (thứ Tư) hiện.
     expect(find.text('Toán'), findsOneWidget);
     expect(find.text('Ngữ văn'), findsOneWidget);
 
-    await _tap(tester, 'Tuần trước'); // 01/09 – 07/09, bắt đầu từ 03/09
-    expect(find.text('Toán'), findsNothing); // thứ Hai 01/09 ngoài học kỳ
-    expect(find.text('Ngữ văn'), findsOneWidget); // thứ Tư 03/09 trong học kỳ
+    await _tap(tester, 'Tuần trước');
+    expect(find.text('Toán'), findsNothing);
+    expect(find.text('Ngữ văn'), findsOneWidget);
     final faded = tester.widget<Opacity>(
       find.ancestor(of: _head('01/09/2031'), matching: find.byType(Opacity)),
     );
@@ -237,7 +233,7 @@ void main() {
       await _tap(tester, 'Tuần trước');
       await _tap(tester, 'Tuần trước');
       expect(_weekLabel(tester), '01/09 – 07/09/2031');
-      expect(find.text('Toán'), findsOneWidget); // không giới hạn học kỳ
+      expect(find.text('Toán'), findsOneWidget);
       expect(_onPressed(tester, 'Tuần trước'), isNotNull);
     },
   );
@@ -249,7 +245,6 @@ void main() {
     await _tap(tester, 'Theo ngày');
     expect(find.text('T2 · 08/09'), findsOneWidget);
     expect(find.text('CN · 14/09'), findsOneWidget);
-    // Mặc định là thứ Tư (hôm nay) → Ngữ văn.
     expect(find.text('Ngữ văn'), findsOneWidget);
 
     await _tap(tester, 'T2 · 08/09');

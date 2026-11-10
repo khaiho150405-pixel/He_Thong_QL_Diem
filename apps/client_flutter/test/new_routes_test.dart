@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Máy chủ giả cho ba route mới của bước 13: danh mục, bảng điểm, tổng kết.
 class _Server implements HttpClientAdapter {
   _Server(this.role);
   final String role;
@@ -388,14 +387,11 @@ void main() {
           expect(tester.takeException(), isNull);
           expect(find.text('Lê Hoàng Cúc'), findsOneWidget);
           expect(find.text('Phạm Minh Đức'), findsOneWidget);
-          // Giáo viên chưa có phân công vẫn hiện.
           expect(find.text('Vũ Thị Hà'), findsOneWidget);
           expect(find.text('Quản lý giáo viên'), findsOneWidget);
           expect(find.text('Quản lý phân công'), findsOneWidget);
-          // Lớp được phân công hiện dạng chip; chủ nhiệm dạng AppBadge.
           expect(find.text('10A1'), findsWidgets);
           expect(find.text('10A2'), findsWidgets);
-          // Chủ nhiệm: mỗi lớp có đúng một AppBadge của giáo viên chủ nhiệm.
           for (final className in ['10A1', '10A2']) {
             expect(
               find.descendant(
@@ -454,7 +450,6 @@ void main() {
         expect(find.text('Quản lý môn học'), findsOneWidget);
         expect(find.text('Quản lý thành phần điểm'), findsOneWidget);
         expect(find.text('Quản lý hệ số học kỳ'), findsOneWidget);
-        // Không viết công thức hay tổng hệ số cứng.
         expect(find.textContaining('chia 9'), findsNothing);
         expect(find.textContaining('Tổng hệ số'), findsNothing);
         expect(
@@ -488,7 +483,6 @@ void main() {
         expect(find.textContaining('W-012345678901234567'), findsWidgets);
         expect(find.textContaining('DEV-2026-01'), findsWidgets);
         expect(find.text('Đang nhập liệu'), findsOneWidget);
-        // Giáo viên được tính; không có cột TB nhóm TX/GK/CK.
         expect(
           find.byKey(const ValueKey('calculate-final-results')),
           findsWidgets,

@@ -5,9 +5,6 @@ import '../../../app/design_tokens.dart';
 import '../image_preview.dart';
 import 'review_page_labels.dart';
 
-/// Mục thu gọn gom các dòng Xanh: "N dòng Xanh — điểm cuối đã điền".
-/// Khi mở ra: danh sách gọn mỗi học sinh một hàng gồm STT, họ tên,
-/// ảnh ô số, ảnh ô chữ (nhỏ, bấm phóng to, kèm độ tin cậy), điểm cuối (sửa được).
 class ReviewGreenGroup extends StatelessWidget {
   const ReviewGreenGroup({
     super.key,
@@ -171,7 +168,6 @@ class ReviewGreenGroup extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Màn rộng: một hàng, ảnh số 96px và ảnh chữ 220px (cao 56px).
           if (constraints.maxWidth >= 560) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +194,6 @@ class ReviewGreenGroup extends StatelessWidget {
               ],
             );
           }
-          // Màn hẹp: dòng 1 là STT, tên, điểm cuối; dòng 2 là hai ảnh trải rộng.
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -241,7 +236,6 @@ class ReviewGreenGroup extends StatelessWidget {
     );
   }
 
-  /// Ảnh ô cắt nhỏ (cao 56) kèm thanh độ tin cậy của kênh.
   Widget _cropThumb(
     BuildContext context, {
     required String label,

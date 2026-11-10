@@ -45,7 +45,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final _searchFocusNode = FocusNode();
   Timer? _searchDebounce;
   String filter = '';
-  String _studentSortBy = 'name'; // 'name' | 'class' | 'status'
+  String _studentSortBy = 'name';
   bool _sortAscending = true;
   int _clientPage = 0;
   int _pageSize = appDefaultPageSize;
@@ -57,24 +57,22 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   );
   bool _mobileFiltersOpen = false;
 
-  // System References cache
   Map<String, List<Json>> _references = {};
   bool _loadingReferences = false;
 
-  // Filter States
   num? _filterClassId;
   num? _filterSubjectId;
   num? _filterTeacherId;
   num? _filterSemesterId;
   num? _filterYearId;
   int? _filterGrade;
-  String? _filterStudentStatus; // null | 'active' | 'inactive'
-  String? _filterRole; // null | 'QUAN_TRI_VIEN' | 'GIAO_VIEN' | 'HOC_SINH'
-  bool? _filterAccountActive; // null | true | false
-  String? _filterDepartment; // null | department string
-  int? _filterPeriods; // null | 1 | 2 | 3 | 4
-  bool? _filterRequired; // null | true | false
-  bool? _filterCurrentYear; // null | true | false
+  String? _filterStudentStatus;
+  String? _filterRole;
+  bool? _filterAccountActive;
+  String? _filterDepartment;
+  int? _filterPeriods;
+  bool? _filterRequired;
+  bool? _filterCurrentYear;
   bool _filterActiveInYear = false;
 
   ResourceSpec get spec =>
@@ -102,11 +100,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final Map<num, int> _studentSchoolStt = {};
   final Map<num, int> _studentClassStt = {};
 
-  /// STT is meaningful only for the complete school list or the class view.
-  /// Search, attendance and other sort modes show a subset/reordered list, so
-  /// hiding it prevents users from treating a position in that subset as rank.
   bool get _showsStudentStt {
-    // STT chỉ đúng khi đã có đủ danh sách (đang tải nền thì chưa xếp hạng được).
     if (_loader.loadingMore) return false;
     if (_studentSortBy == 'status') return false;
     if (_studentSortBy == 'class' || _filterClassId != null) return true;
@@ -174,7 +168,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     if (_references.isNotEmpty) return;
     final role = ref.read(sessionProvider)?.role.value;
     if (role == 'HOC_SINH') {
-      // Học sinh chỉ có quyền xem học sinh của mình, không tải danh mục quản trị khác
       return;
     }
     if (mounted) setState(() => _loadingReferences = true);
@@ -226,7 +219,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     return items;
   }
 
-  /// Gợi ý tìm kiếm lấy từ danh sách đã tải (không gọi thêm máy chủ).
   List<String> get _searchSuggestions => _loader.items
       .map(rowLabel)
       .where((label) => label.trim().isNotEmpty)
@@ -267,8 +259,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     });
   }
 
-  /// Tải lại từ máy chủ (sau khi thêm/sửa/xóa); `reload` thường chỉ dựng lại
-  /// khi đổi năm học hoặc loại danh mục, còn đổi bộ lọc thì lọc trên dữ liệu đã tải.
   void reloadFresh() {
     _dirty = true;
     reload();
@@ -311,7 +301,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
     _dirty = false;
     final resource = widget.resource;
-    // Trang đầu hiện ngay; các trang còn lại tải dưới nền (ProgressiveLoader).
     await _loader.start(key, (cursor) async {
       final res = await ref
           .read(catalogRepositoryProvider)
@@ -573,11 +562,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (admin && !isMobile) _buildTopActionBar(context, theme),
-                // Học sinh chỉ nhận đúng hồ sơ của mình từ backend, nên không
-                // hiển thị bộ lọc/tìm kiếm không có ý nghĩa cho một bản ghi.
                 if (!studentViewer) _buildFilterBar(theme),
 
-                // Student Sort Toolbar
                 if (spec.key == 'students' && !studentViewer) ...[
                   const SizedBox(height: 6),
                   _buildStudentSortToolbar(theme),
@@ -587,7 +573,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   height: MediaQuery.sizeOf(context).width < 600 ? 8 : 16,
                 ),
 
-                // Main Content
                 Expanded(
                   child: FutureBuilder<CatalogPageData>(
                     future: page,
@@ -611,7 +596,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                       final loaded = _loader.items;
                       var rows = loaded.where(_matchesRow).toList();
 
-                      // Student Sorting Logic & STT Calculation
                       if (spec.key == 'students') {
                         _calculateStudentOrders(loaded);
                         rows.sort((a, b) {
@@ -636,9 +620,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                           } else if (_studentSortBy == 'status') {
                             final statusA = a['dang_theo_hoc'] == true ? 1 : 0;
                             final statusB = b['dang_theo_hoc'] == true ? 1 : 0;
-                            res = statusB.compareTo(
-                              statusA,
-                            ); // active (1) first by default
+                            res = statusB.compareTo(statusA);
                             if (res == 0) {
                               final nameA = (a['ho_ten'] ?? rowLabel(a))
                                   .toString();
@@ -972,7 +954,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       years: years,
       width: 270,
       onChanged: () {
-        // setState để FutureBuilder nhận future mới; thiếu setState thì danh sách giữ dữ liệu năm cũ.
         setState(() {
           cursors
             ..clear()
@@ -1524,8 +1505,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  /// Học sinh, giáo viên và tài khoản hiển thị dạng bảng khi đủ rộng; các tài
-  /// nguyên còn lại giữ dạng thẻ.
   bool get _usesTable =>
       const {'students', 'teachers', 'accounts'}.contains(spec.key);
 
@@ -1584,8 +1563,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       },
     );
   }
-
-  // ---------------------------------------------------------------- Bảng
 
   Widget _buildTable(List<Json> rows, Widget pagination) {
     final t = context.tokens;
@@ -1749,8 +1726,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     ],
   );
 
-  /// Ô chữ một dòng. [digits] bật chữ số cùng bề rộng (số điện thoại 10 số
-  /// thẳng cột, mỗi chữ số chiếm cùng một chiều rộng).
   Widget _textCell(AppTokens t, Object? value, {bool digits = false}) {
     final text = value?.toString() ?? '';
     return Text(
@@ -1809,7 +1784,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final isAttending = row['dang_theo_hoc'] == true;
     final classes = (_references['classes'] ?? <Json>[])
         .cast<Map<String, dynamic>>();
-    // Năm học đang xem: dùng để chọn ngày hiệu lực mặc định nằm trong năm học.
     final viewingYear = ref.read(viewingYearProvider);
     final yearStart = AppDateField.parseIsoDate(
       viewingYear?['ngay_bat_dau']?.toString(),
@@ -2043,8 +2017,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
   Widget _roleBadge(String role) => roleAppBadge(role);
 
-  // ----------------------------------------------------------------- Thẻ
-
   _Stt _sttOf(Json row) {
     final studentId = row['ma_hoc_sinh'] as num?;
     final classStt =
@@ -2084,8 +2056,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     ),
   );
 
-  /// Ô STT của bảng học sinh: số thứ tự đang hiển thị cùng phạm vi (LỚP hoặc
-  /// TRƯỜNG). Học sinh xem hồ sơ của mình còn thấy thêm STT lớp.
   Widget _studentSttCell(AppTokens t, Json row) {
     final stt = _sttOf(row);
     if (stt.visible == null && !(studentViewer && stt.classStt != null)) {
@@ -2107,7 +2077,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  /// Dòng phụ của thẻ danh mục: thông tin có nghĩa với người dùng, không hiện mã nội bộ.
   String? _plainSubtitle(Json row) {
     String? range() {
       final from = _viDate(row['ngay_bat_dau']);
@@ -2308,8 +2277,6 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   }
 }
 
-/// Một cột của bảng danh mục: nhãn tiêu đề, độ rộng (cố định hoặc theo `flex`)
-/// và hàm dựng ô từ một dòng dữ liệu.
 class _CatalogColumn {
   const _CatalogColumn(this.label, this.builder, {this.flex = 1, this.width});
 
@@ -2321,7 +2288,6 @@ class _CatalogColumn {
 
 typedef _Stt = ({int? visible, int? classStt, bool classScope, bool show});
 
-/// Ngày `yyyy-MM-dd` từ API → `dd/MM/yyyy` như các ô nhập ngày; giá trị lạ giữ nguyên.
 String? _viDate(Object? value) {
   final raw = value?.toString().trim();
   if (raw == null || raw.isEmpty) return null;

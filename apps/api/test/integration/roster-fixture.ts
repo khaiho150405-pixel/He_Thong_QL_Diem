@@ -1,7 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Pool } from "pg";
 
-// Dữ liệu hoàn toàn giả cho các test phiếu nhận dạng + danh sách lớp đã chốt (ADR-0015).
 export interface Receipt {
   ticketId: string;
   jobId: string;
@@ -68,7 +67,6 @@ export async function createRosterFixture() {
     names.set(id, name);
     return id;
   };
-  // Mã học sinh tăng dần nhưng thứ tự tên là An, Bảo, Cường, Đạt: STT khác thứ tự mã.
   const students = {
     dat: await makeStudent(cls, "Nguyễn Văn Đạt"),
     an: await makeStudent(cls, "Trần Thị An"),
@@ -95,12 +93,10 @@ export async function createRosterFixture() {
   );
   const book = (
     await owner.query(
-      // Phân công đã tự tạo bảng điểm (trigger); lấy lại bảng đó thay vì chèn mới.
       "INSERT INTO bang_diem(ma_lop,ma_mon,ma_hoc_ky) VALUES($1,$2,$3) ON CONFLICT (ma_lop,ma_mon,ma_hoc_ky) DO UPDATE SET ma_lop=EXCLUDED.ma_lop RETURNING ma_bang_diem",
       [cls, subject, term],
     )
   ).rows[0].ma_bang_diem as number;
-  // Ô điểm cho học sinh đang học: cần khi duyệt phiếu.
   await owner.query(
     "INSERT INTO diem_thanh_phan(ma_bang_diem,ma_hoc_sinh,ma_thanh_phan) SELECT $1,ma_hoc_sinh,$2 FROM hoc_sinh WHERE ma_lop=$3 AND dang_theo_hoc ON CONFLICT (ma_bang_diem,ma_hoc_sinh,ma_thanh_phan) DO NOTHING",
     [book, component, cls],
@@ -111,7 +107,6 @@ export async function createRosterFixture() {
     studentId,
     fullName: names.get(studentId)!,
   });
-  // Danh sách đúng theo thứ tự tên.
   const valid = [
     entry(1, students.an),
     entry(2, students.bao),
@@ -160,7 +155,6 @@ export async function createRosterFixture() {
         )
       ).rows[0].count,
     );
-  // Chạy một hàm SQL của runtime trong giao dịch SERIALIZABLE.
   const serializable = async <T>(
     work: (query: Pool["query"]) => Promise<T>,
   ): Promise<T> => {
@@ -196,7 +190,6 @@ export async function createRosterFixture() {
     countTickets,
     serializable,
     close: async () => {
-      // Không để lại sự kiện outbox chưa gửi: dispatcher của test khác lấy theo lô 10 sự kiện cũ nhất.
       await owner.query(
         "UPDATE recognition_outbox SET da_gui_luc=now() WHERE da_gui_luc IS NULL AND ma_phieu IN (SELECT ma_phieu FROM phieu_nhan_dien WHERE ma_bang_diem=$1)",
         [book],

@@ -209,7 +209,6 @@ void main() {
         expect(tester.widget<Text>(find.text('ok')).style!.color, tk.ok);
         expect(tester.widget<Text>(find.text('info')).style!.color, tk.priLink);
         expect(tester.widget<Text>(find.text('ok')).style!.fontSize, 12);
-        // Nhãn không có chấm tròn đầu dòng.
         expect(find.byKey(const ValueKey('app-badge-dot')), findsNothing);
       });
 
@@ -594,7 +593,6 @@ void main() {
         expect(_decorationColor(tester, boxOf('mobile')), tk.subtle);
         expect(_decorationBorder(tester, boxOf('mobile')).top.color, tk.line2);
 
-        // Chấm "nhập từ ảnh" chỉ có ở ô fromImage, màu ok.
         final dot = find.byKey(const ValueKey('app-grade-cell-image-dot'));
         expect(dot, findsOneWidget);
         expect(
@@ -606,7 +604,6 @@ void main() {
         );
         expect(_decorationColor(tester, dot), tk.ok);
 
-        // Chỉ đọc: TextField readOnly; ô thường vẫn gõ được và báo onChanged.
         final readOnlyField = find.descendant(
           of: find.byKey(const ValueKey('readonly')),
           matching: find.byType(TextField),
@@ -626,7 +623,6 @@ void main() {
         final c = TextEditingController(text: '99');
         addTearDown(c.dispose);
         await _pump(tester, theme, AppGradeCell(controller: c), textScale: 1);
-        // Giá trị ngoài 0..10 vẫn hiển thị bình thường; cờ isInvalid do màn cha.
         expect(
           _decorationColor(
             tester,

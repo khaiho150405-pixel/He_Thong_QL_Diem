@@ -229,8 +229,6 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
     );
   }
 
-  /// Sáu thẻ số liệu lấy nguyên từ `GradebookSummaryDto`. Từ 720 px xếp 3 cột
-  /// (hai hàng), hẹp hơn xếp 2 cột.
   Widget _stats(GradebookSummaryDto data) {
     final cards = <Widget>[
       StatCard(
@@ -283,8 +281,6 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
     );
   }
 
-  /// Màu cột theo mã xếp loại backend trả về (cùng quy ước với biểu đồ phân
-  /// bố ở dashboard); mã không nhận ra dùng màu trung tính.
   Color _barColor(AppTokens t, String code) {
     switch (code.trim().toUpperCase()) {
       case 'GIOI':

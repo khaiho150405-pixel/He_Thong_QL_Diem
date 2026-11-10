@@ -92,7 +92,6 @@ export class AdjustmentsService {
     @Inject(ADJUSTMENT_STORE) private readonly store: AdjustmentStore,
   ) {}
 
-  /** Phạm vi bảng điểm của phiếu, để kiểm quyền theo phân công như mọi thao tác trên bảng điểm. */
   private async scopeOf(tx: AdjustmentUnit, bookId: number) {
     const book = await tx.authorization.find("bang_diem", {
       ma_bang_diem: bookId,
@@ -265,7 +264,6 @@ export class AdjustmentsService {
     );
     const idempotent = call(idem, { adjId, expectedVersion });
     return this.store.run(async (tx) => {
-      // Chỉ giáo viên (phụ trách bảng) mới hủy; SQL kiểm thêm đúng người đã gửi.
       await this.loadFor(tx, actor, adjId, true);
       await tx.cancel(actor.sessionHash, adjId, expectedVersion, idempotent);
       return (await tx.detail(adjId))!;

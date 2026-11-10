@@ -8,7 +8,6 @@ import {
   type RosterEntry,
 } from "../src/modules/recognition/domain/row-matching.js";
 
-// Ghép học sinh cho lô nhiều trang (ADR-0016 mục 3): MỘT lần trên toàn lô, dữ liệu hoàn toàn giả.
 const FAMILY = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Vũ", "Đặng", "Bùi"];
 const MIDDLE = ["Văn", "Thị", "Minh", "Quốc", "Ngọc", "Hữu", "Thanh", "Anh"];
 const GIVEN = [
@@ -65,7 +64,6 @@ function row(
   };
 }
 
-/** Các dòng của một trang chứa học sinh STT `from..to` của danh sách lớp, STT in trên giấy lệch `shift`. */
 const page = (
   roster: RosterEntry[],
   pageNumber: number,
@@ -97,7 +95,6 @@ const similarRoster = (names: string[]): RosterEntry[] =>
   }));
 
 test("a student repeated on page 2 fails even when a similar-named classmate could absorb the repeated row", () => {
-  // Hồi quy P3-F1: "Nguyen Van An" và "Nguyen Van Anh" giống nhau 0,93; dòng lặp không được ép sang học sinh thứ hai.
   const roster = similarRoster([
     "Nguyen Van An",
     "Nguyen Van Anh",
@@ -153,7 +150,6 @@ test("a 41-student class over two pages is matched once: 38 rows then 3 rows", (
       result.matches.map((m) => m.stt),
       roster.map((e) => e.stt),
     );
-    // Mỗi dòng mang theo số trang; trang 2 bắt đầu lại từ dòng 1.
     assert.deepEqual(
       result.matches.slice(37).map((m) => [m.page, m.rowIndex, m.stt]),
       [
@@ -170,7 +166,6 @@ test("a 41-student class over two pages is matched once: 38 rows then 3 rows", (
 
 test("a student that appears on two pages fails the whole batch with ROW_MATCH_FAILED", () => {
   const roster = makeRoster(41);
-  // Học sinh STT 5 có dòng ở cả trang 1 lẫn trang 2; tổng số dòng vẫn nhỏ hơn sĩ số.
   const detected = [
     ...page(roster, 1, 1, 30),
     row(2, 1, roster[4]!),
@@ -185,7 +180,6 @@ test("a student that appears on two pages fails the whole batch with ROW_MATCH_F
     if (result.ok) throw new Error("unreachable");
     assert.equal(result.code, "ROW_MATCH_FAILED");
     assert.equal(result.reason, "DUPLICATE_STUDENT");
-    // Thông báo ghi vị trí theo trang.dòng và không chứa họ tên.
     assert.match(result.detail, /1\.5/);
     assert.match(result.detail, /2\.1/);
     assert.doesNotMatch(result.detail, new RegExp(roster[4]!.fullName));
@@ -194,7 +188,6 @@ test("a student that appears on two pages fails the whole batch with ROW_MATCH_F
 
 test("more paper rows than students over all pages fails with ROW_MATCH_FAILED", () => {
   const roster = makeRoster(41);
-  // 38 + 1 + 3 = 42 dòng có điểm cho 41 học sinh: chắc chắn có một học sinh xuất hiện hai lần.
   const detected = [
     ...page(roster, 1, 1, 38),
     row(2, 1, roster[4]!),
@@ -214,7 +207,6 @@ test("a missing or empty page 2 leaves its students blank without an error", () 
   const only = page(roster, 1, 1, 38);
   for (const detected of [
     only,
-    // Trang 2 có mặt nhưng toàn dòng gạch/trống.
     [
       ...only,
       row(2, 1, roster[38]!, 39, { struck: true, hasGradeInk: false }),
@@ -265,7 +257,6 @@ test("one page behaves exactly like the single-photo matcher", () => {
 
 test("the STT model is chosen per page: a shifted second page stays green", () => {
   const roster = makeRoster(41);
-  // Trang 2 in STT lệch +1 (một học sinh đã nghỉ ở trang 1); trang 1 in đúng STT hệ thống.
   const detected = [...page(roster, 1, 1, 38), ...page(roster, 2, 39, 41, 1)];
   const result = ok(matchBatchRows(detected, roster, { sttCheck: true }));
   assert.equal(result.matches.length, 41);
@@ -287,8 +278,6 @@ test("the STT model is chosen per page: a shifted second page stays green", () =
 
 test("struck rows are counted per page when shifting printed STT", () => {
   const roster = makeRoster(10);
-  // Trang 1: STT 1..4 với dòng 3 bị gạch (học sinh STT 3 vẫn trong lớp nên in STT không dịch);
-  // trang 2: STT 5..8, không gạch.
   const detected: BatchDetectedRow[] = [
     row(1, 1, roster[0]!),
     row(1, 2, roster[1]!),

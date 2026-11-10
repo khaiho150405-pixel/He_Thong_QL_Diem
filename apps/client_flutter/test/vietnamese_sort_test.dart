@@ -47,7 +47,7 @@ void main() {
         'Hoàng Thúy Bình',
         'Lê Bảo Châu',
         'Trần Văn Dũng',
-        'Võ Minh Đức', // 'Đức' (Đ) comes after 'Dũng' (D) and before 'E'
+        'Võ Minh Đức',
       ]);
     });
   });

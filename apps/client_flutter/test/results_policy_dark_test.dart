@@ -17,13 +17,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/fake_school_profile.dart';
 
-/// Máy chủ giả cho bước 4: điểm của học sinh, chính sách xếp loại.
 class _FakeServer implements HttpClientAdapter {
   _FakeServer(this.role, {this.subjects});
 
   final String role;
 
-  /// Danh sách môn thay thế cho dữ liệu mặc định (dùng cho test ĐTB chung).
   final List<Map<String, dynamic>>? subjects;
 
   @override
@@ -197,8 +195,6 @@ void main() {
 
   group('Hàng ĐTB chung giữ nguyên phép tính cũ ở client (bước 4b)', () {
     Map<String, dynamic> subj(String name, String score) =>
-        // Mã lạ -> huy hiệu trung tính giữ nguyên chuỗi, không trùng nhãn
-        // Giỏi/Khá/Đạt của xếp loại chung.
         _FakeServer.subject(name, score, 'MA_MON');
 
     Future<void> openTable(
@@ -256,8 +252,6 @@ void main() {
   });
 
   test('ngưỡng xếp loại chung: đủ biên 7.99, 8.0, 6.49, 6.5, 4.99, 5.0', () {
-    // Hành vi HIỆN TẠI của mã (không sửa): chỉ có 3 nhánh Giỏi/Khá/Đạt, không
-    // có nhánh "Chưa đạt"; điểm dưới 5.0 vẫn ra 'DAT'. Xem open-questions.md.
     final expected = <double, String>{
       10.0: 'GIOI',
       8.0: 'GIOI',
@@ -350,7 +344,6 @@ void main() {
         expect(find.text('3 / 38'), findsOneWidget);
         expect(find.text('5 / 6'), findsOneWidget);
         expect(find.textContaining('Mã học sinh'), findsNothing);
-        // Mã lạ giữ nguyên chuỗi, vẫn là badge.
         expect(find.text('7.0 · XUAT_SAC_LA'), findsOneWidget);
         expect(find.text('8.4 · GIOI'), findsOneWidget);
         expect(find.text('Chờ chốt ĐTB'), findsOneWidget);

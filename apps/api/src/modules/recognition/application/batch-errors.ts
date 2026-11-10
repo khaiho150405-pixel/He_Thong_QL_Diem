@@ -1,9 +1,5 @@
 import { HttpException } from "@nestjs/common";
 
-/**
- * Mã lỗi ổn định của lô nhận dạng (ADR-0016 mục 3–4). `status` là mã HTTP; envelope lỗi dùng chính `code` thay cho mã chung
- * theo status (xem BatchErrorFilter). Lỗi quyền (403) và không thấy (404 chung) dùng exception chuẩn của Nest.
- */
 export const BATCH_ERRORS = {
   TOO_MANY_PAGES: 400,
   COMPONENT_NOT_MAPPABLE: 400,

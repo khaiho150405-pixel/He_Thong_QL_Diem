@@ -25,7 +25,6 @@ export class SessionGuard implements CanActivate {
     const mutation = !["GET", "HEAD", "OPTIONS"].includes(req.method);
     if (origin && !this.settings.origins.includes(origin))
       throw new ForbiddenException();
-    // Hồ sơ trường hiển thị cả ở màn đăng nhập: chỉ hai handler GET công khai, không phiên.
     if (
       handler === "SchoolProfilePublicController" &&
       ["profile", "logo"].includes(context.getHandler().name)

@@ -6,7 +6,6 @@ import '../test/phase1_test.dart' as phase1;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  // Native UI exercises a test HTTP adapter; real DB policies are tested in API CI.
   phase1.registerPhaseOneTests(resize: false);
   testWidgets('connects to a running API', (tester) async {
     await tester.pumpWidget(

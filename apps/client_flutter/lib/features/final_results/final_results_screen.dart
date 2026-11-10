@@ -20,13 +20,6 @@ import '../reports/reports_panel.dart';
 import '../reports/repository.dart';
 import 'final_results_panel.dart';
 
-/// GV · Tổng kết & xếp loại (`gv-summary`) dưới dạng trang riêng.
-///
-/// Hỗ trợ 2 chế độ:
-/// 1. Chế độ danh sách: bộ lọc Năm học -> Học kỳ -> Lớp -> Môn + tìm kiếm,
-///    bảng chọn bảng điểm gọn gàng (phân trang 20 dòng, mobile thẻ).
-/// 2. Chế độ chi tiết: thông tin bảng điểm, thống kê, xuất Excel, tính kết quả,
-///    bảng điểm tổng kết phân trang 25 dòng có tìm kiếm, lọc xếp loại, nhóm.
 class FinalResultsScreen extends ConsumerStatefulWidget {
   const FinalResultsScreen({super.key});
 
@@ -65,7 +58,6 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
     super.dispose();
   }
 
-  /// Đọc đủ mọi trang của `gradebooksRepositoryProvider.list` theo năm đang xem.
   Future<List<GradebookDto>> _load() async {
     final viewingYear = ref.read(viewingYearProvider);
     final yearId = viewingYear?.id;
@@ -622,7 +614,6 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
     final years = yearsAsync.valueOrNull ?? const [];
     final isMobile = MediaQuery.sizeOf(context).width < 600;
 
-    // Lắng nghe thay đổi năm học để làm mới danh sách bảng điểm
     ref.listen<ViewingYear?>(viewingYearProvider, (prev, next) {
       if (prev?.id != next?.id) {
         _reload();
@@ -673,7 +664,6 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
                       );
                     }
 
-                    // Chế độ danh sách
                     final filtered = _filtered(books);
                     final totalPages = max(
                       1,

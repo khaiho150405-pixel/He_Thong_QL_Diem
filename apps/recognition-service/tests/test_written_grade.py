@@ -23,12 +23,11 @@ class WrittenGradeTest(unittest.TestCase):
     def test_invalid_written_grades_are_none(self) -> None:
         for text in ("", "xin chào", "mười rưỡi", "tám tám tám", "mười một", "tam ruoi", "8.5", "ba", "rưỡi"):
             if text == "ba":
-                self.assertEqual(wg.so_tu_chuoi_chu(text), 3.0)  # a single whole number is valid
+                self.assertEqual(wg.so_tu_chuoi_chu(text), 3.0)
             else:
                 self.assertIsNone(wg.so_tu_chuoi_chu(text), text)
 
     def test_a_stray_word_diem_is_ignored(self) -> None:
-        # "điểm"/"diem"/"đ" đứng riêng không mang giá trị: bỏ trước khi giải và trước khi nắn từ điển.
         cases = {
             "mười điểm": ("mười", 10.0),
             "chín điểm rưỡi": ("chín rưỡi", 9.5),
@@ -47,9 +46,7 @@ class WrittenGradeTest(unittest.TestCase):
             self.assertEqual(wg.bo_tu_thua(text), text.strip(), text)
         for text in ("tám rưỡi", "mười", "chín chẵn", "bảy tư"):
             self.assertEqual(wg.nan_diem_chu(text), text)
-        # chuỗi chỉ gồm từ "điểm" không đổi thành chuỗi rỗng và vẫn không giải được ra điểm
         self.assertIsNone(wg.so_tu_chuoi_chu("điểm"))
-        # chữ "điểm" nằm trong từ khác hoặc là nhiễu dài vẫn không được coi là điểm hợp lệ
         self.assertIsNone(wg.so_tu_chuoi_chu("điểm điểm"))
         self.assertIsNone(wg.so_tu_chuoi_chu("mười điểm điểm rưỡi"))
 
@@ -80,11 +77,10 @@ class WrittenGradeTest(unittest.TestCase):
         self.assertEqual(wg.hau_xu_ly_tu_dien("tám rưởi", list(wg.TU_DIEN)), "tám rưỡi")
         self.assertEqual(wg.hau_xu_ly_tu_dien("tám rưỡi", list(wg.TU_DIEN)), "tám rưỡi")
         self.assertEqual(wg.hau_xu_ly_tu_dien("", list(wg.TU_DIEN)), "")
-        # The source algorithm turns arbitrary noise into some valid phrase; the guarded version below must not.
         self.assertIn(wg.hau_xu_ly_tu_dien("qqqq zzzz", list(wg.TU_DIEN)), wg.TU_DIEN)
 
     def test_guarded_snapping_does_not_invent_a_grade_from_noise(self) -> None:
-        self.assertEqual(wg.nan_diem_chu("tám rưởi"), "tám rưỡi")  # one edit away
+        self.assertEqual(wg.nan_diem_chu("tám rưởi"), "tám rưỡi")
         self.assertEqual(wg.nan_diem_chu("sau hai"), "sáu hai")
         self.assertEqual(wg.nan_diem_chu("mười"), "mười")
         self.assertEqual(wg.nan_diem_chu(""), "")

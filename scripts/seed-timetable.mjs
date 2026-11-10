@@ -11,7 +11,6 @@ const db = new PrismaClient({
 async function main() {
   console.log("Seeding timetable...");
 
-  // Get active semester
   const activeYear = await db.nam_hoc.findFirst({
     where: { hien_hanh: true },
     include: { hoc_ky_rows: { orderBy: { thu_tu: "asc" } } },
@@ -56,15 +55,12 @@ async function main() {
   const class10A2 = classMap.get("10A2");
   const class11A1 = classMap.get("11A1");
 
-  // Clear existing timetable
   await db.thoi_khoa_bieu.deleteMany({});
 
   const scheduleData = [];
 
   if (class10A1) {
-    // 10A1 Schedule
     scheduleData.push(
-      // Thứ 2
       {
         ma_lop: class10A1,
         ma_mon: mathSub,
@@ -105,7 +101,6 @@ async function main() {
         phong_hoc: "P.101",
         ghi_chu: "Nghị luận",
       },
-      // Thứ 3
       {
         ma_lop: class10A1,
         ma_mon: engSub,
@@ -146,7 +141,6 @@ async function main() {
         phong_hoc: "P.101",
         ghi_chu: "Thực hành lí",
       },
-      // Thứ 4
       {
         ma_lop: class10A1,
         ma_mon: chemSub,
@@ -187,7 +181,6 @@ async function main() {
         phong_hoc: "P.101",
         ghi_chu: "Luyện đề",
       },
-      // Thứ 5
       {
         ma_lop: class10A1,
         ma_mon: mathSub,
@@ -228,7 +221,6 @@ async function main() {
         phong_hoc: "P.101",
         ghi_chu: "Writing",
       },
-      // Thứ 6
       {
         ma_lop: class10A1,
         ma_mon: physSub,
@@ -259,7 +251,6 @@ async function main() {
         phong_hoc: "P.101",
         ghi_chu: "Kiểm tra 15p",
       },
-      // Thứ 7
       {
         ma_lop: class10A1,
         ma_mon: engSub,
@@ -294,9 +285,7 @@ async function main() {
   }
 
   if (class10A2) {
-    // 10A2 Schedule (non-conflicting with teachers)
     scheduleData.push(
-      // Thứ 2
       {
         ma_lop: class10A2,
         ma_mon: litSub,
@@ -337,7 +326,6 @@ async function main() {
         phong_hoc: "P.102",
         ghi_chu: "Hình học",
       },
-      // Thứ 3
       {
         ma_lop: class10A2,
         ma_mon: mathSub,
@@ -358,7 +346,6 @@ async function main() {
         phong_hoc: "P.102",
         ghi_chu: "Phương trình",
       },
-      // Thứ 4
       {
         ma_lop: class10A2,
         ma_mon: engSub,
@@ -379,7 +366,6 @@ async function main() {
         phong_hoc: "P.102",
         ghi_chu: "Vocabulary",
       },
-      // Thứ 5
       {
         ma_lop: class10A2,
         ma_mon: physSub,
@@ -414,7 +400,6 @@ async function main() {
   }
 
   if (class11A1) {
-    // 11A1 Schedule
     scheduleData.push(
       {
         ma_lop: class11A1,

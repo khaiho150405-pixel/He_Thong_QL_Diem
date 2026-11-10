@@ -35,8 +35,6 @@ Widget adjustmentStatusBadge(AdjustmentDtoStatusEnum status) {
   };
 }
 
-/// Hộp thoại hiển thị chi tiết phiếu điều chỉnh điểm kèm danh sách dòng.
-/// Hỗ trợ Quản trị viên duyệt / từ chối và Giáo viên hủy phiếu.
 class AdjustmentDetailDialog extends ConsumerStatefulWidget {
   const AdjustmentDetailDialog({
     super.key,
@@ -504,7 +502,6 @@ class _AdjustmentDetailDialogState
   }
 }
 
-/// Màn hình Quản trị viên: Duyệt điều chỉnh điểm
 class AdjustmentsScreen extends ConsumerStatefulWidget {
   const AdjustmentsScreen({super.key});
 

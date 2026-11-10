@@ -1,4 +1,3 @@
-// Đối chiếu thứ tự in trên giấy với STT hệ thống (classStudentOrder). In vị trí, không in họ tên.
 import { readFileSync } from "node:fs";
 import { classStudentOrder } from "../../../apps/api/src/common/student-order.ts";
 

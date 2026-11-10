@@ -65,7 +65,6 @@ export class TimetableService {
     let targetTeacherId = filter.teacherId;
 
     if (actor.role === "HOC_SINH") {
-      // Học sinh chỉ xem thời khóa biểu của lớp mình
       const student = await this.db.hoc_sinh.findFirst({
         where: { ma_nguoi_dung: actor.id, dang_theo_hoc: true },
       });
@@ -77,7 +76,6 @@ export class TimetableService {
       targetClassId = student.ma_lop;
       targetTeacherId = undefined;
     } else if (actor.role === "GIAO_VIEN") {
-      // Giáo viên mặc định xem các tiết mình dạy
       const teacher = await this.db.giao_vien.findUnique({
         where: { ma_giao_vien: actor.id },
       });
@@ -87,7 +85,6 @@ export class TimetableService {
       targetTeacherId = teacher.ma_giao_vien;
     }
 
-    // Determine current/default semester if not provided
     let semesterId = filter.semesterId;
     if (!semesterId) {
       const activeYear = await this.db.nam_hoc.findFirst({
@@ -199,7 +196,6 @@ export class TimetableService {
       );
     }
 
-    // Check duplicate class-period conflict
     const classConflict = await this.db.thoi_khoa_bieu.findFirst({
       where: {
         ma_lop: input.ma_lop,
@@ -214,7 +210,6 @@ export class TimetableService {
       );
     }
 
-    // Check duplicate teacher-period conflict
     const teacherConflict = await this.db.thoi_khoa_bieu.findFirst({
       where: {
         ma_giao_vien: input.ma_giao_vien,

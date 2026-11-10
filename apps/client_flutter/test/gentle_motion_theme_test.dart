@@ -24,9 +24,6 @@ Widget _buildTransition({required bool disableAnimations}) {
   );
 }
 
-/// Widget zoom/scale bọc quanh nội dung trang: `ScaleTransition` hoặc các
-/// widget `_Zoom...` của `ZoomPageTransitionsBuilder`. Các ScaleTransition nội
-/// bộ khác (ví dụ của Scaffold) không bọc nội dung nên không bị tính.
 Finder _scaleAboveText(String text) => find.ancestor(
   of: find.text(text),
   matching: find.byWidgetPredicate(

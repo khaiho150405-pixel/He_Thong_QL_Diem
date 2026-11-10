@@ -13,8 +13,6 @@ import 'batch_repository.dart';
 import 'cancel_batch_dialog.dart';
 import 'review_screen.dart';
 
-/// Mở màn kết quả lô: bằng GoRouter khi có, không thì bằng Navigator (test,
-/// panel nhúng ngoài ứng dụng).
 Future<void> openBatchResult(
   BuildContext context, {
   required num gradebookId,
@@ -35,9 +33,6 @@ Future<void> openBatchResult(
   );
 }
 
-/// Kết quả một lô nhận dạng (ADR-0016 mục 5, giáo viên bước 5): mỗi thành phần
-/// là một tab có số Xanh/Vàng/Đỏ; bấm tab mở màn đối chiếu hiện có của đúng
-/// phiếu đó. Màn đối chiếu không bị viết lại, duyệt vẫn theo từng phiếu.
 class BatchResultScreen extends ConsumerStatefulWidget {
   const BatchResultScreen({
     super.key,
@@ -87,8 +82,6 @@ class _BatchResultScreenState extends ConsumerState<BatchResultScreen> {
   Future<void> _openReview(RecognitionBatchTicketDto ticket) async {
     final gradebookId = widget.gradebookId;
     bool? approved;
-    // Không truyền phiên bản bảng điểm: sau mỗi phiếu được duyệt phiên bản đổi,
-    // để màn đối chiếu tự lấy phiên bản hiện hành.
     if (GoRouter.maybeOf(context) != null) {
       approved = await context.push<bool>(
         '/gradebooks/$gradebookId/recognition/${ticket.ticketId}?batch=1',
@@ -390,7 +383,6 @@ class _BatchResultScreenState extends ConsumerState<BatchResultScreen> {
       };
 }
 
-/// Thanh tab theo thành phần: tên thành phần và số Xanh/Vàng/Đỏ của phiếu.
 class _BatchTabs extends StatelessWidget {
   const _BatchTabs({
     required this.tickets,
