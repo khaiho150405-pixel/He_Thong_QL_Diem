@@ -1,3 +1,4 @@
+import '../final_results/student_results_screen.dart' show classificationLabel;
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_scaffold.dart';
+import '../../core/date_format.dart';
 import '../authentication/session.dart';
 import '../final_results/final_results_panel.dart';
 import '../final_results/repository.dart';
@@ -145,13 +147,6 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       ? '—'
       : widget.data.items.firstOrNull?.passFail == true
       ? (value == '10.0' ? 'Đạt' : 'Không đạt')
-      : value;
-  String classificationLabel(String value) => value == 'CHUA_CONG_BO'
-      ? 'Chưa công bố'
-      : value == 'DAT'
-      ? 'Đạt'
-      : value == 'CHUA_DAT'
-      ? 'Không đạt'
       : value;
   bool get locked => widget.data.book.status.value == 'DA_CHOT';
   bool get editable => teacher && !locked && !conflict;
@@ -672,7 +667,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Có $count học sinh vào lớp sau khi cột đã chốt',
+                  'Có $count học sinh vào lớp sau khi cột đã khóa',
                   style: TextStyle(fontWeight: FontWeight.bold, color: t.ink),
                 ),
               ),
@@ -965,10 +960,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                   icon: Icon(Icons.camera_alt_outlined),
                   text: 'Quét ảnh OCR',
                 ),
-                Tab(
-                  icon: Icon(Icons.analytics_outlined),
-                  text: 'Báo cáo & Tiện ích',
-                ),
+                Tab(icon: Icon(Icons.analytics_outlined), text: 'Báo cáo'),
               ],
             ),
             body: Column(
@@ -1081,7 +1073,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Đang soạn phiếu điều chỉnh — chỉ các cột đã chốt, chưa ghi vào điểm chính thức',
+                    'Đang soạn phiếu điều chỉnh — chỉ các cột đã khóa, chưa ghi vào điểm chính thức',
                     style: TextStyle(
                       color: t.priLink,
                       fontWeight: FontWeight.w600,
@@ -1112,7 +1104,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Phiếu điều chỉnh #${widget.data.book.pendingAdjustmentId} đang chờ duyệt'
+                    'Có phiếu điều chỉnh đang chờ duyệt'
                     '${_pendingAdjustment != null ? " (${_pendingAdjustment!.lineCount} ô)" : ""}',
                     style: TextStyle(
                       color: t.warn,
@@ -1406,7 +1398,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
             'Nhập từ ảnh',
           ),
           item(box(t.badSoft, t.bad), 'Điểm không hợp lệ'),
-          item(box(t.subtle, t.line), 'Cột đã chốt'),
+          item(box(t.subtle, t.line), 'Cột đã khóa'),
           item(
             Icon(Icons.lock_rounded, size: 14, color: t.warn),
             'Ngoài lịch nhập',
@@ -1688,7 +1680,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
               iconColor: t.ok,
               title: 'Tổng kết môn học',
               subtitle:
-                  'Tính ĐTB và xếp loại cho toàn bộ học sinh trong bảng điểm',
+                  'Tính điểm tổng kết và xếp loại cho toàn bộ học sinh trong bảng điểm',
               action: FilledButton.icon(
                 onPressed: showFinalResults,
                 icon: const Icon(Icons.calculate_outlined, size: 18),
@@ -2128,7 +2120,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
         ? GradeCellTone.readOnly
         : GradeCellTone.normal;
     final status = cell.columnLocked == true
-        ? 'Cột đã chốt'
+        ? 'Cột đã khóa'
         : cell.openForInput == false
         ? 'Ngoài lịch nhập'
         : isPending
@@ -2730,7 +2722,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         ),
                       ),
                       Text(
-                        'Các phiếu đề xuất điều chỉnh điểm sau khi chốt',
+                        'Các phiếu đề xuất điều chỉnh điểm sau khi khóa',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: t.ink2,
                         ),
@@ -3045,12 +3037,14 @@ class GradebookHistoryDialog extends ConsumerWidget {
                   final timestamp = DateTime.tryParse(
                     item.timestamp,
                   )?.toLocal();
+                  final mine = ref.read(sessionProvider)?.id == item.editor;
                   return ListTile(
                     title: Text('${item.studentName} · ${item.componentName}'),
                     subtitle: Text(
-                      '${item.oldValue ?? 'NULL'} → ${item.newValue ?? 'NULL'}'
-                      '\n${item.reason}\nNgười sửa #${item.editor}'
-                      '${timestamp == null ? '' : ' · $timestamp'}',
+                      '${item.oldValue ?? 'Chưa có'} → ${item.newValue ?? 'Chưa có'}'
+                      '\n${item.reason}'
+                      '${mine ? '\nBạn sửa' : ''}'
+                      '${timestamp == null ? '' : ' · ${formatDateTimeVi(timestamp)}'}',
                     ),
                   );
                 },

@@ -11,6 +11,7 @@ import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../../core/vietnamese_sort.dart';
 import '../authentication/session.dart';
+import 'academic_year_scope.dart';
 import 'merged_view_widgets.dart';
 import 'repository.dart';
 
@@ -67,12 +68,15 @@ class _TeachingAssignmentsScreenState
 
   Future<_Source> _load() async {
     final repository = ref.read(catalogRepositoryProvider);
+    final viewing = ref.read(viewingYearProvider);
+    final yearId =
+        viewing?.id ?? (await ref.read(currentYearProvider.future))?.id;
     final results = await Future.wait([
       fetchAllCatalogRows(repository, 'teachers'),
-      fetchAllCatalogRows(repository, 'assignments'),
-      fetchAllCatalogRows(repository, 'classes'),
+      fetchAllCatalogRows(repository, 'assignments', yearId: yearId),
+      fetchAllCatalogRows(repository, 'classes', yearId: yearId),
       fetchAllCatalogRows(repository, 'subjects'),
-      fetchAllCatalogRows(repository, 'semesters'),
+      fetchAllCatalogRows(repository, 'semesters', yearId: yearId),
     ]);
     return _Source(
       teachers: results[0],
@@ -312,6 +316,9 @@ class _TeachingAssignmentsScreenState
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(sessionProvider);
+    ref.listen<ViewingYear?>(viewingYearProvider, (previous, next) {
+      if (previous?.id != next?.id) _reload();
+    });
     return AppScaffold(
       title: 'Giáo viên & phân công',
       currentPath: '/admin/teaching-assignments',

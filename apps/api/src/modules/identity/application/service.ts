@@ -9,7 +9,12 @@ import {
 } from "@nestjs/common";
 import { createHash, randomBytes } from "node:crypto";
 import { argon2id, hash, verify } from "argon2";
-import { STORE, type Store, type Row } from "../../../common/store.js";
+import {
+  STORE,
+  type Store,
+  type Row,
+  type Unit,
+} from "../../../common/store.js";
 import {
   administrator,
   authenticated,
@@ -42,6 +47,21 @@ const publicUser = (u: Row) => ({
   role: u.vai_tro as Role,
   active: Boolean(u.trang_thai),
 });
+async function displayNameOf(
+  tx: Unit,
+  id: number,
+  role: Role,
+): Promise<string | null> {
+  if (role === "GIAO_VIEN") {
+    const teacher = await tx.find("giao_vien", { ma_giao_vien: id });
+    return teacher ? String(teacher.ho_ten) : null;
+  }
+  if (role === "HOC_SINH") {
+    const student = await tx.find("hoc_sinh", { ma_nguoi_dung: id });
+    return student ? String(student.ho_ten) : null;
+  }
+  return null;
+}
 async function passwordHash(password: string) {
   if (
     typeof password !== "string" ||
@@ -221,7 +241,11 @@ export class IdentityService {
           het_han: new Date(+now + rememberLifetime),
         });
       await audit(tx, Number(current.ma_nguoi_dung), "LOGIN", "identity");
-      return publicUser(current);
+      const profile = publicUser(current);
+      return {
+        ...profile,
+        displayName: await displayNameOf(tx, profile.id, profile.role),
+      };
     });
     if (!result) throw new UnauthorizedException();
     return { ...result, token, csrf, remember: rememberToken };
@@ -257,7 +281,11 @@ export class IdentityService {
         het_han: new Date(+now + rememberLifetime),
       });
       await audit(tx, Number(user.ma_nguoi_dung), "SESSION_RESUME", "identity");
-      return publicUser(user);
+      const profile = publicUser(user);
+      return {
+        ...profile,
+        displayName: await displayNameOf(tx, profile.id, profile.role),
+      };
     });
     if (!result) throw new UnauthorizedException();
     return { ...result, token, csrf, remember: next };
@@ -301,6 +329,10 @@ export class IdentityService {
     });
     if (result.stale) await this.touchSession(result.actor.sessionHash);
     return { actor: result.actor, csrf: result.csrf };
+  }
+  async displayName(actor: Actor): Promise<string | null> {
+    authenticated(actor);
+    return this.store.run((tx) => displayNameOf(tx, actor.id, actor.role));
   }
   async logout(actor: Actor) {
     authenticated(actor);

@@ -8,10 +8,8 @@ import 'package:api_client_dart/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**termId** | **num** |  |
 **termName** | **String** |  |
 **className** | **String** |  |
-**yearId** | **num** |  |
 **yearName** | **String** |  |
 **averageScore** | **String** |  |
 **publishedSubjects** | **num** |  |

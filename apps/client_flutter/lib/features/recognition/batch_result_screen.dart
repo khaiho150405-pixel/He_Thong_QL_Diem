@@ -130,7 +130,7 @@ class _BatchResultScreenState extends ConsumerState<BatchResultScreen> {
     for (final template in templates ?? const <TemplateSummaryDto>[]) {
       if (template.id == batch.templateId) return template.name;
     }
-    return 'Mẫu #${batch.templateId.toInt()}';
+    return 'Mẫu bảng điểm';
   }
 
   @override
@@ -138,7 +138,7 @@ class _BatchResultScreenState extends ConsumerState<BatchResultScreen> {
     final t = context.tokens;
     return AppScaffold(
       key: const ValueKey('batch-result-screen'),
-      title: 'Kết quả lô #${widget.batchId}',
+      title: 'Kết quả nhận dạng',
       currentPath: '/gradebooks',
       showBackButton: true,
       body: Center(
@@ -204,7 +204,7 @@ class _BatchResultScreenState extends ConsumerState<BatchResultScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
-              'Lô nhận dạng #${batch.batchId}',
+              'Lô nhận dạng',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: t.ink,

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Thời khóa biểu</string>
+    <string name="widget_description">Tiết học hôm nay (học sinh) hoặc lịch dạy hôm nay (giáo viên).</string>
+    <string name="widget_signed_out">Mở EduScore và đăng nhập để xem lịch.</string>
+</resources>

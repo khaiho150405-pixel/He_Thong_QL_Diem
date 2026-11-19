@@ -161,15 +161,12 @@ export class PrismaFinalResultStore implements FinalResultStore {
           },
           studentResults: (userId, termId, yearId) =>
             tx.$queryRaw<StudentSubjectResult[]>`
-              SELECT b.ma_bang_diem AS "gradebookId",m.ma_mon AS "subjectId",
-                m.ten_mon AS "subjectName",m.danh_gia_dat AS "passFail",h.ma_hoc_ky AS "termId",h.ten AS "termName",
+              SELECT m.ten_mon AS "subjectName",m.danh_gia_dat AS "passFail",h.ten AS "termName",
                 h.ma_nam_hoc AS "yearId",ny.ten AS "yearName",cl.ten_lop AS "className",
-                jsonb_agg(jsonb_build_object('componentId',tp.ma_thanh_phan,
+                jsonb_agg(jsonb_build_object(
                   'componentName',tp.ten_thanh_phan,'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,
                   'value',d.gia_tri::text,'status',d.trang_thai) ORDER BY tp.thu_tu_hien_thi) AS components,
-                k.diem_tong_ket::text AS "finalScore",CASE WHEN h.da_cong_bo THEN k.xep_loai ELSE NULL END AS classification,
-                CASE WHEN k.ngay_tinh IS NULL THEN NULL ELSE
-                  to_char(k.ngay_tinh AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') END AS "calculatedAt"
+                k.diem_tong_ket::text AS "finalScore",CASE WHEN h.da_cong_bo THEN k.xep_loai ELSE NULL END AS classification
               FROM public.hoc_sinh hs
               JOIN public.hoc_sinh_lop g ON g.ma_hoc_sinh=hs.ma_hoc_sinh
               JOIN public.bang_diem b ON b.ma_lop=g.ma_lop
@@ -241,8 +238,8 @@ export class PrismaFinalResultStore implements FinalResultStore {
                   rank() OVER (ORDER BY average_score DESC)::integer AS class_rank
                 FROM averages
               )
-              SELECT st.term_id AS "termId",h.ten AS "termName",me.ten_lop AS "className",
-                h.ma_nam_hoc AS "yearId",(SELECT n.ten FROM public.nam_hoc n WHERE n.ma_nam_hoc=h.ma_nam_hoc) AS "yearName",
+              SELECT h.ten AS "termName",me.ten_lop AS "className",
+                (SELECT n.ten FROM public.nam_hoc n WHERE n.ma_nam_hoc=h.ma_nam_hoc) AS "yearName",
                 r.average_score::text AS "averageScore",
                 (SELECT count(DISTINCT k.ma_mon)::integer
                  FROM public.ket_qua_tong_ket k JOIN public.bang_diem b

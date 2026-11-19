@@ -7,6 +7,10 @@ import {
 } from "@nestjs/common";
 import type { PrismaClient } from "../../../generated/prisma/client.js";
 import { unit } from "../../../common/store.js";
+import {
+  classificationLabel,
+  gradebookStatusLabel,
+} from "../../../common/labels.js";
 import { transaction } from "../../../common/transaction.js";
 import type {
   ExportRow,
@@ -151,32 +155,32 @@ export class PrismaReportStore implements ReportStore {
             (sum, r) => sum + Number(r.count),
             0,
           );
-          const labelsMap: Record<string, { label: string; color: string }> = {
-            GIOI: { label: "Giỏi", color: "#173F43" },
-            KHA: { label: "Khá", color: "#2D7D75" },
-            DAT: { label: "Đạt", color: "#C69C3C" },
-            CHUA_DAT: { label: "Chưa đạt", color: "#C87858" },
-            YEU: { label: "Chưa đạt", color: "#C87858" },
+          const bucketColors: Record<string, string> = {
+            GIOI: "#173F43",
+            KHA: "#2D7D75",
+            TRUNG_BINH: "#C69C3C",
+            YEU: "#C87858",
           };
-          const gradeDistribution = ["GIOI", "KHA", "DAT", "CHUA_DAT"].map(
-            (code) => {
-              const found = distRows.find(
-                (r) =>
-                  r.xep_loai.toUpperCase() === code ||
-                  (code === "CHUA_DAT" && r.xep_loai.toUpperCase() === "YEU"),
-              );
-              const cnt = found ? Number(found.count) : 0;
-              const pct =
-                totalDist > 0 ? Math.round((cnt / totalDist) * 100) : 0;
-              return {
-                code,
-                label: labelsMap[code]?.label || code,
-                count: cnt,
-                percentage: pct,
-                color: labelsMap[code]?.color || "#2D7D75",
-              };
-            },
-          );
+          const bucketOf = (code: string) => {
+            const normalized = code.trim().toUpperCase();
+            if (normalized === "DAT") return "TRUNG_BINH";
+            if (normalized === "CHUA_DAT" || normalized === "KHONG_DAT")
+              return "YEU";
+            return normalized;
+          };
+          const gradeDistribution = Object.keys(bucketColors).map((code) => {
+            const cnt = distRows
+              .filter((r) => bucketOf(r.xep_loai) === code)
+              .reduce((sum, r) => sum + Number(r.count), 0);
+            const pct = totalDist > 0 ? Math.round((cnt / totalDist) * 100) : 0;
+            return {
+              code,
+              label: classificationLabel(code),
+              count: cnt,
+              percentage: pct,
+              color: bucketColors[code]!,
+            };
+          });
 
           const classes = await tx.lop.findMany({
             select: { ma_lop: true, khoi: true },
@@ -252,7 +256,7 @@ export class PrismaReportStore implements ReportStore {
             className: b.ten_lop,
             subjectName: b.ten_mon,
             teacherName: b.ho_ten,
-            status: b.trang_thai === "DA_CHOT" ? "Đã chốt" : "Đang nhập",
+            status: gradebookStatusLabel(b.trang_thai),
             updatedAt: new Date().toISOString(),
           }));
 

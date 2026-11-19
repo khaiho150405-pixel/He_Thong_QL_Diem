@@ -1,3 +1,4 @@
+import '../../core/role_label.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,11 +43,7 @@ class AppSidebar extends ConsumerStatefulWidget {
   final Future<bool> Function()? onBeforeNavigate;
   final Future<void> Function()? onLogout;
 
-  static String _roleLabel(String role) => switch (role) {
-    'QUAN_TRI_VIEN' => 'Quản trị viên',
-    'GIAO_VIEN' => 'Giáo viên',
-    _ => 'Học sinh',
-  };
+  static String _roleLabel(String role) => roleLabelOf(role);
 
   @override
   ConsumerState<AppSidebar> createState() => _AppSidebarState();
@@ -575,7 +572,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  user.username,
+                  user.shownName,
                   style: TextStyle(
                     color: t.onPri,
                     fontWeight: FontWeight.w600,
@@ -616,7 +613,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
           builder: (context, data) {
             final summary = data?.summary;
             final subtitle = summary?.className != null
-                ? 'Lớp ${summary!.className} · ${summary.termName ?? 'Chưa chốt điểm'}'
+                ? 'Lớp ${summary!.className} · ${summary.termName ?? 'Chưa có học kỳ'}'
                 : 'Học sinh';
             final avgNum = summary?.averageScore != null
                 ? double.tryParse(summary!.averageScore!)
@@ -652,7 +649,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
                     ),
                     child: Row(
                       children: [
-                        stat(average, 'ĐTB'),
+                        stat(average, 'Điểm TB'),
                         stat(summary?.classRank?.toString() ?? '—', 'Xếp hạng'),
                         stat(summary?.classSize.toString() ?? '—', 'Sĩ số'),
                       ],

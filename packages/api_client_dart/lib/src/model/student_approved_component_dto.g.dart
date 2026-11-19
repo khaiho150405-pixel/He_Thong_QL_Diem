@@ -7,8 +7,6 @@ part of 'student_approved_component_dto.dart';
 // **************************************************************************
 
 abstract class _$StudentApprovedComponentDtoCWProxy {
-  StudentApprovedComponentDto componentId(num componentId);
-
   StudentApprovedComponentDto componentName(String componentName);
 
   StudentApprovedComponentDto coefficient(String coefficient);
@@ -26,7 +24,6 @@ abstract class _$StudentApprovedComponentDtoCWProxy {
   /// StudentApprovedComponentDto(...).copyWith(id: 12, name: "My name")
   /// ````
   StudentApprovedComponentDto call({
-    num componentId,
     String componentName,
     String coefficient,
     String? value,
@@ -40,10 +37,6 @@ class _$StudentApprovedComponentDtoCWProxyImpl
   const _$StudentApprovedComponentDtoCWProxyImpl(this._value);
 
   final StudentApprovedComponentDto _value;
-
-  @override
-  StudentApprovedComponentDto componentId(num componentId) =>
-      this(componentId: componentId);
 
   @override
   StudentApprovedComponentDto componentName(String componentName) =>
@@ -69,17 +62,12 @@ class _$StudentApprovedComponentDtoCWProxyImpl
   /// StudentApprovedComponentDto(...).copyWith(id: 12, name: "My name")
   /// ````
   StudentApprovedComponentDto call({
-    Object? componentId = const $CopyWithPlaceholder(),
     Object? componentName = const $CopyWithPlaceholder(),
     Object? coefficient = const $CopyWithPlaceholder(),
     Object? value = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
   }) {
     return StudentApprovedComponentDto(
-      componentId: componentId == const $CopyWithPlaceholder()
-          ? _value.componentId
-          // ignore: cast_nullable_to_non_nullable
-          : componentId as num,
       componentName: componentName == const $CopyWithPlaceholder()
           ? _value.componentName
           // ignore: cast_nullable_to_non_nullable
@@ -116,16 +104,9 @@ StudentApprovedComponentDto _$StudentApprovedComponentDtoFromJson(
 ) => $checkedCreate('StudentApprovedComponentDto', json, ($checkedConvert) {
   $checkKeys(
     json,
-    requiredKeys: const [
-      'componentId',
-      'componentName',
-      'coefficient',
-      'value',
-      'status',
-    ],
+    requiredKeys: const ['componentName', 'coefficient', 'value', 'status'],
   );
   final val = StudentApprovedComponentDto(
-    componentId: $checkedConvert('componentId', (v) => v as num),
     componentName: $checkedConvert('componentName', (v) => v as String),
     coefficient: $checkedConvert('coefficient', (v) => v as String),
     value: $checkedConvert('value', (v) => v as String?),
@@ -140,7 +121,6 @@ StudentApprovedComponentDto _$StudentApprovedComponentDtoFromJson(
 Map<String, dynamic> _$StudentApprovedComponentDtoToJson(
   StudentApprovedComponentDto instance,
 ) => <String, dynamic>{
-  'componentId': instance.componentId,
   'componentName': instance.componentName,
   'coefficient': instance.coefficient,
   'value': instance.value,

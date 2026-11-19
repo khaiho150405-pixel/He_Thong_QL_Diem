@@ -38,7 +38,7 @@ export class MappingItemDto {
   @ApiProperty({
     type: Boolean,
     description:
-      "Cột đã chốt, ngoài thời gian nhập, bảng đã chốt hoặc môn Đạt/Không đạt: không chọn được",
+      "Cột đã khóa, ngoài thời gian nhập, bảng đã khóa hoặc môn Đạt/Không đạt: không chọn được",
   })
   locked!: boolean;
   @ApiProperty({

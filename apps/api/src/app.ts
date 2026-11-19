@@ -111,6 +111,7 @@ export async function createApp(
     origin: config.origins,
     credentials: true,
     exposedHeaders: ["x-request-id"],
+    maxAge: 600,
   });
   app.setGlobalPrefix("api/v1");
   app.useGlobalPipes(

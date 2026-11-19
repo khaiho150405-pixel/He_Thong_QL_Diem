@@ -96,7 +96,6 @@ export interface ActivatePolicyInput {
 }
 
 export interface StudentApprovedComponent {
-  componentId: number;
   componentName: string;
   coefficient: string;
   value: string | null;
@@ -105,10 +104,7 @@ export interface StudentApprovedComponent {
 
 export interface StudentSubjectResult {
   passFail?: boolean;
-  gradebookId: number;
-  subjectId: number;
   subjectName: string;
-  termId: number;
   termName: string;
   yearId: number;
   yearName: string;
@@ -116,7 +112,6 @@ export interface StudentSubjectResult {
   components: StudentApprovedComponent[];
   finalScore: string | null;
   classification: string | null;
-  calculatedAt: string | null;
 }
 
 export interface StudentYear {
@@ -126,10 +121,8 @@ export interface StudentYear {
 }
 
 export interface StudentResultSummary {
-  termId: number | null;
   termName: string | null;
   className: string;
-  yearId: number | null;
   yearName: string | null;
   averageScore: string | null;
   publishedSubjects: number;

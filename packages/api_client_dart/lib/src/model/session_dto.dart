@@ -26,6 +26,8 @@ class SessionDto {
 
     required this.active,
 
+    this.displayName,
+
     required this.token,
 
     required this.csrf,
@@ -43,6 +45,9 @@ class SessionDto {
   @JsonKey(name: r'active', required: true, includeIfNull: false)
   final bool active;
 
+  @JsonKey(name: r'displayName', required: false, includeIfNull: false)
+  final String? displayName;
+
   @JsonKey(name: r'token', required: true, includeIfNull: true)
   final String? token;
 
@@ -57,6 +62,7 @@ class SessionDto {
           other.username == username &&
           other.role == role &&
           other.active == active &&
+          other.displayName == displayName &&
           other.token == token &&
           other.csrf == csrf;
 
@@ -66,6 +72,7 @@ class SessionDto {
       username.hashCode +
       role.hashCode +
       active.hashCode +
+      (displayName == null ? 0 : displayName.hashCode) +
       (token == null ? 0 : token.hashCode) +
       csrf.hashCode;
 

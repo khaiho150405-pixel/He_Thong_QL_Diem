@@ -232,7 +232,7 @@ export class PrismaRecognitionStore implements RecognitionStore {
           where: { ma_bang_diem: gradebookId, ma_thanh_phan: componentId },
         })
       )
-        throw new ConflictException("Cột điểm đã chốt; không nhận diện thêm.");
+        throw new ConflictException("Cột điểm đã khóa; không nhận diện thêm.");
       if (
         (await tx.mon_hoc.findUnique({ where: { ma_mon: row.ma_mon } }))
           ?.danh_gia_dat

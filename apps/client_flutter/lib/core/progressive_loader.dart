@@ -47,6 +47,33 @@ class ProgressiveLoader<T, C> {
     _continue(token, cursor, fetch);
   }
 
+  Future<void> refresh(
+    String key,
+    Future<LoadedChunk<T, C>> Function(C? cursor) fetch,
+  ) async {
+    final token = ++_token;
+    _loadingMore = false;
+    _error = null;
+    final collected = <T>[];
+    C? cursor;
+    final seen = <C>{};
+    do {
+      final chunk = await fetch(cursor);
+      if (token != _token) return;
+      collected.addAll(chunk.items);
+      cursor = chunk.next;
+      if (cursor != null && !seen.add(cursor)) break;
+    } while (cursor != null);
+    _key = key;
+    _items = List<T>.unmodifiable(collected);
+    onChanged();
+  }
+
+  void removeWhere(bool Function(T item) test) {
+    _items = List<T>.unmodifiable(_items.where((item) => !test(item)));
+    onChanged();
+  }
+
   Future<void> _continue(
     int token,
     C first,

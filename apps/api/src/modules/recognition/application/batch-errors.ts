@@ -28,10 +28,10 @@ const MESSAGES: Record<BatchErrorCode, string> = {
   RECOGNITION_ALREADY_PENDING:
     "Thành phần điểm này đang có phiếu chờ xử lý/đối chiếu; duyệt hoặc hủy phiếu đó trước.",
   DUPLICATE_FILE: "Ảnh này đã được tải lên ở một phiếu khác.",
-  COLUMN_LOCKED: "Cột điểm đã chốt; không được nhận diện thêm.",
+  COLUMN_LOCKED: "Cột điểm đã khóa; không được nhận diện thêm.",
   GRADE_ENTRY_WINDOW_CLOSED:
     "Chưa đến thời gian nhập hoặc đã hết hạn do nhà trường đặt; không được nhận diện thêm.",
-  GRADEBOOK_NOT_EDITABLE: "Bảng điểm đã chốt; không được nhận diện thêm.",
+  GRADEBOOK_NOT_EDITABLE: "Bảng điểm đã khóa; không được nhận diện thêm.",
   PASS_FAIL_SUBJECT_NOT_RECOGNIZABLE:
     "Môn Đạt/Không đạt nhập bằng lựa chọn đánh giá; không dùng OCR điểm số.",
   IDEMPOTENCY_MISMATCH:

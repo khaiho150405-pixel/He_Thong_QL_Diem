@@ -206,7 +206,7 @@ void main() {
       expect(find.text('Miễn'), findsWidgets);
 
       expect(
-        find.text('Có 1 học sinh vào lớp sau khi cột đã chốt'),
+        find.text('Có 1 học sinh vào lớp sau khi cột đã khóa'),
         findsOneWidget,
       );
       expect(find.text('Lê Văn Muộn'), findsOneWidget);
@@ -428,10 +428,10 @@ void main() {
         findsOneWidget,
       );
 
-      expect(find.text('Bảng điểm chưa chốt'), findsOneWidget);
+      expect(find.text('Bảng điểm chưa khóa'), findsOneWidget);
       expect(
         find.text(
-          'Bảng điểm chưa chốt (còn cột chưa hết hạn hoặc chưa có lịch)',
+          'Bảng điểm chưa khóa (còn cột chưa hết hạn hoặc chưa có lịch)',
         ),
         findsOneWidget,
       );

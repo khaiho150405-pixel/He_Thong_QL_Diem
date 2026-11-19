@@ -359,7 +359,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Chuyển năm hiện hành từ'), findsOneWidget);
-        expect(find.textContaining('3 bảng điểm chưa chốt'), findsOneWidget);
+        expect(find.textContaining('3 bảng điểm chưa khóa'), findsOneWidget);
         expect(find.textContaining('1 phiếu chờ đối chiếu'), findsOneWidget);
         expect(find.textContaining('1 học kỳ chưa công bố'), findsOneWidget);
 
@@ -414,7 +414,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.textContaining('Chuyển năm hiện hành từ'), findsOneWidget);
-        expect(find.textContaining('bảng điểm chưa chốt'), findsNothing);
+        expect(find.textContaining('bảng điểm chưa khóa'), findsNothing);
 
         await tester.tap(find.text('Hủy'));
         await tester.pumpAndSettle();

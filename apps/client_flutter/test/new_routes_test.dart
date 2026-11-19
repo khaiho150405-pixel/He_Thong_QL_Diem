@@ -480,8 +480,7 @@ void main() {
         expect(find.byKey(const ValueKey('export-xlsx')), findsWidgets);
         expect(find.text('Nguyễn Văn An'), findsOneWidget);
         expect(find.text('8.6'), findsOneWidget);
-        expect(find.textContaining('W-012345678901234567'), findsWidgets);
-        expect(find.textContaining('DEV-2026-01'), findsWidgets);
+        expect(find.textContaining('Tính lúc '), findsWidgets);
         expect(find.text('Đang nhập liệu'), findsOneWidget);
         expect(
           find.byKey(const ValueKey('calculate-final-results')),

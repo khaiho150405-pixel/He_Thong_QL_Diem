@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **username** | **String** |  |
 **role** | **String** |  |
 **active** | **bool** |  |
+**displayName** | **String** |  | [optional]
 **token** | **String** |  |
 **csrf** | **String** |  |
 

@@ -123,7 +123,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
                   Icon(Icons.bar_chart_rounded, color: t.priLink),
                   Text(
                     'Thống kê · ${data.students} HS · '
-                    'ĐTB lớp ${data.average ?? '—'} · '
+                    'Điểm TB lớp ${data.average ?? '—'} · '
                     'Cao nhất ${data.highest ?? '—'} · '
                     'Thấp nhất ${data.lowest ?? '—'}',
                     style: theme.textTheme.labelLarge?.copyWith(color: t.ink),
@@ -237,7 +237,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
         icon: Icons.people_alt_outlined,
       ),
       StatCard(
-        title: 'ĐTB lớp',
+        title: 'Điểm TB lớp',
         value: data.average ?? '—',
         icon: Icons.analytics_outlined,
       ),

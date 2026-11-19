@@ -257,8 +257,8 @@ test("UC14 semester coefficients are isolated, authorized, snapshotted and froze
     const mine = await finalResults.myResults(studentActor, term);
     assert.ok(linkedStudentId > 0);
     assert.equal(
-      mine[0]!.components.find((c) => c.componentId === component)!.coefficient,
-      "4.00",
+      mine[0]!.components.some((c) => c.coefficient === "4.00"),
+      true,
     );
   } finally {
     await app.close();

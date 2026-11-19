@@ -9,6 +9,7 @@ import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_date_field.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_select_field.dart';
+import '../../core/school_year.dart';
 import '../authentication/session.dart';
 import 'academic_year_scope.dart';
 import 'fields.dart';
@@ -389,7 +390,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     final warnings = <String>[];
     if (summary != null) {
       if (summary.openGradebooks > 0) {
-        warnings.add('${summary.openGradebooks} bảng điểm chưa chốt');
+        warnings.add('${summary.openGradebooks} bảng điểm chưa khóa');
       }
       if (summary.pendingRecognitionTickets > 0) {
         warnings.add(
@@ -819,7 +820,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         enabled: editable && !locked,
         decoration: InputDecoration(
           labelText: f.label,
-          hintText: 'Ví dụ: 2026-2027',
+          hintText: 'Ví dụ: ${schoolYearName()}',
           helperText: 'Định dạng YYYY-YYYY',
           helperMaxLines: 2,
           prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
@@ -1183,7 +1184,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                       child: Text(
                         'Hệ số này thay thế hệ số mặc định của thành phần '
                         'trong học kỳ đã chọn. Nhập từ 0.01 đến 9.99 '
-                        '(ví dụ 2.00). Khi môn học đã có bảng điểm chốt '
+                        '(ví dụ 2.00). Khi môn học đã có bảng điểm khóa '
                         'trong học kỳ, hệ số không thể sửa hoặc xóa.',
                         style: TextStyle(color: t.ink2),
                       ),
@@ -1256,7 +1257,7 @@ String publishIssueDescription(PublishIssueDtoCodeEnum code) {
     case PublishIssueDtoCodeEnum.GRADEBOOK_MISSING:
       return 'Chưa có bảng điểm — bảng điểm tự tạo khi phân công giáo viên cho lớp–môn, hãy kiểm tra phân công';
     case PublishIssueDtoCodeEnum.GRADEBOOK_NOT_LOCKED:
-      return 'Bảng điểm chưa chốt (còn cột chưa hết hạn hoặc chưa có lịch)';
+      return 'Bảng điểm chưa khóa (còn cột chưa hết hạn hoặc chưa có lịch)';
     case PublishIssueDtoCodeEnum.RECOGNITION_PENDING:
       return 'Còn phiếu nhận dạng chưa duyệt';
     case PublishIssueDtoCodeEnum.STUDENT_NOT_IN_GRADEBOOK:
@@ -1277,7 +1278,7 @@ String publishIssueGroupTitle(PublishIssueDtoCodeEnum code) {
     case PublishIssueDtoCodeEnum.GRADEBOOK_MISSING:
       return 'Chưa có bảng điểm';
     case PublishIssueDtoCodeEnum.GRADEBOOK_NOT_LOCKED:
-      return 'Bảng điểm chưa chốt';
+      return 'Bảng điểm chưa khóa';
     case PublishIssueDtoCodeEnum.RECOGNITION_PENDING:
       return 'Phiếu nhận dạng chưa duyệt';
     case PublishIssueDtoCodeEnum.STUDENT_NOT_IN_GRADEBOOK:

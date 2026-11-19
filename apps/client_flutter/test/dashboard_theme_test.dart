@@ -143,7 +143,7 @@ const _adminData = AdminOverviewData(
       className: '10A1',
       subjectName: 'Toán',
       teacherName: 'Nguyễn Thị Lan',
-      status: 'Đã chốt',
+      status: 'Đã khóa',
       updatedAt: '2026-10-16T01:00:00.000Z',
     ),
     AdminRecentActivityItem(
@@ -270,7 +270,7 @@ void main() {
         for (final title in [
           'Mức điểm toàn trường',
           'Đối chiếu 2 kênh Số & Chữ',
-          'Tỷ lệ chốt sổ của giáo viên',
+          'Tỷ lệ khóa bảng điểm của giáo viên',
           'Hoạt động nộp điểm gần đây',
         ]) {
           expect(find.text(title), findsOneWidget);
@@ -310,7 +310,7 @@ void main() {
         expect(
           tester
               .widgetList<AppBadge>(find.byType(AppBadge))
-              .where((b) => b.label == 'Đã chốt')
+              .where((b) => b.label == 'Đã khóa')
               .single
               .tone,
           AppBadgeTone.ok,
@@ -337,7 +337,7 @@ void main() {
         expect(find.text('10A1, 11A3'), findsOneWidget);
         expect(find.text('Tiến độ nhập'), findsOneWidget);
         expect(find.text('20%'), findsOneWidget);
-        expect(find.text('1 / 5 bảng đã chốt'), findsOneWidget);
+        expect(find.text('1 / 5 bảng đã khóa'), findsOneWidget);
         expect(find.text('OCR chờ duyệt'), findsOneWidget);
         expect(find.text('02 phiếu'), findsOneWidget);
         expect(find.text('Cần xác nhận kết quả'), findsOneWidget);
@@ -366,12 +366,12 @@ void main() {
         );
 
         expect(find.byType(StatCard), findsNWidgets(3));
-        expect(find.text('ĐTB học kỳ'), findsOneWidget);
+        expect(find.text('Điểm TB học kỳ'), findsOneWidget);
         expect(find.text('6.5'), findsOneWidget);
         expect(find.text('Học kỳ I'), findsOneWidget);
-        expect(find.text('Môn đã chốt'), findsOneWidget);
+        expect(find.text('Môn đã có điểm'), findsOneWidget);
         expect(find.text('5 / 6'), findsOneWidget);
-        expect(find.text('Chỉ tính bảng điểm đã chốt'), findsOneWidget);
+        expect(find.text('Số môn đã có điểm tổng kết'), findsOneWidget);
         expect(find.text('Xếp hạng lớp'), findsOneWidget);
         expect(find.text('3 / 38'), findsOneWidget);
         expect(find.text('Lớp 10A1'), findsOneWidget);

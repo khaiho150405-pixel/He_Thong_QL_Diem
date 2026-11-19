@@ -105,31 +105,42 @@ class TimetableToolbar extends StatelessWidget {
                   children: [
                     SizedBox(width: 320, child: tabs),
                     ...extras,
-                    OutlinedButton.icon(
-                      key: const ValueKey('timetable-date-button'),
-                      onPressed: onPickDate,
-                      icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                      label: Text(dateLabel ?? '--/--/----'),
-                    ),
-                    TextButton(
-                      onPressed: onToday,
-                      child: const Text('Hôm nay'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onPrev,
-                      icon: const Icon(Icons.chevron_left, size: 18),
-                      label: const Text('Tuần trước'),
-                    ),
-                    OutlinedButton(
-                      onPressed: onNext,
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Tuần sau'),
-                          SizedBox(width: 4),
-                          Icon(Icons.chevron_right, size: 18),
-                        ],
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        OutlinedButton.icon(
+                          key: const ValueKey('timetable-date-button'),
+                          onPressed: onPickDate,
+                          icon: const Icon(
+                            Icons.calendar_month_outlined,
+                            size: 18,
+                          ),
+                          label: Text(dateLabel ?? '--/--/----'),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        TextButton(
+                          onPressed: onToday,
+                          child: const Text('Hôm nay'),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        OutlinedButton.icon(
+                          onPressed: onPrev,
+                          icon: const Icon(Icons.chevron_left, size: 18),
+                          label: const Text('Tuần trước'),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        OutlinedButton(
+                          onPressed: onNext,
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Tuần sau'),
+                              SizedBox(width: 4),
+                              Icon(Icons.chevron_right, size: 18),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

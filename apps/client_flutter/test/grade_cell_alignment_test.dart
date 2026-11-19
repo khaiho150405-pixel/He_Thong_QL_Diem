@@ -263,7 +263,7 @@ void main() {
     });
 
     testWidgets(
-      'cột đã chốt: ô chỉ đọc cùng khung, tooltip "Cột đã chốt", $width',
+      'cột đã chốt: ô chỉ đọc cùng khung, tooltip "Cột đã khóa", $width',
       (tester) async {
         await _pump(tester, width: width, locked: true);
         for (final k in _col201) {
@@ -275,7 +275,7 @@ void main() {
         }
         final lefts = {for (final k in _col201) _rect(tester, k).left.round()};
         expect(lefts.length, 1);
-        expect(find.byTooltip('Cột đã chốt'), findsWidgets);
+        expect(find.byTooltip('Cột đã khóa'), findsWidgets);
         expect(
           find.descendant(
             of: find.byType(GradeCellFrame),
@@ -297,7 +297,7 @@ void main() {
       'Ô đã sửa',
       'Nhập từ ảnh',
       'Điểm không hợp lệ',
-      'Cột đã chốt',
+      'Cột đã khóa',
       'Ngoài lịch nhập',
       'Chờ đối chiếu',
       'Ô miễn',

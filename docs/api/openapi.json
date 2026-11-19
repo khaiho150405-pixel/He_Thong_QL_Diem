@@ -11569,28 +11569,18 @@
       "StudentApprovedComponentDto": {
         "type": "object",
         "properties": {
-          "componentId": { "type": "number" },
           "componentName": { "type": "string" },
           "coefficient": { "type": "string" },
           "value": { "type": "string", "nullable": true },
           "status": { "type": "string", "enum": ["DA_DUYET", "MIEN"] }
         },
-        "required": [
-          "componentId",
-          "componentName",
-          "coefficient",
-          "value",
-          "status"
-        ]
+        "required": ["componentName", "coefficient", "value", "status"]
       },
       "StudentSubjectResultDto": {
         "type": "object",
         "properties": {
           "passFail": { "type": "boolean" },
-          "gradebookId": { "type": "number" },
-          "subjectId": { "type": "number" },
           "subjectName": { "type": "string" },
-          "termId": { "type": "number" },
           "termName": { "type": "string" },
           "yearId": { "type": "number" },
           "yearName": { "type": "string" },
@@ -11605,26 +11595,17 @@
             }
           },
           "finalScore": { "type": "string", "nullable": true },
-          "classification": { "type": "string", "nullable": true },
-          "calculatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
+          "classification": { "type": "string", "nullable": true }
         },
         "required": [
-          "gradebookId",
-          "subjectId",
           "subjectName",
-          "termId",
           "termName",
           "yearId",
           "yearName",
           "className",
           "components",
           "finalScore",
-          "classification",
-          "calculatedAt"
+          "classification"
         ]
       },
       "StudentYearDto": {
@@ -11639,10 +11620,8 @@
       "StudentResultSummaryDto": {
         "type": "object",
         "properties": {
-          "termId": { "type": "number", "nullable": true },
           "termName": { "type": "string", "nullable": true },
           "className": { "type": "string" },
-          "yearId": { "type": "number", "nullable": true },
           "yearName": { "type": "string", "nullable": true },
           "averageScore": { "type": "string", "nullable": true },
           "publishedSubjects": { "type": "number" },
@@ -11651,10 +11630,8 @@
           "classSize": { "type": "number" }
         },
         "required": [
-          "termId",
           "termName",
           "className",
-          "yearId",
           "yearName",
           "averageScore",
           "publishedSubjects",
@@ -11713,6 +11690,7 @@
             "enum": ["QUAN_TRI_VIEN", "GIAO_VIEN", "HOC_SINH"]
           },
           "active": { "type": "boolean" },
+          "displayName": { "type": "string", "nullable": true },
           "token": { "type": "string", "nullable": true },
           "csrf": { "type": "string" }
         },

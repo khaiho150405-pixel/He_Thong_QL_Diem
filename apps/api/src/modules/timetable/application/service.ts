@@ -144,7 +144,7 @@ export class TimetableService {
       ten_hoc_ky: r.ma_hoc_ky_ref.ten,
       thu: r.thu,
       tiet: r.tiet,
-      phong_hoc: r.phong_hoc,
+      phong_hoc: actor.role === "HOC_SINH" ? null : r.phong_hoc,
       ghi_chu: r.ghi_chu,
     }));
 

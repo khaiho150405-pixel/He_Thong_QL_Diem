@@ -50,6 +50,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   int _clientPage = 0;
   int _pageSize = appDefaultPageSize;
   bool _dirty = false;
+  num? _scopeYearId;
+  num? _scopeActiveYearId;
   late final ProgressiveLoader<Json, String> _loader = ProgressiveLoader(
     onChanged: () {
       if (mounted) setState(() {});
@@ -264,6 +266,31 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     reload();
   }
 
+  Future<LoadedChunk<Json, String>> _fetchChunk(String? cursor) async {
+    final res = await ref
+        .read(catalogRepositoryProvider)
+        .list(
+          widget.resource,
+          cursor: cursor,
+          yearId: _scopeYearId,
+          activeInYearId: _scopeActiveYearId,
+        );
+    return LoadedChunk(res.items, res.nextCursor);
+  }
+
+  Future<void> _softRefresh() async {
+    final key = _loader.key;
+    if (key == null) {
+      if (mounted) reloadFresh();
+      return;
+    }
+    try {
+      await _loader.refresh(key, _fetchChunk);
+    } catch (_) {
+      if (mounted) reloadFresh();
+    }
+  }
+
   Future<CatalogPageData> _loadPage() async {
     num? scopedYearId;
     if (_yearScopedResources.contains(widget.resource)) {
@@ -296,6 +323,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
 
     final key = '${widget.resource}|$scopedYearId|$activeInYearId';
+    _scopeYearId = scopedYearId;
+    _scopeActiveYearId = activeInYearId;
     if (!_dirty && _loader.key == key) {
       return CatalogPageData(_loader.items, null);
     }
@@ -434,7 +463,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         _references.clear();
         await _loadReferences();
       }
-      setState(reloadFresh);
+      await _softRefresh();
     }
   }
 
@@ -451,7 +480,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       ),
     );
     if (changed == true && mounted) {
-      setState(reloadFresh);
+      await _softRefresh();
     }
   }
 
@@ -482,7 +511,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         _references.clear();
         await _loadReferences();
       }
-      if (mounted) setState(reloadFresh);
+      if (mounted) {
+        final removedId = row[spec.id];
+        _loader.removeWhere((item) => item[spec.id] == removedId);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -535,18 +567,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               icon: const Icon(Icons.upload_file_outlined),
               onPressed: _showImport,
             ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: FilledButton.tonalIcon(
-              key: ValueKey('catalog-add-${widget.resource}'),
-              onPressed: () => edit(),
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('Thêm mới'),
-              style: FilledButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-            ),
+          IconButton.filledTonal(
+            key: ValueKey('catalog-add-${widget.resource}'),
+            tooltip: 'Thêm mới',
+            onPressed: () => edit(),
+            icon: const Icon(Icons.add, size: 20),
           ),
         ],
       ],
@@ -1751,7 +1776,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           icon: Icon(Icons.school_outlined, size: 20, color: t.priLink),
           onPressed: () async {
             await context.push('/admin/classes/${row['ma_lop']}/promotion');
-            if (mounted) reloadFresh();
+            if (mounted) _softRefresh();
           },
         ),
       if (admin && !['accounts', 'students'].contains(spec.key))
@@ -1765,6 +1790,18 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       Icon(Icons.chevron_right, color: t.ink3),
     ],
   );
+
+  String _compactLabel(Json row) {
+    final label = rowLabel(row);
+    if (spec.key != 'classes') return label;
+    final viewing = ref.read(viewingYearProvider);
+    if (viewing == null || viewing.isAll) return label;
+    final parts = label.split(' · ');
+    if (parts.length >= 3 && RegExp(r'^\d{4}-\d{4}$').hasMatch(parts[1])) {
+      return [parts.first, ...parts.skip(2)].join(' · ');
+    }
+    return label;
+  }
 
   double get _actionsWidth {
     if (admin && spec.key == 'classes') return 124;
@@ -1820,7 +1857,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     affectedGradebooks: result.affectedGradebooks,
                   );
                 }
-                reloadFresh();
+                _softRefresh();
               }
               break;
             case 'withdraw':
@@ -1834,7 +1871,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
               );
               if (result != null && mounted) {
-                reloadFresh();
+                _softRefresh();
               }
               break;
             case 'reenroll':
@@ -1849,7 +1886,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
               );
               if (result != null && mounted) {
-                reloadFresh();
+                _softRefresh();
               }
               break;
             case 'history':
@@ -2166,7 +2203,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
 
     final studentName = row['ho_ten']?.toString() ?? rowLabel(row);
-    final titleText = isStudent ? studentName : rowLabel(row);
+    final titleText = isStudent ? studentName : _compactLabel(row);
 
     Widget leading;
     if (isStudent && visibleStt != null) {
@@ -2259,7 +2296,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                   await context.push(
                     '/admin/classes/${row['ma_lop']}/promotion',
                   );
-                  if (mounted) reloadFresh();
+                  if (mounted) _softRefresh();
                 },
               ),
             if (admin && spec.key == 'students') _buildStudentMenu(t, row),

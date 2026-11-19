@@ -312,7 +312,7 @@ void main() {
         expect(find.text('Mã: 1'), findsNothing);
         expect(find.byType(Card), findsWidgets);
         expect(find.byKey(const ValueKey('catalog-table-years')), findsNothing);
-        expect(find.text('Thêm mới'), findsOneWidget);
+        expect(find.byKey(const ValueKey('catalog-add-years')), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }

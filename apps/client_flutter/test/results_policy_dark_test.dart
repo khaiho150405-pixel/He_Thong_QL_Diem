@@ -232,24 +232,28 @@ void main() {
       expect(find.text('Đạt'), findsOneWidget);
     });
 
-    testWidgets('còn môn chưa có xếp loại -> Chờ công bố ở cả hai ô', (
-      tester,
-    ) async {
-      await openTable(tester, [
-        subj('Toán', '8.0'),
-        _FakeServer.subject('Văn', null, null),
-      ]);
-      expect(find.text('Chờ công bố'), findsNWidgets(2));
-      expect(find.text('Giỏi'), findsNothing);
-    });
+    testWidgets(
+      'còn môn chưa có xếp loại -> ô tổng không hiện điểm, không nói chuyện công bố',
+      (tester) async {
+        await openTable(tester, [
+          subj('Toán', '8.0'),
+          _FakeServer.subject('Văn', null, null),
+        ]);
+        expect(find.text('Chờ công bố'), findsNothing);
+        expect(find.text('Giỏi'), findsNothing);
+      },
+    );
   });
 
-  test('semesterOverviewOf và ngưỡng xếp loại chung giữ nguyên bản cũ', () {
-    expect(overallClassificationCodeOf(8.0), 'GIOI');
-    expect(overallClassificationCodeOf(7.99), 'KHA');
-    expect(overallClassificationCodeOf(6.5), 'KHA');
-    expect(overallClassificationCodeOf(6.49), 'DAT');
-  });
+  test(
+    'semesterOverviewOf và ngưỡng xếp loại chung theo chính sách mặc định',
+    () {
+      expect(overallClassificationCodeOf(8.0), 'GIOI');
+      expect(overallClassificationCodeOf(7.99), 'KHA');
+      expect(overallClassificationCodeOf(6.5), 'KHA');
+      expect(overallClassificationCodeOf(6.49), 'TRUNG_BINH');
+    },
+  );
 
   test('ngưỡng xếp loại chung: đủ biên 7.99, 8.0, 6.49, 6.5, 4.99, 5.0', () {
     final expected = <double, String>{
@@ -257,20 +261,19 @@ void main() {
       8.0: 'GIOI',
       7.99: 'KHA',
       6.5: 'KHA',
-      6.49: 'DAT',
-      5.0: 'DAT',
-      4.99: 'DAT',
-      0.0: 'DAT',
+      6.49: 'TRUNG_BINH',
+      5.0: 'TRUNG_BINH',
+      4.99: 'YEU',
+      0.0: 'YEU',
     };
     expected.forEach((gpa, code) {
-      expect(overallClassificationCodeOf(gpa), code, reason: 'ĐTB $gpa');
+      expect(overallClassificationCodeOf(gpa), code, reason: 'Điểm TB $gpa');
     });
     final codes = expected.values.toSet();
-    expect(codes, {'GIOI', 'KHA', 'DAT'});
-    expect(codes.contains('CHUA_DAT'), isFalse);
+    expect(codes, {'GIOI', 'KHA', 'TRUNG_BINH', 'YEU'});
   });
 
-  group('semesterOverviewOf (ĐTB chung tính ở client, giữ nguyên bản cũ)', () {
+  group('semesterOverviewOf (điểm TB chung tính ở client)', () {
     StudentSubjectResultDto dto(
       String name,
       String? score,
@@ -345,8 +348,8 @@ void main() {
         expect(find.text('5 / 6'), findsOneWidget);
         expect(find.textContaining('Mã học sinh'), findsNothing);
         expect(find.text('7.0 · XUAT_SAC_LA'), findsOneWidget);
-        expect(find.text('8.4 · GIOI'), findsOneWidget);
-        expect(find.text('Chờ chốt ĐTB'), findsOneWidget);
+        expect(find.text('8.4 · Giỏi'), findsOneWidget);
+        expect(find.text('Chưa có điểm TB'), findsOneWidget);
         expect(tester.takeException(), isNull);
 
         await tester.tap(find.text('Bảng tổng hợp'));
@@ -354,9 +357,9 @@ void main() {
         expect(find.text('Giỏi'), findsOneWidget);
         expect(find.text('Khá'), findsOneWidget);
         expect(find.text('Đạt'), findsOneWidget);
-        expect(find.text('Yếu'), findsOneWidget);
+        expect(find.text('Chưa đạt'), findsOneWidget);
         expect(find.text('XUAT_SAC_LA'), findsOneWidget);
-        expect(find.text('ĐIỂM TRUNG BÌNH CHUNG'), findsOneWidget);
+        expect(find.text('Điểm TB học kỳ'), findsOneWidget);
         expect(tester.takeException(), isNull);
 
         await tester.tap(find.text('Thẻ theo môn'));

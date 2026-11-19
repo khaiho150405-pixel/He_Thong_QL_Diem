@@ -1,3 +1,4 @@
+import '../../core/date_format.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -167,12 +168,9 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
     );
   }
 
-  static String _two(int n) => n.toString().padLeft(2, '0');
-
   static String _formatTime(String iso) {
-    final d = DateTime.tryParse(iso)?.toLocal();
-    if (d == null) return iso;
-    return '${_two(d.hour)}:${_two(d.minute)} ${_two(d.day)}/${_two(d.month)}/${d.year}';
+    final d = DateTime.tryParse(iso);
+    return d == null ? iso : formatDateTimeVi(d);
   }
 
   Widget _field(String key, String label, {String? helper, double? width}) {

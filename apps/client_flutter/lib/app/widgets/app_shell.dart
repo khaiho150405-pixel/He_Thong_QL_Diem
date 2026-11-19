@@ -1,13 +1,10 @@
+import '../../core/role_label.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/authentication/profile_dialog.dart';
 import '../design_tokens.dart';
 
-String appRoleLabel(String role) => switch (role) {
-  'QUAN_TRI_VIEN' => 'Quản trị viên',
-  'GIAO_VIEN' => 'Giáo viên',
-  _ => 'Học sinh',
-};
+String appRoleLabel(String role) => roleLabelOf(role);
 
 double appSidebarWidth(String role, {required bool collapsed}) {
   if (collapsed) return 70;

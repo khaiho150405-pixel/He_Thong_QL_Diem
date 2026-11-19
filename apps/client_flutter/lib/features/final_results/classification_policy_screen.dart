@@ -203,10 +203,10 @@ class _ClassificationPolicyScreenState
                         key: const ValueKey('policy-version'),
                         controller: version,
                         maxLength: 20,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Phiên bản mới',
-                          hintText: 'Ví dụ: SCHOOL-2026-01',
-                          border: OutlineInputBorder(),
+                          hintText: 'Ví dụ: SCHOOL-${DateTime.now().year}-01',
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) =>
                             RegExp(

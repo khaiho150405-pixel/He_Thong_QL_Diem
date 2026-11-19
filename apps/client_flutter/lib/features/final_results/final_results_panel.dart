@@ -1,3 +1,4 @@
+import '../../core/date_format.dart';
 import 'dart:math';
 
 import 'package:api_client_dart/api_client_dart.dart';
@@ -18,15 +19,9 @@ import 'repository.dart';
 import 'student_results_screen.dart'
     show classificationBadgeOf, classificationLabel;
 
-String _formatDateTime(DateTime value) {
-  final d = value.toLocal();
-  String two(int n) => n.toString().padLeft(2, '0');
-  return '${two(d.day)}/${two(d.month)}/${d.year} ${two(d.hour)}:${two(d.minute)}';
-}
-
-Widget _classificationBadge(String code) {
+Widget _classificationBadge(String code, {bool dot = true}) {
   final badge = classificationBadgeOf(code);
-  return AppBadge(badge.label, tone: badge.tone);
+  return AppBadge(badge.label, tone: badge.tone, dot: dot);
 }
 
 enum _ResultGroup { all, exempted, skipped }
@@ -149,8 +144,11 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Chỉ điểm đã duyệt được tính. Hệ thống lưu bộ hệ số, '
-                  'phiên bản chính sách và lịch sử của lần tính này.',
+                  _isAdmin
+                      ? 'Chỉ điểm đã duyệt được tính. Hệ thống lưu bộ hệ số, '
+                            'phiên bản chính sách và lịch sử của lần tính này.'
+                      : 'Chỉ điểm đã duyệt được tính. Hệ thống ghi lại lịch sử '
+                            'của lần tính này.',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: t.ink2),
@@ -175,6 +173,9 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
     );
   }
 
+  bool get _isAdmin =>
+      ref.read(sessionProvider)?.role == SessionDtoRoleEnum.QUAN_TRI_VIEN;
+
   Future<void> calculate() async {
     final reason = await askReason();
     if (reason == null || !mounted) return;
@@ -196,8 +197,8 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
         SnackBar(
           content: Text(
             'Đã tính ${summary.calculatedStudents} học sinh; '
-            'bỏ qua ${summary.skippedStudents}. '
-            'Policy ${summary.policyVersion}.',
+            'bỏ qua ${summary.skippedStudents}.'
+            '${_isAdmin ? ' Chính sách ${summary.policyVersion}.' : ''}',
           ),
         ),
       );
@@ -213,7 +214,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
 
   String _message(Object error) {
     if (error is DioException && error.response?.statusCode == 409) {
-      return 'Không thể tính: bảng chưa chốt, phiên bản đã đổi, còn điểm chờ '
+      return 'Không thể tính: bảng chưa khóa, phiên bản đã đổi, còn điểm chờ '
           'đối chiếu hoặc cấu hình chưa hợp lệ.';
     }
     return 'Không tải được kết quả tổng kết. Vui lòng thử lại.';
@@ -335,9 +336,11 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'Tính lúc ${_formatDateTime(first.calculatedAt)} · '
-              'Hệ số ${first.weightVersion} · '
-              'Chính sách ${first.policyVersion}',
+              _isAdmin
+                  ? 'Tính lúc ${formatDateTimeVi(first.calculatedAt)} · '
+                        'Hệ số ${first.weightVersion} · '
+                        'Chính sách ${first.policyVersion}'
+                  : 'Tính lúc ${formatDateTimeVi(first.calculatedAt)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: t.ink2,
                 fontWeight: FontWeight.w500,
@@ -452,11 +455,11 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
         ),
         DropdownMenuItem(
           value: _ResultSort.scoreDesc,
-          child: Text('ĐTB (cao → thấp)'),
+          child: Text('Điểm cao → thấp'),
         ),
         DropdownMenuItem(
           value: _ResultSort.scoreAsc,
-          child: Text('ĐTB (thấp → cao)'),
+          child: Text('Điểm thấp → cao'),
         ),
       ],
       onChanged: (v) => setState(() {
@@ -751,10 +754,12 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                         ),
                         const SizedBox(height: 2),
                         Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.xs,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
-                              'ĐTB: ',
+                              'Điểm tổng kết: ',
                               style: TextStyle(color: t.ink2, fontSize: 13),
                             ),
                             Text(
@@ -767,13 +772,12 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                                 ],
                               ),
                             ),
+                            _classificationBadge(item.classification),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  _classificationBadge(item.classification),
-                  const SizedBox(width: AppSpacing.xs),
                   IconButton(
                     tooltip: 'Lịch sử tính',
                     icon: const Icon(Icons.history, size: 20),
@@ -1279,7 +1283,7 @@ class _FinalResultHistoryDialog extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.xxs),
         Text(
-          'Tính lúc ${_formatDateTime(item.calculatedAt)}',
+          'Tính lúc ${formatDateTimeVi(item.calculatedAt)}',
           style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
         ),
       ],

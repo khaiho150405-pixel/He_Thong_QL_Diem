@@ -197,6 +197,34 @@ void main() {
     for (final width in [390.0, 1280.0]) {
       final label = '${brightness.name} ${width.toInt()}px';
 
+      testWidgets('quản trị viên $label thấy phiên bản hệ số và chính sách', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          _finalPanel,
+          width: width,
+          brightness: brightness,
+          role: 'QUAN_TRI_VIEN',
+        );
+
+        expect(
+          find.textContaining('Hệ số W-012345678901234567'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Chính sách DEV-2026-01'), findsOneWidget);
+      });
+
+      testWidgets('giáo viên $label không thấy phiên bản hệ số và chính sách', (
+        tester,
+      ) async {
+        await _pump(tester, _finalPanel, width: width, brightness: brightness);
+
+        expect(find.textContaining('Tính lúc '), findsOneWidget);
+        expect(find.textContaining('Hệ số W-'), findsNothing);
+        expect(find.textContaining('Chính sách DEV-2026-01'), findsNothing);
+      });
+
       testWidgets('tổng kết $label: bảng, xếp loại bằng AppBadge, không '
           'overflow', (tester) async {
         await _pump(tester, _finalPanel, width: width, brightness: brightness);
@@ -226,12 +254,7 @@ void main() {
         expect(_badgeDotColor(tester, 'Giỏi'), tokens.ok);
         expect(_badgeDotColor(tester, 'Khá'), tokens.priLink);
         expect(_badgeDotColor(tester, 'Đạt'), tokens.neu);
-        expect(_badgeDotColor(tester, 'Yếu'), tokens.bad);
-        expect(
-          find.textContaining('Hệ số W-012345678901234567'),
-          findsOneWidget,
-        );
-        expect(find.textContaining('Chính sách DEV-2026-01'), findsOneWidget);
+        expect(_badgeDotColor(tester, 'Chưa đạt'), tokens.bad);
         expect(find.textContaining('Tính lúc '), findsOneWidget);
         expect(find.byTooltip('Lịch sử tính'), findsNWidgets(4));
         expect(tester.takeException(), isNull);
@@ -284,7 +307,7 @@ void main() {
         expect(find.byType(StatCard), findsNWidgets(6));
         for (final entry in {
           'HS đã tổng kết': '40',
-          'ĐTB lớp': '7.2',
+          'Điểm TB lớp': '7.2',
           'Cao nhất': '9.8',
           'Thấp nhất': '2.5',
           'Đạt yêu cầu': '36',
@@ -382,7 +405,7 @@ void main() {
     );
     expect(
       find.text(
-        'Thống kê · 40 HS · ĐTB lớp 7.2 · Cao nhất 9.8 · Thấp nhất 2.5',
+        'Thống kê · 40 HS · Điểm TB lớp 7.2 · Cao nhất 9.8 · Thấp nhất 2.5',
       ),
       findsOneWidget,
     );

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:client_flutter/features/authentication/session.dart';
+import 'package:client_flutter/features/timetable/schedule_widget_sync.dart';
 import 'package:client_flutter/features/timetable/timetable_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -93,6 +94,7 @@ Future<void> _pump(
   String role = 'GIAO_VIEN',
   double width = 390,
   double textScale = 1,
+  ScheduleWidgetBridge? bridge,
 }) async {
   tester.view.physicalSize = Size(width, 844);
   tester.view.devicePixelRatio = 1;
@@ -105,6 +107,8 @@ Future<void> _pump(
       apiProvider.overrideWithValue(
         ApiClientDart(dio: Dio()..httpClientAdapter = _Server(role)),
       ),
+      if (bridge != null)
+        scheduleWidgetBridgeProvider.overrideWithValue(bridge),
     ],
   );
   addTearDown(container.dispose);
@@ -128,7 +132,39 @@ Future<void> _mode(WidgetTester tester, String name) async {
   await tester.pumpAndSettle();
 }
 
+class _RecordingBridge implements ScheduleWidgetBridge {
+  final saved = <Map<String, dynamic>>[];
+
+  @override
+  bool get supported => true;
+
+  @override
+  Future<void> save(Map<String, dynamic> payload) async => saved.add(payload);
+
+  @override
+  Future<void> clear() async {}
+}
+
 void main() {
+  testWidgets(
+    'mở lịch của giáo viên thì cập nhật dữ liệu widget màn hình chính',
+    (tester) async {
+      final bridge = _RecordingBridge();
+      await _pump(tester, bridge: bridge);
+      expect(bridge.saved, hasLength(1));
+      expect(bridge.saved.single['role'], 'GIAO_VIEN');
+      expect((bridge.saved.single['lessons'] as List), hasLength(5));
+    },
+  );
+
+  testWidgets('quản trị viên mở lịch thì không đẩy dữ liệu widget', (
+    tester,
+  ) async {
+    final bridge = _RecordingBridge();
+    await _pump(tester, role: 'QUAN_TRI_VIEN', bridge: bridge);
+    expect(bridge.saved, isEmpty);
+  });
+
   testWidgets('mặc định chế độ Ngày: thẻ đúng môn/tiết, gộp tiết liền nhau', (
     tester,
   ) async {

@@ -1,3 +1,4 @@
+import '../../core/date_format.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1011,7 +1012,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         t.ink,
         'Phiếu đã hủy — ${ticket.cancelReason ?? 'Không có lý do'}',
         ticket.cancelledAt != null
-            ? 'Đã hủy lúc ${ticket.cancelledAt!.toLocal().hour.toString().padLeft(2, '0')}:${ticket.cancelledAt!.toLocal().minute.toString().padLeft(2, '0')} ngày ${ticket.cancelledAt!.toLocal().day}/${ticket.cancelledAt!.toLocal().month}/${ticket.cancelledAt!.toLocal().year}. Ảnh và dữ liệu đã bị xóa.'
+            ? 'Đã hủy lúc ${formatDateTimeVi(ticket.cancelledAt!)}. Ảnh và dữ liệu đã bị xóa.'
             : 'Ảnh và dữ liệu đối chiếu đã bị xóa khỏi hệ thống.',
       ),
       'LOI' => (

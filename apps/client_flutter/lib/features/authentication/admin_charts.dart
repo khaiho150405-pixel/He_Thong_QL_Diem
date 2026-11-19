@@ -460,7 +460,7 @@ class _GradeLevelProgressCard extends StatelessWidget {
     final t = context.tokens;
     return _ChartCard(
       eyebrow: 'TIẾN ĐỘ THEO KHỐI',
-      title: 'Tỷ lệ chốt sổ của giáo viên',
+      title: 'Tỷ lệ khóa bảng điểm của giáo viên',
       badge: AppBadge('$totalBooks Sổ điểm', dot: false),
       body: Center(
         child: SingleChildScrollView(
@@ -488,7 +488,7 @@ class _GradeLevelProgressCard extends StatelessWidget {
       ),
       footerIcon: Icons.task_alt_rounded,
       footerText:
-          'Tiến độ toàn trường: $lockedBooks / $totalBooks bảng điểm đã chốt ($completionRate%)',
+          'Tiến độ toàn trường: $lockedBooks / $totalBooks bảng điểm đã khóa ($completionRate%)',
     );
   }
 }
@@ -527,7 +527,7 @@ class _RecentGradebookActivityCard extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (_, index) {
                 final act = activities[index];
-                final isLocked = act.status == 'Đã chốt';
+                final isLocked = act.status == 'Đã khóa';
                 return Row(
                   children: [
                     DecoratedBox(

@@ -269,7 +269,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Thời khóa biểu toàn trường'), findsWidgets);
+      expect(find.text('Thời khóa biểu'), findsWidgets);
       expect(tester.takeException(), isNull);
     },
   );

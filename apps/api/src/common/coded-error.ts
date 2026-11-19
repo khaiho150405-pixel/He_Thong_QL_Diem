@@ -20,7 +20,7 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
   [
     "COLUMN_NOT_OPEN",
     "COLUMN_NOT_OPEN",
-    "Cột điểm chưa mở, đã hết hạn hoặc đã chốt; không đặt/bỏ miễn được.",
+    "Cột điểm chưa mở, đã hết hạn hoặc đã khóa; không đặt/bỏ miễn được.",
   ],
   [
     "RECOGNITION_PENDING",
@@ -30,7 +30,7 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
   [
     "EXEMPTION_VERSION_OR_STATE_CONFLICT",
     "VERSION_OR_STATE_CONFLICT",
-    "Bảng điểm vừa thay đổi hoặc đã chốt; tải lại rồi thử lại.",
+    "Bảng điểm vừa thay đổi hoặc đã khóa; tải lại rồi thử lại.",
   ],
   [
     "CELL_EXEMPT",
@@ -120,7 +120,7 @@ const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
   [
     "CELL_NOT_LOCKED",
     "CELL_NOT_LOCKED",
-    "Ô thuộc cột còn mở; nhập điểm thường, phiếu điều chỉnh chỉ dành cho cột đã chốt.",
+    "Ô thuộc cột còn mở; nhập điểm thường, phiếu điều chỉnh chỉ dành cho cột đã khóa.",
   ],
   [
     "ADJUSTMENT_PENDING_EXISTS",

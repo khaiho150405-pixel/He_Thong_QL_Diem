@@ -77,8 +77,8 @@ String deadlineErrorMessage(Object error) {
     'GRADE_ENTRY_WINDOW_CLOSED' =>
       'Chưa đến thời gian nhập hoặc đã hết hạn; không thể lưu điểm',
     'VERSION_OR_STATE_CONFLICT' =>
-      'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
-    'VERSION_CONFLICT' => 'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
+      'Bảng điểm vừa thay đổi hoặc đã khóa, hãy tải lại',
+    'VERSION_CONFLICT' => 'Bảng điểm vừa thay đổi hoặc đã khóa, hãy tải lại',
     'CONFLICT' => () {
       if (error is DioException) {
         var data = error.response?.data;
@@ -93,7 +93,7 @@ String deadlineErrorMessage(Object error) {
           return data['message'] as String;
         }
       }
-      return 'Dữ liệu vừa thay đổi hoặc đã chốt, hãy tải lại';
+      return 'Dữ liệu vừa thay đổi hoặc đã khóa, hãy tải lại';
     }(),
     'GRADEBOOK_NOT_EDITABLE' => 'Bảng điểm đã khóa, không thể sửa',
     _ => errorMessage(error),

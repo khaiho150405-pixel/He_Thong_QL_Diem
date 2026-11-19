@@ -69,15 +69,15 @@ export async function transaction<T>(
           INVALID_ENTRY_WINDOW:
             "Thời điểm đóng phải sau thời điểm mở và nằm trong tương lai.",
           COLUMN_LOCKED:
-            "Cột điểm đã chốt; không được sửa hoặc nhận diện thêm.",
+            "Cột điểm đã khóa; không được sửa hoặc nhận diện thêm.",
           INCOMPLETE_COLUMN:
-            "Cột còn thiếu điểm bắt buộc hoặc thiếu học sinh; nhập đủ và đồng bộ sĩ số trước khi chốt.",
+            "Cột còn thiếu điểm bắt buộc hoặc thiếu học sinh; nhập đủ và đồng bộ sĩ số trước khi khóa.",
           PENDING_REVIEW:
-            "Còn phiếu nhận diện đang xử lý hoặc chờ duyệt; xử lý xong trước khi chốt.",
+            "Còn phiếu nhận diện đang xử lý hoặc chờ duyệt; xử lý xong trước khi khóa.",
           SEMESTER_WEIGHTS_LOCKED:
-            "Học kỳ đã có cột/bảng điểm chốt; không thể sửa hoặc xóa hệ số.",
+            "Học kỳ đã có cột/bảng điểm khóa; không thể sửa hoặc xóa hệ số.",
           TERM_RESULTS_INCOMPLETE:
-            "Học kỳ còn bảng chưa chốt hoặc học sinh chưa có tổng kết; hoàn tất trước khi công bố.",
+            "Học kỳ còn bảng chưa khóa hoặc học sinh chưa có tổng kết; hoàn tất trước khi công bố.",
           NO_RESULTS_TO_PUBLISH: "Học kỳ chưa có kết quả để công bố.",
           TERM_ALREADY_PUBLISHED:
             "Học kỳ đã công bố; không được tính lại kết quả.",

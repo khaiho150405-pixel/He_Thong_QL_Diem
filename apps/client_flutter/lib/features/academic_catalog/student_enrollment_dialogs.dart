@@ -907,7 +907,7 @@ Future<void> showAffectedGradebooksNotice(
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Nhắc: Cột đã chốt: dùng chức năng Học sinh vào lớp sau khi chốt; cột còn mở: giáo viên có thể đặt Miễn.',
+                        'Nhắc: Cột đã khóa: dùng chức năng Học sinh vào lớp sau khi khóa; cột còn mở: giáo viên có thể đặt Miễn.',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,

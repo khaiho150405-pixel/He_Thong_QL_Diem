@@ -780,16 +780,14 @@ test("final results leave exempt cells out of numerator, denominator and missing
       "UPDATE hoc_sinh SET ma_nguoi_dung=$1 WHERE ma_hoc_sinh=$2",
       [student.id, a],
     );
-    const mine = (await f.finalResults.myResults(student, f.term)).find(
-      (r) => r.gradebookId === book.id,
-    )!;
+    const results = await f.finalResults.myResults(student, f.term);
+    assert.equal(results.length, 1);
+    const mine = results[0]!;
     assert.deepEqual(
-      mine.components
-        .map((item) => [item.componentId, item.value, item.status])
-        .sort(),
+      mine.components.map((item) => [item.value, item.status]).sort(),
       [
-        [tx, "8.0", "DA_DUYET"],
-        [gk, null, "MIEN"],
+        ["8.0", "DA_DUYET"],
+        [null, "MIEN"],
       ].sort(),
     );
   } finally {

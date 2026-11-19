@@ -386,12 +386,9 @@ test("end-of-year promotion keeps last year's gradebook, results, report and pub
       undefined,
       String(x),
     );
-    assert.deepEqual(
-      onlyX.items.map((i) => i.gradebookId),
-      [bookX.id],
-    );
+    assert.equal(onlyX.items.length, 1);
+    assert.equal(onlyX.items[0]!.yearName, onlyX.summary!.yearName);
     assert.equal(onlyX.years.length, 2);
-    assert.equal(onlyX.summary!.yearId, x);
     const empty = await f.year("Năm trống", "2028-09-01", "2029-06-01");
     const none = await f.finalResults.myOverview(
       account,

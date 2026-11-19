@@ -8,6 +8,13 @@ import '../../core/remember_store.dart';
 import '../../core/browser_stub.dart'
     if (dart.library.js_interop) '../../core/browser_web.dart';
 
+extension SessionDisplayName on SessionDto {
+  String get shownName {
+    final name = displayName?.trim();
+    return name == null || name.isEmpty ? username : name;
+  }
+}
+
 final Provider<ApiClientDart> apiProvider = Provider<ApiClientDart>((ref) {
   final dio = Dio(
     BaseOptions(

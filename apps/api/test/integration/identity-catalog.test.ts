@@ -193,6 +193,20 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
     });
     const teacherToken = (await login(phones["teacher"]!)).body.token;
     const studentToken = (await login(phones["student"]!)).body.token;
+    assert.equal(
+      (await call("identity/me", "GET", undefined, teacherToken)).body
+        .displayName,
+      "Giáo viên giả",
+    );
+    assert.equal(
+      (await call("identity/me", "GET", undefined, studentToken)).body
+        .displayName,
+      "Học sinh giả",
+    );
+    assert.equal(
+      (await call("identity/me", "GET", undefined, token)).body.displayName,
+      null,
+    );
     const otherToken = (await login(phones["other"]!)).body.token;
     assert.equal(
       (await call("identity/profile", "GET", undefined, studentToken)).body

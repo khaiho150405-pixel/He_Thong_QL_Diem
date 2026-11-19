@@ -438,7 +438,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
             _notice(
               icon: Icons.lock_clock_rounded,
               text:
-                  'Cột điểm [${_skippedLockedColumns.join(', ')}] hiện đang bị Admin khóa (chưa mở cổng nhập) nên các điểm trong cột này sẽ được bỏ qua.',
+                  'Cột điểm [${_skippedLockedColumns.join(', ')}] hiện đang bị khóa hoặc chưa mở nhập nên các điểm trong cột này sẽ được bỏ qua.',
               background: t.warnSoft,
               border: t.warnLine,
               foreground: t.warn,

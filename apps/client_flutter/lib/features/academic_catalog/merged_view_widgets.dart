@@ -6,13 +6,18 @@ import 'repository.dart';
 
 Future<List<Json>> fetchAllCatalogRows(
   CatalogRepository repository,
-  String resource,
-) async {
+  String resource, {
+  num? yearId,
+}) async {
   final items = <Json>[];
   String? cursor;
   final seen = <String>{};
   do {
-    final page = await repository.list(resource, cursor: cursor);
+    final page = await repository.list(
+      resource,
+      cursor: cursor,
+      yearId: yearId,
+    );
     items.addAll(page.items);
     cursor = page.nextCursor;
     if (cursor != null && !seen.add(cursor)) break;

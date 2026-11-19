@@ -275,14 +275,21 @@ class AppTheme {
         dividerColor: t.line,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: t.navy,
+        backgroundColor: isLight ? t.surface : t.hover,
+        behavior: SnackBarBehavior.floating,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: t.line2),
+        ),
         contentTextStyle: TextStyle(
           fontFamily: kAppFontFamily,
           fontFamilyFallback: kAppFontFallback,
-          color: Colors.white,
+          color: t.ink,
           fontSize: 14,
         ),
-        actionTextColor: t.acc,
+        actionTextColor: t.priLink,
+        closeIconColor: t.ink3,
       ),
       scrollbarTheme: ScrollbarThemeData(
         thickness: const WidgetStatePropertyAll(8),
@@ -307,24 +314,33 @@ class AppTheme {
       ),
       drawerTheme: DrawerThemeData(backgroundColor: t.surface, elevation: 4),
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.disabled)
-              ? t.line2
-              : states.contains(WidgetState.selected)
-              ? Colors.white
-              : t.ink3,
-        ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? (states.contains(WidgetState.disabled) ? t.line2 : t.pri)
-              : t.subtle,
-        ),
-        trackOutlineColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? Colors.transparent
-              : t.ink3,
-        ),
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          final disabled = states.contains(WidgetState.disabled);
+          if (states.contains(WidgetState.selected)) {
+            return disabled ? Colors.white.withAlpha(230) : Colors.white;
+          }
+          return disabled ? t.line2 : t.ink3;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          final disabled = states.contains(WidgetState.disabled);
+          if (states.contains(WidgetState.selected)) {
+            return disabled ? t.pri.withAlpha(110) : t.pri;
+          }
+          return t.subtle;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.transparent;
+          return states.contains(WidgetState.disabled) ? t.line2 : t.ink3;
+        }),
         trackOutlineWidth: const WidgetStatePropertyAll(1.5),
+        thumbIcon: WidgetStateProperty.resolveWith((states) {
+          if (!states.contains(WidgetState.selected)) return null;
+          final disabled = states.contains(WidgetState.disabled);
+          return Icon(
+            Icons.check_rounded,
+            color: disabled ? t.pri.withAlpha(150) : t.pri,
+          );
+        }),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: t.surface,

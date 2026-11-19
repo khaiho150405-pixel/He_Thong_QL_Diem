@@ -878,7 +878,7 @@ void main() {
         expect(find.text('Toán · Học kỳ I'), findsOneWidget);
         expect(
           find.textContaining(
-            'Cột đã chốt: dùng chức năng Học sinh vào lớp sau khi chốt',
+            'Cột đã khóa: dùng chức năng Học sinh vào lớp sau khi khóa',
           ),
           findsOneWidget,
         );
@@ -984,10 +984,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Chưa có kết quả'), findsOneWidget);
-        expect(
-          find.text('Năm học này chưa có kết quả được công bố'),
-          findsOneWidget,
-        );
+        expect(find.text('Năm học này chưa có kết quả'), findsOneWidget);
         expect(
           find.byKey(const ValueKey('student-results-year-select')),
           findsOneWidget,
@@ -1073,10 +1070,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Chưa có kết quả'), findsOneWidget);
-        expect(
-          find.text('Năm học này chưa có kết quả được công bố'),
-          findsOneWidget,
-        );
+        expect(find.text('Năm học này chưa có kết quả'), findsOneWidget);
       },
     );
 

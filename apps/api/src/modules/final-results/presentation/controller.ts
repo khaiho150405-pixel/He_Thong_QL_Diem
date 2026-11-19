@@ -147,7 +147,6 @@ export class ActivateClassificationPolicyInput {
 }
 
 export class StudentApprovedComponentDto {
-  @ApiProperty({ type: Number }) componentId!: number;
   @ApiProperty({ type: String }) componentName!: string;
   @ApiProperty({ type: String }) coefficient!: string;
   @ApiProperty({ type: String, nullable: true }) value!: string | null;
@@ -156,10 +155,7 @@ export class StudentApprovedComponentDto {
 
 export class StudentSubjectResultDto {
   @ApiProperty({ type: Boolean, required: false }) passFail?: boolean;
-  @ApiProperty({ type: Number }) gradebookId!: number;
-  @ApiProperty({ type: Number }) subjectId!: number;
   @ApiProperty({ type: String }) subjectName!: string;
-  @ApiProperty({ type: Number }) termId!: number;
   @ApiProperty({ type: String }) termName!: string;
   @ApiProperty({ type: Number }) yearId!: number;
   @ApiProperty({ type: String }) yearName!: string;
@@ -173,15 +169,11 @@ export class StudentSubjectResultDto {
   @ApiProperty({ type: String, nullable: true }) finalScore!: string | null;
   @ApiProperty({ type: String, nullable: true })
   classification!: string | null;
-  @ApiProperty({ type: String, format: "date-time", nullable: true })
-  calculatedAt!: string | null;
 }
 
 export class StudentResultSummaryDto {
-  @ApiProperty({ type: Number, nullable: true }) termId!: number | null;
   @ApiProperty({ type: String, nullable: true }) termName!: string | null;
   @ApiProperty({ type: String }) className!: string;
-  @ApiProperty({ type: Number, nullable: true }) yearId!: number | null;
   @ApiProperty({ type: String, nullable: true }) yearName!: string | null;
   @ApiProperty({ type: String, nullable: true }) averageScore!: string | null;
   @ApiProperty({ type: Number }) publishedSubjects!: number;

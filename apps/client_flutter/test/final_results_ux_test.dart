@@ -305,8 +305,8 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('view-gradebook-1')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Hệ số W-012345678901234567'), findsOneWidget);
-      expect(find.textContaining('Chính sách DEV-2026-01'), findsOneWidget);
+      expect(find.textContaining('Hệ số W-'), findsNothing);
+      expect(find.textContaining('Chính sách DEV-2026-01'), findsNothing);
       expect(find.textContaining('Tính lúc '), findsOneWidget);
 
       expect(find.text('Chưa công bố'), findsWidgets);

@@ -21,13 +21,7 @@ class StudentSubjectResultDto {
   StudentSubjectResultDto({
     this.passFail,
 
-    required this.gradebookId,
-
-    required this.subjectId,
-
     required this.subjectName,
-
-    required this.termId,
 
     required this.termName,
 
@@ -42,24 +36,13 @@ class StudentSubjectResultDto {
     required this.finalScore,
 
     required this.classification,
-
-    required this.calculatedAt,
   });
 
   @JsonKey(name: r'passFail', required: false, includeIfNull: false)
   final bool? passFail;
 
-  @JsonKey(name: r'gradebookId', required: true, includeIfNull: false)
-  final num gradebookId;
-
-  @JsonKey(name: r'subjectId', required: true, includeIfNull: false)
-  final num subjectId;
-
   @JsonKey(name: r'subjectName', required: true, includeIfNull: false)
   final String subjectName;
-
-  @JsonKey(name: r'termId', required: true, includeIfNull: false)
-  final num termId;
 
   @JsonKey(name: r'termName', required: true, includeIfNull: false)
   final String termName;
@@ -83,42 +66,31 @@ class StudentSubjectResultDto {
   @JsonKey(name: r'classification', required: true, includeIfNull: true)
   final String? classification;
 
-  @JsonKey(name: r'calculatedAt', required: true, includeIfNull: true)
-  final DateTime? calculatedAt;
-
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is StudentSubjectResultDto &&
           other.passFail == passFail &&
-          other.gradebookId == gradebookId &&
-          other.subjectId == subjectId &&
           other.subjectName == subjectName &&
-          other.termId == termId &&
           other.termName == termName &&
           other.yearId == yearId &&
           other.yearName == yearName &&
           other.className == className &&
           other.components == components &&
           other.finalScore == finalScore &&
-          other.classification == classification &&
-          other.calculatedAt == calculatedAt;
+          other.classification == classification;
 
   @override
   int get hashCode =>
       passFail.hashCode +
-      gradebookId.hashCode +
-      subjectId.hashCode +
       subjectName.hashCode +
-      termId.hashCode +
       termName.hashCode +
       yearId.hashCode +
       yearName.hashCode +
       className.hashCode +
       components.hashCode +
       (finalScore == null ? 0 : finalScore.hashCode) +
-      (classification == null ? 0 : classification.hashCode) +
-      (calculatedAt == null ? 0 : calculatedAt.hashCode);
+      (classification == null ? 0 : classification.hashCode);
 
   factory StudentSubjectResultDto.fromJson(Map<String, dynamic> json) =>
       _$StudentSubjectResultDtoFromJson(json);

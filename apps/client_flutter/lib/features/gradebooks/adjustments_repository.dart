@@ -13,7 +13,7 @@ final adjustmentsRepositoryProvider = Provider(
 String adjustmentErrorMessage(Object error) {
   final code = apiErrorCode(error);
   return switch (code) {
-    'CELL_NOT_LOCKED' => 'Cột này chưa chốt — nhập điểm trực tiếp',
+    'CELL_NOT_LOCKED' => 'Cột này chưa khóa — nhập điểm trực tiếp',
     'ADJUSTMENT_PENDING_EXISTS' => 'Bảng đã có phiếu điều chỉnh chờ duyệt',
     'ADJUSTMENT_NO_CHANGE' => 'Chưa có ô nào thay đổi',
     'ADJUSTMENT_STALE' =>
@@ -23,7 +23,7 @@ String adjustmentErrorMessage(Object error) {
     'INVALID_GRADE' => 'Điểm không hợp lệ (từ 0.0 đến 10.0)',
     'PASS_FAIL_VALUE_REQUIRED' =>
       'Môn Đạt/Không đạt chỉ nhận Đạt hoặc Không đạt',
-    'COLUMN_LOCKED' => 'Cột đã chốt',
+    'COLUMN_LOCKED' => 'Cột đã khóa',
     'RESULTS_OUTDATED' => 'Điểm đã được điều chỉnh — cần tính lại tổng kết',
     'ADJUSTMENT_PENDING' => 'Còn phiếu điều chỉnh điểm chờ duyệt',
     _ => deadlineErrorMessage(error),

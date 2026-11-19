@@ -1,3 +1,4 @@
+import '../../core/date_format.dart';
 import 'dart:async';
 
 import 'package:api_client_dart/api_client_dart.dart';
@@ -896,7 +897,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                   tone: AppBadgeTone.warn,
                   icon: Icons.lock_outline_rounded,
                   child: Text(
-                    'Bảng điểm hiện không cho phép gửi ảnh. Kiểm tra trạng thái chốt hoặc tải lại bảng điểm.',
+                    'Bảng điểm hiện không cho phép gửi ảnh. Kiểm tra trạng thái khóa hoặc tải lại bảng điểm.',
                     style: theme.textTheme.bodyMedium?.copyWith(color: t.ink),
                   ),
                 ),
@@ -1274,7 +1275,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Gửi lúc ${_formatDateTime(item.createdAt)}',
+                              'Gửi lúc ${formatDateTimeVi(item.createdAt)}',
                               style: theme.textTheme.bodySmall,
                             ),
                             if (_batchInfo[item.ticketId] case final info?)
@@ -1380,16 +1381,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
     );
   }
 
-  String _formatDateTime(DateTime dt) {
-    final local = dt.toLocal();
-    final h = local.hour.toString().padLeft(2, '0');
-    final m = local.minute.toString().padLeft(2, '0');
-    final d = local.day.toString().padLeft(2, '0');
-    final mo = local.month.toString().padLeft(2, '0');
-    final y = local.year;
-    return '$h:$m $d/$mo/$y';
-  }
-
   Widget _buildTicketStatus(BuildContext context, RecognitionTicketDto item) {
     final theme = Theme.of(context);
     final t = context.tokens;
@@ -1408,7 +1399,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
               const AppBadge('Đã hủy'),
               if (item.cancelledAt != null)
                 Text(
-                  _formatDateTime(item.cancelledAt!),
+                  formatDateTimeVi(item.cancelledAt!),
                   style: small?.copyWith(fontSize: 11),
                 ),
             ],

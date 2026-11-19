@@ -222,7 +222,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     expect(find.text('Kết quả tổng kết và xếp loại'), findsNothing);
-    await tester.tap(find.text('Báo cáo & Tiện ích'));
+    await tester.tap(find.text('Báo cáo'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Thống kê ·'), findsOneWidget);
     expect(find.text('0.0'), findsWidgets);
@@ -261,8 +261,18 @@ void main() {
       expect(find.text('Toán'), findsOneWidget);
       expect(find.text('Cuối kỳ'), findsOneWidget);
       expect(find.text('0.0'), findsOneWidget);
-      expect(find.text('6.5 · KHA'), findsOneWidget);
+      expect(find.text('6.5 · Khá'), findsOneWidget);
       expect(find.textContaining('Mã học sinh'), findsNothing);
+      for (final internal in [
+        'Chờ chốt',
+        'Chờ công bố',
+        'Chưa công bố',
+        'Đã khóa',
+        'duyệt',
+        'Chính sách',
+      ]) {
+        expect(find.textContaining(internal), findsNothing, reason: internal);
+      }
       expect(tester.takeException(), isNull);
     },
   );

@@ -387,7 +387,7 @@ void main() {
       );
       expect(
         find.text(
-          'Đang soạn phiếu điều chỉnh — chỉ các cột đã chốt, chưa ghi vào điểm chính thức',
+          'Đang soạn phiếu điều chỉnh — chỉ các cột đã khóa, chưa ghi vào điểm chính thức',
         ),
         findsOneWidget,
       );
@@ -458,7 +458,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('Phiếu điều chỉnh #adj-100 đang chờ duyệt (1 ô)'),
+      find.text('Có phiếu điều chỉnh đang chờ duyệt (1 ô)'),
       findsOneWidget,
     );
 

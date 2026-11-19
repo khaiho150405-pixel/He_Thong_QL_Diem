@@ -13,6 +13,7 @@ import '../authentication/session.dart';
 import 'timetable_model.dart';
 import 'timetable_edit_dialog.dart';
 import 'mobile/timetable_mobile_view.dart';
+import 'schedule_widget_sync.dart';
 import 'timetable_repository.dart';
 import 'timetable_slot_group.dart';
 import 'timetable_week.dart';
@@ -134,10 +135,23 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
           )
           .then((result) {
             final adopted = _adoptWeek(result);
+            _pushToHomeWidget(result);
             if (mounted) setState(() {});
             return adopted;
           });
     });
+  }
+
+  void _pushToHomeWidget(TimetableResult result) {
+    if (_selectedClassId != null ||
+        _selectedTeacherId != null ||
+        _selectedSemesterId != null) {
+      return;
+    }
+    final role = ref.read(sessionProvider)?.role;
+    if (role == null) return;
+    final payload = buildScheduleWidgetPayload(role: role, result: result);
+    if (payload != null) ref.read(scheduleWidgetBridgeProvider).save(payload);
   }
 
   TimetableResult _adoptWeek(TimetableResult result) {
@@ -440,7 +454,14 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
       title = 'Thời khóa biểu của tôi';
     }
 
-    if (isMobile) return _buildMobile(role, title, t);
+    if (isMobile) {
+      final shortTitle = switch (role) {
+        'QUAN_TRI_VIEN' => 'Thời khóa biểu',
+        'GIAO_VIEN' => 'Lịch giảng dạy',
+        _ => title,
+      };
+      return _buildMobile(role, shortTitle, t);
+    }
 
     final viewTabs = AppTabs(
       tabs: const [

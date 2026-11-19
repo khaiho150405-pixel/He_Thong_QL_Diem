@@ -377,7 +377,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Lịch sử cập nhật điểm'), findsOneWidget);
     expect(find.text('An · Miệng'), findsOneWidget);
-    expect(find.textContaining('NULL → 0.0'), findsOneWidget);
+    expect(find.textContaining('Chưa có → 0.0'), findsOneWidget);
     expect(find.textContaining('Nhập điểm kiểm tra'), findsOneWidget);
     await tester.tap(find.text('Đóng'));
     await tester.pumpAndSettle();
@@ -388,7 +388,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('Phiên bản'), findsNothing);
 
-    await tester.tap(find.text('Báo cáo & Tiện ích'));
+    await tester.tap(find.text('Báo cáo'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Chốt cột'), findsNothing);
     expect(find.text('Lịch nhập điểm của nhà trường'), findsOneWidget);

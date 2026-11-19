@@ -11,7 +11,6 @@ import '../../app/widgets/app_controls.dart';
 import '../../app/widgets/empty_state.dart';
 import '../../app/widgets/shimmer_loading.dart';
 import '../authentication/session.dart';
-import '../gradebooks/adjustments_screen.dart' show formatAdjustmentDateTime;
 import '../school_profile/school_profile.dart';
 
 ({AppBadgeTone tone, String label}) classificationBadgeOf(String code) {
@@ -30,10 +29,9 @@ import '../school_profile/school_profile.dart';
     case 'CHƯA ĐẠT':
     case 'KHONG_DAT':
     case 'KHÔNG ĐẠT':
-      return (tone: AppBadgeTone.bad, label: 'Chưa đạt');
     case 'YEU':
     case 'YẾU':
-      return (tone: AppBadgeTone.bad, label: 'Yếu');
+      return (tone: AppBadgeTone.bad, label: 'Chưa đạt');
     case 'KEM':
     case 'KÉM':
       return (tone: AppBadgeTone.bad, label: 'Kém');
@@ -76,7 +74,9 @@ String overallClassificationCodeOf(double gpa) => gpa >= 8.0
     ? 'GIOI'
     : gpa >= 6.5
     ? 'KHA'
-    : 'DAT';
+    : gpa >= 5.0
+    ? 'TRUNG_BINH'
+    : 'YEU';
 
 String _formatErrorMessage(Object error) {
   if (error is DioException) {
@@ -255,7 +255,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                     const EmptyState(
                       icon: Icons.fact_check_outlined,
                       title: 'Chưa có kết quả',
-                      message: 'Năm học này chưa có kết quả được công bố',
+                      message: 'Năm học này chưa có kết quả',
                     ),
                   ],
                 );
@@ -510,7 +510,9 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                     DataColumn(
                       label: SizedBox(
                         width: colScore,
-                        child: Center(child: Text('ĐTB Môn', style: headStyle)),
+                        child: Center(
+                          child: Text('Điểm tổng kết', style: headStyle),
+                        ),
                       ),
                     ),
                     DataColumn(
@@ -614,10 +616,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                           ),
                                         ),
                                       )
-                                    : const AppBadge.warn(
-                                        'Chờ chốt',
-                                        dot: false,
-                                      ),
+                                    : dash(),
                               ),
                             ),
                           ),
@@ -641,7 +640,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                           SizedBox(
                             width: colSubject,
                             child: Text(
-                              'ĐIỂM TRUNG BÌNH CHUNG',
+                              'Điểm TB học kỳ',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: t.heading,
@@ -668,14 +667,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                         ),
                                       ),
                                     )
-                                  : Text(
-                                      'Chờ công bố',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: t.warn,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                  : dash(),
                             ),
                           ),
                         ),
@@ -687,14 +679,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                   ? _classificationBadge(
                                       overallClassificationCodeOf(gpa),
                                     )
-                                  : Text(
-                                      'Chờ công bố',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: t.warn,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                                  : dash(),
                             ),
                           ),
                         ),
@@ -711,7 +696,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
   }
 
   Widget _classificationBadge(String code) {
-    final badge = classificationBadgeOf(code);
+    final badge = studentClassificationOf(code);
     return AppBadge(badge.label, tone: badge.tone);
   }
 
@@ -753,7 +738,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                 ),
                 trailing: items[i].finalScore != null
                     ? _scoreBadge(items[i])
-                    : const AppBadge.warn('Chờ chốt ĐTB', dot: false),
+                    : const AppBadge(
+                        'Chưa có điểm TB',
+                        tone: AppBadgeTone.neutral,
+                        dot: false,
+                      ),
                 children: [
                   Divider(height: 1, color: t.line),
                   Padding(
@@ -807,7 +796,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                                           ),
                                           const SizedBox(width: AppSpacing.xs),
                                           Text(
-                                            '(hs ${comp.coefficient})',
+                                            '(hệ số ${comp.coefficient})',
                                             style: TextStyle(
                                               fontSize: 10.5,
                                               color: t.ink3,
@@ -821,13 +810,6 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                               ),
                           ],
                         ),
-                        if (items[i].calculatedAt != null) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            'Đã chốt & tính ĐTB lúc ${formatAdjustmentDateTime(items[i].calculatedAt!)}',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -844,11 +826,20 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
         ? (item.finalScore == '10.0' ? 'Đạt' : 'Không đạt')
         : item.finalScore;
     final code = item.classification;
-    final tone = code == null
-        ? AppBadgeTone.neutral
-        : classificationBadgeOf(code).tone;
-    return AppBadge('$score · ${code ?? "Chưa công bố"}', tone: tone);
+    final badge = code == null ? null : studentClassificationOf(code);
+    return AppBadge(
+      '$score · ${badge?.label ?? 'Chưa xếp loại'}',
+      tone: badge?.tone ?? AppBadgeTone.neutral,
+    );
   }
+}
+
+({AppBadgeTone tone, String label}) studentClassificationOf(String code) {
+  final badge = classificationBadgeOf(code);
+  return (
+    tone: badge.tone,
+    label: badge.label == 'Chưa công bố' ? 'Chưa xếp loại' : badge.label,
+  );
 }
 
 class _Chip extends StatelessWidget {
@@ -905,8 +896,8 @@ class _ResultsHero extends StatelessWidget {
         : '—';
     final subjectsText = '$publishedSubjects / $totalSubjects';
     final status = allPublished
-        ? const AppBadge.ok('Đã công bố ĐTB')
-        : AppBadge.warn('Đang cập nhật ($publishedSubjects/$totalSubjects)');
+        ? const AppBadge.ok('Đã có điểm tổng kết')
+        : const AppBadge('Đang cập nhật', tone: AppBadgeTone.neutral);
     final subtitle = ['Lớp $className', ?schoolShortName, termName].join(' · ');
 
     return LayoutBuilder(
@@ -980,18 +971,7 @@ class _ResultsHero extends StatelessWidget {
             const SizedBox(height: AppSpacing.xxs),
             Text(subtitle, style: theme.textTheme.bodyMedium),
             const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.xs,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                status,
-                Text(
-                  'Điểm đã được giáo viên duyệt',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
+            Wrap(children: [status]),
           ],
         );
         final stats = [

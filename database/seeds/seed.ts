@@ -12,6 +12,23 @@ if (
 if (!process.env.MIGRATION_DATABASE_URL)
   throw new Error("MIGRATION_DATABASE_URL required");
 
+function currentSchoolYear(now = new Date()) {
+  const vietnamNow = new Date(now.getTime() + 7 * 3_600_000);
+  const month = vietnamNow.getUTCMonth() + 1;
+  const startYear = vietnamNow.getUTCFullYear() - (month >= 8 ? 0 : 1);
+  const endYear = startYear + 1;
+  return {
+    startYear,
+    name: `${startYear}-${endYear}`,
+    start: `${startYear}-09-01`,
+    end: `${endYear}-05-31`,
+    term1End: `${endYear}-01-15`,
+    term2Start: `${endYear}-01-16`,
+  };
+}
+
+const schoolYear = currentSchoolYear();
+
 const pool = new Pool({ connectionString: process.env.MIGRATION_DATABASE_URL });
 const db = await pool.connect();
 
@@ -117,28 +134,35 @@ try {
   }
 
   await db.query(
+    "UPDATE nam_hoc SET hien_hanh = false WHERE hien_hanh AND ten <> $1",
+    [schoolYear.name],
+  );
+  await db.query(
     `INSERT INTO nam_hoc (ten, ngay_bat_dau, ngay_ket_thuc, hien_hanh)
-     VALUES ('2024-2025', '2024-09-01', '2025-05-31', true)
+     VALUES ($1, $2, $3, true)
      ON CONFLICT (ten) DO UPDATE
      SET hien_hanh = true,
          ngay_bat_dau = EXCLUDED.ngay_bat_dau,
          ngay_ket_thuc = EXCLUDED.ngay_ket_thuc`,
+    [schoolYear.name, schoolYear.start, schoolYear.end],
   );
   const currentYearId = (
-    await db.query("SELECT ma_nam_hoc FROM nam_hoc WHERE ten = '2024-2025'")
+    await db.query("SELECT ma_nam_hoc FROM nam_hoc WHERE ten = $1", [
+      schoolYear.name,
+    ])
   ).rows[0].ma_nam_hoc as number;
 
   await db.query(
     `INSERT INTO hoc_ky (ma_nam_hoc, ten, thu_tu, ngay_bat_dau, ngay_ket_thuc)
-     VALUES ($1, 'Học kỳ 1', 1, '2024-09-01', '2025-01-15')
+     VALUES ($1, 'Học kỳ 1', 1, $2, $3)
      ON CONFLICT (ma_nam_hoc, thu_tu) DO NOTHING`,
-    [currentYearId],
+    [currentYearId, schoolYear.start, schoolYear.term1End],
   );
   await db.query(
     `INSERT INTO hoc_ky (ma_nam_hoc, ten, thu_tu, ngay_bat_dau, ngay_ket_thuc)
-     VALUES ($1, 'Học kỳ 2', 2, '2025-01-16', '2025-05-31')
+     VALUES ($1, 'Học kỳ 2', 2, $2, $3)
      ON CONFLICT (ma_nam_hoc, thu_tu) DO NOTHING`,
-    [currentYearId],
+    [currentYearId, schoolYear.term2Start, schoolYear.end],
   );
 
   const term1Id = (
@@ -214,19 +238,19 @@ try {
       grade: 10,
       classes: ["10A1", "10A2", "10A3", "10A4", "10A5"],
       homeroomTeachers: [gvToanId, gvLyId, gvToanId, gvLyId, gvToanId],
-      birthYear: 2009,
+      birthYear: schoolYear.startYear - 15,
     },
     {
       grade: 11,
       classes: ["11A1", "11A2", "11A3", "11A4", "11A5"],
       homeroomTeachers: [gvVanId, gvHoaId, gvVanId, gvHoaId, gvVanId],
-      birthYear: 2008,
+      birthYear: schoolYear.startYear - 16,
     },
     {
       grade: 12,
       classes: ["12A1", "12A2", "12A3", "12A4", "12A5"],
       homeroomTeachers: [gvAnhId, gvAnhId, gvAnhId, gvLyId, gvHoaId],
-      birthYear: 2007,
+      birthYear: schoolYear.startYear - 17,
     },
   ];
 
