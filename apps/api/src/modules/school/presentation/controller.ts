@@ -67,7 +67,6 @@ export class UpdateSchoolProfileInput {
 type Authed = Request & { actor: Actor };
 const idem = { name: "x-idempotency-key", required: true } as const;
 
-/** Hai route công khai (màn đăng nhập cũng dùng): SessionGuard cho qua theo tên lớp này, nên không thêm route khác vào đây. */
 @ApiTags("school")
 @Controller("school-profile")
 export class SchoolProfilePublicController {
@@ -123,7 +122,6 @@ export class SchoolProfileAdminController {
     },
   })
   @ApiOkResponse({ type: SchoolProfileDto })
-  // Giới hạn multer rộng hơn 1 MB để file quá cỡ nhận INVALID_LOGO_FILE từ service thay vì 413.
   @UseInterceptors(
     FileInterceptor("file", {
       storage: memoryStorage(),

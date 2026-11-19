@@ -1,18 +1,7 @@
-/**
- * Xóa các phiếu nhận dạng CHƯA DUYỆT của bảng điểm thử (BE-20) để có thể tải lại đúng ảnh đó (ảnh trùng SHA-256 bị từ chối).
- *
- *   pnpm exec tsx scripts/recognition/pilot/reset-tickets.ts [LOI|CHUA_DUYET|<mã phiếu>]   (mặc định LOI)
- *
- * LOI: chỉ phiếu lỗi. CHUA_DUYET: phiếu lỗi, đang xử lý và chờ đối chiếu. <mã phiếu>: đúng một phiếu chưa duyệt đó.
- * Phiếu ĐÃ DUYỆT không bao giờ bị xóa (đã ghi điểm).
- * Chỉ chạy với database `*_test` (TEST_MIGRATION_URL, chủ sở hữu bảng); tắt trigger chỉ-ghi-thêm của `danh_sach_phieu`
- * trong một giao dịch rồi bật lại. Xóa luôn ảnh gốc và ảnh ô trong object storage.
- */
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { Pool } from "pg";
 
-// @aws-sdk/client-s3 chỉ được cài trong workspace apps/api.
 const { DeleteObjectCommand, S3Client } = createRequire(
   new URL("../../../apps/api/package.json", import.meta.url),
 )("@aws-sdk/client-s3") as typeof import("@aws-sdk/client-s3");
@@ -108,9 +97,7 @@ if (keys.length && process.env.S3_ENDPOINT) {
         new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }),
       );
       removed += 1;
-    } catch {
-      // đối tượng đã mất hoặc storage không sẵn sàng
-    }
+    } catch {}
   }
   console.log(JSON.stringify({ objectsRemoved: removed }));
 }

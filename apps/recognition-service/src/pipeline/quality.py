@@ -16,16 +16,13 @@ import cv2
 
 from .errors import PipelineError
 
-# ── Ngưỡng (đo trên trang A4 đã nắn về 1654x2338) ─────────────────────────────
-NET_KEM = 120.0  # phương sai Laplacian: dưới mức này là mờ rõ rệt
-NET_CANH_BAO = 260.0  # dưới mức này thì cảnh báo "hơi mờ"
-XIEN_CANH_BAO = 6.0  # độ: góc xiên của tờ giấy khi chụp
+NET_KEM = 120.0
+NET_CANH_BAO = 260.0
+XIEN_CANH_BAO = 6.0
 XIEN_NANG = 12.0
-MEO_CANH_BAO = 0.16  # lệch bề dài hai cạnh đối diện: chụp chéo
+MEO_CANH_BAO = 0.16
 MEO_NANG = 0.28
-PHAN_GIAI_TOI_THIEU = 1.0e6  # ~1.0 MP: dưới mức này chữ viết tay vỡ nét
-# Độ phân giải THỰC của tờ giấy (DPI quy đổi trên khổ A4) — chỉ số quyết định, vì trang luôn được nắn về
-# 1654x2338 (200 DPI): ảnh gốc thưa hơn thì nét chữ đã mất từ trước, phóng to lên không cứu được.
+PHAN_GIAI_TOI_THIEU = 1.0e6
 DPI_CHAN = 100.0
 DPI_CANH_BAO = 145.0
 DIEN_TICH_A4_INCH2 = 8.268 * 11.693

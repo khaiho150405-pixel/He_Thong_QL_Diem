@@ -223,7 +223,6 @@ test("detail signs private images and keeps storage keys internal", async () => 
   assert.equal(result.rows[0]!.suggestedSource, "SO");
   assert.equal(result.rows[0]!.matchLevel, "XANH");
   assert.equal(result.rows[0]!.gradeLevel, "XANH");
-  // Không trường nào của bản ghi trong kho được âm thầm bỏ khi dựng DTO (ngoài khóa đối tượng, được đổi thành URL ký).
   const stored = (await store.detail(actor, 1, "42"))!.rows[0]!;
   for (const key of Object.keys(stored).filter((k) => !k.endsWith("CropKey")))
     assert.equal(key in result.rows[0]!, true, `thiếu trường ${key}`);
@@ -360,10 +359,8 @@ test("cancel validates input, hashes it, removes images and returns the cancelle
   assert.equal(result.status, "DA_HUY");
   assert.equal(result.cancelReason, "Chụp nhầm bảng");
   assert.equal(result.cancelledAt, "2026-09-12T01:00:00.000Z");
-  // Ảnh đã bị xóa nên không ký URL.
   assert.equal(result.sourceImageUrl, "");
   assert.equal(result.rows[0]!.numericCropUrl, null);
-  // Cùng yêu cầu → cùng hash (idempotency); khác lý do → hash khác.
   await service.cancel(actor, 1, "42", "cancel-key", {
     expectedVersion: 2,
     reason: "Chụp nhầm bảng",
@@ -416,7 +413,6 @@ test("cancel rejects malformed requests before touching the store", async () => 
       name,
     );
   assert.equal(calls.length, 0);
-  // Đủ 200 ký tự thì hợp lệ.
   await service.cancel(actor, 1, "42", "k", {
     expectedVersion: 0,
     reason: "a".repeat(200),

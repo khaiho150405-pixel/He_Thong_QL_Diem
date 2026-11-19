@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createRosterFixture } from "./roster-fixture.js";
 
-// ADR-0015: luu_ket_qua_nhan_dien tra học sinh theo danh_sach_phieu (STT), không theo ma_hoc_sinh.
 test("recognition results map rows by roster STT and approval writes the right students", async () => {
   const f = await createRosterFixture();
   const { owner, students: s, valid } = f;
@@ -58,7 +57,6 @@ test("recognition results map rows by roster STT and approval writes the right s
       ).rows[0].status as string;
     const malformed = (error: { code?: string }) => error.code === "23514";
 
-    // Lớp đổi sau khi tạo phiếu (thêm học sinh): cách gán cũ theo ma_hoc_sinh sẽ lệch, snapshot thì không.
     await f.makeStudent(f.cls, "Mới Vào Lớp");
 
     const bad: Array<[string, unknown[]]> = [
@@ -85,7 +83,6 @@ test("recognition results map rows by roster STT and approval writes the right s
       assert.equal(await status(), "DANG_XU_LY", label);
     }
 
-    // Vị trí trên ảnh ≠ STT; STT 2 (một dòng gạch) không có trong kết quả.
     await save([
       row(1, 3, { nameRead: "Lê Văn Cường", matchNote: "Khớp tên" }),
       row(2, 1),
@@ -126,7 +123,6 @@ test("recognition results map rows by roster STT and approval writes the right s
         "Khớp tên",
       ],
     );
-    // Kênh gợi ý được lưu theo dòng; dòng Đỏ không có gợi ý.
     assert.deepEqual(
       saved.rows.map((r) => r.kenh_goi_y),
       ["SO", "SO", null],
@@ -148,7 +144,6 @@ test("recognition results map rows by roster STT and approval writes the right s
       ).rows[0].so_dong_nhan_dien,
       3,
     );
-    // Máy chỉ đề xuất: chưa có điểm chính thức.
     assert.equal(
       Number(
         (
@@ -160,11 +155,9 @@ test("recognition results map rows by roster STT and approval writes the right s
       ),
       0,
     );
-    // Gọi lại là idempotent: không thêm dòng.
     await save([row(1, 3), row(2, 1), row(3, 4)]);
     assert.equal(await evidenceCount(), 3);
 
-    // Duyệt: điểm vào đúng học sinh theo snapshot.
     const versions = (
       await owner.query(
         "SELECT t.version AS ticket_version,b.version AS book_version FROM phieu_nhan_dien t JOIN bang_diem b USING(ma_bang_diem) WHERE t.ma_phieu=$1",
@@ -206,7 +199,6 @@ test("recognition results map rows by roster STT and approval writes the right s
     assert.equal(byStudent.get(s.cuong)?.value, "7.5");
     assert.equal(byStudent.get(s.an)?.value, "9.0");
     assert.equal(byStudent.get(s.dat)?.value, "6.0");
-    // Học sinh không có dòng (STT 2) giữ NULL, không bị ghi 0.
     assert.equal(byStudent.get(s.bao)?.value, null);
     assert.equal(byStudent.get(s.bao)?.status, "CHUA_CO");
     assert.equal(await status(), "DA_DUYET");

@@ -48,7 +48,6 @@ void main() {
         final scaffold = tester.widget<Scaffold>(find.byType(Scaffold).first);
         expect(scaffold.backgroundColor, tokens.surface);
 
-        // Nửa trái navy chỉ có từ 960 trở lên.
         final navyPanel = find.byWidgetPredicate(
           (w) => w is Container && w.color == tokens.navy,
         );
@@ -58,7 +57,6 @@ void main() {
           width >= 960 ? findsOneWidget : findsNothing,
         );
 
-        // Ô nhập và nút cao tối thiểu 48.
         expect(
           tester.getSize(find.byType(FilledButton)).height,
           greaterThanOrEqualTo(48),

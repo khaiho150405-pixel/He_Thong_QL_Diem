@@ -116,7 +116,6 @@ test("configuration fails without secrets and rejects owner database roles", () 
     RECOGNITION_SERVICE_URL: "https://recognition.example.edu",
   };
   assert.equal(readConfig(secure).environment, "production");
-  // S3_PUBLIC_ENDPOINT (tùy chọn): không đặt/để trống → undefined; kiểm http/https như S3_ENDPOINT, ngoài development phải https.
   assert.equal(readConfig(secure).s3PublicEndpoint, undefined);
   assert.equal(
     readConfig({ ...secure, S3_PUBLIC_ENDPOINT: "  " }).s3PublicEndpoint,

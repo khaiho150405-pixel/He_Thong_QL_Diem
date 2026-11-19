@@ -35,8 +35,6 @@ import {
   type V2Result,
 } from "../src/modules/recognition/public.js";
 
-// Dữ liệu hoàn toàn giả. Fake store/model/storage thay DB, dịch vụ nhận dạng và MinIO (giống recognition.test.ts).
-
 function png(width = 2, height = 3): Uint8Array {
   const bytes = new Uint8Array(24);
   bytes.set([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -69,7 +67,6 @@ const col = (
   ...extra,
 });
 
-// STT | Họ tên | TX1 số | TX1 chữ | GK1 số | Ghi chú
 const columns = (): TemplateColumn[] => [
   col(0, "STT"),
   col(1, "HO_TEN"),
@@ -216,7 +213,6 @@ class FakeStore implements FormTemplateStore {
   async save(input: SaveTemplate) {
     this.saves.push(input);
     if (this.saveError) throw this.saveError;
-    // Tạo và tạo phiên bản sinh mẫu mới (id 3); sửa tại chỗ giữ id.
     const templateId = input.mode === "SUA" ? input.templateId! : 3;
     if (!this.rows.has(templateId))
       this.rows.set(templateId, this.detailRow(templateId, "NHAP"));
@@ -294,12 +290,10 @@ test("create re-analyses the image, stores it privately and saves a draft", asyn
   const saved = store.saves[0]!;
   assert.equal(saved.mode, "TAO");
   assert.equal(saved.templateId, null);
-  // Chữ ký do server tính, không lấy từ client.
   assert.deepEqual(saved.image?.signature, signature());
   assert.equal(saved.image?.objectKey, key);
   assert.match(saved.image!.checksum, /^[0-9a-f]{64}$/);
   assert.deepEqual(store.rateLimits, ["FORM_TEMPLATE_ANALYZE"]);
-  // Trả về chi tiết với URL ký ngắn hạn và không lộ khóa object.
   assert.equal(created.id, 3);
   assert.equal(created.status, "NHAP");
   assert.equal("imageKey" in created, false);
@@ -475,7 +469,6 @@ test("students cannot read templates; teachers see only DANG_DUNG", async () => 
     [[1, "DANG_DUNG"]],
   );
   assert.equal((await service.detail(teacher, 1)).id, 1);
-  // Mẫu NHAP không tồn tại với giáo viên.
   assert.equal(await codeOf(service.detail(teacher, 2)), "TEMPLATE_NOT_FOUND");
   const adminList = await service.list(admin);
   assert.equal(adminList.items.length, 2);
@@ -501,7 +494,6 @@ test("update and versions go through the store with the optimistic version", asy
       ["PHIEN_BAN", 1, 4],
     ],
   );
-  // Thiếu expectedVersion hoặc sai kiểu: 400, không chạm store.
   await assert.rejects(service.update(admin, 2, JSON.parse(definition())), {
     name: "BadRequestException",
   });
@@ -509,7 +501,6 @@ test("update and versions go through the store with the optimistic version", asy
     service.update(admin, 2, { ...body, expectedVersion: "4" }),
     { name: "BadRequestException" },
   );
-  // Định nghĩa sai trong PUT bị chặn ở domain.
   assert.equal(
     await codeOf(
       service.update(admin, 2, {
@@ -529,7 +520,6 @@ test("a template already used by tickets cannot be edited in place", async () =>
   store.saveError = new TemplateException("TEMPLATE_IN_USE", "x");
   const body = { expectedVersion: 0, ...JSON.parse(definition()) };
   assert.equal(await codeOf(service.update(admin, 1, body)), "TEMPLATE_IN_USE");
-  // Phiên bản mới vẫn tạo được.
   store.saveError = null;
   await service.createVersion(admin, 1, body);
   assert.equal(store.saves.at(-1)?.mode, "PHIEN_BAN");
@@ -576,7 +566,6 @@ test("try builds the layout from template columns, saves nothing and audits once
       ["GK1", null, "VANG"],
     ],
   );
-  // Không có ảnh ô cắt, không ghép học sinh, không lưu gì ngoài một dòng audit "thử mẫu".
   assert.equal(JSON.stringify(result).includes("CropBase64"), false);
   assert.equal(JSON.stringify(result).includes("studentId"), false);
   assert.equal(store.saves.length, 0);
@@ -667,8 +656,6 @@ test("the error filter writes the stable envelope with request id and details", 
   });
 });
 
-// ── Store: dịch lỗi của hàm SQL ──
-
 function failingDb(message: string, state: string, code = "P2010") {
   let attempts = 0;
   const db = {
@@ -758,11 +745,8 @@ test("save passes the session, mode, version and JSON columns to luu_mau_bang_di
   assert.equal(values[4], "Mẫu");
   assert.equal(values[5], null);
   assert.deepEqual(JSON.parse(values[6] as string), columns());
-  // Chế độ không phải TAO: không gửi chữ ký hay ảnh.
   assert.deepEqual(values.slice(7), [null, null, null]);
 });
-
-// ── Client HTTP v2 với fetch giả ──
 
 const analysisBody = () => ({
   signature: signature(4),
@@ -903,7 +887,6 @@ test("v2 client maps unavailable, timeout, 422 and server errors", async () => {
   await assert.rejects(client(timeout).recognize(png(), layout()), {
     code: "RECOGNITION_TIMEOUT",
   });
-  // Header tới rồi body mới bị treo đến khi hết hạn: vẫn là RECOGNITION_TIMEOUT, cả HTTP 200 lẫn 422.
   for (const status of [200, 422]) {
     const stalledBody = (async (_url: unknown, init?: RequestInit) =>
       new Response(

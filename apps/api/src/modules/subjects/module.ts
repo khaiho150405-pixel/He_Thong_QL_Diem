@@ -6,7 +6,6 @@ import { SubjectsController } from "./presentation/subjects.js";
 import { ComponentsService } from "./application/components.js";
 import { ComponentsController } from "./presentation/components.js";
 
-// Ownership is reserved here; business endpoints are introduced with their UC tests.
 @Module({
   controllers: [
     SemesterWeightsController,

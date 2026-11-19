@@ -41,10 +41,6 @@ type TemplateRow = Prisma.mau_bang_diemGetPayload<{
   include: { cot_rows: true };
 }>;
 
-/**
- * Dịch lỗi của hàm SQL (mã nằm trong thông điệp RAISE EXCEPTION) sang mã lỗi ổn định của API. Hàm SQL cũng chặn ở tầng DB
- * (AC-2): `INVALID_TEMPLATE_DEFINITION: SO_COT` là số cột lệch chữ ký đã lưu.
- */
 function translate(error: unknown): unknown {
   if (error instanceof HttpException) return error;
   const diagnostic =
@@ -128,7 +124,6 @@ export class PrismaFormTemplateStore
     @Inject(SETTINGS) private readonly settings: Settings,
   ) {}
 
-  /** Xác nhận phiên còn hiệu lực; học sinh không có quyền với bất kỳ endpoint mẫu nào. */
   private async session(
     tx: Prisma.TransactionClient,
     actor: Actor,
@@ -149,7 +144,6 @@ export class PrismaFormTemplateStore
   ): Promise<TemplatePage> {
     return run(this.db, async (tx) => {
       await this.session(tx, actor, false);
-      // Giáo viên chỉ thấy mẫu đang dùng, bất kể tham số lọc.
       const visible =
         actor.role === "GIAO_VIEN" ? ("DANG_DUNG" as const) : status;
       const rows = await tx.mau_bang_diem.findMany({
@@ -202,7 +196,6 @@ export class PrismaFormTemplateStore
         where: { ma_bang_diem: gradebookId },
       });
       if (!book) throw new NotFoundException();
-      // Chỉ giáo viên được phân công (học sinh và quản trị viên bị từ chối): backend tự kiểm, không tin UI.
       await gradebookAccess(
         authorization,
         actor,
@@ -228,7 +221,6 @@ export class PrismaFormTemplateStore
       });
       const [locked, windows, pending] = await Promise.all([
         tx.chot_cot_diem.findMany({ where: { ma_bang_diem: gradebookId } }),
-        // Lịch hiệu lực: lịch riêng (bảng, cột) nếu có, không thì lịch mặc định của học kỳ (lich_hieu_luc).
         tx.$queryRaw<
           Array<{ ma_thanh_phan: number; mo_luc: Date; dong_luc: Date }>
         >`SELECT t.ma_thanh_phan, e.mo_luc, e.dong_luc
@@ -295,7 +287,6 @@ export class PrismaFormTemplateStore
 
   save(input: SaveTemplate): Promise<{ templateId: number }> {
     return run(this.db, async (tx) => {
-      // Ghi qua hàm SQL: phiên, vai trò QTV, luật nhiều dòng, kiểm phiếu tham chiếu, audit trong cùng giao dịch.
       const rows = await tx.$queryRaw<
         Array<{ result: { templateId: number } }>
       >`

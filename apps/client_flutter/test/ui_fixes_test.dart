@@ -56,12 +56,6 @@ class _FakeDeadlinesRepo implements SemesterDeadlinesRepository {
   );
 
   @override
-  Future<InitializeGradebooksResultDto> initializeGradebooks({
-    required num semesterId,
-    required String idempotencyKey,
-  }) async => InitializeGradebooksResultDto(created: [], skipped: []);
-
-  @override
   Future<PublishReadinessDto> publishReadiness(num semesterId) async =>
       PublishReadinessDto(ready: true, issues: []);
 }
@@ -232,25 +226,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Bấm Sửa lịch
       await tester.tap(find.text('Sửa lịch'));
       await tester.pumpAndSettle();
 
-      // Bấm nút Mở nhập để mở DatePicker & TimePicker
       await tester.tap(find.textContaining('Mở nhập:'));
       await tester.pumpAndSettle();
 
-      // Chọn ngày xong -> ấn OK trên DatePickerDialog
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
-      // TimePicker hiện ra: chuyển sang chế độ gõ phím (icon keyboard)
       final keyboardIcon = find.byIcon(Icons.keyboard_outlined);
       expect(keyboardIcon, findsOneWidget);
       await tester.tap(keyboardIcon);
       await tester.pumpAndSettle();
 
-      // Nhập giờ 23, phút 40
       final textFields = find.descendant(
         of: find.byType(TimePickerDialog),
         matching: find.byType(TextField),
@@ -259,15 +248,12 @@ void main() {
       await tester.enterText(textFields.first, '23');
       await tester.enterText(textFields.last, '40');
 
-      // Bấm OK trên TimePickerDialog
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
-      // Không có lỗi "Nhập thời gian hợp lệ"
       expect(find.text('Nhập thời gian hợp lệ'), findsNothing);
       expect(find.text('Enter a valid time'), findsNothing);
 
-      // Nhãn nút đã cập nhật thành 23:40
       expect(find.textContaining('23:40'), findsOneWidget);
     });
 
@@ -309,23 +295,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Bấm Đặt lịch riêng cho bảng này
       await tester.tap(find.text('Đặt lịch riêng cho bảng này'));
       await tester.pumpAndSettle();
 
-      // Bấm Mở nhập
       await tester.tap(find.textContaining('Mở nhập:'));
       await tester.pumpAndSettle();
 
-      // Chọn ngày -> OK
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
-      // Chuyển sang gõ phím
       await tester.tap(find.byIcon(Icons.keyboard_outlined));
       await tester.pumpAndSettle();
 
-      // Nhập 23:40
       final textFields = find.descendant(
         of: find.byType(TimePickerDialog),
         matching: find.byType(TextField),
@@ -385,11 +366,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // opensAt tương lai -> "Chưa mở"
       expect(find.text('Chưa mở'), findsOneWidget);
-      // closesAt null -> "Chưa đặt lịch"
       expect(find.text('Chưa đặt lịch'), findsOneWidget);
-      // Không hiện "Đang hiệu lực"
       expect(find.text('Đang hiệu lực'), findsNothing);
     });
 
@@ -457,7 +435,6 @@ void main() {
         );
         addTearDown(container.dispose);
 
-        // Đặt viewingYear là ViewingYear.all
         container
             .read(viewingYearProvider.notifier)
             .selectYear(ViewingYear.all);
@@ -470,7 +447,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Ô chọn năm không hiển thị "Tất cả các năm"
         expect(
           find.descendant(
             of: find.byType(AcademicYearFilterControl),
@@ -479,7 +455,6 @@ void main() {
           findsNothing,
         );
 
-        // Màn hình dùng năm hiện hành (2026-2027)
         expect(find.textContaining('2026-2027'), findsWidgets);
       },
     );
@@ -530,12 +505,10 @@ void main() {
       await tester.tap(find.text('Xác nhận lưu'));
       await tester.pumpAndSettle();
 
-      // Không hiện banner xung đột
       expect(
         find.textContaining('Bảng điểm đã thay đổi ở nơi khác'),
         findsNothing,
       );
-      // Hiện thông báo tiếng Việt theo code
       expect(find.textContaining('Ô đã có điểm'), findsOneWidget);
     });
 
@@ -584,7 +557,6 @@ void main() {
       await tester.tap(find.text('Xác nhận lưu'));
       await tester.pumpAndSettle();
 
-      // Bật banner xung đột
       expect(
         find.textContaining('Bảng điểm đã thay đổi ở nơi khác'),
         findsOneWidget,

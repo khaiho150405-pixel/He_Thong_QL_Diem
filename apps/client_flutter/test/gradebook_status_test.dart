@@ -19,16 +19,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Máy chủ giả cho bước 10: danh sách bảng điểm và chi tiết một bảng.
 class _Server implements HttpClientAdapter {
   _Server({this.locked = false, this.closes = const {}});
 
   final bool locked;
 
-  /// `componentId` -> `closesAt` (ISO). Thiếu khóa là cột chưa đặt lịch.
   final Map<int, String?> closes;
 
-  /// Mọi đường dẫn đã gọi, để kiểm tra giao diện không gọi lock.
   final paths = <String>[];
 
   @override
@@ -350,7 +347,6 @@ void main() {
           expect(find.byKey(const ValueKey('gradebooks-table')), findsNothing);
           expect(find.text('10A1 · Toán'), findsOneWidget);
         }
-        // Bảng điểm tự tạo khi được phân công: không còn nút tạo thủ công.
         expect(find.text('Tạo bảng điểm'), findsNothing);
         expect(server.paths.any((p) => p.contains('lock')), isFalse);
         expect(tester.takeException(), isNull);
@@ -376,7 +372,6 @@ void main() {
         final local = DateTime.parse('2026-10-25T10:30:00.000Z').toLocal();
         final expected = 'Khóa lúc ${formatDateTimeVi(local)}';
         expect(find.text(expected), findsOneWidget);
-        // Định dạng dd/MM/yyyy HH:mm, không dùng "thg" của Material.
         expect(find.textContaining('thg'), findsNothing);
         expect(find.textContaining('Phiên bản'), findsNothing);
         expect(find.text('Lưu thay đổi'), findsOneWidget);
@@ -450,7 +445,6 @@ void main() {
       mode: Brightness.light,
     );
     final tokens = AppTokens.light;
-    // Nền ô điểm do khung GradeCellFrame vẽ.
     Color? fillOf(String key) {
       final frame = find.ancestor(
         of: find.byKey(ValueKey(key)),

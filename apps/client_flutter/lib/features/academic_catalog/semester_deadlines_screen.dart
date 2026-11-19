@@ -96,7 +96,6 @@ class _SemesterDeadlinesScreenState
   Future<List<SemestersDto>>? _semestersFuture;
   num? _selectedSemesterId;
   Future<SemesterDeadlinesDto>? _deadlinesFuture;
-  bool _initializing = false;
   num? _lastLoadedYearId;
   List<SemestersDto> _loadedSemesters = const [];
 
@@ -165,112 +164,6 @@ class _SemesterDeadlinesScreenState
             .read(semesterDeadlinesRepositoryProvider)
             .getDeadlines(_selectedSemesterId!);
       });
-    }
-  }
-
-  Future<void> _initializeGradebooks(String semesterYearLabel) async {
-    if (_selectedSemesterId == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Khởi tạo bảng điểm còn thiếu'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              semesterYearLabel,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Sau khi có bảng điểm, cấu trúc thành phần điểm của môn sẽ không sửa được.',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Khởi tạo'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _initializing = true);
-    InitializeGradebooksResultDto? result;
-    try {
-      final key =
-          'init-$_selectedSemesterId-${DateTime.now().millisecondsSinceEpoch}';
-      result = await ref
-          .read(semesterDeadlinesRepositoryProvider)
-          .initializeGradebooks(
-            semesterId: _selectedSemesterId!,
-            idempotencyKey: key,
-          );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(deadlineErrorMessage(e))));
-      }
-    } finally {
-      if (mounted) setState(() => _initializing = false);
-    }
-
-    if (result != null && mounted) {
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Kết quả khởi tạo'),
-          content: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Số bảng đã tạo: ${result!.created.length}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  if (result.skipped.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      'Danh sách bỏ qua (${result.skipped.length}):',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 6),
-                    for (final item in result.skipped)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Text(
-                          '${item.className} – ${item.subjectName}: ${item.reason == SkippedGradebookDtoReasonEnum.EMPTY_ROSTER ? "Lớp chưa có học sinh" : "Môn chưa có thành phần điểm"}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Đóng'),
-            ),
-          ],
-        ),
-      );
     }
   }
 
@@ -418,22 +311,6 @@ class _SemesterDeadlinesScreenState
                                     }
                                   },
                           ),
-                        ),
-                        FilledButton.icon(
-                          onPressed:
-                              _initializing || _selectedSemesterId == null
-                              ? null
-                              : () => _initializeGradebooks(semesterYearLabel),
-                          icon: _initializing
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.playlist_add_check),
-                          label: const Text('Khởi tạo bảng điểm còn thiếu'),
                         ),
                       ],
                     ),

@@ -7,22 +7,13 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../school_profile/school_profile.dart';
 
-/// Nửa trái nền navy của màn đăng nhập (chỉ hiện từ 960): thương hiệu, mockup
-/// "từ giấy viết tay sang số hóa", tiêu đề và 3 ý tính năng. Toàn bộ là nội dung
-/// trang trí, không có chức năng và không ảnh hưởng luồng đăng nhập.
-///
-/// [horizontalMockup] do màn đăng nhập tính từ chiều rộng nửa trái (nội dung
-/// >= 560 thì xếp ngang giấy | vạch quét | thẻ, hẹp hơn thì xếp dọc). Không dùng
-/// `LayoutBuilder` ở đây vì panel nằm trong `IntrinsicHeight`.
 class LoginArtPanel extends ConsumerWidget {
   const LoginArtPanel({super.key, required this.horizontalMockup});
 
   final bool horizontalMockup;
 
-  /// Nội dung nửa trái rộng tối thiểu bao nhiêu thì xếp ngang.
   static const horizontalMinWidth = 560.0;
 
-  /// Lề ngang của nửa trái (36 mỗi bên).
   static const horizontalPadding = 72.0;
 
   @override
@@ -101,9 +92,6 @@ class LoginArtPanel extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.xxl),
           const Spacer(),
-          // Không bọc `ConstrainedBox(maxWidth)` quanh chữ xuống dòng: màn đăng
-          // nhập dùng `IntrinsicHeight` mà `ConstrainedBox` không giới hạn bề
-          // rộng khi tính chiều cao nội tại, sẽ làm panel bị tràn đáy.
           Text(
             'Nhập điểm nhanh hơn, đối chiếu rõ ràng hơn.',
             style: theme.textTheme.headlineMedium?.copyWith(
@@ -189,12 +177,6 @@ class _Feature extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Mockup "Từ giấy viết tay sang số hóa"
-// ---------------------------------------------------------------------------
-
-/// Dữ liệu minh họa (không phải dữ liệu thật). Điểm số luôn một chữ số thập
-/// phân, điểm chữ đọc từng chữ số, không có từ "phẩy".
 const _sample = [
   _SampleRow('1', 'Nguyễn Văn An', '8.5', 'tám năm', false),
   _SampleRow('2', 'Trần Thị Bích', '7.0', 'bảy không', true),
@@ -208,19 +190,16 @@ class _SampleRow {
   final String score;
   final String words;
 
-  /// Dòng cần giáo viên xem lại (huy hiệu Vàng) thay vì Khớp (Xanh).
   final bool recheck;
 }
 
-/// Mốc thời gian của một chu kỳ (0..1). Vạch quét xiên nhẹ nên dòng ở dưới bị
-/// quét sau dòng ở trên; dòng ở thẻ phải hiện đúng lúc vạch quét qua cột điểm.
 abstract final class _Timeline {
   static const beamEnd = 0.85;
   static const beamFrom = -0.2;
   static const beamTo = 1.2;
   static const scoreColumn = 0.55;
-  static const slope = 0.3; // độ lệch ngang của vạch quét theo chiều cao giấy
-  static const rowCenters = [0.42, 0.62, 0.82]; // tâm dòng / chiều cao giấy
+  static const slope = 0.3;
+  static const rowCenters = [0.42, 0.62, 0.82];
 
   static double beamU(double p) =>
       beamFrom + (beamTo - beamFrom) * (p / beamEnd).clamp(0.0, 1.0).toDouble();
@@ -241,9 +220,6 @@ abstract final class _Timeline {
       ((p - start) / duration).clamp(0.0, 1.0).toDouble();
 }
 
-/// Mockup động. Điều khiển hoạt ảnh nằm trọn trong widget này nên form đăng
-/// nhập không bị dựng lại. Chạy 2 chu kỳ rồi dừng ở trạng thái hoàn chỉnh;
-/// bấm hoặc rê chuột vào thì chạy lại một chu kỳ.
 class _OcrMockup extends StatefulWidget {
   const _OcrMockup({required this.horizontal});
 
@@ -281,7 +257,6 @@ class _OcrMockupState extends State<_OcrMockup>
     super.didChangeDependencies();
     _reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion) {
-      // Đặt value=1 kích hoạt trạng thái completed: phải bỏ lượt chạy thêm.
       _extraRuns = 0;
       _controller
         ..stop()
@@ -316,7 +291,6 @@ class _OcrMockupState extends State<_OcrMockup>
           onTap: _replay,
           child: AnimatedBuilder(
             animation: _controller,
-            // Nội dung giấy không đổi theo thời gian: dựng một lần.
             child: const _PaperSheet(),
             builder: (context, sheet) {
               final horizontal = widget.horizontal;
@@ -353,7 +327,6 @@ class _OcrMockupState extends State<_OcrMockup>
   }
 }
 
-/// Khung tờ giấy: nghiêng -1,2 độ, bo góc, đổ bóng, cắt vạch quét theo giấy.
 class _PaperFrame extends StatelessWidget {
   const _PaperFrame({
     required this.beamU,
@@ -400,14 +373,12 @@ class _PaperFrame extends StatelessWidget {
   }
 }
 
-/// Nội dung tờ giấy kẻ ô: tiêu đề in, 3 dòng chữ viết tay (nét mực `t.pen`).
 class _PaperSheet extends StatelessWidget {
   const _PaperSheet();
 
   static const _cell = 16.0;
   static const _rowHeight = 2 * _cell;
 
-  // Góc nghiêng nhẹ cố định theo từng dòng (~±0.6° - 0.8°) tạo nét viết tay tự nhiên.
   static const _rowRotations = [-0.012, 0.014, -0.010];
 
   @override
@@ -525,8 +496,6 @@ class _GridPainter extends CustomPainter {
       old.color != color || old.cell != cell;
 }
 
-/// Vạch quét xanh xiên nhẹ kèm quầng sáng. [u] là vị trí ngang (theo tỉ lệ
-/// chiều rộng giấy) của đầu trên vạch.
 class _BeamPainter extends CustomPainter {
   const _BeamPainter({
     required this.u,
@@ -543,7 +512,6 @@ class _BeamPainter extends CustomPainter {
     if (opacity <= 0 || size.isEmpty) return;
     canvas.save();
     canvas.translate(u * size.width, 0);
-    // Đầu dưới của vạch lệch trái: dòng ở dưới được quét sau dòng ở trên.
     canvas.transform(
       (Matrix4.identity()
             ..setEntry(0, 1, -_Timeline.slope * size.width / size.height))
@@ -574,7 +542,6 @@ class _BeamPainter extends CustomPainter {
       old.u != u || old.opacity != opacity || old.color != color;
 }
 
-/// Nhãn "AI OCR" giữa tờ giấy và thẻ kết quả; mũi tên đổi hướng xuống khi hẹp.
 class _ScanConnector extends StatelessWidget {
   const _ScanConnector({required this.vertical, required this.active});
 
@@ -639,8 +606,6 @@ class _ScanConnector extends StatelessWidget {
   }
 }
 
-/// Thẻ giao diện bảng điểm đã số hóa. Mỗi dòng hiện (mờ dần + trượt nhẹ) khi
-/// vạch quét qua dòng tương ứng, sau đó huy hiệu bật lên.
 class _DigitizedCard extends StatelessWidget {
   const _DigitizedCard({required this.progress});
 

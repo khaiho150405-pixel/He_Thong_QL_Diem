@@ -25,7 +25,6 @@ async function main() {
 
   for (const [dupId, canonId] of Object.entries(mapping)) {
     const dup = Number(dupId);
-    // Delete timetable slots belonging to duplicate
     const deletedTkb = await db.thoi_khoa_bieu.deleteMany({
       where: { ma_giao_vien: dup },
     });
@@ -33,7 +32,6 @@ async function main() {
       `Deleted ${deletedTkb.count} timetable slots from duplicate teacher ${dup}`,
     );
 
-    // Update phan_cong_giang_day if any
     const updatedPc = await db.phan_cong_giang_day.updateMany({
       where: { ma_giao_vien: dup },
       data: { ma_giao_vien: canonId },
@@ -42,7 +40,6 @@ async function main() {
       `Updated ${updatedPc.count} assignments from teacher ${dup} to ${canonId}`,
     );
 
-    // Update lop if any
     const updatedLop = await db.lop.updateMany({
       where: { ma_gv_chu_nhiem: dup },
       data: { ma_gv_chu_nhiem: canonId },
@@ -51,13 +48,11 @@ async function main() {
       `Updated ${updatedLop.count} homeroom classes from teacher ${dup} to ${canonId}`,
     );
 
-    // Delete duplicate teacher
     await db.giao_vien.deleteMany({
       where: { ma_giao_vien: dup },
     });
     console.log(`Deleted duplicate teacher ${dup}`);
 
-    // Delete duplicate user
     await db.nguoi_dung.deleteMany({
       where: { ma_nguoi_dung: dup },
     });

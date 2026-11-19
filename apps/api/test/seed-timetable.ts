@@ -42,8 +42,6 @@ async function main() {
     phong_hoc: string;
     ghi_chu: string;
   }> = [];
-  // A,A,B,C gives one consecutive double period and three subjects.
-  // The offsets keep each teacher in only one class at the same period.
   const patterns = [
     [0, 0, 1, 2],
     [1, 2, 2, 3],

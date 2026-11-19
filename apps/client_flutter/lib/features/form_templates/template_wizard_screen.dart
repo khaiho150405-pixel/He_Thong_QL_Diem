@@ -19,8 +19,6 @@ import 'form_templates_screen.dart';
 import 'image_source_buttons.dart';
 import 'repository.dart';
 
-/// `/admin/form-templates/new`: trình hướng dẫn tạo mẫu 3 bước (ADR-0016 mục 5).
-/// ① chọn/chụp ảnh tờ mẫu → ② `analyze` + khai báo cột → ③ tên, mô tả, lưu.
 class TemplateWizardScreen extends ConsumerStatefulWidget {
   const TemplateWizardScreen({super.key});
 
@@ -59,7 +57,6 @@ class _TemplateWizardScreenState extends ConsumerState<TemplateWizardScreen> {
 
   void _picked(RecognitionImage image) => setState(() {
     _image = image;
-    // Ảnh đổi thì kết quả phân tích cũ không còn đúng.
     _analysis = null;
     _previewBytes = null;
     _columns = const [];

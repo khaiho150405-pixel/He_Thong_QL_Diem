@@ -1,6 +1,3 @@
-/// Bộ tiện ích so sánh và sắp xếp chuỗi, họ tên theo chuẩn bảng chữ cái tiếng Việt.
-/// Thứ tự bảng chữ cái: A, Ă, Â, B, C, D, Đ, E, Ê, G, H, I, K, L, M, N, O, Ô, Ơ, P, Q, R, S, T, U, Ư, V, X, Y
-/// Thứ tự dấu thanh: Không dấu (ngang) < Huyền < Hỏi < Ngã < Sắc < Nặng.
 class VietnameseCollation {
   static const List<String> _charOrder = [
     'a',
@@ -106,7 +103,6 @@ class VietnameseCollation {
     return map;
   }();
 
-  /// So sánh 2 chuỗi theo chuẩn chữ cái tiếng Việt.
   static int compare(String a, String b) {
     final strA = a.trim().toLowerCase();
     final strB = b.trim().toLowerCase();
@@ -139,9 +135,6 @@ class VietnameseCollation {
     return runesA.length.compareTo(runesB.length);
   }
 
-  /// So sánh họ và tên học sinh theo chuẩn giáo dục Việt Nam:
-  /// 1. Xét Tên chính trước (từ cuối cùng, ví dụ: "Châu", "An", "Bình", "Đức").
-  /// 2. Nếu Tên chính trùng nhau, xét tiếp Họ và Tên đệm (ví dụ: "Lê Bảo Châu" vs "Trần Bảo Châu").
   static int compareStudentNames(String nameA, String nameB) {
     final cleanA = nameA.trim();
     final cleanB = nameB.trim();
@@ -153,22 +146,16 @@ class VietnameseCollation {
     final partsA = cleanA.split(RegExp(r'\s+'));
     final partsB = cleanB.split(RegExp(r'\s+'));
 
-    // Tên chính là từ cuối cùng
     final firstNameA = partsA.last;
     final firstNameB = partsB.last;
 
     final firstNameCmp = compare(firstNameA, firstNameB);
     if (firstNameCmp != 0) return firstNameCmp;
 
-    // Nếu tên chính giống nhau, so sánh toàn bộ Họ và Tên
     return compare(cleanA, cleanB);
   }
 }
 
-/// Chỉ mục số thứ tự hiển thị của học sinh.
-///
-/// Số thứ tự toàn trường và theo lớp đều được tính từ cùng một danh sách đầy
-/// đủ, nên tìm kiếm, lọc trạng thái và phân trang không làm thay đổi số đã cấp.
 class StudentOrderIndex {
   StudentOrderIndex._(this.school, this.byClass);
 

@@ -108,7 +108,6 @@ test("phân công giảng dạy tự tạo bảng điểm; bổ sung khi lớp c
         ).rows[0].count,
       );
 
-    // 1. Phân công lớp đủ học sinh + môn có thành phần: bảng điểm xuất hiện cùng ô trống (NULL, không phải 0.0).
     const full = await makeClass(`AG-full-${suffix}`, 3);
     const math = await makeSubject("math", true);
     await assign(full, math);
@@ -121,7 +120,6 @@ test("phân công giảng dạy tự tạo bảng điểm; bổ sung khi lớp c
     );
     assert.equal(audit.rowCount, 1);
     assert.equal(audit.rows[0].ma_tac_nhan, null);
-    // Giáo viên thấy bảng ngay trong danh sách; gọi lại không tạo trùng.
     const listed = await service.list(teacher);
     assert.ok(
       listed.items.some((b) => b.id === created[0].ma_bang_diem),
@@ -129,7 +127,6 @@ test("phân công giảng dạy tự tạo bảng điểm; bổ sung khi lớp c
     );
     assert.equal((await books(full, math)).length, 1);
 
-    // 2. Lớp chưa có học sinh hoặc môn chưa có thành phần: phân công vẫn thành công, chưa có bảng.
     const empty = await makeClass(`AG-empty-${suffix}`, 0);
     const bare = await makeSubject("bare", false);
     await assign(empty, math);
@@ -137,7 +134,6 @@ test("phân công giảng dạy tự tạo bảng điểm; bổ sung khi lớp c
     assert.equal((await books(empty, math)).length, 0);
     assert.equal((await books(full, bare)).length, 0);
 
-    // 3. Lớp có học sinh sau đó: giáo viên mở danh sách thì bảng được bổ sung.
     await owner.query(
       "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh,dang_theo_hoc) VALUES($1,'HS muộn','2010-01-01',true)",
       [empty],
@@ -147,7 +143,6 @@ test("phân công giảng dạy tự tạo bảng điểm; bổ sung khi lớp c
     assert.equal(late.length, 1);
     assert.equal(await cells(late[0].ma_bang_diem), 2);
 
-    // 4. Học kỳ đã công bố: không tạo thêm bảng mới.
     const closedTerm = (
       await owner.query(
         "INSERT INTO hoc_ky(ma_nam_hoc,ten,thu_tu,ngay_bat_dau,ngay_ket_thuc,da_cong_bo) VALUES($1,'Kỳ đã công bố',2,'2027-01-02','2027-06-01',true) RETURNING ma_hoc_ky",

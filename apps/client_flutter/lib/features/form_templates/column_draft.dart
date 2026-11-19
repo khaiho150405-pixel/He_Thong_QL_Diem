@@ -3,10 +3,8 @@ import 'package:api_client_dart/api_client_dart.dart';
 typedef Role = TemplateColumnDtoRoleEnum;
 typedef Group = TemplateColumnDtoGroupEnum;
 
-/// Số thứ tự tối đa trong một nhóm hệ số (cùng giới hạn với backend).
 const int kMaxOrderInGroup = 20;
 
-/// Một cột đang được khai báo trên form. Bất biến; sửa bằng [copyWith].
 class ColumnDraft {
   const ColumnDraft({
     required this.index,
@@ -18,8 +16,6 @@ class ColumnDraft {
     this.suggested = false,
   });
 
-  /// Dựng từ kết quả `analyze`: vai trò gợi ý được chọn sẵn và đánh dấu
-  /// [suggested]; không đọc được tiêu đề (`suggestedRole == null`) thì "Bỏ qua".
   factory ColumnDraft.fromAnalyzed(AnalyzedColumnDto column) {
     final role = switch (column.suggestedRole) {
       AnalyzedColumnDtoSuggestedRoleEnum.STT => Role.STT,
@@ -48,7 +44,6 @@ class ColumnDraft {
     );
   }
 
-  /// Dựng từ mẫu đã lưu (màn sửa / tạo phiên bản).
   factory ColumnDraft.fromTemplate(TemplateColumnDto column) => ColumnDraft(
     index: column.index.toInt(),
     headerText: column.headerText ?? '',
@@ -65,11 +60,8 @@ class ColumnDraft {
   final int? order;
   final int? pairedWith;
 
-  /// Vai trò đang hiển thị là gợi ý của máy, chưa được người dùng đổi.
   final bool suggested;
 
-  /// Đổi vai trò: bỏ các trường không thuộc vai trò mới (backend từ chối
-  /// `EXTRA_FIELDS`); cột điểm mới được gán sẵn nhóm TX và thứ tự còn trống.
   ColumnDraft withRole(Role next, {required Iterable<ColumnDraft> others}) {
     if (next == role) return this;
     return switch (next) {
@@ -135,10 +127,8 @@ class ColumnDraft {
   );
 }
 
-/// Trường của cột mà lỗi gắn vào (để hiện lỗi sát đúng ô).
 enum DraftField { role, group, order, pairedWith }
 
-/// Mã luật, đặt trùng tên với [DefinitionIssue] của backend để dễ đối chiếu.
 enum DraftRule { hoTen, stt, noDiem, diemFields, groupOrderDuplicate, pairing }
 
 class DraftIssue {
@@ -147,12 +137,10 @@ class DraftIssue {
   final DraftRule rule;
   final String message;
 
-  /// `index` của cột sai; null với lỗi chung (không gắn cột nào).
   final int? column;
   final DraftField? field;
 }
 
-/// Kết quả kiểm hợp lệ của cả danh sách cột.
 class DraftValidation {
   const DraftValidation(this.issues);
 
@@ -173,8 +161,6 @@ class DraftValidation {
   bool has(DraftRule rule) => issues.any((issue) => issue.rule == rule);
 }
 
-/// Cùng luật với `validateColumns` của backend (ADR-0016 mục 1). Backend vẫn là
-/// nơi kiểm cuối; hàm này chỉ chặn sớm và chỉ đúng cột sai.
 DraftValidation validateDrafts(List<ColumnDraft> columns) {
   final issues = <DraftIssue>[];
 

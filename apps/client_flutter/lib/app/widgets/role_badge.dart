@@ -1,23 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../core/role_label.dart';
+
 class RoleBadge extends StatelessWidget {
   const RoleBadge({super.key, required this.role, this.compact = false});
 
   final String role;
   final bool compact;
 
-  String get label {
-    switch (role) {
-      case 'QUAN_TRI_VIEN':
-        return 'Quản trị viên';
-      case 'GIAO_VIEN':
-        return 'Giáo viên';
-      case 'HOC_SINH':
-        return 'Học sinh';
-      default:
-        return role;
-    }
-  }
+  String get label => roleLabelOf(role);
 
   IconData get icon {
     switch (role) {

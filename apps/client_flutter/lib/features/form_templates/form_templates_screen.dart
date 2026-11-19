@@ -16,7 +16,6 @@ final templateListProvider =
       (ref) => ref.read(formTemplatesRepositoryProvider).list(),
     );
 
-/// `/admin/form-templates`: danh sách mẫu bảng điểm cho QTV (ADR-0016 mục 5).
 class FormTemplatesScreen extends ConsumerWidget {
   const FormTemplatesScreen({super.key});
 
@@ -142,7 +141,6 @@ class _TemplateTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.tokens;
     final theme = Theme.of(context);
-    // Bản tóm tắt không có kiểu đọc; lấy từ chi tiết (đã cache) để không đoán.
     final detail = ref.watch(templateDetailProvider(item.id));
     final readMode = detail.when(
       data: (d) => readModeLabel(d.columns),

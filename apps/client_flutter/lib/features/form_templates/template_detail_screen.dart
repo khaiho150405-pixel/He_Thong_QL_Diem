@@ -17,8 +17,6 @@ import 'repository.dart';
 import 'template_editor_screen.dart';
 import 'try_result_view.dart';
 
-/// `/admin/form-templates/:id`: ảnh mẫu, bảng cột, đổi trạng thái, sửa / tạo
-/// phiên bản và "Thử nhận dạng" (chỉ đọc, không lưu gì).
 class TemplateDetailScreen extends ConsumerStatefulWidget {
   const TemplateDetailScreen({super.key, required this.templateId});
 
@@ -30,7 +28,6 @@ class TemplateDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _TemplateDetailScreenState extends ConsumerState<TemplateDetailScreen> {
-  // Trạng thái tạm giữ ở đây (không ở widget con) để không mất khi tải lại.
   bool _inUse = false;
   bool _busy = false;
   String? _actionError;

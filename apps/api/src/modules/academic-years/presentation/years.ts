@@ -36,7 +36,7 @@ export class YearsDto extends YearsInput {
   @ApiProperty({ type: Number }) ma_nam_hoc!: number;
 }
 export class YearPendingSummaryDto {
-  @ApiProperty({ type: Number, description: "Bảng điểm chưa chốt" })
+  @ApiProperty({ type: Number, description: "Bảng điểm chưa khóa" })
   openGradebooks!: number;
   @ApiProperty({
     type: Number,

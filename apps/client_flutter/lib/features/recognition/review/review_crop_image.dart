@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../app/design_tokens.dart';
 import '../image_preview.dart';
 
-/// Widget hiển thị ảnh ô cắt nhận dạng (Điểm số, Điểm chữ, Họ tên).
-/// Bấm / chạm vào ảnh sẽ phóng to bằng [showRecognitionImage].
 class ReviewCropImage extends StatelessWidget {
   const ReviewCropImage({
     super.key,

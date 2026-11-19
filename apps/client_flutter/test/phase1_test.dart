@@ -134,7 +134,7 @@ void registerPhaseOneTests({bool resize = true}) {
       await tester.tap(find.text('Năm học'));
       await tester.pumpAndSettle();
       expect(find.text('Chưa có dữ liệu phù hợp.'), findsOneWidget);
-      await tester.tap(find.text('Thêm mới'));
+      await tester.tap(find.byKey(const ValueKey('catalog-add-years')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Tên'),

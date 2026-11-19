@@ -19,7 +19,6 @@ String groupLabel(Group group) => switch (group) {
   Group.CK => 'Cuối kỳ (CK)',
 };
 
-/// Nhãn ngắn cho cột điểm, ví dụ `TX1`; null nếu chưa đủ nhóm và thứ tự.
 String? gradeKeyOf(ColumnDraft column) =>
     column.group == null || column.order == null
     ? null
@@ -39,8 +38,6 @@ AppBadge templateDetailStatusBadge(TemplateDetailDtoStatusEnum status) =>
       TemplateDetailDtoStatusEnum.NGUNG => const AppBadge.warn('Ngừng'),
     };
 
-/// Kiểu đọc suy ra từ khai báo cột (ADR-0016): cột điểm có cột chữ đi kèm thì
-/// đọc hai kênh; mẫu không có cột chữ nào thì chỉ đọc số. Trộn cả hai thì nói rõ.
 String readModeLabel(List<TemplateColumnDto> columns) {
   final grades = [
     for (final c in columns)
@@ -58,7 +55,6 @@ String readModeLabel(List<TemplateColumnDto> columns) {
   return 'Số + chữ ($both/${grades.length} cột)';
 }
 
-/// Thẻ nội dung theo token (nền `surface`, viền `line`).
 class TemplateCard extends StatelessWidget {
   const TemplateCard({
     super.key,
@@ -85,7 +81,6 @@ class TemplateCard extends StatelessWidget {
   }
 }
 
-/// Khung thông báo lỗi/ghi chú theo tông token, có icon.
 class TemplateNotice extends StatelessWidget {
   const TemplateNotice({
     super.key,
@@ -147,7 +142,6 @@ class TemplateNotice extends StatelessWidget {
   }
 }
 
-/// Lề trang theo bề rộng: 24 trên màn rộng, 16 trên màn hẹp.
 EdgeInsets templatePagePadding(BuildContext context) => EdgeInsets.all(
   MediaQuery.sizeOf(context).width >= 600
       ? AppSpacing.page

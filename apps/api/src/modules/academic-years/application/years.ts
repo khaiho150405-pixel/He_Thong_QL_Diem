@@ -33,7 +33,6 @@ export class YearsService extends CatalogService {
     });
   }
 
-  /** Không xóa năm hiện hành: luôn phải có một năm hiện hành, muốn bỏ phải chuyển sang năm khác trước. */
   protected override async guardRemove(_tx: Unit, row: Row) {
     if (row.hien_hanh)
       throw new ConflictException(
@@ -41,10 +40,6 @@ export class YearsService extends CatalogService {
       );
   }
 
-  /**
-   * Việc còn dang dở của một năm học, để quản trị viên cân nhắc trước khi chuyển năm hiện hành:
-   * bảng điểm chưa chốt, phiếu nhận dạng đang xử lý/chờ đối chiếu (phiếu đã hủy không tính), học kỳ chưa công bố.
-   */
   async pendingSummary(actor: Actor, yearId: number) {
     administrator(actor);
     return this.store.run(async (tx) => {

@@ -9,8 +9,6 @@ import 'review_header.dart';
 import 'review_models.dart';
 import 'review_row_content.dart';
 
-/// Chế độ xem từng dòng (PageView) trên Mobile cho các dòng Đỏ/Vàng/STT-khác.
-/// Hết các dòng cần xem → hiển thị trang tổng kết với ô xác nhận và nút Duyệt.
 class ReviewMobilePager extends StatefulWidget {
   final List<RecognitionEvidenceRowDto> needReviewRows;
   final List<RecognitionEvidenceRowDto> greenRows;
@@ -134,7 +132,6 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
 
     return Column(
       children: [
-        // Thanh tóm tắt đầu trang: chip Đỏ/Vàng/Xanh/STT khác + tiến độ (đồng bộ web)
         if (widget.ticket != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -151,17 +148,14 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
             ),
           ),
 
-        // Banner chỉ xem nếu phiếu đã duyệt
         if (widget.readOnly && widget.ticket != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: _buildReadOnlyBanner(context, widget.ticket!.status.value),
           ),
 
-        // Thanh chỉ báo dòng đang xem + nút chuyển dạng danh sách
         _buildTopStepper(context, totalRows),
 
-        // Khung trượt PageView từng dòng
         Expanded(
           child: PageView.builder(
             controller: _pageController,
@@ -176,7 +170,6 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
           ),
         ),
 
-        // Thanh điều hướng chân trang (trừ khi ở trang tổng kết)
         if (_currentPage < totalRows) _buildPagerNavigation(context),
       ],
     );
@@ -268,8 +261,6 @@ class _ReviewMobilePagerState extends State<ReviewMobilePager> {
               ),
             ],
           ),
-          // Chấm tiến độ từng dòng (`.mdots`): màu theo mức, dòng đang xem
-          // có viền đậm. Chỉ trình bày, không bấm được.
           if (totalRows > 1 && totalRows <= 30) ...[
             const SizedBox(height: AppSpacing.xs),
             Wrap(

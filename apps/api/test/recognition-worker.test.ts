@@ -114,7 +114,6 @@ test("worker preserves two channels, matches students and never writes an offici
   assert.equal(first.nameCropKey, "recognition/crops/42/1-name.png");
   assert.equal(first.reviewLevel, "XANH");
   assert.match(String(first.matchNote), /Khớp họ tên/);
-  // original + 3 crops per row.
   assert.equal(storage.objects.size, 7);
 });
 
@@ -145,7 +144,6 @@ test("struck rows are dropped and their crops are never stored", async () => {
 });
 
 test("rows are mapped by STT and name, not by position on the paper", async () => {
-  // Trang chỉ chứa STT 3–4 của lớp 4 người: dòng 1 trên ảnh là học sinh STT 3.
   const onPaper = (rowIndex: number, stt: number): RecognitionRowResult => ({
     ...row(rowIndex),
     stt: { ...row(rowIndex).stt, value: stt, raw: String(stt) },
@@ -171,7 +169,6 @@ test("rows without any STT reading (project decision: STT is not recognised) are
     stt: { raw: null, value: null, confidence: "0", isBlank: true },
     name: { raw: name, confidence: "0.90", isBlank: false },
   });
-  // The page holds students 3–5 of a class of 6; names alone locate the segment.
   const { state, processor } = harness(
     [noStt(1, "Học sinh 3"), noStt(2, "Học sinh 4"), noStt(3, "Học sinh 5")],
     roster(6),
@@ -187,7 +184,6 @@ test("rows without any STT reading (project decision: STT is not recognised) are
     ],
   );
   assert.ok(state.completed!.every((item) => item.reviewLevel === "XANH"));
-  // A row whose name cannot be read is never green when there is no STT either (red, 1 of 5 stays within the red ratio).
   const unreadable = harness(
     [
       noStt(1, "Học sinh 1"),
@@ -223,7 +219,6 @@ test("final level is the lower of the grade level and the match level", async ()
   };
   const redMatch: RecognitionRowResult = {
     ...row(2),
-    // Tên khớp mạnh nhưng STT in trên giấy mâu thuẫn học sinh được ghép → hạ xuống Vàng (khi bật RECOGNITION_STT_CHECK).
     stt: { ...row(2).stt, value: 9, raw: "9" },
   };
   const rows = [yellowGrade, redMatch, row(3), row(4), row(5), row(6)];
@@ -244,7 +239,6 @@ test("final level is the lower of the grade level and the match level", async ()
     state.completed![1]!.matchNote,
     "STT trên giấy 9 khác STT dự kiến 2.",
   );
-  // Mô hình STT đã chọn (quy ước, k, cộng dòng gạch) được ghi log có cấu trúc, không chứa họ tên.
   const logged = logs
     .map((line) => JSON.parse(line) as Record<string, unknown>)
     .find((entry) => entry.event === "recognition_stt_model");
@@ -256,13 +250,10 @@ test("final level is the lower of the grade level and the match level", async ()
   });
   assert.equal(logged?.ticketId, "9");
   assert.equal(JSON.stringify(logged).includes("Học sinh"), false);
-  // Cờ tắt (mặc định): STT bị bỏ qua hoàn toàn.
   const off = harness(rows, roster(6));
   await off.processor.process("9");
   assert.equal(off.state.completed![1]!.reviewLevel, "XANH");
-  // Mức điểm gốc của dịch vụ vẫn được giữ trong comparison.
   assert.equal(state.completed![0]!.comparison, "LECH");
-  // Mức ghép được ghi riêng khỏi mức cuối: dòng 1 điểm Vàng nhưng ghép Xanh; dòng 2 ghép Vàng (STT lệch) nên mức cuối Vàng.
   assert.deepEqual(
     state.completed!.map((item) => item.matchLevel),
     ["XANH", "VANG", "XANH", "XANH", "XANH", "XANH"],
@@ -280,7 +271,6 @@ test("rows that cannot be matched mark the ticket ROW_MATCH_FAILED and store not
   assert.equal(state.failed, "ROW_MATCH_FAILED");
   assert.equal(state.completed, undefined);
   assert.equal(storage.objects.size, 1);
-  // Nhiều dòng có điểm hơn sĩ số snapshot cũng không đoán.
   const tooMany = harness([row(1), row(2), row(3)], roster(2));
   await tooMany.processor.process("12");
   assert.equal(tooMany.state.failed, "ROW_MATCH_FAILED");
@@ -382,7 +372,6 @@ test("HTTP model accepts the full contract and sends only the image", async () =
     (await respond(page([row(1)])).recognize(image)).rows[0]!.name.raw,
     "Học sinh 1",
   );
-  // pageStartStt may be null; struck/blank rows with null values are valid.
   const struck = {
     ...row(2),
     struck: true,
@@ -423,7 +412,6 @@ test("HTTP model rejects malformed output and maps unavailable model", async () 
     1,
   );
   await assert.rejects(timedOut.recognize(image), /RECOGNITION_TIMEOUT/);
-  // A real timeout from the abort signal also maps to RECOGNITION_TIMEOUT.
   const aborted = new HttpRecognitionModel(
     "http://ocr",
     (_url, init) =>
@@ -618,7 +606,6 @@ test("the research merge rule is accepted: red mismatches, one-channel yellows a
 });
 
 test("API parser accepts the response produced by the real FastAPI service", () => {
-  // Golden file written by apps/recognition-service (tests/test_api.py keeps it in sync).
   const body = JSON.parse(
     readFileSync(
       new URL("./fixtures/recognition-fake-response.json", import.meta.url),
@@ -661,7 +648,6 @@ test("HTTP 422 from the service keeps its stable pipeline code", async () => {
       new RegExp(`^Error: ${code}$`),
       code,
     );
-  // Unknown or malformed 422 bodies (e.g. FastAPI validation errors) are generic service errors.
   for (const body of [
     { detail: { code: "SOMETHING_ELSE" } },
     { detail: [{ loc: ["body", "image"], msg: "field required" }] },
@@ -699,7 +685,7 @@ test("worker marks the ticket LOI with the pipeline code and does not retry", as
         },
       },
     );
-    await processor.process("77"); // resolves: BullMQ sees success and will not retry
+    await processor.process("77");
     assert.deepEqual(failures, [code]);
     assert.equal(storage.objects.size, 1);
   }
@@ -792,7 +778,6 @@ test("worker finishes a job for a cancelled ticket without recognising, writing 
 test("a ticket cancelled while the model runs: result is ignored and the orphan crops are removed", async () => {
   const { state, storage, processor } = cancellable(["DANG_XU_LY", "DA_HUY"]);
   await captureLogs(state.logs, () => processor.process("43"));
-  // complete() vẫn được gọi (SQL bỏ qua kết quả của phiếu đã hủy) nhưng ảnh ô vừa tải lên bị dọn.
   assert.equal(state.recognized, 1);
   assert.equal(state.failed, 0);
   assert.deepEqual([...storage.objects.keys()], ["original.png"]);

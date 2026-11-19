@@ -59,7 +59,6 @@ void main() {
       expect(itemFinder, findsOneWidget);
 
       final menuTop = tester.getTopLeft(itemFinder).dy;
-      // Vị trí top của menu >= bottom của ô (cho phép sai số 1px do border)
       expect(menuTop, greaterThanOrEqualTo(fieldBottom - 1));
     },
   );
@@ -344,17 +343,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Ban đầu ô hiển thị "Năm học 2024-2025"
       expect(
         find.widgetWithText(TextField, 'Năm học 2024-2025'),
         findsOneWidget,
       );
 
-      // Tap mở menu
       await tester.tap(find.byType(TextField));
       await tester.pumpAndSettle();
 
-      // Thấy đầy đủ 3 mục trong menu, không bị lọc còn 1 mục
       expect(
         find.widgetWithText(MenuItemButton, 'Năm học 2023-2024'),
         findsOneWidget,
@@ -401,7 +397,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap và gõ "nam hoc"
     await tester.tap(find.byType(TextField));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'nam hoc');
@@ -410,7 +405,6 @@ void main() {
     expect(find.textContaining('Năm học 2024-2025'), findsOneWidget);
     expect(find.textContaining('Thầy Dương'), findsNothing);
 
-    // Xóa và gõ "DUONG"
     await tester.enterText(find.byType(TextField), 'DUONG');
     await tester.pumpAndSettle();
 
@@ -521,10 +515,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Ban đầu là Lớp 10A
       expect(find.widgetWithText(TextField, 'Lớp 10A'), findsOneWidget);
 
-      // Tap và gõ dở "Lớp 10B"
       await tester.tap(find.widgetWithText(TextField, 'Lớp 10A'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -533,11 +525,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Chuyển focus ra ngoài mà không chọn
       focusOutside.requestFocus();
       await tester.pumpAndSettle();
 
-      // Trả lại label cũ "Lớp 10A", onChanged không bị gọi
       expect(find.widgetWithText(TextField, 'Lớp 10A'), findsOneWidget);
       expect(changedCalled, isFalse);
     },
@@ -574,18 +564,15 @@ void main() {
       await tester.tap(fieldFinder);
       await tester.pumpAndSettle();
 
-      // Gõ từ khóa tìm kiếm "tin"
       await tester.enterText(fieldFinder, 'tin');
       await tester.pumpAndSettle();
 
-      // Nhấn Escape -> Đóng menu và hoàn tác về "Ngữ văn"
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(TextField, 'Ngữ văn'), findsOneWidget);
       expect(selected, isNull);
 
-      // Mở lại và chọn bằng Enter
       await tester.tap(find.widgetWithText(TextField, 'Ngữ văn'));
       await tester.pumpAndSettle();
 
@@ -636,7 +623,6 @@ void main() {
     expect(dropdownMenu.enableSearch, isFalse);
     expect(dropdownMenu.requestFocusOnTap, isFalse);
 
-    // Tap và chọn mục
     await tester.tap(find.byType(TextField));
     await tester.pumpAndSettle();
 
@@ -678,17 +664,13 @@ void main() {
       await tester.enterText(find.byType(TextField), 'tu khoa go do');
       await tester.pumpAndSettle();
 
-      // Nút clear xuất hiện
       final clearBtn = find.byKey(const ValueKey('app-select-clear-button'));
       expect(clearBtn, findsOneWidget);
 
-      // Bấm nút clear
       await tester.tap(clearBtn);
       await tester.pumpAndSettle();
 
-      // Giá trị đã chọn không đổi
       expect(selected, 'old');
-      // Ô nhập được xóa trống từ khóa để hiện lại đủ danh sách
       expect(
         find.byKey(const ValueKey('app-select-clear-button')),
         findsNothing,
@@ -748,7 +730,6 @@ void main() {
       expect(itemFinder, findsOneWidget);
 
       final itemRect = tester.getRect(itemFinder);
-      // Menu rộng ≈ 300 và căn trái theo ô
       expect(itemRect.width, closeTo(300, 2.0));
       expect(itemRect.left, closeTo(fieldRect.left, 2.0));
     },
@@ -780,21 +761,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Ban đầu hiện "Tất cả" với màu xám nhạt kiểu placeholder (ink3)
       final fieldFinder = find.byType(TextField);
       expect(find.widgetWithText(TextField, 'Tất cả'), findsOneWidget);
       final fieldWidget = tester.widget<TextField>(fieldFinder);
       expect(fieldWidget.style?.color, AppTokens.light.ink3);
 
-      // Tap vào ô dropdown
       await tester.tap(fieldFinder);
       await tester.pumpAndSettle();
 
-      // Chữ "Tất cả" trong ô biến mất (trống) để người dùng gõ từ khóa
       final fieldAfterTap = tester.widget<TextField>(fieldFinder);
       expect(fieldAfterTap.controller?.text, isEmpty);
 
-      // Menu dropdown vẫn mở và gợi ý đầy đủ các option
       expect(find.widgetWithText(MenuItemButton, 'Tất cả'), findsOneWidget);
       expect(find.widgetWithText(MenuItemButton, 'Toán học'), findsOneWidget);
       expect(find.widgetWithText(MenuItemButton, 'Ngữ văn'), findsOneWidget);
@@ -832,11 +809,9 @@ void main() {
       await tester.tap(fieldFinder);
       await tester.pumpAndSettle();
 
-      // Gõ "10" vào ô mà không nhấn Enter
       await tester.enterText(fieldFinder, '10');
       await tester.pumpAndSettle();
 
-      // Danh sách menu được tự động filter ngay lập tức
       expect(find.textContaining('10A1'), findsOneWidget);
       expect(find.textContaining('10A2'), findsOneWidget);
       expect(find.textContaining('11B1'), findsNothing);

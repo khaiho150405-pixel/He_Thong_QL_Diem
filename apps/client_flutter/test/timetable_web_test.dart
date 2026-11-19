@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Học kỳ 01/09/2031 – 31/12/2031; hôm nay cố định: thứ Hai 08/09/2031 (tuần 2).
 const _semester = {
   'id': 1,
   'name': 'Học kỳ I',
@@ -48,11 +47,9 @@ class _Server implements HttpClientAdapter {
     } else if (options.path.endsWith('/timetable')) {
       body = {
         'items': [
-          // Thứ Hai: Ngữ văn tiết 1-3 (gộp), Toán tiết 4 (sáng), Hóa tiết 7.
           for (final p in [1, 2, 3]) _slot(p, 7, 'Ngữ văn', 2, p, 'P.101'),
           _slot(4, 4, 'Toán', 2, 4, 'P.102'),
           _slot(5, 9, 'Hóa học', 2, 7, null),
-          // Thứ Tư: Ngữ văn một tiết → cùng môn, cùng màu với thứ Hai.
           _slot(6, 7, 'Ngữ văn', 4, 2, 'P.101'),
         ],
         'total': 6,
@@ -156,7 +153,7 @@ void main() {
       expect(find.text('T$tiet'), findsNothing);
     }
     final table = tester.widget<Table>(find.byType(Table));
-    expect(table.children.length, 3); // tiêu đề + 2 buổi
+    expect(table.children.length, 3);
     expect(find.text('Thứ 2'), findsOneWidget);
     expect(find.text('Thứ 7'), findsOneWidget);
     expect(find.text('Chủ nhật'), findsOneWidget);
@@ -176,11 +173,10 @@ void main() {
       expect(find.text('Tiết: 1 - 3'), findsOneWidget);
       expect(find.text('Tiết: 4'), findsOneWidget);
       expect(find.text('Tiết: 7'), findsOneWidget);
-      expect(find.text('Tiết: 2'), findsOneWidget); // Ngữ văn thứ Tư
+      expect(find.text('Tiết: 2'), findsOneWidget);
       expect(find.text('Lớp: 10A2'), findsNWidgets(4));
       expect(find.text('Phòng: P.101'), findsNWidgets(2));
       expect(find.textContaining('GV:'), findsNothing);
-      // Ngữ văn (thứ Hai) nằm ở ô Sáng, Hóa học ở ô Chiều.
       expect(find.byKey(const ValueKey('tt-block-1')), findsOneWidget);
       expect(find.byKey(const ValueKey('tt-block-2')), findsNothing);
     },
@@ -195,8 +191,8 @@ void main() {
 
   testWidgets('cùng môn cùng màu, khác môn khác màu', (tester) async {
     await _pump(tester);
-    expect(_blockColor(tester, 1), _blockColor(tester, 6)); // Ngữ văn × 2
-    expect(_blockColor(tester, 1), isNot(_blockColor(tester, 4))); // Toán
+    expect(_blockColor(tester, 1), _blockColor(tester, 6));
+    expect(_blockColor(tester, 1), isNot(_blockColor(tester, 4)));
   });
 
   testWidgets('giáo viên bấm khối chỉ xem, không có hành động sửa', (
@@ -204,7 +200,7 @@ void main() {
   ) async {
     await _pump(tester);
     expect(find.byIcon(Icons.add), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('tt-block-4'))); // Toán
+    await tester.tap(find.byKey(const ValueKey('tt-block-4')));
     await tester.pumpAndSettle();
     expect(find.text('Đóng'), findsOneWidget);
     expect(find.text('Giáo viên'), findsOneWidget);
@@ -216,7 +212,6 @@ void main() {
     tester,
   ) async {
     await _pump(tester, role: 'QUAN_TRI_VIEN');
-    // Sáng thứ Hai đã có tiết 1-4 → tiết trống đầu tiên là 5.
     final add = find.byKey(const ValueKey('tt-add-2-0')).first;
     await tester.ensureVisible(add);
     await tester.tap(add);

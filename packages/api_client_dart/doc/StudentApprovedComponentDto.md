@@ -8,7 +8,6 @@ import 'package:api_client_dart/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**componentId** | **num** |  |
 **componentName** | **String** |  |
 **coefficient** | **String** |  |
 **value** | **String** |  |

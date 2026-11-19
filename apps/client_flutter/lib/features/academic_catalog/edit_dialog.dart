@@ -9,14 +9,13 @@ import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_date_field.dart';
 import '../../app/widgets/app_dialog.dart';
 import '../../app/widgets/app_select_field.dart';
+import '../../core/school_year.dart';
 import '../authentication/session.dart';
 import 'academic_year_scope.dart';
 import 'fields.dart';
 import 'repository.dart';
 import 'semester_deadlines_repository.dart';
 
-/// Giá trị tối đa của các trường số nguyên (khớp `apps/api/src/modules/*`);
-/// trường không có trong bảng chỉ yêu cầu số nguyên từ 1.
 const _intFieldMax = <String, int>{
   'khoi': 12,
   'so_tiet_tuan': 50,
@@ -24,13 +23,10 @@ const _intFieldMax = <String, int>{
   'thu_tu': 3,
 };
 
-/// Chuẩn hóa hệ số nhập tay thành dạng máy chủ yêu cầu `d.dd` (0.01–9.99):
-/// "2" → "2.00", "1,5" → "1.50". Trả null khi không hợp lệ.
 String? normalizeCoefficientText(String input) {
   final value = double.tryParse(input.trim().replaceAll(',', '.'));
   if (value == null || value < 0.01 || value >= 10) return null;
   final text = value.toStringAsFixed(2);
-  // 9.995 làm tròn thành "10.00" nên loại.
   return text.length == 4 ? text : null;
 }
 
@@ -50,8 +46,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
   bool loading = true, busy = false;
   String? error;
 
-  /// Lỗi hiện tại do tải danh mục liên kết thất bại (mới có nút "Tải lại");
-  /// lỗi khi lưu (dữ liệu sai, trùng...) thì không có nút này.
   bool loadFailed = false;
   bool get editable => ref.read(sessionProvider)?.role.value == 'QUAN_TRI_VIEN';
   List<FormFieldSpec> get fields => widget.spec.fields
@@ -144,8 +138,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     });
     try {
       if (editable) {
-        // Các danh mục liên kết độc lập nhau nên tải song song (trước đây tuần tự nên
-        // hộp thoại mở chậm khi có nhiều tài khoản/lớp).
         final references = fields
             .map((f) => f.reference)
             .whereType<String>()
@@ -168,7 +160,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           choices[entry.key] = entry.value;
         }
 
-        // Preload teachers to prevent duplicate teacher creation
         if (widget.spec.key == 'teachers') {
           final tRows = <Json>[];
           String? cursor;
@@ -186,7 +177,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           }
         }
 
-        // Preload assignments to prevent duplicate assignment creation
         if (widget.spec.key == 'assignments') {
           final aRows = <Json>[];
           String? cursor;
@@ -211,7 +201,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         }
         final viewingYearId = viewingYear?.id;
 
-        // Prioritize items of the viewing year in choices
         if (viewingYearId != null) {
           if (choices['years'] != null) {
             choices['years']!.sort((a, b) {
@@ -242,7 +231,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           }
         }
 
-        // Pre-select for new record according to viewing year
         if (widget.row == null && viewingYearId != null) {
           if (values['ma_nam_hoc'] == null &&
               choices['years']?.any((y) => y['ma_nam_hoc'] == viewingYearId) ==
@@ -396,14 +384,13 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           .read(catalogRepositoryProvider)
           .getYearPendingSummary(currentId!);
     } catch (_) {
-      // Lỗi tải pending-summary thì vẫn hiện hộp xác nhận không kèm số liệu
       summary = null;
     }
 
     final warnings = <String>[];
     if (summary != null) {
       if (summary.openGradebooks > 0) {
-        warnings.add('${summary.openGradebooks} bảng điểm chưa chốt');
+        warnings.add('${summary.openGradebooks} bảng điểm chưa khóa');
       }
       if (summary.pendingRecognitionTickets > 0) {
         warnings.add(
@@ -511,7 +498,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
           : text;
     }
 
-    // Duplicate check for assignments (ma_lop, ma_mon, ma_hoc_ky)
     if (widget.spec.key == 'assignments') {
       final currentId = widget.row?['ma_phan_cong'];
       final isDup = _existingAssignments.any((a) {
@@ -680,7 +666,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         label: f.label,
         searchable: false,
         prefixIcon: const Icon(Icons.security_rounded, size: 20),
-        // Chỉ có một quản trị viên duy nhất: không cấp vai trò này cho tài khoản khác.
         items:
             [
                   if (widget.row?['role'] == 'QUAN_TRI_VIEN') 'QUAN_TRI_VIEN',
@@ -712,7 +697,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             )
             .toList();
 
-        // Exclude accounts that already have a teacher profile when creating a new teacher
         if (widget.spec.key == 'teachers' && widget.row == null) {
           rows = rows
               .where((r) => !_existingTeacherIds.contains(r['id']))
@@ -836,7 +820,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         enabled: editable && !locked,
         decoration: InputDecoration(
           labelText: f.label,
-          hintText: 'Ví dụ: 2026-2027',
+          hintText: 'Ví dụ: ${schoolYearName()}',
           helperText: 'Định dạng YYYY-YYYY',
           helperMaxLines: 2,
           prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
@@ -1123,7 +1107,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         if (f.kind == 'int') {
           final n = int.tryParse(value);
           if (n == null) return 'Nhập số nguyên';
-          // Cùng giới hạn với API (số nguyên từ 1 đến mức tối đa của từng trường).
           final max = _intFieldMax[f.key];
           if (n < 1 || (max != null && n > max)) {
             return max == null ? 'Nhập số từ 1' : 'Nhập số từ 1 đến $max';
@@ -1178,7 +1161,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             )
           : Form(
               key: form,
-              // Sau lần Lưu lỗi đầu tiên, sửa trường nào thì lỗi trường đó tự cập nhật.
               autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1202,7 +1184,7 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                       child: Text(
                         'Hệ số này thay thế hệ số mặc định của thành phần '
                         'trong học kỳ đã chọn. Nhập từ 0.01 đến 9.99 '
-                        '(ví dụ 2.00). Khi môn học đã có bảng điểm chốt '
+                        '(ví dụ 2.00). Khi môn học đã có bảng điểm khóa '
                         'trong học kỳ, hệ số không thể sửa hoặc xóa.',
                         style: TextStyle(color: t.ink2),
                       ),
@@ -1260,8 +1242,6 @@ class _EditDialogState extends ConsumerState<EditDialog> {
   }
 }
 
-/// Nhãn vai trò dạng [AppBadge]: quản trị viên đỏ, giáo viên xanh, học sinh
-/// trung tính (theo bảng tài khoản của prototype).
 AppBadge roleAppBadge(String role) => AppBadge(
   roleLabel(role),
   tone: switch (role) {
@@ -1275,9 +1255,9 @@ AppBadge roleAppBadge(String role) => AppBadge(
 String publishIssueDescription(PublishIssueDtoCodeEnum code) {
   switch (code) {
     case PublishIssueDtoCodeEnum.GRADEBOOK_MISSING:
-      return 'Chưa có bảng điểm — dùng Khởi tạo bảng điểm ở màn Lịch nhập điểm học kỳ';
+      return 'Chưa có bảng điểm — bảng điểm tự tạo khi phân công giáo viên cho lớp–môn, hãy kiểm tra phân công';
     case PublishIssueDtoCodeEnum.GRADEBOOK_NOT_LOCKED:
-      return 'Bảng điểm chưa chốt (còn cột chưa hết hạn hoặc chưa có lịch)';
+      return 'Bảng điểm chưa khóa (còn cột chưa hết hạn hoặc chưa có lịch)';
     case PublishIssueDtoCodeEnum.RECOGNITION_PENDING:
       return 'Còn phiếu nhận dạng chưa duyệt';
     case PublishIssueDtoCodeEnum.STUDENT_NOT_IN_GRADEBOOK:
@@ -1298,7 +1278,7 @@ String publishIssueGroupTitle(PublishIssueDtoCodeEnum code) {
     case PublishIssueDtoCodeEnum.GRADEBOOK_MISSING:
       return 'Chưa có bảng điểm';
     case PublishIssueDtoCodeEnum.GRADEBOOK_NOT_LOCKED:
-      return 'Bảng điểm chưa chốt';
+      return 'Bảng điểm chưa khóa';
     case PublishIssueDtoCodeEnum.RECOGNITION_PENDING:
       return 'Phiếu nhận dạng chưa duyệt';
     case PublishIssueDtoCodeEnum.STUDENT_NOT_IN_GRADEBOOK:

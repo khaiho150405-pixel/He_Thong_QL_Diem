@@ -232,7 +232,6 @@ test("UC14 semester coefficients are isolated, authorized, snapshotted and froze
       ),
       { code: "23514" },
     );
-    // A different semester is still editable after this one is locked.
     await weights.save(admin, { ...input, ma_hoc_ky: term2, he_so: "5.00" });
     const result = await finalResults.calculate(
       teacher,
@@ -258,8 +257,8 @@ test("UC14 semester coefficients are isolated, authorized, snapshotted and froze
     const mine = await finalResults.myResults(studentActor, term);
     assert.ok(linkedStudentId > 0);
     assert.equal(
-      mine[0]!.components.find((c) => c.componentId === component)!.coefficient,
-      "4.00",
+      mine[0]!.components.some((c) => c.coefficient === "4.00"),
+      true,
     );
   } finally {
     await app.close();

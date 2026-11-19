@@ -7,13 +7,9 @@ class AppTabItem {
 
   final String label;
 
-  /// Số đếm hiển thị trong chip nhỏ cạnh nhãn; null thì không có chip.
   final int? count;
 }
 
-/// Tab gạch chân (`.tabs`): mục chọn có gạch 2px màu `pri`, cuộn ngang được.
-/// Mục thứ `i` có `ValueKey('app-tab-i')`, khung gạch chân có
-/// `ValueKey('app-tab-box-i')`.
 class AppTabs extends StatelessWidget {
   const AppTabs({
     super.key,

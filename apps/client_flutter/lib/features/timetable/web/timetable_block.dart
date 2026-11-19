@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../app/design_tokens.dart';
 import '../timetable_slot_group.dart';
 
-/// Bộ màu của một khối môn: nền nhạt, viền cùng tông, chữ tiêu đề đậm hơn.
 class SubjectColor {
   const SubjectColor(this.bg, this.line, this.fg);
   final Color bg;
@@ -11,7 +10,6 @@ class SubjectColor {
   final Color fg;
 }
 
-/// Màu ổn định theo môn (cùng `subjectId` luôn cùng màu), lấy từ token.
 SubjectColor subjectColor(AppTokens t, int subjectId) {
   final bases = [
     t.pri,
@@ -32,7 +30,6 @@ SubjectColor subjectColor(AppTokens t, int subjectId) {
   );
 }
 
-/// Giờ học của cả khối: đầu của tiết đầu đến cuối của tiết cuối, null nếu không rõ.
 String? slotTimeRange(TimetableSlot slot) {
   final start = slot.items.first.timeSlotLabel.split(' - ');
   final end = slot.items.last.timeSlotLabel.split(' - ');
@@ -40,7 +37,6 @@ String? slotTimeRange(TimetableSlot slot) {
   return '${start.first} - ${end.last}';
 }
 
-/// Khối môn trong lưới tuần/danh sách ngày trên web.
 class TimetableBlock extends StatelessWidget {
   const TimetableBlock({
     super.key,
@@ -142,7 +138,6 @@ class TimetableBlock extends StatelessWidget {
   }
 }
 
-/// Hộp thông tin chỉ xem (giáo viên/học sinh bấm vào khối).
 Future<void> showTimetableSlotInfo(
   BuildContext context,
   TimetableSlot slot, {

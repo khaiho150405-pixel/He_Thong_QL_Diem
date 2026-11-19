@@ -294,13 +294,11 @@ void main() {
     expect(find.text('Bỏ các thay đổi chưa lưu?'), findsOneWidget);
     expect(find.textContaining('1 ô điểm đã sửa'), findsOneWidget);
 
-    // Ở lại: vẫn trên bảng điểm, giá trị gõ được giữ nguyên.
     await tester.tap(find.text('Ở lại'));
     await tester.pumpAndSettle();
     expect(find.text('Bỏ các thay đổi chưa lưu?'), findsNothing);
     expect(find.byKey(const ValueKey('grade-9001')), findsOneWidget);
 
-    // Rời đi: về danh sách bảng điểm.
     await tester.tap(find.byTooltip('Quay lại'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Rời đi'));
@@ -379,7 +377,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Lịch sử cập nhật điểm'), findsOneWidget);
     expect(find.text('An · Miệng'), findsOneWidget);
-    expect(find.textContaining('NULL → 0.0'), findsOneWidget);
+    expect(find.textContaining('Chưa có → 0.0'), findsOneWidget);
     expect(find.textContaining('Nhập điểm kiểm tra'), findsOneWidget);
     await tester.tap(find.text('Đóng'));
     await tester.pumpAndSettle();
@@ -390,13 +388,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('Phiên bản'), findsNothing);
 
-    await tester.tap(find.text('Báo cáo & Tiện ích'));
+    await tester.tap(find.text('Báo cáo'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Chốt cột'), findsNothing);
     expect(find.text('Lịch nhập điểm của nhà trường'), findsOneWidget);
     server.locked = true;
     server.version++;
-    // Màn bảng điểm không còn nút tải lại riêng: đồng bộ sĩ số cũng tải lại dữ liệu.
     await tester.tap(find.byTooltip('Thao tác khác'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Đồng bộ sĩ số'));

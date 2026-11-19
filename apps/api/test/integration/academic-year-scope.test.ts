@@ -6,9 +6,6 @@ import { createApp } from "../../src/app.js";
 import type { ObjectStorage } from "../../src/modules/files/application/port.js";
 import { createRosterFixture } from "./roster-fixture.js";
 
-// Năm học hiện hành làm phạm vi mặc định: lọc ở server theo yearId trước khi phân trang, chuyển năm hiện hành trong một giao dịch,
-// tóm tắt việc còn dang dở của năm và học kỳ mặc định của thời khóa biểu. Dữ liệu hoàn toàn giả, chỉ trên DB *_test.
-
 interface Page<T> {
   items: T[];
   nextCursor: string | null;
@@ -101,7 +98,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
     const teacherOne = await makeUser("GIAO_VIEN");
     const teacherTwo = await makeUser("GIAO_VIEN");
 
-    // --- Hai năm học tạo qua API, đều không hiện hành ---
     const makeYear = async (name: string, from: string, to: string) => {
       const response = await call(admin.token, "POST", "/catalog/years", {
         ten: `${name}-${suffix}`,
@@ -115,7 +111,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
     const y1 = await makeYear("Y1", "2026-09-01", "2027-06-01");
     const y2 = await makeYear("Y2", "2027-09-01", "2028-06-01");
 
-    // Dữ liệu: năm 2 chèn trước nên danh sách không lọc (bắt đầu từ mã đầu tiên của bài test) có đủ cả hai năm.
     const semester = async (
       year: number,
       name: string,
@@ -171,7 +166,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
       [y1Classes[0], subject, s1a, y1Classes[1], y2Classes[0], s2],
     );
 
-    // --- Lọc theo yearId, trước khi phân trang ---
     const idsOf = <T extends Record<string, unknown>>(
       page: Page<T>,
       key: string,
@@ -184,7 +178,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
       admin.token,
       path("/catalog/classes", { yearId: y1 }),
     );
-    // Cùng một năm: phân trang đúng (50 + 5), không lẫn lớp của năm khác dù mã nhỏ hơn.
     const collected: number[] = [];
     let page = await get<Page<Record<string, unknown>>>(
       admin.token,
@@ -218,7 +211,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
       ),
       y2Classes,
     );
-    // Không truyền yearId: như cũ, thấy lớp của mọi năm.
     const unfiltered = await get<Page<Record<string, unknown>>>(
       admin.token,
       path("/catalog/classes", { cursor: fromMine }),
@@ -284,11 +276,9 @@ test("year scoped lists, current-year switching and pending summary", async () =
       ).items.map((item) => item.termId) as number[];
     const inMine = (terms: number[]) =>
       terms.filter((term) => [s1a, s2].includes(term)).sort();
-    // Phân trang của bảng điểm cũng theo năm: lọc rồi mới cắt trang nên không thiếu bảng của năm 1.
     assert.deepEqual(inMine(await gradebooksIn(y1)), [s1a, s1a]);
     assert.deepEqual(inMine(await gradebooksIn(y2)), [s2]);
 
-    // Giáo viên: activeInYearId chỉ gồm người có phân công trong năm đó.
     const teachersIn = async (year?: number) =>
       idsOf(
         await get<Page<Record<string, unknown>>>(
@@ -307,7 +297,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
     );
     assert.equal((await teachersIn()).length, 2);
 
-    // Năm không tồn tại: danh sách rỗng. Tham số sai: 400. Giáo viên vẫn bị giới hạn theo phạm vi của mình.
     assert.deepEqual(
       (
         await get<Page<unknown>>(
@@ -348,7 +337,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
     );
     assert.deepEqual(idsOf(teacherView, "ma_lop"), [y2Classes[1]]);
 
-    // --- Chuyển năm hiện hành ---
     const save = (
       method: "POST" | "PUT",
       year: number | null,
@@ -367,10 +355,8 @@ test("year scoped lists, current-year switching and pending summary", async () =
       );
     assert.equal((await save("PUT", y1, true)).status, 200);
     assert.deepEqual(await currentYears(), [y1]);
-    // Bật năm khác: năm cũ tự tắt trong cùng giao dịch, luôn đúng một năm hiện hành.
     assert.equal((await save("PUT", y2, true)).status, 200);
     assert.deepEqual(await currentYears(), [y2]);
-    // Tạo mới một năm hiện hành cũng chuyển.
     const created = await call(admin.token, "POST", "/catalog/years", {
       ten: `Y3-${suffix}`,
       ngay_bat_dau: "2028-09-01",
@@ -380,7 +366,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
     assert.equal(created.status, 200);
     const y3 = ((await created.json()) as { ma_nam_hoc: number }).ma_nam_hoc;
     assert.deepEqual(await currentYears(), [y3]);
-    // Hai yêu cầu chuyển song song: không bao giờ có hai năm hiện hành (chỉ mục duy nhất một phần sẽ lộ ra nếu không nguyên tử).
     const race = await Promise.all([
       save("PUT", y1, true),
       save("PUT", y2, true),
@@ -398,7 +383,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
       ) >= 1,
       true,
     );
-    // Tắt năm hiện hành duy nhất: 409 với thông báo tiếng Việt, không đổi gì.
     const [onlyCurrent] = await currentYears();
     const refused = await save("PUT", onlyCurrent === y2 ? y2 : y1, false);
     assert.equal(refused.status, 409);
@@ -407,7 +391,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
       /Phải có một năm học hiện hành; hãy bật năm khác để chuyển\./,
     );
     assert.deepEqual(await currentYears(), [onlyCurrent]);
-    // Không xóa được năm đang hiện hành (409 tiếng Việt, năm vẫn còn); năm không hiện hành và chưa dùng thì xóa được.
     const deleteCurrent = await call(
       admin.token,
       "DELETE",
@@ -440,7 +423,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
     );
     assert.deepEqual(await currentYears(), [onlyCurrent]);
 
-    // --- Tóm tắt việc còn dang dở ---
     assert.equal(
       (await call(admin.token, "GET", `/catalog/years/${y1}/pending-summary`))
         .status,
@@ -514,7 +496,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
           .pendingRecognitionTickets,
         1,
       );
-      // Phiếu đã hủy hoặc đã duyệt không còn là việc dang dở.
       await fixture.owner.query(
         "UPDATE phieu_nhan_dien SET trang_thai='DA_HUY', ly_do_huy='x', nguoi_huy=$2, thoi_diem_huy=now() WHERE ma_phieu=$1",
         [ticket.ticketId, fixture.teacherId],
@@ -524,7 +505,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
           .pendingRecognitionTickets,
         0,
       );
-      // Công bố học kỳ cần đủ kết quả tổng kết (trigger kiem_cong_bo) nên ở đây chỉ chốt bảng điểm.
       await fixture.owner.query(
         "UPDATE bang_diem SET trang_thai='DA_CHOT' WHERE ma_bang_diem=$1",
         [fixture.book],
@@ -538,7 +518,6 @@ test("year scoped lists, current-year switching and pending summary", async () =
       await fixture.close();
     }
   } finally {
-    // Trả năm hiện hành về như trước khi chạy test (DB *_test dùng chung với các test khác).
     await owner.query("UPDATE nam_hoc SET hien_hanh=false WHERE hien_hanh");
     if (originalCurrent.length)
       await owner.query(
@@ -603,7 +582,6 @@ test("timetable without semesterId shows the semester running today in the curre
       "INSERT INTO giao_vien(ma_giao_vien,ho_ten) VALUES($1,'GV TKB giả')",
       [adminId],
     );
-    // Ngày theo giờ Việt Nam như service dùng; học kỳ 1 đã qua, học kỳ 2 đang chạy: mặc định phải là học kỳ 2, không phải học kỳ đầu.
     const day = (offset: number) =>
       new Date(Date.now() + 7 * 3_600_000 + offset * 86_400_000)
         .toISOString()
@@ -659,9 +637,7 @@ test("timetable without semesterId shows the semester running today in the curre
       ).items.map((item) => item.ma_hoc_ky);
     };
     assert.deepEqual(await list(), [running]);
-    // Truyền semesterId rõ ràng thì giữ nguyên như cũ.
     assert.deepEqual(await list(`&semesterId=${past}`), [past]);
-    // Hôm nay nằm giữa hai học kỳ → học kỳ đầu như cũ.
     await owner.query("UPDATE hoc_ky SET ngay_ket_thuc=$2 WHERE ma_hoc_ky=$1", [
       past,
       day(-20),

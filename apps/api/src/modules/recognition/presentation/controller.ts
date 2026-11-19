@@ -288,7 +288,6 @@ export class RecognitionController {
     @Req() req: Request & { actor: Actor },
     @Param("gradebookId", ParseIntPipe) gradebookId: number,
     @Headers("x-idempotency-key") idempotencyKey: string,
-    // `declaredRows` do client cũ gửi được bỏ qua (ADR-0015).
     @Body() body: { componentId?: unknown },
     @UploadedFile() file?: Express.Multer.File,
   ) {

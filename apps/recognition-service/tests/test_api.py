@@ -106,7 +106,6 @@ class ApiContractTest(IsolatedAsyncioTestCase):
         self.assertTrue(struck.numeric.isBlank)
         self.assertIsNone(struck.numeric.value)
         self.assertEqual(struck.reviewLevel, "DO")
-        # STT stays aligned with row position even when a row is struck.
         self.assertEqual([row.stt.value for row in response.rows], [1, 2, 3, 4, 5, 6])
 
     async def test_invalid_fake_configuration_is_rejected(self) -> None:

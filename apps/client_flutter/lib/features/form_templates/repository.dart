@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../authentication/session.dart';
 import '../recognition/image_picker.dart';
 
-/// Cổng duy nhất của màn Mẫu bảng điểm tới API (`/api/v1/catalog/form-templates`).
-/// Widget không gọi Dio; test thay bằng bản giả qua [formTemplatesRepositoryProvider].
 abstract interface class FormTemplatesRepository {
   Future<List<TemplateSummaryDto>> list();
   Future<TemplateDetailDto> detail(num id);
@@ -42,7 +40,6 @@ abstract interface class FormTemplatesRepository {
     required num expectedVersion,
   });
 
-  /// "Thử nhận dạng": chỉ đọc, backend không ghép học sinh và không lưu gì.
   Future<TryResultDto> tryTemplate({
     required num id,
     required RecognitionImage image,
@@ -53,7 +50,6 @@ final formTemplatesRepositoryProvider = Provider<FormTemplatesRepository>(
   (ref) => ApiFormTemplatesRepository(ref.read(apiProvider)),
 );
 
-/// Chi tiết một mẫu; tải lại bằng `ref.invalidate`.
 final templateDetailProvider = FutureProvider.autoDispose
     .family<TemplateDetailDto, num>(
       (ref, id) => ref.read(formTemplatesRepositoryProvider).detail(id),
@@ -86,8 +82,6 @@ class ApiFormTemplatesRepository implements FormTemplatesRepository {
   Future<TemplateDetailDto> detail(num id) async =>
       (await _api.formTemplatesDetail(id: id)).data!;
 
-  // Client sinh (dart-dio) bỏ trống thân multipart nên ba lệnh có ảnh gửi
-  // FormData trực tiếp bằng Dio của client; phần còn lại dùng hàm sinh sẵn.
   Future<MultipartFile> _file(RecognitionImage image) async {
     final mime = recognitionImageMime(image);
     return MultipartFile.fromBytes(
@@ -209,7 +203,6 @@ class ApiFormTemplatesRepository implements FormTemplatesRepository {
   }
 }
 
-/// Mã lỗi ổn định trong envelope lỗi của API (`{code, message, details, requestId}`).
 String? apiErrorCode(Object error) {
   if (error is! DioException) return null;
   final data = error.response?.data;
@@ -220,8 +213,6 @@ String? apiErrorCode(Object error) {
   return null;
 }
 
-/// Thông điệp thân thiện cho mã lỗi backend của mẫu bảng điểm (ADR-0016 mục 4).
-/// Mã lạ thì rơi về [errorMessage] chung để không lộ chi tiết kỹ thuật.
 String templateErrorMessage(Object error) {
   if (error is RecognitionImageException) return error.message;
   return switch (apiErrorCode(error)) {

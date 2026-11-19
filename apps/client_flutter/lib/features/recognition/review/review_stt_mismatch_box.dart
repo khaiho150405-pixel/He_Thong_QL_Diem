@@ -5,8 +5,6 @@ import '../../../app/design_tokens.dart';
 import 'review_crop_image.dart';
 import 'review_models.dart';
 
-/// Bộ màu của chip/khung STT khác: xanh dương (thông tin) khi ghép họ tên đã
-/// chắc chắn, đỏ khi nghi lệch học sinh, vàng cảnh báo còn lại.
 ({Color bg, Color line, Color fg}) _sttColors(
   AppTokens t,
   RecognitionEvidenceRowDto row,
@@ -18,7 +16,6 @@ import 'review_models.dart';
   return (bg: t.warnSoft, line: t.warnLine, fg: t.warn);
 }
 
-/// Chip hiển thị trên tiêu đề dòng: "STT giấy {sttOnPaper} ≠ hệ thống {stt}" với icon swap_horiz.
 Widget buildSttMismatchChip(
   BuildContext context,
   RecognitionEvidenceRowDto row,
@@ -60,16 +57,6 @@ Widget buildSttMismatchChip(
   );
 }
 
-/// Khung ghi chú riêng khi STT trên giấy khác STT hệ thống:
-/// - Ngay dưới tiêu đề, full width, icon swap_horiz.
-/// - Luôn hiện ảnh ô họ tên (bấm phóng to).
-/// - matchLevel == XANH: màu thông tin (xanh dương nhạt).
-///   Dòng 1 in đậm: "STT khác nhau: trên giấy là {N}, trong hệ thống là {M}".
-///   Dòng 2: "Tờ giấy xếp tên khác hệ thống; đã ghép theo họ tên." (không có checkbox).
-/// - matchLevel == VANG/DO/null: màu cảnh báo (vàng; DO thì đỏ).
-///   Dòng 1 in đậm: "STT không khớp: trên giấy là {N}, trong hệ thống là {M}".
-///   Dòng 2: "Hãy kiểm tra ảnh họ tên có đúng là {studentName} không." + checkbox "Đúng học sinh này".
-/// - Chữ >= 14sp, responsive không tràn trên mobile 320px.
 class ReviewSttMismatchBox extends StatelessWidget {
   final RecognitionEvidenceRowDto row;
   final bool isConfirmed;
@@ -111,8 +98,6 @@ class ReviewSttMismatchBox extends StatelessWidget {
         ? 'Tờ giấy xếp tên khác hệ thống; đã ghép theo họ tên.'
         : 'Hãy kiểm tra ảnh họ tên có đúng là ${row.studentName} không.';
 
-    // Dòng Xanh chỉ cần ghi chú gọn một khối; ảnh họ tên nằm chung hàng với
-    // ảnh điểm số/điểm chữ/điểm cuối trong [ReviewRowContent].
     if (isInfo) {
       return Container(
         key: ValueKey('review-stt-box-${row.rowId}'),
@@ -171,7 +156,6 @@ class ReviewSttMismatchBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Dòng 1: Icon swap_horiz + Tiêu đề in đậm (>= 14sp)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -192,7 +176,6 @@ class ReviewSttMismatchBox extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
-          // Dòng 2: Nội dung hướng dẫn (>= 14sp)
           Padding(
             padding: const EdgeInsets.only(left: 30),
             child: Text(
@@ -207,7 +190,6 @@ class ReviewSttMismatchBox extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // Ảnh ô họ tên (full width, bấm phóng to)
           ReviewCropImage(
             label: 'Họ tên trên giấy',
             imageUrl: row.nameCropUrl,
@@ -217,7 +199,6 @@ class ReviewSttMismatchBox extends StatelessWidget {
             isCancelled: isCancelled,
           ),
 
-          // Checkbox xác nhận cho trường hợp cảnh báo (VANG/DO/null), không hiện ở chế độ chỉ xem
           if (!isInfo && !readOnly) ...[
             const SizedBox(height: 8),
             InkWell(

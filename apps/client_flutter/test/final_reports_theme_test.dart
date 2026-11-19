@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Máy chủ giả cho bước 7: kết quả tổng kết, lịch sử tính và thống kê báo cáo.
 class _FakeServer implements HttpClientAdapter {
   _FakeServer({this.role = 'GIAO_VIEN', this.results = const []});
 
@@ -133,7 +132,6 @@ final _results = [
   _result('504', 'Phạm Minh Đức', '3.1', 'YEU'),
 ];
 
-/// Dựng một panel ở kích thước và chế độ sáng/tối cho trước, đã đăng nhập.
 Future<void> _pump(
   WidgetTester tester,
   Widget panel, {
@@ -187,9 +185,7 @@ Future<void> _pump(
 const _finalPanel = FinalResultsPanel(gradebookId: 7, gradebookVersion: 4);
 const _reportsPanel = ReportsPanel(gradebookId: 7);
 
-/// Mọi `AppBadge` phải lấy màu chữ từ token đúng chế độ.
 Color _badgeDotColor(WidgetTester tester, String label) {
-  // Nhãn không còn chấm tròn: màu chữ của nhãn là màu token tương ứng.
   return tester.widget<Text>(find.text(label).first).style!.color!;
 }
 
@@ -200,6 +196,34 @@ void main() {
         : AppTokens.light;
     for (final width in [390.0, 1280.0]) {
       final label = '${brightness.name} ${width.toInt()}px';
+
+      testWidgets('quản trị viên $label thấy phiên bản hệ số và chính sách', (
+        tester,
+      ) async {
+        await _pump(
+          tester,
+          _finalPanel,
+          width: width,
+          brightness: brightness,
+          role: 'QUAN_TRI_VIEN',
+        );
+
+        expect(
+          find.textContaining('Hệ số W-012345678901234567'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Chính sách DEV-2026-01'), findsOneWidget);
+      });
+
+      testWidgets('giáo viên $label không thấy phiên bản hệ số và chính sách', (
+        tester,
+      ) async {
+        await _pump(tester, _finalPanel, width: width, brightness: brightness);
+
+        expect(find.textContaining('Tính lúc '), findsOneWidget);
+        expect(find.textContaining('Hệ số W-'), findsNothing);
+        expect(find.textContaining('Chính sách DEV-2026-01'), findsNothing);
+      });
 
       testWidgets('tổng kết $label: bảng, xếp loại bằng AppBadge, không '
           'overflow', (tester) async {
@@ -226,18 +250,11 @@ void main() {
         }
         expect(find.text('Nguyễn Văn An'), findsOneWidget);
         expect(find.text('8.6'), findsOneWidget);
-        // Xếp loại ánh xạ theo mã backend.
         expect(find.byType(AppBadge), findsNWidgets(4));
         expect(_badgeDotColor(tester, 'Giỏi'), tokens.ok);
         expect(_badgeDotColor(tester, 'Khá'), tokens.priLink);
         expect(_badgeDotColor(tester, 'Đạt'), tokens.neu);
-        expect(_badgeDotColor(tester, 'Yếu'), tokens.bad);
-        // Dữ liệu thật: phiên bản hệ số, chính sách, thời điểm tính (hiển thị 1 lần phía trên).
-        expect(
-          find.textContaining('Hệ số W-012345678901234567'),
-          findsOneWidget,
-        );
-        expect(find.textContaining('Chính sách DEV-2026-01'), findsOneWidget);
+        expect(_badgeDotColor(tester, 'Chưa đạt'), tokens.bad);
         expect(find.textContaining('Tính lúc '), findsOneWidget);
         expect(find.byTooltip('Lịch sử tính'), findsNWidgets(4));
         expect(tester.takeException(), isNull);
@@ -252,7 +269,6 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Tính kết quả tổng kết'), findsOneWidget);
         expect(find.text('Lý do tính hoặc tính lại'), findsOneWidget);
-        // Lý do trống thì báo lỗi, không đóng hộp thoại.
         await tester.tap(find.text('Tính kết quả').last);
         await tester.pumpAndSettle();
         expect(find.text('Cần nhập lý do.'), findsOneWidget);
@@ -291,7 +307,7 @@ void main() {
         expect(find.byType(StatCard), findsNWidgets(6));
         for (final entry in {
           'HS đã tổng kết': '40',
-          'ĐTB lớp': '7.2',
+          'Điểm TB lớp': '7.2',
           'Cao nhất': '9.8',
           'Thấp nhất': '2.5',
           'Đạt yêu cầu': '36',
@@ -307,7 +323,6 @@ void main() {
             findsOneWidget,
           );
         }
-        // Phân bố xếp loại: dữ liệu `distribution` của backend vẽ bằng AppHBars.
         expect(find.byType(AppHBars), findsOneWidget);
         expect(find.text('Phân bố xếp loại:'), findsOneWidget);
         expect(find.text('12 HS'), findsOneWidget);
@@ -390,7 +405,7 @@ void main() {
     );
     expect(
       find.text(
-        'Thống kê · 40 HS · ĐTB lớp 7.2 · Cao nhất 9.8 · Thấp nhất 2.5',
+        'Thống kê · 40 HS · Điểm TB lớp 7.2 · Cao nhất 9.8 · Thấp nhất 2.5',
       ),
       findsOneWidget,
     );

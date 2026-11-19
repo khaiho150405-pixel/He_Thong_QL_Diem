@@ -129,19 +129,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Kiểm tra tab số lượng
       expect(find.byKey(const ValueKey('group-tab-exempted')), findsOneWidget);
       expect(find.byKey(const ValueKey('group-tab-skipped')), findsOneWidget);
       expect(find.text('Miễn môn (2)'), findsOneWidget);
       expect(find.text('Thiếu điểm (1)'), findsOneWidget);
 
-      // Xem tab Miễn môn
       await tester.tap(find.byKey(const ValueKey('group-tab-exempted')));
       await tester.pumpAndSettle();
       expect(find.text('Trần Miễn 1'), findsOneWidget);
       expect(find.text('Lê Miễn 2'), findsOneWidget);
 
-      // Xem tab Thiếu điểm
       await tester.tap(find.byKey(const ValueKey('group-tab-skipped')));
       await tester.pumpAndSettle();
       expect(find.text('Phạm Thiếu 1'), findsOneWidget);
@@ -188,17 +185,14 @@ void main() {
     expect(find.text('Miễn môn (2)'), findsOneWidget);
     expect(find.text('Thiếu điểm (1)'), findsOneWidget);
 
-    // Đóng panel
     setHostState(() => showPanel = false);
     await tester.pumpAndSettle();
     expect(find.text('Panel đã đóng'), findsOneWidget);
     expect(find.text('Miễn môn (2)'), findsNothing);
 
-    // Mở lại panel
     setHostState(() => showPanel = true);
     await tester.pumpAndSettle();
 
-    // Vẫn đúng số lượng mà không cần bấm tính
     expect(find.text('Miễn môn (2)'), findsOneWidget);
     expect(find.text('Thiếu điểm (1)'), findsOneWidget);
 
@@ -238,10 +232,8 @@ void main() {
       expect(find.text('Miễn môn (2)'), findsOneWidget);
       expect(find.text('Thiếu điểm (1)'), findsOneWidget);
 
-      // Cập nhật dữ liệu mà repository trả về khi tải lại
       repo.currentList = updatedListAfterCalculate;
 
-      // Bấm "Tính kết quả"
       final calculateButton = find.byKey(
         const ValueKey('calculate-final-results'),
       );
@@ -249,7 +241,6 @@ void main() {
       await tester.tap(calculateButton);
       await tester.pumpAndSettle();
 
-      // Nhập lý do
       expect(find.text('Tính kết quả tổng kết'), findsOneWidget);
       await tester.enterText(
         find.widgetWithText(TextField, 'Lý do tính hoặc tính lại'),
@@ -260,17 +251,14 @@ void main() {
 
       expect(repo.calculateCallCount, 1);
 
-      // Sau khi tính và tải lại, số lượng cập nhật theo list mới
       expect(find.text('Miễn môn (1)'), findsOneWidget);
       expect(find.text('Thiếu điểm (0)'), findsOneWidget);
 
-      // Mở nhóm Miễn môn: chỉ còn 1 học sinh
       await tester.tap(find.byKey(const ValueKey('group-tab-exempted')));
       await tester.pumpAndSettle();
       expect(find.text('Trần Miễn 1'), findsOneWidget);
       expect(find.text('Lê Miễn 2'), findsNothing);
 
-      // Mở nhóm Thiếu điểm: hiển thị rỗng
       await tester.tap(find.byKey(const ValueKey('group-tab-skipped')));
       await tester.pumpAndSettle();
       expect(find.text('Không có học sinh thiếu điểm'), findsOneWidget);

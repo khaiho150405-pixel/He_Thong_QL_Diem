@@ -2,13 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens.dart';
 
-/// Khung hộp thoại của prototype (`.modal`): rộng tối đa 520, bo
-/// [AppRadius.lg], header có tiêu đề và nút đóng, nội dung cuộn được, footer
-/// nền `subtle` với nút Hủy và nút chính.
-///
-/// Mặc định nút Hủy / nút X đóng hộp thoại với kết quả `false`, nút chính (khi
-/// [onConfirm] là null) đóng với kết quả `true`. Đặt [danger] để đổi nút chính
-/// sang màu `bad`. Khung này chỉ hiển thị, không chứa logic nghiệp vụ.
 class AppDialog extends StatelessWidget {
   const AppDialog({
     super.key,
@@ -30,17 +23,13 @@ class AppDialog extends StatelessWidget {
   final String confirmLabel;
   final String cancelLabel;
 
-  /// Gọi khi bấm nút chính. Null thì đóng hộp thoại với kết quả `true`.
   final VoidCallback? onConfirm;
 
-  /// Gọi khi bấm Hủy hoặc X. Null thì đóng hộp thoại với kết quả `false`.
   final VoidCallback? onCancel;
   final bool danger;
   final bool confirmEnabled;
   final bool showFooter;
 
-  /// Tắt nút Hủy ở chân hộp thoại (hộp chỉ để xem: một nút "Đóng" là đủ, X ở
-  /// tiêu đề vẫn đóng được).
   final bool showCancel;
   final double maxWidth;
 
@@ -165,9 +154,6 @@ class AppDialog extends StatelessWidget {
   }
 }
 
-/// Mở một [AppDialog] (hoặc widget bất kỳ trả về từ [builder]) bằng
-/// `showDialog`. Kết quả là giá trị truyền vào `Navigator.pop`; với nút mặc định
-/// của [AppDialog] là `true` (nút chính) hoặc `false` (Hủy, X).
 Future<T?> showAppDialog<T>({
   required BuildContext context,
   required WidgetBuilder builder,

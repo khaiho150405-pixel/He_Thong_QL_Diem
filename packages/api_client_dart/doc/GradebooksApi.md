@@ -11,7 +11,6 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**gradebooksBatchUpdate**](GradebooksApi.md#gradebooksbatchupdate) | **PUT** /api/v1/gradebooks/{id}/grades |
 [**gradebooksCells**](GradebooksApi.md#gradebookscells) | **GET** /api/v1/gradebooks/{id}/cells |
-[**gradebooksCreate**](GradebooksApi.md#gradebookscreate) | **POST** /api/v1/gradebooks |
 [**gradebooksExemptions**](GradebooksApi.md#gradebooksexemptions) | **PUT** /api/v1/gradebooks/{id}/exemptions |
 [**gradebooksHistory**](GradebooksApi.md#gradebookshistory) | **GET** /api/v1/gradebooks/{id}/cells/{cellId}/history |
 [**gradebooksHistoryAll**](GradebooksApi.md#gradebookshistoryall) | **GET** /api/v1/gradebooks/{id}/history |
@@ -120,55 +119,6 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **gradebooksCreate**
-> GradebookDto gradebooksCreate(createGradebookInput)
-
-
-
-### Example
-```dart
-import 'package:api_client_dart/api.dart';
-// TODO Configure API key authorization: cookie
-//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
-// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
-// TODO Configure API key authorization: csrf
-//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
-// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
-
-final api = ApiClientDart().getGradebooksApi();
-final CreateGradebookInput createGradebookInput = ; // CreateGradebookInput |
-
-try {
-    final response = api.gradebooksCreate(createGradebookInput);
-    print(response);
-} catch on DioException (e) {
-    print('Exception when calling GradebooksApi->gradebooksCreate: $e\n');
-}
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **createGradebookInput** | [**CreateGradebookInput**](CreateGradebookInput.md)|  |
-
-### Return type
-
-[**GradebookDto**](GradebookDto.md)
-
-### Authorization
-
-[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

@@ -28,7 +28,6 @@ export class BullRecognitionQueue implements RecognitionQueue {
   }
 
   async enqueue(event: RecognitionOutboxEvent): Promise<void> {
-    // Sự kiện lô nhiều trang là MỘT job cho cả lô (ADR-0016); sự kiện phiếu một ảnh giữ nguyên.
     const [name, data] = event.batchId
       ? (["recognize-batch", { batchId: event.batchId }] as const)
       : (["recognize-grade-sheet", { ticketId: event.ticketId }] as const);

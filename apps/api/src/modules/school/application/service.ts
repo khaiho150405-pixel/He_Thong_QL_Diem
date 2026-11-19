@@ -22,7 +22,6 @@ import {
 } from "./port.js";
 
 const MAX_LOGO_BYTES = 1024 * 1024;
-/** Độ dài [tối thiểu, tối đa] đã trim; 0 nghĩa là được để trống (lưu null). */
 const LIMITS: Record<string, [number, number]> = {
   name: [3, 200],
   shortName: [2, 60],
@@ -38,7 +37,6 @@ function idempotencyKey(value: unknown) {
     throw new BadRequestException();
   return value;
 }
-/** Số nguyên dương; nhận cả chuỗi vì multipart/query không có kiểu số. */
 function version(value: unknown) {
   const n =
     typeof value === "string" && /^[0-9]{1,10}$/.test(value)
@@ -64,7 +62,6 @@ function call(key: string, payload: unknown): IdempotentCall {
 const invalidLogo = (message: string) =>
   new CodedException("INVALID_LOGO_FILE", message);
 
-/** Kiểm tra và chuẩn hóa nội dung sửa thông tin trường; chuỗi rỗng của trường tùy chọn → null. */
 function profileData(body: unknown) {
   if (!body || typeof body !== "object" || Array.isArray(body))
     throw new BadRequestException();
@@ -139,7 +136,6 @@ export class SchoolService {
   ) {
     const idem = idempotencyKey(key);
     const expected = version(expectedVersion);
-    // Chỉ QTV mới được ghi kho; session còn hạn được kiểm lại trong giao dịch bên dưới.
     administrator(actor);
     if (file.bytes.byteLength > MAX_LOGO_BYTES)
       throw invalidLogo("Logo tối đa 1 MB.");
@@ -155,7 +151,6 @@ export class SchoolService {
       contentType: inspected.contentType,
       checksum,
     };
-    // Key theo nội dung và không xóa file cũ, nên file mồ côi khi giao dịch sau đó lỗi là chấp nhận được.
     await this.storage.put({
       key: logo.key,
       bytes: file.bytes,

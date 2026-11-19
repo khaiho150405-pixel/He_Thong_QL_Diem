@@ -5,19 +5,15 @@ import {
   Controller,
   ExceptionFilter,
   Get,
-  Headers,
-  HttpCode,
   Inject,
   Param,
   ParseIntPipe,
-  Post,
   Put,
   Req,
   UseFilters,
 } from "@nestjs/common";
 import {
   ApiBody,
-  ApiHeader,
   ApiOkResponse,
   ApiParam,
   ApiProperty,
@@ -30,7 +26,6 @@ import { GradebooksService } from "../application/service.js";
 
 const types = ["TX", "GK", "CK"];
 
-/** Envelope lỗi ổn định (`code`, `message`, `details`, `requestId`) với mã lỗi riêng của lịch nhập điểm. */
 @Catch(DeadlineException)
 export class DeadlineErrorFilter implements ExceptionFilter {
   catch(error: DeadlineException, host: ArgumentsHost): void {
@@ -72,30 +67,6 @@ export class SemesterDeadlineInput {
   @ApiProperty({ type: String, format: "date-time" }) opensAt!: string;
   @ApiProperty({ type: String, format: "date-time" }) closesAt!: string;
   @ApiProperty({ type: Number, minimum: 0 }) expectedVersion!: number;
-}
-
-export class InitializedGradebookDto {
-  @ApiProperty({ type: Number }) gradebookId!: number;
-  @ApiProperty({ type: Number }) classId!: number;
-  @ApiProperty({ type: String }) className!: string;
-  @ApiProperty({ type: Number }) subjectId!: number;
-  @ApiProperty({ type: String }) subjectName!: string;
-}
-
-export class SkippedGradebookDto {
-  @ApiProperty({ type: Number }) classId!: number;
-  @ApiProperty({ type: String }) className!: string;
-  @ApiProperty({ type: Number }) subjectId!: number;
-  @ApiProperty({ type: String }) subjectName!: string;
-  @ApiProperty({ type: String, enum: ["EMPTY_ROSTER", "NO_COMPONENTS"] })
-  reason!: string;
-}
-
-export class InitializeGradebooksResultDto {
-  @ApiProperty({ type: [InitializedGradebookDto] })
-  created!: InitializedGradebookDto[];
-  @ApiProperty({ type: [SkippedGradebookDto] })
-  skipped!: SkippedGradebookDto[];
 }
 
 const issueCodes = [
@@ -158,19 +129,6 @@ export class SemesterDeadlinesController {
     @Body() body: unknown,
   ) {
     return this.service.setSemesterDeadline(req.actor, id, type, body);
-  }
-
-  @Post("gradebooks/initialize")
-  @HttpCode(200)
-  @ApiParam({ name: "id", type: Number })
-  @ApiHeader({ name: "x-idempotency-key", required: true })
-  @ApiOkResponse({ type: InitializeGradebooksResultDto })
-  initialize(
-    @Req() req: Request & { actor: Actor },
-    @Param("id", ParseIntPipe) id: number,
-    @Headers("x-idempotency-key") key: string,
-  ) {
-    return this.service.initializeSemesterGradebooks(req.actor, id, key);
   }
 
   @Get("publish-readiness")

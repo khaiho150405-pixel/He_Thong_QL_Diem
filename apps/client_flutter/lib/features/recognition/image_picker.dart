@@ -27,7 +27,6 @@ class RecognitionImageException implements Exception {
   String toString() => message;
 }
 
-/// Client preflight only; the API still validates the actual upload bytes.
 String recognitionImageMime(RecognitionImage image) {
   final bytes = image.bytes;
   if (bytes.isEmpty) {

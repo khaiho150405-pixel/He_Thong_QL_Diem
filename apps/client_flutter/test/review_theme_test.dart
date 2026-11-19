@@ -15,7 +15,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'recognition_review_screen_test.dart' show ReviewTestServer, evidenceRow;
 
-/// Đủ các loại dòng: Xanh, Xanh lệch STT, Vàng (một kênh), Vàng lệch STT, Đỏ.
 List<Map<String, dynamic>> _allKinds() => [
   {
     ...evidenceRow(
@@ -134,7 +133,6 @@ Future<void> _open(
   await tester.pumpAndSettle();
 }
 
-/// Có hộp trang trí nền đúng màu token (dùng kiểm tra thanh tiêu đề dòng).
 Finder _boxWithColor(Color color) => find.byWidgetPredicate(
   (w) =>
       w is DecoratedBox &&
@@ -168,39 +166,33 @@ void main() {
         expect(find.byIcon(Icons.arrow_back), findsNothing);
         expect(find.text(' › Phiếu #42'), findsOneWidget);
 
-        // Dải 3 chỉ số: StatCard Xanh / Vàng / Đỏ (số dòng của phiếu).
         expect(find.byType(StatCard), findsNWidgets(3));
         expect(
           tester.widgetList<StatCard>(find.byType(StatCard)).map((c) => c.tone),
           [StatTone.ok, StatTone.warn, StatTone.bad],
         );
 
-        // Chip lọc giữ key và chữ cũ, có số đếm.
         for (final key in ['ALL', 'DO', 'VANG', 'XANH', 'STT_DIFF']) {
           expect(find.byKey(ValueKey(key)), findsOneWidget);
         }
         expect(find.text('Tất cả (3)'), findsOneWidget);
         expect(find.text('⇄ STT khác: 2'), findsOneWidget);
 
-        // Thanh tiêu đề dòng đổi màu theo mức bằng token.
         expect(_boxWithColor(tokens.badSoft), findsWidgets);
         expect(_boxWithColor(tokens.warnSoft), findsWidgets);
         expect(find.byType(AppBadge), findsWidgets);
 
-        // Ảnh ô cắt Điểm số/Điểm chữ vẫn hiện; không hiện độ tin cậy, ký tự thô, tên đọc được.
         expect(find.text('Điểm số'), findsWidgets);
         expect(find.text('Điểm chữ'), findsWidgets);
         expect(find.byType(AppConfidenceBar), findsNothing);
         expect(find.textContaining('%'), findsNothing);
         expect(find.textContaining('Máy đọc'), findsNothing);
 
-        // Vẫn không lộ nhãn bị cấm.
         expect(find.textContaining('Độ tin cậy'), findsNothing);
         expect(find.textContaining('Ký tự thô'), findsNothing);
         expect(find.textContaining('Tên đọc được'), findsNothing);
         expect(find.textContaining('Lấy theo'), findsNothing);
 
-        // Thanh dính đáy: tiến độ + ô xác nhận + nút Duyệt giữ key và chuỗi.
         expect(find.textContaining('Đã xử lý 1/4'), findsOneWidget);
         expect(find.byType(AppProgress), findsOneWidget);
         expect(
@@ -213,8 +205,6 @@ void main() {
         );
         expect(approve.onPressed, isNull);
 
-        // Nhóm Xanh gập: header dùng nền ok-soft của token. Ở 1280 px các
-        // dòng xếp dọc nên nhóm nằm sâu trong danh sách, cuộn tới trước.
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('review-green-group')),
           600,
@@ -261,7 +251,6 @@ void main() {
           );
           expect(find.textContaining('Dòng 1 / 4'), findsOneWidget);
 
-          // Trang đầu là dòng Đỏ: ảnh Điểm số/Điểm chữ, không hiện độ tin cậy.
           expect(find.text('Điểm số'), findsOneWidget);
           expect(find.text('Điểm chữ'), findsOneWidget);
           expect(find.textContaining('Độ tin cậy'), findsNothing);
@@ -269,7 +258,6 @@ void main() {
           expect(_boxWithColor(tokens.badSoft), findsWidgets);
           expect(find.text('Tiếp ›'), findsOneWidget);
 
-          // Sang chế độ danh sách: dải chỉ số gọn + thanh dính đáy có tiến độ.
           await tester.tap(find.text('Danh sách'));
           await tester.pumpAndSettle();
           expect(find.byType(StatCard), findsNothing);
@@ -293,12 +281,10 @@ void main() {
       );
       expect(tester.takeException(), isNull);
 
-      // Banner chỉ xem dùng màu ok của token.
       expect(find.text('Phiếu đã duyệt — chỉ xem'), findsOneWidget);
       final title = tester.widget<Text>(find.text('Phiếu đã duyệt — chỉ xem'));
       expect(title.style?.color, tokens.ok);
 
-      // Không có ô nhập, nút Đồng ý, menu ⋮, thanh duyệt.
       expect(find.byKey(const ValueKey('review-value-r-r')), findsNothing);
       expect(find.byKey(const ValueKey('review-agree-r-y')), findsNothing);
       expect(find.byKey(const ValueKey('review-menu-r-r')), findsNothing);
@@ -306,7 +292,6 @@ void main() {
       expect(find.byKey(const ValueKey('review-approve')), findsNothing);
       expect(find.byType(AppProgress), findsNothing);
 
-      // Chế độ chỉ xem vẫn hiện ảnh ô cắt; vẫn không lộ độ tin cậy (quyết định giữ hành vi hiện tại).
       expect(find.text('Điểm số'), findsWidgets);
       expect(find.text('Điểm chữ'), findsWidgets);
       expect(find.text('Điểm đã ghi'), findsWidgets);

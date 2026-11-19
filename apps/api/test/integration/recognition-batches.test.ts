@@ -27,8 +27,6 @@ import {
 import type { PrismaClient } from "../../src/generated/prisma/client.js";
 import { createTemplate } from "./batch-fixture.js";
 
-// Lô nhận dạng nhiều trang, nhiều thành phần (ADR-0016 mục 3, 4) qua HTTP + worker thật + PostgreSQL thật.
-// Họ tên, ảnh và điểm hoàn toàn giả. Mô hình nhận dạng là bản giả đặt trong test; ảnh nằm trong kho lưu trữ trong bộ nhớ.
 function png(seed: Uint8Array = randomBytes(8)): Uint8Array {
   const bytes = new Uint8Array(24 + seed.byteLength);
   bytes.set([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -98,7 +96,6 @@ const pageResult = (rows: V2Row[]): V2Result => ({
   rows,
 });
 
-// Giá trị KHÁC NHAU giữa hai cột của cùng một học sinh để bắt nhầm cột (AC-4).
 const TX1 = ["6.0", "7.0", "8.0", "9.0"];
 const TX2 = ["1.0", "2.0", "3.0", "4.0"];
 
@@ -335,7 +332,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
         book.id,
       ]);
 
-    // --- Gợi ý ánh xạ cột -> thành phần ---
     const mappingUrl = (templateId: number, gradebookId = book.id) =>
       `${baseUrl}/api/v1/gradebooks/${gradebookId}/form-templates/${templateId}/mapping`;
     const mapping = await fetch(mappingUrl(template), {
@@ -393,7 +389,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       404,
     );
 
-    // --- Từ chối trước khi đụng tới dữ liệu: không lô, không phiếu, không ảnh ---
     const pages = [png(), png()];
     const codeOf = async (response: Response) =>
       ((await response.json()) as { code?: string }).code;
@@ -421,7 +416,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
     const unknown = await postBatch(pages, { templateId: 2_000_000_000 });
     assert.equal(unknown.status, 404);
     assert.equal(await codeOf(unknown), "TEMPLATE_NOT_FOUND");
-    // AC-8: giáo viên không được phân công, học sinh và người chưa đăng nhập.
     assert.equal((await postBatch(pages, { actor: intruder })).status, 403);
     assert.equal((await postBatch(pages, { actor: student })).status, 403);
     assert.equal((await postBatch(pages, { actor: null })).status, 401);
@@ -433,7 +427,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
     assert.equal(await ticketCount(), 0);
     assert.equal(objects.size, 0);
 
-    // --- AC-2: lỗi ở thành phần thứ hai thì rollback cả lô và dọn ảnh đã tải ---
     const lone = await postBatch([png()], { components: [choice(4, comp2)] });
     assert.equal(lone.status, 202);
     const loneBatch = ((await lone.json()) as { batchId: string }).batchId;
@@ -453,7 +446,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       ),
       4,
     );
-    // Hủy lô một thành phần: ảnh trang được xóa vì mọi phiếu của lô đã hủy.
     const cancelledLone = await cancelBatch(loneBatch);
     assert.equal(cancelledLone.status, 200);
     assert.equal(
@@ -462,7 +454,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
     );
     assert.equal(objects.size, 0);
 
-    // --- Tạo lô 2 trang, 2 thành phần: 202 và đúng 2 phiếu trong một giao dịch ---
     const created = await postBatch(pages, { key: "batch-1" });
     assert.equal(created.status, 202);
     const receipt = (await created.json()) as {
@@ -500,7 +491,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       ]),
       2,
     );
-    // Một sự kiện outbox cho cả lô.
     assert.equal(
       await count(
         "SELECT count(*) FROM recognition_outbox WHERE ma_lo=$1 AND loai_su_kien='RECOGNITION_BATCH_REQUESTED'",
@@ -509,7 +499,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       1,
     );
 
-    // Phát lại cùng khóa và cùng nội dung: cùng kết quả, không thêm lô/phiếu/ảnh.
     const replay = await postBatch(pages, { key: "batch-1" });
     assert.equal(replay.status, 202);
     assert.deepEqual(await replay.json(), receipt);
@@ -521,7 +510,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       1,
     );
     assert.equal(await ticketCount(), 3);
-    // Cùng khóa nhưng ảnh khác; khóa khác nhưng cùng ảnh; thành phần đang chờ.
     const mismatch = await postBatch([png(), png()], { key: "batch-1" });
     assert.equal(mismatch.status, 409);
     assert.equal(await codeOf(mismatch), "IDEMPOTENCY_MISMATCH");
@@ -534,7 +522,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
     assert.equal(objects.size, 2);
     assert.equal(await ticketCount(), 3);
 
-    // Gợi ý ánh xạ giờ đánh dấu hai thành phần đang chờ.
     const pendingMapping = (await (
       await fetch(mappingUrl(template), { headers: auth(teacher) })
     ).json()) as { items: Array<{ pending: boolean; locked: boolean }> };
@@ -546,7 +533,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       ],
     );
 
-    // Dispatcher đưa MỘT job cho cả lô (batchId), không có job theo phiếu của lô.
     const queued: RecognitionOutboxEvent[] = [];
     const dispatcher = new RecognitionDispatcher(
       new PrismaRecognitionOutbox(database),
@@ -571,7 +557,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       false,
     );
 
-    // --- Worker thật trên DB thật: ghép học sinh MỘT lần, mỗi phiếu chỉ giá trị của đúng cột ---
     const roster = (
       await owner.query(
         "SELECT stt, ho_ten FROM danh_sach_phieu WHERE ma_phieu=$1 ORDER BY stt",
@@ -647,7 +632,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       [tx1View.greenRows, tx1View.yellowRows, tx1View.redRows],
       [4, 0, 0],
     );
-    // AC-5: cột một kênh không có dòng Xanh (tối đa Vàng).
     assert.deepEqual(
       [tx2View.greenRows, tx2View.yellowRows, tx2View.redRows],
       [0, 4, 0],
@@ -678,7 +662,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
         [1002, 2],
       ],
     );
-    // AC-4: mỗi phiếu chỉ chứa giá trị của đúng cột của nó.
     assert.deepEqual(
       first.map((row) => row.a),
       TX1,
@@ -690,13 +673,11 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
     assert.ok(
       second.every((row) => row.b === null && row.duong_dan_anh_o_chu === null),
     );
-    // Cùng bốn học sinh ở cả hai phiếu: ghép một lần cho cả lô.
     assert.deepEqual(
       first.map((row) => row.ma_hoc_sinh),
       second.map((row) => row.ma_hoc_sinh),
     );
     assert.equal(new Set(first.map((row) => row.ma_hoc_sinh)).size, 4);
-    // Máy chỉ đề xuất: chưa có điểm chính thức.
     assert.equal(
       await count(
         "SELECT count(*) FROM diem_thanh_phan WHERE ma_bang_diem=$1 AND gia_tri IS NOT NULL",
@@ -704,17 +685,14 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       ),
       0,
     );
-    // Job bị gửi lại sau khi xong: không đọc lại, không ghi trùng.
     const retry = modelFor([]);
     await processorFor(retry).process(receipt.batchId);
     assert.equal(retry.calls, 0);
     assert.equal((await evidence(tx1Ticket)).length, 4);
 
-    // --- AC-8: IDOR theo batchId ---
     assert.equal((await getBatch(receipt.batchId, intruder)).status, 403);
     assert.equal((await getBatch(receipt.batchId, student)).status, 403);
     assert.equal((await getBatch(receipt.batchId, null)).status, 401);
-    // Lô của bảng điểm này đọc qua bảng điểm khác (mà người dùng được phân công) là không tìm thấy.
     assert.equal(
       (await getBatch(receipt.batchId, intruder, otherBook.id)).status,
       404,
@@ -746,7 +724,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       ),
       0,
     );
-    // Người đã tải lô nhưng mất phân công thì không hủy được (AGENTS 7.9): 403 và không gì thay đổi.
     const cancelAudit = () =>
       count(
         "SELECT count(*) FROM nhat_ky_bao_mat WHERE hanh_dong IN ('RECOGNITION_CANCELLED','RECOGNITION_BATCH_CANCELLED')",
@@ -793,7 +770,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       0,
     );
 
-    // --- AC-7: duyệt TỪNG phiếu của lô bằng endpoint duyệt hiện có ---
     const approve = async (ticketId: string, values: string[], key: string) => {
       const detail = (await (
         await fetch(`${api}/recognition-tickets/${ticketId}`, {
@@ -842,7 +818,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       (await grades(comp1)).map((cell) => cell.value).sort(),
       [...TX1].sort(),
     );
-    // Phiếu kia và thành phần kia chưa bị đụng tới (NULL, không phải 0.0).
     assert.deepEqual(await grades(comp2), [
       { value: null, status: "CHUA_CO" },
       { value: null, status: "CHUA_CO" },
@@ -868,14 +843,12 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       (await grades(comp1)).map((cell) => cell.value).sort(),
       [...TX1].sort(),
     );
-    // Mọi phiếu của lô đã duyệt thì không hủy được.
     const lateCancel = await cancelBatch(receipt.batchId, {
       key: "late-cancel",
     });
     assert.equal(lateCancel.status, 409);
     assert.equal(await codeOf(lateCancel), "BATCH_ALREADY_APPROVED");
 
-    // --- Hủy lô trước khi worker chạy: phiếu DA_HUY, ảnh bị xóa, sự kiện không gửi, worker bỏ qua ---
     const fresh = [png(), png()];
     const secondUpload = await postBatch(fresh, { key: "batch-2" });
     assert.equal(secondUpload.status, 202);
@@ -914,7 +887,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
     );
     assert.ok(cancelledBody.pages.every((page) => page.imageUrl === ""));
     assert.equal(objects.size, objectsBefore - 2);
-    // Cùng khóa -> cùng kết quả; khóa khác -> vẫn là lô đã hủy với lý do ban đầu.
     const sameKey = await cancelBatch(secondBatch, {
       body: { reason: "Chụp nhầm bảng" },
       key: "cancel-batch-2",
@@ -931,7 +903,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
     };
     assert.equal(otherKeyBody.cancelReason, "Chụp nhầm bảng");
     assert.equal(otherKeyBody.version, 1);
-    // Sự kiện outbox chưa gửi của lô đã hủy không còn được gửi.
     assert.equal(
       await count(
         "SELECT count(*) FROM recognition_outbox WHERE ma_lo=$1 AND da_gui_luc IS NULL",
@@ -961,7 +932,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       0,
     );
 
-    // Hủy xong tải lại đúng ảnh đó được (không còn DUPLICATE_FILE) — lô thứ ba, sẽ lỗi ở trang 2.
     const third = await postBatch(fresh, { key: "batch-3" });
     assert.equal(third.status, 202);
     const thirdReceipt = (await third.json()) as {
@@ -969,7 +939,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       tickets: Array<{ ticketId: string }>;
     };
 
-    // --- AC-6: trang lỗi TEMPLATE_MISMATCH -> mọi phiếu của lô LOI cùng mã, không có dòng kết quả ---
     const mismatchModel = modelFor([
       pageResult(rowsOf([1, 2])),
       new RecognitionV2Error("TEMPLATE_MISMATCH", { score: 0.4 }),
@@ -999,7 +968,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       0,
     );
 
-    // --- AC-3: một học sinh ở hai trang -> ROW_MATCH_FAILED, không ghi dòng ---
     const fourth = await postBatch([png(), png()], { key: "batch-4" });
     assert.equal(fourth.status, 202);
     const fourthBatch = ((await fourth.json()) as { batchId: string }).batchId;
@@ -1029,7 +997,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       0,
     );
 
-    // --- Trang 2 thiếu: học sinh của trang 2 bỏ trống, không lỗi ---
     const fifth = await postBatch([png(), png()], { key: "batch-5" });
     assert.equal(fifth.status, 202);
     const fifthBatch = ((await fifth.json()) as { batchId: string }).batchId;
@@ -1051,7 +1018,6 @@ test("recognition batches: mapping, upload, worker, per-ticket approval, cancel 
       ),
       6,
     );
-    // Dọn: không để sự kiện outbox chưa gửi cho test khác.
     await owner.query(
       "UPDATE recognition_outbox SET da_gui_luc=now() WHERE da_gui_luc IS NULL AND ma_lo IN (SELECT ma_lo FROM lo_nhan_dien WHERE ma_bang_diem=$1)",
       [book.id],

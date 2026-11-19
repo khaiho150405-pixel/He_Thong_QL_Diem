@@ -177,9 +177,6 @@ class AppScaffold extends ConsumerWidget {
       );
     }
 
-    // Thanh điều hướng đáy chỉ hiển thị trên ứng dụng di động native (Android / iOS).
-    // Trên Web (kể cả khi co nhỏ màn hình hoặc mở web trên điện thoại), KHÔNG dùng bottom nav,
-    // người dùng điều hướng qua Drawer và Sidebar.
     final showMobileNav = !kIsWeb;
     final mobileNav = showMobileNav
         ? AppBottomNav(

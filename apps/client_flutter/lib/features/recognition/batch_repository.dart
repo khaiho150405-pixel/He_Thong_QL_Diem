@@ -9,10 +9,8 @@ import '../form_templates/repository.dart' show apiErrorCode;
 import 'image_picker.dart';
 import 'image_preview.dart';
 
-/// Số trang tối đa mỗi lô (ADR-0016 mục 3, D-02).
 const int kMaxBatchPages = 4;
 
-/// Một cột mẫu đã chọn cùng thành phần điểm nhận kết quả.
 class BatchComponentChoice {
   const BatchComponentChoice({
     required this.templateColumnIndex,
@@ -28,10 +26,7 @@ class BatchComponentChoice {
   };
 }
 
-/// Cổng duy nhất của panel nhận dạng theo mẫu tới API. Widget không gọi Dio;
-/// test thay bằng bản giả qua [recognitionBatchRepositoryProvider].
 abstract interface class RecognitionBatchRepository {
-  /// Mẫu `DANG_DUNG` mà giáo viên được chọn.
   Future<List<TemplateSummaryDto>> activeTemplates();
 
   Future<MappingDto> mapping({
@@ -64,31 +59,22 @@ final recognitionBatchRepositoryProvider = Provider<RecognitionBatchRepository>(
   (ref) => ApiRecognitionBatchRepository(ref.read(apiProvider)),
 );
 
-/// Danh sách mẫu `DANG_DUNG`. Lỗi (ví dụ máy chủ chưa có mẫu) thì panel ẩn
-/// bộ chọn mẫu và hoạt động như luồng cũ. Không dùng `autoDispose`: panel tải
-/// lại danh sách mỗi lần mở lại (xem `RecognitionPanel.initState`).
 final activeTemplatesProvider = FutureProvider<List<TemplateSummaryDto>>(
   (ref) => ref.read(recognitionBatchRepositoryProvider).activeTemplates(),
 );
 
-/// Mẫu đã chọn cho từng bảng điểm, nhớ trong phiên chạy (không lưu ra đĩa).
-/// `null` = "Không dùng mẫu (mẫu E0330113 cũ)".
 final selectedTemplateProvider = StateProvider.family<num?, num>(
   (ref, gradebookId) => null,
 );
 
-/// Lô đang theo dõi của từng bảng điểm, để panel dựng lại vẫn theo dõi tiếp.
 final trackedBatchProvider = StateProvider.family<String?, num>(
   (ref, gradebookId) => null,
 );
 
-/// Tăng mỗi khi một phiếu của lô được duyệt, để panel báo bảng điểm tải lại.
 final batchApprovalTickProvider = StateProvider.family<int, num>(
   (ref, gradebookId) => 0,
 );
 
-/// Thông tin lô của phiếu, biết được trong phiên này (danh sách phiếu của API
-/// chưa có `batchId`/số trang/tên mẫu — xem `docs/design/open-questions.md`).
 class BatchTicketInfo {
   const BatchTicketInfo({
     required this.batchId,
@@ -151,8 +137,6 @@ class ApiRecognitionBatchRepository implements RecognitionBatchRepository {
     templateId: templateId,
   )).data!;
 
-  // Client sinh (dart-dio) bỏ trống thân multipart nên lệnh tải lô gửi
-  // FormData trực tiếp bằng Dio của client (cùng cách với form_templates).
   @override
   Future<RecognitionBatchReceiptDto> submit({
     required num gradebookId,
@@ -232,13 +216,11 @@ class ApiRecognitionBatchRepository implements RecognitionBatchRepository {
   )).data!;
 }
 
-/// Thông điệp khi lô báo lỗi: theo `errorCode`, kèm số trang gây lỗi nếu có.
 String batchFailureMessage(String? code, num? page) {
   final message = recognitionFailureMessage(code);
   return page == null ? message : 'Trang ${page.toInt()}: $message';
 }
 
-/// Thông điệp khi gửi/hủy/tải lô thất bại ngay ở API (mã trong envelope lỗi).
 String batchErrorMessage(Object error) {
   if (error is RecognitionImageException) return error.message;
   return switch (apiErrorCode(error)) {

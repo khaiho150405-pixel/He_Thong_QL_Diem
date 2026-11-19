@@ -52,8 +52,6 @@ class ModelRow:
     numeric_crop: bytes
     written_crop: bytes
     name_crop: bytes
-    # Đối chiếu STT (BE-24, chỉ khi RECOGNITION_STT_CHECK=1): STT đọc được ở ô STT in và STT suy theo vị trí dòng. ``stt.value``
-    # là STT trên giấy = giá trị khi hai nguồn trùng nhau, khác nhau thì None.
     stt_read: int | None = None
     stt_from_position: int | None = None
 
@@ -101,7 +99,6 @@ class ModelResultV2:
     model_version: str
     page_start_stt: int | None
     template_score: float
-    # {chỉ số cột mẫu: chỉ số cột ảnh} của các cột được căn 1–1.
     column_map: dict[int, int]
     rows: tuple[ModelRowV2, ...]
 
@@ -368,8 +365,6 @@ class WeightsRecognitionModel(RecognitionModel):
             zip((r.row_index for r in name_rows), self._name_reader.read_cells([r.name_cell for r in name_rows]))
         )
 
-        # Đối chiếu STT (tùy chọn): đọc ô STT in bằng VietOCR gốc như cột họ tên (KHÔNG dùng CRNN), rồi suy STT theo vị trí
-        # dòng bằng bỏ phiếu. STT chỉ là lớp xác nhận ở API; không bao giờ quyết định gán học sinh.
         stt_reads: dict[int, tuple[int | None, str, float]] = {}
         stt_start: int | None = None
         if self._stt_check:
@@ -385,8 +380,6 @@ class WeightsRecognitionModel(RecognitionModel):
         out: list[ModelRow] = []
         for row in rows:
             i = row.row_index
-            # Chủ dự án chốt (BE-19b): KHÔNG đọc STT; mục tiêu là điểm số và điểm chữ. STT luôn là null với độ tin cậy 0,
-            # còn việc ghép dòng ↔ học sinh dựa vào họ tên và thứ tự (row-matching.ts đã hỗ trợ ghép không cần STT).
             stt_pred = STT_NOT_READ
             stt_read_value: int | None = None
             stt_position: int | None = None
@@ -404,7 +397,6 @@ class WeightsRecognitionModel(RecognitionModel):
                 elif not row.struck:
                     stt_pred = SttPrediction(None, None, None, is_blank=True)
             name = name_reads.get(i)
-            # Ô họ tên "trống" theo MỰC (không theo việc OCR đọc ra chữ): có mực mà không đọc được vẫn là có dữ liệu.
             name_pred = (
                 NamePrediction(None, None, is_blank=True)
                 if name is None
@@ -445,7 +437,6 @@ class WeightsRecognitionModel(RecognitionModel):
             )
         return ModelResult(self._version, None, tuple(out))
 
-    # ── Contract v2 (ADR-0016): chỉ luồng này đọc tiêu đề cột; luồng v1 ở trên vẫn gọi analyze_page(image, None). ──
 
     def ocr_ham(self, anh: Any) -> str:
         """Đọc một ô tiêu đề (ảnh xám đã phóng to) bằng VietOCR gốc, cùng ``name_reader`` với cột họ tên."""
@@ -503,7 +494,6 @@ class WeightsRecognitionModel(RecognitionModel):
             zip((r.row_index for r in name_rows), self._name_reader.read_cells([r.name_cell for r in name_rows]))
         )
 
-        # Đối chiếu STT như v1 (VietOCR gốc, KHÔNG dùng CRNN); chỉ khi mẫu có cột STT.
         stt_reads: dict[int, tuple[int | None, str, float]] = {}
         stt_start: int | None = None
         use_stt = self._stt_check and page.has_stt

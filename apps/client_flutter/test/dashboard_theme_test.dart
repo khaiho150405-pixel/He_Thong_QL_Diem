@@ -17,7 +17,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Máy chủ giả chỉ trả kết quả học sinh (`/students/me/results`).
 class _StudentServer implements HttpClientAdapter {
   @override
   void close({bool force = false}) {}
@@ -61,7 +60,6 @@ class _StudentServer implements HttpClientAdapter {
   }
 }
 
-/// Repository giả: trả đúng dữ liệu `AdminOverviewData` được truyền vào.
 class _FakeReports extends ReportsRepository {
   _FakeReports(this.data) : super(ApiClientDart(dio: Dio()));
   final AdminOverviewData data;
@@ -145,7 +143,7 @@ const _adminData = AdminOverviewData(
       className: '10A1',
       subjectName: 'Toán',
       teacherName: 'Nguyễn Thị Lan',
-      status: 'Đã chốt',
+      status: 'Đã khóa',
       updatedAt: '2026-10-16T01:00:00.000Z',
     ),
     AdminRecentActivityItem(
@@ -167,7 +165,6 @@ SessionDto _user(String role) => SessionDto.fromJson({
   'csrf': 'test-csrf',
 });
 
-/// Dựng dashboard một vai ở kích thước và chế độ sáng/tối cho trước.
 Future<void> _pump(
   WidgetTester tester, {
   required String role,
@@ -209,7 +206,6 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
-/// Tháo cây widget để huỷ timer 10 giây của `adminOverviewProvider`.
 Future<void> _unmount(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump();
@@ -252,15 +248,12 @@ void main() {
           ),
           findsOneWidget,
         );
-        // Danh mục nằm trong menu, không lặp trên dashboard ở mọi độ rộng.
         expect(find.byType(ListTile), findsNothing);
         expect(find.text('1248'), findsOneWidget);
         expect(find.text('39 HS / lớp'), findsOneWidget);
-        // Dưới 720 px nhãn rút gọn như bản cũ.
         expect(find.text(wide ? 'Tỷ lệ hoàn thành' : 'Tỷ lệ'), findsOneWidget);
         expect(find.text(wide ? 'Đối chiếu OCR' : 'OCR'), findsOneWidget);
 
-        // Thẻ KPI đi theo token của chế độ hiện tại.
         final card = tester.widget<DecoratedBox>(
           find
               .descendant(
@@ -274,11 +267,10 @@ void main() {
         expect(value.style?.color, tokens.ink);
         expect(value.style?.fontSize, 30);
 
-        // Bốn thẻ biểu đồ cao cố định.
         for (final title in [
           'Mức điểm toàn trường',
           'Đối chiếu 2 kênh Số & Chữ',
-          'Tỷ lệ chốt sổ của giáo viên',
+          'Tỷ lệ khóa bảng điểm của giáo viên',
           'Hoạt động nộp điểm gần đây',
         ]) {
           expect(find.text(title), findsOneWidget);
@@ -290,7 +282,6 @@ void main() {
           findsNWidgets(4),
         );
 
-        // Phân bố học lực: màu cột lấy từ token, không dùng hex của backend.
         final bars = tester
             .widgetList<AppHBars>(find.byType(AppHBars))
             .toList();
@@ -302,7 +293,6 @@ void main() {
         expect(grade[3].color, tokens.bad);
         expect(grade[1].color, isNot(tokens.pri));
         expect(grade[0].valueText, '400 HS · 40%');
-        // Tiến độ theo khối: 81% xanh, 64% primary, 20% amber.
         final progress = bars.last.items;
         expect(progress.map((i) => i.color), [
           tokens.ok,
@@ -311,7 +301,6 @@ void main() {
         ]);
         expect(progress[0].valueText, '9 / 11 lớp (81%)');
 
-        // OCR: ba badge Xanh/Vàng/Đỏ và ba thanh AppProgress.
         expect(find.text('Xanh (Khớp)'), findsOneWidget);
         expect(find.text('Vàng (Lệch)'), findsOneWidget);
         expect(find.text('Đỏ (Ô trống)'), findsOneWidget);
@@ -321,7 +310,7 @@ void main() {
         expect(
           tester
               .widgetList<AppBadge>(find.byType(AppBadge))
-              .where((b) => b.label == 'Đã chốt')
+              .where((b) => b.label == 'Đã khóa')
               .single
               .tone,
           AppBadgeTone.ok,
@@ -348,11 +337,10 @@ void main() {
         expect(find.text('10A1, 11A3'), findsOneWidget);
         expect(find.text('Tiến độ nhập'), findsOneWidget);
         expect(find.text('20%'), findsOneWidget);
-        expect(find.text('1 / 5 bảng đã chốt'), findsOneWidget);
+        expect(find.text('1 / 5 bảng đã khóa'), findsOneWidget);
         expect(find.text('OCR chờ duyệt'), findsOneWidget);
         expect(find.text('02 phiếu'), findsOneWidget);
         expect(find.text('Cần xác nhận kết quả'), findsOneWidget);
-        // Không có biểu đồ của quản trị.
         expect(find.byType(AppHBars), findsNothing);
         expect(find.text('Xin chào, dash_user'), findsOneWidget);
 
@@ -378,12 +366,12 @@ void main() {
         );
 
         expect(find.byType(StatCard), findsNWidgets(3));
-        expect(find.text('ĐTB học kỳ'), findsOneWidget);
+        expect(find.text('Điểm TB học kỳ'), findsOneWidget);
         expect(find.text('6.5'), findsOneWidget);
         expect(find.text('Học kỳ I'), findsOneWidget);
-        expect(find.text('Môn đã chốt'), findsOneWidget);
+        expect(find.text('Môn đã có điểm'), findsOneWidget);
         expect(find.text('5 / 6'), findsOneWidget);
-        expect(find.text('Chỉ tính bảng điểm đã chốt'), findsOneWidget);
+        expect(find.text('Số môn đã có điểm tổng kết'), findsOneWidget);
         expect(find.text('Xếp hạng lớp'), findsOneWidget);
         expect(find.text('3 / 38'), findsOneWidget);
         expect(find.text('Lớp 10A1'), findsOneWidget);

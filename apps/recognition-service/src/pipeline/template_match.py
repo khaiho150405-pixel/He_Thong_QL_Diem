@@ -22,30 +22,16 @@ from .page import PX_MM
 
 SIGNATURE_VERSION = 1
 
-# Ngưỡng điểm khớp tối thiểu để nhận ảnh (D-04 trong decisions.md): ảnh cùng mẫu chụp nghiêng/phối cảnh nhẹ đạt ≥ 0,9,
-# mẫu khác có số cột/bề rộng khác xa dưới 0,8. Đổi bằng biến môi trường, không sửa mã.
 ENV_MIN_SCORE = "RECOGNITION_TEMPLATE_MIN_SCORE"
 DEFAULT_MIN_SCORE = 0.80
 
-# Điểm bề rộng = 1 − (tổng sai lệch tỉ lệ bề rộng + các khoản phạt): tỉ lệ bề rộng đã chuẩn hóa về tổng 1 nên tổng
-# sai lệch (chuẩn L1) nằm trong 0–2; hai tờ cùng mẫu lệch vài phần nghìn mỗi cột, hai tờ khác mẫu lệch hàng chục %.
-# Phạt khi MỘT cột ảnh bằng hai cột mẫu (mất một vạch dọc: chữ viết đè, vạch mờ). Đủ nhỏ để một vạch mất vẫn khớp.
 PHAT_GOP_COT = 0.04
-# Phạt khi HAI cột ảnh bằng một cột mẫu (có vạch giả: nét gạch hoặc nếp gấp bị nhận như vạch kẻ).
 PHAT_TACH_COT = 0.04
-# Tỉ trọng của hai thành phần khi có đủ chữ tiêu đề để so (chữ tiêu đề do OCR đọc nên nhiễu: chỉ là phần phụ).
 TRONG_SO_BE_RONG = 0.75
 TRONG_SO_TIEU_DE = 0.25
-# Số cặp cột 1–1 cùng có chữ tiêu đề tối thiểu để chữ tiêu đề được tính vào điểm (ít hơn thì chỉ xét bề rộng).
 SO_CAP_TIEU_DE_TOI_THIEU = 2
 SO_CHU_SO = 4
 
-# Cắt mép (P7): ảnh điện thoại có thể mất vạch ngoài cùng nên lưới dò được chỉ phủ một đoạn liên tiếp của mẫu (các cột đầu
-# hoặc cuối của mẫu nằm ngoài lưới). DEV: hai trang cắt cột cuối (điểm 0,80/0,83 theo phép căn cũ), một trang cắt cột STT,
-# một trang cắt hai cột trái. Mỗi cột bỏ phạt 0,05 (đắt hơn một vạch mất giữa bảng) để ảnh của mẫu khác không "tìm" được
-# đoạn nào đó khớp; phép căn cắt mép phải rẻ hơn phép căn toàn bộ ít nhất 0,03 và hơn cách cắt khác ít nhất 0,02.
-# Ngoài ra các cột nhìn thấy phải khớp đoạn mẫu gần như chính xác (sai lệch bề rộng ≤ 0,03, chưa tính phạt): bốn trang
-# DEV cắt mép có sai lệch 0,0009–0,0046 còn cách cắt tốt thứ hai ≥ 0,13; tờ mẫu khác (tổng hợp) ≥ 0,12.
 SAI_LECH_CAT_BIEN_TOI_DA = 0.03
 PHAT_MAT_COT_BIEN = 0.05
 SO_COT_BIEN_TOI_DA = 3

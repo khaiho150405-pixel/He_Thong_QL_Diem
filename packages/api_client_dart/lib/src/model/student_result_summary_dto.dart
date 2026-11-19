@@ -18,13 +18,9 @@ part 'student_result_summary_dto.g.dart';
 class StudentResultSummaryDto {
   /// Returns a new [StudentResultSummaryDto] instance.
   StudentResultSummaryDto({
-    required this.termId,
-
     required this.termName,
 
     required this.className,
-
-    required this.yearId,
 
     required this.yearName,
 
@@ -39,17 +35,11 @@ class StudentResultSummaryDto {
     required this.classSize,
   });
 
-  @JsonKey(name: r'termId', required: true, includeIfNull: true)
-  final num? termId;
-
   @JsonKey(name: r'termName', required: true, includeIfNull: true)
   final String? termName;
 
   @JsonKey(name: r'className', required: true, includeIfNull: false)
   final String className;
-
-  @JsonKey(name: r'yearId', required: true, includeIfNull: true)
-  final num? yearId;
 
   @JsonKey(name: r'yearName', required: true, includeIfNull: true)
   final String? yearName;
@@ -73,10 +63,8 @@ class StudentResultSummaryDto {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is StudentResultSummaryDto &&
-          other.termId == termId &&
           other.termName == termName &&
           other.className == className &&
-          other.yearId == yearId &&
           other.yearName == yearName &&
           other.averageScore == averageScore &&
           other.publishedSubjects == publishedSubjects &&
@@ -86,10 +74,8 @@ class StudentResultSummaryDto {
 
   @override
   int get hashCode =>
-      (termId == null ? 0 : termId.hashCode) +
       (termName == null ? 0 : termName.hashCode) +
       className.hashCode +
-      (yearId == null ? 0 : yearId.hashCode) +
       (yearName == null ? 0 : yearName.hashCode) +
       (averageScore == null ? 0 : averageScore.hashCode) +
       publishedSubjects.hashCode +

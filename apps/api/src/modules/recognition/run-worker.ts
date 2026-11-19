@@ -26,7 +26,6 @@ async function main() {
   });
   const store = new PrismaRecognitionWorkerStore(database);
   const storage = makeObjectStorage(config);
-  // Ràng buộc STT + họ tên mặc định BẬT (BE-24b); đặt RECOGNITION_STT_CHECK=0 để tắt (cùng giá trị với dịch vụ nhận dạng).
   const sttCheck = process.env.RECOGNITION_STT_CHECK !== "0";
   const processor = new RecognitionJobProcessor(
     store,
@@ -38,7 +37,6 @@ async function main() {
     ),
     { sttCheck },
   );
-  // Lô nhiều trang/nhiều thành phần theo mẫu (ADR-0016): /v2/recognize dùng cùng thời gian chờ như /v1.
   const batchStore = new PrismaRecognitionBatchWorkerStore(database);
   const batchProcessor = new RecognitionBatchProcessor(
     batchStore,

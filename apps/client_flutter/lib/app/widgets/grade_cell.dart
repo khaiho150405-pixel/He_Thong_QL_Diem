@@ -3,12 +3,6 @@ import 'package:flutter/services.dart';
 
 import '../design_tokens.dart';
 
-/// Ô điểm của prototype (`.gc`): 64x36 trên màn rộng, 80x48 trên mobile.
-///
-/// Chỉ là lớp hiển thị bọc quanh [TextField]. Widget KHÔNG kiểm tra giá trị
-/// điểm: màn cha tự quyết định [isInvalid] (theo quy tắc validate đang có) và
-/// [isChanged] (đã sửa chưa lưu). Thứ tự ưu tiên màu: không hợp lệ, rồi đã sửa,
-/// rồi bình thường. [fromImage] chỉ thêm chấm ở góc phải trên.
 class AppGradeCell extends StatefulWidget {
   const AppGradeCell({
     super.key,
@@ -31,11 +25,9 @@ class AppGradeCell extends StatefulWidget {
 
   final TextEditingController controller;
 
-  /// Key đặt trên [TextField] (ví dụ `ValueKey('grade-<id>')` khi gắn vào lưới).
   final Key? fieldKey;
   final FocusNode? focusNode;
 
-  /// Kiểu 80x48, chữ 18 đậm, viền và nền luôn hiện.
   final bool mobile;
   final bool isChanged;
   final bool fromImage;

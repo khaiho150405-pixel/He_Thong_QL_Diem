@@ -83,7 +83,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
         [year, teacher.id],
       )
     ).rows[0].ma_lop;
-    // 3 students x 2 components = 6 cells
     await owner.query(
       "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh,dang_theo_hoc) SELECT $1,'HS write ' || n,'2010-01-01',true FROM generate_series(1,3) n",
       [cls],
@@ -107,7 +106,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
     assert.equal(book.status, "DANG_NHAP_LIEU");
     assert.equal(book.version, 0);
 
-    // Get all cells
     const { items: cells } = await service.cells(teacher, book.id);
     assert.equal(cells.length, 6);
     assert.ok(cells.every((c) => c.value === null && c.status === "CHUA_CO"));
@@ -190,7 +188,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       ).status,
       409,
     );
-    // Replays authenticate/authorize before lookup, including a user guessing another user's key.
     assert.equal(
       (
         await request(
@@ -340,7 +337,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       403,
     );
 
-    // A second book, also assigned to this teacher: URL scope still must match each cell.
     const subject2 = (
       await owner.query(
         "INSERT INTO mon_hoc(ten_mon,so_tiet_tuan) VALUES($1,1) RETURNING ma_mon",
@@ -366,7 +362,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
         .status,
       404,
     );
-    // Valid first change then invalid cell: all point/history/version/idempotency changes roll back.
     const historyCount = async () =>
       Number(
         (
@@ -414,7 +409,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       /after audit/,
     );
     assert.equal(await historyCount(), beforeCount);
-    // DB function rejects invalid values even when the application validator is bypassed.
     await assert.rejects(
       store.run((tx) =>
         tx.updateGrades(teacher.sessionHash, book.id, version, [
@@ -423,7 +417,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       ),
       (error: { getStatus?: () => number }) => error.getStatus?.() === 409,
     );
-    // Force a real audit INSERT failure for this fixture cell only; every point write rolls back.
     const triggerName = "test_history_" + suffix;
     await owner.query(`CREATE FUNCTION public.${triggerName}() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN IF NEW.ma_diem=${cells[0]!.id} THEN RAISE EXCEPTION 'TEST_AUDIT_FAILURE' USING ERRCODE='23514'; END IF; RETURN NEW; END $$`);
@@ -499,7 +492,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       ).status,
       403,
     );
-    // Teachers cannot manually lock columns.
     assert.equal(
       (
         await request(
@@ -512,7 +504,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       ).status,
       403,
     );
-    // Add a new student: GET stays read-only; explicit sync adds NULL cells without losing existing rows.
     await owner.query(
       "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,'HS giả mới','2010-01-01')",
       [cls],
@@ -553,7 +544,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
     assert.equal(fill.status, 200);
     version++;
 
-    // Real concurrent edits with identical version: exactly one commits.
     const concurrentBody = body("6.0");
     const races = await Promise.all([
       request("/" + book.id + "/grades", "PUT", concurrentBody),
@@ -561,7 +551,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
     ]);
     assert.deepEqual(races.map((r) => r.status).sort(), [200, 409]);
     version++;
-    // Identical-key concurrent calls converge without duplicate history; a conflict can be retried.
     const sameBody = body("9.0");
     const same = await Promise.all([
       request(
@@ -594,7 +583,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       200,
     );
     version++;
-    // Expired records retain replay protection until retention is explicitly implemented.
     await owner.query(
       "UPDATE khoa_idempotency SET het_han=now()-interval '1 hour' WHERE ma_nguoi_dung=$1 AND khoa='same'",
       [teacher.id],
@@ -612,7 +600,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       version,
     );
 
-    // Historical closed-column fixture; deadline races are covered in grade-deadlines.test.ts.
     for (const componentId of new Set(cells.map((c) => c.componentId))) {
       const closed = await closedFixture(
         owner,
@@ -641,7 +628,6 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       (await service.cells(teacher, book.id)).book.status,
       "DA_CHOT",
     );
-    // Same cached payload cannot bypass revoked assignment/session.
     await owner.query(
       "DELETE FROM phan_cong_giang_day WHERE ma_lop=$1 AND ma_mon=$2",
       [cls, subject],

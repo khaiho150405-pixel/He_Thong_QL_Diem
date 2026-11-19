@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens.dart';
 
-/// Tông màu của ô icon trong [StatCard] (`.kpi .ico`, `.ok`, `.warn`, `.bad`).
 enum StatTone { primary, ok, warn, bad }
 
-/// Thẻ chỉ số (`.kpi` của prototype): icon vuông 34 theo tông, nhãn, số lớn
-/// 30px và dòng phụ. Giữ API cũ (`title`, `value`, `icon`, `subtitle`,
-/// `onTap`); `tone` mặc định là `primary`.
 class StatCard extends StatelessWidget {
   const StatCard({
     super.key,
@@ -94,7 +90,6 @@ class StatCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                // Số lớn tự thu nhỏ khi cột hẹp để không tràn.
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
@@ -131,8 +126,6 @@ class StatCard extends StatelessWidget {
   }
 }
 
-/// Lưới thẻ chỉ số: từ breakpoint trở lên xếp một hàng, từ 340px xếp 2 cột,
-/// dưới 340px xếp 1 cột; các thẻ cùng hàng cao bằng nhau.
 class StatCardGrid extends StatelessWidget {
   const StatCardGrid({
     super.key,

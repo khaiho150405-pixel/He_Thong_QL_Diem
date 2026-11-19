@@ -67,17 +67,13 @@ void main() {
         find.text('Nhập điểm nhanh hơn, đối chiếu rõ ràng hơn.'),
         findsOneWidget,
       );
-      // Thẻ xem trước cũ dạng Positioned đã được thay bằng mockup trong luồng.
       expect(
         find.byWidgetPredicate(
           (w) => w.runtimeType.toString() == '_OcrPreviewCard',
         ),
         findsNothing,
       );
-      expect(
-        find.byType(Positioned),
-        findsWidgets,
-      ); // nút đổi theme, giữ nguyên
+      expect(find.byType(Positioned), findsWidgets);
       final panel = tester.getRect(find.byType(LoginArtPanel));
       for (final key in ['Đã số hóa', 'Kiểm tra lại', 'AI OCR']) {
         final r = tester.getRect(find.text(key));
@@ -109,10 +105,9 @@ void main() {
     tester,
   ) async {
     await pumpLogin(tester, const Size(1280, 800), settle: false);
-    // Khung đầu: dòng kết quả chưa hiện.
     expect(opacityOf(tester, 'Kiểm tra lại'), 0);
 
-    await tester.pumpAndSettle(); // không treo => đã dừng
+    await tester.pumpAndSettle();
     expect(tester.binding.hasScheduledFrame, isFalse);
     expect(opacityOf(tester, 'Kiểm tra lại'), 1);
     expect(opacityOf(tester, 'Khớp'), 1);
@@ -143,7 +138,6 @@ void main() {
     addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 
     await pumpLogin(tester, const Size(1280, 800), settle: false);
-    // Cho schoolProfileProvider (bất đồng bộ) trả về trước khi kiểm khung hình.
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
 

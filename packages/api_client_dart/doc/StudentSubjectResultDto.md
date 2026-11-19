@@ -9,10 +9,7 @@ import 'package:api_client_dart/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **passFail** | **bool** |  | [optional]
-**gradebookId** | **num** |  |
-**subjectId** | **num** |  |
 **subjectName** | **String** |  |
-**termId** | **num** |  |
 **termName** | **String** |  |
 **yearId** | **num** |  |
 **yearName** | **String** |  |
@@ -20,6 +17,5 @@ Name | Type | Description | Notes
 **components** | [**List&lt;StudentApprovedComponentDto&gt;**](StudentApprovedComponentDto.md) |  |
 **finalScore** | **String** |  |
 **classification** | **String** |  |
-**calculatedAt** | [**DateTime**](DateTime.md) |  |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

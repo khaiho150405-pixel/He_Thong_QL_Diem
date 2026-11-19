@@ -66,7 +66,6 @@ void main() {
         expect(theme.extension<AppTokens>(), same(tokens));
         expect(theme.textTheme.bodyLarge?.fontFamily, kAppFontFamily);
         expect(theme.textTheme.titleLarge?.fontFamily, kAppFontFamily);
-        // Chiều cao control chuẩn 48 không đổi.
         expect(
           theme.filledButtonTheme.style?.minimumSize?.resolve({}),
           const Size(0, 48),

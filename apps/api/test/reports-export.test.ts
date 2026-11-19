@@ -71,7 +71,6 @@ const student = (
 });
 
 test("Excel export orders students by the shared class STT, including duplicate names", async () => {
-  // Mã học sinh ≠ thứ tự tên; hai học sinh trùng hoàn toàn họ tên được phân định bằng mã.
   const store = fakeStore([
     student(50, "Trần Văn Đạt", "5.0"),
     student(40, "Lê Thị Bảo", "6.0"),
@@ -88,7 +87,6 @@ test("Excel export orders students by the shared class STT, including duplicate 
     if (index > 1)
       table.push([Number(row.getCell(1).value), Number(row.getCell(2).value)]);
   });
-  // [STT, mã học sinh] theo thứ tự An, Bảo, Châu(20), Châu(21), Đạt.
   assert.deepEqual(table, [
     [1, 31],
     [2, 40],

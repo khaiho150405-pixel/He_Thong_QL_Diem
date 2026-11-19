@@ -41,7 +41,6 @@ export async function validateAssignment(
   if (!classroom || !semester || classroom.ma_nam_hoc !== semester.ma_nam_hoc)
     throw new BadRequestException();
 
-  // Check duplicate assignment: 1 class, 1 subject in 1 term can only have 1 teacher
   const existing = await tx.find("phan_cong_giang_day", {
     ma_lop: data.ma_lop,
     ma_mon: data.ma_mon,

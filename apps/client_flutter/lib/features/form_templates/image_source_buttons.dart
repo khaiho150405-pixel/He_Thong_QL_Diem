@@ -6,9 +6,6 @@ import '../../app/design_tokens.dart';
 import '../recognition/image_picker.dart';
 import 'repository.dart';
 
-/// Nút "Chọn ảnh" (mọi nền tảng) và "Chụp ảnh" (chỉ Android/iOS), dùng lại
-/// `RecognitionImagePicker` của luồng nhận dạng. Ảnh được kiểm sơ bộ ở máy
-/// (loại, dung lượng, độ phân giải); backend vẫn kiểm lại byte thật.
 class ImageSourceButtons extends ConsumerWidget {
   const ImageSourceButtons({
     super.key,

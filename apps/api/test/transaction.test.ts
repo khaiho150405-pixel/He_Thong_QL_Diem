@@ -132,7 +132,6 @@ test("retry waits grow with randomised jitter and total less than one second", (
     [160, 480],
   ]);
   assert.ok(bounds.reduce((sum, [, high]) => sum + high!, 0) < 1000);
-  // Ngẫu nhiên thật sự: nhiều lần lấy mẫu không cho cùng một giá trị.
   assert.ok(
     new Set(Array.from({ length: 20 }, () => retryDelayMs(3))).size > 1,
   );

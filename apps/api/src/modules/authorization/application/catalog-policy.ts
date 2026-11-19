@@ -1,7 +1,6 @@
 import { ForbiddenException } from "@nestjs/common";
 import { authenticated, currentActor, type Actor } from "./policy.js";
 import type { Row, Table, Unit } from "../../../common/store.js";
-// Public query policy: homeroom access never grants grade write access.
 export async function catalogScope(
   tx: Unit,
   actor: Actor,

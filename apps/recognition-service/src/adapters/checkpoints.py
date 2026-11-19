@@ -35,7 +35,6 @@ def metadata(checkpoint: object) -> dict:
 
 
 def candidates(items: list[dict]) -> dict:
-    # File timestamps only identify the newest local copy, not the best model.
     numeric = [r for r in items if r["file"].startswith("crnn_num")
                and r.get("reported_accuracy_percent") is not None]
     ranked = sorted(numeric, key=lambda r: (
@@ -54,7 +53,6 @@ def candidates(items: list[dict]) -> dict:
 
 
 def inspect(folder: Path) -> dict:
-    # Torch is an optional OFFLINE dependency, not added to the API runtime.
     import torch
 
     items = []
@@ -70,7 +68,6 @@ def inspect(folder: Path) -> dict:
             row.update(metadata(checkpoint))
             del checkpoint
         except Exception as error:
-            # No unsafe pickle fallback, no paths/config secrets in the report.
             row.update(status="unreadable", error_type=type(error).__name__)
         items.append(row)
     return {"checkpoints": items, "candidates": candidates(items)}

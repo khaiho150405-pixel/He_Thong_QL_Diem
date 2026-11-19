@@ -41,8 +41,8 @@ FAKE_ENV = {"APP_ENV": "test", "RECOGNITION_MODEL_MODE": "fake"}
 VERSION = "crnn-dot5+vietocr-tang4+name-vgg:abcdef012345"
 
 ROWS = 10
-FILLED = (0, 1, 2, 3, 4, 5, 7)  # zero-based; row 6, 8 and 9 are blank
-STRUCK = 7  # zero-based
+FILLED = (0, 1, 2, 3, 4, 5, 7)
+STRUCK = 7
 BLANK = 6
 
 STT_COLUMN = {"index": 0, "role": "STT"}
@@ -155,7 +155,6 @@ class LayoutAnalyzeTest(V2TestBase):
         self.assertAlmostEqual(columns[-1]["x1"], 1.0, places=3)
         for left, right in zip(columns, columns[1:]):
             self.assertAlmostEqual(left["x1"], right["x0"], places=3)
-        # the name column is 380 px of 1430 at 200 DPI = 48.2 mm
         self.assertAlmostEqual(columns[1]["widthMm"], 48.2, delta=1.5)
 
     def test_preview_is_a_png_no_wider_than_1400_px(self) -> None:
@@ -164,7 +163,6 @@ class LayoutAnalyzeTest(V2TestBase):
         preview = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
         self.assertLessEqual(preview.shape[1], 1400)
         self.assertGreater(preview.shape[1], 1000)
-        # the grid is drawn in red over the (white/black) sheet
         red = (preview[..., 2] > 200) & (preview[..., 1] < 60) & (preview[..., 0] < 60)
         self.assertGreater(int(red.sum()), 2000)
 
@@ -266,7 +264,6 @@ class RecognizeV2Test(V2TestBase):
                     self.assertEqual(grade["suggestedSource"], "SO")
 
     def test_a_column_with_a_written_partner_reads_two_channels_and_can_be_green(self) -> None:
-        # Column 3 plays the role of the written-grade column of column 2; GK stays single-channel.
         layout = layout_of(
             self.signature,
             NAME_COLUMN,
@@ -337,7 +334,7 @@ class WeightsModelV2Test(V2TestBase):
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
         filled = [r for r in body["rows"] if not r["struck"] and r["grades"][0]["numeric"]["value"]]
-        self.assertEqual(len(filled), 6)  # rows 1-6; 7 is blank, 8 struck, 9-10 blank
+        self.assertEqual(len(filled), 6)
         self.assertEqual(body["modelVersion"], VERSION)
         first = body["rows"][0]
         self.assertEqual(first["name"]["raw"], "Họ tên giả")
@@ -430,7 +427,6 @@ class WeightsModelV2Test(V2TestBase):
 
         crnn.read_cells, vietocr.read_cells = numeric, written
         self.run_model(weights_model(crnn, vietocr, name))
-        # 6 inked rows x 2 numeric columns (TX1, GK) and 6 x 1 written column
         self.assertEqual(counts, {"numeric": 12, "written": 6})
 
 
@@ -458,7 +454,6 @@ class TemplateMismatchTest(V2TestBase):
 
     def test_the_threshold_comes_from_the_environment(self) -> None:
         layout = layout_of(self.signature, STT_COLUMN, NAME_COLUMN, TX1, GK, CK)
-        # a different photo of the same form never scores exactly 1.0
         other_angle = thpt_photo(scale=0.7)
         with patch.dict(os.environ, {**FAKE_ENV, "RECOGNITION_TEMPLATE_MIN_SCORE": "1"}, clear=True):
             strict = post_recognize(self.client, other_angle, layout)
@@ -482,7 +477,6 @@ class TemplateMismatchTest(V2TestBase):
         self.assertTrue(detail["details"]["unmappedColumns"])
 
     def test_a_lost_vertical_rule_only_matters_for_columns_that_are_requested(self) -> None:
-        # The rule between TX3 and TX4 is missing, so template columns 4 and 5 cannot be cut apart.
         page, _ = make_thpt_page(
             rows=ROWS, filled_rows=FILLED, struck_rows=(STRUCK,), missing_lines=(5,)
         )

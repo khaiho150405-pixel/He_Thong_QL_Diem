@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import '../design_tokens.dart';
 import 'app_pager.dart';
 
-/// Các cỡ trang cho phép chọn ở mọi danh sách/bảng.
 const appPageSizes = <int>[10, 30, 50];
 
-/// Cỡ trang mặc định.
 const appDefaultPageSize = 10;
 
-/// Cắt [rows] theo trang hiện tại; `page` tính từ 1 và được ép vào khoảng hợp lệ.
 List<T> pageSlice<T>(List<T> rows, int page, int pageSize) {
   final pages = appPageCount(rows.length, pageSize);
   final current = page.clamp(1, pages);
@@ -17,13 +14,9 @@ List<T> pageSlice<T>(List<T> rows, int page, int pageSize) {
   return rows.skip(start).take(pageSize).toList();
 }
 
-/// Số trang (tối thiểu 1).
 int appPageCount(int total, int pageSize) =>
     total <= 0 ? 1 : (total / pageSize).ceil();
 
-/// Chân danh sách dùng chung: chọn số dòng mỗi trang (10 / 30 / 50), tổng số
-/// mục và thanh phân trang. Mọi màn hình danh sách/bảng dùng widget này để
-/// giao diện phân trang giống nhau.
 class AppListFooter extends StatelessWidget {
   const AppListFooter({
     super.key,
@@ -36,16 +29,13 @@ class AppListFooter extends StatelessWidget {
     this.itemLabel = 'mục',
   });
 
-  /// Tổng số mục sau khi lọc.
   final int total;
 
-  /// Trang hiện tại, tính từ 1.
   final int page;
   final int pageSize;
   final ValueChanged<int> onPageChanged;
   final ValueChanged<int> onPageSizeChanged;
 
-  /// Đang tải tiếp dữ liệu dưới nền: tổng số mục có thể còn tăng.
   final bool loadingMore;
   final String itemLabel;
 

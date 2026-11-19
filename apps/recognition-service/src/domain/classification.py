@@ -71,16 +71,11 @@ class Suggestion(StrEnum):
 class Classification:
     comparison: Comparison
     level: ReviewLevel
-    # Kênh có giá trị được gợi ý; None khi Đỏ (không gợi ý giá trị). Khi hai kênh đồng thuận, hai giá trị bằng nhau
-    # nên chọn NUMERIC.
     suggestion: Suggestion | None = None
 
 
-# Ngưỡng riêng từng kênh (τ của nghiên cứu: ket_hop/ket_qua/tang4/cau_hinh_hop_nhat_dev_co_mai.json): độ tin cậy
-# CRNN+CTC và VietOCR không cùng thang đo nên không dùng chung một ngưỡng.
 DEFAULT_NUMERIC_THRESHOLD = Decimal("0.95")
 DEFAULT_WRITTEN_THRESHOLD = Decimal("0.90")
-# Mức sàn đồng thuận mỗi kênh; 0 = đúng luật nghiên cứu (đồng thuận luôn Xanh). Giá trị đã khóa ở BE-22.
 DEFAULT_NUMERIC_FLOOR = Decimal("0.00")
 DEFAULT_WRITTEN_FLOOR = Decimal("0.00")
 
@@ -157,5 +152,4 @@ def classify_channels(
         return Classification(comparison, ReviewLevel.YELLOW, Suggestion.NUMERIC)
     if strong_written and not strong_numeric:
         return Classification(comparison, ReviewLevel.YELLOW, Suggestion.WRITTEN)
-    # Cả hai mạnh mà mâu thuẫn, hoặc cả hai (còn đọc được) cùng yếu: Đỏ, không gợi ý giá trị.
     return Classification(comparison, ReviewLevel.RED)

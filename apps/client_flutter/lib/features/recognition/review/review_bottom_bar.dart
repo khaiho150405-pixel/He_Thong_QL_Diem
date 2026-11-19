@@ -4,8 +4,6 @@ import '../../../app/design_tokens.dart';
 import '../../../app/widgets/app_controls.dart';
 import '../../../app/widgets/app_progress.dart';
 
-/// Thanh dưới dính: tiến độ "Đã xử lý n/m" (khi có số đếm), ô xác nhận
-/// "Tôi đã kiểm tra kỹ ảnh ô cắt…" + nút "Duyệt phiếu (N dòng)".
 class ReviewBottomBar extends StatelessWidget {
   const ReviewBottomBar({
     super.key,
@@ -32,8 +30,6 @@ class ReviewBottomBar extends StatelessWidget {
   final bool busy;
   final bool allSttWarningsConfirmed;
 
-  /// Số dòng cần xem đã xử lý / tổng số dòng cần xem (dữ liệu đếm của màn);
-  /// null hoặc tổng bằng 0 thì không hiện tiến độ.
   final int? processedCount;
   final int? processedTotal;
 
@@ -125,8 +121,6 @@ class ReviewBottomBar extends StatelessWidget {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Ô xác nhận nằm trên cùng; tiến độ và nút Duyệt nằm cùng một
-            // hàng khi đủ rộng, xếp dọc khi hẹp.
             final wide = constraints.maxWidth >= 720;
             return Column(
               mainAxisSize: MainAxisSize.min,

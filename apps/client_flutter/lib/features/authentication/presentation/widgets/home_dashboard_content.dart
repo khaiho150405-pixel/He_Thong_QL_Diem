@@ -63,9 +63,6 @@ final teacherOverviewProvider = FutureProvider.autoDispose<TeacherOverviewData>(
   },
 );
 
-/// "Học kỳ I, 2024-2025" của năm hiện hành; học kỳ lấy theo ngày hôm nay
-/// (API chưa có cờ học kỳ hiện hành). Không có học kỳ thì chỉ ghi năm học,
-/// không có năm học thì null.
 final currentTermLabelProvider = FutureProvider<String?>((ref) async {
   final year = await ref.watch(currentYearProvider.future);
   if (year == null) return null;
@@ -111,15 +108,15 @@ class HomeDashboardContent extends ConsumerWidget {
     return StatCardGrid(
       children: [
         StatCard(
-          title: 'ĐTB học kỳ',
+          title: 'Điểm TB học kỳ',
           value: average,
-          subtitle: summary.termName ?? 'Chưa có học kỳ đã chốt',
+          subtitle: summary.termName ?? 'Chưa có học kỳ',
           icon: Icons.star_rounded,
         ),
         StatCard(
-          title: 'Môn đã chốt',
+          title: 'Môn đã có điểm',
           value: '${summary.publishedSubjects} / ${summary.totalSubjects}',
-          subtitle: 'Chỉ tính bảng điểm đã chốt',
+          subtitle: 'Số môn đã có điểm tổng kết',
           icon: Icons.menu_book_outlined,
         ),
         StatCard(
@@ -156,13 +153,14 @@ class HomeDashboardContent extends ConsumerWidget {
           'Tra cứu điểm thành phần, điểm tổng kết và xếp loại học lực của chính mình.';
     }
 
+    final narrow = MediaQuery.sizeOf(context).width < 480;
+
     return ListView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
       ),
       children: [
-        // Tiêu đề trang (pagehead): vai trò, lời chào, mô tả.
         DecoratedBox(
           decoration: BoxDecoration(
             color: t.surface,
@@ -197,7 +195,7 @@ class HomeDashboardContent extends ConsumerWidget {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Xin chào, ${user.username}',
+                              'Xin chào, ${user.shownName}',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
@@ -206,10 +204,14 @@ class HomeDashboardContent extends ConsumerWidget {
                               ),
                             ),
                           ),
+                          if (narrow) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            RoleBadge(role: role),
+                          ],
                         ],
                       ),
                     ),
-                    RoleBadge(role: role),
+                    if (!narrow) RoleBadge(role: role),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -224,7 +226,6 @@ class HomeDashboardContent extends ConsumerWidget {
 
         const SizedBox(height: AppSpacing.md),
 
-        // Các ô chỉ số theo vai trò.
         if (role == 'QUAN_TRI_VIEN')
           Builder(
             builder: (context) {
@@ -250,7 +251,6 @@ class HomeDashboardContent extends ConsumerWidget {
 
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  // Dưới 720: nhãn rút gọn như bản cũ.
                   final wide = constraints.maxWidth >= 720;
                   return StatCardGrid(
                     children: [
@@ -263,7 +263,7 @@ class HomeDashboardContent extends ConsumerWidget {
                       StatCard(
                         title: wide ? 'Tỷ lệ hoàn thành' : 'Tỷ lệ',
                         value: rateVal,
-                        subtitle: wide ? 'Đã chốt sổ điểm' : 'Đã chốt sổ',
+                        subtitle: 'Đã khóa',
                         icon: Icons.trending_up_rounded,
                         tone: StatTone.ok,
                       ),
@@ -305,7 +305,7 @@ class HomeDashboardContent extends ConsumerWidget {
                   ? '${overview.completionRate}%'
                   : (isLoading ? '...' : '0%');
               final rateSub = overview != null
-                  ? '${overview.lockedGradebooks} / ${overview.totalGradebooks} bảng đã chốt'
+                  ? '${overview.lockedGradebooks} / ${overview.totalGradebooks} bảng đã khóa'
                   : (isLoading ? 'Đang cập nhật' : 'Chưa có bảng điểm');
               final ocrText = overview != null
                   ? '${overview.pendingOcrCount.toString().padLeft(2, '0')} phiếu'
@@ -363,14 +363,13 @@ class HomeDashboardContent extends ConsumerWidget {
                 return const EmptyState(
                   icon: Icons.fact_check_outlined,
                   title: 'Chưa có kết quả',
-                  message: 'Năm học này chưa có kết quả được công bố',
+                  message: 'Năm học này chưa có kết quả',
                 );
               }
               return _buildStudentStatistics(context, summary);
             },
           ),
 
-        // Biểu đồ thống kê của quản trị (web và mobile).
         if (role == 'QUAN_TRI_VIEN') ...[
           const SizedBox(height: AppSpacing.xl),
           const AdminChartsSection(),

@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../app/design_tokens.dart';
 
-/// Chiều cao cố định của mọi ô điểm, ở mọi trạng thái.
 const gradeCellHeight = 40.0;
 
-/// Bề rộng hai vùng bên (trái: chỉ báo, phải: nút ⋮). Hai vùng bằng nhau nên giá
-/// trị ở giữa luôn nằm đúng tâm ô dù vùng bên có nội dung hay trống.
 const gradeCellSide = 24.0;
 
-/// Kiểu số của ô điểm: chữ số cùng độ rộng để số thập phân thẳng cột.
 TextStyle gradeNumberStyle(
   BuildContext context, {
   Color? color,
@@ -23,8 +19,6 @@ TextStyle gradeNumberStyle(
   fontFeatures: const [FontFeature.tabularFigures()],
 );
 
-/// Trang trí ô nhập số: không viền/nền riêng (khung [GradeCellFrame] vẽ), chữ
-/// canh giữa theo chiều dọc bằng padding để cả ô 40 px đều bấm để nhập được.
 InputDecoration gradeInputDecoration(
   BuildContext context, {
   String hint = '—',
@@ -47,7 +41,6 @@ InputDecoration gradeInputDecoration(
       size: hintSize,
       weight: FontWeight.w400,
     ),
-    // Lỗi hiển thị bằng màu ô, không chừa dòng chữ lỗi dưới ô.
     errorStyle: const TextStyle(fontSize: 0, height: 0),
     contentPadding: const EdgeInsets.symmetric(vertical: 11.5),
   );
@@ -55,9 +48,6 @@ InputDecoration gradeInputDecoration(
 
 enum GradeCellTone { normal, readOnly, changed, invalid }
 
-/// Khung chung của mọi biến thể ô điểm: cùng bề rộng, cùng cao 40 px, bố cục 3
-/// vùng cố định [trái 24 | giữa | phải 24]. Trạng thái chỉ đổi màu nền/viền, biểu
-/// tượng vùng trái và tooltip, không đổi kích thước.
 class GradeCellFrame extends StatefulWidget {
   const GradeCellFrame({
     super.key,
@@ -73,12 +63,10 @@ class GradeCellFrame extends StatefulWidget {
   final double width;
   final GradeCellTone tone;
 
-  /// Vùng giữa (giá trị), căn giữa.
   final Widget child;
   final Widget? leading;
   final Widget? trailing;
 
-  /// Mô tả trạng thái, hiện khi rê chuột (web) hoặc nhấn giữ (mobile).
   final String? tooltip;
   final TooltipTriggerMode tooltipTrigger;
 
@@ -141,7 +129,6 @@ class _GradeCellFrameState extends State<GradeCellFrame> {
   }
 }
 
-/// Chấm "nhập từ ảnh" (vùng trái của ô), có tooltip.
 class GradeAiDot extends StatelessWidget {
   const GradeAiDot({super.key});
 
@@ -162,7 +149,6 @@ class GradeAiDot extends StatelessWidget {
   }
 }
 
-/// Chọn Đạt / Không đạt nằm gọn trong khung ô (vùng giữa).
 class GradePassFailMenu extends StatelessWidget {
   const GradePassFailMenu({
     super.key,
@@ -173,15 +159,12 @@ class GradePassFailMenu extends StatelessWidget {
     this.display,
   });
 
-  /// 'EMPTY', '10.0' (Đạt) hoặc '0.0' (Không đạt).
   final String value;
   final bool enabled;
   final ValueChanged<String> onChanged;
 
-  /// Có mục "Chưa đánh giá" hay không (phiếu điều chỉnh thì không).
   final bool includeEmpty;
 
-  /// Ghi đè chữ hiển thị (ví dụ "Đạt → Không đạt").
   final String? display;
 
   static String label(String value) => switch (value) {

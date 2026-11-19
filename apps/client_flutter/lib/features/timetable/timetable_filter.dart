@@ -5,7 +5,6 @@ import '../../app/widgets/app_controls.dart';
 
 typedef TimetableFilterOption = ({num? value, String label});
 
-/// A compact filter with full-size names and search in its selection sheet.
 class TimetableFilter extends StatelessWidget {
   const TimetableFilter({
     super.key,

@@ -15,7 +15,6 @@ import { RecognitionJobProcessor } from "../../src/modules/recognition/applicati
 import { PrismaRecognitionWorkerStore } from "../../src/modules/recognition/infrastructure/prisma-worker-store.js";
 import { createRosterFixture } from "./roster-fixture.js";
 
-// ADR-0015, bước BE-11: upload (snapshot) → worker (ghép STT + họ tên) → CHO_DOI_CHIEU; dữ liệu hoàn toàn giả.
 const pixel =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
@@ -133,7 +132,6 @@ async function setup(
 }
 
 test("upload → worker maps each row to the right student by STT and drops struck rows", async () => {
-  // Thứ tự tên: An(1), Bảo(2), Cường(3), Đạt(4); mã học sinh khác thứ tự này. Dòng 2 trên ảnh bị gạch.
   const t = await setup((names) => [
     paperRow(1, 1, names[0]!, "9.0"),
     paperRow(2, 2, names[1]!, "5.0", {
@@ -177,9 +175,7 @@ test("upload → worker maps each row to the right student by STT and drops stru
       t.objects.has(`recognition/crops/${t.receipt.ticketId}/2-numeric.png`),
       false,
     );
-    // Máy chỉ đề xuất: chưa có điểm chính thức nào.
     assert.equal(official, 0);
-    // Chạy lại job là idempotent: không gọi lại mô hình, không thêm dòng.
     const calls = t.recognized();
     await t.worker.process(t.receipt.ticketId);
     assert.equal(t.recognized(), calls);
@@ -196,7 +192,6 @@ test("final level combines the grade level with the match level and keeps both t
         comparison: "LECH",
         reviewLevel: "VANG",
       }),
-      // Tên khớp mạnh nhưng STT in trên giấy mâu thuẫn học sinh được ghép → hạ xuống Vàng (cờ xác nhận STT bật).
       paperRow(2, 9, names[1]!, "5.0"),
       paperRow(3, 3, names[2]!, "7.5"),
       paperRow(4, 4, names[3]!, "6.0"),
@@ -217,7 +212,6 @@ test("final level combines the grade level with the match level and keeps both t
     );
     assert.equal(Number(evidence[1]!.match_conf) >= 0, true);
     assert.equal(evidence[1]!.stt_giay, 9);
-    // Mức ghép lưu riêng cột muc_ghep: dòng 1 điểm Vàng nhưng ghép Xanh, dòng 2 ghép Vàng (STT lệch).
     assert.deepEqual(
       evidence.map((r) => r.match_level),
       ["XANH", "VANG", "XANH", "XANH"],
@@ -228,7 +222,6 @@ test("final level combines the grade level with the match level and keeps both t
 });
 
 test("rows from the wrong class mark the ticket ROW_MATCH_FAILED and write nothing", async () => {
-  // FAKE_START_STT sai lớp: tên/STT thuộc học sinh khác hoàn toàn.
   const t = await setup(() =>
     [1, 2, 3, 4].map((n) =>
       paperRow(n, 38 + n, `Trương Ghi ${n}${n}${n}`, `${n}.0`),
@@ -241,7 +234,6 @@ test("rows from the wrong class mark the ticket ROW_MATCH_FAILED and write nothi
     assert.equal(ticket.ma_loi, "ROW_MATCH_FAILED");
     assert.equal(evidence.length, 0);
     assert.equal(official, 0);
-    // Phiếu LOI không được xử lý lại.
     const calls = t.recognized();
     await t.worker.process(t.receipt.ticketId);
     assert.equal(t.recognized(), calls);
@@ -271,10 +263,8 @@ test("more graded rows than the class size fail instead of guessing", async () =
 });
 
 test("without any STT reading the rows are still matched to the right students by name", async () => {
-  // STT is not recognised (project decision): the service sends stt.value = null, confidence 0.
   const t = await setup((names) =>
     [3, 1, 0, 2].map((nameIndex, i) =>
-      // paper order differs from the name order only by the real class order: An, Bảo, Cường, Đạt
       paperRow(i + 1, null, names[[0, 1, 2, 3][i]!]!, `${6 + i}.0`),
     ),
   );

@@ -6,8 +6,6 @@ import '../../app/widgets/app_controls.dart';
 import 'batch_repository.dart';
 import 'cancel_ticket_dialog.dart' show kPresetCancelReasons;
 
-/// Hộp thoại hủy cả lô: hủy mềm mọi phiếu chưa duyệt của lô (ADR-0016 mục 3).
-/// Trả `true` khi đã hủy.
 Future<bool?> showCancelBatchDialog({
   required BuildContext context,
   required num gradebookId,

@@ -68,6 +68,8 @@ export class AccountDto {
   @ApiProperty({ type: Boolean }) active!: boolean;
 }
 export class SessionDto extends AccountDto {
+  @ApiPropertyOptional({ type: String, nullable: true })
+  displayName?: string | null;
   @ApiProperty({ type: String, nullable: true }) token!: string | null;
   @ApiProperty({ type: String }) csrf!: string;
 }
@@ -136,7 +138,6 @@ export class IdentityController {
     if (remember) res.setHeader("x-remember-token", remember);
     return session;
   }
-  /** App di động: đổi mã ghi nhớ (header x-remember-token) lấy phiên mới; mã mới cũng trả qua header. */
   @Post("resume")
   @ApiHeader({ name: "x-client-platform", required: true, enum: ["native"] })
   @ApiHeader({ name: "x-remember-token", required: true })
@@ -153,10 +154,11 @@ export class IdentityController {
   }
   @Get("me")
   @ApiOkResponse({ type: SessionDto })
-  me(@Req() req: SessionRequest) {
+  async me(@Req() req: SessionRequest) {
     return {
       id: req.actor.id,
       username: req.actor.username,
+      displayName: await this.service.displayName(req.actor),
       role: req.actor.role,
       active: true,
       csrf: req.csrf,

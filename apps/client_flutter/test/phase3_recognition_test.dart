@@ -222,7 +222,6 @@ void main() {
     expect(find.textContaining('Số dòng khai báo'), findsNothing);
     await tester.runAsync(() async {
       await tester.tap(find.byKey(const ValueKey('recognition-pick')));
-      // Allow the engine image decoder to complete outside the fake clock.
       await Future<void>.delayed(const Duration(milliseconds: 100));
     });
     await tester.pumpAndSettle();
@@ -235,7 +234,6 @@ void main() {
     expect(fields.containsKey('declaredRows'), isFalse);
     expect(server.uploadedForm?.files.single.key, 'image');
 
-    // Polling receives CHO_DOI_CHIEU and automatically navigates to ReviewScreen.
     expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
     final greenGroup = find.byKey(const ValueKey('review-green-group'));
     if (greenGroup.evaluate().isNotEmpty) {
@@ -274,7 +272,6 @@ void main() {
       150,
       scrollable: find.byType(Scrollable).first,
     );
-    // Dismiss any active SnackBar from upload so it doesn't overlap the approve button.
     ScaffoldMessenger.of(
       tester.element(find.byType(Scaffold).first),
     ).clearSnackBars();

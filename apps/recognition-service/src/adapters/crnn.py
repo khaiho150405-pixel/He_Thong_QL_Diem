@@ -162,7 +162,6 @@ class CrnnReader:
         try:
             checkpoint = torch.load(file, map_location=device, weights_only=True)
         except Exception as error:
-            # Không hạ sang chế độ pickle tùy ý: tệp chứa đối tượng pickle bị từ chối.
             raise ModelUnavailableError("CRNN checkpoint cannot be loaded safely") from error
         state = checkpoint.get("model_state_dict") if isinstance(checkpoint, dict) else None
         if state is None and isinstance(checkpoint, dict):

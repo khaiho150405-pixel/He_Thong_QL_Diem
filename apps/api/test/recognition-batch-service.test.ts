@@ -20,8 +20,6 @@ import {
   parseComponentChoices,
 } from "../src/modules/recognition/application/batch-service.js";
 
-// Dịch vụ lô (ADR-0016 mục 3, 4) với kho lưu trữ và store giả: kiểm ảnh từng trang, tối đa 4 trang, dọn object khi lỗi,
-// phát lại idempotent. Không có DB; dữ liệu hoàn toàn giả.
 const actor: Actor = {
   id: 7,
   username: "giaovien_gia",
@@ -72,7 +70,6 @@ function setup() {
   };
   const state = {
     createError: null as Error | null,
-    /** Khóa object mà store trả về; null = đúng ảnh vừa tải (lần tạo đầu). */
     replayKeys: null as string[] | null,
     detail: null as RecognitionBatchView | null,
     cancelKeys: [] as string[],
@@ -155,7 +152,6 @@ test("a page that is not an image, no page, or the same image twice is rejected 
     ),
     "BAD_REQUEST",
   );
-  // Khai báo loại tệp sai so với nội dung thật.
   assert.equal(
     await codeOf(
       service.upload(actor, 1, "key-1", {
@@ -400,7 +396,6 @@ test("a batch whose tickets are all cancelled has no page URLs because the image
     (await service.detail(actor, 9, "5")).pages.map((item) => item.imageUrl),
     ["", ""],
   );
-  // Còn một phiếu đã duyệt: ảnh trang là bằng chứng nên vẫn còn.
   state.detail = view(["DA_HUY", "DA_DUYET"]);
   assert.equal(
     (await service.detail(actor, 9, "5")).pages[0]!.imageUrl.startsWith(

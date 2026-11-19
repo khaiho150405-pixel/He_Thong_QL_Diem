@@ -175,9 +175,6 @@ const resources = <ResourceSpec>[
 String rowLabel(Map<String, dynamic> row) {
   final label = row['label']?.toString();
   final componentName = row['ten_thanh_phan']?.toString();
-  // Thành phần điểm: máy chủ ghép nhãn theo nhóm hệ số ("Thường xuyên · Toán học")
-  // nên nhiều cột cùng nhóm trùng tên. Thay đoạn đầu bằng tên thành phần
-  // ("ĐĐGtx 1 · Toán học") để phân biệt được từng cột.
   if (label != null &&
       componentName != null &&
       componentName.isNotEmpty &&

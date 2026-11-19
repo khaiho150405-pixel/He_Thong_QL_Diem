@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../design_tokens.dart';
 
-/// Thanh phân trang (`.pager`): chữ "Trang p / n" và các nút số trang.
-/// `page` tính từ 1. Không giữ trạng thái: gọi [onChanged] để màn cha đổi trang.
-/// Nút số trang `p` có `ValueKey('app-pager-p')`.
 class AppPager extends StatelessWidget {
   const AppPager({
     super.key,
@@ -19,13 +16,10 @@ class AppPager extends StatelessWidget {
   final int pageCount;
   final ValueChanged<int> onChanged;
 
-  /// Số nút số tối đa trước khi rút gọn bằng dấu "…" (tối thiểu 5).
   final int maxButtons;
 
-  /// Lề quanh thanh phân trang.
   final EdgeInsetsGeometry padding;
 
-  /// Danh sách mục hiển thị; null là dấu "…".
   static List<int?> pagesToShow(int page, int count, int maxButtons) {
     final max = maxButtons < 5 ? 5 : maxButtons;
     if (count <= max) return [for (var i = 1; i <= count; i++) i];

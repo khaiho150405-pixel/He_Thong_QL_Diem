@@ -26,14 +26,12 @@ import { crop } from "./worker.js";
 export interface BatchWorkerTicket {
   ticketId: string;
   status: "DANG_XU_LY" | "CHO_DOI_CHIEU" | "DA_DUYET" | "LOI" | "DA_HUY";
-  /** `chi_so_cot` của cột điểm trong mẫu mà phiếu đọc. */
   templateColumnIndex: number;
 }
 
 export interface BatchWorkerJob {
   status: BatchStatus;
   signature: LayoutSignature;
-  /** Cột của mẫu đã dùng khi tạo lô (mẫu đã dùng thì không sửa được: ADR-0016 mục 1). */
   columns: TemplateColumn[];
   pages: Array<{ page: number; objectKey: string }>;
   tickets: BatchWorkerTicket[];
@@ -41,7 +39,6 @@ export interface BatchWorkerJob {
 
 export interface RecognitionBatchWorkerStore {
   load(batchId: string): Promise<BatchWorkerJob | null>;
-  /** Danh sách lớp đã chốt khi tạo lô (giống nhau cho mọi phiếu của lô). */
   roster(ticketId: string): Promise<RosterEntry[]>;
   complete(
     batchId: string,
@@ -51,10 +48,6 @@ export interface RecognitionBatchWorkerStore {
   fail(batchId: string, code: string, page: number | null): Promise<void>;
 }
 
-/**
- * Mã lỗi xác định (HTTP 422) của `/v2/recognize`: ảnh hoặc mẫu không dùng được, thử lại vô ích. Cộng mã v1 với
- * TEMPLATE_MISMATCH (ảnh không khớp lưới mẫu) và INVALID_LAYOUT (layout dựng từ mẫu bị từ chối).
- */
 function isBatchPipelineError(value: unknown): boolean {
   return (
     isPipelineErrorCode(value) ||
@@ -63,7 +56,6 @@ function isBatchPipelineError(value: unknown): boolean {
   );
 }
 
-/** Vị trí dòng trên trang phải < 1000 để `order` = (trang-1)*1000 + vị trí duy nhất trong phiếu. */
 const MAX_ROW_PER_PAGE = 999;
 const UPLOAD_CONCURRENCY = 8;
 const BLANK_CHANNEL: ChannelResult = {
@@ -95,10 +87,6 @@ function detected(page: number, row: V2Row): BatchDetectedRow {
   };
 }
 
-/**
- * Phản hồi phải đúng những gì đã yêu cầu: mỗi dòng có đúng các `key` của layout (không thiếu, không thừa, không cột khác),
- * vị trí dòng nằm trong giới hạn của `order`. Sai thì MALFORMED_RESPONSE (retry; hết lượt thì phiếu LOI).
- */
 export function assertResponseMatchesLayout(
   result: V2Result,
   expectedKeys: ReadonlySet<string>,
@@ -123,17 +111,11 @@ async function inChunks<T>(
     await Promise.all(items.slice(index, index + size).map(work));
 }
 
-/**
- * Worker cho sự kiện lô (ADR-0016 mục 3): gọi `/v2/recognize` cho từng trang với CÙNG một layout dựng từ cột mẫu, gom dòng mọi
- * trang, ghép học sinh MỘT lần cho cả lô, tách kết quả theo `key` ghi từng phiếu trong một giao dịch. Máy chỉ đề xuất: không
- * bao giờ ghi điểm chính thức (bất biến 1). Log không chứa họ tên.
- */
 export class RecognitionBatchProcessor {
   constructor(
     private readonly store: RecognitionBatchWorkerStore,
     private readonly storage: ObjectStorage,
     private readonly model: RecognitionV2Client,
-    /** Lớp xác nhận STT (RECOGNITION_STT_CHECK): chỉ hạ mức dòng, không gán học sinh. */
     private readonly options: { sttCheck?: boolean } = {},
   ) {}
 
@@ -151,7 +133,6 @@ export class RecognitionBatchProcessor {
       return;
     }
     if (job.status !== "DANG_XU_LY") return;
-    // Phiếu đã hủy riêng lẻ không đọc nữa; hủy hết thì không còn gì để làm.
     const active = job.tickets.filter(
       (ticket) => ticket.status === "DANG_XU_LY",
     );
@@ -173,7 +154,6 @@ export class RecognitionBatchProcessor {
     const expectedKeys = new Set(keyOf.values());
     const roster = await this.store.roster(active[0]!.ticketId);
     if (!roster.length) {
-      // Không có danh sách lớp đã chốt thì không thể xác định học sinh: không đoán.
       await this.store.fail(batchId, "ROW_MATCH_FAILED", null);
       return;
     }
@@ -192,7 +172,6 @@ export class RecognitionBatchProcessor {
       try {
         result = await this.model.recognize(image, layout);
       } catch (error) {
-        // Một trang bị từ chối (mờ, lệch lưới mẫu...): lỗi xác định → CẢ LÔ LOI cùng mã kèm số trang, không ghi dòng nào.
         if (error instanceof Error && isBatchPipelineError(error.message)) {
           await this.store.fail(batchId, error.message, page.page);
           return;
@@ -244,7 +223,6 @@ export class RecognitionBatchProcessor {
       const rows = matched.matches.map((match) => {
         const row = rowAt.get(`${match.page}:${match.rowIndex}`)!;
         const grade = row.grades.find((item) => item.key === key)!;
-        // `order` = (trang-1)*1000 + vị trí dòng: duy nhất trong phiếu qua mọi trang, giữ thứ tự trang rồi dòng.
         const order = (match.page - 1) * 1000 + match.rowIndex;
         const prefix = `recognition/crops/${ticket.ticketId}/${order}`;
         const numericKey = `${prefix}-numeric.png`;
@@ -277,7 +255,6 @@ export class RecognitionBatchProcessor {
           nameRead: match.nameRead,
           matchConfidence: match.matchConfidence,
           matchNote: match.note,
-          // Hai kênh giữ riêng giá trị và độ tin cậy (bất biến 2); cột một kênh có kênh chữ trống.
           numeric: grade.numeric,
           written: grade.written ?? BLANK_CHANNEL,
           numericCropKey: numericKey,
@@ -285,7 +262,6 @@ export class RecognitionBatchProcessor {
           nameCropKey: nameKey,
           comparison: grade.comparison,
           suggestedSource: grade.suggestedSource,
-          // Mức ghép học sinh tách riêng khỏi mức điểm; mức cuối là mức thấp hơn của hai mức (bất biến 4, 5).
           matchLevel: match.matchLevel,
           reviewLevel: combineLevel(grade.reviewLevel, match.matchLevel),
         };
@@ -317,8 +293,6 @@ export class RecognitionBatchProcessor {
       );
       throw error;
     }
-    // Lô/phiếu có thể bị hủy trong lúc nhận dạng: SQL bỏ qua kết quả nên ảnh ô vừa tải lên thành mồ côi → dọn lại.
-    // Đặt ngoài try: lỗi ở bước này không được xóa ảnh ô của kết quả đã ghi.
     const after = await this.store.load(batchId);
     const dropped = new Set(
       after?.status === "DA_HUY"

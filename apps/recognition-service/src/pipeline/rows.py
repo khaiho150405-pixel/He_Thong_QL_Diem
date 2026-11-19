@@ -25,31 +25,19 @@ from .errors import PipelineError
 from .page import doc_anh, nan_trang
 from .quality import QualityReport, assess_quality
 
-# Ô có tỉ lệ mực dưới mức này (đơn vị %) coi là trống.
 NGUONG_TRONG = 1.0
-# Ô họ tên in sẵn: ngưỡng mực riêng, thấp hơn vì chữ in mảnh.
 NGUONG_TEN_TRONG = 0.8
 MAX_STT = 500
 
 
-# Khoảng trắng ngang trong ô họ tên rộng hơn mức này (tính theo chiều cao ô) bị coi là khe giữa hai cột con
-# (họ đệm | tên) và được thu lại; đo trên mẫu in thật: khe giữa hai cột ≈ 3 lần chiều cao ô, khoảng cách giữa hai từ
-# chỉ ≈ 0,2–0,5 lần.
 NGUONG_KHE_TEN = 1.0
 KHE_TEN_SAU_KHI_GOM = 0.4
 LE_TEN_SAU_KHI_GOM = 0.25
-# Cột mực phủ quá tỉ lệ này chiều cao ô là vạch kẻ bảng chứ không phải chữ.
 NGUONG_VACH_DUNG = 0.8
-# Hàng có tỉ lệ mực vượt mức này chiều rộng ô là đường kẻ ngang (lọt vào ô khi chụp nghiêng/lệch), không phải chữ.
 NGUONG_VACH_NGANG = 0.5
-# Cột chỉ được tính là có mực khi có ít nhất ngần này điểm mực (bỏ nhiễu 1 px).
 MUC_TOI_THIEU_CAT = 2
-# Cửa sổ lọc trung vị để ước lượng nền (tỉ lệ theo chiều cao ô, tối thiểu 15, luôn lẻ): lớn hơn nét chữ nên nền còn
-# lại sau khi lọc là bóng/độ xám của giấy.
 CUA_SO_NEN_TEN = 0.75
-# Dải sát bốn mép ô bị bỏ khỏi mặt nạ: tàn dư đường kẻ dọc/ngang của bảng (kể cả đường kẻ nghiêng), không phải chữ.
 LE_MEP_TEN = 3
-# Sau khi bù nền, điểm tối nhất còn sáng hơn mức này nghĩa là ô không có mực (chỉ nhiễu).
 DO_SANG_O_TRONG = 205
 
 
@@ -91,7 +79,6 @@ def compact_name_cell(cell):
     has_ink = (column_ink >= MUC_TOI_THIEU_CAT) & (column_ink < NGUONG_VACH_DUNG * height)
     if not has_ink.any():
         return cell
-    # Các đoạn mực liên tiếp theo chiều ngang.
     edges = np.diff(np.concatenate(([0], has_ink.astype(np.int8), [0])))
     starts, ends = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)
     limit = NGUONG_KHE_TEN * height
@@ -169,7 +156,7 @@ def suy_stt_bat_dau(
     if not lech:
         return None
     gia_tri, so_lan = Counter(lech).most_common(1)[0]
-    can = 2 if max(1, so_dong_du_lieu) <= 5 else 3  # trang sau chỉ có vài dòng
+    can = 2 if max(1, so_dong_du_lieu) <= 5 else 3
     if so_lan < can or so_lan < 0.35 * len(lech) or gia_tri < 1:
         return None
     return int(gia_tri)
@@ -200,7 +187,6 @@ class PageAnalysis:
     selection: dict[str, Any]
     rows: tuple[PageRow, ...]
     quality: QualityReport
-    # Cột điểm được suy đoán bằng hình học vì không đọc được tiêu đề: tầng trên phải hạ độ tin cậy.
     guessed_columns: bool
 
     def page_start_stt(self, stt_theo_dong: Mapping[int, int]) -> int | None:
@@ -312,8 +298,6 @@ def extract_rows(
         score_ink = do_dam_muc(score_cell)
         written_ink = do_dam_muc(written_cell) if written_cell is not None else 0.0
         name_ink = do_dam_muc(name_cell) if name_cell is not None else 0.0
-        # Gạch bỏ phải cắt qua ô điểm VÀ ô họ tên/điểm chữ: nét ngang ngắn của chữ viết tay (thanh ngang của số 7,
-        # 5...) không được làm mất một dòng có điểm.
         struck = la_gach_ngang(score_cell) and (
             la_gach_ngang(name_cell) or la_gach_ngang(written_cell)
         )
@@ -325,7 +309,6 @@ def extract_rows(
             PageRow(
                 row_index=position,
                 stt_cell=stt_cell,
-                # Dòng bị gạch không được đọc nên không gom; đường gạch cũng sẽ bị coi là đường kẻ ngang.
                 name_cell=name_cell if struck else compact_name_cell(name_cell),
                 score_cell=score_cell,
                 written_cell=written_cell,

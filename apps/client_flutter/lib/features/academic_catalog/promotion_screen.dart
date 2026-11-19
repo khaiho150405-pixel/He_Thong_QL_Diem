@@ -155,7 +155,6 @@ class _PromotionScreenState extends ConsumerState<PromotionScreen> {
         );
       }).toList();
 
-      // Mặc định quick apply class là lớp đầu tiên của khối +1 nếu có
       final nextGrade = preview.sourceClass.grade + 1;
       final nextGradeClasses = preview.targetClasses
           .where((c) => c.grade == nextGrade)

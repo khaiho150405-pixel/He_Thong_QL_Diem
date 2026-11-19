@@ -5,11 +5,8 @@ import { Pool } from "pg";
 import { createApp } from "../../src/app.js";
 import type { ObjectStorage } from "../../src/modules/files/public.js";
 
-// Thông tin trường (ADR-0019, migration 202610280001). Chạy qua HTTP thật trên DB *_test; kho ảnh là bản trong bộ nhớ.
-
 const sha = (v: string | Uint8Array) =>
   createHash("sha256").update(v).digest("hex");
-/** PNG 1x1 hợp lệ tối thiểu (chữ ký + IHDR); inspectImage chỉ đọc kích thước, không giải mã ảnh. */
 const PNG = Buffer.concat([
   Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13]),
   Buffer.from("IHDR"),
@@ -102,7 +99,6 @@ async function fixture() {
     runtimePool,
     key: (tag: string) => `${tag}-${randomBytes(4).toString("hex")}`,
     done: async () => {
-      // Trả bảng truong về mặc định để các lần chạy sau (và test khác) thấy trạng thái ban đầu.
       await owner.query(
         "UPDATE truong SET ten_truong='Trường THPT Bà Điểm',ten_ngan='THPT Bà Điểm',co_quan_chu_quan='Sở Giáo dục và Đào tạo TP. Hồ Chí Minh',dia_chi=NULL,dien_thoai=NULL,email=NULL,hieu_truong=NULL,logo_key=NULL,logo_content_type=NULL,logo_checksum=NULL",
       );
@@ -131,7 +127,6 @@ test("public profile, admin update, role and version checks, idempotency", async
       email: "truong@example.test",
       address: "",
     };
-    // Giáo viên và học sinh không sửa được; không phiên thì 401.
     for (const token of [f.teacher, f.student])
       assert.equal(
         (
@@ -169,7 +164,6 @@ test("public profile, admin update, role and version checks, idempotency", async
     const pub = await f.call("school-profile");
     assert.deepEqual(pub.body, updated.body);
 
-    // Gửi lại cùng khóa + cùng nội dung: cùng kết quả, version không tăng thêm.
     const replay = await f.call("admin/school-profile", {
       method: "PUT",
       token: f.admin,
@@ -179,7 +173,6 @@ test("public profile, admin update, role and version checks, idempotency", async
     assert.equal(replay.status, 200);
     assert.equal(replay.body.version, version + 1);
 
-    // Sai version → conflict; dữ liệu sai → INVALID_SCHOOL_PROFILE kèm trường sai.
     const stale = await f.call("admin/school-profile", {
       method: "PUT",
       token: f.admin,
@@ -219,7 +212,6 @@ test("logo upload validates content, serves bytes, and can be removed", async ()
         body: form,
       });
 
-    // File giả đuôi .png, quá 1 MB, hoặc khai sai loại đều bị từ chối.
     for (const form of [
       f.logoForm(version, Buffer.from("not a png at all")),
       f.logoForm(version, Buffer.concat([PNG, Buffer.alloc(1024 * 1024)])),

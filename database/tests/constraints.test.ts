@@ -212,7 +212,6 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
       [slip, student],
       "23505",
     );
-    // ADR-0015: roster snapshot is append-only, unique per ticket/student and tied to the ticket.
     await owner.query(
       "INSERT INTO danh_sach_phieu(ma_phieu,stt,ma_hoc_sinh,ho_ten) VALUES($1,1,$2,'Học sinh giả')",
       [slip, student],
@@ -253,7 +252,6 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
       [slip],
       "23503",
     );
-    // Matching columns on ket_qua_dong.
     await owner.query(
       "UPDATE ket_qua_dong SET stt_giay=1,ho_ten_doc_duoc='Học sinh giả',do_tin_cay_ghep=0.9500,duong_dan_anh_o_ten='recognition/crops/x/1-name.png',ghi_chu_ghep='ok' WHERE ma_phieu=$1 AND thu_tu_dong=1",
       [slip],
@@ -263,7 +261,6 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
       [slip],
       "23514",
     );
-    // phieu_luoi: row count must be within 1..declared size; fewer detected rows than the roster are allowed.
     const roster = (
       await owner.query(
         "INSERT INTO phieu_nhan_dien (ma_bang_diem,ma_thanh_phan,nguoi_tai,ma_bam_tep,duong_dan_anh_goc,so_dong_khai_bao) VALUES ($1,$2,$3,$4,'test/image2',3) RETURNING ma_phieu",
@@ -280,7 +277,6 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
       "UPDATE phieu_nhan_dien SET trang_thai='CHO_DOI_CHIEU',so_dong_nhan_dien=2 WHERE ma_phieu=$1",
       [roster],
     );
-    // SET ROLE uses the actual database role, inside this rollback-only fixture.
     await owner.query("SET LOCAL ROLE app_runtime");
     await owner.query(
       "INSERT INTO lich_su_sua_diem (ma_diem,nguoi_sua,gia_tri_cu,gia_tri_moi,ly_do) VALUES ($1,$2,NULL,0,'Test fixture')",

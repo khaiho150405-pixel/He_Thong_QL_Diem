@@ -14,9 +14,7 @@ export class InfrastructureProbe implements DependencyProbe {
       connectionTimeoutMillis: 1500,
       query_timeout: 1500,
     });
-    this.pool.on("error", () => {
-      /* Request checks report sanitized readiness failures. */
-    });
+    this.pool.on("error", () => {});
     this.s3 = new S3Client({
       endpoint: config.s3Endpoint,
       region: "us-east-1",

@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../theme_mode.dart';
 
-/// Nút đổi giao diện sáng/tối. Chỉ chuyển qua lại giữa sáng và tối; mặc định
-/// là sáng, không lưu lựa chọn (xem [themeModeProvider]). Nhãn trợ năng lấy từ
-/// `tooltip` của [IconButton].
 class ThemeModeButton extends ConsumerWidget {
   const ThemeModeButton({super.key});
 

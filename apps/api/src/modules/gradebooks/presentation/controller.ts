@@ -25,8 +25,6 @@ import type { Request } from "express";
 import type { Actor } from "../../authorization/application/policy.js";
 import { GradebooksService } from "../application/service.js";
 
-/* ── DTO ── */
-
 export class GradebookDto {
   @ApiProperty({ type: Number }) id!: number;
   @ApiProperty({ type: Number }) classId!: number;
@@ -112,12 +110,6 @@ export class CellsResponseDto {
   @ApiProperty({ type: GradebookDto }) book!: GradebookDto;
   @ApiProperty({ type: [GradeCellDto] }) items!: GradeCellDto[];
   @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
-}
-
-export class CreateGradebookInput {
-  @ApiProperty({ type: Number }) classId!: number;
-  @ApiProperty({ type: Number }) subjectId!: number;
-  @ApiProperty({ type: Number }) termId!: number;
 }
 
 export class GradeChangeInput {
@@ -234,8 +226,6 @@ export class GradebookHistoryDto {
   @ApiProperty({ type: String, nullable: true }) nextCursor!: string | null;
 }
 
-/* ── Controller ── */
-
 @ApiTags("gradebooks")
 @Controller("gradebooks")
 export class GradebooksController {
@@ -258,14 +248,6 @@ export class GradebooksController {
     @Query("yearId") yearId?: string,
   ) {
     return this.service.list(req.actor, cursor ? Number(cursor) : 0, yearId);
-  }
-
-  @Post()
-  @HttpCode(200)
-  @ApiBody({ type: CreateGradebookInput })
-  @ApiOkResponse({ type: GradebookDto })
-  create(@Req() req: Request & { actor: Actor }, @Body() body: unknown) {
-    return this.service.create(req.actor, body);
   }
 
   @Get(":id/cells")

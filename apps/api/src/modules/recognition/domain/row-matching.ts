@@ -1,17 +1,8 @@
-// Ghép dòng trên ảnh với danh sách lớp đã chốt của phiếu (ADR-0015). Miền thuần: không import NestJS/Prisma.
-//
-// Máy chỉ đề xuất. Hàm này không chọn điểm; nó chỉ gán mỗi dòng có dữ liệu cho một học sinh trong snapshot
-// (theo họ tên đọc được trên giấy, STT nếu có, thứ tự dòng chỉ là điểm thưởng nhỏ) và đánh giá độ chắc chắn của phép
-// ghép. Ghép một-một tối ưu toàn cục (Hungarian), nên thứ tự trên giấy khác thứ tự hệ thống vẫn ghép đúng theo tên.
-// Không ghép được thì dừng.
-
 export type ReviewLevel = "XANH" | "VANG" | "DO";
 
 export interface DetectedRow {
-  /** Vị trí dòng trên ảnh, bắt đầu từ 1. */
   rowIndex: number;
   struck: boolean;
-  /** STT in trên giấy đọc được; null khi không đọc được. */
   sttValue: number | null;
   sttConfidence: number | null;
   nameRaw: string | null;
@@ -28,24 +19,17 @@ export interface RosterEntry {
 
 export interface RowMatch {
   rowIndex: number;
-  /** STT hệ thống đã ghép (từ snapshot), không phải STT đọc trên giấy. */
   stt: number;
   studentId: number;
   sttOnPaper: number | null;
   nameRead: string | null;
-  /** 0..1, tối đa 4 chữ số thập phân (khớp numeric(5,4)). */
   matchConfidence: number;
   matchLevel: ReviewLevel;
-  /** Ghi chú ≤ 200 ký tự, không chứa họ tên. */
   note: string;
 }
 
 export type SttConvention = "A" | "B";
 
-/**
- * Mô hình độ lệch STT của một trang: STT in trên giấy = STT theo quy ước + k (+ số dòng bị gạch đứng trước khi
- * `strikeShift`). `k` là độ lệch cố định (ví dụ học sinh đã nghỉ ở trang trước); `support` là số dòng tên mạnh khớp mô hình.
- */
 export interface SttModel {
   convention: SttConvention;
   k: number;
@@ -69,7 +53,6 @@ export type RowMatchResult =
       ok: true;
       matches: RowMatch[];
       skipped: SkippedRow[];
-      /** Ràng buộc STT của trang: `model` null khi tắt hoặc khi không đủ dòng ủng hộ (mọi dòng "Không xác nhận được STT"). */
       stt: { enabled: boolean; model: SttModel | null; evidence: number };
     }
   | {
@@ -79,28 +62,17 @@ export type RowMatchResult =
       detail: string;
     };
 
-// Ngưỡng khóa ở BE-22 theo tập DEV của mẫu E0330113 (chưa có bảng điểm cấp 3 thật): NAME_STRONG/NAME_WEAK giữ nguyên;
-// MAX_RED_RATIO 0,30 → 0,34 vì trang 2 chỉ có 3 dòng bị từ chối khi có đúng 1 dòng Đỏ (33%); trên DEV không làm tăng dòng gán sai.
-/** Độ giống họ tên từ mức này trở lên là khớp mạnh. */
 export const NAME_STRONG = 0.85;
-/** Dưới mức này là họ tên khác nhiều so với học sinh được ghép. */
 export const NAME_WEAK = 0.6;
-/** Tỷ lệ dòng mức Đỏ do ghép tối đa; vượt thì dừng, yêu cầu ảnh khác. */
 export const MAX_RED_RATIO = 0.34;
-/** Họ tên khớp học sinh kề tốt hơn từ mức chênh này trở lên thì nghi lệch dòng. */
 export const NEIGHBOR_MARGIN = 0.15;
-/** Điểm thưởng tối đa (giảm dần theo độ lệch) khi dòng nằm đúng vị trí dự kiến; chỉ để phân xử khi tên yếu/trùng. */
 export const ORDER_BONUS = 0.1;
-/** Ghi chú khi họ tên khớp mạnh nhưng thứ tự dòng trên giấy khác thứ tự hệ thống. */
 export const ORDER_NOTE = "Thứ tự trên giấy khác hệ thống.";
-/** Độ giống quy ước khi dòng không có họ tên đọc được: không thưởng cũng không phạt nặng. */
 export const UNKNOWN_NAME_SIMILARITY = 0.4;
-/** Điểm cơ sở trừ khỏi mỗi phép ghép để ghép kém không có lợi hơn bỏ qua dòng không có điểm. */
 export const PAIR_BASELINE = 0.5;
 
 const LEVEL_RANK: Record<ReviewLevel, number> = { DO: 0, VANG: 1, XANH: 2 };
 
-/** Mức thấp hơn giữa hai mức (DO < VANG < XANH). */
 export function combineLevel(
   gradeLevel: ReviewLevel,
   matchLevel: ReviewLevel,
@@ -110,7 +82,6 @@ export function combineLevel(
     : matchLevel;
 }
 
-/** NFC, bỏ dấu, chữ thường, chỉ giữ chữ/số, gộp khoảng trắng. */
 export function normalizeName(value: string | null | undefined): string {
   if (!value) return "";
   return value
@@ -145,7 +116,6 @@ function editDistance(a: string, b: string): number {
   return previous[b.length] ?? 0;
 }
 
-/** 1 - khoảng cách sửa / độ dài, trên họ tên đã chuẩn hóa. */
 export function nameSimilarity(a: string, b: string): number {
   const length = Math.max(a.length, b.length);
   if (length === 0) return 0;
@@ -162,13 +132,8 @@ function fail(
   return { ok: false, code: "ROW_MATCH_FAILED", reason, detail };
 }
 
-/** Chi phí cấm: dòng bắt buộc không được rơi vào cột "bỏ trống". */
 const FORBIDDEN = 1e6;
 
-/**
- * Bài toán phân công chi phí nhỏ nhất (Hungarian, O(n²·p)); ``cost`` có n hàng và p ≥ n cột. Trả về chỉ số cột cho
- * từng hàng.
- */
 function assignMinCost(cost: number[][]): number[] {
   const n = cost.length;
   const p = cost[0]!.length;
@@ -218,7 +183,6 @@ function assignMinCost(cost: number[][]): number[] {
   return result;
 }
 
-/** Các dòng (theo thứ tự trên trang) không thuộc dãy tăng dài nhất của chỉ số học sinh: dòng bị đảo thứ tự. */
 function outOfOrderRows(
   order: number[],
   assignment: Map<number, number>,
@@ -243,7 +207,6 @@ function outOfOrderRows(
     inOrder.add(sequence[cursor]!);
   const flagged = new Set<number>();
   for (const row of sequence) if (!inOrder.has(row)) flagged.add(row);
-  // Hai dòng kề nhau đổi chỗ cho nhau (chỉ số học sinh cách nhau ≤ 2): đánh dấu cả hai, không chỉ dòng nằm ngoài dãy tăng dài nhất.
   for (let index = 0; index + 1 < sequence.length; index += 1) {
     const first = sequence[index]!;
     const second = sequence[index + 1]!;
@@ -260,17 +223,10 @@ function outOfOrderRows(
 }
 
 export interface MatchOptions {
-  /**
-   * Bật ràng buộc STT + họ tên (RECOGNITION_STT_CHECK, mặc định BẬT ở cấu hình triển khai): Xanh chỉ khi tên khớp mạnh VÀ
-   * STT trên giấy khớp mô hình STT của trang. STT không quyết định gán học sinh, trừ trong nhóm trùng họ tên. Mô hình STT
-   * (quy ước A/B, độ lệch k, có cộng dòng gạch hay không) được ước lượng trên các dòng tên khớp mạnh của chính trang.
-   */
   sttCheck?: boolean;
 }
 
-/** Dòng phát hiện của một trang trong lô nhiều trang (ADR-0016 mục 3). */
 export interface BatchDetectedRow extends DetectedRow {
-  /** Số trang trong lô, bắt đầu từ 1. */
   page: number;
 }
 
@@ -282,7 +238,6 @@ export interface BatchSkippedRow extends SkippedRow {
   page: number;
 }
 
-/** Mô hình STT chọn riêng cho từng trang (BE-24c) và số dòng tên mạnh làm bằng chứng. */
 export interface BatchSttPage {
   page: number;
   model: SttModel | null;
@@ -298,10 +253,6 @@ export type BatchMatchResult =
     }
   | Extract<RowMatchResult, { ok: false }>;
 
-/**
- * Ghép dòng của MỘT trang với danh sách lớp đã chốt (luồng phiếu một ảnh). Hành vi không đổi so với trước khi có lô nhiều
- * trang: là trường hợp riêng của `matchBatchRows` với một trang.
- */
 export function matchRows(
   detected: DetectedRow[],
   roster: RosterEntry[],
@@ -328,11 +279,6 @@ export function matchRows(
   };
 }
 
-/**
- * Ghép dòng của MỌI trang trong lô với cùng một danh sách lớp, MỘT lần duy nhất (ADR-0016 mục 3): ghép một-một toàn cục
- * nên một học sinh xuất hiện ở hai trang là lỗi `ROW_MATCH_FAILED` (DUPLICATE_STUDENT), không đoán. Học sinh không có dòng
- * nào ở trang nào được bỏ trống. Độ lệch vị trí và mô hình STT được ước lượng riêng từng trang (BE-24c).
- */
 export function matchBatchRows(
   detected: BatchDetectedRow[],
   roster: RosterEntry[],
@@ -367,7 +313,6 @@ function matchPaged(
     (a, b) => a - b,
   );
   const multiPage = pageNumbers.length > 1;
-  /** Mô tả vị trí dòng trong thông báo lỗi: thêm số trang khi lô có nhiều trang. */
   const where = (row: BatchDetectedRow) =>
     multiPage ? `${row.page}.${row.rowIndex}` : String(row.rowIndex);
   const entries = [...roster].sort((a, b) => a.stt - b.stt);
@@ -376,7 +321,6 @@ function matchPaged(
 
   const names = rows.map((row) => normalizeName(row.nameRaw));
   const rosterNames = entries.map((entry) => normalizeName(entry.fullName));
-  // similarity[i][j]: null khi dòng i không có họ tên đọc được.
   const similarity = rows.map((_, i) =>
     names[i]
       ? rosterNames.map((name) => nameSimilarity(names[i]!, name))
@@ -384,14 +328,10 @@ function matchPaged(
   );
   const pair = (i: number, j: number): number => {
     const sim = similarity[i]?.[j] ?? UNKNOWN_NAME_SIMILARITY;
-    // Lập phương độ giống: khớp tốt không bị đánh đổi lấy vài phần trăm cải thiện ở dòng đọc kém. STT không tham gia.
     return sim ** 3 - PAIR_BASELINE ** 3;
   };
   const sttActive = options.sttCheck === true;
 
-  // Ghép một-một tối ưu toàn cục theo họ tên. Dòng có điểm bắt buộc phải được ghép; dòng chỉ có
-  // họ tên (ô điểm trống) được ghép khi có lợi; học sinh không có trên trang được bỏ trống. Thứ tự dòng chỉ là điểm
-  // thưởng nhỏ quanh vị trí dự kiến (độ lệch ước lượng từ các dòng khớp tên mạnh) để phân xử khi tên yếu hoặc trùng.
   const n = rows.length;
   const m = entries.length;
   const mandatory = rows.map((row) => row.hasGradeInk);
@@ -415,8 +355,6 @@ function matchPaged(
     return result;
   };
   const first = solve(() => 0);
-  // Độ lệch vị trí (chỉ số học sinh − vị trí dòng trên trang) ước lượng riêng từng trang. Trang không có dòng tên mạnh nào
-  // làm bằng chứng được coi là nối tiếp trang trước (một trang đầu thì độ lệch 0, như luồng một ảnh).
   const offsetByPage = new Map<number, number>();
   let carry = 0;
   for (const page of pageNumbers) {
@@ -458,7 +396,6 @@ function matchPaged(
     for (const i of outOfOrderRows(rowsOfPage(page), assignment))
       flagged.add(i);
 
-  // --- Ràng buộc STT (tùy chọn) ---
   const struckBefore = rows.map(
     (row) =>
       detected.filter(
@@ -484,7 +421,6 @@ function matchPaged(
         !isDuplicatedName(j),
     )
     .map(([i, j]) => ({ i, j }));
-  // Mô hình STT chọn riêng từng trang (BE-24c): mỗi trang có thể lệch STT khác nhau (học sinh nghỉ, dòng gạch...).
   const models = new Map<number, SttModel | null>();
   const sttPages: BatchSttPage[] = pageNumbers.map((page) => {
     const pageRows = rowsOfPage(page);
@@ -501,7 +437,6 @@ function matchPaged(
     models.set(page, model);
     return { page, model, evidence: pageEvidence.length };
   });
-  /** STT in trên giấy dự kiến của học sinh j ở dòng i theo mô hình của trang; null khi không có mô hình. */
   const expectedPaper = (i: number, j: number): number | null => {
     const model = models.get(rows[i]!.page) ?? null;
     return model === null
@@ -520,9 +455,6 @@ function matchPaged(
       duplicateState,
     );
 
-  // Hai dòng cùng nhắm tới một học sinh (học sinh có độ giống cao nhất, không hòa, từ mức khớp mạnh) là cùng một học sinh
-  // xuất hiện hai lần: dừng, không ép dòng lặp sang học sinh tên gần giống chỉ để đạt ghép một-một. Học sinh trùng họ tên
-  // trong lớp không thuộc kiểm tra này (hòa điểm cao nhất); các học sinh đó được phân biệt bằng STT.
   const targetOf = (similar: number[] | null): number | null => {
     if (!similar) return null;
     const top = Math.max(...similar);
@@ -546,7 +478,6 @@ function matchPaged(
     const j = assignment.get(i);
     const row = rows[i]!;
     if (j === undefined) {
-      // Dòng không điểm bị bỏ qua: không có học sinh nào đáng ghép.
       skipped.push({
         page: row.page,
         rowIndex: row.rowIndex,
@@ -591,10 +522,6 @@ const stripAccents = (value: string): string =>
 const baseCollator = new Intl.Collator("en", { sensitivity: "base" });
 const viCollator = new Intl.Collator("vi", { sensitivity: "variant" });
 
-/**
- * Quy ước B: sắp tên (từ cuối) → họ tên đầy đủ theo chữ KHÔNG dấu (đ → d) trước, chỉ khi bằng nhau mới so dấu, rồi mã.
- * Trả về STT 1..n của từng học sinh trong `entries` (cùng thứ tự mảng). Không đổi STT hiển thị của hệ thống.
- */
 function accentFoldedNumbers(entries: RosterEntry[]): number[] {
   const given = (name: string) => name.trim().split(/\s+/).at(-1) ?? "";
   const order = entries
@@ -620,11 +547,6 @@ function accentFoldedNumbers(entries: RosterEntry[]): number[] {
   return numbers;
 }
 
-/**
- * Chọn mô hình STT của trang khớp nhiều dòng tên-mạnh nhất trong {A, B} × {không cộng, cộng 1 sau mỗi dòng gạch đứng
- * trước}; với mỗi mô hình, k là độ lệch (STT giấy − STT dự kiến) phổ biến nhất. Hòa → không cộng, rồi A, rồi |k| nhỏ.
- * Cần ít nhất `minSupport` dòng ủng hộ, nếu không trả null (mọi dòng thành "Không xác nhận được STT").
- */
 function chooseSttModel(
   evidence: Array<{ i: number; j: number }>,
   rows: DetectedRow[],
@@ -645,18 +567,12 @@ function chooseSttModel(
       const [k, support] = [...counts.entries()].sort(
         (x, y) => y[1] - x[1] || Math.abs(x[0]) - Math.abs(y[0]) || x[0] - y[0],
       )[0] ?? [0, 0];
-      // Duyệt theo thứ tự ưu tiên (không cộng, A trước) nên chỉ thay khi nhiều dòng ủng hộ hơn hẳn.
       if (support >= minSupport && (best === null || support > best.support))
         best = { convention, k, strikeShift, support };
     }
   return best;
 }
 
-/**
- * Nhóm học sinh TRÙNG họ tên: STT là bằng chứng duy nhất để phân biệt. Dòng có STT dự kiến khớp đúng một thành viên chưa
- * bị dòng khác nhận thì được gán cho thành viên đó (RESOLVED); dòng còn lại lấy thành viên còn trống và bị đánh dấu
- * không phân biệt được (AMBIGUOUS → Đỏ).
- */
 function resolveDuplicateNames(
   rows: BatchDetectedRow[],
   assignment: Map<number, number>,
@@ -709,9 +625,7 @@ function resolveDuplicateNames(
 
 interface SttContext {
   active: boolean;
-  /** Trang có mô hình STT (đủ dòng ủng hộ). */
   hasModel: boolean;
-  /** STT in trên giấy dự kiến của học sinh được ghép theo mô hình của trang; null khi không có mô hình. */
   expected: number | null;
   duplicate: "RESOLVED" | "AMBIGUOUS" | null;
 }
@@ -745,7 +659,6 @@ function describe(
     level = "DO";
     note = `Họ tên khớp STT ${entries[betterNeighbor]!.stt} hơn STT ${entry.stt}; nghi lệch dòng.`;
   } else if (sim === null) {
-    // Không có bằng chứng định danh nào: chỉ dựa vào vị trí, nên không đủ tin để bỏ qua.
     level = "DO";
     note = `Không đọc được họ tên; chỉ ghép theo vị trí (STT ${entry.stt}).`;
   } else if (sim < NAME_WEAK) {
@@ -766,7 +679,6 @@ function describe(
       note = "Trùng họ tên — không phân biệt được bằng STT.";
     }
   } else if (stt.active) {
-    // Xanh chỉ khi tên khớp mạnh VÀ STT khớp mô hình của trang.
     if (!stt.hasModel || row.sttValue === null || stt.expected === null) {
       level = "VANG";
       note = "Không xác nhận được STT.";
@@ -778,14 +690,12 @@ function describe(
       note = "Khớp họ tên và STT.";
     }
   } else if (outOfOrder) {
-    // Họ tên khớp mạnh nên giữ mức theo tên; chỉ báo rằng thứ tự trên giấy khác thứ tự hệ thống.
     level = "XANH";
     note = ORDER_NOTE;
   } else {
     level = "XANH";
     note = "Khớp họ tên.";
   }
-  // Tên yếu mà STT trên giấy lại lệch mô hình của trang → Đỏ (STT chỉ hạ mức, không bao giờ nâng).
   if (
     stt.active &&
     level === "VANG" &&
@@ -798,7 +708,6 @@ function describe(
     level = "DO";
     note = `${note} STT trên giấy ${row.sttValue} khác STT dự kiến ${stt.expected}.`;
   }
-  // Độ tin cậy ghép chỉ dựa vào họ tên; không đọc được tên thì 0,5.
   const nameComponent = sim ?? 0.5;
   return {
     rowIndex: row.rowIndex,

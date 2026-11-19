@@ -6,12 +6,10 @@ from src.pipeline import grid as gd
 from src.pipeline.errors import PipelineError
 from synthetic import make_page
 
-# STT | Họ tên | Đ.số | Điểm chữ | Ký tên | Ghi chú (mimics the E0330113 proportions in px at 200 DPI).
 SCORE_SHEET = (60, 480, 90, 210, 150, 160)
 SCORE_HEADERS = ("STT", "Ho va ten", "D.so", "Diem chu", "Ky ten", "Ghi chu")
 SCORE_OCR = ("STT", "Họ và tên", "Đ.số", "Điểm chữ", "Ký tên", "Ghi chú")
 
-# High-school layout: STT | Mã HS | Họ tên | ĐĐGtx | ĐĐGgk | ĐĐGck
 HIGH_SCHOOL = (60, 105, 380, 115, 130, 145)
 HIGH_SCHOOL_HEADERS = ("STT", "Ma HS", "Ho ten", "DDGtx", "DDGgk", "DDGck")
 HIGH_SCHOOL_OCR = ("STT", "Mã HS", "Họ tên học sinh", "ĐĐGtx", "ĐĐGgk", "ĐĐGck")
@@ -21,7 +19,6 @@ class HeaderOcr:
     """Fake printed-text OCR: answers by the width of the header cell it is shown."""
 
     def __init__(self, widths: tuple[int, ...], texts: tuple[str, ...]) -> None:
-        # cat_o trims 3 px per side, _anh_cho_ocr scales x2 and pads 8 px per side.
         self.expected = [2 * (w - 6) + 16 for w in widths]
         self.texts = texts
         self.calls = 0
@@ -56,7 +53,6 @@ class KeywordMatchingTest(unittest.TestCase):
             "MSSV": "ma_sv",
             "Ghi chú": "ghi_chu",
             "Ký tên": "ky_ten",
-            # high school (cấp 3)
             "ĐĐGtx": "diem_qua_trinh",
             "Miệng": "diem_qua_trinh",
             "Điểm kiểm tra 15 phút": "diem_qua_trinh",
@@ -81,7 +77,7 @@ class KeywordMatchingTest(unittest.TestCase):
 class GridDetectionTest(unittest.TestCase):
     def test_detects_rows_and_columns_of_a_ruled_table(self) -> None:
         _, luoi = grid_for(SCORE_SHEET, SCORE_HEADERS)
-        self.assertEqual(luoi["so_hang"], 39)  # header + 38 data rows
+        self.assertEqual(luoi["so_hang"], 39)
         columns = gd._cot_du_lieu(luoi, 1)
         self.assertEqual(len(columns) - 1, 6)
         widths = np.diff(columns)

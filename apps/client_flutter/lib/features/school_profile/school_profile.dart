@@ -20,7 +20,6 @@ class ApiSchoolProfileRepository implements SchoolProfileRepository {
   const ApiSchoolProfileRepository(this._api);
   final ApiClientDart _api;
 
-  // Khóa idempotency của API chỉ nhận [a-zA-Z0-9_-], tối đa 64 ký tự.
   static String _key() => 'school-${DateTime.now().microsecondsSinceEpoch}';
 
   @override
@@ -56,10 +55,6 @@ final schoolProfileRepositoryProvider = Provider<SchoolProfileRepository>(
   (ref) => ApiSchoolProfileRepository(ref.watch(apiProvider)),
 );
 
-/// Thông tin trường dùng chung (endpoint công khai, gọi được khi chưa đăng
-/// nhập). Lỗi/đang tải cho `null` để giao diện hiện chữ trung tính, không chặn
-/// đăng nhập. Tải lại khi đăng nhập/đăng xuất; sau khi QTV lưu thì
-/// `ref.invalidate(schoolProfileProvider)`.
 final schoolProfileProvider = FutureProvider<SchoolProfileDto?>((ref) async {
   ref.watch(sessionProvider.select((user) => user != null));
   try {
@@ -69,11 +64,9 @@ final schoolProfileProvider = FutureProvider<SchoolProfileDto?>((ref) async {
   }
 });
 
-/// `?v=<version>` để trình duyệt không giữ logo cũ sau khi đổi.
 String schoolLogoUrl(SchoolProfileDto profile) =>
     '${AppConfig.apiBaseUrl}/api/v1/school-profile/logo?v=${profile.version}';
 
-/// Logo trường; không có logo hoặc tải lỗi thì hiện [fallback].
 class SchoolLogoImage extends StatelessWidget {
   const SchoolLogoImage({
     super.key,
@@ -95,14 +88,12 @@ class SchoolLogoImage extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      // Web: API khác origin với trang, <img> không cần CORS như CanvasKit.
       webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
       errorBuilder: (_, _, _) => fallback,
     );
   }
 }
 
-/// [SchoolLogoImage] lấy dữ liệu từ [schoolProfileProvider].
 class SchoolLogo extends ConsumerWidget {
   const SchoolLogo({super.key, required this.size, required this.fallback});
 

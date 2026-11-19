@@ -257,7 +257,6 @@ class ReviewTestServer implements HttpClientAdapter {
   }
 }
 
-/// Một dòng bằng chứng đầy đủ trường (dữ liệu giả) để thử các tổ hợp mức điểm / mức ghép.
 Map<String, dynamic> evidenceRow({
   required String level,
   required String? matchLevel,
@@ -386,7 +385,6 @@ void main() {
         expect(approveButton().onPressed, isNull);
         expect(server.lastApprovalBody, isNull);
 
-        // Reload after the server recovers: error gone, approval allowed with the real version.
         server.failCells = false;
         await tester.tap(find.byKey(const ValueKey('review-retry-version')));
         await tester.pumpAndSettle();
@@ -395,7 +393,6 @@ void main() {
           findsNothing,
         );
 
-        // Đỏ row cần được nhập điểm để nút Duyệt mở
         await tester.enterText(
           find.byKey(const ValueKey('review-value-r-red')),
           '8.0',
@@ -437,7 +434,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Should be redirected away from gradebooks route to home /
         expect(find.byKey(const ValueKey('review-screen')), findsNothing);
         expect(find.byType(HomeScreen), findsOneWidget);
       },
@@ -478,7 +474,6 @@ void main() {
         expect(find.text('Bảng điểm #7'), findsOneWidget);
         expect(find.text(' › Phiếu #42'), findsOneWidget);
 
-        // KHÔNG hiển thị: Ký tự thô, Độ tin cậy, Tên đọc được, Điểm chưa đủ tin cậy, enum tiếng Anh trong tiêu đề
         expect(find.textContaining('Ký tự thô'), findsNothing);
         expect(find.textContaining('Độ tin cậy'), findsNothing);
         expect(find.textContaining('Tên đọc được'), findsNothing);
@@ -487,41 +482,31 @@ void main() {
         expect(find.textContaining('· VANG'), findsNothing);
         expect(find.textContaining('· XANH'), findsNothing);
 
-        // STT và tên học sinh cho các dòng cần xem (Đỏ / Vàng)
-        // row 2: stt 2, sttOnPaper 5 (khác nhau) -> hiển thị chip "STT giấy 5 ≠ hệ thống 2"
         expect(
           find.textContaining('STT hệ thống 2 · Trần Thị Bình'),
           findsOneWidget,
         );
         expect(find.text('STT giấy 5 ≠ hệ thống 2'), findsOneWidget);
-        // row 3: stt 3, sttOnPaper 3 (bằng nhau) -> KHÔNG hiển thị "trên giấy 3"
         expect(
           find.textContaining('STT hệ thống 3 · Lê Hoàng Cúc'),
           findsOneWidget,
         );
         expect(find.textContaining('STT hệ thống 3 · trên giấy'), findsNothing);
 
-        // Mở mục thu gọn dòng Xanh để kiểm tra học sinh dòng Xanh (Nguyễn Văn An)
         await tester.tap(find.byKey(const ValueKey('review-green-group')));
         await tester.pumpAndSettle();
         expect(find.text('Nguyễn Văn An'), findsOneWidget);
 
-        // Kiểm tra chip STT giấy khác hệ thống
         expect(find.text('STT giấy 5 ≠ hệ thống 2'), findsOneWidget);
 
-        // Ảnh họ tên chỉ hiện khi matchLevel ≠ XANH
-        // row 2 (VANG) và row 3 (DO) hiển thị "Họ tên trên giấy", row 1 (XANH) ẩn
         expect(find.text('Họ tên trên giấy'), findsNWidgets(2));
         expect(find.text('Kiểm tra đúng học sinh'), findsWidgets);
 
-        // Giá trị gợi ý:
-        // Green row: 8.5
         final greenField = tester.widget<TextFormField>(
           find.byKey(const ValueKey('review-value-r-green')),
         );
         expect(greenField.controller?.text, '8.5');
 
-        // Yellow row: 7.0
         final yellowField = tester.widget<TextFormField>(
           find.byKey(const ValueKey('review-value-r-yellow')),
         );
@@ -529,22 +514,17 @@ void main() {
         expect(find.textContaining('Lấy theo'), findsNothing);
         expect(find.textContaining('khác nhau'), findsNothing);
 
-        // RED ROW PHẢI ĐỂ TRỐNG
         final redField = tester.widget<TextFormField>(
           find.byKey(const ValueKey('review-value-r-red')),
         );
         expect(redField.controller?.text, isEmpty);
 
-        // Cảnh báo Đỏ do matchLevel == DO -> "Kiểm tra đúng học sinh"
         expect(find.textContaining('Kiểm tra đúng học sinh'), findsWidgets);
-        // Dòng Vàng do matchLevel == VANG -> "Kiểm tra đúng học sinh (STT trên giấy khác)"
         expect(
           find.textContaining('Kiểm tra đúng học sinh (STT trên giấy khác)'),
           findsOneWidget,
         );
 
-        // Bộ lọc màu
-        // Default ALL: có cả r-yellow và r-red
         expect(
           find.byKey(const ValueKey('review-value-r-yellow')),
           findsOneWidget,
@@ -554,7 +534,6 @@ void main() {
           findsOneWidget,
         );
 
-        // Lọc DO
         await tester.tap(find.byKey(const ValueKey('DO')));
         await tester.pumpAndSettle();
         expect(
@@ -566,7 +545,6 @@ void main() {
           findsOneWidget,
         );
 
-        // Lọc VANG
         await tester.tap(find.byKey(const ValueKey('VANG')));
         await tester.pumpAndSettle();
         expect(
@@ -575,11 +553,9 @@ void main() {
         );
         expect(find.byKey(const ValueKey('review-value-r-red')), findsNothing);
 
-        // Trở về ALL
         await tester.tap(find.byKey(const ValueKey('ALL')));
         await tester.pumpAndSettle();
 
-        // Nhập điểm cho dòng Đỏ để mở duyệt
         await tester.enterText(
           find.byKey(const ValueKey('review-value-r-red')),
           '8.5',
@@ -589,7 +565,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Xác nhận và Duyệt
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('review-confirm-all')),
           150,
@@ -763,12 +738,10 @@ void main() {
           find.byKey(const ValueKey('review-approve')),
         );
 
-        // Tick xác nhận: nút Duyệt vẫn vô hiệu vì dòng Đỏ chưa xử lý
         await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
         await tester.pumpAndSettle();
         expect(approveButton().onPressed, isNull);
 
-        // Nhập điểm hợp lệ cho dòng Đỏ -> nút Duyệt mở
         await tester.enterText(
           find.byKey(const ValueKey('review-value-r-1')),
           '8.0',
@@ -794,23 +767,19 @@ void main() {
         );
         await openReview(tester, server);
 
-        // Mở menu ⋮
         await tester.tap(find.byKey(const ValueKey('review-menu-r-1')));
         await tester.pumpAndSettle();
 
-        // Chọn mục "Không ghi điểm (vắng/miễn…)"
         expect(find.text('Không ghi điểm (vắng/miễn…)'), findsOneWidget);
         await tester.tap(find.text('Không ghi điểm (vắng/miễn…)'));
         await tester.pumpAndSettle();
 
-        // Ô lý do xuất hiện kèm các chip chọn nhanh
         expect(find.byKey(const ValueKey('review-reason-r-1')), findsOneWidget);
         expect(find.text('Vắng thi'), findsOneWidget);
         expect(find.text('Miễn'), findsOneWidget);
         expect(find.text('Nhập sau'), findsOneWidget);
         expect(find.text('Khác…'), findsOneWidget);
 
-        // Thử nút "Hủy"
         expect(
           find.byKey(const ValueKey('review-cancel-empty-r-1')),
           findsOneWidget,
@@ -819,13 +788,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byKey(const ValueKey('review-reason-r-1')), findsNothing);
 
-        // Mở lại menu ⋮ và chọn Không ghi điểm
         await tester.tap(find.byKey(const ValueKey('review-menu-r-1')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Không ghi điểm (vắng/miễn…)'));
         await tester.pumpAndSettle();
 
-        // Bấm chip "Vắng thi"
         await tester.tap(find.text('Vắng thi'));
         await tester.pumpAndSettle();
 
@@ -834,7 +801,6 @@ void main() {
         );
         expect(reasonField.controller?.text, 'Vắng thi');
 
-        // Xác nhận và Duyệt
         await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
         await tester.pumpAndSettle();
 
@@ -861,10 +827,8 @@ void main() {
         final server = ReviewTestServer(ticketStatus: 'DA_DUYET');
         await openReview(tester, server);
 
-        // Banner chỉ xem
         expect(find.text('Phiếu đã duyệt — chỉ xem'), findsOneWidget);
 
-        // Ẩn ô nhập điểm
         expect(
           find.byKey(const ValueKey('review-value-r-green')),
           findsNothing,
@@ -875,19 +839,16 @@ void main() {
         );
         expect(find.byKey(const ValueKey('review-value-r-red')), findsNothing);
 
-        // Ẩn menu ⋮
         expect(
           find.byKey(const ValueKey('review-menu-r-yellow')),
           findsNothing,
         );
 
-        // Ẩn nút Đồng ý
         expect(
           find.byKey(const ValueKey('review-agree-r-yellow')),
           findsNothing,
         );
 
-        // Ẩn ô xác nhận và nút Duyệt
         expect(find.byKey(const ValueKey('review-confirm-all')), findsNothing);
         expect(find.byKey(const ValueKey('review-approve')), findsNothing);
       },
@@ -899,8 +860,6 @@ void main() {
         final server = ReviewTestServer(includeNameCrop: false);
         await openReview(tester, server);
 
-        // matchLevel == XANH: ẩn ảnh họ tên
-        // matchLevel == VANG (r-yellow) & DO (r-red): hiển thị placeholder
         expect(find.text('Không có ảnh họ tên'), findsNWidgets(2));
       },
     );
@@ -936,22 +895,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Chế độ PageView trên mobile
       expect(find.byType(PageView), findsOneWidget);
       expect(find.textContaining('Dòng 1'), findsOneWidget);
 
-      // Dòng 1 là Đỏ (ưu tiên sắp xếp đầu): nút là 'Tiếp ›'
       expect(find.text('Tiếp ›'), findsOneWidget);
       await tester.tap(find.text('Tiếp ›'));
       await tester.pumpAndSettle();
 
-      // Chuyển sang dòng 2 (Vàng): nút là '✓ Đồng ý & tiếp'
       expect(find.textContaining('Dòng 2'), findsOneWidget);
       expect(find.text('✓ Đồng ý & tiếp'), findsOneWidget);
       await tester.tap(find.text('✓ Đồng ý & tiếp'));
       await tester.pumpAndSettle();
 
-      // Chuyển sang trang tổng kết
       expect(find.textContaining('Trang tổng kết'), findsOneWidget);
     });
 
@@ -984,7 +939,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Cột ảnh gốc trên desktop
       expect(
         find.byKey(const ValueKey('review-source-image-column')),
         findsOneWidget,
@@ -1031,9 +985,7 @@ void main() {
           ],
         ),
       );
-      // Tiêu đề có chip STT giấy
       expect(find.text('STT giấy 4 ≠ hệ thống 1'), findsOneWidget);
-      // Khung thông tin
       expect(find.byKey(const ValueKey('review-stt-box-r-1')), findsOneWidget);
       expect(
         find.text('STT khác nhau: trên giấy là 4, trong hệ thống là 1'),
@@ -1044,7 +996,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Họ tên trên giấy'), findsOneWidget);
-      // Không có checkbox xác nhận
       expect(find.text('Đúng học sinh này'), findsNothing);
       expect(
         find.byKey(const ValueKey('review-stt-confirm-r-1')),
@@ -1069,9 +1020,7 @@ void main() {
         );
         await openReview(tester, server);
 
-        // Tiêu đề có chip STT giấy
         expect(find.text('STT giấy 5 ≠ hệ thống 2'), findsOneWidget);
-        // Khung cảnh báo
         expect(
           find.byKey(const ValueKey('review-stt-box-r-1')),
           findsOneWidget,
@@ -1085,24 +1034,19 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('Họ tên trên giấy'), findsOneWidget);
-        // Có checkbox
         expect(find.text('Đúng học sinh này'), findsOneWidget);
 
-        // Bấm tick xác nhận tất cả ở bottom bar
         await tester.tap(find.byKey(const ValueKey('review-confirm-all')));
         await tester.pumpAndSettle();
 
         FilledButton approveButton() => tester.widget<FilledButton>(
           find.byKey(const ValueKey('review-approve')),
         );
-        // Nút Duyệt vẫn vô hiệu vì chưa tích "Đúng học sinh này"
         expect(approveButton().onPressed, isNull);
 
-        // Tích "Đúng học sinh này"
         await tester.tap(find.byKey(const ValueKey('review-stt-confirm-r-1')));
         await tester.pumpAndSettle();
 
-        // Nút Duyệt mở
         expect(approveButton().onPressed, isNotNull);
       },
     );
@@ -1145,21 +1089,17 @@ void main() {
       );
       await openReview(tester, server);
 
-      // Chip tóm tắt hiển thị: 2 dòng khác
       expect(find.text('⇄ STT khác: 2'), findsOneWidget);
 
-      // Mặc định hiện tất cả dòng có STT khác
       expect(find.byKey(const ValueKey('review-stt-box-r-2')), findsOneWidget);
       expect(find.byKey(const ValueKey('review-stt-box-r-3')), findsOneWidget);
 
-      // Bấm vào chip để lọc STT khác
       await tester.tap(
         find.byKey(const ValueKey('STT_DIFF')),
         warnIfMissed: false,
       );
       await tester.pumpAndSettle();
 
-      // Chỉ hiện 2 dòng có STT khác
       expect(find.byKey(const ValueKey('review-stt-box-r-2')), findsOneWidget);
       expect(find.byKey(const ValueKey('review-stt-box-r-3')), findsOneWidget);
     });
@@ -1181,10 +1121,8 @@ void main() {
         );
         await openReview(tester, server);
 
-        // Banner chỉ xem
         expect(find.text('Phiếu đã duyệt — chỉ xem'), findsOneWidget);
 
-        // Vẫn hiện chip tiêu đề & khung ghi chú
         expect(find.text('STT giấy 5 ≠ hệ thống 2'), findsOneWidget);
         expect(
           find.byKey(const ValueKey('review-stt-box-r-1')),
@@ -1195,7 +1133,6 @@ void main() {
           findsOneWidget,
         );
 
-        // KHÔNG có checkbox
         expect(find.text('Đúng học sinh này'), findsNothing);
         expect(
           find.byKey(const ValueKey('review-stt-confirm-r-1')),
@@ -1293,24 +1230,19 @@ void main() {
           );
           await openReview(tester, server, physicalSize: size);
 
-          // 1. Không hiển thị các chuỗi cấm
           expect(find.textContaining('Ký tự thô'), findsNothing);
           expect(find.textContaining('Độ tin cậy'), findsNothing);
           expect(find.textContaining('Lấy theo'), findsNothing);
           expect(find.textContaining('khác nhau'), findsNothing);
 
-          // 2. Đúng câu lý do
           expect(find.text('Nhập điểm theo ảnh'), findsWidgets);
 
-          // 3. Đỏ để trống, Vàng điền sẵn
           final redField = tester.widget<TextFormField>(
             find.byKey(const ValueKey('review-value-r-1')),
           );
           expect(redField.controller?.text, isEmpty);
 
-          // 4. Chip và khung STT khác nhau ở dòng r-2 (trên mobile pager có thể cần chuyển slide hoặc xem dạng danh sách)
           if (size.width < 600) {
-            // Chuyển sang dòng 2 trên mobile pager
             await tester.tap(find.text('Tiếp ›'));
             await tester.pumpAndSettle();
           }
@@ -1327,7 +1259,6 @@ void main() {
           );
           expect(find.text('Đúng học sinh này'), findsOneWidget);
 
-          // 5. Menu ⋮ và Không ghi điểm bắt buộc lý do (thực hiện ở r-2)
           await tester.tap(find.byKey(const ValueKey('review-menu-r-2')));
           await tester.pumpAndSettle();
           await tester.tap(find.byKey(const ValueKey('review-empty-r-2')));
@@ -1340,14 +1271,12 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          // 6. Checkbox chặn duyệt phiếu
           if (size.width >= 600) {
             final approveBtn = tester.widget<FilledButton>(
               find.byKey(const ValueKey('review-approve')),
             );
             expect(approveBtn.onPressed, isNull);
           } else {
-            // Trên mobile, nút duyệt ở trang tổng kết
             await tester.tap(find.text('✓ Đồng ý & tiếp'));
             await tester.pumpAndSettle();
             final approveBtn = tester.widget<FilledButton>(

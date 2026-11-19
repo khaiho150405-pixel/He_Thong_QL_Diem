@@ -26,7 +26,6 @@ export interface RecognitionWorkerStore {
     status: "DANG_XU_LY" | "CHO_DOI_CHIEU" | "DA_DUYET" | "LOI" | "DA_HUY";
     objectKey: string;
   } | null>;
-  /** Danh sách lớp đã chốt khi tạo phiếu (STT → học sinh); rỗng với phiếu tạo trước ADR-0015. */
   roster(ticketId: string): Promise<RosterEntry[]>;
   complete(
     ticketId: string,
@@ -36,7 +35,6 @@ export interface RecognitionWorkerStore {
   fail(ticketId: string, code: string): Promise<void>;
 }
 
-/** Giải mã ảnh ô base64 từ dịch vụ nhận dạng (đã kiểm định dạng và kích thước); dùng chung với worker lô. */
 export function crop(value: string): Uint8Array {
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value))
     throw new Error("MALFORMED_RESPONSE");
@@ -68,11 +66,9 @@ export class RecognitionJobProcessor {
     private readonly store: RecognitionWorkerStore,
     private readonly storage: ObjectStorage,
     private readonly model: RecognitionModelClient,
-    /** Lớp xác nhận STT (RECOGNITION_STT_CHECK, mặc định tắt): chỉ hạ mức dòng, không gán học sinh. */
     private readonly options: { sttCheck?: boolean } = {},
   ) {}
 
-  /** Phiếu đã hủy: kết thúc job thành công (không retry, không ghi kết quả). Log không chứa họ tên. */
   private logCancelled(ticketId: string): void {
     console.log(
       JSON.stringify({ event: "recognition_ticket_cancelled", ticketId }),
@@ -90,7 +86,6 @@ export class RecognitionJobProcessor {
     if (ticket.status === "LOI") return;
     const roster = await this.store.roster(ticketId);
     if (!roster.length) {
-      // Phiếu không có danh sách lớp đã chốt thì không thể xác định học sinh: không đoán.
       await this.store.fail(ticketId, "ROW_MATCH_FAILED");
       return;
     }
@@ -99,8 +94,6 @@ export class RecognitionJobProcessor {
     try {
       result = await this.model.recognize(image);
     } catch (error) {
-      // Ảnh bị từ chối (mờ, không có bảng, không phải bảng điểm, không thấy cột điểm...): lỗi xác định, thử lại vô ích →
-      // đánh dấu phiếu LOI với đúng mã để giáo viên chụp lại.
       if (error instanceof Error && isPipelineErrorCode(error.message)) {
         await this.store.fail(ticketId, error.message);
         return;
@@ -115,7 +108,6 @@ export class RecognitionJobProcessor {
       return;
     }
     if (matched.stt.enabled)
-      // Mô hình STT đã chọn cho trang (quy ước A/B, độ lệch k, có cộng dòng gạch không); không chứa họ tên.
       console.log(
         JSON.stringify({
           event: "recognition_stt_model",
@@ -162,9 +154,7 @@ export class RecognitionJobProcessor {
           nameCropKey: nameKey,
           comparison: row.comparison,
           suggestedSource: row.suggestedSource,
-          // Mức ghép học sinh tách riêng khỏi mức điểm (reviewLevel là mức cuối = thấp hơn của hai mức).
           matchLevel: match.matchLevel,
-          // Mức cuối là mức thấp hơn giữa mức điểm (hai kênh) và mức ghép học sinh.
           reviewLevel: combineLevel(row.reviewLevel, match.matchLevel),
         });
       }
@@ -173,8 +163,6 @@ export class RecognitionJobProcessor {
       await Promise.allSettled(uploaded.map((key) => this.storage.remove(key)));
       throw error;
     }
-    // Phiếu có thể bị hủy trong lúc nhận dạng: SQL bỏ qua kết quả nên ảnh ô vừa tải lên thành mồ côi → dọn lại.
-    // Đặt ngoài try: lỗi ở bước này không được xóa ảnh ô của kết quả đã ghi.
     if ((await this.store.load(ticketId))?.status === "DA_HUY") {
       await Promise.allSettled(uploaded.map((key) => this.storage.remove(key)));
       this.logCancelled(ticketId);

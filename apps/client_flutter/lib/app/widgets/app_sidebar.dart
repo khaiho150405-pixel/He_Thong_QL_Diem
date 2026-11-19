@@ -1,3 +1,4 @@
+import '../../core/role_label.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,7 +20,6 @@ final sidebarOpenGroupsProvider = StateProvider<Set<String>>(
   },
 );
 
-/// Mục con trong một nhóm gập của sidebar.
 typedef _SidebarItem = ({
   IconData icon,
   String title,
@@ -27,12 +27,6 @@ typedef _SidebarItem = ({
   String? countBadge,
 });
 
-/// Thanh điều hướng bên (`.side` của prototype): nền navy, mục cao 44, mục
-/// đang chọn có nền mờ và vạch vàng 3px bên trái, cuối thanh là avatar, tên,
-/// vai trò và nút đăng xuất.
-///
-/// [onLogout] do màn hình cha cấp (kèm hộp thoại xác nhận); khi để trống thì
-/// đăng xuất ngay như trang chủ.
 class AppSidebar extends ConsumerStatefulWidget {
   const AppSidebar({
     super.key,
@@ -49,11 +43,7 @@ class AppSidebar extends ConsumerStatefulWidget {
   final Future<bool> Function()? onBeforeNavigate;
   final Future<void> Function()? onLogout;
 
-  static String _roleLabel(String role) => switch (role) {
-    'QUAN_TRI_VIEN' => 'Quản trị viên',
-    'GIAO_VIEN' => 'Giáo viên',
-    _ => 'Học sinh',
-  };
+  static String _roleLabel(String role) => roleLabelOf(role);
 
   @override
   ConsumerState<AppSidebar> createState() => _AppSidebarState();
@@ -104,7 +94,6 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
         ? false
         : (isCollapsed ?? ref.watch(sidebarCollapsedProvider));
 
-    // Nền mờ trên navy: trắng 7% khi rê chuột, 14% khi đang chọn.
     final hoverBg = t.onPri.withAlpha(18);
     final activeBg = t.onPri.withAlpha(36);
     final itemRadius = BorderRadius.circular(AppRadius.sm);
@@ -158,7 +147,6 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
       ),
     );
 
-    /// Khung một mục: nền (đang chọn), hiệu ứng rê chuột, vạch vàng.
     Widget itemShell({
       required bool active,
       required bool tinted,
@@ -444,7 +432,6 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
         child: Icon(Icons.school_outlined, size: 20, color: t.onPri),
       );
       if (school == null || !school.hasLogo) return icon;
-      // Logo đặt trên nền sáng để đọc được cả khi ảnh nền trong suốt.
       return Container(
         width: 36,
         height: 36,
@@ -585,7 +572,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  user.username,
+                  user.shownName,
                   style: TextStyle(
                     color: t.onPri,
                     fontWeight: FontWeight.w600,
@@ -622,12 +609,11 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
         return footer(userRow('Giáo viên bộ môn'));
       }
       if (role == 'HOC_SINH') {
-        // Dữ liệu thật từ studentResultsList (giữ nguyên nguồn như bản cũ).
         return _StudentSummaryBuilder(
           builder: (context, data) {
             final summary = data?.summary;
             final subtitle = summary?.className != null
-                ? 'Lớp ${summary!.className} · ${summary.termName ?? 'Chưa chốt điểm'}'
+                ? 'Lớp ${summary!.className} · ${summary.termName ?? 'Chưa có học kỳ'}'
                 : 'Học sinh';
             final avgNum = summary?.averageScore != null
                 ? double.tryParse(summary!.averageScore!)
@@ -663,7 +649,7 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
                     ),
                     child: Row(
                       children: [
-                        stat(average, 'ĐTB'),
+                        stat(average, 'Điểm TB'),
                         stat(summary?.classRank?.toString() ?? '—', 'Xếp hạng'),
                         stat(summary?.classSize.toString() ?? '—', 'Sĩ số'),
                       ],
@@ -884,8 +870,6 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
   }
 }
 
-/// Tải một lần `studentResultsList` cho phần cuối sidebar của học sinh
-/// (lớp, học kỳ, ĐTB, xếp hạng, sĩ số); lỗi thì hiển thị như chưa có dữ liệu.
 class _StudentSummaryBuilder extends ConsumerStatefulWidget {
   const _StudentSummaryBuilder({required this.builder});
 

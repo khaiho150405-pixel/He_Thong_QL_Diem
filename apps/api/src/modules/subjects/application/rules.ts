@@ -25,7 +25,6 @@ export async function validateComponent(
     !["TX", "GK", "CK"].includes(String(data.loai_he_so))
   )
     throw new ConflictException("Nhóm hệ số không hợp lệ.");
-  // Cho phép Admin mở/khóa cổng nhập điểm (cho_phep_nhap) mà không ảnh hưởng cấu trúc điểm
   if (previous) {
     const structuralChanged =
       (data.loai_he_so !== undefined &&
@@ -40,7 +39,6 @@ export async function validateComponent(
       return;
     }
   }
-  // Versioned coefficient snapshots belong to Phase 5; freeze already-used sets now.
   if (
     (await tx.count("bang_diem", { ma_mon: data.ma_mon })) ||
     (previous && (await tx.count("bang_diem", { ma_mon: previous.ma_mon })))

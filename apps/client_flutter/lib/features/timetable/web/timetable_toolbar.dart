@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../app/design_tokens.dart';
 import '../../../app/widgets/app_badge.dart';
 
-/// Thanh công cụ gộp: tiêu đề + học kỳ/tuần ở trái, chọn ngày/chuyển tuần ở phải.
 class TimetableToolbar extends StatelessWidget {
   const TimetableToolbar({
     super.key,
@@ -23,21 +22,16 @@ class TimetableToolbar extends StatelessWidget {
 
   final String title;
 
-  /// Tên học kỳ và năm học (ví dụ "Học kỳ I · 2031-2032"); null khi chưa rõ.
   final String? semesterLabel;
 
-  /// Nhãn số tuần (ví dụ "Tuần 2"); null khi chưa rõ học kỳ.
   final String? weekNumberLabel;
 
-  /// "dd/MM – dd/MM/yyyy" của tuần đang xem.
   final String? weekLabel;
 
-  /// Ngày đang chọn, dạng dd/MM/yyyy.
   final String? dateLabel;
   final Widget tabs;
   final List<Widget> extras;
 
-  /// Hàng thứ hai (bộ lọc của QTV).
   final Widget? below;
   final VoidCallback? onPickDate;
   final VoidCallback? onToday;
@@ -111,31 +105,42 @@ class TimetableToolbar extends StatelessWidget {
                   children: [
                     SizedBox(width: 320, child: tabs),
                     ...extras,
-                    OutlinedButton.icon(
-                      key: const ValueKey('timetable-date-button'),
-                      onPressed: onPickDate,
-                      icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                      label: Text(dateLabel ?? '--/--/----'),
-                    ),
-                    TextButton(
-                      onPressed: onToday,
-                      child: const Text('Hôm nay'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onPrev,
-                      icon: const Icon(Icons.chevron_left, size: 18),
-                      label: const Text('Tuần trước'),
-                    ),
-                    OutlinedButton(
-                      onPressed: onNext,
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('Tuần sau'),
-                          SizedBox(width: 4),
-                          Icon(Icons.chevron_right, size: 18),
-                        ],
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        OutlinedButton.icon(
+                          key: const ValueKey('timetable-date-button'),
+                          onPressed: onPickDate,
+                          icon: const Icon(
+                            Icons.calendar_month_outlined,
+                            size: 18,
+                          ),
+                          label: Text(dateLabel ?? '--/--/----'),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        TextButton(
+                          onPressed: onToday,
+                          child: const Text('Hôm nay'),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        OutlinedButton.icon(
+                          onPressed: onPrev,
+                          icon: const Icon(Icons.chevron_left, size: 18),
+                          label: const Text('Tuần trước'),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        OutlinedButton(
+                          onPressed: onNext,
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Tuần sau'),
+                              SizedBox(width: 4),
+                              Icon(Icons.chevron_right, size: 18),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

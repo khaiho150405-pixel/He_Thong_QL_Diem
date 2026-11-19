@@ -28,14 +28,13 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "apps" / "recognition-service"))
 
 DPI = 200
-PAGE_PX = (1654, 2339)  # A4 ở 200 dpi
+PAGE_PX = (1654, 2339)
 PX_PER_MM = DPI / 25.4
 TITLE = "SỔ ĐIỂM MÔN HỌC — THPT"
 SUBTITLE = "(Mô phỏng theo Thông tư 22/2021/TT-BGDĐT)"
 FIELDS = "Lớp: ................   Môn: ......................   Học kỳ: ......   Năm học: ..............."
 FOOTER = "Mẫu mô phỏng để thử nghiệm nhận dạng; danh sách họ tên là dữ liệu giả."
 HEADERS = ("STT", "Họ và tên", "TX1", "TX2", "TX3", "TX4", "GK", "CK", "Ghi chú")
-# Bề rộng cột (mm), tổng 186 mm = A4 trừ lề 12 mm hai bên.
 COLUMNS_MM = (10, 56, 14, 14, 14, 14, 16, 16, 32)
 N_ROWS = 40
 LEFT_MM = 12.0
@@ -53,7 +52,6 @@ FONT_CANDIDATES = (
     ("/System/Library/Fonts/Supplemental/Arial.ttf", "/System/Library/Fonts/Supplemental/Arial Bold.ttf"),
 )
 
-# Họ, đệm, tên phổ biến để ghép tên giả. Ghép ngẫu nhiên nên không phản ánh người thật nào.
 HO = ("Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý")
 DEM = ("Văn", "Thị", "Hữu", "Minh", "Quốc", "Ngọc", "Thanh", "Anh", "Gia", "Bảo", "Đức", "Thu", "Hoài", "Kim")
 TEN = ("An", "Bình", "Châu", "Dũng", "Giang", "Hà", "Hải", "Khoa", "Lan", "Linh", "Mai", "Nam", "Phúc", "Quân", "Sơn", "Thảo", "Trang", "Uyên", "Vy", "Yến")

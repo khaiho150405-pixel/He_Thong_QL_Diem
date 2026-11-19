@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../authentication/session.dart';
 
-/// Mã lỗi ổn định trong envelope lỗi của API (`{code, message, details, requestId}`).
 String? apiErrorCode(Object error) {
   if (error is! DioException) return null;
   var data = error.response?.data;
@@ -22,7 +21,6 @@ String? apiErrorCode(Object error) {
   return null;
 }
 
-/// Chi tiết lỗi trong envelope lỗi của API (`details`).
 Map<String, dynamic>? apiErrorDetails(Object error) {
   if (error is! DioException) return null;
   var data = error.response?.data;
@@ -38,7 +36,6 @@ Map<String, dynamic>? apiErrorDetails(Object error) {
   return null;
 }
 
-/// Thông điệp tiếng Việt thân thiện theo trường code lỗi của backend.
 String deadlineErrorMessage(Object error) {
   return switch (apiErrorCode(error)) {
     'STUDENT_CLASS_VIA_ENROLLMENT' =>
@@ -80,8 +77,8 @@ String deadlineErrorMessage(Object error) {
     'GRADE_ENTRY_WINDOW_CLOSED' =>
       'Chưa đến thời gian nhập hoặc đã hết hạn; không thể lưu điểm',
     'VERSION_OR_STATE_CONFLICT' =>
-      'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
-    'VERSION_CONFLICT' => 'Bảng điểm vừa thay đổi hoặc đã chốt, hãy tải lại',
+      'Bảng điểm vừa thay đổi hoặc đã khóa, hãy tải lại',
+    'VERSION_CONFLICT' => 'Bảng điểm vừa thay đổi hoặc đã khóa, hãy tải lại',
     'CONFLICT' => () {
       if (error is DioException) {
         var data = error.response?.data;
@@ -96,7 +93,7 @@ String deadlineErrorMessage(Object error) {
           return data['message'] as String;
         }
       }
-      return 'Dữ liệu vừa thay đổi hoặc đã chốt, hãy tải lại';
+      return 'Dữ liệu vừa thay đổi hoặc đã khóa, hãy tải lại';
     }(),
     'GRADEBOOK_NOT_EDITABLE' => 'Bảng điểm đã khóa, không thể sửa',
     _ => errorMessage(error),
@@ -112,10 +109,6 @@ abstract class SemesterDeadlinesRepository {
     required DateTime opensAt,
     required DateTime closesAt,
     required num expectedVersion,
-  });
-  Future<InitializeGradebooksResultDto> initializeGradebooks({
-    required num semesterId,
-    required String idempotencyKey,
   });
   Future<PublishReadinessDto> publishReadiness(num semesterId);
 }
@@ -170,18 +163,6 @@ class ApiSemesterDeadlinesRepository implements SemesterDeadlinesRepository {
         closesAt: closesAt,
         expectedVersion: expectedVersion,
       ),
-    );
-    return res.data!;
-  }
-
-  @override
-  Future<InitializeGradebooksResultDto> initializeGradebooks({
-    required num semesterId,
-    required String idempotencyKey,
-  }) async {
-    final res = await _api.getSemestersApi().semesterDeadlinesInitialize(
-      id: semesterId,
-      xIdempotencyKey: idempotencyKey,
     );
     return res.data!;
   }

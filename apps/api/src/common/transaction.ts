@@ -16,17 +16,11 @@ export function sqlStateOf(error: unknown): string | undefined {
   );
 }
 export interface TransactionOptions {
-  /** Mặc định Serializable. Mức thấp hơn chỉ dành cho việc chạm phiên (không ảnh hưởng dữ liệu nghiệp vụ). */
   isolationLevel?: "Serializable" | "ReadCommitted";
 }
 
-/** Tổng số lần chạy tối đa của một giao dịch gặp lỗi tuần tự hóa (1 lần đầu + 4 lần thử lại). */
 export const MAX_TRANSACTION_ATTEMPTS = 5;
 
-/**
- * Chờ ngẫu nhiên tăng dần trước lần thử lại thứ n (n = 1..4): 20–60, 40–120, 80–240, 160–480 ms (tổng tối đa < 1 giây),
- * để các giao dịch đụng nhau không chạy lại đúng cùng lúc.
- */
 export function retryDelayMs(
   retry: number,
   random: () => number = Math.random,
@@ -75,15 +69,15 @@ export async function transaction<T>(
           INVALID_ENTRY_WINDOW:
             "Thời điểm đóng phải sau thời điểm mở và nằm trong tương lai.",
           COLUMN_LOCKED:
-            "Cột điểm đã chốt; không được sửa hoặc nhận diện thêm.",
+            "Cột điểm đã khóa; không được sửa hoặc nhận diện thêm.",
           INCOMPLETE_COLUMN:
-            "Cột còn thiếu điểm bắt buộc hoặc thiếu học sinh; nhập đủ và đồng bộ sĩ số trước khi chốt.",
+            "Cột còn thiếu điểm bắt buộc hoặc thiếu học sinh; nhập đủ và đồng bộ sĩ số trước khi khóa.",
           PENDING_REVIEW:
-            "Còn phiếu nhận diện đang xử lý hoặc chờ duyệt; xử lý xong trước khi chốt.",
+            "Còn phiếu nhận diện đang xử lý hoặc chờ duyệt; xử lý xong trước khi khóa.",
           SEMESTER_WEIGHTS_LOCKED:
-            "Học kỳ đã có cột/bảng điểm chốt; không thể sửa hoặc xóa hệ số.",
+            "Học kỳ đã có cột/bảng điểm khóa; không thể sửa hoặc xóa hệ số.",
           TERM_RESULTS_INCOMPLETE:
-            "Học kỳ còn bảng chưa chốt hoặc học sinh chưa có tổng kết; hoàn tất trước khi công bố.",
+            "Học kỳ còn bảng chưa khóa hoặc học sinh chưa có tổng kết; hoàn tất trước khi công bố.",
           NO_RESULTS_TO_PUBLISH: "Học kỳ chưa có kết quả để công bố.",
           TERM_ALREADY_PUBLISHED:
             "Học kỳ đã công bố; không được tính lại kết quả.",
@@ -91,7 +85,6 @@ export async function transaction<T>(
             "Môn đã có bảng điểm; không thể đổi hình thức đánh giá.",
           PASS_FAIL_VALUE_REQUIRED:
             "Môn Đạt/Không đạt chỉ nhận Đạt hoặc Không đạt.",
-          // Hủy phiếu nhận dạng. VERSION_CONFLICT đứng sau mọi khóa khác chứa chuỗi này (ví dụ DEADLINE_VERSION_CONFLICT).
           TICKET_ALREADY_APPROVED: "Phiếu đã duyệt, không thể hủy.",
           RECOGNITION_ALREADY_PENDING:
             "Thành phần điểm này đang có phiếu chờ xử lý/đối chiếu; duyệt hoặc hủy phiếu đó trước.",

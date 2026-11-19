@@ -43,7 +43,6 @@ import 'package:api_client_dart/src/model/classification_policy_dto.dart';
 import 'package:api_client_dart/src/model/components_dto.dart';
 import 'package:api_client_dart/src/model/components_input.dart';
 import 'package:api_client_dart/src/model/components_page.dart';
-import 'package:api_client_dart/src/model/create_gradebook_input.dart';
 import 'package:api_client_dart/src/model/create_timetable_item_input.dart';
 import 'package:api_client_dart/src/model/distribution_item_dto.dart';
 import 'package:api_client_dart/src/model/enrollment_dto.dart';
@@ -68,8 +67,6 @@ import 'package:api_client_dart/src/model/gradebook_history_entry_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_list_dto.dart';
 import 'package:api_client_dart/src/model/gradebook_summary_dto.dart';
 import 'package:api_client_dart/src/model/health_dto.dart';
-import 'package:api_client_dart/src/model/initialize_gradebooks_result_dto.dart';
-import 'package:api_client_dart/src/model/initialized_gradebook_dto.dart';
 import 'package:api_client_dart/src/model/late_student_input.dart';
 import 'package:api_client_dart/src/model/late_student_result_dto.dart';
 import 'package:api_client_dart/src/model/lock_input.dart';
@@ -115,7 +112,6 @@ import 'package:api_client_dart/src/model/semesters_dto.dart';
 import 'package:api_client_dart/src/model/semesters_input.dart';
 import 'package:api_client_dart/src/model/semesters_page.dart';
 import 'package:api_client_dart/src/model/session_dto.dart';
-import 'package:api_client_dart/src/model/skipped_gradebook_dto.dart';
 import 'package:api_client_dart/src/model/skipped_student_dto.dart';
 import 'package:api_client_dart/src/model/student_approved_component_dto.dart';
 import 'package:api_client_dart/src/model/student_result_summary_dto.dart';
@@ -308,9 +304,6 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'ComponentsPage':
       return ComponentsPage.fromJson(value as Map<String, dynamic>)
           as ReturnType;
-    case 'CreateGradebookInput':
-      return CreateGradebookInput.fromJson(value as Map<String, dynamic>)
-          as ReturnType;
     case 'CreateTimetableItemInput':
       return CreateTimetableItemInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -379,14 +372,6 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'HealthDto':
       return HealthDto.fromJson(value as Map<String, dynamic>) as ReturnType;
-    case 'InitializeGradebooksResultDto':
-      return InitializeGradebooksResultDto.fromJson(
-            value as Map<String, dynamic>,
-          )
-          as ReturnType;
-    case 'InitializedGradebookDto':
-      return InitializedGradebookDto.fromJson(value as Map<String, dynamic>)
-          as ReturnType;
     case 'LateStudentInput':
       return LateStudentInput.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -518,9 +503,6 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'SessionDto':
       return SessionDto.fromJson(value as Map<String, dynamic>) as ReturnType;
-    case 'SkippedGradebookDto':
-      return SkippedGradebookDto.fromJson(value as Map<String, dynamic>)
-          as ReturnType;
     case 'SkippedStudentDto':
       return SkippedStudentDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;

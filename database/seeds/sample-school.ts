@@ -1,12 +1,3 @@
-/**
- * Dữ liệu mẫu giống thực tế cho trường THPT: giáo viên bộ môn, phân công giảng dạy và thời khóa biểu của 15 lớp.
- *
- * Chỉ chạy ở development/test, sau `db:seed` (cần năm học hiện hành, học kỳ 1 và các lớp 10A1-12A5). Chạy lặp lại
- * an toàn: chỉ thêm phần còn thiếu, không xóa hay sửa dữ liệu đã có. Họ tên, số điện thoại và email đều là dữ liệu
- * giả (không phải người thật); số điện thoại 10 chữ số bắt đầu bằng 0 dùng làm tên đăng nhập (AGENTS.md mục 7, điều 16).
- *
- * Mã thoát 2: chưa có dữ liệu nền, cần chạy `pnpm db:seed` trước.
- */
 import "dotenv/config";
 import { Pool } from "pg";
 import { hash, argon2id } from "argon2";
@@ -21,7 +12,6 @@ if (
 if (!process.env.MIGRATION_DATABASE_URL)
   throw new Error("MIGRATION_DATABASE_URL required");
 
-/** Môn học mẫu: tên, số tiết mỗi tuần, tổ chuyên môn, số giáo viên bộ môn. */
 const SUBJECTS = [
   { name: "Toán học", periods: 4, dept: "Toán - Tin", teachers: 5 },
   { name: "Ngữ văn", periods: 4, dept: "Ngữ văn", teachers: 5 },
@@ -71,11 +61,6 @@ const FIRST = [
   "Thủy",
 ];
 
-/**
- * Tuần mẫu của một lớp (thứ 2-6: 4 tiết, thứ 7: 3 tiết), thỏa quy tắc của API:
- * mỗi buổi tối đa 4 tiết, môn học 2 tiết trong buổi phải liên tiếp, ngày có từ 3 tiết thì ≥ 3 môn.
- * Đủ số tiết/tuần của 10 môn (23 tiết).
- */
 const WEEK: { thu: number; plan: string[] }[] = [
   { thu: 2, plan: ["Toán học", "Toán học", "Tiếng Anh", "Lịch sử"] },
   { thu: 3, plan: ["Ngữ văn", "Ngữ văn", "Toán học", "Địa lý"] },
@@ -90,7 +75,6 @@ const db = await pool.connect();
 
 type Slot = { thu: number; tiet: number; subject: string };
 
-/** Mọi hoán vị của các chỉ số 0..4 (120 cách sắp thứ tự năm ngày thứ 2-6). */
 function permutations(items: number[]): number[][] {
   if (items.length <= 1) return [items];
   return items.flatMap((item, i) =>
@@ -103,7 +87,6 @@ function permutations(items: number[]): number[][] {
 const DAY_ORDERS = permutations([0, 1, 2, 3, 4]);
 const SATURDAY_ORDERS = permutations([0, 1, 2]);
 
-/** Biến thể của tuần mẫu: đổi thứ tự các ngày thứ 2-6 theo `order` và đảo thứ tự tiết trong ngày khi `flip`. */
 function weekVariant(
   order: number[],
   satOrder: number[],
@@ -160,7 +143,6 @@ try {
   } else {
     const termId = term.rows[0].ma_hoc_ky as number;
 
-    // 1. Môn học và thành phần điểm còn thiếu.
     const subjectId = new Map<string, number>();
     for (const s of SUBJECTS) {
       await db.query(
@@ -195,7 +177,6 @@ try {
       }
     }
 
-    // 2. Giáo viên bộ môn: mỗi môn đủ số giáo viên, tên đăng nhập là số điện thoại 10 chữ số.
     const passwordHash = await hash(process.env.SEED_PASSWORD!, {
       type: argon2id,
       memoryCost: 65536,
@@ -206,7 +187,6 @@ try {
     let serial = 0;
     for (const s of SUBJECTS) {
       const ids: number[] = [];
-      // Giáo viên có sẵn của môn (tổ chuyên môn trùng và đã có phân công môn này) được dùng lại trước.
       const existing = await db.query(
         `SELECT DISTINCT pc.ma_giao_vien FROM phan_cong_giang_day pc
          WHERE pc.ma_mon = $1 AND pc.ma_hoc_ky = $2 ORDER BY pc.ma_giao_vien`,
@@ -238,9 +218,8 @@ try {
       teachersBySubject.set(s.name, ids);
     }
 
-    // 3. Phân công: mỗi lớp học đủ 10 môn; lớp nào chưa có phân công thì chia đều cho giáo viên của môn.
-    const teacherOf = new Map<string, number>(); // `${lop}|${môn}` -> giáo viên
-    const loads = new Map<string, number>(); // `${giáo viên}|${chiều?}` -> số lớp trong buổi đó
+    const teacherOf = new Map<string, number>();
+    const loads = new Map<string, number>();
     const classKhoi = new Map<number, number>(
       classRows.map((c) => [c.ma_lop as number, c.khoi as number]),
     );
@@ -278,8 +257,7 @@ try {
       }
     }
 
-    // 4. Thời khóa biểu: lớp nào chưa có tiết nào trong học kỳ thì xếp một tuần mẫu không trùng giáo viên.
-    const busy = new Set<string>(); // `${giáo viên}|${thứ}|${tiết}`
+    const busy = new Set<string>();
     for (const row of (
       await db.query(
         "SELECT ma_giao_vien, thu, tiet FROM thoi_khoa_bieu WHERE ma_hoc_ky = $1",
@@ -305,7 +283,6 @@ try {
       perGrade.set(cls.khoi, index + 1);
       indexOf.set(cls.ma_lop, index);
     }
-    // Lớp có nhiều giáo viên dùng chung nhất (khó xếp nhất) được xếp trước.
     const sharedTeachers = (lop: number) =>
       SUBJECTS.filter(
         (s) =>
@@ -321,7 +298,6 @@ try {
     for (const cls of order) {
       const index = indexOf.get(cls.ma_lop)!;
       if (scheduled.has(cls.ma_lop)) continue;
-      // Khối 10 học buổi chiều, các khối còn lại học buổi sáng: giáo viên dạy nhiều khối không bị trùng giờ.
       const afternoon = cls.khoi === 10;
       let placed: Slot[] | null = null;
       const variants = DAY_ORDERS.length * 2 * SATURDAY_ORDERS.length;

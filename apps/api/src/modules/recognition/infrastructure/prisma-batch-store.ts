@@ -27,10 +27,6 @@ import type {
   StoredBatchReceipt,
 } from "../application/batch-port.js";
 
-/**
- * Dịch lỗi của hàm SQL (mã nằm trong thông điệp RAISE EXCEPTION) sang mã lỗi ổn định của API. Thứ tự quan trọng: mã nào là
- * chuỗi con của mã khác phải đứng sau.
- */
 const SQL_CODES: Array<[string, BatchErrorCode]> = [
   ["TOO_MANY_PAGES", "TOO_MANY_PAGES"],
   ["COMPONENT_NOT_MAPPABLE", "COMPONENT_NOT_MAPPABLE"],
@@ -96,7 +92,6 @@ export class PrismaRecognitionBatchStore implements RecognitionBatchStore {
     @Inject(SETTINGS) private readonly settings: Settings,
   ) {}
 
-  /** Đọc bảng điểm sau khi kiểm phiên và quyền; `write` chỉ giáo viên được phân công. */
   private async authorize(
     tx: Prisma.TransactionClient,
     actor: CreateRecognitionBatch["actor"],
@@ -142,7 +137,6 @@ export class PrismaRecognitionBatchStore implements RecognitionBatchStore {
 
   create(input: CreateRecognitionBatch): Promise<StoredBatchReceipt> {
     return run(this.db, async (tx) => {
-      // Danh sách lớp được chốt vào từng phiếu ngay trong giao dịch tạo lô (ADR-0015).
       const students = await tx.$queryRaw<
         Array<{ ma_hoc_sinh: number; ma_lop: number; ho_ten: string }>
       >`
@@ -180,7 +174,6 @@ export class PrismaRecognitionBatchStore implements RecognitionBatchStore {
     batchId: string,
   ): Promise<RecognitionBatchView | null> {
     return run(this.db, async (tx) => {
-      // Đọc: giáo viên được phân công hoặc quản trị viên (như danh sách phiếu); học sinh bị từ chối.
       await this.authorize(tx, actor, gradebookId, false);
       const batch = await tx.lo_nhan_dien.findFirst({
         where: { ma_lo: BigInt(batchId), ma_bang_diem: gradebookId },
@@ -242,7 +235,6 @@ export class PrismaRecognitionBatchStore implements RecognitionBatchStore {
 
   cancel(input: CancelRecognitionBatch): Promise<{ objectKeys: string[] }> {
     return run(this.db, async (tx) => {
-      // Kiểm phân công hiện tại trước mọi thay đổi (AGENTS 7.9); hàm SQL tự bảo vệ thêm một lần.
       await this.authorize(tx, input.actor, input.gradebookId, true);
       await tx.$queryRaw`
         SELECT public.huy_lo_nhan_dien(
@@ -253,7 +245,6 @@ export class PrismaRecognitionBatchStore implements RecognitionBatchStore {
           ${input.idempotencyKey}::text,
           ${input.requestHash}::text
         ) AS result`;
-      // Hàm SQL đã chặn lô không thuộc bảng điểm; đọc khóa ảnh để dọn object storage sau khi commit.
       const batch = await tx.lo_nhan_dien.findFirst({
         where: {
           ma_lo: BigInt(input.batchId),
@@ -286,7 +277,6 @@ export class PrismaRecognitionBatchStore implements RecognitionBatchStore {
           row.duong_dan_anh_o_ten,
         ]),
       );
-      // Ảnh trang là bằng chứng chung của mọi phiếu trong lô: chỉ xóa khi không còn phiếu nào chưa hủy (kể cả đã duyệt).
       const everyTicketCancelled = cancelled.length === batch.phieu_rows.length;
       const pageKeys = everyTicketCancelled
         ? batch.trang_rows.map((page) => page.duong_dan_anh)

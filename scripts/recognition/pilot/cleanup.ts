@@ -1,17 +1,7 @@
-/**
- * Xóa lớp thử nhận dạng (BE-20) khỏi DATABASE TEST CỤC BỘ và các ảnh liên quan trong object storage.
- *
- *   pnpm exec tsx scripts/recognition/pilot/cleanup.ts [đường-dẫn/pilot.json]   (mặc định .local/pilot/pilot.json)
- *
- * Chỉ chạy với database có tên kết thúc `_test` (TEST_MIGRATION_URL, vai trò chủ sở hữu bảng). Lịch sử điểm và danh sách
- * phiếu là bảng chỉ-ghi-thêm: script tắt trigger chặn xóa của đúng hai bảng đó TRONG MỘT GIAO DỊCH và bật lại ngay trước
- * khi commit. Không dùng cho DB development/production.
- */
 import { readFileSync, existsSync, renameSync } from "node:fs";
 import { createRequire } from "node:module";
 import { Pool } from "pg";
 
-// @aws-sdk/client-s3 chỉ được cài trong workspace apps/api.
 const { DeleteObjectCommand, S3Client } = createRequire(
   new URL("../../../apps/api/package.json", import.meta.url),
 )("@aws-sdk/client-s3") as typeof import("@aws-sdk/client-s3");
@@ -153,7 +143,6 @@ try {
   await pool.end();
 }
 
-// Ảnh gốc và ảnh ô trong object storage (sau khi DB đã sạch). Lỗi xóa ảnh không làm hỏng việc dọn DB.
 if (keys.length && process.env.S3_ENDPOINT) {
   const s3 = new S3Client({
     endpoint: process.env.S3_ENDPOINT,
@@ -171,9 +160,7 @@ if (keys.length && process.env.S3_ENDPOINT) {
         new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }),
       );
       removed += 1;
-    } catch {
-      // đối tượng đã mất hoặc storage không sẵn sàng
-    }
+    } catch {}
   }
   console.log(JSON.stringify({ objectsRemoved: removed }));
 }

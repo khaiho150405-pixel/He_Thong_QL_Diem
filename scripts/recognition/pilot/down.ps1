@@ -1,6 +1,4 @@
-﻿# Tắt 5 dịch vụ thử nhận dạng và gỡ chuyển cổng USB. Không tắt Docker (dữ liệu vẫn giữ nguyên).
-# Dùng:  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/recognition/pilot/down.ps1
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 . (Join-Path $PSScriptRoot 'usb-common.ps1')
 try {

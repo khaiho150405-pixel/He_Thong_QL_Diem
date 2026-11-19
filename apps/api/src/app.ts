@@ -38,7 +38,6 @@ import {
 
 const DEFAULT_TRY_TIMEOUT_MS = 90_000;
 
-/** Thời gian chờ "thử nhận dạng" đồng bộ (mặc định 90 s); đặt bằng FORM_TEMPLATE_TRY_TIMEOUT_MS, 1 s–10 phút. */
 function tryTimeoutMs(env: NodeJS.ProcessEnv): number {
   const value = Number(
     env.FORM_TEMPLATE_TRY_TIMEOUT_MS ?? DEFAULT_TRY_TIMEOUT_MS,
@@ -112,6 +111,7 @@ export async function createApp(
     origin: config.origins,
     credentials: true,
     exposedHeaders: ["x-request-id"],
+    maxAge: 600,
   });
   app.setGlobalPrefix("api/v1");
   app.useGlobalPipes(

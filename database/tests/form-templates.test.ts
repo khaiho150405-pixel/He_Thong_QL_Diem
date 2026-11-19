@@ -3,9 +3,6 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { createRosterFixture } from "../../apps/api/test/integration/roster-fixture.js";
 
-// Mẫu bảng điểm (ADR-0016, migration 202610190001): ràng buộc bảng, quyền runtime, hàm luu_mau_bang_diem /
-// doi_trang_thai_mau_bang_diem, chặn sửa mẫu đã có phiếu tham chiếu. Dữ liệu hoàn toàn giả; chỉ chạy trên DB *_test.
-
 type Failure = { code?: string; message?: string };
 type Col = {
   index: number;
@@ -25,7 +22,6 @@ const col = (index: number, role: string, extra: Partial<Col> = {}): Col => ({
   ...extra,
 });
 
-// STT | Họ tên | TX1 số | TX1 chữ | GK1 số | Ghi chú
 const validColumns = (): Col[] => [
   col(0, "STT"),
   col(1, "HO_TEN"),
@@ -140,7 +136,6 @@ async function setup() {
       f.valid,
       `tmpl-${randomBytes(6).toString("hex")}`,
     );
-    // P3 sẽ ghi cột này khi tạo phiếu theo mẫu; ở đây mô phỏng bằng chủ sở hữu bảng.
     await f.owner.query(
       "UPDATE phieu_nhan_dien SET ma_mau=$1 WHERE ma_phieu=$2",
       [templateId, ticket.ticketId],
@@ -301,7 +296,6 @@ test("luu_mau_bang_diem rejects every invalid definition and rolls back", async 
         failsWith("23514", `INVALID_TEMPLATE_DEFINITION: ${reason ?? ""}`),
         label,
       );
-    // Mỗi lời gọi lỗi rollback toàn bộ: không có mẫu hay cột nào còn lại.
     assert.equal(await t.templateTotal(), before);
   } finally {
     await t.f.close();
@@ -311,7 +305,6 @@ test("luu_mau_bang_diem rejects every invalid definition and rolls back", async 
 test("only a live administrator session in a serializable transaction may write", async () => {
   const t = await setup();
   try {
-    // Phiên giáo viên (fixture) và phiên không tồn tại đều bị từ chối.
     await assert.rejects(
       t.create({ session: t.f.session }),
       failsWith("42501", "FORBIDDEN"),
@@ -320,7 +313,6 @@ test("only a live administrator session in a serializable transaction may write"
       t.create({ session: "f".repeat(64) }),
       failsWith("42501", "FORBIDDEN"),
     );
-    // Phiên QTV đã hết hạn.
     const expired = createHash("sha256").update(randomBytes(32)).digest("hex");
     await t.f.owner.query(
       "INSERT INTO phien_lam_viec VALUES($1,$2,$3,now()-interval '1 minute',now())",
@@ -330,7 +322,6 @@ test("only a live administrator session in a serializable transaction may write"
       t.create({ session: expired }),
       failsWith("42501", "FORBIDDEN"),
     );
-    // Ngoài giao dịch SERIALIZABLE.
     await assert.rejects(
       t.f.runtime.query(
         "SELECT public.luu_mau_bang_diem($1,'TAO',NULL,NULL,'x',NULL,'[]'::jsonb,'{}'::jsonb,'a','b')",
@@ -371,12 +362,10 @@ test("update in place bumps the version and replaces the columns", async () => {
       )
     ).rows[0].loai_he_so;
     assert.equal(group, "CK");
-    // Phiên bản cũ của người dùng: xung đột.
     await assert.rejects(
       t.save("SUA", { templateId, expectedVersion: 0 }),
       failsWith("23514", "VERSION_CONFLICT"),
     );
-    // Số cột phải khớp chữ ký đã lưu.
     await assert.rejects(
       t.save("SUA", {
         templateId,
@@ -405,7 +394,6 @@ test("a template referenced by a ticket cannot be edited in place", async () => 
     );
     assert.equal((await t.row(templateId)).ten_mau, "Mẫu giả");
     assert.equal(await t.columnCount(templateId), 6);
-    // Trigger chặn cả ghi trực tiếp vào cot_mau của mẫu đã dùng, kể cả chủ sở hữu bảng.
     await assert.rejects(
       t.f.owner.query("DELETE FROM cot_mau WHERE ma_mau=$1 AND chi_so_cot=5", [
         templateId,
@@ -420,7 +408,6 @@ test("a template referenced by a ticket cannot be edited in place", async () => 
       failsWith("23514", "TEMPLATE_IN_USE"),
     );
     assert.equal(await t.columnCount(templateId), 6);
-    // "Sửa" lúc này là tạo phiên bản mới.
     const next = await t.save("PHIEN_BAN", {
       templateId,
       expectedVersion: 0,
@@ -453,7 +440,6 @@ test("a new version retires the old row and keeps one chain", async () => {
     assert.equal(fresh.ma_mau_goc, first);
     assert.equal(await t.columnCount(second), 6);
 
-    // Chỉ tạo phiên bản từ bản mới nhất của chuỗi.
     await assert.rejects(
       t.save("PHIEN_BAN", { templateId: first, expectedVersion: 2 }),
       failsWith("23514", "VERSION_CONFLICT"),
@@ -467,10 +453,8 @@ test("a new version retires the old row and keeps one chain", async () => {
     ).templateId;
     const latest = await t.row(third);
     assert.equal(latest.phien_ban, 3);
-    // Bản gốc của chuỗi là bản đầu, không phải bản liền trước.
     assert.equal(latest.ma_mau_goc, first);
     assert.equal((await t.row(second)).status, "NGUNG");
-    // Bản cũ đã NGUNG không bật lại được và không sửa tại chỗ được.
     await assert.rejects(
       t.changeStatus(first, 2, "DANG_DUNG"),
       failsWith("23514", "TEMPLATE_INACTIVE"),
@@ -479,7 +463,6 @@ test("a new version retires the old row and keeps one chain", async () => {
       t.save("SUA", { templateId: first, expectedVersion: 2 }),
       failsWith("23514", "TEMPLATE_INACTIVE"),
     );
-    // Bản không mới nhất của chuỗi cũng không kích hoạt được.
     await assert.rejects(
       t.changeStatus(second, 1, "DANG_DUNG"),
       failsWith("23514", "TEMPLATE_INACTIVE"),
@@ -536,7 +519,6 @@ test("table constraints reject malformed rows even for the table owner", async (
   const t = await setup();
   try {
     const { templateId } = await t.create();
-    // Mẫu khác chỉ để thử chèn cột sai (mẫu chưa có phiếu tham chiếu nên trigger "đang dùng" không chặn trước).
     const other = (await t.create()).templateId;
     const insertOther = (
       index: number,
@@ -578,7 +560,6 @@ test("table constraints reject malformed rows even for the table owner", async (
       insertOther(64, "BO_QUA", null, null, null),
       checks("cot_mau_chi_so_hop_le"),
     );
-    // (loai_he_so, thu_tu_trong_nhom) trùng và một cột chữ thứ hai cho cùng cột điểm.
     await assert.rejects(
       insertOther(20, "DIEM", "TX", 1, null),
       failsWith("23505", "cot_mau_nhom_thu_tu_key"),
@@ -587,7 +568,6 @@ test("table constraints reject malformed rows even for the table owner", async (
       insertOther(21, "DIEM_CHU", null, null, 2),
       failsWith("23505", "cot_mau_di_kem_key"),
     );
-    // Khóa ngoại hoãn: cột chữ trỏ tới chỉ số không tồn tại bị bắt khi COMMIT.
     const client = await t.f.owner.connect();
     try {
       await client.query("BEGIN");
@@ -638,14 +618,12 @@ test("table constraints reject malformed rows even for the table owner", async (
       insertTemplate(goodPath, 1, null, { version: 1, columnWidths: [1] }),
       checks("mau_chu_ky_hop_le"),
     );
-    // Cùng chuỗi không có hai phiên bản trùng số.
     await assert.rejects(
       insertTemplate(goodPath, 2, other, signature()).then(() =>
         insertTemplate(goodPath, 2, other, signature()),
       ),
       failsWith("23505", "mau_bang_diem_chuoi_phien_ban_key"),
     );
-    // Không hard-delete mẫu.
     await assert.rejects(
       t.f.owner.query("DELETE FROM mau_bang_diem WHERE ma_mau=$1", [
         templateId,
@@ -728,12 +706,10 @@ test("trying a template needs no table write: only the rate-limit counter accept
             )
           ).rows[0].allowed as boolean,
       );
-    // QTV dùng được thao tác của mẫu; hết hạn mức thì false.
     assert.equal(await consume(t.admin.session, "FORM_TEMPLATE_TRY"), true);
     assert.equal(await consume(t.admin.session, "FORM_TEMPLATE_TRY"), true);
     assert.equal(await consume(t.admin.session, "FORM_TEMPLATE_TRY"), false);
     assert.equal(await consume(t.admin.session, "FORM_TEMPLATE_ANALYZE"), true);
-    // Giáo viên không dùng được thao tác của QTV và QTV không dùng thao tác upload của giáo viên.
     await assert.rejects(
       consume(t.f.session, "FORM_TEMPLATE_TRY"),
       failsWith("42501", "FORBIDDEN"),
@@ -747,7 +723,6 @@ test("trying a template needs no table write: only the rate-limit counter accept
       consume(t.admin.session, "SOMETHING_ELSE"),
       failsWith("23514", "INVALID_OPERATION_RATE_LIMIT"),
     );
-    // "Thử" không tạo phiếu, kết quả dòng hay mẫu: số bản ghi không đổi.
     const ticketsBefore = await t.f.countTickets();
     const templatesBefore = await t.templateTotal();
     await consume(t.admin.session, "FORM_TEMPLATE_TRY");

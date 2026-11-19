@@ -1,17 +1,11 @@
+import '../../core/role_label.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/authentication/profile_dialog.dart';
 import '../design_tokens.dart';
 
-/// Nhãn vai trò dùng ở dòng nhỏ phía trên tiêu đề topbar (`.eyebrow`).
-String appRoleLabel(String role) => switch (role) {
-  'QUAN_TRI_VIEN' => 'Quản trị viên',
-  'GIAO_VIEN' => 'Giáo viên',
-  _ => 'Học sinh',
-};
+String appRoleLabel(String role) => roleLabelOf(role);
 
-/// Độ rộng sidebar: 258 (quản trị), 242 (giáo viên), 236 (học sinh); 70 khi
-/// thu gọn.
 double appSidebarWidth(String role, {required bool collapsed}) {
   if (collapsed) return 70;
   return switch (role) {
@@ -21,7 +15,6 @@ double appSidebarWidth(String role, {required bool collapsed}) {
   };
 }
 
-/// Khung co giãn bao quanh [child] (thường là `AppSidebar`).
 class AppSidebarFrame extends StatelessWidget {
   const AppSidebarFrame({
     super.key,
@@ -43,8 +36,6 @@ class AppSidebarFrame extends StatelessWidget {
   );
 }
 
-/// Topbar màn rộng (`.top` của prototype): dòng nhỏ vai trò, tiêu đề trang,
-/// nền surface, viền dưới `line`.
 class AppTopBar extends StatelessWidget {
   const AppTopBar({
     super.key,
@@ -143,8 +134,6 @@ class AppTopBar extends StatelessWidget {
   }
 }
 
-/// Thanh điều hướng đáy theo vai trên màn hẹp (`.tabbar` của prototype):
-/// tab đang chọn màu primary, nhãn 12px.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,

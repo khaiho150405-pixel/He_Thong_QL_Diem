@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createRosterFixture } from "./roster-fixture.js";
 
-// Duyệt phiếu: giá trị cuối null = KHÔNG ghi điểm cho dòng đó (ví dụ học sinh vắng), nhưng vẫn lưu người duyệt,
-// thời điểm và lý do bắt buộc; ô điểm của học sinh đó không đổi (NULL khác 0.0, giá trị cũ giữ nguyên).
 test("a row approved with no final value leaves the cell untouched and the other rows are written", async () => {
   const f = await createRosterFixture();
   const { owner, students: s, valid } = f;
@@ -38,7 +36,6 @@ test("a row approved with no final value leaves the cell untouched and the other
         JSON.stringify([row(1, 1), row(2, 2), row(3, 3)]),
       ]),
     );
-    // Học sinh STT 2 đã có điểm cũ: dòng bỏ qua không được đụng tới ô này.
     await owner.query(
       "UPDATE diem_thanh_phan SET gia_tri=5.5, trang_thai='DA_DUYET', nguon_nhap='NHAP_TAY' WHERE ma_bang_diem=$1 AND ma_hoc_sinh=$2",
       [f.book, s.bao],
@@ -90,7 +87,6 @@ test("a row approved with no final value leaves the cell untouched and the other
         )
       ).rows[0];
 
-    // Lý do bắt buộc: dòng bỏ qua không có lý do thì cả phiếu bị từ chối, không ghi gì.
     for (const bad of ["", "   ", "x".repeat(501)])
       await assert.rejects(
         decide("skip-bad", bad),
@@ -112,7 +108,6 @@ test("a row approved with no final value leaves the cell untouched and the other
       .rows[0].result;
     assert.equal(result.status, "DA_DUYET");
     assert.equal(result.reviewedRows, 3);
-    // Dòng bỏ qua không được tính là máy đúng.
     assert.equal(result.machineMatchedRows, 2);
 
     assert.deepEqual(await cell(s.an), {
@@ -125,16 +120,13 @@ test("a row approved with no final value leaves the cell untouched and the other
       status: "DA_DUYET",
       source: "NHAN_DIEN",
     });
-    // Ô của học sinh bị bỏ qua giữ nguyên: giá trị, trạng thái và nguồn không đổi.
     assert.deepEqual(await cell(s.bao), {
       value: "5.5",
       status: "DA_DUYET",
       source: "NHAP_TAY",
     });
-    // Học sinh không có dòng nào vẫn là NULL, không bị ghi 0.
     assert.equal((await cell(s.dat)).value, null);
     assert.equal((await cell(s.dat)).status, "CHUA_CO");
-    // Lịch sử chỉ có hai bản ghi mới (hai ô được ghi), không có bản ghi cho ô bị bỏ qua.
     assert.equal(
       Number(
         (await owner.query("SELECT count(*) FROM lich_su_sua_diem")).rows[0]
@@ -157,7 +149,6 @@ test("a row approved with no final value leaves the cell untouched and the other
     const written = saved.filter((r) => r.ma_hoc_sinh !== s.bao);
     assert.ok(written.every((r) => r.ma_diem !== null && r.final === "8.0"));
 
-    // Gửi lại cùng khóa idempotency trả đúng kết quả cũ, không ghi thêm.
     const repeated = (await decide("skip-ok", "Học sinh vắng, không ghi điểm"))
       .rows[0].result;
     assert.deepEqual(repeated, result);
@@ -169,7 +160,6 @@ test("a row approved with no final value leaves the cell untouched and the other
       historyBefore + 2,
     );
 
-    // Ràng buộc DB: đã duyệt mà không ghi điểm thì bắt buộc có lý do.
     await assert.rejects(
       owner.query(
         "UPDATE ket_qua_dong SET ly_do_duyet=NULL WHERE ma_phieu=$1 AND ma_hoc_sinh=$2",

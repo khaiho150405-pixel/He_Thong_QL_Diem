@@ -27,9 +27,7 @@ export interface BatchPageUpload {
 
 export interface BatchUpload {
   templateId: unknown;
-  /** Chuỗi JSON `[{templateColumnIndex, componentId}]` (multipart) hoặc mảng đã phân tích. */
   components: unknown;
-  /** Ảnh các trang theo thứ tự giáo viên sắp xếp (trang 1 đứng đầu). */
   pages: BatchPageUpload[];
 }
 
@@ -61,7 +59,6 @@ function idempotencyKeyOf(value: unknown): string {
   return value;
 }
 
-/** `components` của multipart: JSON `[{templateColumnIndex, componentId}]`, 1..20 mục, không trùng cột mẫu hay thành phần. */
 export function parseComponentChoices(raw: unknown): BatchComponentChoice[] {
   let value = raw;
   if (typeof raw === "string") {
@@ -122,10 +119,6 @@ export class RecognitionBatchService {
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
-  /**
-   * Tạo lô: kiểm ảnh từng trang (ADR-0008), kiểm quyền, tải ảnh lên object storage TRƯỚC giao dịch rồi tạo lô + phiếu trong
-   * một giao dịch SQL. Lỗi (hoặc phát lại cùng khóa idempotency) thì dọn các object vừa tải.
-   */
   async upload(
     actor: Actor,
     gradebookIdInput: unknown,
@@ -145,7 +138,6 @@ export class RecognitionBatchService {
     const checksums = upload.pages.map((page) =>
       createHash("sha256").update(page.bytes).digest("hex"),
     );
-    // Cùng một ảnh cho hai trang của một lô là nhầm lẫn: từ chối sớm, trước khi tải gì lên.
     if (new Set(checksums).size !== checksums.length)
       throw batchError("DUPLICATE_FILE");
     await this.store.authorizeUpload(actor, gradebookId);
@@ -179,7 +171,6 @@ export class RecognitionBatchService {
         idempotencyKey,
         requestHash,
       });
-      // Phát lại cùng khóa: lô đã bền vững với ảnh của lần đầu; ảnh vừa tải lên là thừa.
       if (stored.storedObjectKeys[0] !== pages[0]!.objectKey)
         await this.discard(uploaded);
       return {
@@ -204,7 +195,6 @@ export class RecognitionBatchService {
       batchIdOf(batchIdInput),
     );
     if (!batch) throw new NotFoundException();
-    // Lô đã hủy hoàn toàn: ảnh các trang đã bị xóa khỏi object storage nên không ký URL (chuỗi rỗng), như phiếu đã hủy.
     const imagesRemoved = batch.tickets.every(
       (ticket) => ticket.status === "DA_HUY",
     );
@@ -226,7 +216,6 @@ export class RecognitionBatchService {
     };
   }
 
-  /** Hủy mềm lô; ảnh bị xóa khỏi object storage sau khi commit (best-effort, gọi lại cùng khóa sẽ dọn tiếp). */
   async cancel(
     actor: Actor,
     gradebookIdInput: unknown,
@@ -281,7 +270,6 @@ export class RecognitionBatchService {
     const results = await Promise.allSettled(
       keys.map((key) => this.storage.remove(key)),
     );
-    // Ảnh mồ côi không chứa họ tên; dọn dẹp là việc vận hành, không đổi kết quả lỗi gốc.
     if (results.some((result) => result.status === "rejected"))
       this.logger.warn(
         JSON.stringify({ event: "recognition_batch_cleanup_failed" }),

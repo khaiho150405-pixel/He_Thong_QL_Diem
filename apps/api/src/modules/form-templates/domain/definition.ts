@@ -1,6 +1,3 @@
-// Luật hợp lệ của mẫu bảng điểm và ánh xạ (nhóm, thứ tự) -> thành phần điểm (ADR-0016 mục 1). Thuần domain: không phụ thuộc
-// framework, DB hay dịch vụ nhận dạng. Hàm SQL kiem_tra_dinh_nghia_mau lặp lại cùng các luật ở tầng DB.
-
 export const COLUMN_ROLES = [
   "STT",
   "HO_TEN",
@@ -16,15 +13,11 @@ export type GradeGroup = (typeof GRADE_GROUPS)[number];
 export const MAX_TEMPLATE_COLUMNS = 64;
 export const MAX_ORDER_IN_GROUP = 20;
 
-/** Một cột dữ liệu của tờ, theo thứ tự trái -> phải (`index` từ 0). */
 export interface TemplateColumn {
   index: number;
   role: ColumnRole;
-  /** Chỉ cột DIEM. */
   group: GradeGroup | null;
-  /** Chỉ cột DIEM: thứ tự trong nhóm, từ 1. */
   order: number | null;
-  /** Chỉ cột DIEM_CHU: `index` của cột DIEM đi kèm. */
   pairedWith: number | null;
   headerText: string | null;
 }
@@ -35,7 +28,6 @@ export interface TemplateDefinition {
   columns: TemplateColumn[];
 }
 
-/** Lý do ổn định (không chứa dữ liệu người dùng) khi định nghĩa mẫu không hợp lệ. */
 export type DefinitionIssue =
   | "SHAPE"
   | "NAME"
@@ -96,7 +88,6 @@ function optionalInt(value: unknown): number | null {
   return value;
 }
 
-/** Phân tích JSON thô của `definition` thành `TemplateDefinition`; chưa kiểm luật nhiều cột. */
 export function parseDefinition(raw: unknown): TemplateDefinition {
   if (!isRecord(raw)) return fail("SHAPE");
   const allowed = new Set(["name", "description", "columns"]);
@@ -159,10 +150,6 @@ export function parseDefinition(raw: unknown): TemplateDefinition {
   };
 }
 
-/**
- * Kiểm luật hợp lệ của danh sách cột với số cột của tờ mẫu (ADR-0016 mục 1). Ném `InvalidTemplateDefinition`.
- * Phải liệt kê đủ mọi cột 0..n-1 (cột không đọc dùng BO_QUA).
- */
 export function validateColumns(
   columns: readonly TemplateColumn[],
   columnCount: number,
@@ -217,12 +204,10 @@ export function validateColumns(
     return fail("PAIRING");
 }
 
-/** Định danh ổn định của cột điểm trong layout gửi dịch vụ nhận dạng, ví dụ `TX1`, `GK1`, `CK1`. */
 export function gradeKey(group: GradeGroup, order: number): string {
   return `${group}${order}`;
 }
 
-/** Cột nào đọc hai kênh (có cột điểm chữ đi kèm). Suy ra từ định nghĩa, không lưu riêng (ADR-0016). */
 export function readsBothChannels(
   columns: readonly TemplateColumn[],
   gradeIndex: number,
@@ -232,7 +217,6 @@ export function readsBothChannels(
   );
 }
 
-/** Các cột gửi tới `/v2/recognize`: STT (nếu có), HO_TEN, mọi DIEM (kèm `key`, `writtenIndex`) và DIEM_CHU đi kèm. */
 export function recognitionColumns(columns: readonly TemplateColumn[]): Array<{
   index: number;
   role: "STT" | "HO_TEN" | "DIEM" | "DIEM_CHU";
@@ -258,10 +242,6 @@ export function recognitionColumns(columns: readonly TemplateColumn[]): Array<{
   return result;
 }
 
-/**
- * Cột gửi tới `/v2/recognize` cho một lô (ADR-0016 mục 3): chỉ STT, HO_TEN, các cột DIEM được chọn (theo `index` cột mẫu)
- * và DIEM_CHU đi kèm các cột đó. Cột điểm không được chọn không được đọc.
- */
 export function recognitionColumnsFor(
   columns: readonly TemplateColumn[],
   selectedGradeIndexes: readonly number[],
@@ -287,7 +267,6 @@ export function recognitionColumnsFor(
   );
 }
 
-/** Thành phần điểm của một môn, đủ thông tin để ánh xạ. */
 export interface MappableComponent {
   id: number;
   group: string;
@@ -300,15 +279,9 @@ export interface ColumnMapping {
   group: GradeGroup;
   order: number;
   readMode: "SO_VA_CHU" | "CHI_SO";
-  /** null khi môn không có thành phần thứ `order` của nhóm `group`. */
   componentId: number | null;
 }
 
-/**
- * Ánh xạ (nhóm, thứ tự) của cột DIEM tới thành phần của môn: `(TX, 2)` là thành phần `loai_he_so = 'TX'` đứng thứ 2 theo
- * `thu_tu_hien_thi, ma_thanh_phan` (ADR-0016 mục 1). Mẫu không gắn với môn nên cột không có thành phần tương ứng thì
- * `componentId = null` (giáo viên không chọn được).
- */
 export function mapColumnsToComponents(
   columns: readonly TemplateColumn[],
   components: readonly MappableComponent[],

@@ -1,5 +1,4 @@
-﻿# Hàm dùng chung cho điện thoại cắm USB (adb reverse). Được up.ps1, usb-reconnect.ps1, down.ps1 nạp bằng dot-source.
-
+﻿
 function Find-Adb {
   $candidates = @()
   if ($env:ANDROID_HOME) { $candidates += (Join-Path $env:ANDROID_HOME 'platform-tools\adb.exe') }
@@ -20,7 +19,6 @@ function Get-AdbDevices([string]$Adb) {
   } finally { $ErrorActionPreference = $old }
   $devices = @()
   foreach ($line in $raw) {
-    # Dòng thiết bị dạng "<serial><TAB><trạng thái>"; bỏ dòng tiêu đề và thông báo daemon ("* ...").
     if ($line -match '^([^\s*]\S*)\t+(\S+)\s*$') {
       $devices += [pscustomobject]@{ Serial = $Matches[1]; State = $Matches[2] }
     }

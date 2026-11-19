@@ -9,9 +9,9 @@ from synthetic import encode_png, make_page, photograph
 from test_pipeline_grid import SCORE_HEADERS, SCORE_OCR, SCORE_SHEET, HeaderOcr
 
 ROWS = 10
-STRUCK = 3  # zero-based: the 4th data row is crossed out
-BLANK = 6  # the 7th data row has no name and no grade
-HYPHEN = 8  # a long dash only inside the score cell: a grade, not a strike
+STRUCK = 3
+BLANK = 6
+HYPHEN = 8
 
 
 def sheet():
@@ -148,14 +148,14 @@ class PipelineErrorsTest(unittest.TestCase):
 
 class PageStartSttTest(unittest.TestCase):
     def test_starts_from_a_clean_column(self) -> None:
-        reads = {n: 38 + n for n in range(1, 4)}  # rows 1-3 read as 39, 40, 41
+        reads = {n: 38 + n for n in range(1, 4)}
         self.assertEqual(rw.suy_stt_bat_dau(reads, 3), 39)
 
     def test_two_wrong_reads_do_not_move_the_start(self) -> None:
         reads = {n: 38 + n for n in range(1, 11)}
-        reads[4] = 99  # misread
-        reads[7] = 12  # misread
-        del reads[9]  # missed
+        reads[4] = 99
+        reads[7] = 12
+        del reads[9]
         self.assertEqual(rw.suy_stt_bat_dau(reads, 10), 39)
 
     def test_first_page_starts_at_one(self) -> None:
@@ -163,10 +163,10 @@ class PageStartSttTest(unittest.TestCase):
 
     def test_not_enough_evidence_returns_none(self) -> None:
         self.assertIsNone(rw.suy_stt_bat_dau({}, 38))
-        self.assertIsNone(rw.suy_stt_bat_dau({5: 7}, 38))  # a single vote on a long page
+        self.assertIsNone(rw.suy_stt_bat_dau({5: 7}, 38))
         scattered = {1: 3, 2: 30, 3: 11, 4: 90, 5: 2, 6: 55}
         self.assertIsNone(rw.suy_stt_bat_dau(scattered, 6))
-        self.assertIsNone(rw.suy_stt_bat_dau({1: 0, 2: 600}, 5))  # out-of-range reads
+        self.assertIsNone(rw.suy_stt_bat_dau({1: 0, 2: 600}, 5))
 
     def test_short_last_page_needs_only_two_votes(self) -> None:
         self.assertEqual(rw.suy_stt_bat_dau({1: 39, 3: 41}, 3), 39)
@@ -185,7 +185,7 @@ class RowLineNormalizationTest(unittest.TestCase):
 
     def test_a_strike_line_is_merged_back_into_its_row(self) -> None:
         lines = [100.0 + 44 * k for k in range(8)]
-        lines.insert(4, lines[3] + 22)  # strike through row 4 (index 3)
+        lines.insert(4, lines[3] + 22)
         fixed = rw.chuan_hoa_hang_y(self.grid(lines))
         self.assertEqual(fixed["so_hang"], 7)
         self.assertEqual(fixed["hang_y"], [100.0 + 44 * k for k in range(8)])
@@ -194,11 +194,11 @@ class RowLineNormalizationTest(unittest.TestCase):
     def test_regular_rows_and_taller_rows_are_untouched(self) -> None:
         regular = self.grid([100.0 + 44 * k for k in range(8)])
         self.assertEqual(rw.chuan_hoa_hang_y(regular)["hang_y"], regular["hang_y"])
-        tall = self.grid([100, 144, 188, 288, 332, 376, 420])  # one double-height row
+        tall = self.grid([100, 144, 188, 288, 332, 376, 420])
         self.assertEqual(rw.chuan_hoa_hang_y(tall)["hang_y"], [100, 144, 188, 288, 332, 376, 420])
 
     def test_two_real_short_rows_that_do_not_make_one_row_are_kept(self) -> None:
-        lines = [100, 144, 188, 200, 212, 256, 300, 344]  # 12 px slivers: total 24, not a row
+        lines = [100, 144, 188, 200, 212, 256, 300, 344]
         self.assertEqual(rw.chuan_hoa_hang_y(self.grid(lines))["hang_y"], lines)
 
     def test_tiny_grids_are_returned_unchanged(self) -> None:
@@ -244,10 +244,9 @@ class CompactNameCellTest(unittest.TestCase):
         after = rw.compact_name_cell(before)
         self.assertEqual(after.shape[0], self.HEIGHT)
         self.assertLess(after.shape[1], before.shape[1] - 100)
-        self.assertEqual(self.ink_columns(after), self.ink_columns(before))  # no ink lost, none invented
+        self.assertEqual(self.ink_columns(after), self.ink_columns(before))
         self.assertLess(self.widest_gap(after), rw.NGUONG_KHE_TEN * self.HEIGHT)
         self.assertEqual(after.dtype, before.dtype)
-        # the background stays the background (no black bars)
         self.assertGreater(int(after[0, 0].mean()), 200)
 
     def test_word_spacing_inside_one_column_is_left_alone(self) -> None:
@@ -261,13 +260,12 @@ class CompactNameCellTest(unittest.TestCase):
 
     def test_grid_lines_are_not_mistaken_for_ink(self) -> None:
         image = self.cell("Le Minh", "Duc")
-        image[:, 0:2] = 20  # vertical rule at the left edge
-        image[:, 150:152] = 20  # a rule inside the gap
+        image[:, 0:2] = 20
+        image[:, 150:152] = 20
         after = rw.compact_name_cell(image)
         self.assertLess(after.shape[1], image.shape[1] - 100)
 
     def test_a_horizontal_rule_inside_the_cell_does_not_hide_the_gap(self) -> None:
-        # Đường kẻ ngang lọt vào ô (ảnh chụp lệch): trước đây mọi cột đều "có mực" nên không thu được khe.
         image = self.cell("Nguyen Van", "Anh")
         cv2.line(image, (0, 9), (image.shape[1], 9), (40, 40, 40), 2)
         after = rw.compact_name_cell(image)
@@ -275,7 +273,6 @@ class CompactNameCellTest(unittest.TestCase):
         self.assertLess(self.widest_gap_in(after, ignore_rule_rows=True), rw.NGUONG_KHE_TEN * self.HEIGHT)
 
     def test_a_grey_gradient_background_does_not_count_as_ink(self) -> None:
-        # Bóng/nền xám dần: Otsu toàn cục coi vùng tối của nền là mực nên khe biến mất.
         image = self.cell("Tran Quoc", "Bao").astype(np.float32)
         ramp = np.linspace(95, 245, image.shape[1], dtype=np.float32)[None, :, None] / 240.0
         image = np.clip(image * ramp, 0, 255).astype(np.uint8)
@@ -284,7 +281,7 @@ class CompactNameCellTest(unittest.TestCase):
 
     def test_a_dark_shadow_band_and_a_rule_together_still_collapse_the_gap(self) -> None:
         image = self.cell("Le Thi", "Mai").astype(np.float32)
-        image[:, :180] *= 0.55  # bóng đổ phủ nửa trái
+        image[:, :180] *= 0.55
         image = np.clip(image, 0, 255).astype(np.uint8)
         cv2.line(image, (0, 30), (image.shape[1], 30), (50, 50, 50), 2)
         after = rw.compact_name_cell(image)
@@ -293,7 +290,7 @@ class CompactNameCellTest(unittest.TestCase):
     def test_single_pixel_specks_in_the_gap_are_ignored(self) -> None:
         image = self.cell("Pham Van", "Dung")
         for x in (150, 175, 200, 215):
-            image[18, x] = (30, 30, 30)  # 1 điểm mực: nhiễu, không phải chữ
+            image[18, x] = (30, 30, 30)
         after = rw.compact_name_cell(image)
         self.assertLess(after.shape[1], image.shape[1] - 100)
 
@@ -335,14 +332,12 @@ class CompactNameCellTest(unittest.TestCase):
         struck = [row for row in analysis.rows if row.struck]
         others = [row for row in analysis.rows if not row.struck]
         self.assertEqual(len(struck), 1)
-        # Dòng bị gạch không được đọc nên không gom; mọi dòng còn lại mang ô đã gom.
         self.assertEqual(len(seen), len(others))
         self.assertIsNot(struck[0].name_cell, marker)
         for row in others:
             self.assertIs(row.name_cell, marker)
         inked = [row for row in others if row.has_name_ink]
         self.assertTrue(inked)
-        # ink was measured on the full-width original (marker is a flat 9x9 image: it would measure 0)
         self.assertTrue(all(row.name_ink > rw.NGUONG_TEN_TRONG for row in inked))
         self.assertTrue(all(width > 9 for _, width in seen))
 

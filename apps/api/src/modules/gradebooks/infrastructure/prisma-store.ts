@@ -19,7 +19,6 @@ import type {
   GradebookHistoryEntry,
   BatchResult,
   SemesterDeadline,
-  InitializeResult,
   ExemptionResult,
   LateStudentResult,
   MissingStudent,
@@ -56,10 +55,6 @@ function book(row: BookRow): Gradebook {
   };
 }
 
-/**
- * Lỗi nghiệp vụ của tao_luoi_diem_trong → thông báo tiếng Việt cụ thể (chỉ cho luồng tạo bảng điểm).
- * Không lộ chi tiết SQL/phiên; lỗi khác trả null để giữ cách xử lý chung.
- */
 export function createGridFailure(error: unknown): Error | null {
   const diagnostic =
     String(error) + JSON.stringify((error as { meta?: unknown }).meta ?? {});
@@ -76,7 +71,6 @@ export function createGridFailure(error: unknown): Error | null {
   return null;
 }
 
-/** Ô điểm của một bảng kèm lịch hiệu lực, trạng thái miễn và STT; `filter` chọn ô, `limit` giới hạn số dòng. */
 async function selectCells(
   tx: Prisma.TransactionClient,
   bookId: number,
@@ -149,17 +143,6 @@ export class PrismaGradebookStore implements GradebookStore {
           ) => {
             try {
               await tx.$queryRaw`SELECT public.dat_lich_nhap_hoc_ky(${sessionHash}::text,${termId}::integer,${type}::text,${opensAt}::timestamptz,${closesAt}::timestamptz,${version}::integer)::text`;
-            } catch (error) {
-              throw deadlineFailure(error) ?? error;
-            }
-          },
-          initializeSemester: async (sessionHash, termId, key, requestHash) => {
-            try {
-              const rows = await tx.$queryRaw<
-                Array<{ result: InitializeResult }>
-              >`
-                SELECT public.khoi_tao_bang_diem_hoc_ky(${sessionHash}::text,${termId}::integer,${key}::text,${requestHash}::text) AS result`;
-              return rows[0]!.result;
             } catch (error) {
               throw deadlineFailure(error) ?? error;
             }
@@ -351,7 +334,7 @@ export class PrismaGradebookStore implements GradebookStore {
                 },
               },
             });
-            if (!row) return null; // Retain replay protection until a reviewed retention job exists.
+            if (!row) return null;
             return {
               key: row.khoa,
               userId: row.ma_nguoi_dung,
@@ -380,7 +363,6 @@ export class PrismaGradebookStore implements GradebookStore {
         }),
       );
     } catch (error) {
-      // Normalize the driver adapter error; never expose SQL/session details.
       const e = error as { code?: string };
       const sqlState = sqlStateOf(error);
       if (e.code === "P2010" && sqlState === "42501")

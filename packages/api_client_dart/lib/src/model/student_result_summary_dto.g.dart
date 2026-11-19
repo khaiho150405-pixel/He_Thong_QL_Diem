@@ -7,13 +7,9 @@ part of 'student_result_summary_dto.dart';
 // **************************************************************************
 
 abstract class _$StudentResultSummaryDtoCWProxy {
-  StudentResultSummaryDto termId(num? termId);
-
   StudentResultSummaryDto termName(String? termName);
 
   StudentResultSummaryDto className(String className);
-
-  StudentResultSummaryDto yearId(num? yearId);
 
   StudentResultSummaryDto yearName(String? yearName);
 
@@ -34,10 +30,8 @@ abstract class _$StudentResultSummaryDtoCWProxy {
   /// StudentResultSummaryDto(...).copyWith(id: 12, name: "My name")
   /// ````
   StudentResultSummaryDto call({
-    num? termId,
     String? termName,
     String className,
-    num? yearId,
     String? yearName,
     String? averageScore,
     num publishedSubjects,
@@ -55,18 +49,12 @@ class _$StudentResultSummaryDtoCWProxyImpl
   final StudentResultSummaryDto _value;
 
   @override
-  StudentResultSummaryDto termId(num? termId) => this(termId: termId);
-
-  @override
   StudentResultSummaryDto termName(String? termName) =>
       this(termName: termName);
 
   @override
   StudentResultSummaryDto className(String className) =>
       this(className: className);
-
-  @override
-  StudentResultSummaryDto yearId(num? yearId) => this(yearId: yearId);
 
   @override
   StudentResultSummaryDto yearName(String? yearName) =>
@@ -100,10 +88,8 @@ class _$StudentResultSummaryDtoCWProxyImpl
   /// StudentResultSummaryDto(...).copyWith(id: 12, name: "My name")
   /// ````
   StudentResultSummaryDto call({
-    Object? termId = const $CopyWithPlaceholder(),
     Object? termName = const $CopyWithPlaceholder(),
     Object? className = const $CopyWithPlaceholder(),
-    Object? yearId = const $CopyWithPlaceholder(),
     Object? yearName = const $CopyWithPlaceholder(),
     Object? averageScore = const $CopyWithPlaceholder(),
     Object? publishedSubjects = const $CopyWithPlaceholder(),
@@ -112,10 +98,6 @@ class _$StudentResultSummaryDtoCWProxyImpl
     Object? classSize = const $CopyWithPlaceholder(),
   }) {
     return StudentResultSummaryDto(
-      termId: termId == const $CopyWithPlaceholder()
-          ? _value.termId
-          // ignore: cast_nullable_to_non_nullable
-          : termId as num?,
       termName: termName == const $CopyWithPlaceholder()
           ? _value.termName
           // ignore: cast_nullable_to_non_nullable
@@ -124,10 +106,6 @@ class _$StudentResultSummaryDtoCWProxyImpl
           ? _value.className
           // ignore: cast_nullable_to_non_nullable
           : className as String,
-      yearId: yearId == const $CopyWithPlaceholder()
-          ? _value.yearId
-          // ignore: cast_nullable_to_non_nullable
-          : yearId as num?,
       yearName: yearName == const $CopyWithPlaceholder()
           ? _value.yearName
           // ignore: cast_nullable_to_non_nullable
@@ -173,10 +151,8 @@ StudentResultSummaryDto _$StudentResultSummaryDtoFromJson(
   $checkKeys(
     json,
     requiredKeys: const [
-      'termId',
       'termName',
       'className',
-      'yearId',
       'yearName',
       'averageScore',
       'publishedSubjects',
@@ -186,10 +162,8 @@ StudentResultSummaryDto _$StudentResultSummaryDtoFromJson(
     ],
   );
   final val = StudentResultSummaryDto(
-    termId: $checkedConvert('termId', (v) => v as num?),
     termName: $checkedConvert('termName', (v) => v as String?),
     className: $checkedConvert('className', (v) => v as String),
-    yearId: $checkedConvert('yearId', (v) => v as num?),
     yearName: $checkedConvert('yearName', (v) => v as String?),
     averageScore: $checkedConvert('averageScore', (v) => v as String?),
     publishedSubjects: $checkedConvert('publishedSubjects', (v) => v as num),
@@ -203,10 +177,8 @@ StudentResultSummaryDto _$StudentResultSummaryDtoFromJson(
 Map<String, dynamic> _$StudentResultSummaryDtoToJson(
   StudentResultSummaryDto instance,
 ) => <String, dynamic>{
-  'termId': instance.termId,
   'termName': instance.termName,
   'className': instance.className,
-  'yearId': instance.yearId,
   'yearName': instance.yearName,
   'averageScore': instance.averageScore,
   'publishedSubjects': instance.publishedSubjects,

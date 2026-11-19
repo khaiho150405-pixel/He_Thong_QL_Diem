@@ -14,9 +14,6 @@ import 'repository.dart';
 
 enum TemplateEditMode { edit, newVersion }
 
-/// Sửa tại chỗ hoặc tạo phiên bản mới của một mẫu đã có. Chỉ sửa khai báo
-/// (tên, mô tả, vai trò cột); ảnh mẫu và chữ ký lưới giữ nguyên.
-/// Pop về [TemplateDetailDto] đã lưu, hoặc null nếu hủy.
 class TemplateEditorScreen extends ConsumerStatefulWidget {
   const TemplateEditorScreen({
     super.key,
@@ -28,7 +25,6 @@ class TemplateEditorScreen extends ConsumerStatefulWidget {
   final TemplateDetailDto template;
   final TemplateEditMode mode;
 
-  /// Gọi khi backend trả `TEMPLATE_IN_USE`, để màn chi tiết ẩn nút Sửa.
   final VoidCallback onInUse;
 
   @override
@@ -104,7 +100,6 @@ class _TemplateEditorScreenState extends ConsumerState<TemplateEditorScreen> {
         _busy = false;
         _error = templateErrorMessage(error);
         if (inUse) {
-          // Giữ nguyên nội dung đã nhập, chuyển sang lưu thành phiên bản mới.
           _inUse = true;
           _mode = TemplateEditMode.newVersion;
         }

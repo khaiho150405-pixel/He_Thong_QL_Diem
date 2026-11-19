@@ -16,8 +16,6 @@ import type { ObjectStorage, StoredObject } from "../application/port.js";
 @Injectable()
 export class S3ObjectStorage implements ObjectStorage {
   private readonly client?: S3Client;
-  // Chỉ dùng để KÝ URL: ký trực tiếp với host công khai (không thay chuỗi sau khi ký vì host nằm trong chữ ký). Ký là phép tính
-  // cục bộ nên không cần kết nối tới host này.
   private readonly signer?: S3Client;
   private readonly bucket?: string;
 

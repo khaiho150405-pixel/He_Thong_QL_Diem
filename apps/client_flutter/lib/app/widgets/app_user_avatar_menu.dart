@@ -1,3 +1,4 @@
+import '../../core/role_label.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/authentication/change_password_dialog.dart';
@@ -6,7 +7,6 @@ import '../../features/authentication/session.dart';
 import '../design_tokens.dart';
 import 'app_avatar.dart';
 
-/// Hộp thoại xác nhận đăng xuất thống nhất toàn hệ thống
 Future<void> confirmLogout(
   BuildContext context,
   WidgetRef ref, [
@@ -76,10 +76,6 @@ Future<void> confirmLogout(
   }
 }
 
-/// Menu Avatar gom toàn bộ thao tác tài khoản:
-/// 1. Thông tin cá nhân (ad, gv)
-/// 2. Đổi mật khẩu (ad, gv)
-/// 3. Đăng xuất (có hỏi trước khi đăng xuất)
 class AppUserAvatarMenu extends ConsumerWidget {
   const AppUserAvatarMenu({
     super.key,
@@ -94,11 +90,7 @@ class AppUserAvatarMenu extends ConsumerWidget {
   final Color? textColor;
   final Future<void> Function()? onLogout;
 
-  static String _roleLabel(String role) => switch (role) {
-    'QUAN_TRI_VIEN' => 'Quản trị viên',
-    'GIAO_VIEN' => 'Giáo viên',
-    _ => 'Học sinh',
-  };
+  static String _roleLabel(String role) => roleLabelOf(role);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -122,7 +114,7 @@ class AppUserAvatarMenu extends ConsumerWidget {
         ),
       ),
       child: PopupMenuButton<String>(
-        tooltip: 'Tài khoản: ${user.username}',
+        tooltip: 'Tài khoản: ${user.shownName}',
         offset: const Offset(0, 44),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 180, maxWidth: 230),
@@ -139,7 +131,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
           }
         },
         itemBuilder: (ctx) => [
-          // Header tóm tắt tài khoản
           PopupMenuItem<String>(
             enabled: false,
             child: Column(
@@ -148,7 +139,7 @@ class AppUserAvatarMenu extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    AppAvatar(name: user.username, size: AppAvatarSize.sm),
+                    AppAvatar(name: user.shownName, size: AppAvatarSize.sm),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -156,7 +147,7 @@ class AppUserAvatarMenu extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            user.username,
+                            user.shownName,
                             style: TextStyle(
                               color: t.heading,
                               fontWeight: FontWeight.w700,
@@ -186,7 +177,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
               ],
             ),
           ),
-          // 1. Thông tin cá nhân (ad, gv)
           if (isStaff)
             PopupMenuItem<String>(
               value: 'profile',
@@ -205,7 +195,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
                 ],
               ),
             ),
-          // 2. Đổi mật khẩu (ad, gv)
           if (isStaff)
             PopupMenuItem<String>(
               value: 'password',
@@ -225,7 +214,6 @@ class AppUserAvatarMenu extends ConsumerWidget {
               ),
             ),
           if (isStaff) const PopupMenuDivider(height: 1),
-          // 3. Đăng xuất (có hỏi trước khi đăng xuất)
           PopupMenuItem<String>(
             value: 'logout',
             child: Row(
@@ -258,15 +246,19 @@ class AppUserAvatarMenu extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppAvatar(name: user.username, size: size),
+                AppAvatar(name: user.shownName, size: size),
                 if (showName) ...[
                   const SizedBox(width: 8),
-                  Text(
-                    user.username,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textColor ?? t.heading,
+                  Flexible(
+                    child: Text(
+                      user.shownName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textColor ?? t.heading,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),

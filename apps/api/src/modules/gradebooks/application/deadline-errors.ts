@@ -1,9 +1,5 @@
 import { HttpException } from "@nestjs/common";
 
-/**
- * Mã lỗi ổn định của lịch nhập điểm theo học kỳ và khởi tạo bảng điểm hàng loạt. `status` là mã HTTP; envelope lỗi dùng
- * chính `code` thay cho mã chung theo status (xem DeadlineErrorFilter).
- */
 export const DEADLINE_ERRORS = {
   NOT_IMPLEMENTED: 501,
   DEADLINE_VERSION_CONFLICT: 409,
@@ -38,7 +34,6 @@ export function deadlineError(code: DeadlineErrorCode): DeadlineException {
   return new DeadlineException(code);
 }
 
-/** Đọc mã lỗi nghiệp vụ trong thông điệp RAISE EXCEPTION của hàm SQL; null nếu không phải lỗi của lịch nhập. */
 export function deadlineFailure(error: unknown): DeadlineException | null {
   const diagnostic =
     String(error) + JSON.stringify((error as { meta?: unknown }).meta ?? {});

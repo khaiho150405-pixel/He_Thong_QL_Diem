@@ -76,7 +76,6 @@ void main() {
         .state<ScrollableState>(find.byType(Scrollable))
         .position;
     final before = position.pixels;
-    // Thumb position follows the content offset (500 / 2880 * 700).
     await tester.pump(const Duration(milliseconds: 200));
     await tester.dragFrom(
       const Offset(1434, 150),

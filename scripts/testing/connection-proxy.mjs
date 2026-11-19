@@ -1,4 +1,3 @@
-// Test-only fault injection. Never started by the application or deployment scripts.
 import { createServer } from "node:http";
 
 if (process.env.CONNECTION_SMOKE_TEST !== "1")

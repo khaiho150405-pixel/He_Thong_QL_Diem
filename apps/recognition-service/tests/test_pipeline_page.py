@@ -39,7 +39,6 @@ class PageFlatteningTest(unittest.TestCase):
         self.assertEqual(flat.shape[:2], (pg.A4[1], pg.A4[0]))
         horizontal = horizontal_slopes(flat)
         vertical = vertical_slopes(flat)
-        # 38 data rows + header + closing line, all ruled lines almost perfectly horizontal.
         self.assertGreaterEqual(len(horizontal), 38)
         self.assertGreaterEqual(len(vertical), 6)
         limit = math.tan(math.radians(0.3))
@@ -76,8 +75,7 @@ class PageFlatteningTest(unittest.TestCase):
 
     def test_no_file_name_hooks_remain(self) -> None:
         with open(pg.__file__, encoding="utf-8") as handle:
-            code = handle.read().split('"""', 2)[2]  # everything after the module docstring
-        # The hand-tuned quads of the training project must never reach production code.
+            code = handle.read().split('"""', 2)[2]
         for forbidden in ("QUAD_OVERRIDES", "ten_file", "R05_T01", "P06_S01", "pillow_heif"):
             self.assertNotIn(forbidden, code)
 

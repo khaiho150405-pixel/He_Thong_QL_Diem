@@ -13,7 +13,6 @@ export async function validateStudent(
     if (!account || account.vai_tro !== "HOC_SINH")
       throw new BadRequestException();
   }
-  // Lớp và trạng thái đang học thay đổi theo ghi danh (hoc_sinh_lop), không sửa trực tiếp từ danh mục học sinh.
   if (
     previous &&
     (Number(previous.ma_lop) !== Number(data.ma_lop) ||

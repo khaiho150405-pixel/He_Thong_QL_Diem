@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// PNG 1x1 hợp lệ: qua được bước kiểm sơ bộ ở máy và giải mã được thành ảnh.
 final Uint8List _png = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
 );
@@ -91,7 +90,6 @@ TemplateColumnDto _col(
   headerText: header,
 );
 
-/// Mẫu hợp lệ: STT, Họ tên, TX1 (số + chữ), GK1 (chỉ số), cột bỏ qua.
 List<TemplateColumnDto> _goodColumns() => [
   _col(0, TemplateColumnDtoRoleEnum.STT, header: 'STT'),
   _col(1, TemplateColumnDtoRoleEnum.HO_TEN, header: 'Họ và tên'),
@@ -441,10 +439,8 @@ Future<void> _tapKey(WidgetTester tester, String key) async {
   await tester.pumpAndSettle();
 }
 
-/// Chọn một mục trong `AppSelectField` (mở menu rồi chạm đúng nhãn).
 Future<void> _choose(WidgetTester tester, String fieldKey, String label) async {
   await _tapKey(tester, fieldKey);
-  // Mục menu nằm trong cây ngay dưới ô vừa mở, không phải mục cuối cây.
   await tester.tap(find.widgetWithText(MenuItemButton, label).last);
   await tester.pumpAndSettle();
 }
@@ -635,7 +631,6 @@ void main() {
       expect(find.text('Phiên bản 3'), findsOneWidget);
       expect(find.text('2 cột điểm'), findsOneWidget);
       expect(find.text('1 cột điểm'), findsOneWidget);
-      // THCS: TX1 có cột chữ, GK1 không → nói rõ trộn; THPT: chỉ số.
       expect(
         tester
             .widget<Text>(find.byKey(const ValueKey('template-readmode-5')))
@@ -662,7 +657,6 @@ void main() {
         picker: picker,
         location: '/admin/form-templates/new',
       );
-      // Bước 1: chưa có ảnh thì không phân tích được.
       expect(
         tester
             .widget<FilledButton>(find.byKey(const ValueKey('wizard-analyze')))
@@ -675,8 +669,6 @@ void main() {
       await _tapKey(tester, 'wizard-analyze');
       expect(fake.calls, contains('analyze'));
 
-      // Bước 2: vai trò gợi ý chọn sẵn và có nhãn "Gợi ý"; cột không đọc được
-      // tiêu đề thì "Bỏ qua" và không có nhãn.
       expect(find.byKey(const ValueKey('wizard-step-columns')), findsOneWidget);
       for (final i in [0, 1, 2, 3, 4]) {
         expect(find.byKey(ValueKey('column-suggested-$i')), findsOneWidget);
@@ -684,7 +676,6 @@ void main() {
       expect(find.byKey(const ValueKey('column-suggested-5')), findsNothing);
       expect(find.text('Gợi ý'), findsNWidgets(5));
       expect(find.text('Không đọc được tiêu đề'), findsOneWidget);
-      // Cột chữ chưa trỏ cột nào → lỗi sát đúng cột 3.
       expect(
         find.byKey(const ValueKey('column-error-3-pairing-pairedWith')),
         findsOneWidget,
@@ -694,7 +685,6 @@ void main() {
       expect(find.byKey(const ValueKey('column-error-3')), findsNothing);
 
       await _tapKey(tester, 'wizard-next');
-      // Bước 3: nhập tên rồi lưu.
       expect(find.byKey(const ValueKey('wizard-step-save')), findsOneWidget);
       expect(
         tester
@@ -719,7 +709,6 @@ void main() {
       expect(saved[2].group, TemplateColumnDtoGroupEnum.TX);
       expect(saved[2].order, 1);
       expect(saved[5].role, TemplateColumnDtoRoleEnum.BO_QUA);
-      // Lưu xong chuyển sang màn chi tiết của mẫu vừa tạo.
       expect(
         _pathOf(container, '/admin/form-templates/new'),
         '/admin/form-templates/50',
@@ -735,7 +724,6 @@ void main() {
       await _tapKey(tester, 'pick-image');
       await _tapKey(tester, 'wizard-analyze');
 
-      // Luật 4 (cột chữ chưa trỏ): lỗi ở cột 3, bước cuối chặn Lưu.
       await _tapKey(tester, 'wizard-next');
       await tester.enterText(
         find.byKey(const ValueKey('wizard-name')),
@@ -752,7 +740,6 @@ void main() {
       await _tapKey(tester, 'wizard-fix-columns');
       expect(find.byKey(const ValueKey('wizard-step-columns')), findsOneWidget);
 
-      // Luật 1: đổi cột 5 thành Họ tên → hai cột Họ tên đều báo lỗi.
       await _choose(tester, 'column-role-5', 'Họ tên');
       expect(
         find.byKey(const ValueKey('column-error-1-hoTen-role')),
@@ -762,14 +749,12 @@ void main() {
         find.byKey(const ValueKey('column-error-5-hoTen-role')),
         findsOneWidget,
       );
-      // Luật 1 (thiếu): đổi cả hai về "Bỏ qua" → lỗi chung.
       await _choose(tester, 'column-role-5', 'Bỏ qua');
       await _choose(tester, 'column-role-1', 'Bỏ qua');
       expect(find.byKey(const ValueKey('draft-general-hoTen')), findsOneWidget);
       await _choose(tester, 'column-role-1', 'Họ tên');
       expect(find.byKey(const ValueKey('draft-general-hoTen')), findsNothing);
 
-      // Luật 3: đặt cột 4 thành TX thứ 1 → trùng với cột 2.
       await _choose(tester, 'column-group-4', 'Thường xuyên (TX)');
       await _choose(tester, 'column-order-4', '1');
       expect(
@@ -783,14 +768,12 @@ void main() {
       await _choose(tester, 'column-order-4', '2');
       expect(find.byKey(const ValueKey('column-error-4')), findsNothing);
 
-      // Luật 2: không còn cột điểm nào.
       await _choose(tester, 'column-role-2', 'Bỏ qua');
       await _choose(tester, 'column-role-4', 'Bỏ qua');
       expect(
         find.byKey(const ValueKey('draft-general-noDiem')),
         findsOneWidget,
       );
-      // Cột chữ 3 giờ trỏ vào cột không còn là điểm số → lỗi ở cột 3.
       expect(
         find.byKey(const ValueKey('column-error-3-pairing-pairedWith')),
         findsOneWidget,
@@ -819,7 +802,6 @@ void main() {
         ),
         findsOneWidget,
       );
-      // Vẫn ở bước 1 để thử lại.
       expect(find.byKey(const ValueKey('wizard-step-image')), findsOneWidget);
       await _finish(tester);
     });
@@ -834,7 +816,6 @@ void main() {
       expect(find.byKey(const ValueKey('act-retire')), findsNothing);
       expect(find.byKey(const ValueKey('act-edit')), findsOneWidget);
       expect(find.byKey(const ValueKey('act-new-version')), findsOneWidget);
-      // Bảng cột: 6 cột, vai trò đúng.
       for (var i = 0; i < 6; i++) {
         expect(find.byKey(ValueKey('detail-column-$i')), findsOneWidget);
       }
@@ -867,12 +848,10 @@ void main() {
       );
       await tester.pump();
       await _tapKey(tester, 'editor-save');
-      // Editor giữ nội dung và đổi sang lưu phiên bản mới.
       expect(fake.calls, contains('update'));
       expect(find.byKey(const ValueKey('editor-error')), findsOneWidget);
       expect(find.text('Lưu phiên bản mới'), findsOneWidget);
 
-      // Lưu thành phiên bản mới → sang mẫu mới.
       await _tapKey(tester, 'editor-save');
       expect(fake.calls, contains('createVersion'));
       expect(fake.lastName, 'Sổ điểm đã sửa');
@@ -907,7 +886,6 @@ void main() {
       await _pump(tester, fake: fake, location: '/admin/form-templates/5');
       await _tapKey(tester, 'act-edit');
       await _choose(tester, 'column-role-5', 'Điểm số');
-      // Cột điểm mới được gán sẵn TX và thứ tự còn trống (2).
       await _tapKey(tester, 'editor-save');
       expect(fake.calls, contains('update'));
       final saved = fake.lastColumns!;
@@ -956,20 +934,17 @@ void main() {
       expect(find.text('Dòng 1'), findsOneWidget);
       expect(find.text('Họ tên đọc: Học sinh A'), findsOneWidget);
       expect(find.text('STT đọc: 1'), findsOneWidget);
-      // Hai kênh, một kênh, không đọc được.
       expect(find.text('TX1 · Xanh'), findsOneWidget);
       expect(find.text('Số: 8.5 · Chữ: 8.5'), findsOneWidget);
       expect(find.text('GK1 · Vàng'), findsOneWidget);
       expect(find.text('Số: 7.0'), findsOneWidget);
       expect(find.text('Lấy theo điểm số'), findsOneWidget);
       expect(find.text('TX1 · Đỏ'), findsOneWidget);
-      // Màu mức lấy từ token.
       final context = tester.element(find.byKey(const ValueKey('try-result')));
       final cell = tester.widget<DecoratedBox>(
         find.byKey(const ValueKey('try-grade-1-TX1')),
       );
       expect((cell.decoration as BoxDecoration).color, context.tokens.okSoft);
-      // Chỉ gọi try; không có thao tác duyệt/ghi điểm trên màn.
       expect(fake.calls.where((c) => c != 'detail' && c != 'list'), [
         'tryTemplate',
       ]);
@@ -1101,7 +1076,6 @@ void main() {
           expect(tester.takeException(), isNull);
           await _tapKey(tester, 'pick-image');
           await _tapKey(tester, 'wizard-analyze');
-          // Có lỗi cột chữ để chiều cao lỗi cũng được thử.
           expect(tester.takeException(), isNull);
           expect(
             find.byKey(const ValueKey('column-error-3-pairing-pairedWith')),
@@ -1211,7 +1185,6 @@ void main() {
   });
 }
 
-/// Repository giả mà `analyze` luôn lỗi `GRID_NOT_FOUND`.
 class _AnalyzeFails extends _FakeTemplates {
   @override
   Future<AnalyzeResultDto> analyze(RecognitionImage image) =>

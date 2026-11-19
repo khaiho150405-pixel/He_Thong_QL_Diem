@@ -24,7 +24,6 @@ class RegressionChecksTest(unittest.TestCase):
         self.assertTrue(all(ev.regression_checks(v1, v2).values()))
 
     def test_rejected_pages_cannot_hide_a_regression(self) -> None:
-        # v2 từ chối trang nên chỉ đọc 900/1000 dòng; trên dòng đọc được còn chính xác hơn v1, nhưng trên cùng tập thì tụt ~9 điểm %.
         v1 = counts(1000, 1000, 990, 988)
         v2 = counts(1000, 900, 895, 890)
         self.assertGreaterEqual(100 * v2["num_ok"] / v2["read"], 100 * v1["num_ok"] / v1["read"])

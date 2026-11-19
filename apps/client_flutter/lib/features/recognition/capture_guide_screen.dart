@@ -7,14 +7,6 @@ import 'package:flutter/services.dart';
 import '../../app/design_tokens.dart';
 import '../../app/theme.dart';
 
-/// Màn "chuẩn bị chụp" luôn tối, đặt trước bước chụp ảnh bảng điểm.
-///
-/// `image_picker` mở ứng dụng camera của hệ điều hành nên khung 4 góc ở đây chỉ
-/// là hình minh họa cách căn tờ giấy, KHÔNG phải lớp phủ trên khung ngắm thật.
-/// Màn không tự chọn ảnh và không gọi API: nút chụp và nút thư viện gọi lại
-/// hàm chọn ảnh có sẵn của panel nhận dạng. Callback trả `true` khi đã có ảnh
-/// (hoặc thông báo lỗi) để panel hiển thị; khi đó màn tự đóng. Trả `false`
-/// (người dùng hủy) thì màn ở lại.
 class CaptureGuideScreen extends StatefulWidget {
   const CaptureGuideScreen({
     super.key,
@@ -25,19 +17,15 @@ class CaptureGuideScreen extends StatefulWidget {
     this.enabled = true,
   });
 
-  /// Ví dụ `10A1 · Toán`, lấy từ dữ liệu bảng điểm.
   final String? classSubjectLabel;
 
-  /// Tên cột điểm đang chọn, ví dụ `Giữa kỳ`; `null` khi chưa chọn.
   final String? componentLabel;
 
-  /// `false` khi panel không cho gửi ảnh (bảng đã khóa, chưa có cột điểm...).
   final bool enabled;
 
   final Future<bool> Function() onCapture;
   final Future<bool> Function() onPickFromLibrary;
 
-  /// Nhãn pill: ghép các phần có giá trị bằng " · ".
   static String? buildLabel(String? classSubject, String? component) {
     final parts = [
       for (final part in [classSubject, component])
@@ -67,7 +55,6 @@ class _CaptureGuideScreenState extends State<CaptureGuideScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Luôn tối, bất kể chế độ sáng/tối của hệ thống.
     return Theme(
       data: AppTheme.dark(),
       child: Builder(
@@ -176,8 +163,6 @@ class _CaptureGuideScreenState extends State<CaptureGuideScreen> {
                     ),
                   ),
           ),
-          // Cân đối với nút đóng; prototype có nút flash nhưng image_picker
-          // không hỗ trợ nên không làm.
           const SizedBox(width: 48),
         ],
       ),
@@ -231,7 +216,6 @@ class _CaptureGuideScreenState extends State<CaptureGuideScreen> {
     );
   }
 
-  /// Góc khung vàng: 0 trên-trái, 1 trên-phải, 2 dưới-trái, 3 dưới-phải.
   Widget _corner(AppTokens t, int index) {
     final top = index < 2;
     final left = index.isEven;
@@ -264,7 +248,6 @@ class _CaptureGuideScreenState extends State<CaptureGuideScreen> {
   }
 
   Widget _buildNote(BuildContext context, AppTokens t) {
-    // image_picker mở camera của hệ điều hành: không hứa có khung trên đó.
     final text = kIsWeb
         ? 'Hình minh họa cách căn tờ giấy. Trên trình duyệt, nút chụp mở hộp chọn tệp của trình duyệt.'
         : 'Hình minh họa cách căn tờ giấy. Khi bấm chụp, ứng dụng camera của máy sẽ mở; khung này không hiện trên màn camera đó.';
@@ -444,7 +427,6 @@ class _CaptureGuideScreenState extends State<CaptureGuideScreen> {
               ),
             ),
           ),
-          // Prototype có "Trang 1/2"; mỗi phiếu chỉ một ảnh nên không làm.
           const SizedBox(width: 72, height: 72),
         ],
       ),
@@ -452,8 +434,6 @@ class _CaptureGuideScreenState extends State<CaptureGuideScreen> {
   }
 }
 
-/// Hình tờ giấy minh họa (không phải dữ liệu thật): chỉ có các thanh xám và
-/// tên cột. Cố định cỡ chữ để không tràn trong khung minh họa.
 class _PaperSketch extends StatelessWidget {
   const _PaperSketch({required this.tokens});
 

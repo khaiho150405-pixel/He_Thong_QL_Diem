@@ -11,6 +11,7 @@ import {
   gradebookActor,
 } from "../../authorization/application/gradebook-policy.js";
 import { classStudentOrder } from "../../../common/student-order.js";
+import { classificationLabel } from "../../../common/labels.js";
 import { REPORT_STORE, type ReportStore } from "./port.js";
 
 function id(value: number) {
@@ -72,7 +73,6 @@ export class ReportsService {
       }));
       if (!rawRows.length) throw new NotFoundException();
 
-      // STT dùng chung với lưới điểm và nhận dạng (common/student-order).
       const order = classStudentOrder(
         rawRows.map((r) => ({
           ma_hoc_sinh: r.studentId,
@@ -136,7 +136,7 @@ export class ReportsService {
             ]),
           ),
           finalScore: gradeCell(row.finalScore),
-          classification: row.classification,
+          classification: classificationLabel(row.classification),
         });
       }
       sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };

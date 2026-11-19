@@ -1,10 +1,8 @@
 import 'timetable_model.dart';
 
-/// Các tiết liền nhau (cùng buổi) của một môn/lớp/giáo viên/phòng, gộp một thẻ.
 class TimetableSlot {
   const TimetableSlot(this.items);
 
-  /// Đã sắp theo tiết, liên tục.
   final List<TimetableItem> items;
 
   TimetableItem get first => items.first;
@@ -12,12 +10,10 @@ class TimetableSlot {
   int get toPeriod => items.last.tiet;
   bool get isMorning => fromPeriod <= 5;
 
-  /// "1 - 3", hoặc "1" khi chỉ một tiết.
   String get periodLabel =>
       fromPeriod == toPeriod ? '$fromPeriod' : '$fromPeriod - $toPeriod';
 }
 
-/// Gộp các tiết của một ngày thành thẻ, xếp theo tiết rồi theo lớp.
 List<TimetableSlot> groupSlots(Iterable<TimetableItem> dayItems) {
   final sorted = dayItems.toList()
     ..sort((a, b) {

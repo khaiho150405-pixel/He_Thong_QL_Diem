@@ -48,7 +48,6 @@ createServer(async (req, res) => {
     try {
       data = await readFile(target);
     } catch {
-      // SPA Fallback for client-side routing when URL has no extension
       if (!path.extname(pathname)) {
         try {
           target = path.join(root, "index.html");

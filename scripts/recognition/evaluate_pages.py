@@ -87,12 +87,11 @@ SPLITS = {
     "test": ("test", "manifest_test", {"P08", "R04", "R05", "T06", "T07"}),
 }
 TRAIN = {"P01", "P02", "P03", "P04", "P06", "P07", "P09", "P10", "P11", "R01", "R02", "T02", "T05"}
-PAGE_START = {"p1": 1, "p2": 39}  # mọi mẫu E0330113 trong bộ dữ liệu: 38 dòng ở trang 1, trang 2 bắt đầu từ STT 39
+PAGE_START = {"p1": 1, "p2": 39}
 ROSTERS = DATA / "03_DU_LIEU_TONG_HOP" / "BANG_DIEM_CHEP_TAY_Sheet_01_10.xlsx"
 LEVEL_RANK = {"DO": 0, "VANG": 1, "XANH": 2}
 
 
-# ───────────────────────────── dữ liệu ─────────────────────────────
 def load_labels(split: str) -> dict[tuple, dict]:
     folder, stem, people = SPLITS[split]
     labels: dict[tuple, dict] = {}
@@ -107,7 +106,6 @@ def load_labels(split: str) -> dict[tuple, dict]:
             if person in TRAIN:
                 raise SystemExit(f"Người {person} thuộc tập TRAIN: dừng.")
             if person not in people:
-                # Người có trong manifest nhưng chưa được khai báo ở SPLITS (ví dụ T04 trong test/): bỏ qua, không đoán tập.
                 skipped.add(person)
                 continue
             seen.add(person)
@@ -137,7 +135,6 @@ def page_keys(labels: dict) -> list[tuple]:
     return sorted({k[:4] for k in labels})
 
 
-# ───────────────────────────── chạy mô hình ─────────────────────────────
 def channel_json(c: ChannelPrediction) -> dict:
     return {
         "value": None if c.value is None else str(c.value),
@@ -154,7 +151,7 @@ def eval_model():
     env = dict(os.environ)
     env.setdefault("APP_ENV", "production")
     env["RECOGNITION_MODEL_MODE"] = "weights"
-    env["RECOGNITION_STT_CHECK"] = "1"  # luôn đọc STT khi đánh giá; bật/tắt lớp xác nhận STT ở bước report/ghép
+    env["RECOGNITION_STT_CHECK"] = "1"
     for prefix, name in (
         ("CRNN", "crnn_num_best_dot5.pth"),
         ("VIETOCR", "vietocr_best_tang4.pth"),
@@ -183,7 +180,6 @@ def run(split: str, limit: int | None, tag: str = "", layout_path: Path | None =
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.is_file() else {"pages": {}}
     if split == "test" and cache.get("completedAt"):
-        # Tập TEST chỉ được chạy MỘT lần sau khi khóa cấu hình trên DEV (ADR-0016, phase P6): không cho chạy lại.
         raise SystemExit(f"TEST đã chạy xong lúc {cache['completedAt']} ({cache_path.name}); không chạy lại.")
     model, env = eval_model()
     layout = load_layout(layout_path) if layout_path else None
@@ -195,10 +191,9 @@ def run(split: str, limit: int | None, tag: str = "", layout_path: Path | None =
         cache["layout"] = Path(layout_path).name
         cache["minScore"] = threshold
         cache["gradeKey"] = grade_key
-        import src.pipeline.layout as rows_module  # cat_dong_theo_mau gọi compact_name_cell của mô-đun này
+        import src.pipeline.layout as rows_module
     else:
         import src.pipeline.rows as rows_module
-    # Ghi nhận ô họ tên nào thực sự được thu khe (compact_name_cell trả ảnh khác ảnh vào), theo thứ tự dòng.
     collapsed: list[bool] = []
     original_compact = rows_module.compact_name_cell
 
@@ -225,7 +220,6 @@ def run(split: str, limit: int | None, tag: str = "", layout_path: Path | None =
             else:
                 result = model.recognize_v2(image, layout, threshold)
                 template_score = result.template_score
-            # compact_name_cell chỉ được gọi cho dòng không bị gạch, theo thứ tự dòng.
             recorded = iter(collapsed)
             flags = [None if r.struck else next(recorded, None) for r in result.rows]
             rows = []
@@ -263,7 +257,6 @@ def run(split: str, limit: int | None, tag: str = "", layout_path: Path | None =
         cache_path.write_text(json.dumps(cache), encoding="utf-8")
 
 
-# ───────────────────────────── phân loại ─────────────────────────────
 def prediction(c: dict) -> ChannelPrediction:
     return ChannelPrediction(
         raw_output=None,
@@ -301,7 +294,6 @@ def research_classify(numeric, written, tau_n, tau_w, floor: Decimal):
     return {"XANH": "XANH", "VANG": "VANG", "DO": "DO"}[result.level.value], value
 
 
-# ───────────────────────────── ghép học sinh (bộ ghép thật của API) ─────────────────────────────
 def read_sheet(path: str, index: int) -> dict[int, dict]:
     """Đọc một sheet .xlsx bằng thư viện chuẩn (không cần openpyxl): {số dòng: {cột: giá trị}}."""
     z = zipfile.ZipFile(path)
@@ -357,7 +349,6 @@ def match_pages(cache: dict, labels: dict, stt_check: bool = False, struck_activ
     return {item["key"]: item for item in json.loads(out.stdout)}
 
 
-# ───────────────────────────── báo cáo ─────────────────────────────
 def evaluate(cache: dict, labels: dict, matches: dict, rule: str, floor: Decimal) -> dict:
     tau_n, tau_w = thresholds_from_env(os.environ)
     groups: dict[str, collections.Counter] = {s: collections.Counter() for s in ("phone", "scan", "all")}
@@ -554,9 +545,8 @@ def compare(split: str, tag_v2: str, floor: Decimal, struck_active: bool) -> boo
     return verdict
 
 
-# ───────────────────────────── chữ ký lưới, điểm khớp mẫu (D-04) ─────────────────────────────
 SIGNATURE_CACHE = CACHE_DIR / "signatures.json"
-E0330113_COLUMNS = [  # 9 cột dữ liệu: STT | Mã SV | Họ tên | Ngày sinh | Tên lớp | Đ.số | Điểm chữ | Ký tên | Ghi chú
+E0330113_COLUMNS = [
     {"index": 0, "role": "STT"},
     {"index": 2, "role": "HO_TEN"},
     {"index": 5, "role": "DIEM", "key": "CK1", "writtenIndex": 6},
@@ -623,7 +613,7 @@ def make_layout(out: Path) -> None:
     print(f"Đã ghi {out}")
 
 
-THAYHA_COLUMNS = [  # 14 cột: STT|Mã SV|Họ tên|Ng.sinh|Lớp|ĐQT×6|ĐTK|Điểm chữ|Chữ ký; đọc TX1, TX2 (một kênh) và ĐTK + Điểm chữ
+THAYHA_COLUMNS = [
     {"index": 0, "role": "STT"},
     {"index": 2, "role": "HO_TEN"},
     {"index": 5, "role": "DIEM", "key": "TX1"},
@@ -752,8 +742,6 @@ def template_scores(layout_path: Path, others: list[Path], other_files: list[Pat
     candidates = [p for d in others for p in image_files(d)] + other_files
     groups["other"] = []
     groups["same_sheet_info"] = [p for d in same_sheet for p in image_files(d)]
-    # Nhãn "mẫu khác" theo CHỮ IN trên tờ (tiêu đề Đ.số + Điểm chữ = tờ E0330113), KHÔNG theo điểm khớp (tránh vòng tròn):
-    # một thư mục như Data_thayHa trộn cả hai loại tờ.
     for path, entry in image_signatures(candidates).items():
         texts = entry.get("signature", {}).get("headerTexts", [])
         printed_like_template = "dso" in texts and "diemchu" in texts
@@ -761,7 +749,7 @@ def template_scores(layout_path: Path, others: list[Path], other_files: list[Pat
         groups[target].append(next(p for p in candidates if sig_key(p) == path))
     if not groups["same_sheet_info"]:
         del groups["same_sheet_info"]
-    results: dict[str, list[tuple[float, bool]]] = {}  # (điểm khớp, đủ cột cần đọc được ánh xạ 1–1)
+    results: dict[str, list[tuple[float, bool]]] = {}
     for name, paths in groups.items():
         entries = image_signatures(paths)
         found, failed = [], collections.Counter()
@@ -799,7 +787,7 @@ def template_scores(layout_path: Path, others: list[Path], other_files: list[Pat
 
 
 def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8")  # console Windows mặc định cp1252, không in được tiếng Việt
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=["run", "report", "tune", "compare", "scores", "make-layout", "make-second-layout", "qualitative", "diagnose"])
     parser.add_argument("--split", choices=list(SPLITS), default=None, help="bắt buộc, trừ make-second-layout và qualitative (ảnh không nhãn)")
@@ -868,7 +856,6 @@ def main() -> None:
         print_report("Luật CŨ (trước BE-22)", evaluate(cache, labels, matches, "legacy", Decimal("0")))
         print_report(f"Luật hợp nhất của nghiên cứu (sàn {floor})", evaluate(cache, labels, matches, "research", floor))
         return
-    # tune: lưới 0,00–0,95 bước 0,05; chọn 0 Xanh sai với ít Vàng nhất (hòa → sàn thấp hơn)
     rows = []
     for step in range(0, 20):
         floor = Decimal(step) * Decimal("0.05")

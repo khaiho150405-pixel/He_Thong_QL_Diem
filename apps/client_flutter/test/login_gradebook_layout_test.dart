@@ -45,14 +45,12 @@ void main() {
       await pumpLogin(tester, 1440);
 
       expect(find.textContaining('phẩy'), findsNothing);
-      // Tờ giấy + thẻ "Đã số hóa" (mỗi điểm hiện ở giấy và hai lần ở thẻ).
       expect(find.text('8.5'), findsNWidgets(3));
       expect(find.text('7.0'), findsNWidgets(3));
       expect(find.text('6.5'), findsNWidgets(3));
       expect(find.text('tám năm'), findsOneWidget);
       expect(find.text('bảy không'), findsOneWidget);
       expect(find.text('sáu năm'), findsOneWidget);
-      // Cột điểm số đủ rộng cho "7.0": không xuống dòng, không tràn.
       final seven = tester.getSize(find.text('7.0').first);
       expect(seven.height, lessThan(30));
       expect(tester.takeException(), isNull);
@@ -72,7 +70,6 @@ void main() {
         expect(login.width, closeTo(field.width, 0.5));
         expect(login.width, lessThanOrEqualTo(380));
         expect(login.height, greaterThanOrEqualTo(48));
-        // Nút nằm đúng dưới ô nhập, không lệch trái.
         expect(
           tester.getTopLeft(find.byType(FilledButton)).dx,
           closeTo(
@@ -97,7 +94,6 @@ void main() {
   });
 
   group('lưới nhập điểm kéo giãn hết khung', () {
-    // 1024 có sidebar nên vùng nội dung < 800 và dùng thẻ (xem test riêng).
     for (final width in <double>[800, 1280, 1440]) {
       for (final columns in <int>[1, 3, 6]) {
         testWidgets('${width.toInt()}px, $columns cột điểm', (tester) async {
@@ -114,15 +110,12 @@ void main() {
           expect(find.byType(DataTable), findsOneWidget);
           final form = tester.getSize(find.byType(Form)).width;
           final table = tester.getSize(find.byType(DataTable)).width;
-          // Đủ chỗ: bảng chiếm hết khung (trừ lề 16 hai bên), không để trống.
-          // Không đủ chỗ: giữ độ rộng gốc của các cột và cuộn ngang.
           final natural = 32 + 20 * (columns + 1) + 40 + 190 + 170.0 * columns;
           final expected = natural > form - 32 ? natural : form - 32;
           expect(table, closeTo(expected, 2));
           if (natural <= form - 32) {
             expect(table, closeTo(form - 32, 2));
           }
-          // Ô nhập đầu tiên vẫn tìm được theo key cũ.
           expect(find.byKey(const ValueKey('grade-101')), findsOneWidget);
           expect(tester.takeException(), isNull);
         });

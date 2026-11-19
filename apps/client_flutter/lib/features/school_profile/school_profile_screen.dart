@@ -1,3 +1,4 @@
+import '../../core/date_format.dart';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,6 @@ import '../../app/widgets/app_scaffold.dart';
 import '../academic_catalog/semester_deadlines_repository.dart';
 import 'school_profile.dart';
 
-/// Màn "Thông tin trường" (chỉ QTV): sửa tên và thông tin liên hệ hiển thị toàn app.
 class SchoolProfileScreen extends ConsumerStatefulWidget {
   const SchoolProfileScreen({super.key});
 
@@ -28,7 +28,6 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
     'principal',
   ];
   final _ctrl = {for (final k in _keys) k: TextEditingController()};
-  // Trường BE báo sai (details.fields); xóa khi người dùng sửa lại ô đó.
   final _serverInvalid = <String>{};
 
   SchoolProfileDto? _profile;
@@ -85,7 +84,6 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
 
   String _text(String key) => _ctrl[key]!.text.trim();
 
-  // Cùng luật với BE (apps/api/src/modules/school/application/service.ts).
   String? _validate(String key, String? raw) {
     final v = (raw ?? '').trim();
     if (_serverInvalid.contains(key)) return 'Giá trị không hợp lệ';
@@ -123,7 +121,6 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
     context,
   ).showSnackBar(SnackBar(content: Text(message)));
 
-  /// Chạy một lệnh ghi; thành công thì cập nhật form và làm mới sidebar/tiêu đề.
   Future<void> _run(
     Future<SchoolProfileDto> Function() action,
     String success,
@@ -171,12 +168,9 @@ class _SchoolProfileScreenState extends ConsumerState<SchoolProfileScreen> {
     );
   }
 
-  static String _two(int n) => n.toString().padLeft(2, '0');
-
   static String _formatTime(String iso) {
-    final d = DateTime.tryParse(iso)?.toLocal();
-    if (d == null) return iso;
-    return '${_two(d.hour)}:${_two(d.minute)} ${_two(d.day)}/${_two(d.month)}/${d.year}';
+    final d = DateTime.tryParse(iso);
+    return d == null ? iso : formatDateTimeVi(d);
   }
 
   Widget _field(String key, String label, {String? helper, double? width}) {

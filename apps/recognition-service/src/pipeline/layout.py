@@ -31,19 +31,14 @@ from .rows import NGUONG_TEN_TRONG, chuan_hoa_hang_y, compact_name_cell, do_dam_
 from .template_match import KetQuaKhop, khop_mau_chi_tiet, tinh_chu_ky
 
 PREVIEW_MAX_WIDTH = 1400
-_MAU_LUOI = (0, 0, 255)  # BGR
+_MAU_LUOI = (0, 0, 255)
 _MAU_SO = (0, 90, 0)
 _SO_CHU_SO = 4
-# Khoảng tìm lại một vạch dọc quanh vị trí kỳ vọng: 30% bề rộng cột nhỏ hơn trong hai cột kề, chặn 10–40 px (P7).
 DUNG_SAI_VACH = 0.3
 DUNG_SAI_VACH_TOI_THIEU_PX = 10.0
 DUNG_SAI_VACH_TOI_DA_PX = 40.0
-# Hệ số nhân phần bảng mẫu bị mất (so với phần thấy được) để nới quad giấy khi nắn lại (P7); thử lần lượt, nhận cái đầu tiên
-# cho lưới khớp mẫu. Đo trên ảnh điện thoại thật: vùng 0,05–0,30 lần bề rộng quad đều cho lưới đủ 9 cột.
 THU_MO_RONG = (1.0, 1.5)
 
-# Vai trò từ khóa tiêu đề (``grid.TU_KHOA``) → vai trò gợi ý của mẫu; cột còn lại là BO_QUA. Cột không đọc được tiêu đề
-# hoặc tiêu đề không khớp từ khóa nào thì KHÔNG gợi ý (None) — người khai báo mẫu tự chọn.
 _VAI_TRO_GOI_Y = {
     "stt": "STT",
     "ho_ten": "HO_TEN",
@@ -57,27 +52,24 @@ _VAI_TRO_GOI_Y = {
     "ky_ten": "BO_QUA",
     "ghi_chu": "BO_QUA",
 }
-# Nhóm hệ số suy từ chữ tiêu đề (đã bỏ dấu). GK/CK xét trước vì "ddggk"/"ddgck" cũng chứa "gk"/"ck".
 _NHOM_TU_KHOA = (
     ("GK", ("gk", "giuaky")),
     ("CK", ("ck", "cuoiky")),
     ("TX", ("tx", "thuongxuyen", "mieng", "kiemtra", "15phut")),
 )
-# Tiêu đề chỉ gồm ký hiệu nhóm hệ số (TX1, GK, ĐĐGck...) nhưng ``grid.khop_tu_khoa`` không nhận ra: vẫn là cột điểm.
 _TIEU_DE_NHOM = re.compile(r"(?:ddg)?(?:tx|gk|ck)\d{0,2}")
 
 
 @dataclass(frozen=True, slots=True)
 class CotBoCuc:
     index: int
-    x0: float  # tỉ lệ 0–1 theo bề rộng bảng
+    x0: float
     x1: float
     width_mm: float
     header_text: str
     suggested_role: str | None
     suggested_group: str | None
     suggested_order: int | None
-    # Biên cột trên trang đã nắn (px) để cắt ô.
     px0: float
     px1: float
 
@@ -271,8 +263,6 @@ def cat_dong_theo_mau(bo_cuc: BoCuc, layout: Layout, column_map: dict[int, int])
             continue
         name_cell = _cat(page, luoi, hang, name, 2)
         stt_cell = _cat(page, luoi, hang, stt, 2) if stt else None
-        # Gạch bỏ cắt qua ô họ tên VÀ ít nhất một ô điểm/ô chữ: nét ngang ngắn của chữ số (thanh ngang số 7) không làm
-        # mất một dòng có điểm (cùng nguyên tắc với v1).
         struck = la_gach_ngang(name_cell) and any(
             la_gach_ngang(g.numeric_cell) or la_gach_ngang(g.written_cell) for g in grades
         )
@@ -358,7 +348,7 @@ def khoi_phuc_vach_thieu(
     def find(expected: float, span: float, ratio: float) -> float | None:
         return tim_vach_doc(page, hang_y, hang_dau, expected, _khoang_tim_vach(span, ratio), tranh=bounds + added)
 
-    for image_index, first in ket_qua.gop:  # một cột ảnh = hai cột mẫu kề nhau
+    for image_index, first in ket_qua.gop:
         pair = (first, first + 1)
         if not any(j in missing for j in pair):
             continue
@@ -376,7 +366,7 @@ def khoi_phuc_vach_thieu(
         column_ids = (
             list(range(ket_qua.cat_trai - 1, -1, -1)) if direction < 0 else list(range(count - ket_qua.cat_phai, count))
         )
-        wanted = [j for j in column_ids if j in missing]  # column_ids đi từ mép lưới ra ngoài
+        wanted = [j for j in column_ids if j in missing]
         if not cut or not wanted:
             continue
         for j in column_ids[: column_ids.index(wanted[-1]) + 1]:

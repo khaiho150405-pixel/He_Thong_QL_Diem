@@ -18,8 +18,6 @@ part 'student_approved_component_dto.g.dart';
 class StudentApprovedComponentDto {
   /// Returns a new [StudentApprovedComponentDto] instance.
   StudentApprovedComponentDto({
-    required this.componentId,
-
     required this.componentName,
 
     required this.coefficient,
@@ -28,9 +26,6 @@ class StudentApprovedComponentDto {
 
     required this.status,
   });
-
-  @JsonKey(name: r'componentId', required: true, includeIfNull: false)
-  final num componentId;
 
   @JsonKey(name: r'componentName', required: true, includeIfNull: false)
   final String componentName;
@@ -48,7 +43,6 @@ class StudentApprovedComponentDto {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is StudentApprovedComponentDto &&
-          other.componentId == componentId &&
           other.componentName == componentName &&
           other.coefficient == coefficient &&
           other.value == value &&
@@ -56,7 +50,6 @@ class StudentApprovedComponentDto {
 
   @override
   int get hashCode =>
-      componentId.hashCode +
       componentName.hashCode +
       coefficient.hashCode +
       (value == null ? 0 : value.hashCode) +

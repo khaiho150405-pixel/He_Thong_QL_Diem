@@ -12,7 +12,6 @@ enum AppAvatarSize {
   final double fontSize;
 }
 
-/// Avatar tròn chữ cái đầu (`.avatar`), không dùng ảnh.
 class AppAvatar extends StatelessWidget {
   const AppAvatar({
     super.key,
@@ -20,12 +19,9 @@ class AppAvatar extends StatelessWidget {
     this.size = AppAvatarSize.md,
   });
 
-  /// Họ tên đầy đủ; hiển thị chữ cái đầu của từ đầu và từ cuối
-  /// (giống hàm `initials` của prototype).
   final String name;
   final AppAvatarSize size;
 
-  /// "Nguyễn Thị Lan" -> "NL", "Lan" -> "L", rỗng -> "".
   static String initialsOf(String name) {
     final words = name
         .trim()

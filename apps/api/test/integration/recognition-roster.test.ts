@@ -3,7 +3,6 @@ import { randomBytes } from "node:crypto";
 import { test } from "node:test";
 import { createRosterFixture } from "./roster-fixture.js";
 
-// ADR-0015: tao_phieu_nhan_dien chốt danh sách lớp (STT -> học sinh) vào phiếu; dữ liệu hoàn toàn giả.
 test("recognition ticket accepts only a valid class roster snapshot", async () => {
   const f = await createRosterFixture();
   const {
@@ -20,7 +19,6 @@ test("recognition ticket accepts only a valid class roster snapshot", async () =
     const isCheckViolation = (error: { code?: string }) =>
       error.code === "23514";
 
-    // Roster sai: không tạo phiếu, không ghi danh sách.
     const bad: Array<[string, unknown]> = [
       ["thiếu một học sinh", valid.slice(0, 3)],
       ["thừa học sinh đã nghỉ", [...valid, entry(5, s.left)]],
@@ -72,7 +70,6 @@ test("recognition ticket accepts only a valid class roster snapshot", async () =
       assert.equal(await countTickets(), 0, label);
     }
 
-    // Roster hợp lệ: phiếu mới, snapshot ghi đúng STT -> học sinh, so_dong_khai_bao = sĩ số.
     const receipt = await create(valid, "roster-ok", "b".repeat(64));
     assert.equal(receipt.status, "DANG_XU_LY");
     const stored = await owner.query(
@@ -93,7 +90,6 @@ test("recognition ticket accepts only a valid class roster snapshot", async () =
       4,
     );
 
-    // Replay cùng khóa/hash trả lại phiếu cũ và không ghi thêm snapshot.
     assert.deepEqual(await create(valid, "roster-ok", "b".repeat(64)), receipt);
     assert.equal(await countTickets(), 1);
     assert.equal(
@@ -112,7 +108,6 @@ test("recognition ticket accepts only a valid class roster snapshot", async () =
       (error: { code?: string }) => error.code === "23505",
     );
 
-    // Lớp đổi sau khi tạo phiếu: snapshot giữ nguyên.
     await makeStudent(cls, "Mới Vào Lớp");
     await owner.query(
       "UPDATE hoc_sinh_lop SET trang_thai='NGHI_HOC',den_ngay=greatest(CURRENT_DATE,tu_ngay) WHERE ma_hoc_sinh=$1 AND trang_thai='DANG_HOC'",
@@ -127,7 +122,6 @@ test("recognition ticket accepts only a valid class roster snapshot", async () =
       valid.map((e) => [e.stt, e.studentId]),
     );
 
-    // Roster cũ không còn khớp sĩ số hiện tại nên bị từ chối với phiếu mới.
     await assert.rejects(create(valid, "stale"), isCheckViolation);
   } finally {
     await f.close();

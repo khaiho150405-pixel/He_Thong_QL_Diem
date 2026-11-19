@@ -15,6 +15,8 @@ abstract class _$SessionDtoCWProxy {
 
   SessionDto active(bool active);
 
+  SessionDto displayName(String? displayName);
+
   SessionDto token(String? token);
 
   SessionDto csrf(String csrf);
@@ -30,6 +32,7 @@ abstract class _$SessionDtoCWProxy {
     String username,
     SessionDtoRoleEnum role,
     bool active,
+    String? displayName,
     String? token,
     String csrf,
   });
@@ -54,6 +57,9 @@ class _$SessionDtoCWProxyImpl implements _$SessionDtoCWProxy {
   SessionDto active(bool active) => this(active: active);
 
   @override
+  SessionDto displayName(String? displayName) => this(displayName: displayName);
+
+  @override
   SessionDto token(String? token) => this(token: token);
 
   @override
@@ -71,6 +77,7 @@ class _$SessionDtoCWProxyImpl implements _$SessionDtoCWProxy {
     Object? username = const $CopyWithPlaceholder(),
     Object? role = const $CopyWithPlaceholder(),
     Object? active = const $CopyWithPlaceholder(),
+    Object? displayName = const $CopyWithPlaceholder(),
     Object? token = const $CopyWithPlaceholder(),
     Object? csrf = const $CopyWithPlaceholder(),
   }) {
@@ -91,6 +98,10 @@ class _$SessionDtoCWProxyImpl implements _$SessionDtoCWProxy {
           ? _value.active
           // ignore: cast_nullable_to_non_nullable
           : active as bool,
+      displayName: displayName == const $CopyWithPlaceholder()
+          ? _value.displayName
+          // ignore: cast_nullable_to_non_nullable
+          : displayName as String?,
       token: token == const $CopyWithPlaceholder()
           ? _value.token
           // ignore: cast_nullable_to_non_nullable
@@ -129,6 +140,7 @@ SessionDto _$SessionDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
         (v) => $enumDecode(_$SessionDtoRoleEnumEnumMap, v),
       ),
       active: $checkedConvert('active', (v) => v as bool),
+      displayName: $checkedConvert('displayName', (v) => v as String?),
       token: $checkedConvert('token', (v) => v as String?),
       csrf: $checkedConvert('csrf', (v) => v as String),
     );
@@ -142,6 +154,7 @@ Map<String, dynamic> _$SessionDtoToJson(SessionDto instance) =>
       'username': instance.username,
       'role': _$SessionDtoRoleEnumEnumMap[instance.role]!,
       'active': instance.active,
+      'displayName': ?instance.displayName,
       'token': instance.token,
       'csrf': instance.csrf,
     };

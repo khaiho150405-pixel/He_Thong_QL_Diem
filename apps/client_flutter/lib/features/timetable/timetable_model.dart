@@ -1,4 +1,3 @@
-/// Học kỳ của danh sách TKB đang hiển thị; ngày là ngày thuần ở UTC.
 class TimetableSemester {
   final num id;
   final String name;
@@ -14,7 +13,6 @@ class TimetableSemester {
     required this.endDate,
   });
 
-  /// Trả null khi thiếu/hỏng ngày để màn hình rơi về chế độ không có học kỳ.
   static TimetableSemester? tryParse(Object? json) {
     if (json is! Map<String, dynamic>) return null;
     final start = DateTime.tryParse('${json['startDate']}');
@@ -46,8 +44,8 @@ class TimetableItem {
   final String tenGiaoVien;
   final int maHocKy;
   final String tenHocKy;
-  final int thu; // 2 -> 8 (Thứ Hai -> Chủ nhật)
-  final int tiet; // 1 -> 10
+  final int thu;
+  final int tiet;
   final String? phongHoc;
   final String? ghiChu;
 

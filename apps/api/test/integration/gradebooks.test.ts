@@ -31,8 +31,6 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
     throw new Error("Explicit isolated test URLs required");
   const owner = new Pool({ connectionString: ownerUrl });
   const runtime = new Pool({ connectionString: runtimeUrl });
-  // Các kịch bản này kiểm tra việc tạo bảng điểm thủ công/hàng loạt khi phân công chưa tạo sẵn bảng,
-  // nên tắt trigger tự tạo trong lúc chạy (trigger được kiểm riêng ở auto-gradebook.test.ts).
   await owner.query(
     "ALTER TABLE phan_cong_giang_day DISABLE TRIGGER tg_phan_cong_tao_bang_diem_them",
   );
@@ -85,7 +83,6 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
         [year, teacher.id],
       )
     ).rows[0].ma_lop;
-    // 26 students x 2 components exercises a 50-cell cursor boundary. Inactive excluded at creation.
     await owner.query(
       "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh,dang_theo_hoc) SELECT $1,'Học sinh giả ' || n,'2010-01-01',n<=26 FROM generate_series(1,27) n",
       [cls],
@@ -149,7 +146,6 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
       ),
     );
     assert.ok(cells.every((c) => ["1.00", "2.00"].includes(c.coefficient)));
-    // STT follows the shared name order, not ma_hoc_sinh: given names "1","10".."19","2","20".."26","3".."9".
     const sttByName = new Map(cells.map((c) => [c.studentName, c.stt]));
     assert.equal(new Set(cells.map((c) => c.stt)).size, 26);
     assert.deepEqual(
@@ -194,7 +190,6 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
       0,
     );
 
-    // The owner simulates future writes; this phase exposes no runtime grade update capability.
     await owner.query(
       "UPDATE diem_thanh_phan SET gia_tri=0.0,trang_thai='DA_DUYET' WHERE ma_diem=$1",
       [cells[0]!.id],
@@ -260,7 +255,6 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
       0,
     );
 
-    // A second valid teacher with no assignment cannot use a homeroom relationship to gain access.
     const intruderId = (
       await owner.query(
         "INSERT INTO nguoi_dung(ten_dang_nhap,mat_khau_ma_hoa,vai_tro) VALUES($1,'test-only-no-login','GIAO_VIEN') RETURNING ma_nguoi_dung",

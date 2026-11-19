@@ -13,8 +13,6 @@ import {
   twoChannelRow,
 } from "../../apps/api/test/integration/batch-fixture.js";
 
-// Lô nhận dạng nhiều trang (ADR-0016 mục 3, migration 202610200001): tao_lo_nhan_dien, luu_ket_qua_lo,
-// danh_dau_lo_nhan_dien_loi, huy_lo_nhan_dien, ràng buộc bảng và quyền runtime. Dữ liệu hoàn toàn giả; chỉ chạy trên DB *_test.
 type Failure = { code?: string; message?: string };
 const failsWith = (code: string, text: string) => (error: Failure) =>
   error.code === code && String(error.message).includes(text);
@@ -80,7 +78,6 @@ test("a batch creates one ticket per component, the pages, the roster copies and
       assert.equal(ticket.duong_dan_anh_goc, pages[0]!.objectKey);
       assert.equal(ticket.so_dong_khai_bao, 4);
       assert.equal(ticket.status, "DANG_XU_LY");
-      // ma_bam_tep của phiếu thuộc lô = SHA-256(checksum các trang theo thứ tự ':' mã thành phần).
       assert.equal(
         ticket.ma_bam_tep,
         createHash("sha256")
@@ -100,7 +97,6 @@ test("a batch creates one ticket per component, the pages, the roster copies and
     }
     assert.notEqual(tickets[0]!.ma_bam_tep, tickets[1]!.ma_bam_tep);
 
-    // MỘT sự kiện cho cả lô, không có sự kiện theo phiếu.
     const events = (
       await f.owner.query(
         "SELECT loai_su_kien, ma_phieu, ma_lo::text AS batch, du_lieu FROM recognition_outbox WHERE ma_lo=$1 OR ma_phieu IN (SELECT ma_phieu FROM phieu_nhan_dien WHERE ma_lo=$1)",
@@ -124,7 +120,6 @@ test("a batch creates one ticket per component, the pages, the roster copies and
       { hanh_dong: "RECOGNITION_BATCH_UPLOADED", n: 1 },
       { hanh_dong: "RECOGNITION_UPLOADED", n: 2 },
     ]);
-    // Máy chỉ đề xuất: tạo lô không đụng tới điểm chính thức.
     assert.equal(
       Number(
         (
@@ -172,7 +167,6 @@ test("replaying the same key returns the same receipt without writing; the same 
 test("a failure on the second component rolls the whole batch back", async () => {
   const t = await createBatchFixture();
   try {
-    // Thành phần TX2 đang chờ (lô một thành phần) nên lô hai thành phần tạo xong phiếu TX1 rồi mới gặp lỗi ở TX2.
     await t.createBatch({
       components: [t.components[1]],
       pages: fakePages(1),
@@ -184,7 +178,6 @@ test("a failure on the second component rolls the whole batch back", async () =>
       t.createBatch({ pages: fakePages(2) }),
       failsWith("23514", "RECOGNITION_ALREADY_PENDING"),
     );
-    // Không còn lô, trang, phiếu, danh sách lớp, sự kiện outbox, audit hay khóa idempotency nào của lần thử lỗi.
     assert.deepEqual(await t.totals(), before);
   } finally {
     await t.close();
@@ -343,7 +336,6 @@ test("invalid requests are rejected with stable codes and write nothing", async 
         failsWith(code, text),
         label,
       );
-    // Ngoài giao dịch SERIALIZABLE.
     await assert.rejects(
       f.runtime.query(
         "SELECT public.tao_lo_nhan_dien($1,$2,$3,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,'k','h')",
@@ -362,18 +354,15 @@ test("pending components and re-uploads are refused; cancelling frees them (part
   try {
     const pages = fakePages(2);
     const first = await t.createBatch({ pages });
-    // Cùng ảnh, cùng thành phần: tải trùng.
     await assert.rejects(
       t.createBatch({ pages }),
       failsWith("23505", "DUPLICATE_FILE"),
     );
-    // Ảnh khác nhưng thành phần đang chờ.
     await assert.rejects(
       t.createBatch({ pages: fakePages(2) }),
       failsWith("23514", "RECOGNITION_ALREADY_PENDING"),
     );
     await t.cancelBatch(first.batchId);
-    // Hủy xong tải lại đúng ảnh được.
     const again = await t.createBatch({ pages });
     assert.notEqual(again.batchId, first.batchId);
   } finally {
@@ -406,7 +395,6 @@ test("results are written for every ticket of the batch at once, with the page o
     const one = await t.evidence(tx1.ticketId);
     const two = await t.evidence(tx2.ticketId);
     const studentOfStt = f.valid.map((entry) => entry.studentId);
-    // thu_tu_dong = (trang-1)*1000 + vị trí; so_trang đúng; học sinh theo STT của danh sách chốt.
     assert.deepEqual(
       one.map((row) => [row.thu_tu_dong, row.so_trang, row.ma_hoc_sinh]),
       [
@@ -420,7 +408,6 @@ test("results are written for every ticket of the batch at once, with the page o
       one.map((row) => row.so_trang),
       two.map((row) => row.so_trang),
     );
-    // AC-4: mỗi phiếu chỉ chứa giá trị của đúng cột của nó (hai cột có giá trị khác nhau).
     assert.deepEqual(
       one.map((row) => row.a),
       [...TX1_VALUES],
@@ -429,7 +416,6 @@ test("results are written for every ticket of the batch at once, with the page o
       two.map((row) => row.a),
       [...TX2_VALUES],
     );
-    // AC-5: cột một kênh không Xanh, không có kênh chữ, ảnh ô chữ trống; cột hai kênh có kênh chữ.
     assert.equal(
       two.some((row) => row.level === "XANH"),
       false,
@@ -446,7 +432,6 @@ test("results are written for every ticket of the batch at once, with the page o
       one.every((row) => row.duong_dan_anh_o_chu !== null),
       true,
     );
-    // Máy chỉ đề xuất: chưa có điểm chính thức.
     assert.equal(
       Number(
         (
@@ -459,7 +444,6 @@ test("results are written for every ticket of the batch at once, with the page o
       0,
     );
 
-    // Ghi lại là bỏ qua: lô đã XONG.
     await t.saveResults(receipt.batchId, fullResults(receipt));
     assert.equal((await t.evidence(tx1.ticketId)).length, 4);
     assert.equal((await t.batchRow(receipt.batchId)).version, 1);
@@ -474,7 +458,6 @@ test("a red row never keeps a suggestion and a blank cell is read as unreadable,
     const receipt = await t.createBatch();
     const results = fullResults(receipt);
     const tx1 = results[0]!;
-    // Ô trống: không đọc được, Đỏ, không gợi ý. Dòng khác bị hạ Đỏ do ghép học sinh vẫn không lưu gợi ý.
     tx1.rows[0] = twoChannelRow(tx1.ticketId, 1, 1, 1, null);
     tx1.rows[1] = twoChannelRow(tx1.ticketId, 1, 2, 2, "7.0", {
       reviewLevel: "DO",
@@ -661,7 +644,6 @@ test("malformed results are rejected whole: nothing is written for any ticket of
         label,
       );
     }
-    // Phiếu không có dòng nào: số dòng không hợp lệ, cũng không ghi gì.
     await assert.rejects(
       t.saveResults(
         receipt.batchId,
@@ -672,7 +654,6 @@ test("malformed results are rejected whole: nothing is written for any ticket of
       failsWith("23514", "GRID_ROW_COUNT_MISMATCH"),
     );
     assert.equal((await t.evidence(tx2.ticketId)).length, 0);
-    // Phiếu của lô không ghi được qua hàm một ảnh, và dòng của phiếu thường không được mang số trang.
     await assert.rejects(
       t.f.serializable((query) =>
         query("SELECT public.luu_ket_qua_nhan_dien($1,$2,$3::jsonb)", [
@@ -748,7 +729,6 @@ test("a rejected page fails the whole batch with the same code on every ticket a
       });
       assert.equal((await t.evidence(ticket.ticketId)).length, 0);
     }
-    // Lỗi thì không ghi kết quả được nữa, và đánh dấu lại là bỏ qua.
     await assert.rejects(
       t.saveResults(receipt.batchId, fullResults(receipt)),
       failsWith("23514", "BATCH_NOT_PROCESSING"),
@@ -758,13 +738,11 @@ test("a rejected page fails the whole batch with the same code on every ticket a
       (await t.batchRow(receipt.batchId)).ma_loi,
       "TEMPLATE_MISMATCH",
     );
-    // Lỗi không gắn với trang (ghép học sinh).
     const second = await t.createBatch();
     await t.failBatch(second.batchId, "ROW_MATCH_FAILED", null);
     const failed = await t.batchRow(second.batchId);
     assert.equal(failed.ma_loi, "ROW_MATCH_FAILED");
     assert.equal(failed.trang_loi, null);
-    // Thành phần của lô LOI không còn bị coi là đang chờ.
     await t.createBatch();
   } finally {
     await t.close();
@@ -801,7 +779,6 @@ test("each ticket of a batch is approved on its own with the existing function a
       "batch-approve-1",
     );
     assert.equal((await t.ticketStatus(tx1.ticketId)).status, "DA_DUYET");
-    // Phiếu kia và thành phần kia chưa bị đụng tới.
     assert.equal((await t.ticketStatus(tx2.ticketId)).status, "CHO_DOI_CHIEU");
     const first = await cells(t.component1);
     f.valid.forEach((entry, index) => {
@@ -822,7 +799,6 @@ test("each ticket of a batch is approved on its own with the existing function a
     f.valid.forEach((entry, index) => {
       assert.equal(second.get(entry.studentId)?.value, TX2_VALUES[index]);
     });
-    // Điểm cột TX1 không đổi sau khi duyệt phiếu thứ hai.
     const firstAgain = await cells(t.component1);
     f.valid.forEach((entry, index) => {
       assert.equal(firstAgain.get(entry.studentId)?.value, TX1_VALUES[index]);
@@ -838,7 +814,6 @@ test("each ticket of a batch is approved on its own with the existing function a
       ),
       8,
     );
-    // Lô đã duyệt hết thì không còn gì để hủy.
     await assert.rejects(
       t.cancelBatch(receipt.batchId),
       failsWith("23514", "TICKET_ALREADY_APPROVED"),
@@ -856,7 +831,6 @@ test("cancelling a batch is soft, idempotent and scoped to its own gradebook", a
     const key = "batch-cancel-1";
     const hash = randomBytes(32).toString("hex");
     const unassigned = await makeSession(f.owner, "GIAO_VIEN", "batch_cancel");
-    // IDOR: giáo viên không được phân công, lô của bảng điểm khác, bảng điểm/lô không tồn tại.
     await assert.rejects(
       t.cancelBatch(receipt.batchId, { session: unassigned.session }),
       failsWith("42501", "FORBIDDEN"),
@@ -901,7 +875,6 @@ test("cancelling a batch is soft, idempotent and scoped to its own gradebook", a
     });
     for (const ticket of receipt.tickets)
       assert.equal((await t.ticketStatus(ticket.ticketId)).status, "DA_HUY");
-    // Dispatcher không gửi lại sự kiện của lô đã hủy.
     assert.equal(
       Number(
         (
@@ -913,7 +886,6 @@ test("cancelling a batch is soft, idempotent and scoped to its own gradebook", a
       ),
       0,
     );
-    // Cùng khóa -> cùng kết quả; khóa khác -> vẫn là lô đã hủy, không đổi lý do; cùng khóa khác nội dung -> từ chối.
     assert.deepEqual(
       await t.cancelBatch(receipt.batchId, {
         reason: "Chụp nhầm bảng",
@@ -936,7 +908,6 @@ test("cancelling a batch is soft, idempotent and scoped to its own gradebook", a
       }),
       failsWith("23505", "IDEMPOTENCY_MISMATCH"),
     );
-    // Kết quả đến muộn của worker bị bỏ qua: không dòng nào được ghi, không lỗi.
     await t.saveResults(receipt.batchId, fullResults(receipt));
     for (const ticket of receipt.tickets)
       assert.equal((await t.evidence(ticket.ticketId)).length, 0);
@@ -1012,7 +983,6 @@ test("cancelling keeps the tickets that are already approved", async () => {
     assert.equal(cancelled.cancelledTickets, 1);
     assert.equal((await t.ticketStatus(tx1.ticketId)).status, "DA_DUYET");
     assert.equal((await t.ticketStatus(tx2.ticketId)).status, "DA_HUY");
-    // Kết quả đã duyệt (bằng chứng) không bị xóa.
     assert.equal((await t.evidence(tx1.ticketId)).length, 4);
   } finally {
     await t.close();
@@ -1054,7 +1024,6 @@ test("batch and page rows are protected: runtime is read-only and nothing is eve
         denied,
         sql,
       );
-    // Kể cả chủ sở hữu bảng cũng không xóa được lô hay sửa/xóa trang.
     for (const sql of [
       "DELETE FROM lo_nhan_dien WHERE ma_lo=$1",
       "DELETE FROM trang_lo_nhan_dien WHERE ma_lo=$1",
@@ -1103,7 +1072,6 @@ test("table constraints reject malformed batch rows even for the table owner", a
       ),
       checks("lo_loi_hop_le"),
     );
-    // Phiếu thuộc lô phải có chỉ số cột mẫu và mẫu; mỗi thành phần/cột mẫu chỉ một phiếu trong một lô.
     await assert.rejects(
       f.owner.query(
         "UPDATE phieu_nhan_dien SET chi_so_cot_mau=NULL WHERE ma_lo=$1",
@@ -1125,7 +1093,6 @@ test("table constraints reject malformed batch rows even for the table owner", a
       ),
       failsWith("23505", "phieu_lo_thanh_phan_key"),
     );
-    // Cùng một ảnh không dùng cho hai trang.
     await assert.rejects(
       f.owner.query(
         "INSERT INTO trang_lo_nhan_dien(ma_lo,so_trang,ma_bam_tep,duong_dan_anh) SELECT ma_lo,3,ma_bam_tep,'recognition/original/00000000-0000-0000-0000-000000000000.png' FROM trang_lo_nhan_dien WHERE ma_lo=$1 AND so_trang=1",
@@ -1140,7 +1107,6 @@ test("table constraints reject malformed batch rows even for the table owner", a
       ),
       checks("trang_lo_duong_dan_hop_le"),
     );
-    // Dòng kết quả: số trang phải đi cùng phiếu thuộc lô và không vượt số trang của lô.
     const ticket = receipt.tickets[0]!.ticketId;
     const student = f.valid[0]!.studentId;
     const insertRow = (page: number | null) =>
@@ -1151,7 +1117,6 @@ test("table constraints reject malformed batch rows even for the table owner", a
     await assert.rejects(insertRow(null), checks("BATCH_ROW_PAGE_MISMATCH"));
     await assert.rejects(insertRow(3), checks("BATCH_ROW_PAGE_MISMATCH"));
     await assert.rejects(insertRow(5), checks("BATCH_ROW_PAGE_MISMATCH"));
-    // Phiếu cũ (không thuộc lô) không được mang số trang.
     const legacy = await f.createTicket(f.valid, "batch-legacy-row");
     await assert.rejects(
       f.owner.query(
@@ -1160,7 +1125,6 @@ test("table constraints reject malformed batch rows even for the table owner", a
       ),
       checks("BATCH_ROW_PAGE_MISMATCH"),
     );
-    // Outbox: đúng một trong ma_phieu / ma_lo.
     await assert.rejects(
       f.owner.query(
         "INSERT INTO recognition_outbox(loai_su_kien,ma_lo,du_lieu) VALUES('RECOGNITION_REQUESTED',$1,'{}'::jsonb)",

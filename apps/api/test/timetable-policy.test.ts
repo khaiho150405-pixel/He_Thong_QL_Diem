@@ -126,14 +126,11 @@ test("list reports the semester in use: explicit, default, or null", async () =>
       endDate: "2027-05-31",
     },
   );
-  // Không có năm hiện hành và không truyền semesterId → null.
   assert.equal((await build(null).getTimetable(admin, {})).semester, null);
-  // semesterId không tồn tại → null, không lỗi.
   assert.equal(
     (await build(null).getTimetable(admin, { semesterId: 99 })).semester,
     null,
   );
-  // Năm hiện hành có học kỳ nhưng ngoài mọi khoảng ngày → học kỳ đầu (thu_tu nhỏ nhất).
   const year = {
     hoc_ky_rows: [
       {
@@ -186,4 +183,34 @@ test("class day requires variety, maximum four periods per session and consecuti
       { ma_mon: 5, tiet: 5 },
     ]),
   );
+});
+
+test("students never receive the classroom, teachers and admins do", async () => {
+  const row = {
+    ma_tiet_hoc: 1,
+    ma_lop: 7,
+    ma_lop_ref: { ten_lop: "10A1" },
+    ma_mon: 2,
+    ma_mon_ref: { ten_mon: "Toán" },
+    ma_giao_vien: 3,
+    ma_giao_vien_ref: { ho_ten: "Phạm Thu Hà" },
+    ma_hoc_ky: 4,
+    ma_hoc_ky_ref: { ten: "Học kỳ 1" },
+    thu: 2,
+    tiet: 1,
+    phong_hoc: "A101",
+    ghi_chu: null,
+  };
+  const service = new TimetableService({
+    giao_vien: { findUnique: async () => ({ ma_giao_vien: 3 }) },
+    hoc_sinh: { findFirst: async () => ({ ma_lop: 7 }) },
+    nam_hoc: { findFirst: async () => null },
+    hoc_ky: { findUnique: async () => null },
+    thoi_khoa_bieu: { findMany: async () => [row] },
+  } as never);
+  const room = async (role: Actor["role"]) =>
+    (await service.getTimetable(actor(role), {})).items[0]!.phong_hoc;
+  assert.equal(await room("HOC_SINH"), null);
+  assert.equal(await room("GIAO_VIEN"), "A101");
+  assert.equal(await room("QUAN_TRI_VIEN"), "A101");
 });

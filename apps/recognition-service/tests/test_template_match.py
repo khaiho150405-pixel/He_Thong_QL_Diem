@@ -41,7 +41,6 @@ class SignatureTest(unittest.TestCase):
         for name in ("rowHeightMm", "tableWidthMm"):
             self.assertEqual(signature[name], round(signature[name], 4))
         self.assertEqual(signature["headerRows"], 1)
-        # 1430 px at 200 DPI = 181.9 mm; the row pitch is 44 px = 5.6 mm
         self.assertAlmostEqual(signature["tableWidthMm"], 181.9, delta=1.5)
         self.assertAlmostEqual(signature["rowHeightMm"], 5.6, delta=0.3)
 
@@ -91,7 +90,6 @@ class TemplateMatchPhotoTest(unittest.TestCase):
         self.assertLess(score, tm.DEFAULT_MIN_SCORE)
 
     def test_a_lost_vertical_rule_still_matches_and_maps_the_other_columns(self) -> None:
-        # Rule between TX3 (template column 4) and TX4 (column 5) is missing: those two columns merge into one.
         page, _ = make_thpt_page(missing_lines=(5,))
         signature = signature_of(page, None)
         self.assertEqual(len(signature["columnWidths"]), 8)
@@ -102,7 +100,7 @@ class TemplateMatchPhotoTest(unittest.TestCase):
         self.assertNotIn(5, column_map)
 
     def test_a_spurious_vertical_rule_splits_a_column_and_leaves_it_unmapped(self) -> None:
-        columns = (60, 380, 52, 53, 105, 105, 105, 116, 128, 326)  # TX1 drawn as two cells
+        columns = (60, 380, 52, 53, 105, 105, 105, 116, 128, 326)
         page, _ = make_thpt_page(columns=columns, headers=None, score_columns=(4, 5, 6, 7))
         signature = signature_of(page, None)
         self.assertEqual(len(signature["columnWidths"]), 10)
@@ -138,7 +136,7 @@ class KhopMauUnitTest(unittest.TestCase):
         self.assertEqual(tm.khop_mau(sig(self.WIDTHS), sig([])), (0.0, {}))
 
     def test_a_merged_pair_costs_a_fixed_penalty_and_leaves_both_unmapped(self) -> None:
-        merged = [0.05, 0.25, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1]  # columns 2 and 3 merged
+        merged = [0.05, 0.25, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1]
         score, column_map = tm.khop_mau(sig(merged), sig(self.WIDTHS))
         self.assertAlmostEqual(score, 1.0 - tm.PHAT_GOP_COT, places=4)
         self.assertEqual(column_map, {0: 0, 1: 1, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7})
@@ -157,7 +155,6 @@ class KhopMauUnitTest(unittest.TestCase):
         self.assertLess(lower, 0.8)
         self.assertEqual(tm.khop_mau(sig(self.WIDTHS, [""] * 9), sig(self.WIDTHS, same))[0], 1.0)
         self.assertEqual(tm.khop_mau(sig(self.WIDTHS), sig(self.WIDTHS, same))[0], 1.0)
-        # a single comparable header pair is not enough evidence to move the score
         one = [""] * 8 + ["zzzz"]
         self.assertEqual(tm.khop_mau(sig(self.WIDTHS, one), sig(self.WIDTHS, same))[0], 1.0)
 

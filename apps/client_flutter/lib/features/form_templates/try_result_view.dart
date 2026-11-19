@@ -5,8 +5,6 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import 'common.dart';
 
-/// Kết quả "Thử nhận dạng": từng dòng với STT đọc, họ tên đọc và từng cột điểm
-/// tô màu theo mức Xanh/Vàng/Đỏ. Chỉ để xem; không có thao tác ghi điểm nào.
 class TryResultView extends StatelessWidget {
   const TryResultView({super.key, required this.result});
 

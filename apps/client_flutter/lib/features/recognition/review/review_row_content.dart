@@ -8,16 +8,8 @@ import 'review_models.dart';
 import 'review_page_labels.dart';
 import 'review_stt_mismatch_box.dart';
 
-/// Kiểu bố cục hiển thị một dòng:
-/// - [wide]: Web/Tablet ngang (các cột trong Row)
-/// - [narrow]: Mobile / Danh sách hẹp (xếp dọc, ảnh và nút full-width)
 enum ReviewRowLayout { wide, narrow }
 
-/// Widget dùng chung hiển thị toàn bộ nội dung của một dòng đối chiếu theo thẻ
-/// `.rv` của prototype: thanh tiêu đề đổi màu theo mức (STT hệ thống, họ tên,
-/// chip STT khác, huy hiệu mức, menu ⋮), khung STT khác, ảnh họ tên, ảnh ô
-/// Điểm số và Điểm chữ (kèm độ tin cậy và giá trị máy đọc), vùng "Điểm ghi vào
-/// bảng" (lý do, ô nhập Điểm cuối / Không ghi điểm / Chỉ xem, nút Đồng ý).
 class ReviewRowContent extends StatelessWidget {
   final RecognitionEvidenceRowDto row;
   final TextEditingController valueController;
@@ -75,7 +67,6 @@ class ReviewRowContent extends StatelessWidget {
         row.sttOnPaper != null &&
         row.stt != null &&
         row.sttOnPaper!.toInt() != row.stt;
-    // Dòng Xanh chỉ lệch STT: ảnh họ tên thu nhỏ nằm chung hàng với ảnh điểm và điểm cuối.
     final compactInfo = showPaperStt && row.matchLevel?.value == 'XANH';
     final nameCropShown = (showNameCrop && !showPaperStt) || compactInfo;
 
@@ -90,10 +81,8 @@ class ReviewRowContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Thanh tiêu đề đổi màu theo mức (`.rv-h`)
           _buildHeader(context, colors, level, showPaperStt),
 
-          // Khung ghi chú riêng khi STT khác nhau (full width)
           if (showPaperStt)
             ReviewSttMismatchBox(
               row: row,
@@ -104,7 +93,6 @@ class ReviewRowContent extends StatelessWidget {
               isCancelled: isCancelled,
             ),
 
-          // Nội dung theo bố cục ngang (wide) hoặc dọc (narrow)
           Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: layout == ReviewRowLayout.wide
@@ -223,7 +211,6 @@ class ReviewRowContent extends StatelessWidget {
     );
   }
 
-  /// Ảnh ô Điểm số + độ tin cậy + giá trị máy đọc.
   Widget _numericCrop(double height) => ReviewCropImage(
     label: 'Điểm số',
     imageUrl: row.numericCropUrl,
@@ -233,7 +220,6 @@ class ReviewRowContent extends StatelessWidget {
     isCancelled: isCancelled,
   );
 
-  /// Ảnh ô Điểm chữ + độ tin cậy + giá trị máy đọc.
   Widget _writtenCrop(double height) => ReviewCropImage(
     label: 'Điểm chữ',
     imageUrl: row.writtenCropUrl,
@@ -252,7 +238,6 @@ class ReviewRowContent extends StatelessWidget {
     isCancelled: isCancelled,
   );
 
-  /// Lý do ngắn (`.why`): chỉ có chữ khi dòng Vàng/Đỏ.
   Widget? _buildWhy(
     BuildContext context,
     ReviewLevelColors colors,
@@ -290,22 +275,17 @@ class ReviewRowContent extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Ảnh họ tên nếu có (chỉ khi cần kiểm tra đúng học sinh)
         if (showNameCrop) ...[
           Expanded(flex: 2, child: _nameCrop(48)),
           const SizedBox(width: AppSpacing.md),
         ],
 
-        // Ảnh ô Điểm số
         Expanded(flex: 2, child: _numericCrop(cropHeight)),
         const SizedBox(width: AppSpacing.md),
 
-        // Ảnh ô Điểm chữ — dạng ngang, cần rộng hơn Điểm số để chữ viết tay
-        // không bị thu nhỏ (ảnh bị giới hạn bởi chiều rộng cột).
         Expanded(flex: 3, child: _writtenCrop(cropHeight)),
         const SizedBox(width: AppSpacing.lg),
 
-        // Điểm ghi vào bảng: lý do, ô nhập và thao tác
         Expanded(
           flex: 3,
           child: _buildFinalColumn(context, colors, shortReason),
@@ -325,17 +305,14 @@ class ReviewRowContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Lý do ngắn nằm trên cùng để thấy ngay việc cần làm
         if (why != null) ...[why, const SizedBox(height: AppSpacing.md)],
 
-        // Ảnh họ tên nếu có (chỉ hiện khi chưa có khung STT)
         if (showNameCrop) ...[
           _nameCrop(compact ? 44 : 68),
           const SizedBox(height: AppSpacing.md),
         ],
 
         if (compact)
-          // Dòng Xanh: ảnh điểm số và điểm chữ cạnh nhau để tiết kiệm chiều cao.
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -345,23 +322,18 @@ class ReviewRowContent extends StatelessWidget {
             ],
           )
         else ...[
-          // Ảnh ô Điểm số (full width)
           _numericCrop(128),
           const SizedBox(height: AppSpacing.md),
 
-          // Ảnh ô Điểm chữ (full width, cao hơn vì chữ viết tay dài hơn điểm số)
           _writtenCrop(160),
         ],
         const SizedBox(height: AppSpacing.lg),
 
-        // Điểm ghi vào bảng (full width); lý do đã hiện phía trên
         _buildFinalColumn(context, colors, '', isMobile: true),
       ],
     );
   }
 
-  /// Vùng "Điểm ghi vào bảng" (`.rv-f`): nhãn, lý do (bố cục ngang), rồi ô
-  /// nhập / Không ghi điểm / Chỉ xem.
   Widget _buildFinalColumn(
     BuildContext context,
     ReviewLevelColors colors,
@@ -395,7 +367,6 @@ class ReviewRowContent extends StatelessWidget {
     final t = context.tokens;
     final isYellow = row.reviewLevel.value == 'VANG';
 
-    // Chế độ CHỈ XEM
     if (readOnly) {
       final finalDisplay = row.finalValue != null
           ? '${row.finalValue}'
@@ -437,7 +408,6 @@ class ReviewRowContent extends StatelessWidget {
       );
     }
 
-    // Không ghi điểm (vắng/miễn…)
     if (isLeavingEmpty) {
       return Container(
         width: isMobile ? double.infinity : null,
@@ -554,7 +524,6 @@ class ReviewRowContent extends StatelessWidget {
       );
     }
 
-    // Nhập điểm cuối
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

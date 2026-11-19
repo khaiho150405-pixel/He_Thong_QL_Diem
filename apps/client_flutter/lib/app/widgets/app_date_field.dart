@@ -24,15 +24,12 @@ class AppDateField extends StatefulWidget {
   final DateTime? initialDateWhenEmpty;
   final FormFieldValidator<String>? validator;
 
-  /// Đọc giá trị ngày: lấy 10 ký tự đầu rồi tách năm/tháng/ngày.
-  /// Không dùng DateTime.parse(...).toLocal() để tránh lệch múi giờ.
   static DateTime? parseIsoDate(String? value) {
     if (value == null) return null;
     final s = value.trim();
     if (s.isEmpty) return null;
     final raw = s.length >= 10 ? s.substring(0, 10) : s;
 
-    // yyyy-MM-dd
     final isoMatch = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(raw);
     if (isoMatch != null) {
       final y = int.tryParse(isoMatch.group(1)!);
@@ -52,7 +49,6 @@ class AppDateField extends StatefulWidget {
       }
     }
 
-    // dd/MM/yyyy
     final vnMatch = RegExp(r'^(\d{2})/(\d{2})/(\d{4})$').firstMatch(raw);
     if (vnMatch != null) {
       final d = int.tryParse(vnMatch.group(1)!);
@@ -75,7 +71,6 @@ class AppDateField extends StatefulWidget {
     return null;
   }
 
-  /// Hiển thị dd/MM/yyyy
   static String formatDisplay(DateTime? dt) {
     if (dt == null) return '';
     final d = dt.day.toString().padLeft(2, '0');
@@ -84,7 +79,6 @@ class AppDateField extends StatefulWidget {
     return '$d/$m/$y';
   }
 
-  /// Định dạng ISO yyyy-MM-dd cho API
   static String formatIso(DateTime dt) {
     final y = dt.year.toString().padLeft(4, '0');
     final m = dt.month.toString().padLeft(2, '0');

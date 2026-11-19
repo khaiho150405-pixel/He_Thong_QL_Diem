@@ -13,9 +13,6 @@ import re
 import unicodedata
 from decimal import Decimal
 
-# ---------------------------------------------------------------------------
-# 1. Chuẩn hoá giá trị điểm
-# ---------------------------------------------------------------------------
 TU_PHAN_NGUYEN = {
     "không": 0, "một": 1, "hai": 2, "ba": 3, "bốn": 4, "năm": 5,
     "sáu": 6, "bảy": 7, "tám": 8, "chín": 9, "mười": 10,
@@ -47,7 +44,6 @@ def so_tu_chuoi_so(pred: str):
     return v if 0.0 <= v <= 10.0 else None
 
 
-# Từ "điểm" viết kèm (mười điểm, chín điểm rưỡi, bảy điểm năm) không mang giá trị: bỏ token đứng riêng này trước khi giải.
 TU_THUA = frozenset({"điểm", "diem", "đ"})
 
 
@@ -71,7 +67,7 @@ def so_tu_chuoi_chu(pred: str):
     if len(tokens) == 1:
         if tokens[0] == "mười":
             return 10.0
-        if tokens[0] in TU_PHAN_NGUYEN:          # ví dụ nhãn rút gọn 'không'
+        if tokens[0] in TU_PHAN_NGUYEN:
             return float(TU_PHAN_NGUYEN[tokens[0]])
         return None
     if len(tokens) == 2:
@@ -87,9 +83,6 @@ def dinh_dang_diem(v) -> str:
     return "" if v is None else f"{v:.1f}"
 
 
-# ---------------------------------------------------------------------------
-# 2. Hậu xử lý từ điển cho nhánh chữ
-# ---------------------------------------------------------------------------
 def khoang_cach_sua(a: str, b: str) -> int:
     truoc = list(range(len(b) + 1))
     for i, ca in enumerate(a, 1):
@@ -105,7 +98,6 @@ def hau_xu_ly_tu_dien(pred: str, tu_dien: list[str]) -> str:
     p = unicodedata.normalize("NFC", (pred or "").strip())
     if not p or not tu_dien or p in tu_dien:
         return p
-    # NẾU bản thân dự đoán thô đã là một điểm chữ hợp lệ (ví dụ: 'mười', 'hai rưỡi') -> GIỮ NGUYÊN
     if so_tu_chuoi_chu(p) is not None:
         return p
     return min(tu_dien, key=lambda c: (khoang_cach_sua(p, c), abs(len(p) - len(c))))
@@ -133,7 +125,6 @@ def grade_decimal(value: float | None) -> Decimal | None:
     return Decimal(f"{value:.1f}")
 
 
-# Từ điển 133 cụm điểm chữ hợp lệ.
 TU_DIEN: tuple[str, ...] = (
     "ba ba",
     "ba bảy",
