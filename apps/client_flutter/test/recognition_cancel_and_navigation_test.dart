@@ -281,10 +281,10 @@ void main() {
 
         expect(find.byIcon(Icons.arrow_back), findsNothing);
 
-        expect(find.text('Bảng điểm #7'), findsOneWidget);
-        expect(find.text(' › Phiếu #42'), findsOneWidget);
+        expect(find.text('10A1 · Toán'), findsOneWidget);
+        expect(find.text(' › Phiếu nhận dạng · Kiểm tra 1'), findsOneWidget);
 
-        await tester.tap(find.text('Bảng điểm #7'));
+        await tester.tap(find.text('10A1 · Toán'));
         await tester.pumpAndSettle();
 
         expect(find.text('10A1 · Toán'), findsOneWidget);
@@ -319,8 +319,8 @@ void main() {
         expect(find.byIcon(Icons.arrow_back), findsOneWidget);
         expect(find.byTooltip('Quay lại bảng điểm'), findsOneWidget);
 
-        expect(find.text(' › Phiếu #42'), findsNothing);
-        expect(find.widgetWithText(AppBar, 'Phiếu #42'), findsOneWidget);
+        expect(find.text(' › Phiếu nhận dạng · Kiểm tra 1'), findsNothing);
+        expect(find.widgetWithText(AppBar, 'Phiếu nhận dạng'), findsOneWidget);
 
         await tester.tap(find.byIcon(Icons.arrow_back));
         await tester.pumpAndSettle();
@@ -391,7 +391,7 @@ void main() {
         await tester.enterText(find.byType(TextFormField).first, '9.5');
         await tester.pumpAndSettle();
 
-        await tester.tap(find.text('Bảng điểm #7'));
+        await tester.tap(find.text('10A1 · Toán'));
         await tester.pumpAndSettle();
 
         expect(find.text('Bỏ các thay đổi chưa duyệt?'), findsOneWidget);
@@ -400,13 +400,13 @@ void main() {
 
         await tester.tap(find.text('Ở lại'));
         await tester.pumpAndSettle();
-        expect(find.text('Bảng điểm #7'), findsOneWidget);
-        expect(find.text('10A1 · Toán'), findsNothing);
+        expect(find.text(' › Phiếu nhận dạng · Kiểm tra 1'), findsOneWidget);
 
-        await tester.tap(find.text('Bảng điểm #7'));
+        await tester.tap(find.text('10A1 · Toán'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Rời đi'));
         await tester.pumpAndSettle();
+        expect(find.text(' › Phiếu nhận dạng · Kiểm tra 1'), findsNothing);
         expect(find.text('10A1 · Toán'), findsOneWidget);
       },
     );
@@ -963,14 +963,14 @@ void main() {
         await tester.tap(find.text('Quét ảnh OCR'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Phiếu #42 · Kiểm tra 1'), findsOneWidget);
+        expect(find.text('Phiếu nhận dạng · Kiểm tra 1'), findsOneWidget);
         expect(find.text('Đối chiếu ngay'), findsNothing);
 
-        await tester.tap(find.text('Phiếu #42 · Kiểm tra 1'));
+        await tester.tap(find.text('Phiếu nhận dạng · Kiểm tra 1'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Bảng điểm #7'), findsOneWidget);
-        expect(find.text('Phiếu #42'), findsOneWidget);
+        expect(find.text('10A1 · Toán'), findsOneWidget);
+        expect(find.text('Phiếu nhận dạng'), findsOneWidget);
         expect(find.textContaining('dòng cần xem'), findsNothing);
       },
     );

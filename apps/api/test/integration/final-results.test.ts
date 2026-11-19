@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import { closedFixture } from "./legacy-closed-fixture.js";
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
@@ -12,6 +13,7 @@ import type {
 import { FinalResultsService } from "../../src/modules/final-results/application/service.js";
 import { GradebooksService } from "../../src/modules/gradebooks/application/service.js";
 import { ReportsService } from "../../src/modules/reports/application/service.js";
+import { SchoolService } from "../../src/modules/school/application/service.js";
 
 test("UC14-15 calculates approved grades, snapshots policy and preserves append-only history", async () => {
   const ownerUrl = process.env.TEST_MIGRATION_URL;
@@ -234,6 +236,14 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
     const exported = await reports.export(teacher, book.id);
     assert.equal(exported.filename, `bang-diem-${book.id}.xlsx`);
     assert.equal(exported.bytes.subarray(0, 2).toString("ascii"), "PK");
+    const exportedBook = new ExcelJS.Workbook();
+    await exportedBook.xlsx.load(exported.bytes as unknown as ArrayBuffer);
+    const exportedSheet = exportedBook.getWorksheet("Bang diem")!;
+    assert.equal(
+      exportedSheet.getCell(1, 1).value,
+      (await app.get(SchoolService).profile()).name,
+    );
+    assert.equal(exportedSheet.getCell(2, 1).value, "STT");
     assert.equal(
       (
         await owner.query(
@@ -307,11 +317,32 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
     const mine = await finalResults.myResults(studentActor, term);
     assert.equal(mine.length, 1);
     assert.equal(mine[0]!.components.length, 2);
+    assert.equal(mine[0]!.finalScore, null);
+    assert.equal(mine[0]!.classification, null);
+    assert.equal(mine[0]!.termAverage, null);
+    assert.equal(mine[0]!.termClassification, null);
+    const unpublished = await finalResults.myOverview(studentActor, term);
+    assert.ok(unpublished.items.every((item) => item.finalScore === null));
+    assert.equal(unpublished.summary!.averageScore, null);
+    assert.equal(unpublished.summary!.publishedSubjects, 0);
+    await owner.query("UPDATE hoc_ky SET da_cong_bo=true WHERE ma_hoc_ky=$1", [
+      term,
+    ]);
+    const published = await finalResults.myResults(studentActor, term);
+    const expectedScore = second.results.find(
+      (item) => item.studentId === linkedStudentId,
+    )!.finalScore;
+    assert.equal(published[0]!.finalScore, expectedScore);
+    assert.notEqual(published[0]!.classification, null);
+    const publishedOverview = await finalResults.myOverview(studentActor, term);
     assert.equal(
-      mine[0]!.finalScore,
-      second.results.find((item) => item.studentId === linkedStudentId)!
-        .finalScore,
+      publishedOverview.items[0]!.termAverage,
+      publishedOverview.summary!.averageScore,
     );
+    assert.ok(publishedOverview.items[0]!.termClassification);
+    await owner.query("UPDATE hoc_ky SET da_cong_bo=false WHERE ma_hoc_ky=$1", [
+      term,
+    ]);
     assert.throws(() => finalResults.myResults(teacher), ForbiddenException);
     const hiddenCell = cells.find(
       (cell) => cell.studentId === linkedStudentId,

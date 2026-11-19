@@ -8,7 +8,7 @@ import 'package:api_client_dart/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**openGradebooks** | **num** | Bảng điểm chưa chốt |
+**openGradebooks** | **num** | Bảng điểm chưa khóa |
 **pendingRecognitionTickets** | **num** | Phiếu nhận dạng đang xử lý hoặc chờ đối chiếu |
 **unpublishedSemesters** | **num** | Học kỳ chưa công bố |
 

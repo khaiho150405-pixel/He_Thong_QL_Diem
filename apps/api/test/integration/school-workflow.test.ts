@@ -308,8 +308,21 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
     assert.ok(result.results.every((r) => r.classification === "CHUA_CONG_BO"));
     assert.ok(
       (await finalResults.myResults(studentActor, term)).every(
-        (r) => r.classification === null,
+        (r) =>
+          r.classification === null &&
+          r.finalScore === null &&
+          r.termAverage === null &&
+          r.termClassification === null,
       ),
+    );
+    assert.ok(
+      (await finalResults.myOverview(studentActor, term)).items.every(
+        (r) => r.finalScore === null && r.termAverage === null,
+      ),
+    );
+    assert.equal(
+      (await finalResults.myOverview(studentActor, term)).summary!.averageScore,
+      null,
     );
     assert.equal(
       (await finalResults.myOverview(studentActor, term)).summary!.classRank,
@@ -403,6 +416,9 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
     const summary = (await finalResults.myOverview(studentActor, term)).summary;
     const numericScore = mine.find((r) => !r.passFail)!.finalScore;
     assert.equal(Number(summary!.averageScore), Number(numericScore));
+    assert.ok(mine.every((r) => r.finalScore !== null));
+    assert.ok(mine.every((r) => r.termAverage === summary!.averageScore));
+    assert.ok(mine.every((r) => r.termClassification !== null));
     await assert.rejects(
       finalResults.calculate(teacher, book.id, "after-publish", {
         expectedVersion: locked.version,

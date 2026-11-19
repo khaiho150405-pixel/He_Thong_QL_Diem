@@ -36,6 +36,10 @@ class StudentSubjectResultDto {
     required this.finalScore,
 
     required this.classification,
+
+    required this.termAverage,
+
+    required this.termClassification,
   });
 
   @JsonKey(name: r'passFail', required: false, includeIfNull: false)
@@ -60,11 +64,21 @@ class StudentSubjectResultDto {
   @JsonKey(name: r'components', required: true, includeIfNull: false)
   final List<StudentApprovedComponentDto> components;
 
+  /// Điểm tổng kết môn; null cho tới khi học kỳ được công bố
   @JsonKey(name: r'finalScore', required: true, includeIfNull: true)
   final String? finalScore;
 
+  /// Xếp loại môn; null cho tới khi học kỳ được công bố
   @JsonKey(name: r'classification', required: true, includeIfNull: true)
   final String? classification;
+
+  /// Điểm TB học kỳ (cùng nguồn với summary.averageScore); null khi chưa công bố
+  @JsonKey(name: r'termAverage', required: true, includeIfNull: true)
+  final String? termAverage;
+
+  /// Xếp loại chung theo chính sách đang áp dụng; null khi chưa công bố
+  @JsonKey(name: r'termClassification', required: true, includeIfNull: true)
+  final String? termClassification;
 
   @override
   bool operator ==(Object other) =>
@@ -78,7 +92,9 @@ class StudentSubjectResultDto {
           other.className == className &&
           other.components == components &&
           other.finalScore == finalScore &&
-          other.classification == classification;
+          other.classification == classification &&
+          other.termAverage == termAverage &&
+          other.termClassification == termClassification;
 
   @override
   int get hashCode =>
@@ -90,7 +106,9 @@ class StudentSubjectResultDto {
       className.hashCode +
       components.hashCode +
       (finalScore == null ? 0 : finalScore.hashCode) +
-      (classification == null ? 0 : classification.hashCode);
+      (classification == null ? 0 : classification.hashCode) +
+      (termAverage == null ? 0 : termAverage.hashCode) +
+      (termClassification == null ? 0 : termClassification.hashCode);
 
   factory StudentSubjectResultDto.fromJson(Map<String, dynamic> json) =>
       _$StudentSubjectResultDtoFromJson(json);

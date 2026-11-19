@@ -308,6 +308,8 @@ class _FakeEnrollmentServer implements HttpClientAdapter {
               ],
               'finalScore': '8.5',
               'classification': 'GIOI',
+              'termAverage': '8.50',
+              'termClassification': 'GIOI',
               'calculatedAt': '2026-09-13T01:00:00.000Z',
             },
           ],

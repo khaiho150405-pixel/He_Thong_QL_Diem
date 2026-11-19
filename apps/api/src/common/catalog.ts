@@ -11,6 +11,7 @@ import {
 } from "../modules/authorization/application/policy.js";
 import { catalogScope } from "../modules/authorization/application/catalog-policy.js";
 import { audit } from "../modules/audit/application/write.js";
+import { pageSize } from "./query.js";
 import { compareStudents, numberByClass } from "./student-order.js";
 
 export interface Field {
@@ -242,8 +243,15 @@ export class CatalogService {
     );
     return buildStudentOrderNumbers(students);
   }
-  async list(actor: Actor, cursor?: string, q?: string, yearIdInput?: unknown) {
+  async list(
+    actor: Actor,
+    cursor?: string,
+    q?: string,
+    yearIdInput?: unknown,
+    limitInput?: unknown,
+  ) {
     if (q && q.length > 100) throw new BadRequestException();
+    const size = pageSize(limitInput);
     const yearId = parseYearId(yearIdInput);
     if (
       cursor &&
@@ -294,13 +302,15 @@ export class CatalogService {
           ],
         },
         this.spec.id,
+        size + 1,
       );
       const studentOrders = await this.studentOrderNumbers(tx);
       return {
         items: await Promise.all(
-          rows.slice(0, 50).map((row) => this.output(tx, row, studentOrders)),
+          rows.slice(0, size).map((row) => this.output(tx, row, studentOrders)),
         ),
-        nextCursor: rows.length > 50 ? String(rows[49]![this.spec.id]) : null,
+        nextCursor:
+          rows.length > size ? String(rows[size - 1]![this.spec.id]) : null,
       };
     });
   }

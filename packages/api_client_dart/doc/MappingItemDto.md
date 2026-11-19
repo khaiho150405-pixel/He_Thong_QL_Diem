@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 **channels** | **String** | SO = chỉ điểm số (tối đa Vàng); SO_CHU = đọc cả điểm số lẫn điểm chữ |
 **componentId** | **num** | Thành phần điểm của môn khớp (nhóm, thứ tự); null khi môn không có thành phần tương ứng |
 **componentName** | **String** |  |
-**locked** | **bool** | Cột đã chốt, ngoài thời gian nhập, bảng đã chốt hoặc môn Đạt/Không đạt: không chọn được |
+**locked** | **bool** | Cột đã khóa, ngoài thời gian nhập, bảng đã khóa hoặc môn Đạt/Không đạt: không chọn được |
 **pending** | **bool** | Đang có phiếu chờ xử lý/đối chiếu: không chọn được |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

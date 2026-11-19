@@ -102,7 +102,23 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       [teacher.id, cls, subject, term],
     );
     const scope = { classId: cls, subjectId: subject, termId: term };
-    const book = await service.create(teacher, scope);
+    const autoBook = async (classId: number, subjectId: number) => {
+      const row = (
+        await owner.query(
+          "SELECT ma_bang_diem FROM bang_diem WHERE ma_lop=$1 AND ma_mon=$2 AND ma_hoc_ky=$3",
+          [classId, subjectId, term],
+        )
+      ).rows;
+      assert.equal(
+        row.length,
+        1,
+        "assignment auto-creates exactly one gradebook",
+      );
+      const listed = await service.list(teacher);
+      return listed.items.find((b) => b.id === row[0].ma_bang_diem)!;
+    };
+    const book = await autoBook(cls, subject);
+    assert.ok(book, "teacher sees the auto-created gradebook");
     assert.equal(book.status, "DANG_NHAP_LIEU");
     assert.equal(book.version, 0);
 
@@ -303,7 +319,23 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
     assert.equal(csrfOk.status, 200);
     version++;
     assert.equal((await request("", "GET")).status, 200);
-    assert.equal((await request("", "POST", scope)).status, 200);
+    assert.ok(
+      (await request("", "GET")).data.items.some(
+        (b: { id: number }) => b.id === book.id,
+      ),
+    );
+    assert.equal((await request("", "POST", scope)).status, 404);
+    for (const query of [
+      "?sort=secret",
+      "?limit=999999",
+      "?sort=secret&limit=999999",
+    ]) {
+      const rejected = await request(query);
+      assert.equal(rejected.status, 400, query);
+      assert.equal(rejected.data.code, "VALIDATION_ERROR", query);
+      assert.ok(rejected.data.requestId, query);
+    }
+    assert.equal((await request("?cursor=0&yearId=" + year)).status, 200);
     assert.equal(
       (await request("/" + book.id + "/cells", "GET", undefined, student.token))
         .status,
@@ -351,11 +383,7 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       "INSERT INTO phan_cong_giang_day(ma_giao_vien,ma_lop,ma_mon,ma_hoc_ky,ngay_phan_cong) VALUES($1,$2,$3,$4,CURRENT_DATE)",
       [teacher.id, cls, subject2, term],
     );
-    const book2 = await service.create(teacher, {
-      classId: cls,
-      subjectId: subject2,
-      termId: term,
-    });
+    const book2 = await autoBook(cls, subject2);
     const foreignCell = (await service.cells(teacher, book2.id)).items[0]!.id;
     assert.equal(
       (await request("/" + book.id + "/cells/" + foreignCell + "/history"))

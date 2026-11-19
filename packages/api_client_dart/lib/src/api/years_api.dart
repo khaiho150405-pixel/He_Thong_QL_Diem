@@ -128,6 +128,7 @@ class YearsApi {
   ///
   ///
   /// Parameters:
+  /// * [limit] - Số dòng mỗi trang, từ 1 đến 500; vắng = 50
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -140,6 +141,7 @@ class YearsApi {
   /// Returns a [Future] containing a [Response] with a [YearsPage] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<YearsPage>> yearsList({
+    num? limit,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -169,6 +171,7 @@ class YearsApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (limit != null) r'limit': limit,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

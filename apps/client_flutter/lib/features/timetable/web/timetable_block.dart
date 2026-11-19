@@ -81,7 +81,7 @@ class TimetableBlock extends StatelessWidget {
       message: [
         item.tenMon,
         if (showClass) 'Lớp: ${item.tenLop}',
-        if (showTeacher) 'GV: ${item.tenGiaoVien}',
+        if (showTeacher) 'Giáo viên: ${item.tenGiaoVien}',
         'Tiết: ${slot.periodLabel}',
         if (showRoom && room.isNotEmpty) 'Phòng: $room',
         if (note.isNotEmpty) note,
@@ -115,7 +115,7 @@ class TimetableBlock extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 if (showClass) line('Lớp', item.tenLop),
-                if (showTeacher) line('GV', item.tenGiaoVien),
+                if (showTeacher) line('Giáo viên', item.tenGiaoVien),
                 line('Tiết', slot.periodLabel),
                 if (showRoom && room.isNotEmpty) line('Phòng', room),
                 if (note.isNotEmpty)

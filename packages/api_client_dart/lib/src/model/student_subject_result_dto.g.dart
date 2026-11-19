@@ -27,6 +27,10 @@ abstract class _$StudentSubjectResultDtoCWProxy {
 
   StudentSubjectResultDto classification(String? classification);
 
+  StudentSubjectResultDto termAverage(String? termAverage);
+
+  StudentSubjectResultDto termClassification(String? termClassification);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentSubjectResultDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -43,6 +47,8 @@ abstract class _$StudentSubjectResultDtoCWProxy {
     List<StudentApprovedComponentDto> components,
     String? finalScore,
     String? classification,
+    String? termAverage,
+    String? termClassification,
   });
 }
 
@@ -87,6 +93,14 @@ class _$StudentSubjectResultDtoCWProxyImpl
       this(classification: classification);
 
   @override
+  StudentSubjectResultDto termAverage(String? termAverage) =>
+      this(termAverage: termAverage);
+
+  @override
+  StudentSubjectResultDto termClassification(String? termClassification) =>
+      this(termClassification: termClassification);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `StudentSubjectResultDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -103,6 +117,8 @@ class _$StudentSubjectResultDtoCWProxyImpl
     Object? components = const $CopyWithPlaceholder(),
     Object? finalScore = const $CopyWithPlaceholder(),
     Object? classification = const $CopyWithPlaceholder(),
+    Object? termAverage = const $CopyWithPlaceholder(),
+    Object? termClassification = const $CopyWithPlaceholder(),
   }) {
     return StudentSubjectResultDto(
       passFail: passFail == const $CopyWithPlaceholder()
@@ -141,6 +157,14 @@ class _$StudentSubjectResultDtoCWProxyImpl
           ? _value.classification
           // ignore: cast_nullable_to_non_nullable
           : classification as String?,
+      termAverage: termAverage == const $CopyWithPlaceholder()
+          ? _value.termAverage
+          // ignore: cast_nullable_to_non_nullable
+          : termAverage as String?,
+      termClassification: termClassification == const $CopyWithPlaceholder()
+          ? _value.termClassification
+          // ignore: cast_nullable_to_non_nullable
+          : termClassification as String?,
     );
   }
 }
@@ -170,6 +194,8 @@ StudentSubjectResultDto _$StudentSubjectResultDtoFromJson(
       'components',
       'finalScore',
       'classification',
+      'termAverage',
+      'termClassification',
     ],
   );
   final val = StudentSubjectResultDto(
@@ -190,6 +216,11 @@ StudentSubjectResultDto _$StudentSubjectResultDtoFromJson(
     ),
     finalScore: $checkedConvert('finalScore', (v) => v as String?),
     classification: $checkedConvert('classification', (v) => v as String?),
+    termAverage: $checkedConvert('termAverage', (v) => v as String?),
+    termClassification: $checkedConvert(
+      'termClassification',
+      (v) => v as String?,
+    ),
   );
   return val;
 });
@@ -206,4 +237,6 @@ Map<String, dynamic> _$StudentSubjectResultDtoToJson(
   'components': instance.components.map((e) => e.toJson()).toList(),
   'finalScore': instance.finalScore,
   'classification': instance.classification,
+  'termAverage': instance.termAverage,
+  'termClassification': instance.termClassification,
 };

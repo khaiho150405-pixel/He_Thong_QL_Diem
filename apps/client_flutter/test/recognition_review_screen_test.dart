@@ -440,7 +440,7 @@ void main() {
     );
 
     testWidgets(
-      'ReviewScreen displays new design elements, filters, DO empty suggestion, hides confidences and raw values',
+      'ReviewScreen displays new design elements, filters, DO empty suggestion, shows channel readings and hides raw characters',
       (tester) async {
         tester.view.physicalSize = const Size(1280, 2500);
         tester.view.devicePixelRatio = 1;
@@ -471,8 +471,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
-        expect(find.text('Bảng điểm #7'), findsOneWidget);
-        expect(find.text(' › Phiếu #42'), findsOneWidget);
+        expect(find.text('10A1 · Toán'), findsOneWidget);
+        expect(find.text(' › Phiếu nhận dạng · Điểm kiểm tra'), findsOneWidget);
 
         expect(find.textContaining('Ký tự thô'), findsNothing);
         expect(find.textContaining('Độ tin cậy'), findsNothing);

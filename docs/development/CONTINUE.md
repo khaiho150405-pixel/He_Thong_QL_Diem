@@ -2,6 +2,56 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Đợt test 2: nghiệm thu và kết quả (2026-11-20; đã commit)
+
+- Báo cáo tổng hợp: `test-dot-2.md` ở gốc repo. Bằng chứng chi tiết ở `.local/dot2/`, ngoài git.
+- Gate cuối do coordinator chạy sau đợt sửa 4: `pnpm check` 209/209, `contracts:check`, `test:db` 42/42, `test:integration` 55/55 (dùng `REDIS_URL=redis://localhost:6379/3` để worker chung không lấy job của test), Python 269 OK (3 bỏ qua), `flutter analyze` sạch, `flutter test` 740 đạt.
+- Đã kiểm trên web sau khi build lại: màn đối chiếu hiện giá trị và độ tin cậy từng kênh, breadcrumb không còn `#id`, màn học sinh ẩn điểm tổng kết khi học kỳ chưa công bố, 375px không vỡ.
+- Còn lại:
+  - Chạy app Android trên máy ảo hoặc máy thật: APK debug đã build được; máy ảo cần 7,3 GB trống trên ổ F.
+  - O-01: sao lưu Postgres qua Docker.
+  - O-05: tắt lần lượt Postgres, Redis, MinIO, dịch vụ nhận dạng.
+  - H-K01: nhãn trùng ý "Không đạt · Chưa đạt".
+  - H-U05: một số XLSX không đọc được do thư viện `excel` 4.0.6.
+- Build APK trên máy này: đặt `JAVA_HOME=F:\Android\jbr` và `GRADLE_USER_HOME` trên ổ F (ổ C gần đầy).
+
+## Đợt test 2, đợt sửa 4: lỗi giao diện (H-U04, H-U07, H-U01, H-U02, H-U05, H-U03; 2026-11-20)
+
+- H-U04 (bất biến 3): màn đối chiếu hiện dưới mỗi ảnh ô cắt giá trị máy đọc của kênh và độ tin cậy phần trăm ("Máy đọc 8.5 · Tin cậy 96%"; Điểm chữ: `Chữ đọc được "tám rưỡi" → 8.5 · Tin cậy 93%`; kênh không có giá trị và không có chữ thì "Không đọc được"). Widget `ReviewChannelReading` (`review/review_channel_reading.dart`) dùng ở thẻ dòng và nhóm Xanh; dữ liệu đã có sẵn trong `RecognitionEvidenceRowDto`, không đổi API. Các test cũ khẳng định "không lộ độ tin cậy" đã đổi theo bất biến; `phase3_recognition_test` chỉ chạm nhóm Xanh khi nhóm đang đóng.
+- H-U07: breadcrumb và tiêu đề không còn `#id`: "Lớp · Môn" (lấy từ `cells().book`) và "Phiếu nhận dạng · <thành phần>"; thẻ phiếu trong danh sách và màn kết quả lô viết "Phiếu nhận dạng · <thành phần>"; mẫu không rõ tên là "Mẫu bảng điểm". Breadcrumb co lại bằng dấu ba chấm khi hẹp, màn đối chiếu `setState` sau khi tải xong để breadcrumb có nhãn.
+- H-U01, H-U02, H-U05: logic nhập file tách ra `gradebooks/grade_import.dart` (test `grade_import_test.dart`). CSV xác định dấu phân cách từ dòng tiêu đề (`;`, tab hoặc `,`), tôn trọng dấu ngoặc kép, nhận dấu phẩy thập phân, bỏ BOM; file không phải UTF-8 báo "Hãy lưu file dạng CSV UTF-8". Phân tích báo lỗi theo từng dòng (số dòng trong file và lý do: điểm ngoài 0.0-10.0, không phải số, quá một chữ số thập phân, trùng học sinh, học sinh không thuộc lớp, môn Đạt/Không đạt sai chữ) và không cho áp dụng khi còn lỗi (không nhập dở dang); cột khóa và ô miễn vẫn chỉ là cảnh báo. XLSX: lỗi `Null check` nằm trong thư viện `excel` 4.0.6 (`_parseCell`, chuỗi dùng chung thiếu, thấy ở `duplicate.xlsx`, `invalid-11-mixed.xlsx`) nên không sửa được nếu không đổi dependency; nay bắt lỗi và báo "Không đọc được file Excel này ... lưu lại dạng .xlsx hoặc CSV UTF-8"; ô thiếu của dòng thưa đọc thành chuỗi rỗng.
+- H-U03: file Excel xuất bảng điểm có dòng tên trường ở đầu sheet "Bang diem" (lấy từ `SchoolService.profile()`, gộp ô, in đậm) và dòng "Trường" ở sheet "Thong tin". Vị trí đổi: tiêu đề cột ở dòng 2, dữ liệu từ dòng 3, đóng băng 2 dòng, bộ lọc từ A2; test `reports-export.test.ts` và `final-results.test.ts` cập nhật theo. `ReportsModule` nhập `SchoolModule`.
+- H-U06 giữ nguyên theo quyết định của coordinator (mẫu chỉ Ngừng dùng, không xóa).
+
+## Đợt test 2, H-C07: tải ghi 12 phiên (2026-11-20; chỉ đo, không sửa mã)
+
+- Đo trên `quan_ly_diem_test` bằng `.local/dot2/claude-api/hc07.ts` (báo cáo `.local/dot2/claude-api/report-h-c07.md`): tuần tự p50 36-43 ms; 12 phiên đồng thời p95 376-707 ms khi bảng `khoa_idempotency` nhỏ, còn 166-206 ms khi bảng có 3000 khóa mỗi giáo viên.
+- Nguyên nhân là lỗi tuần tự hóa 40001 (khóa vị từ cấp trang trên bảng quá nhỏ) làm giao dịch ghi bị chạy lại 2,4 lần với backoff; lỗi giảm từ 92 xuống 6 khi bảng có dữ liệu cỡ thật. Không có điểm nghẽn rõ trong mã hoặc SQL, không mất điểm, không 5xx; không sửa ép.
+
+## Đợt test 2, đợt sửa 3: E-04, E-01, đồng nhất allowQuery (2026-11-20; chưa commit)
+
+- API: mọi danh sách catalog (`years`, `semesters`, `classes`, `students`, `subjects`, `components`, `semester-weights`, `teachers`, `assignments`) và `GET identity/accounts` nhận `limit` (mặc định 50, tối đa 500, ngoài khoảng là 400) qua `pageSize` trong `apps/api/src/common/query.ts`; `identity/accounts` thêm lọc `role`. Mọi danh sách catalog (cả `form-templates`) và `identity/accounts` đều qua `allowQuery`, tham số lạ là 400 `VALIDATION_ERROR`. Client Flutter chỉ gọi qua hàm sinh sẵn nên không gửi tham số nào ngoài danh sách. OpenAPI và client Dart đã sinh lại.
+- Flutter: `CatalogRepository.list` nhận `limit`, `role`; `CatalogRepository.listAll` lặp theo `nextCursor` với `limit=500` (`catalogLargePage`), nên thường 1-2 request và không bao giờ cắt dữ liệu; hộp thoại thêm/sửa, `fetchAllCatalogRows` và `_fetchAll` của danh mục đều dùng nó (tài khoản lọc theo vai trò). Màn Giáo viên & phân công không còn tải hai lần khi mở (trước đó `viewingYearProvider` đổi từ rỗng sang năm hiện hành kích hoạt tải lại), `_reload` không còn trả Future trong `setState`, và `_createTeacherAccount` không còn giải phóng controller khi hộp thoại còn đang đóng.
+- Số đo (máy chủ giả, 1200 tài khoản học sinh, 43 giáo viên, 151 phân công, 40 lớp; test `catalog_page_size_test.dart`): hộp thoại thêm học sinh từ 26 request (25 trang tài khoản mọi vai trò + 1 trang lớp) xuống 2; màn Giáo viên & phân công từ 16 request (hai lần tải, mỗi lần 1+4+1+1+1) xuống 5 danh mục (cộng 1 để xác định năm hiện hành).
+- Kiểm tra: `pnpm check` (209 test), `contracts:check`, `test:integration` 55/55 với `REDIS_URL=redis://127.0.0.1:6379/3`, `test:db` 42/42, `flutter analyze` sạch, `flutter test` 718.
+
+## Đợt test 2, đợt sửa 2: H-C04, H-C05, H-C06, H-C03, H-C01 (2026-11-20; chưa commit)
+
+- H-C04: `gradebook-write.test.ts` không còn gọi `POST /gradebooks`; lấy bảng điểm đã được trigger tự tạo khi phân công (qua `service.list`), và khẳng định route cũ trả 404.
+- H-C05: `test:db` chạy tuần tự (`--test-concurrency=1`); `constraints.test.ts` loại bảng kỹ thuật `phien_ghi_nho` khỏi 16 bảng nghiệp vụ; `recognition-batches.test.ts` dùng id thành phần không tồn tại nằm trong ngưỡng 9 chữ số (id 10 chữ số là `INVALID_RECOGNITION_REQUEST` theo kiểm hình dạng của `tao_lo_nhan_dien`, có thêm ca riêng) và tạo phiếu lẻ trên một thành phần riêng (`createTicket` của `roster-fixture.ts` nhận thêm `componentId`). Kết quả 42/42.
+- H-C06: `docs/development/recognition-checkpoints.md` được format bằng prettier.
+- H-C03: AGENTS.md mục 7 bất biến 13 ghi rõ chỉ cột bắt buộc bị ghi 0; cột không bắt buộc giữ NULL nhưng vẫn khóa (ADR-0014, bổ sung 21/10). Không đổi mã.
+- H-C01: `limit` và `sort` vốn không phải tham số của `GET /gradebooks` và `GET /catalog/students` (cỡ trang cố định 50, sắp theo id), nên bị bỏ qua chứ không ảnh hưởng. Nay hai endpoint trả 400 `VALIDATION_ERROR` khi có tham số ngoài danh sách (`cursor`, `yearId`; thêm `q` cho học sinh) qua `allowQuery` (`apps/api/src/common/query.ts`). Client Flutter chỉ gọi qua hàm sinh sẵn (`gradebooksList`, `studentsList`) nên không gửi tham số nào khác. Các danh sách catalog khác chưa áp dụng.
+- Test: `query.test.ts`, `identity-catalog.test.ts`, `gradebook-write.test.ts`. Kết quả: `pnpm check` đạt (209 test), `test:db` 42/42, `contracts:check` đạt, `test:integration` 54/55; ca còn lại (`recognition-infrastructure.test.ts`, "job ... locked by another worker") do worker nhận dạng của stack chung đang chạy trên cùng Redis 6379 nhận mất job của test, không liên quan thay đổi này; chạy lại khi tắt worker chung.
+
+## Đợt test 2, đợt sửa 1: H-01, B-07, D-08 (2026-11-20; chưa commit, coordinator commit sau nghiệm thu)
+
+- H-01 (P1): trước khi quản trị viên công bố học kỳ, `GET students/me/results` không còn trả `finalScore` (cùng với `classification` vốn đã ẩn); điểm thành phần đã duyệt vẫn hiện. SQL `studentResults` ở `final-results/infrastructure/prisma-store.ts`. Sau công bố hiện đủ.
+- B-07 (P2): điểm TB học kỳ và xếp loại chung chỉ còn một nguồn là API. Mỗi dòng `StudentSubjectResultDto` có thêm `termAverage`, `termClassification` (cùng phép tính với `summary.averageScore`: trung bình điểm tổng kết các môn tính điểm của học kỳ, bảng đã khóa, học sinh còn học; xếp loại theo chính sách đang áp dụng, làm tròn theo `so_chu_so_lam_tron`; null khi chưa công bố). Client bỏ `semesterOverviewOf` và `overallClassificationCodeOf`, chỉ định dạng (`formatAverageScore`). Nhãn thẻ môn chưa có điểm đổi thành "Chưa có điểm tổng kết".
+- D-08 (P2): bỏ viết tắt GV/HS ở nhãn hiển thị (tổng quan, báo cáo, biểu đồ quản trị, thời khóa biểu, danh mục, hộp thoại nhập Excel). Tiêu đề cột Excel mẫu "Mã HS" thành "Mã học sinh"; bộ đọc file vẫn nhận cả hai tên cột nên file mẫu cũ còn dùng được.
+- Test: tích hợp `final-results` và `school-workflow` (trước/sau công bố, `termAverage` trùng `summary.averageScore`), widget `results_policy_dark_test`, `dashboard_theme_test`; các test so khớp nhãn đổi theo. OpenAPI và client Dart đã sinh lại (hai DTO khác chỉ đổi mô tả vì nguồn đã dùng chữ "khóa" từ trước).
+- Chạy test tích hợp trên DB mới `quan_ly_diem_test` (tạo bằng `scripts/prepare-test-db.mjs`, trên Postgres 5433), không đụng DB dev hay DB pilot.
+
 ## Rà UI/UX web, điện thoại 375px, 3 vai (2026-11-19; chưa sửa trừ CORS)
 
 - Đã xem bằng trình duyệt tích hợp: quản trị (tổng quan, học sinh, lớp, giáo viên, phân công, thời khóa biểu; cả 1366px và 375px), giáo viên (tổng quan, danh sách bảng điểm, nhập điểm trên điện thoại), học sinh (tổng quan, thời khóa biểu, điểm của tôi trên điện thoại). Chưa xem được app Android/iOS thật và widget (Gradle lỗi `Unable to establish loopback connection` trên máy này), dịch vụ nhận dạng đang tắt, chưa xem chế độ tối trên điện thoại.
@@ -15,7 +65,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 - Điểm trung bình: bỏ viết tắt "ĐTB"; dùng "Điểm TB học kỳ" (cấp học kỳ, cả tổng quan, bảng điểm cá nhân, thanh bên), "Điểm TB lớp" (báo cáo) và "Điểm tổng kết" (cấp môn: bảng tổng kết giáo viên, cột bảng của học sinh). Hệ số của học sinh viết "(hệ số 1.00)" như bên giáo viên.
 - Xếp loại một bộ nhãn duy nhất Giỏi / Khá / Đạt / Chưa đạt (`TRUNG_BINH` và `DAT` là Đạt; `YEU`, `CHUA_DAT`, `KHONG_DAT` là Chưa đạt): sửa `classificationBadgeOf` (trước đó `YEU` hiện "Yếu" còn API là "Chưa đạt"), bỏ hàm nhãn riêng trong `gradebook_screen.dart` (hiện mã thô như `GIOI`), cột Xếp loại của file Excel xuất giờ là nhãn chứ không còn mã, biểu đồ phổ điểm tổng quan nay gộp đúng `TRUNG_BINH`/`YEU` (trước đó bỏ sót `TRUNG_BINH`). Xếp loại chung của học sinh (`overallClassificationCodeOf`) theo ngưỡng chính sách mặc định 8.0 / 6.5 / 5.0 thay vì gộp mọi điểm dưới 6.5 thành Đạt.
 - Nhãn vai trò chỉ còn một hàm `roleLabelOf` (`lib/core/role_label.dart`) thay cho 4 bản sao; bỏ chữ "Admin" trong hộp thoại nhập Excel.
-- Còn lại (chưa đổi): điểm trung bình chung học kỳ của học sinh vẫn tính ở client từ điểm tổng kết các môn (`semesterOverviewOf`) trong khi ô "Điểm TB" ở đầu trang lấy từ API; nên chuyển sang một nguồn từ API. Viết tắt GV/HS ở vài nhãn tổng quan chưa thống nhất.
+- Còn lại (đã xử lý ở mục "Đợt test 2, đợt sửa 1" phía trên): điểm TB chung học kỳ của học sinh chuyển sang một nguồn từ API; viết tắt GV/HS thống nhất bằng chữ đầy đủ.
 - Đã xóa test `create gradebook reports exactly what is wrong` (kiểm tra route `POST gradebooks` đã bỏ từ trước); giữ test ánh xạ lỗi SQL cùng file.
 
 ## Rà thông tin hiển thị theo vai (2026-11-19; test đạt, chưa commit)
@@ -112,7 +162,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 
 - Migration `202610280001_school_profile`: bảng `truong` (1 dòng, `ma_truong = 1`, có dòng mặc định THPT Bà Điểm), hàm `cap_nhat_thong_tin_truong`, `dat_logo_truong`; runtime chỉ SELECT. Module `apps/api/src/modules/school`: `GET /school-profile` và `GET /school-profile/logo` công khai (guard cho qua theo tên `SchoolProfilePublicController`); `PUT /admin/school-profile`, `PUT|DELETE /admin/school-profile/logo` chỉ QTV, cần `x-idempotency-key` và `expectedVersion`. Mã lỗi: `SCHOOL_PROFILE_VERSION_CONFLICT`, `INVALID_SCHOOL_PROFILE`, `INVALID_LOGO_FILE`.
 - Test: `integration/school-profile.test.ts` (3 ca), `database/tests/constraints.test.ts`. Client Dart đã sinh lại; chưa làm UI (AI frontend): thay chữ "THPT Bà Điểm" cứng bằng `GET /school-profile`, màn QTV sửa thông tin/logo.
-- Chưa làm: dòng tên trường trên Excel bảng điểm (lệch vị trí ô so với test/dòng đóng băng); dọn file logo cũ trong kho.
+- Chưa làm: dọn file logo cũ trong kho. Dòng tên trường trên Excel bảng điểm đã làm ở mục "đợt sửa 4".
 
 ## Mẫu bảng điểm (ADR-0016) — phase P7 vòng 3: AC-1 (DEV) ĐẠT, TEST đã chạy một lần (2026-10-19)
 

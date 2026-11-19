@@ -9,20 +9,7 @@ Future<List<Json>> fetchAllCatalogRows(
   String resource, {
   num? yearId,
 }) async {
-  final items = <Json>[];
-  String? cursor;
-  final seen = <String>{};
-  do {
-    final page = await repository.list(
-      resource,
-      cursor: cursor,
-      yearId: yearId,
-    );
-    items.addAll(page.items);
-    cursor = page.nextCursor;
-    if (cursor != null && !seen.add(cursor)) break;
-  } while (cursor != null);
-  return items;
+  return repository.listAll(resource, yearId: yearId);
 }
 
 typedef MergedViewLink = ({String label, IconData icon, String route});

@@ -21,6 +21,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import type { Request } from "express";
+import { allowQuery } from "../../../common/query.js";
 import type { Actor } from "../../authorization/application/policy.js";
 import { ComponentsService } from "../application/components.js";
 export class ComponentsInput {
@@ -50,13 +51,21 @@ export class ComponentsController {
   @Get()
   @ApiQuery({ name: "cursor", required: false, type: String })
   @ApiQuery({ name: "q", required: false, type: String })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    type: Number,
+    description: "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+  })
   @ApiOkResponse({ type: ComponentsPage })
   list(
     @Req() req: Request & { actor: Actor },
     @Query("cursor") cursor?: string,
     @Query("q") q?: string,
+    @Query("limit") limit?: string,
   ) {
-    return this.service.list(req.actor, cursor, q);
+    allowQuery(req.query, ["cursor", "q", "limit"]);
+    return this.service.list(req.actor, cursor, q, undefined, limit);
   }
   @Post()
   @HttpCode(200)

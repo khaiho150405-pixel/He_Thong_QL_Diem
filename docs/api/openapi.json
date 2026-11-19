@@ -937,6 +937,13 @@
         "operationId": "yearsList",
         "parameters": [
           {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -1352,6 +1359,13 @@
             "required": false,
             "in": "query",
             "description": "Chỉ học kỳ thuộc năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
             "schema": { "type": "number" }
           },
           {
@@ -3687,6 +3701,13 @@
             "schema": { "type": "number" }
           },
           {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -5646,6 +5667,23 @@
         "operationId": "identityAccounts",
         "parameters": [
           {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ tài khoản của vai trò này; vắng = tất cả",
+            "schema": {
+              "enum": ["QUAN_TRI_VIEN", "GIAO_VIEN", "HOC_SINH"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -6914,109 +6952,6 @@
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
-    "/api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve": {
-      "post": {
-        "operationId": "reviewApprove",
-        "parameters": [
-          {
-            "name": "x-idempotency-key",
-            "in": "header",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "ticketId",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "gradebookId",
-            "required": true,
-            "in": "path",
-            "schema": { "type": "number" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ReviewApprovalInput" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReviewApprovalResultDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "401": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "403": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "404": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "409": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "429": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          },
-          "500": {
-            "description": "Error envelope",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorDto" }
-              }
-            }
-          }
-        },
-        "tags": ["review"],
-        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
-      }
-    },
     "/api/v1/school-profile": {
       "get": {
         "operationId": "schoolProfilePublicProfile",
@@ -7438,6 +7373,109 @@
         "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
       }
     },
+    "/api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve": {
+      "post": {
+        "operationId": "reviewApprove",
+        "parameters": [
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "ticketId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "gradebookId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReviewApprovalInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewApprovalResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["review"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/students": {
       "get": {
         "operationId": "studentsList",
@@ -7447,6 +7485,13 @@
             "required": false,
             "in": "query",
             "description": "Chỉ học sinh của các lớp thuộc năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
             "schema": { "type": "number" }
           },
           {
@@ -7869,6 +7914,13 @@
             "schema": { "type": "number" }
           },
           {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -8197,6 +8249,13 @@
         "operationId": "subjectsList",
         "parameters": [
           {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+            "schema": { "type": "number" }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -8524,6 +8583,13 @@
       "get": {
         "operationId": "componentsList",
         "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+            "schema": { "type": "number" }
+          },
           {
             "name": "q",
             "required": false,
@@ -8857,6 +8923,13 @@
             "required": false,
             "in": "query",
             "description": "Chỉ giáo viên có phân công trong năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
             "schema": { "type": "number" }
           },
           {
@@ -9276,6 +9349,13 @@
             "required": false,
             "in": "query",
             "description": "Chỉ phân công thuộc học kỳ của năm học này; vắng = tất cả",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
             "schema": { "type": "number" }
           },
           {
@@ -10291,7 +10371,7 @@
           "componentName": { "type": "string", "nullable": true },
           "locked": {
             "type": "boolean",
-            "description": "Cột đã chốt, ngoài thời gian nhập, bảng đã chốt hoặc môn Đạt/Không đạt: không chọn được"
+            "description": "Cột đã khóa, ngoài thời gian nhập, bảng đã khóa hoặc môn Đạt/Không đạt: không chọn được"
           },
           "pending": {
             "type": "boolean",
@@ -10363,7 +10443,7 @@
         "properties": {
           "openGradebooks": {
             "type": "number",
-            "description": "Bảng điểm chưa chốt"
+            "description": "Bảng điểm chưa khóa"
           },
           "pendingRecognitionTickets": {
             "type": "number",
@@ -11594,8 +11674,26 @@
               "$ref": "#/components/schemas/StudentApprovedComponentDto"
             }
           },
-          "finalScore": { "type": "string", "nullable": true },
-          "classification": { "type": "string", "nullable": true }
+          "finalScore": {
+            "type": "string",
+            "nullable": true,
+            "description": "Điểm tổng kết môn; null cho tới khi học kỳ được công bố"
+          },
+          "classification": {
+            "type": "string",
+            "nullable": true,
+            "description": "Xếp loại môn; null cho tới khi học kỳ được công bố"
+          },
+          "termAverage": {
+            "type": "string",
+            "nullable": true,
+            "description": "Điểm TB học kỳ (cùng nguồn với summary.averageScore); null khi chưa công bố"
+          },
+          "termClassification": {
+            "type": "string",
+            "nullable": true,
+            "description": "Xếp loại chung theo chính sách đang áp dụng; null khi chưa công bố"
+          }
         },
         "required": [
           "subjectName",
@@ -11605,7 +11703,9 @@
           "className",
           "components",
           "finalScore",
-          "classification"
+          "classification",
+          "termAverage",
+          "termClassification"
         ]
       },
       "StudentYearDto": {
@@ -12334,6 +12434,61 @@
           "recentActivities"
         ]
       },
+      "SchoolProfileDto": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "shortName": { "type": "string" },
+          "governingBody": { "type": "string", "nullable": true },
+          "address": { "type": "string", "nullable": true },
+          "phone": { "type": "string", "nullable": true },
+          "email": { "type": "string", "nullable": true },
+          "principal": { "type": "string", "nullable": true },
+          "hasLogo": { "type": "boolean" },
+          "version": { "type": "number" },
+          "updatedAt": { "type": "string" }
+        },
+        "required": [
+          "name",
+          "shortName",
+          "governingBody",
+          "address",
+          "phone",
+          "email",
+          "principal",
+          "hasLogo",
+          "version",
+          "updatedAt"
+        ]
+      },
+      "UpdateSchoolProfileInput": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": { "type": "number", "minimum": 1 },
+          "name": { "type": "string", "minLength": 3, "maxLength": 200 },
+          "shortName": { "type": "string", "minLength": 2, "maxLength": 60 },
+          "governingBody": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "address": { "type": "string", "maxLength": 300, "nullable": true },
+          "phone": {
+            "type": "string",
+            "maxLength": 11,
+            "nullable": true,
+            "pattern": "^[0-9]{10,11}$"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true,
+            "format": "email"
+          },
+          "principal": { "type": "string", "maxLength": 120, "nullable": true }
+        },
+        "required": ["expectedVersion", "name", "shortName"]
+      },
       "ReviewDecisionInput": {
         "type": "object",
         "properties": {
@@ -12392,61 +12547,6 @@
           "errorRows",
           "status"
         ]
-      },
-      "SchoolProfileDto": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "shortName": { "type": "string" },
-          "governingBody": { "type": "string", "nullable": true },
-          "address": { "type": "string", "nullable": true },
-          "phone": { "type": "string", "nullable": true },
-          "email": { "type": "string", "nullable": true },
-          "principal": { "type": "string", "nullable": true },
-          "hasLogo": { "type": "boolean" },
-          "version": { "type": "number" },
-          "updatedAt": { "type": "string" }
-        },
-        "required": [
-          "name",
-          "shortName",
-          "governingBody",
-          "address",
-          "phone",
-          "email",
-          "principal",
-          "hasLogo",
-          "version",
-          "updatedAt"
-        ]
-      },
-      "UpdateSchoolProfileInput": {
-        "type": "object",
-        "properties": {
-          "expectedVersion": { "type": "number", "minimum": 1 },
-          "name": { "type": "string", "minLength": 3, "maxLength": 200 },
-          "shortName": { "type": "string", "minLength": 2, "maxLength": 60 },
-          "governingBody": {
-            "type": "string",
-            "maxLength": 200,
-            "nullable": true
-          },
-          "address": { "type": "string", "maxLength": 300, "nullable": true },
-          "phone": {
-            "type": "string",
-            "maxLength": 11,
-            "nullable": true,
-            "pattern": "^[0-9]{10,11}$"
-          },
-          "email": {
-            "type": "string",
-            "maxLength": 200,
-            "nullable": true,
-            "format": "email"
-          },
-          "principal": { "type": "string", "maxLength": 120, "nullable": true }
-        },
-        "required": ["expectedVersion", "name", "shortName"]
       },
       "StudentsDto": {
         "type": "object",

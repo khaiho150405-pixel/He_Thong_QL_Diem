@@ -51,6 +51,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   late Future<RecognitionTicketDetailDto> detail;
   RecognitionTicketDetailDto? loaded;
   num? _gradebookVersion;
+  String? _bookLabel;
   String? _versionError;
   bool confirmed = false;
   bool busy = false;
@@ -65,22 +66,25 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   }
 
   Future<RecognitionTicketDetailDto> _loadDetail() async {
-    if (_gradebookVersion == null) {
+    if (_gradebookVersion == null || _bookLabel == null) {
       try {
         final cells = await ref
             .read(gradebooksRepositoryProvider)
             .cells(widget.gradebookId);
-        _gradebookVersion = cells.book.version;
+        _gradebookVersion ??= cells.book.version;
+        _bookLabel = '${cells.book.className} · ${cells.book.subjectName}';
         _versionError = null;
       } catch (_) {
-        _versionError = 'Không tải được phiên bản bảng điểm';
+        if (_gradebookVersion == null) {
+          _versionError = 'Không tải được phiên bản bảng điểm';
+        }
       }
     }
     final data = await ref
         .read(recognitionRepositoryProvider)
         .detail(gradebookId: widget.gradebookId, ticketId: widget.ticketId);
     if (!mounted) return data;
-    loaded = data;
+    setState(() => loaded = data);
     for (final row in data.rows) {
       if (row.exempt == true) {
         if (!values.containsKey(row.rowId)) {
@@ -492,28 +496,36 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.xs),
-          onTap: _handleBack,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(
-              'Bảng điểm #${widget.gradebookId}',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: t.priLink,
-                decoration: TextDecoration.underline,
+        Flexible(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            onTap: _handleBack,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                _bookLabel ?? 'Bảng điểm',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: t.priLink,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
           ),
         ),
-        Text(
-          ' › Phiếu #${widget.ticketId}',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: t.ink,
+        Flexible(
+          child: Text(
+            ' › Phiếu nhận dạng${loaded == null ? '' : ' · ${loaded!.componentName}'}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: t.ink,
+            ),
           ),
         ),
       ],
@@ -585,9 +597,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       },
       child: AppScaffold(
         key: const ValueKey('review-screen'),
-        title: isMobile
-            ? 'Phiếu #${widget.ticketId}'
-            : 'Đối chiếu nhận dạng #${widget.ticketId}',
+        title: isMobile ? 'Phiếu nhận dạng' : 'Đối chiếu nhận dạng',
         titleWidget: isMobile ? null : _buildBreadcrumb(context),
         showBackButton: false,
         automaticallyImplyLeading: false,

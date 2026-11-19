@@ -59,6 +59,7 @@ class _TeachingAssignmentsScreenState
     extends ConsumerState<TeachingAssignmentsScreen> {
   late Future<_Source> _future;
   num? _semesterId;
+  bool _loadedWithoutYear = false;
 
   @override
   void initState() {
@@ -69,6 +70,7 @@ class _TeachingAssignmentsScreenState
   Future<_Source> _load() async {
     final repository = ref.read(catalogRepositoryProvider);
     final viewing = ref.read(viewingYearProvider);
+    _loadedWithoutYear = viewing == null;
     final yearId =
         viewing?.id ?? (await ref.read(currentYearProvider.future))?.id;
     final results = await Future.wait([
@@ -87,7 +89,11 @@ class _TeachingAssignmentsScreenState
     );
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    setState(() {
+      _future = _load();
+    });
+  }
 
   static String _className(Json? row, num id) =>
       row?['ten_lop']?.toString() ?? 'Lớp $id';
@@ -317,7 +323,12 @@ class _TeachingAssignmentsScreenState
   Widget build(BuildContext context) {
     final user = ref.watch(sessionProvider);
     ref.listen<ViewingYear?>(viewingYearProvider, (previous, next) {
-      if (previous?.id != next?.id) _reload();
+      if (previous?.id == next?.id) return;
+      if (_loadedWithoutYear && previous == null) {
+        _loadedWithoutYear = false;
+        return;
+      }
+      _reload();
     });
     return AppScaffold(
       title: 'Giáo viên & phân công',

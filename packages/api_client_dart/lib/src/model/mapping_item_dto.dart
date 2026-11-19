@@ -63,7 +63,7 @@ class MappingItemDto {
   @JsonKey(name: r'componentName', required: true, includeIfNull: true)
   final String? componentName;
 
-  /// Cột đã chốt, ngoài thời gian nhập, bảng đã chốt hoặc môn Đạt/Không đạt: không chọn được
+  /// Cột đã khóa, ngoài thời gian nhập, bảng đã khóa hoặc môn Đạt/Không đạt: không chọn được
   @JsonKey(name: r'locked', required: true, includeIfNull: false)
   final bool locked;
 

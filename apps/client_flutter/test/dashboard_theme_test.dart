@@ -18,6 +18,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _StudentServer implements HttpClientAdapter {
+  _StudentServer({this.unpublished = false});
+
+  final bool unpublished;
+
   @override
   void close({bool force = false}) {}
 
@@ -42,10 +46,10 @@ class _StudentServer implements HttpClientAdapter {
           'className': '10A1',
           'yearId': 1,
           'yearName': '2025-2026',
-          'averageScore': '6.50',
-          'publishedSubjects': 5,
+          'averageScore': unpublished ? null : '6.50',
+          'publishedSubjects': unpublished ? 0 : 5,
           'totalSubjects': 6,
-          'classRank': 3,
+          'classRank': unpublished ? null : 3,
           'classSize': 38,
         },
       };
@@ -170,6 +174,7 @@ Future<void> _pump(
   required String role,
   required double width,
   required Brightness brightness,
+  bool studentUnpublished = false,
 }) async {
   tester.view.physicalSize = Size(width, 3000);
   tester.view.devicePixelRatio = 1;
@@ -179,7 +184,12 @@ Future<void> _pump(
     ProviderScope(
       overrides: [
         apiProvider.overrideWithValue(
-          ApiClientDart(dio: Dio()..httpClientAdapter = _StudentServer()),
+          ApiClientDart(
+            dio: Dio()
+              ..httpClientAdapter = _StudentServer(
+                unpublished: studentUnpublished,
+              ),
+          ),
         ),
         reportsRepositoryProvider.overrideWithValue(_FakeReports(_adminData)),
         teacherOverviewProvider.overrideWith(
@@ -250,7 +260,7 @@ void main() {
         );
         expect(find.byType(ListTile), findsNothing);
         expect(find.text('1248'), findsOneWidget);
-        expect(find.text('39 HS / lớp'), findsOneWidget);
+        expect(find.text('39 học sinh / lớp'), findsOneWidget);
         expect(find.text(wide ? 'Tỷ lệ hoàn thành' : 'Tỷ lệ'), findsOneWidget);
         expect(find.text(wide ? 'Đối chiếu OCR' : 'OCR'), findsOneWidget);
 
@@ -292,7 +302,7 @@ void main() {
         expect(grade[2].color, tokens.neu);
         expect(grade[3].color, tokens.bad);
         expect(grade[1].color, isNot(tokens.pri));
-        expect(grade[0].valueText, '400 HS · 40%');
+        expect(grade[0].valueText, '400 học sinh · 40%');
         final progress = bars.last.items;
         expect(progress.map((i) => i.color), [
           tokens.ok,
@@ -384,6 +394,33 @@ void main() {
       });
     }
   }
+
+  testWidgets('học sinh: học kỳ chưa công bố không hiện điểm TB và xếp hạng', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      role: 'HOC_SINH',
+      width: 390,
+      brightness: Brightness.light,
+      studentUnpublished: true,
+    );
+
+    expect(find.byType(StatCard), findsNWidgets(3));
+    expect(find.text('Điểm TB học kỳ'), findsOneWidget);
+    expect(find.text('6.5'), findsNothing);
+    expect(
+      find.descendant(
+        of: _statCard('Điểm TB học kỳ'),
+        matching: find.text('—'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('0 / 6'), findsOneWidget);
+    expect(find.text('— / 38'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await _unmount(tester);
+  });
 
   testWidgets('StatCardGrid: 4 thẻ rộng 1 hàng, hẹp 2 hàng, cùng hàng cao bằng '
       'nhau', (tester) async {

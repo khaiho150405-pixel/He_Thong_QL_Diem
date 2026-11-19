@@ -176,7 +176,7 @@ void main() {
       expect(find.text('Tiết: 2'), findsOneWidget);
       expect(find.text('Lớp: 10A2'), findsNWidgets(4));
       expect(find.text('Phòng: P.101'), findsNWidgets(2));
-      expect(find.textContaining('GV:'), findsNothing);
+      expect(find.textContaining('Giáo viên:'), findsNothing);
       expect(find.byKey(const ValueKey('tt-block-1')), findsOneWidget);
       expect(find.byKey(const ValueKey('tt-block-2')), findsNothing);
     },
@@ -184,7 +184,7 @@ void main() {
 
   testWidgets('học sinh thấy GV, không thấy Lớp/Phòng', (tester) async {
     await _pump(tester, role: 'HOC_SINH');
-    expect(find.text('GV: Trần Thị B'), findsNWidgets(4));
+    expect(find.text('Giáo viên: Trần Thị B'), findsNWidgets(4));
     expect(find.textContaining('Lớp:'), findsNothing);
     expect(find.textContaining('Phòng:'), findsNothing);
   });

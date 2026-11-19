@@ -286,9 +286,15 @@ test("invalid requests are rejected with stable codes and write nothing", async 
       ],
       [
         "a component that does not exist",
-        { components: [column(2, 2_000_000_000)] },
+        { components: [column(2, 999_999_999)] },
         "23514",
         "COMPONENT_NOT_MAPPABLE",
+      ],
+      [
+        "a component id beyond the accepted range",
+        { components: [column(2, 2_000_000_000)] },
+        "23514",
+        "INVALID_RECOGNITION_REQUEST",
       ],
       [
         "a template that is not in use",
@@ -1117,7 +1123,23 @@ test("table constraints reject malformed batch rows even for the table owner", a
     await assert.rejects(insertRow(null), checks("BATCH_ROW_PAGE_MISMATCH"));
     await assert.rejects(insertRow(3), checks("BATCH_ROW_PAGE_MISMATCH"));
     await assert.rejects(insertRow(5), checks("BATCH_ROW_PAGE_MISMATCH"));
-    const legacy = await f.createTicket(f.valid, "batch-legacy-row");
+    const legacyComponent = (
+      await f.owner.query(
+        "INSERT INTO thanh_phan_diem(ma_mon,ten_thanh_phan,he_so,thu_tu_hien_thi) SELECT ma_mon,'Phiếu lẻ',1,9 FROM bang_diem WHERE ma_bang_diem=$1 RETURNING ma_thanh_phan",
+        [f.book],
+      )
+    ).rows[0].ma_thanh_phan as number;
+    await f.owner.query(
+      "INSERT INTO diem_thanh_phan(ma_bang_diem,ma_hoc_sinh,ma_thanh_phan) SELECT $1,ma_hoc_sinh,$2 FROM hoc_sinh WHERE ma_lop=$3 AND dang_theo_hoc ON CONFLICT (ma_bang_diem,ma_hoc_sinh,ma_thanh_phan) DO NOTHING",
+      [f.book, legacyComponent, f.cls],
+    );
+    const legacy = await f.createTicket(
+      f.valid,
+      "batch-legacy-row",
+      undefined,
+      undefined,
+      legacyComponent,
+    );
     await assert.rejects(
       f.owner.query(
         "INSERT INTO ket_qua_dong(ma_phieu,ma_hoc_sinh,thu_tu_dong,so_trang,ket_luan_doi_chieu,muc_phan_loai) VALUES($1,$2,1,1,'KHONG_DOC_DUOC'::\"KetLuan\",'DO'::\"MucPhanLoai\")",

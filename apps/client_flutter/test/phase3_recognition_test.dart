@@ -236,7 +236,8 @@ void main() {
 
     expect(find.byKey(const ValueKey('review-screen')), findsOneWidget);
     final greenGroup = find.byKey(const ValueKey('review-green-group'));
-    if (greenGroup.evaluate().isNotEmpty) {
+    if (greenGroup.evaluate().isNotEmpty &&
+        find.byKey(const ValueKey('review-value-51')).evaluate().isEmpty) {
       await tester.tap(greenGroup);
       await tester.pumpAndSettle();
     }
@@ -283,6 +284,6 @@ void main() {
     final decisions = server.approvalBody?['decisions'] as List<dynamic>;
     expect(decisions.single['rowId'], '51');
     expect(decisions.single['value'], '0.0');
-    expect(find.text('Đối chiếu nhận dạng #42'), findsNothing);
+    expect(find.text('Đối chiếu nhận dạng'), findsNothing);
   });
 }

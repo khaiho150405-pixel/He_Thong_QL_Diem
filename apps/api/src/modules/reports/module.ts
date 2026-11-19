@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { SchoolModule } from "../school/module.js";
 import { ReportsService } from "./application/service.js";
 import { REPORT_STORE } from "./application/port.js";
 import { PrismaReportStore } from "./infrastructure/prisma-store.js";
@@ -8,6 +9,7 @@ import {
 } from "./presentation/controller.js";
 
 @Module({
+  imports: [SchoolModule],
   controllers: [ReportsController, AdminReportsController],
   providers: [
     ReportsService,

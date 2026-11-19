@@ -35,16 +35,16 @@ Adapter thật hiện vẫn báo `MODEL_UNAVAILABLE` khi chưa cấu hình. Khô
 
 Mô hình thật chỉ chạy khi `RECOGNITION_MODEL_MODE=weights` (mặc định) và đủ các biến sau (ba mô hình, mỗi mô hình một tệp + hash), nếu thiếu hoặc sai thì dịch vụ trả `503 MODEL_UNAVAILABLE` và worker không ghi gì:
 
-| Biến                                                              | Ý nghĩa                                                                                                |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `RECOGNITION_CRNN_WEIGHTS` / `RECOGNITION_CRNN_SHA256`            | CRNN đọc ô Đ.số và STT (`crnn_num_best_dot6.pth`)                                                      |
+| Biến                                                              | Ý nghĩa                                                                                                                                                      |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `RECOGNITION_CRNN_WEIGHTS` / `RECOGNITION_CRNN_SHA256`            | CRNN đọc ô Đ.số và STT (`crnn_num_best_dot6.pth`)                                                                                                            |
 | `RECOGNITION_VIETOCR_WEIGHTS` / `RECOGNITION_VIETOCR_SHA256`      | VietOCR tinh chỉnh đọc ô Điểm chữ (`vietocr_best_tang4.pth`, hoặc tùy chọn: `vietocr_vgg_seq2seq_C1L_seed123.pth`, `vietocr_vgg_transformer_T1_seed123.pth`) |
-| `RECOGNITION_VIETOCR_ARCH` (tùy chọn)                             | `seq2seq` (mặc định) hoặc `transformer`: kiến trúc của kênh Điểm chữ; cột Họ tên luôn là seq2seq gốc    |
-| `RECOGNITION_CRNN_TAG` / `RECOGNITION_VIETOCR_TAG` (tùy chọn)     | nhãn ghi vào `modelVersion`, mặc định `dot5` / `tang4`; bản mới đặt `dot6` / `T1`                       |
-| `RECOGNITION_NAME_WEIGHTS` / `RECOGNITION_NAME_SHA256`            | VietOCR GỐC đọc ô Họ tên in (`vietocr_vgg_seq2seq_pretrained.pth`)                                     |
-| `RECOGNITION_NUMERIC_THRESHOLD` / `RECOGNITION_WRITTEN_THRESHOLD` | τ riêng từng kênh của luật hợp nhất (kênh đủ tin cậy ≥ τ), mặc định 0.95 / 0.90 (khóa ở BE-22)         |
-| `RECOGNITION_NUMERIC_FLOOR` / `RECOGNITION_WRITTEN_FLOOR`         | mức sàn nhánh đồng thuận, mặc định 0.00 = đúng luật nghiên cứu (khóa ở BE-22 vì DEV không có Xanh sai) |
-| `RECOGNITION_DEVICE`                                              | `cpu` (mặc định) hoặc `cuda`                                                                           |
+| `RECOGNITION_VIETOCR_ARCH` (tùy chọn)                             | `seq2seq` (mặc định) hoặc `transformer`: kiến trúc của kênh Điểm chữ; cột Họ tên luôn là seq2seq gốc                                                         |
+| `RECOGNITION_CRNN_TAG` / `RECOGNITION_VIETOCR_TAG` (tùy chọn)     | nhãn ghi vào `modelVersion`, mặc định `dot5` / `tang4`; bản mới đặt `dot6` / `T1`                                                                            |
+| `RECOGNITION_NAME_WEIGHTS` / `RECOGNITION_NAME_SHA256`            | VietOCR GỐC đọc ô Họ tên in (`vietocr_vgg_seq2seq_pretrained.pth`)                                                                                           |
+| `RECOGNITION_NUMERIC_THRESHOLD` / `RECOGNITION_WRITTEN_THRESHOLD` | τ riêng từng kênh của luật hợp nhất (kênh đủ tin cậy ≥ τ), mặc định 0.95 / 0.90 (khóa ở BE-22)                                                               |
+| `RECOGNITION_NUMERIC_FLOOR` / `RECOGNITION_WRITTEN_FLOOR`         | mức sàn nhánh đồng thuận, mặc định 0.00 = đúng luật nghiên cứu (khóa ở BE-22 vì DEV không có Xanh sai)                                                       |
+| `RECOGNITION_DEVICE`                                              | `cpu` (mặc định) hoặc `cuda`                                                                                                                                 |
 
 Cài phụ thuộc mô hình: `pip install -e apps/recognition-service[ml]` (torch, torchvision; nhóm tùy chọn, CI và chế độ fake không cần) rồi `pip install --no-deps vietocr==0.3.13`. Không có torch thì chế độ weights trả `MODEL_UNAVAILABLE` và các bài test cần torch tự bỏ qua.
 

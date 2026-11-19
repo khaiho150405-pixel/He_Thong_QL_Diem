@@ -130,6 +130,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
     loadChoices();
   }
 
+  String get _accountRole =>
+      widget.spec.key == 'teachers' ? 'GIAO_VIEN' : 'HOC_SINH';
+
   Future<void> loadChoices() async {
     setState(() {
       loading = true;
@@ -144,15 +147,12 @@ class _EditDialogState extends ConsumerState<EditDialog> {
             .toSet();
         final loaded = await Future.wait(
           references.map((reference) async {
-            final rows = <Json>[];
-            String? cursor;
-            do {
-              final page = await ref
-                  .read(catalogRepositoryProvider)
-                  .list(reference, cursor: cursor);
-              rows.addAll(page.items);
-              cursor = page.nextCursor;
-            } while (cursor != null);
+            final rows = await ref
+                .read(catalogRepositoryProvider)
+                .listAll(
+                  reference,
+                  role: reference == 'accounts' ? _accountRole : null,
+                );
             return MapEntry(reference, rows);
           }),
         );
@@ -161,15 +161,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         }
 
         if (widget.spec.key == 'teachers') {
-          final tRows = <Json>[];
-          String? cursor;
-          do {
-            final page = await ref
-                .read(catalogRepositoryProvider)
-                .list('teachers', cursor: cursor);
-            tRows.addAll(page.items);
-            cursor = page.nextCursor;
-          } while (cursor != null);
+          final tRows = await ref
+              .read(catalogRepositoryProvider)
+              .listAll('teachers');
           _existingTeacherIds.clear();
           for (final t in tRows) {
             final id = t['ma_giao_vien'];
@@ -178,15 +172,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         }
 
         if (widget.spec.key == 'assignments') {
-          final aRows = <Json>[];
-          String? cursor;
-          do {
-            final page = await ref
-                .read(catalogRepositoryProvider)
-                .list('assignments', cursor: cursor);
-            aRows.addAll(page.items);
-            cursor = page.nextCursor;
-          } while (cursor != null);
+          final aRows = await ref
+              .read(catalogRepositoryProvider)
+              .listAll('assignments');
           _existingAssignments.clear();
           _existingAssignments.addAll(aRows);
         }
@@ -307,15 +295,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         ),
       ),
     );
-    if (submitted != true || !mounted) {
-      username.dispose();
-      password.dispose();
-      return;
-    }
+    if (submitted != true || !mounted) return;
     final selectedUsername = username.text.trim();
     final selectedPassword = password.text;
-    username.dispose();
-    password.dispose();
     setState(() {
       busy = true;
       error = null;
@@ -326,15 +308,8 @@ class _EditDialogState extends ConsumerState<EditDialog> {
         'password': selectedPassword,
         'role': 'GIAO_VIEN',
       });
-      final accounts = <Json>[];
-      String? cursor;
-      do {
-        final page = await ref
-            .read(catalogRepositoryProvider)
-            .list('accounts', cursor: cursor);
-        accounts.addAll(page.items);
-        cursor = page.nextCursor;
-      } while (cursor != null);
+      final repository = ref.read(catalogRepositoryProvider);
+      final accounts = await repository.listAll('accounts', role: 'GIAO_VIEN');
       final created = accounts.firstWhere(
         (row) => row['username'] == selectedUsername,
       );

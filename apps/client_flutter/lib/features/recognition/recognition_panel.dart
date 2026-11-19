@@ -1267,7 +1267,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Phiếu #${item.ticketId} · ${item.componentName}',
+                              'Phiếu nhận dạng · ${item.componentName}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: status == 'DA_HUY' ? t.ink2 : t.ink,
@@ -1359,7 +1359,7 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
             .where((template) => template.id == info.templateId)
             .firstOrNull
             ?.name ??
-        'Mẫu #${info.templateId.toInt()}';
+        'Mẫu bảng điểm';
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Row(

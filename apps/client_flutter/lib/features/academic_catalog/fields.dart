@@ -102,7 +102,7 @@ const resources = <ResourceSpec>[
     FormFieldSpec('thu_tu_hien_thi', 'Thứ tự hiển thị', 'int', optional: false),
     FormFieldSpec(
       'cho_phep_nhap',
-      'Mở cổng nhập điểm (GV được nhập)',
+      'Mở cổng nhập điểm (giáo viên được nhập)',
       'boolean',
       optional: false,
     ),
@@ -166,7 +166,11 @@ const resources = <ResourceSpec>[
     FormFieldSpec('ngay_phan_cong', 'Ngày phân công', 'date', optional: false),
   ]),
   ResourceSpec('accounts', 'Tài khoản', 'id', [
-    FormFieldSpec('username', 'Tên đăng nhập (GV/HS: số điện thoại)', 'text'),
+    FormFieldSpec(
+      'username',
+      'Tên đăng nhập (giáo viên/học sinh: số điện thoại)',
+      'text',
+    ),
     FormFieldSpec('password', 'Mật khẩu mới (ít nhất 12 ký tự)', 'password'),
     FormFieldSpec('role', 'Vai trò', 'role'),
     FormFieldSpec('active', 'Cho phép đăng nhập', 'boolean'),

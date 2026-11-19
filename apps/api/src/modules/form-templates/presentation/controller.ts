@@ -30,6 +30,7 @@ import {
 } from "@nestjs/swagger";
 import { memoryStorage } from "multer";
 import type { Request, Response } from "express";
+import { allowQuery } from "../../../common/query.js";
 import type { Actor } from "../../authorization/application/policy.js";
 import { MAX_IMAGE_BYTES } from "../../recognition/application/image.js";
 import { TemplateException } from "../application/errors.js";
@@ -284,6 +285,7 @@ export class FormTemplatesController {
     @Query("cursor") cursor?: string,
     @Query("status") status?: string,
   ) {
+    allowQuery(req.query, ["cursor", "status"]);
     return this.service.list(req.actor, cursor, status);
   }
 

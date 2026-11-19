@@ -118,6 +118,7 @@ export async function createRosterFixture() {
     key: string,
     hash = "a".repeat(64),
     checksum = randomBytes(32).toString("hex"),
+    componentId = component,
   ): Promise<Receipt> => {
     const client = await runtime.connect();
     try {
@@ -128,7 +129,7 @@ export async function createRosterFixture() {
           [
             session,
             book,
-            component,
+            componentId,
             checksum,
             `recognition/original/${randomUUID()}.png`,
             JSON.stringify(roster),

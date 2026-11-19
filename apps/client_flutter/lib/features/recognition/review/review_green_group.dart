@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/design_tokens.dart';
 import '../image_preview.dart';
+import 'review_channel_reading.dart';
 import 'review_page_labels.dart';
 
 class ReviewGreenGroup extends StatelessWidget {
@@ -181,6 +182,7 @@ class ReviewGreenGroup extends StatelessWidget {
                   label: 'Số',
                   url: row.numericCropUrl,
                   width: 96,
+                  reading: _reading(row, ReviewChannel.numeric),
                 ),
                 const SizedBox(width: 8),
                 _cropThumb(
@@ -188,6 +190,7 @@ class ReviewGreenGroup extends StatelessWidget {
                   label: 'Chữ',
                   url: row.writtenCropUrl,
                   width: 220,
+                  reading: _reading(row, ReviewChannel.written),
                 ),
                 const SizedBox(width: 8),
                 gradeField,
@@ -216,6 +219,7 @@ class ReviewGreenGroup extends StatelessWidget {
                       context,
                       label: 'Số',
                       url: row.numericCropUrl,
+                      reading: _reading(row, ReviewChannel.numeric),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -225,6 +229,7 @@ class ReviewGreenGroup extends StatelessWidget {
                       context,
                       label: 'Chữ',
                       url: row.writtenCropUrl,
+                      reading: _reading(row, ReviewChannel.written),
                     ),
                   ),
                 ],
@@ -240,6 +245,7 @@ class ReviewGreenGroup extends StatelessWidget {
     BuildContext context, {
     required String label,
     required String? url,
+    required Widget reading,
     double? width,
   }) {
     final t = context.tokens;
@@ -286,6 +292,27 @@ class ReviewGreenGroup extends StatelessWidget {
       );
     }
 
-    return thumb;
+    return SizedBox(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [thumb, const SizedBox(height: 2), reading],
+      ),
+    );
+  }
+
+  Widget _reading(RecognitionEvidenceRowDto row, ReviewChannel channel) {
+    final numeric = channel == ReviewChannel.numeric;
+    return ReviewChannelReading(
+      key: ValueKey(
+        'review-${numeric ? 'numeric' : 'written'}-reading-${row.rowId}',
+      ),
+      channel: channel,
+      raw: numeric ? row.numericRaw : row.writtenRaw,
+      value: numeric ? row.numericValue : row.writtenValue,
+      confidence: numeric ? row.numericConfidence : row.writtenConfidence,
+      compact: true,
+    );
   }
 }

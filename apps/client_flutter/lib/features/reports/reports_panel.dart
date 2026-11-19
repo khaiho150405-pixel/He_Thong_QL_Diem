@@ -122,7 +122,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
                 children: [
                   Icon(Icons.bar_chart_rounded, color: t.priLink),
                   Text(
-                    'Thống kê · ${data.students} HS · '
+                    'Thống kê · ${data.students} học sinh · '
                     'Điểm TB lớp ${data.average ?? '—'} · '
                     'Cao nhất ${data.highest ?? '—'} · '
                     'Thấp nhất ${data.lowest ?? '—'}',
@@ -232,7 +232,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
   Widget _stats(GradebookSummaryDto data) {
     final cards = <Widget>[
       StatCard(
-        title: 'HS đã tổng kết',
+        title: 'Học sinh đã tổng kết',
         value: '${data.students}',
         icon: Icons.people_alt_outlined,
       ),
@@ -315,7 +315,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
           AppHBarItem(
             label: classificationBadgeOf(item.classification).label,
             value: item.students.toDouble(),
-            valueText: '${item.students} HS',
+            valueText: '${item.students} học sinh',
             color: _barColor(t, item.classification),
           ),
       ],

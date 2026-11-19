@@ -45,38 +45,10 @@ import '../school_profile/school_profile.dart';
 
 String classificationLabel(String code) => classificationBadgeOf(code).label;
 
-({int totalSubjects, int lockedSubjects, bool allLocked, double? gpa})
-semesterOverviewOf(List<StudentSubjectResultDto> items) {
-  final totalSubjects = items.length;
-  final lockedSubjects = items.where((i) => i.classification != null).length;
-  final allLocked = totalSubjects > 0 && lockedSubjects == totalSubjects;
-
-  double? gpa;
-  if (allLocked) {
-    final scores = items
-        .where((i) => i.passFail != true)
-        .map((i) => double.tryParse(i.finalScore ?? ''))
-        .whereType<double>()
-        .toList();
-    if (scores.isNotEmpty) {
-      gpa = scores.reduce((a, b) => a + b) / scores.length;
-    }
-  }
-  return (
-    totalSubjects: totalSubjects,
-    lockedSubjects: lockedSubjects,
-    allLocked: allLocked,
-    gpa: gpa,
-  );
+String? formatAverageScore(String? raw) {
+  final value = raw == null ? null : double.tryParse(raw);
+  return value?.toStringAsFixed(1);
 }
-
-String overallClassificationCodeOf(double gpa) => gpa >= 8.0
-    ? 'GIOI'
-    : gpa >= 6.5
-    ? 'KHA'
-    : gpa >= 5.0
-    ? 'TRUNG_BINH'
-    : 'YEU';
 
 String _formatErrorMessage(Object error) {
   if (error is DioException) {
@@ -265,7 +237,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
               final publishedSubjects = summary.publishedSubjects.toInt();
               final allPublished =
                   totalSubjects > 0 && publishedSubjects >= totalSubjects;
-              final average = _formatAverage(summary.averageScore);
+              final average = formatAverageScore(summary.averageScore);
 
               final grouped =
                   <
@@ -408,27 +380,29 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
         }
       }
     }
-    final overview = semesterOverviewOf(items);
+    final termAverage = items
+        .map((i) => formatAverageScore(i.termAverage))
+        .whereType<String>()
+        .firstOrNull;
+    final termClassification = items
+        .map((i) => i.termClassification)
+        .whereType<String>()
+        .firstOrNull;
     return _buildUnifiedGradeTable(
       context: context,
       items: items,
       componentNames: componentNames,
-      allLocked: overview.allLocked,
-      gpa: overview.gpa,
+      termAverage: termAverage,
+      termClassification: termClassification,
     );
-  }
-
-  String? _formatAverage(String? raw) {
-    final value = raw == null ? null : double.tryParse(raw);
-    return value?.toStringAsFixed(1);
   }
 
   Widget _buildUnifiedGradeTable({
     required BuildContext context,
     required List<StudentSubjectResultDto> items,
     required List<String> componentNames,
-    required bool allLocked,
-    required double? gpa,
+    required String? termAverage,
+    required String? termClassification,
   }) {
     final theme = Theme.of(context);
     final t = context.tokens;
@@ -656,11 +630,11 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                           SizedBox(
                             width: colScore,
                             child: Center(
-                              child: allLocked && gpa != null
+                              child: termAverage != null
                                   ? _Chip(
                                       background: t.pri,
                                       child: Text(
-                                        gpa.toStringAsFixed(1),
+                                        termAverage,
                                         style: TextStyle(
                                           fontWeight: FontWeight.w700,
                                           color: t.onPri,
@@ -675,10 +649,10 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                           SizedBox(
                             width: colClassif,
                             child: Center(
-                              child: allLocked && gpa != null
-                                  ? _classificationBadge(
-                                      overallClassificationCodeOf(gpa),
-                                    )
+                              child:
+                                  termAverage != null &&
+                                      termClassification != null
+                                  ? _classificationBadge(termClassification)
                                   : dash(),
                             ),
                           ),
@@ -739,7 +713,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                 trailing: items[i].finalScore != null
                     ? _scoreBadge(items[i])
                     : const AppBadge(
-                        'Chưa có điểm TB',
+                        'Chưa có điểm tổng kết',
                         tone: AppBadgeTone.neutral,
                         dot: false,
                       ),

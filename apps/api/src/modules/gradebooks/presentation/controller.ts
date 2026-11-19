@@ -22,6 +22,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import type { Request } from "express";
+import { allowQuery } from "../../../common/query.js";
 import type { Actor } from "../../authorization/application/policy.js";
 import { GradebooksService } from "../application/service.js";
 
@@ -247,6 +248,7 @@ export class GradebooksController {
     @Query("cursor") cursor?: string,
     @Query("yearId") yearId?: string,
   ) {
+    allowQuery(req.query, ["cursor", "yearId"]);
     return this.service.list(req.actor, cursor ? Number(cursor) : 0, yearId);
   }
 

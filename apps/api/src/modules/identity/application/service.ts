@@ -23,6 +23,7 @@ import {
   type Actor,
   type Role,
 } from "../../authorization/application/policy.js";
+import { pageSize } from "../../../common/query.js";
 import { audit } from "../../audit/application/write.js";
 
 export const digest = (token: string) =>
@@ -342,8 +343,20 @@ export class IdentityService {
       await audit(tx, actor.id, "LOGOUT", "identity");
     });
   }
-  async accounts(actor: Actor, after = 0, q?: string) {
+  async accounts(
+    actor: Actor,
+    after = 0,
+    q?: string,
+    limitInput?: unknown,
+    roleInput?: unknown,
+  ) {
     if (q && q.length > 100) throw new BadRequestException();
+    const size = pageSize(limitInput);
+    if (
+      roleInput !== undefined &&
+      !["QUAN_TRI_VIEN", "GIAO_VIEN", "HOC_SINH"].includes(roleInput as string)
+    )
+      throw new BadRequestException();
     administrator(actor);
     return this.store.run(async (tx) => {
       if (!Number.isSafeInteger(after) || after < 0 || after > 2147483647)
@@ -354,12 +367,15 @@ export class IdentityService {
         {
           ma_nguoi_dung: { gt: after },
           ...(q ? { ten_dang_nhap: { contains: q, mode: "insensitive" } } : {}),
+          ...(roleInput ? { vai_tro: roleInput } : {}),
         },
         "ma_nguoi_dung",
+        size + 1,
       );
       return {
-        items: rows.slice(0, 50).map(publicUser),
-        nextCursor: rows.length > 50 ? String(rows[49]!.ma_nguoi_dung) : null,
+        items: rows.slice(0, size).map(publicUser),
+        nextCursor:
+          rows.length > size ? String(rows[size - 1]!.ma_nguoi_dung) : null,
       };
     });
   }

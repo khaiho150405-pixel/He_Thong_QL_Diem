@@ -112,6 +112,8 @@ export interface StudentSubjectResult {
   components: StudentApprovedComponent[];
   finalScore: string | null;
   classification: string | null;
+  termAverage: string | null;
+  termClassification: string | null;
 }
 
 export interface StudentYear {

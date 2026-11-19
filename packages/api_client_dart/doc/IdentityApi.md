@@ -23,7 +23,7 @@ Method | HTTP request | Description
 
 
 # **identityAccounts**
-> AccountsDto identityAccounts(q, cursor)
+> AccountsDto identityAccounts(role, limit, q, cursor)
 
 
 
@@ -36,11 +36,13 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getIdentityApi();
+final String role = role_example; // String | Chỉ tài khoản của vai trò này; vắng = tất cả
+final num limit = 8.14; // num | Số dòng mỗi trang, từ 1 đến 500; vắng = 50
 final String q = q_example; // String |
 final String cursor = cursor_example; // String |
 
 try {
-    final response = api.identityAccounts(q, cursor);
+    final response = api.identityAccounts(role, limit, q, cursor);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling IdentityApi->identityAccounts: $e\n');
@@ -51,6 +53,8 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **role** | **String**| Chỉ tài khoản của vai trò này; vắng = tất cả | [optional]
+ **limit** | **num**| Số dòng mỗi trang, từ 1 đến 500; vắng = 50 | [optional]
  **q** | **String**|  | [optional]
  **cursor** | **String**|  | [optional]
 

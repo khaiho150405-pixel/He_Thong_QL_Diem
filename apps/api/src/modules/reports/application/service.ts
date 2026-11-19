@@ -12,6 +12,7 @@ import {
 } from "../../authorization/application/gradebook-policy.js";
 import { classStudentOrder } from "../../../common/student-order.js";
 import { classificationLabel } from "../../../common/labels.js";
+import { SchoolService } from "../../school/application/service.js";
 import { REPORT_STORE, type ReportStore } from "./port.js";
 
 function id(value: number) {
@@ -30,7 +31,10 @@ function numericCell(value: string | null | undefined) {
 
 @Injectable()
 export class ReportsService {
-  constructor(@Inject(REPORT_STORE) private readonly store: ReportStore) {}
+  constructor(
+    @Inject(REPORT_STORE) private readonly store: ReportStore,
+    @Inject(SchoolService) private readonly school: SchoolService,
+  ) {}
 
   summary(actor: Actor, gradebookId: number) {
     id(gradebookId);
@@ -101,24 +105,36 @@ export class ReportsService {
               ? "Đạt"
               : "Không đạt"
           : numericCell(value);
+      const profile = await this.school.profile();
       const workbook = new ExcelJS.Workbook();
       workbook.creator = "Hệ thống Quản lý Điểm";
       workbook.created = new Date();
       const sheet = workbook.addWorksheet("Bang diem", {
-        views: [{ state: "frozen", ySplit: 1 }],
+        views: [{ state: "frozen", ySplit: 2 }],
       });
+      const headers = [
+        "STT",
+        "Mã học sinh",
+        "Họ tên",
+        ...componentNames.map((name) => safeCell(name)),
+        "Điểm tổng kết",
+        "Xếp loại",
+      ];
       sheet.columns = [
-        { header: "STT", key: "stt", width: 8 },
-        { header: "Mã học sinh", key: "studentId", width: 15 },
-        { header: "Họ tên", key: "studentName", width: 28 },
-        ...componentNames.map((name, index) => ({
-          header: safeCell(name),
+        { key: "stt", width: 8 },
+        { key: "studentId", width: 15 },
+        { key: "studentName", width: 28 },
+        ...componentNames.map((_, index) => ({
           key: `component${index}`,
           width: 16,
         })),
-        { header: "Điểm tổng kết", key: "finalScore", width: 16 },
-        { header: "Xếp loại", key: "classification", width: 18 },
+        { key: "finalScore", width: 16 },
+        { key: "classification", width: 18 },
       ];
+      sheet.addRow([safeCell(profile.name)]);
+      sheet.mergeCells(1, 1, 1, headers.length);
+      sheet.getRow(1).font = { bold: true, size: 14 };
+      sheet.addRow(headers);
       for (const { row, stt } of rows) {
         const components = new Map(
           row.components.map((item) => [item.name, item]),
@@ -139,18 +155,19 @@ export class ReportsService {
           classification: classificationLabel(row.classification),
         });
       }
-      sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-      sheet.getRow(1).fill = {
+      sheet.getRow(2).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      sheet.getRow(2).fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: "FF176B59" },
       };
       sheet.autoFilter = {
-        from: "A1",
-        to: sheet.getCell(1, sheet.columnCount).address,
+        from: "A2",
+        to: sheet.getCell(2, sheet.columnCount).address,
       };
       const info = workbook.addWorksheet("Thong tin");
       info.addRows([
+        ["Trường", safeCell(profile.name)],
         ["Lớp", safeCell(book.className)],
         ["Môn", safeCell(book.subjectName)],
         ["Học kỳ", safeCell(book.termName)],

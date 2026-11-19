@@ -66,7 +66,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **yearsList**
-> YearsPage yearsList(q, cursor)
+> YearsPage yearsList(limit, q, cursor)
 
 
 
@@ -79,11 +79,12 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getYearsApi();
+final num limit = 8.14; // num | Số dòng mỗi trang, từ 1 đến 500; vắng = 50
 final String q = q_example; // String |
 final String cursor = cursor_example; // String |
 
 try {
-    final response = api.yearsList(q, cursor);
+    final response = api.yearsList(limit, q, cursor);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling YearsApi->yearsList: $e\n');
@@ -94,6 +95,7 @@ try {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **limit** | **num**| Số dòng mỗi trang, từ 1 đến 500; vắng = 50 | [optional]
  **q** | **String**|  | [optional]
  **cursor** | **String**|  | [optional]
 

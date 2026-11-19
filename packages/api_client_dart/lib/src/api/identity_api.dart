@@ -30,6 +30,8 @@ class IdentityApi {
   ///
   ///
   /// Parameters:
+  /// * [role] - Chỉ tài khoản của vai trò này; vắng = tất cả
+  /// * [limit] - Số dòng mỗi trang, từ 1 đến 500; vắng = 50
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -42,6 +44,8 @@ class IdentityApi {
   /// Returns a [Future] containing a [Response] with a [AccountsDto] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<AccountsDto>> identityAccounts({
+    String? role,
+    num? limit,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -71,6 +75,8 @@ class IdentityApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (role != null) r'role': role,
+      if (limit != null) r'limit': limit,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

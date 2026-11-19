@@ -246,7 +246,7 @@ class HomeDashboardContent extends ConsumerWidget {
                   : '—';
               final stuVal = kpi != null ? '${kpi.totalStudents}' : '—';
               final stuSub = kpi != null && kpi.totalClasses > 0
-                  ? '${(kpi.totalStudents / kpi.totalClasses).round()} HS / lớp'
+                  ? '${(kpi.totalStudents / kpi.totalClasses).round()} học sinh / lớp'
                   : unavailableSubtitle;
 
               return LayoutBuilder(
@@ -270,7 +270,9 @@ class HomeDashboardContent extends ConsumerWidget {
                       StatCard(
                         title: wide ? 'Đối chiếu OCR' : 'OCR',
                         value: ocrVal,
-                        subtitle: wide ? 'Bảng chờ GV duyệt' : 'Chờ GV duyệt',
+                        subtitle: wide
+                            ? 'Bảng chờ giáo viên duyệt'
+                            : 'Chờ giáo viên duyệt',
                         icon: Icons.document_scanner_outlined,
                         tone: StatTone.warn,
                       ),

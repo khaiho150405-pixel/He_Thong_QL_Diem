@@ -312,7 +312,7 @@ class _GradeDistributionCard extends StatelessWidget {
                 AppHBarItem(
                   label: item.label,
                   value: item.count.toDouble(),
-                  valueText: '${item.count} HS · ${item.percentage}%',
+                  valueText: '${item.count} học sinh · ${item.percentage}%',
                   color: colorOf(t, item.code),
                 ),
             ],
@@ -321,7 +321,7 @@ class _GradeDistributionCard extends StatelessWidget {
       ),
       footerIcon: Icons.check_circle_rounded,
       footerText:
-          'Đã tổng kết $totalRated / $totalStudents HS · Tỷ lệ Giỏi & Khá: $passRate%',
+          'Đã tổng kết $totalRated / $totalStudents học sinh · Tỷ lệ Giỏi & Khá: $passRate%',
     );
   }
 }
@@ -366,7 +366,7 @@ class _OcrAccuracyCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             _OcrRow(
               badge: const AppBadge.warn('Vàng (Lệch)'),
-              desc: 'GV đã chỉnh sửa',
+              desc: 'Giáo viên đã chỉnh sửa',
               pct: pct(data.yellowCount),
               value: ratio(data.yellowCount),
               tone: AppProgressTone.warn,
@@ -374,7 +374,7 @@ class _OcrAccuracyCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             _OcrRow(
               badge: const AppBadge.bad('Đỏ (Ô trống)'),
-              desc: 'GV nhập tay lại',
+              desc: 'Giáo viên nhập tay lại',
               pct: pct(data.redCount),
               value: ratio(data.redCount),
               tone: AppProgressTone.bad,

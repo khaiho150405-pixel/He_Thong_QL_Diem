@@ -25,7 +25,7 @@ class YearPendingSummaryDto {
     required this.unpublishedSemesters,
   });
 
-  /// Bảng điểm chưa chốt
+  /// Bảng điểm chưa khóa
   @JsonKey(name: r'openGradebooks', required: true, includeIfNull: false)
   final num openGradebooks;
 

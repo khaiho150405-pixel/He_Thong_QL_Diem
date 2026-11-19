@@ -614,7 +614,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
         for (final teacher in _teachers)
           DropdownMenuItem(
             value: teacher['ma_giao_vien'] as num?,
-            child: Text(teacher['ho_ten']?.toString() ?? 'GV'),
+            child: Text(teacher['ho_ten']?.toString() ?? 'Giáo viên'),
           ),
       ],
       onChanged: (value) {

@@ -80,7 +80,7 @@ class ReviewHeader extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'Phiếu #${ticket.ticketId}',
+                      'Phiếu nhận dạng',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: t.ink,

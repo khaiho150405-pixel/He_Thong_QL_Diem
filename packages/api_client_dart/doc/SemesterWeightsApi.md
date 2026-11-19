@@ -65,7 +65,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **semesterWeightsList**
-> SemesterWeightsPage semesterWeightsList(yearId, q, cursor)
+> SemesterWeightsPage semesterWeightsList(yearId, limit, q, cursor)
 
 
 
@@ -79,11 +79,12 @@ import 'package:api_client_dart/api.dart';
 
 final api = ApiClientDart().getSemesterWeightsApi();
 final num yearId = 8.14; // num | Chỉ hệ số thuộc học kỳ của năm học này; vắng = tất cả
+final num limit = 8.14; // num | Số dòng mỗi trang, từ 1 đến 500; vắng = 50
 final String q = q_example; // String |
 final String cursor = cursor_example; // String |
 
 try {
-    final response = api.semesterWeightsList(yearId, q, cursor);
+    final response = api.semesterWeightsList(yearId, limit, q, cursor);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling SemesterWeightsApi->semesterWeightsList: $e\n');
@@ -95,6 +96,7 @@ try {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **yearId** | **num**| Chỉ hệ số thuộc học kỳ của năm học này; vắng = tất cả | [optional]
+ **limit** | **num**| Số dòng mỗi trang, từ 1 đến 500; vắng = 50 | [optional]
  **q** | **String**|  | [optional]
  **cursor** | **String**|  | [optional]
 

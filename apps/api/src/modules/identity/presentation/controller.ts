@@ -24,6 +24,7 @@ import {
 } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { SETTINGS, type Settings } from "../../../common/database.js";
+import { allowQuery } from "../../../common/query.js";
 import {
   type Actor,
   roles,
@@ -194,12 +195,33 @@ export class IdentityController {
   @ApiOkResponse({ type: AccountsDto })
   @ApiQuery({ name: "cursor", type: String, required: false })
   @ApiQuery({ name: "q", type: String, required: false })
+  @ApiQuery({
+    name: "limit",
+    type: Number,
+    required: false,
+    description: "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+  })
+  @ApiQuery({
+    name: "role",
+    enum: roles,
+    required: false,
+    description: "Chỉ tài khoản của vai trò này; vắng = tất cả",
+  })
   accounts(
     @Req() req: SessionRequest,
     @Query("cursor") cursor?: string,
     @Query("q") q?: string,
+    @Query("limit") limit?: string,
+    @Query("role") role?: string,
   ) {
-    return this.service.accounts(req.actor, cursor ? Number(cursor) : 0, q);
+    allowQuery(req.query, ["cursor", "q", "limit", "role"]);
+    return this.service.accounts(
+      req.actor,
+      cursor ? Number(cursor) : 0,
+      q,
+      limit,
+      role,
+    );
   }
   @Post("accounts")
   @HttpCode(200)

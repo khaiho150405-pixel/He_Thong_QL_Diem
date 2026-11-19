@@ -4,6 +4,8 @@ import '../authentication/session.dart';
 
 typedef Json = Map<String, dynamic>;
 
+const catalogLargePage = 500;
+
 class CatalogPageData {
   const CatalogPageData(this.items, this.nextCursor);
   final List<Json> items;
@@ -23,12 +25,15 @@ class CatalogRepository {
     String? q,
     num? yearId,
     num? activeInYearId,
+    num? limit,
+    String? role,
   }) async {
     switch (resource) {
       case 'years':
         final result = (await api.getYearsApi().yearsList(
           q: q,
           cursor: cursor,
+          limit: limit,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -38,6 +43,7 @@ class CatalogRepository {
         final result = (await api.getSemestersApi().semestersList(
           q: q,
           cursor: cursor,
+          limit: limit,
           yearId: yearId,
         )).data!;
         return CatalogPageData(
@@ -48,6 +54,7 @@ class CatalogRepository {
         final result = (await api.getClassesApi().classesList(
           q: q,
           cursor: cursor,
+          limit: limit,
           yearId: yearId,
         )).data!;
         return CatalogPageData(
@@ -58,6 +65,7 @@ class CatalogRepository {
         final result = (await api.getStudentsApi().studentsList(
           q: q,
           cursor: cursor,
+          limit: limit,
           yearId: yearId,
         )).data!;
         return CatalogPageData(
@@ -68,6 +76,7 @@ class CatalogRepository {
         final result = (await api.getSubjectsApi().subjectsList(
           q: q,
           cursor: cursor,
+          limit: limit,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -77,6 +86,7 @@ class CatalogRepository {
         final result = (await api.getComponentsApi().componentsList(
           q: q,
           cursor: cursor,
+          limit: limit,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -86,6 +96,7 @@ class CatalogRepository {
         final result = (await api.getSemesterWeightsApi().semesterWeightsList(
           q: q,
           cursor: cursor,
+          limit: limit,
           yearId: yearId,
         )).data!;
         return CatalogPageData(
@@ -96,6 +107,7 @@ class CatalogRepository {
         final result = (await api.getTeachersApi().teachersList(
           q: q,
           cursor: cursor,
+          limit: limit,
           activeInYearId: activeInYearId,
         )).data!;
         return CatalogPageData(
@@ -106,6 +118,7 @@ class CatalogRepository {
         final result = (await api.getAssignmentsApi().assignmentsList(
           q: q,
           cursor: cursor,
+          limit: limit,
           yearId: yearId,
         )).data!;
         return CatalogPageData(
@@ -116,6 +129,8 @@ class CatalogRepository {
         final result = (await api.getIdentityApi().identityAccounts(
           q: q,
           cursor: cursor,
+          limit: limit,
+          role: role,
         )).data!;
         return CatalogPageData(
           result.items.map((row) => row.toJson()).toList(),
@@ -124,6 +139,33 @@ class CatalogRepository {
       default:
         throw ArgumentError.value(resource);
     }
+  }
+
+  Future<List<Json>> listAll(
+    String resource, {
+    String? q,
+    num? yearId,
+    num? activeInYearId,
+    String? role,
+  }) async {
+    final items = <Json>[];
+    final seen = <String>{};
+    String? cursor;
+    do {
+      final page = await list(
+        resource,
+        cursor: cursor,
+        q: q,
+        yearId: yearId,
+        activeInYearId: activeInYearId,
+        limit: catalogLargePage,
+        role: role,
+      );
+      items.addAll(page.items);
+      cursor = page.nextCursor;
+      if (cursor != null && !seen.add(cursor)) break;
+    } while (cursor != null);
+    return items;
   }
 
   Future<YearPendingSummaryDto> getYearPendingSummary(num id) async {

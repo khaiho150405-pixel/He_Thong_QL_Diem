@@ -18,11 +18,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/fake_school_profile.dart';
 
 class _FakeServer implements HttpClientAdapter {
-  _FakeServer(this.role, {this.subjects});
+  _FakeServer(this.role, {this.subjects, this.summaryOverrides});
 
   final String role;
 
   final List<Map<String, dynamic>>? subjects;
+
+  final Map<String, dynamic>? summaryOverrides;
 
   @override
   void close({bool force = false}) {}
@@ -71,6 +73,7 @@ class _FakeServer implements HttpClientAdapter {
           'totalSubjects': 6,
           'classRank': 3,
           'classSize': 38,
+          ...?summaryOverrides,
         },
         'years': [
           {'id': 1, 'name': '2025-2026', 'className': '10A1'},
@@ -103,14 +106,24 @@ class _FakeServer implements HttpClientAdapter {
   static Map<String, dynamic> subject(
     String name,
     String? score,
-    String? code,
-  ) => _subject(name, score, code);
+    String? code, {
+    String? termAverage,
+    String? termClassification,
+  }) => _subject(
+    name,
+    score,
+    code,
+    termAverage: termAverage,
+    termClassification: termClassification,
+  );
 
   static Map<String, dynamic> _subject(
     String name,
     String? score,
-    String? code,
-  ) => {
+    String? code, {
+    String? termAverage,
+    String? termClassification,
+  }) => {
     'gradebookId': 7,
     'subjectId': name.hashCode.abs() % 1000,
     'subjectName': name,
@@ -130,6 +143,8 @@ class _FakeServer implements HttpClientAdapter {
     ],
     'finalScore': score,
     'classification': code,
+    'termAverage': termAverage,
+    'termClassification': termClassification,
     'calculatedAt': score == null ? null : '2026-09-13T01:00:00.000Z',
   };
 }
@@ -142,6 +157,7 @@ Future<ProviderContainer> _pump(
   required Brightness mode,
   double height = 900,
   List<Map<String, dynamic>>? subjects,
+  Map<String, dynamic>? summaryOverrides,
 }) async {
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
@@ -150,7 +166,12 @@ Future<ProviderContainer> _pump(
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
   final api = ApiClientDart(
-    dio: Dio()..httpClientAdapter = _FakeServer(role, subjects: subjects),
+    dio: Dio()
+      ..httpClientAdapter = _FakeServer(
+        role,
+        subjects: subjects,
+        summaryOverrides: summaryOverrides,
+      ),
   );
   final container = ProviderContainer(
     overrides: [
@@ -193,14 +214,25 @@ void main() {
     expect(unknown.label, 'XUAT_SAC_LA');
   });
 
-  group('Hàng ĐTB chung giữ nguyên phép tính cũ ở client (bước 4b)', () {
-    Map<String, dynamic> subj(String name, String score) =>
-        _FakeServer.subject(name, score, 'MA_MON');
+  group('Hàng Điểm TB học kỳ lấy từ API, client không tự tính (B-07)', () {
+    Map<String, dynamic> subj(
+      String name,
+      String score, {
+      String? termAverage,
+      String? termClassification,
+    }) => _FakeServer.subject(
+      name,
+      score,
+      'MA_MON',
+      termAverage: termAverage,
+      termClassification: termClassification,
+    );
 
     Future<void> openTable(
       WidgetTester tester,
-      List<Map<String, dynamic>> subjects,
-    ) async {
+      List<Map<String, dynamic>> subjects, {
+      Map<String, dynamic>? summaryOverrides,
+    }) async {
       await _pump(
         tester,
         role: 'HOC_SINH',
@@ -208,118 +240,73 @@ void main() {
         width: 1280,
         mode: Brightness.light,
         subjects: subjects,
+        summaryOverrides: summaryOverrides,
       );
       await tester.tap(find.text('Bảng tổng hợp'));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('trung bình 8.2 -> Giỏi', (tester) async {
-      await openTable(tester, [subj('Toán', '8.0'), subj('Văn', '8.4')]);
-      expect(find.text('8.2'), findsOneWidget);
+    testWidgets('hiện điểm TB và xếp loại chung đúng như API trả', (
+      tester,
+    ) async {
+      await openTable(
+        tester,
+        [
+          subj('Toán', '8.0', termAverage: '8.20', termClassification: 'GIOI'),
+          subj('Văn', '8.4', termAverage: '8.20', termClassification: 'GIOI'),
+        ],
+        summaryOverrides: {'averageScore': '8.20'},
+      );
+      expect(find.text('8.2'), findsWidgets);
       expect(find.text('Giỏi'), findsOneWidget);
       expect(find.text('Chờ công bố'), findsNothing);
     });
 
-    testWidgets('trung bình 7.0 -> Khá', (tester) async {
-      await openTable(tester, [subj('Toán', '6.0'), subj('Văn', '8.0')]);
-      expect(find.text('7.0'), findsOneWidget);
-      expect(find.text('Khá'), findsOneWidget);
-    });
-
-    testWidgets('trung bình 5.5 -> Đạt', (tester) async {
-      await openTable(tester, [subj('Toán', '5.0'), subj('Văn', '6.0')]);
-      expect(find.text('5.5'), findsOneWidget);
-      expect(find.text('Đạt'), findsOneWidget);
-    });
-
     testWidgets(
-      'còn môn chưa có xếp loại -> ô tổng không hiện điểm, không nói chuyện công bố',
+      'không cộng trung bình ở client: điểm môn 9.0 nhưng API trả 7.00',
       (tester) async {
-        await openTable(tester, [
-          subj('Toán', '8.0'),
-          _FakeServer.subject('Văn', null, null),
-        ]);
-        expect(find.text('Chờ công bố'), findsNothing);
-        expect(find.text('Giỏi'), findsNothing);
+        await openTable(
+          tester,
+          [
+            subj('Toán', '9.0', termAverage: '7.00', termClassification: 'KHA'),
+            subj('Văn', '9.0', termAverage: '7.00', termClassification: 'KHA'),
+          ],
+          summaryOverrides: {'averageScore': '7.00'},
+        );
+        expect(find.text('7.0'), findsWidgets);
+        expect(find.text('Khá'), findsOneWidget);
       },
     );
-  });
 
-  test(
-    'semesterOverviewOf và ngưỡng xếp loại chung theo chính sách mặc định',
-    () {
-      expect(overallClassificationCodeOf(8.0), 'GIOI');
-      expect(overallClassificationCodeOf(7.99), 'KHA');
-      expect(overallClassificationCodeOf(6.5), 'KHA');
-      expect(overallClassificationCodeOf(6.49), 'TRUNG_BINH');
-    },
-  );
+    testWidgets(
+      'học kỳ chưa công bố: không có điểm tổng kết, điểm TB và xếp loại ở cả hai chỗ',
+      (tester) async {
+        await openTable(
+          tester,
+          [
+            _FakeServer.subject('Toán', null, null),
+            _FakeServer.subject('Văn', null, null),
+          ],
+          summaryOverrides: {
+            'averageScore': null,
+            'publishedSubjects': 0,
+            'classRank': null,
+          },
+        );
+        expect(find.text('Điểm TB học kỳ'), findsOneWidget);
+        expect(find.text('Giỏi'), findsNothing);
+        expect(find.text('Khá'), findsNothing);
+        expect(find.text('Chờ công bố'), findsNothing);
+        expect(find.text('0 / 6'), findsOneWidget);
+        expect(find.text('—'), findsWidgets);
+        expect(find.text('5.0'), findsWidgets);
 
-  test('ngưỡng xếp loại chung: đủ biên 7.99, 8.0, 6.49, 6.5, 4.99, 5.0', () {
-    final expected = <double, String>{
-      10.0: 'GIOI',
-      8.0: 'GIOI',
-      7.99: 'KHA',
-      6.5: 'KHA',
-      6.49: 'TRUNG_BINH',
-      5.0: 'TRUNG_BINH',
-      4.99: 'YEU',
-      0.0: 'YEU',
-    };
-    expected.forEach((gpa, code) {
-      expect(overallClassificationCodeOf(gpa), code, reason: 'Điểm TB $gpa');
-    });
-    final codes = expected.values.toSet();
-    expect(codes, {'GIOI', 'KHA', 'TRUNG_BINH', 'YEU'});
-  });
-
-  group('semesterOverviewOf (điểm TB chung tính ở client)', () {
-    StudentSubjectResultDto dto(
-      String name,
-      String? score,
-      String? code, {
-      bool? passFail,
-    }) => StudentSubjectResultDto.fromJson({
-      ..._FakeServer.subject(name, score, code),
-      'passFail': ?passFail,
-    });
-
-    test('chỉ tính khi mọi môn đã có xếp loại, bằng trung bình cộng', () {
-      final all = semesterOverviewOf([
-        dto('Toán', '8.0', 'GIOI'),
-        dto('Văn', '6.0', 'DAT'),
-      ]);
-      expect(all.allLocked, isTrue);
-      expect(all.lockedSubjects, 2);
-      expect(all.gpa, closeTo(7.0, 1e-9));
-
-      final partial = semesterOverviewOf([
-        dto('Toán', '8.0', 'GIOI'),
-        dto('Văn', null, null),
-      ]);
-      expect(partial.allLocked, isFalse);
-      expect(partial.lockedSubjects, 1);
-      expect(partial.gpa, isNull);
-
-      final empty = semesterOverviewOf(const []);
-      expect(empty.allLocked, isFalse);
-      expect(empty.gpa, isNull);
-    });
-
-    test('môn Đạt/Không đạt không tính vào ĐTB chung', () {
-      final result = semesterOverviewOf([
-        dto('Toán', '9.0', 'GIOI'),
-        dto('Thể dục', '10.0', 'DAT', passFail: true),
-      ]);
-      expect(result.allLocked, isTrue);
-      expect(result.gpa, closeTo(9.0, 1e-9));
-
-      final onlyPassFail = semesterOverviewOf([
-        dto('Thể dục', '10.0', 'DAT', passFail: true),
-      ]);
-      expect(onlyPassFail.allLocked, isTrue);
-      expect(onlyPassFail.gpa, isNull);
-    });
+        await tester.tap(find.text('Thẻ theo môn'));
+        await tester.pumpAndSettle();
+        expect(find.text('Chưa có điểm tổng kết'), findsNWidgets(2));
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 
   for (final mode in Brightness.values) {
@@ -349,7 +336,7 @@ void main() {
         expect(find.textContaining('Mã học sinh'), findsNothing);
         expect(find.text('7.0 · XUAT_SAC_LA'), findsOneWidget);
         expect(find.text('8.4 · Giỏi'), findsOneWidget);
-        expect(find.text('Chưa có điểm TB'), findsOneWidget);
+        expect(find.text('Chưa có điểm tổng kết'), findsOneWidget);
         expect(tester.takeException(), isNull);
 
         await tester.tap(find.text('Bảng tổng hợp'));

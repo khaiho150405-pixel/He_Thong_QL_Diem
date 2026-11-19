@@ -166,9 +166,32 @@ export class StudentSubjectResultDto {
   className!: string;
   @ApiProperty({ type: [StudentApprovedComponentDto] })
   components!: StudentApprovedComponentDto[];
-  @ApiProperty({ type: String, nullable: true }) finalScore!: string | null;
-  @ApiProperty({ type: String, nullable: true })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Điểm tổng kết môn; null cho tới khi học kỳ được công bố",
+  })
+  finalScore!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: "Xếp loại môn; null cho tới khi học kỳ được công bố",
+  })
   classification!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "Điểm TB học kỳ (cùng nguồn với summary.averageScore); null khi chưa công bố",
+  })
+  termAverage!: string | null;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "Xếp loại chung theo chính sách đang áp dụng; null khi chưa công bố",
+  })
+  termClassification!: string | null;
 }
 
 export class StudentResultSummaryDto {

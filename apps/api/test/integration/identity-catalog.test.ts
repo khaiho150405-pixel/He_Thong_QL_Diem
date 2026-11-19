@@ -256,6 +256,113 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
         .status,
       400,
     );
+    const listEndpoints = [
+      "catalog/years",
+      "catalog/semesters",
+      "catalog/classes",
+      "catalog/students",
+      "catalog/subjects",
+      "catalog/components",
+      "catalog/semester-weights",
+      "catalog/teachers",
+      "catalog/assignments",
+      "catalog/form-templates",
+      "identity/accounts",
+    ];
+    for (const endpoint of listEndpoints)
+      for (const query of [
+        "sort=secret",
+        "sort=secret&limit=999999",
+        "unknown=1",
+      ]) {
+        const rejected = await call(
+          `${endpoint}?${query}`,
+          "GET",
+          undefined,
+          token,
+        );
+        assert.equal(rejected.status, 400, `${endpoint}?${query}`);
+        assert.equal(rejected.body.code, "VALIDATION_ERROR", endpoint);
+        assert.ok(rejected.body.requestId, endpoint);
+      }
+    for (const endpoint of listEndpoints.filter(
+      (item) => item !== "catalog/form-templates",
+    ))
+      for (const limit of ["0", "501", "999999", "abc", "-1", "1.5", ""]) {
+        const rejected = await call(
+          `${endpoint}?limit=${limit}`,
+          "GET",
+          undefined,
+          token,
+        );
+        assert.equal(rejected.status, 400, `${endpoint}?limit=${limit}`);
+      }
+    for (const endpoint of listEndpoints.filter(
+      (item) => item !== "catalog/form-templates",
+    )) {
+      const page = await call(`${endpoint}?limit=1`, "GET", undefined, token);
+      assert.equal(page.status, 200, endpoint);
+      assert.ok(page.body.items.length <= 1, endpoint);
+      const wide = await call(`${endpoint}?limit=500`, "GET", undefined, token);
+      assert.equal(wide.status, 200, endpoint);
+      assert.ok(wide.body.items.length <= 500, endpoint);
+    }
+    const oneAccount = await call(
+      "identity/accounts?limit=1",
+      "GET",
+      undefined,
+      token,
+    );
+    assert.equal(oneAccount.body.items.length, 1);
+    assert.ok(oneAccount.body.nextCursor);
+    const nextAccount = await call(
+      `identity/accounts?limit=1&cursor=${oneAccount.body.nextCursor}`,
+      "GET",
+      undefined,
+      token,
+    );
+    assert.equal(nextAccount.body.items.length, 1);
+    assert.ok(nextAccount.body.items[0].id > oneAccount.body.items[0].id);
+    const teacherAccounts = await call(
+      "identity/accounts?role=GIAO_VIEN&limit=500",
+      "GET",
+      undefined,
+      token,
+    );
+    assert.equal(teacherAccounts.status, 200);
+    assert.ok(teacherAccounts.body.items.length > 0);
+    assert.ok(
+      teacherAccounts.body.items.every(
+        (item: { role: string }) => item.role === "GIAO_VIEN",
+      ),
+    );
+    assert.equal(
+      (await call("identity/accounts?role=ROOT", "GET", undefined, token))
+        .status,
+      400,
+    );
+    assert.equal(
+      (
+        await call(
+          "catalog/students?q=a&yearId=1&limit=5&cursor=1",
+          "GET",
+          undefined,
+          token,
+        )
+      ).status,
+      200,
+    );
+    assert.equal(
+      (
+        await call(
+          "catalog/form-templates?cursor=1&status=DANG_DUNG",
+          "GET",
+          undefined,
+          token,
+        )
+      ).status,
+      200,
+    );
     const rollbackName = `Rollback ${suffix}`;
     await assert.rejects(
       app.get<Store>(STORE).run(async (tx) => {

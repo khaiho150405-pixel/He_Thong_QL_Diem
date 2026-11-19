@@ -328,7 +328,7 @@ class _BatchResultScreenState extends ConsumerState<BatchResultScreen> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
-                'Phiếu #${ticket.ticketId} · ${ticket.componentName}',
+                'Phiếu nhận dạng · ${ticket.componentName}',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: t.ink,

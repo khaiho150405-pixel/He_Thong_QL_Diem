@@ -20,6 +20,8 @@ class _FakeCatalogRepository extends CatalogRepository {
     String? q,
     num? yearId,
     num? activeInYearId,
+    num? limit,
+    String? role,
   }) async {
     return const CatalogPageData([], null);
   }

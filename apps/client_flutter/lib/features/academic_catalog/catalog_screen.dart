@@ -202,23 +202,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     num? yearId,
     num? activeInYearId,
   }) async {
-    final items = <Json>[];
-    String? cursor;
-    final seen = <String>{};
-    do {
-      final res = await ref
-          .read(catalogRepositoryProvider)
-          .list(
-            resource,
-            cursor: cursor,
-            yearId: yearId,
-            activeInYearId: activeInYearId,
-          );
-      items.addAll(res.items);
-      cursor = res.nextCursor;
-      if (cursor != null && !seen.add(cursor)) break;
-    } while (cursor != null);
-    return items;
+    return ref
+        .read(catalogRepositoryProvider)
+        .listAll(resource, yearId: yearId, activeInYearId: activeInYearId);
   }
 
   List<String> get _searchSuggestions => _loader.items
@@ -1048,7 +1034,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         final seenTeacherNames = <String>{};
         final uniqueTeachers = <Json>[];
         for (final t in candidateTeachers) {
-          final name = t['ho_ten']?.toString() ?? 'GV ${t['ma_giao_vien']}';
+          final name =
+              t['ho_ten']?.toString() ?? 'Giáo viên ${t['ma_giao_vien']}';
           if (seenTeacherNames.add(name)) {
             uniqueTeachers.add(t);
           }
@@ -1081,7 +1068,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 DropdownMenuItem(
                   value: t['ma_giao_vien'] as num?,
                   child: Text(
-                    t['ho_ten']?.toString() ?? 'GV ${t['ma_giao_vien']}',
+                    t['ho_ten']?.toString() ?? 'Giáo viên ${t['ma_giao_vien']}',
                   ),
                 ),
             ],
@@ -1101,7 +1088,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         final seenTeacherNames = <String>{};
         final uniqueTeachers = <Json>[];
         for (final t in teachers) {
-          final name = t['ho_ten']?.toString() ?? 'GV ${t['ma_giao_vien']}';
+          final name =
+              t['ho_ten']?.toString() ?? 'Giáo viên ${t['ma_giao_vien']}';
           if (seenTeacherNames.add(name)) {
             uniqueTeachers.add(t);
           }
@@ -1154,7 +1142,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 DropdownMenuItem(
                   value: t['ma_giao_vien'] as num?,
                   child: Text(
-                    t['ho_ten']?.toString() ?? 'GV ${t['ma_giao_vien']}',
+                    t['ho_ten']?.toString() ?? 'Giáo viên ${t['ma_giao_vien']}',
                   ),
                 ),
             ],

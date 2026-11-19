@@ -31,6 +31,8 @@ class _FakeCatalogRepository extends CatalogRepository {
     String? q,
     num? yearId,
     num? activeInYearId,
+    num? limit,
+    String? role,
   }) async {
     return switch (resource) {
       'subjects' => CatalogPageData(subjects, null),

@@ -127,6 +127,7 @@ class SubjectsApi {
   ///
   ///
   /// Parameters:
+  /// * [limit] - Số dòng mỗi trang, từ 1 đến 500; vắng = 50
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -139,6 +140,7 @@ class SubjectsApi {
   /// Returns a [Future] containing a [Response] with a [SubjectsPage] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<SubjectsPage>> subjectsList({
+    num? limit,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -168,6 +170,7 @@ class SubjectsApi {
     );
 
     final _queryParameters = <String, dynamic>{
+      if (limit != null) r'limit': limit,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

@@ -129,6 +129,8 @@ class Phase5FakeServer implements HttpClientAdapter {
             ],
             'finalScore': '6.5',
             'classification': 'KHA',
+            'termAverage': '6.50',
+            'termClassification': 'KHA',
             'calculatedAt': '2026-09-13T01:00:00.000Z',
           },
         ],

@@ -21,6 +21,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import type { Request } from "express";
+import { allowQuery } from "../../../common/query.js";
 import type { Actor } from "../../authorization/application/policy.js";
 import { TeachersService } from "../application/teachers.js";
 export class TeachersInput {
@@ -55,6 +56,12 @@ export class TeachersController {
   @ApiQuery({ name: "cursor", required: false, type: String })
   @ApiQuery({ name: "q", required: false, type: String })
   @ApiQuery({
+    name: "limit",
+    required: false,
+    type: Number,
+    description: "Số dòng mỗi trang, từ 1 đến 500; vắng = 50",
+  })
+  @ApiQuery({
     name: "activeInYearId",
     required: false,
     type: Number,
@@ -66,8 +73,10 @@ export class TeachersController {
     @Query("cursor") cursor?: string,
     @Query("q") q?: string,
     @Query("activeInYearId") activeInYearId?: string,
+    @Query("limit") limit?: string,
   ) {
-    return this.service.list(req.actor, cursor, q, activeInYearId);
+    allowQuery(req.query, ["cursor", "q", "activeInYearId", "limit"]);
+    return this.service.list(req.actor, cursor, q, activeInYearId, limit);
   }
   @Post()
   @HttpCode(200)

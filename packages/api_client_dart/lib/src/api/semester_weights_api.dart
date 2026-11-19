@@ -128,6 +128,7 @@ class SemesterWeightsApi {
   ///
   /// Parameters:
   /// * [yearId] - Chỉ hệ số thuộc học kỳ của năm học này; vắng = tất cả
+  /// * [limit] - Số dòng mỗi trang, từ 1 đến 500; vắng = 50
   /// * [q]
   /// * [cursor]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -141,6 +142,7 @@ class SemesterWeightsApi {
   /// Throws [DioException] if API call or serialization fails
   Future<Response<SemesterWeightsPage>> semesterWeightsList({
     num? yearId,
+    num? limit,
     String? q,
     String? cursor,
     CancelToken? cancelToken,
@@ -171,6 +173,7 @@ class SemesterWeightsApi {
 
     final _queryParameters = <String, dynamic>{
       if (yearId != null) r'yearId': yearId,
+      if (limit != null) r'limit': limit,
       if (q != null) r'q': q,
       if (cursor != null) r'cursor': cursor,
     };

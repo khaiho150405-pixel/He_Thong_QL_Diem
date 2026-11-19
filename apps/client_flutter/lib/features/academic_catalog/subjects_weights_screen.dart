@@ -87,7 +87,11 @@ class _SubjectsWeightsScreenState extends ConsumerState<SubjectsWeightsScreen> {
     );
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Map<num, Json> _buildYearMap(List<Json> years) => {
     for (final y in years)

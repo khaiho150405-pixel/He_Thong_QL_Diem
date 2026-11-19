@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/design_tokens.dart';
 import '../../../app/widgets/app_badge.dart';
+import 'review_channel_reading.dart';
 import 'review_crop_image.dart';
 import 'review_models.dart';
 import 'review_page_labels.dart';
@@ -211,22 +212,50 @@ class ReviewRowContent extends StatelessWidget {
     );
   }
 
-  Widget _numericCrop(double height) => ReviewCropImage(
-    label: 'Điểm số',
-    imageUrl: row.numericCropUrl,
-    nullPlaceholder: 'Không có ảnh',
-    height: height,
-    onRefresh: onRefresh,
-    isCancelled: isCancelled,
+  Widget _numericCrop(double height) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ReviewCropImage(
+        label: 'Điểm số',
+        imageUrl: row.numericCropUrl,
+        nullPlaceholder: 'Không có ảnh',
+        height: height,
+        onRefresh: onRefresh,
+        isCancelled: isCancelled,
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      ReviewChannelReading(
+        key: ValueKey('review-numeric-reading-${row.rowId}'),
+        channel: ReviewChannel.numeric,
+        raw: row.numericRaw,
+        value: row.numericValue,
+        confidence: row.numericConfidence,
+      ),
+    ],
   );
 
-  Widget _writtenCrop(double height) => ReviewCropImage(
-    label: 'Điểm chữ',
-    imageUrl: row.writtenCropUrl,
-    nullPlaceholder: 'Không có ảnh',
-    height: height,
-    onRefresh: onRefresh,
-    isCancelled: isCancelled,
+  Widget _writtenCrop(double height) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ReviewCropImage(
+        label: 'Điểm chữ',
+        imageUrl: row.writtenCropUrl,
+        nullPlaceholder: 'Không có ảnh',
+        height: height,
+        onRefresh: onRefresh,
+        isCancelled: isCancelled,
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      ReviewChannelReading(
+        key: ValueKey('review-written-reading-${row.rowId}'),
+        channel: ReviewChannel.written,
+        raw: row.writtenRaw,
+        value: row.writtenValue,
+        confidence: row.writtenConfidence,
+      ),
+    ],
   );
 
   Widget _nameCrop(double height) => ReviewCropImage(

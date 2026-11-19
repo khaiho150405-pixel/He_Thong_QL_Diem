@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:excel/excel.dart' hide Border;
 import 'package:file_picker/file_picker.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
+import 'grade_import.dart';
 
 class ExcelImportDialog extends StatefulWidget {
   const ExcelImportDialog({
@@ -37,6 +37,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
   final List<String> _skippedLockedColumns = [];
   final List<String> _skippedExemptCells = [];
   final List<Map<String, dynamic>> _previewRows = [];
+  final List<GradeImportRowError> _rowErrors = [];
 
   Future<void> _downloadTemplate() async {
     try {
@@ -47,7 +48,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
 
       final headers = <CellValue>[
         TextCellValue('STT'),
-        TextCellValue('Mã HS'),
+        TextCellValue('Mã học sinh'),
         TextCellValue('Họ và tên'),
       ];
 
@@ -133,6 +134,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
       _skippedLockedColumns.clear();
       _skippedExemptCells.clear();
       _previewRows.clear();
+      _rowErrors.clear();
       _matchedStudentsCount = 0;
     });
 
@@ -151,210 +153,60 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
       final file = result.files.single;
       final bytes = file.bytes;
       if (bytes == null) {
-        throw Exception('Không thể đọc dữ liệu file tải lên.');
+        throw const GradeImportException('Không thể đọc dữ liệu file tải lên.');
       }
 
       _selectedFileName = file.name;
 
+      final GradeImportTable table;
       if (file.name.toLowerCase().endsWith('.csv')) {
-        _parseCsv(utf8.decode(bytes));
+        table = parseCsvTable(decodeCsvBytes(bytes));
       } else {
-        _parseExcel(bytes);
+        table = readExcelTable(bytes);
       }
-    } catch (e) {
-      setState(() => _errorMessage = 'Lỗi đọc file: $e');
+      _applyAnalysis(
+        analyzeGradeImport(
+          headers: table.headers,
+          rows: table.rows,
+          students: widget.students,
+          components: widget.components,
+        ),
+      );
+    } on GradeImportException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } catch (_) {
+      setState(
+        () => _errorMessage =
+            'Không đọc được file này. Hãy mở bằng Excel, lưu lại dạng .xlsx hoặc CSV UTF-8 rồi thử lại.',
+      );
     } finally {
       setState(() => _isProcessing = false);
     }
   }
 
-  void _parseExcel(Uint8List bytes) {
-    final excel = Excel.decodeBytes(bytes);
-    final sheet = excel.tables[excel.tables.keys.first];
-    if (sheet == null || sheet.rows.isEmpty) {
-      throw Exception('File Excel không có dữ liệu.');
-    }
-
-    final headerRow = sheet.rows.first;
-    _processRows(
-      headerRow.map((cell) => cell?.value?.toString() ?? '').toList(),
-      sheet.rows
-          .skip(1)
-          .map((row) => row.map((c) => c?.value?.toString() ?? '').toList())
-          .toList(),
-    );
+  void _applyAnalysis(GradeImportResult result) {
+    setState(() {
+      _skippedLockedColumns.addAll(result.skippedLockedColumns);
+      _skippedExemptCells.addAll(result.skippedExemptCells);
+      _rowErrors.addAll(result.errors);
+      if (result.hasErrors) return;
+      if (result.scores.isEmpty) {
+        _errorMessage =
+            'Không tìm thấy ô điểm hợp lệ nào để nạp (kiểm tra lại tên cột hoặc giá trị 0.0–10.0).';
+        return;
+      }
+      _parsedScores.addAll(result.scores);
+      _previewRows.addAll(result.previewRows);
+      _matchedStudentsCount = result.matchedStudents;
+    });
   }
 
-  void _parseCsv(String csvContent) {
-    final lines = const LineSplitter().convert(csvContent);
-    if (lines.isEmpty) throw Exception('File CSV trống.');
-
-    final header = lines.first
-        .split(RegExp(r'[,;\t]'))
-        .map((s) => s.trim().replaceAll('"', ''))
-        .toList();
-    final dataRows = lines
-        .skip(1)
-        .map(
-          (line) => line
-              .split(RegExp(r'[,;\t]'))
-              .map((s) => s.trim().replaceAll('"', ''))
-              .toList(),
-        )
-        .toList();
-
-    _processRows(header, dataRows);
-  }
-
-  void _processRows(List<String> headers, List<List<String>> rows) {
-    int? idColIndex;
-    int? nameColIndex;
-    final compColMap = <int, GradeCellDto>{};
-
-    for (var i = 0; i < headers.length; i++) {
-      final h = headers[i].trim().toLowerCase();
-      if (h.contains('mã hs') ||
-          h.contains('ma_hoc_sinh') ||
-          h == 'id' ||
-          h == 'mã') {
-        idColIndex = i;
-      } else if (h.contains('họ và tên') ||
-          h.contains('họ tên') ||
-          h.contains('tên') ||
-          h.contains('name')) {
-        nameColIndex = i;
-      }
-
-      for (final comp in widget.components) {
-        final cName = comp.componentName.toLowerCase();
-        if (h.contains('id:${comp.componentId}') ||
-            h.contains('(id:${comp.componentId})') ||
-            h == cName ||
-            h.contains(cName)) {
-          compColMap[i] = comp;
-        }
-      }
-    }
-
-    if (idColIndex == null && nameColIndex == null) {
-      throw Exception(
-        'Không tìm thấy cột "Mã HS" hoặc "Họ và tên" trong file.',
-      );
-    }
-
-    final studentMapById = <num, List<GradeCellDto>>{};
-    final studentMapByName = <String, List<GradeCellDto>>{};
-    for (final entry in widget.students.entries) {
-      studentMapById[entry.key] = entry.value;
-      if (entry.value.isNotEmpty) {
-        studentMapByName[entry.value.first.studentName.trim().toLowerCase()] =
-            entry.value;
-      }
-    }
-
-    final matchedStudentIds = <num>{};
-
-    for (final row in rows) {
-      if (row.isEmpty || row.every((c) => c.trim().isEmpty)) continue;
-
-      List<GradeCellDto>? matchedStudentCells;
-      if (idColIndex != null && idColIndex < row.length) {
-        final idVal = num.tryParse(row[idColIndex].trim());
-        if (idVal != null && studentMapById.containsKey(idVal)) {
-          matchedStudentCells = studentMapById[idVal];
-        }
-      }
-
-      if (matchedStudentCells == null &&
-          nameColIndex != null &&
-          nameColIndex < row.length) {
-        final nameVal = row[nameColIndex].trim().toLowerCase();
-        if (studentMapByName.containsKey(nameVal)) {
-          matchedStudentCells = studentMapByName[nameVal];
-        }
-      }
-
-      if (matchedStudentCells == null || matchedStudentCells.isEmpty) continue;
-
-      final student = matchedStudentCells.first;
-      matchedStudentIds.add(student.studentId);
-
-      final previewItem = <String, dynamic>{
-        'name': student.studentName,
-        'scores': <String, String>{},
-      };
-
-      for (final compEntry in compColMap.entries) {
-        final colIdx = compEntry.key;
-        final comp = compEntry.value;
-
-        if (colIdx >= row.length) continue;
-        final rawVal = row[colIdx].trim();
-        if (rawVal.isEmpty) continue;
-
-        if (comp.openForInput == false || comp.columnLocked == true) {
-          if (!_skippedLockedColumns.contains(comp.componentName)) {
-            _skippedLockedColumns.add(comp.componentName);
-          }
-          continue;
-        }
-
-        final text = rawVal.toLowerCase();
-        final double? parsedNum;
-        if (comp.passFail == true) {
-          if (['đạt', 'dat', 'đ', 'd'].contains(text)) {
-            parsedNum = 10.0;
-          } else if ([
-            'không đạt',
-            'khong dat',
-            'kđ',
-            'kd',
-            'chưa đạt',
-            'chua dat',
-          ].contains(text)) {
-            parsedNum = 0.0;
-          } else {
-            throw Exception(
-              'Cột ${comp.componentName}: chỉ nhập Đạt hoặc Không đạt.',
-            );
-          }
-        } else {
-          parsedNum = double.tryParse(rawVal.replaceAll(',', '.'));
-        }
-
-        if (parsedNum != null && parsedNum >= 0.0 && parsedNum <= 10.0) {
-          final targetCell = matchedStudentCells.firstWhere(
-            (c) => c.componentId == comp.componentId,
-            orElse: () => student,
-          );
-
-          if (targetCell.status.value == 'MIEN') {
-            final desc = '${student.studentName} (${comp.componentName})';
-            if (!_skippedExemptCells.contains(desc)) {
-              _skippedExemptCells.add(desc);
-            }
-            continue;
-          }
-
-          final normalizedScore = parsedNum.toStringAsFixed(1);
-          _parsedScores[targetCell.id] = normalizedScore;
-          (previewItem['scores'] as Map<String, String>)[comp.componentName] =
-              normalizedScore;
-        }
-      }
-
-      if ((previewItem['scores'] as Map).isNotEmpty) {
-        _previewRows.add(previewItem);
-      }
-    }
-
-    _matchedStudentsCount = matchedStudentIds.length;
-
-    if (_parsedScores.isEmpty) {
-      throw Exception(
-        'Không tìm thấy ô điểm hợp lệ nào để nạp (kiểm tra lại tên cột hoặc giá trị 0.0–10.0).',
-      );
-    }
+  String get _rowErrorsText {
+    final shown = _rowErrors.take(10).join('\n');
+    final more = _rowErrors.length > 10
+        ? '\nvà ${_rowErrors.length - 10} lỗi khác.'
+        : '';
+    return 'File có ${_rowErrors.length} lỗi nên chưa thể áp dụng. Sửa file rồi chọn lại.\n$shown$more';
   }
 
   void _applyImport() {
@@ -430,6 +282,19 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
               border: t.badLine,
               foreground: t.bad,
               fontSize: 13,
+            ),
+          ],
+
+          if (_rowErrors.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            _notice(
+              key: const ValueKey('excel-import-row-errors'),
+              icon: Icons.error_outline_rounded,
+              text: _rowErrorsText,
+              background: t.badSoft,
+              border: t.badLine,
+              foreground: t.bad,
+              fontSize: 12.5,
             ),
           ],
 
@@ -552,6 +417,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
   }
 
   Widget _notice({
+    Key? key,
     required IconData icon,
     required String text,
     required Color background,
@@ -559,6 +425,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
     required Color foreground,
     required double fontSize,
   }) => DecoratedBox(
+    key: key,
     decoration: BoxDecoration(
       color: background,
       borderRadius: BorderRadius.circular(AppRadius.sm + 2),

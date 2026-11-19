@@ -147,7 +147,7 @@ void main() {
 
     for (final width in [1280.0, 1440.0]) {
       testWidgets('đối chiếu $mode ${width.toInt()} px: đủ dòng Xanh/Vàng/Đỏ/'
-          'STT khác, không tràn, ảnh ô cắt không lộ độ tin cậy', (
+          'STT khác, không tràn, mỗi ảnh ô cắt kèm giá trị và độ tin cậy', (
         tester,
       ) async {
         await _open(
@@ -164,7 +164,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.byIcon(Icons.arrow_back), findsNothing);
-        expect(find.text(' › Phiếu #42'), findsOneWidget);
+        expect(find.text(' › Phiếu nhận dạng · Điểm kiểm tra'), findsOneWidget);
 
         expect(find.byType(StatCard), findsNWidgets(3));
         expect(
@@ -185,8 +185,13 @@ void main() {
         expect(find.text('Điểm số'), findsWidgets);
         expect(find.text('Điểm chữ'), findsWidgets);
         expect(find.byType(AppConfidenceBar), findsNothing);
-        expect(find.textContaining('%'), findsNothing);
-        expect(find.textContaining('Máy đọc'), findsNothing);
+        expect(find.text('Máy đọc 7.0 · Tin cậy 90%'), findsOneWidget);
+        expect(find.text('Không đọc được · Tin cậy 40%'), findsOneWidget);
+        expect(
+          find.textContaining('Máy đọc 9.0 · Tin cậy 91%'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('→ 8.0 · Tin cậy 88%'), findsOneWidget);
 
         expect(find.textContaining('Độ tin cậy'), findsNothing);
         expect(find.textContaining('Ký tự thô'), findsNothing);
@@ -231,7 +236,7 @@ void main() {
     for (final width in [320.0, 390.0]) {
       testWidgets(
         'đối chiếu $mode ${width.toInt()} px: PageView, chấm tiến độ, '
-        'ảnh ô cắt không lộ độ tin cậy, không tràn',
+        'ảnh ô cắt kèm giá trị và độ tin cậy, không tràn',
         (tester) async {
           await _open(
             tester,
@@ -244,7 +249,7 @@ void main() {
           expect(find.byType(PageView), findsOneWidget);
           expect(find.byIcon(Icons.arrow_back), findsOneWidget);
           expect(find.byTooltip('Quay lại bảng điểm'), findsOneWidget);
-          expect(find.text(' › Phiếu #42'), findsNothing);
+          expect(find.text(' › Phiếu nhận dạng · Điểm kiểm tra'), findsNothing);
           expect(
             find.byKey(const ValueKey('review-pager-dots')),
             findsOneWidget,
@@ -253,6 +258,7 @@ void main() {
 
           expect(find.text('Điểm số'), findsOneWidget);
           expect(find.text('Điểm chữ'), findsOneWidget);
+          expect(find.textContaining('Tin cậy'), findsWidgets);
           expect(find.textContaining('Độ tin cậy'), findsNothing);
           expect(find.byType(AppConfidenceBar), findsNothing);
           expect(_boxWithColor(tokens.badSoft), findsWidgets);

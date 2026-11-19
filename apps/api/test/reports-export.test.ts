@@ -9,6 +9,7 @@ import type {
   ReportUnit,
 } from "../src/modules/reports/application/port.js";
 import { ReportsService } from "../src/modules/reports/application/service.js";
+import type { SchoolService } from "../src/modules/school/application/service.js";
 
 const admin: Actor = {
   id: 1,
@@ -16,6 +17,10 @@ const admin: Actor = {
   role: "QUAN_TRI_VIEN",
   sessionHash: "a".repeat(64),
 };
+
+const fakeSchool = {
+  profile: async () => ({ name: "Trường Giả Lập" }),
+} as unknown as SchoolService;
 
 function fakeStore(rows: ExportRow[]): ReportStore {
   const now = Date.now();
@@ -78,13 +83,20 @@ test("Excel export orders students by the shared class STT, including duplicate 
     student(21, "Hoàng Minh Châu", "8.0"),
     student(20, "Hoàng Minh Châu", "9.0"),
   ]);
-  const { bytes } = await new ReportsService(store).export(admin, 9);
+  const { bytes } = await new ReportsService(store, fakeSchool).export(
+    admin,
+    9,
+  );
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(bytes as unknown as ArrayBuffer);
   const sheet = workbook.getWorksheet("Bang diem")!;
   const table: Array<[number, number]> = [];
+  assert.equal(sheet.getCell(1, 1).value, "Trường Giả Lập");
+  assert.equal(sheet.getCell(2, 1).value, "STT");
+  assert.equal(sheet.views[0]?.state, "frozen");
+  assert.equal((sheet.views[0] as { ySplit?: number }).ySplit, 2);
   sheet.eachRow((row, index) => {
-    if (index > 1)
+    if (index > 2)
       table.push([Number(row.getCell(1).value), Number(row.getCell(2).value)]);
   });
   assert.deepEqual(table, [

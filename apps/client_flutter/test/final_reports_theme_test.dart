@@ -306,7 +306,7 @@ void main() {
         expect(find.text('Xuất Excel'), findsOneWidget);
         expect(find.byType(StatCard), findsNWidgets(6));
         for (final entry in {
-          'HS đã tổng kết': '40',
+          'Học sinh đã tổng kết': '40',
           'Điểm TB lớp': '7.2',
           'Cao nhất': '9.8',
           'Thấp nhất': '2.5',
@@ -325,10 +325,10 @@ void main() {
         }
         expect(find.byType(AppHBars), findsOneWidget);
         expect(find.text('Phân bố xếp loại:'), findsOneWidget);
-        expect(find.text('12 HS'), findsOneWidget);
-        expect(find.text('15 HS'), findsOneWidget);
-        expect(find.text('9 HS'), findsOneWidget);
-        expect(find.text('4 HS'), findsOneWidget);
+        expect(find.text('12 học sinh'), findsOneWidget);
+        expect(find.text('15 học sinh'), findsOneWidget);
+        expect(find.text('9 học sinh'), findsOneWidget);
+        expect(find.text('4 học sinh'), findsOneWidget);
         final fill = tester.widget<DecoratedBox>(
           find.byKey(const ValueKey('app-hbar-fill-0')),
         );
@@ -405,7 +405,7 @@ void main() {
     );
     expect(
       find.text(
-        'Thống kê · 40 HS · Điểm TB lớp 7.2 · Cao nhất 9.8 · Thấp nhất 2.5',
+        'Thống kê · 40 học sinh · Điểm TB lớp 7.2 · Cao nhất 9.8 · Thấp nhất 2.5',
       ),
       findsOneWidget,
     );
