@@ -586,7 +586,8 @@ class WeightsRecognitionModel(RecognitionModel):
 
 
 _WEIGHTS_LOCK = threading.Lock()
-_WEIGHTS_CACHE: dict[tuple[str, str, str, str, str, str, str, bool], WeightsRecognitionModel] = {}
+_WEIGHTS_CACHE: dict[tuple[str | bool, ...], WeightsRecognitionModel] = {}
+_VERSION_TAG = re.compile(r"^[A-Za-z0-9_.-]{1,24}$")
 
 
 def weights_model(values: Mapping[str, str]) -> WeightsRecognitionModel:
@@ -610,18 +611,29 @@ def weights_model(values: Mapping[str, str]) -> WeightsRecognitionModel:
     if device not in {"cpu", "cuda"}:
         raise ModelUnavailableError("RECOGNITION_DEVICE must be cpu or cuda")
     stt_check = values.get("RECOGNITION_STT_CHECK", "1") != "0"
-    key = (crnn_path, crnn_sha.lower(), ocr_path, ocr_sha.lower(), name_path, name_sha.lower(), device, stt_check)
+    # Tùy chọn (mặc định giữ hành vi cũ): kiến trúc VietOCR của kênh điểm chữ và nhãn phiên bản ghi vào kết quả.
+    ocr_arch = values.get("RECOGNITION_VIETOCR_ARCH", "seq2seq")
+    crnn_tag = values.get("RECOGNITION_CRNN_TAG", "dot5")
+    ocr_tag = values.get("RECOGNITION_VIETOCR_TAG", "tang4")
+    if ocr_arch not in {"seq2seq", "transformer"}:
+        raise ModelUnavailableError("RECOGNITION_VIETOCR_ARCH must be seq2seq or transformer")
+    if not (_VERSION_TAG.match(crnn_tag) and _VERSION_TAG.match(ocr_tag)):
+        raise ModelUnavailableError("RECOGNITION_*_TAG is malformed")
+    key = (
+        crnn_path, crnn_sha.lower(), ocr_path, ocr_sha.lower(), name_path, name_sha.lower(), device, stt_check,
+        ocr_arch, crnn_tag, ocr_tag,
+    )
     with _WEIGHTS_LOCK:
         cached = _WEIGHTS_CACHE.get(key)
         if cached is not None:
             return cached
         crnn_reader = CrnnReader.load(Path(crnn_path), crnn_sha, device)
-        vietocr_reader = VietOcrReader.load(Path(ocr_path), ocr_sha, device)
+        vietocr_reader = VietOcrReader.load(Path(ocr_path), ocr_sha, device, architecture=ocr_arch)
         name_reader = VietOcrReader.load(Path(name_path), name_sha, device)
         digest = hashlib.sha256(
             (crnn_reader.sha256 + vietocr_reader.sha256 + name_reader.sha256).encode("ascii")
         ).hexdigest()
-        version = f"crnn-dot5+vietocr-tang4+name-vgg:{digest[:12]}"
+        version = f"crnn-{crnn_tag}+vietocr-{ocr_tag}+name-vgg:{digest[:12]}"
         model = WeightsRecognitionModel(crnn_reader, vietocr_reader, name_reader, version, stt_check)
         _WEIGHTS_CACHE[key] = model
         return model

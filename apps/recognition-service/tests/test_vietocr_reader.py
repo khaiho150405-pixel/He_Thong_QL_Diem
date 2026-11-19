@@ -46,6 +46,24 @@ class ConfigTest(unittest.TestCase):
             if key != "vocab":
                 self.assertNotIn("http", str(value).lower(), key)
 
+    def test_default_architecture_is_seq2seq_and_transformer_only_changes_the_decoder_block(self) -> None:
+        default = vr.build_config(vr.DEFAULT_CONFIG, Path("w.pth"), "cpu")
+        self.assertEqual(default["seq_modeling"], "seq2seq")
+        transformer = vr.build_config(vr.DEFAULT_CONFIG, Path("w.pth"), "cpu", "transformer")
+        self.assertEqual(transformer["seq_modeling"], "transformer")
+        self.assertEqual(transformer["transformer"], vr.TRANSFORMER_CONFIG)
+        # tiền xử lý ảnh, bộ ký tự và giải mã tham lam không đổi
+        for key in ("dataset", "vocab", "cnn", "backbone"):
+            self.assertEqual(transformer[key], default[key], key)
+        self.assertIs(transformer["predictor"]["beamsearch"], False)
+        for key, value in transformer.items():
+            if key != "vocab":
+                self.assertNotIn("http", str(value).lower(), key)
+
+    def test_unknown_architecture_is_refused(self) -> None:
+        with self.assertRaises(ModelUnavailableError):
+            vr.build_config(vr.DEFAULT_CONFIG, Path("w.pth"), "cpu", "lstm")
+
     def test_shipped_yaml_only_references_urls_that_are_overridden(self) -> None:
         text = vr.DEFAULT_CONFIG.read_text(encoding="utf-8")
         self.assertIn("vocr.vn", text)  # present in the file ...

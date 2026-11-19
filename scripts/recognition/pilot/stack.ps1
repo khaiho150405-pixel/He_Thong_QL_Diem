@@ -20,6 +20,13 @@ New-Item -ItemType Directory -Force $pidDir, $logDir | Out-Null
 $weights = if ($env:PILOT_WEIGHTS_DIR) { $env:PILOT_WEIGHTS_DIR } else { 'D:\HocTap\KhoaLuan\App\weights' }
 $crnnSha = 'a685425e61662ccfda06ca35db54d539ae8599accd4c48bbd4b394958c0e3e62'
 $vietocrSha = '32999513a94f822f4ba4c302749a8d97be0e065631cedceacc0134327f9a73c9'
+$t1Sha = '3fb5038d3c97c72066f634567686d1286cfab70a56034fe60d383e303c91b896'
+$c1lSha = '024a437f122c1353b6584fcbf180db5834b6350a1c1e14e4807d8c5cc2d4c7f6'
+# Kênh Điểm chữ mặc định: VietOCR VGG-Seq2Seq Tầng 4 (khớp báo cáo). Tùy chọn (không phải mặc định):
+#   PILOT_WEIGHTS_WRITTEN=T1   VGG-Transformer T1 seed 123 (đợt 33-34, chưa chốt)
+#   PILOT_WEIGHTS_WRITTEN=C1L  VGG-Seq2Seq tiền huấn luyện VietHTR-Line 11 epoch, seed 123 (đợt 33B + 41: qua các điều kiện đo
+#                              được của cổng thay thế, còn thiếu tập mù nên chưa thay Tầng 4 làm mặc định)
+$writtenModel = switch ($env:PILOT_WEIGHTS_WRITTEN) { 'T1' { 'T1' } 'C1L' { 'C1L' } default { 'tang4' } }
 $nameSha = '0921503a41375a0584268e23ef3d414ea478a8fe8777865c7745d38f2d0bc5db'
 $testDatabase = if ($env:PILOT_DATABASE) { $env:PILOT_DATABASE } else { 'qld_phase7_test' }
 if (-not $testDatabase.EndsWith('_test')) { throw 'PILOT_DATABASE phải kết thúc bằng _test' }
@@ -49,8 +56,23 @@ function Set-PilotEnvironment {
   $env:RECOGNITION_MODEL_MODE = 'weights'
   $env:RECOGNITION_CRNN_WEIGHTS = Join-Path $weights 'crnn_num_best_dot6.pth'
   $env:RECOGNITION_CRNN_SHA256 = $crnnSha
-  $env:RECOGNITION_VIETOCR_WEIGHTS = Join-Path $weights 'vietocr_best_tang4.pth'
-  $env:RECOGNITION_VIETOCR_SHA256 = $vietocrSha
+  $env:RECOGNITION_CRNN_TAG = 'dot6'
+  if ($writtenModel -eq 'T1') {
+    $env:RECOGNITION_VIETOCR_WEIGHTS = Join-Path $weights 'vietocr_vgg_transformer_T1_seed123.pth'
+    $env:RECOGNITION_VIETOCR_SHA256 = $t1Sha
+    $env:RECOGNITION_VIETOCR_ARCH = 'transformer'
+    $env:RECOGNITION_VIETOCR_TAG = 'T1'
+  } elseif ($writtenModel -eq 'C1L') {
+    $env:RECOGNITION_VIETOCR_WEIGHTS = Join-Path $weights 'vietocr_vgg_seq2seq_C1L_seed123.pth'
+    $env:RECOGNITION_VIETOCR_SHA256 = $c1lSha
+    $env:RECOGNITION_VIETOCR_ARCH = 'seq2seq'
+    $env:RECOGNITION_VIETOCR_TAG = 'C1L'
+  } else {
+    $env:RECOGNITION_VIETOCR_WEIGHTS = Join-Path $weights 'vietocr_best_tang4.pth'
+    $env:RECOGNITION_VIETOCR_SHA256 = $vietocrSha
+    $env:RECOGNITION_VIETOCR_ARCH = 'seq2seq'
+    $env:RECOGNITION_VIETOCR_TAG = 'tang4'
+  }
   $env:RECOGNITION_NAME_WEIGHTS = Join-Path $weights 'vietocr_vgg_seq2seq_pretrained.pth'
   $env:RECOGNITION_NAME_SHA256 = $nameSha
   $env:RECOGNITION_DEVICE = 'cpu'

@@ -43,10 +43,32 @@ class TextRead:
     prob: float
 
 
-def build_config(config_path: Path, weights_path: Path, device: str) -> dict[str, Any]:
-    """Đọc yml, ghi đè theo ``nap_cau_hinh_vietocr`` và loại mọi URL tải mô hình."""
+ARCHITECTURES = ("seq2seq", "transformer")
+# Khối Transformer của checkpoint VGG-Transformer (đợt 33–34), đúng như lúc huấn luyện và đánh giá.
+TRANSFORMER_CONFIG: dict[str, Any] = {
+    "d_model": 256,
+    "nhead": 8,
+    "num_encoder_layers": 6,
+    "num_decoder_layers": 6,
+    "dim_feedforward": 2048,
+    "max_seq_length": 1024,
+    "pos_dropout": 0.1,
+    "trans_dropout": 0.1,
+}
+
+
+def build_config(
+    config_path: Path, weights_path: Path, device: str, architecture: str = "seq2seq"
+) -> dict[str, Any]:
+    """Đọc yml, ghi đè theo ``nap_cau_hinh_vietocr`` và loại mọi URL tải mô hình.
+
+    ``architecture`` mặc định ``seq2seq`` (hành vi cũ). ``transformer`` chỉ đổi khối giải mã sang VGG-Transformer;
+    tiền xử lý ảnh, bộ ký tự và giải mã tham lam giữ nguyên.
+    """
     import yaml
 
+    if architecture not in ARCHITECTURES:
+        raise ModelUnavailableError("VietOCR architecture must be seq2seq or transformer")
     with config_path.open(encoding="utf-8") as stream:
         cfg = yaml.safe_load(stream)
     cfg["dataset"].update(
@@ -57,7 +79,10 @@ def build_config(config_path: Path, weights_path: Path, device: str) -> dict[str
     cfg["cnn"]["pretrained"] = False
     cfg["weights"] = str(weights_path)
     cfg.pop("pretrain", None)
-    leftover = [key for key, value in cfg.items() if key != "vocab" and "http" in str(value).lower()]
+    if architecture == "transformer":
+        cfg["seq_modeling"] = "transformer"
+        cfg["transformer"] = dict(TRANSFORMER_CONFIG)
+    leftover =[key for key, value in cfg.items() if key != "vocab" and "http" in str(value).lower()]
     if leftover:
         raise ModelUnavailableError("VietOCR config still references a remote URL")
     return cfg
@@ -99,6 +124,7 @@ class VietOcrReader:
         expected_sha256: str,
         device: str = "cpu",
         config_path: Path = DEFAULT_CONFIG,
+        architecture: str = "seq2seq",
     ) -> "VietOcrReader":
         expected = (expected_sha256 or "").strip().lower()
         if not _SHA256.match(expected):
@@ -111,7 +137,7 @@ class VietOcrReader:
         translate = _vietocr()
         import torch
 
-        config = build_config(config_path, weights, device)
+        config = build_config(config_path, weights, device, architecture)
         try:
             state = torch.load(weights, map_location=torch.device(device), weights_only=True)
         except Exception as error:

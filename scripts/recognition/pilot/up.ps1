@@ -148,7 +148,12 @@ try {
   if (-not $weights -and (Test-Path $wFile)) { $weights = (Get-Content $wFile -Raw).Trim() }
   if (-not $weights -and (Test-Path 'D:\HocTap\KhoaLuan\App\weights')) { $weights = 'D:\HocTap\KhoaLuan\App\weights' }
   if (-not $weights) { $weights = (Read-Host 'Nhập đường dẫn thư mục chứa 3 file trọng số (.pth)').Trim().Trim('"') }
-  $need = 'crnn_num_best_dot6.pth', 'vietocr_best_tang4.pth', 'vietocr_vgg_seq2seq_pretrained.pth'
+  $written = switch ($env:PILOT_WEIGHTS_WRITTEN) {
+    'T1' { 'vietocr_vgg_transformer_T1_seed123.pth' }
+    'C1L' { 'vietocr_vgg_seq2seq_C1L_seed123.pth' }
+    default { 'vietocr_best_tang4.pth' }
+  }
+  $need = 'crnn_num_best_dot6.pth', $written, 'vietocr_vgg_seq2seq_pretrained.pth'
   $missing = @($need | Where-Object { -not (Test-Path (Join-Path $weights $_)) })
   if ($missing.Count -gt 0) {
     if (Test-Path $wFile) { Remove-Item $wFile }

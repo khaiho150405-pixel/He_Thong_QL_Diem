@@ -352,7 +352,57 @@ class ConfiguredModelTest(unittest.TestCase):
         self.assertIs(first._vietocr, ocr)
         self.assertIs(first._name_reader, name)
         self.assertRegex(first._version, r"^crnn-dot5\+vietocr-tang4\+name-vgg:[0-9a-f]{12}$")
+        # mặc định giữ hành vi cũ: điểm chữ nạp theo seq2seq, họ tên luôn seq2seq
+        self.assertEqual(
+            [call.kwargs.get("architecture", "seq2seq") for call in load_ocr.call_args_list],
+            ["seq2seq", "seq2seq"],
+        )
         model_module._WEIGHTS_CACHE.clear()
+
+    def test_optional_architecture_and_tags_select_the_transformer_for_the_written_channel_only(self) -> None:
+        env = {
+            "APP_ENV": "production",
+            "RECOGNITION_MODEL_MODE": "weights",
+            "RECOGNITION_CRNN_WEIGHTS": "/m/c.pth",
+            "RECOGNITION_CRNN_SHA256": "a" * 64,
+            "RECOGNITION_VIETOCR_WEIGHTS": "/m/t1.pth",
+            "RECOGNITION_VIETOCR_SHA256": "b" * 64,
+            "RECOGNITION_NAME_WEIGHTS": "/m/n.pth",
+            "RECOGNITION_NAME_SHA256": "c" * 64,
+            "RECOGNITION_VIETOCR_ARCH": "transformer",
+            "RECOGNITION_CRNN_TAG": "dot6",
+            "RECOGNITION_VIETOCR_TAG": "T1",
+        }
+        model_module._WEIGHTS_CACHE.clear()
+        with patch("src.adapters.crnn.CrnnReader.load", return_value=StubCrnn()), patch(
+            "src.adapters.vietocr_reader.VietOcrReader.load", side_effect=[StubVietOcr(), StubNameReader()]
+        ) as load_ocr:
+            model = configured_model(env)
+        self.assertEqual(
+            [call.kwargs.get("architecture", "seq2seq") for call in load_ocr.call_args_list],
+            ["transformer", "seq2seq"],
+        )
+        self.assertRegex(model._version, r"^crnn-dot6\+vietocr-T1\+name-vgg:[0-9a-f]{12}$")
+        model_module._WEIGHTS_CACHE.clear()
+
+    def test_bad_architecture_or_tag_makes_the_model_unavailable(self) -> None:
+        base = {
+            "APP_ENV": "production",
+            "RECOGNITION_MODEL_MODE": "weights",
+            "RECOGNITION_CRNN_WEIGHTS": "/m/c.pth",
+            "RECOGNITION_CRNN_SHA256": "a" * 64,
+            "RECOGNITION_VIETOCR_WEIGHTS": "/m/v.pth",
+            "RECOGNITION_VIETOCR_SHA256": "b" * 64,
+            "RECOGNITION_NAME_WEIGHTS": "/m/n.pth",
+            "RECOGNITION_NAME_SHA256": "c" * 64,
+        }
+        for extra in (
+            {"RECOGNITION_VIETOCR_ARCH": "lstm"},
+            {"RECOGNITION_VIETOCR_TAG": "bad tag!"},
+            {"RECOGNITION_CRNN_TAG": ""},
+        ):
+            with self.assertRaises(ModelUnavailableError):
+                configured_model({**base, **extra})
 
 
 class HttpErrorContractTest(unittest.IsolatedAsyncioTestCase):
