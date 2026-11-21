@@ -33,6 +33,7 @@ export interface ExportComponent {
   coefficient: string;
   value: string | null;
   exempt?: boolean;
+  kind?: string | null;
 }
 
 export interface ExportRow {

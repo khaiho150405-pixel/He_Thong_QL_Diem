@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:api_client_dart/api_client_dart.dart';
+import 'package:client_flutter/features/gradebooks/excel_file_name.dart';
 import 'package:client_flutter/features/gradebooks/grade_import.dart';
 import 'package:excel/excel.dart' hide Border;
 import 'package:flutter_test/flutter_test.dart';
@@ -57,7 +58,11 @@ Map<num, List<GradeCellDto>> _students({
     ],
 };
 
-GradeImportResult _run(String csv, {Map<num, List<GradeCellDto>>? students}) {
+GradeImportResult _run(
+  String csv, {
+  Map<num, List<GradeCellDto>>? students,
+  bool scoreColumn = false,
+}) {
   final table = parseCsvTable(csv);
   final map = students ?? _students();
   return analyzeGradeImport(
@@ -65,6 +70,7 @@ GradeImportResult _run(String csv, {Map<num, List<GradeCellDto>>? students}) {
     rows: table.rows,
     students: map,
     components: map.values.first,
+    scoreComponent: scoreColumn ? map.values.first.first : null,
   );
 }
 
@@ -115,6 +121,109 @@ void main() {
         '3;2;Trần Bình;11\n',
       );
       expect(result.errors.single.row, 4);
+    });
+  });
+
+  group('file mẫu ba cột STT, Họ tên, Điểm', () {
+    test('cột Điểm nạp vào cột điểm đã chọn, khớp theo tên và STT', () {
+      final result = _run(
+        'STT;Họ tên;Điểm\n1;Nguyễn An;8,5\n2;Trần Bình;6,0\n',
+        scoreColumn: true,
+      );
+      expect(result.hasErrors, isFalse);
+      expect(result.scores, {'c-1-11': '8.5', 'c-2-11': '6.0'});
+    });
+
+    test('chỉ có STT và Điểm vẫn khớp được học sinh', () {
+      final result = _run('STT;Điểm\n2;7,5\n', scoreColumn: true);
+      expect(result.hasErrors, isFalse);
+      expect(result.scores, {'c-2-11': '7.5'});
+    });
+
+    test('STT lệch với họ tên bị báo lỗi, không gán nhầm học sinh', () {
+      final result = _run(
+        'STT;Họ tên;Điểm\n2;Nguyễn An;8,0\n',
+        scoreColumn: true,
+      );
+      expect(result.errors.single.row, 2);
+      expect(result.errors.single.message, contains('không khớp'));
+      expect(result.scores, isEmpty);
+    });
+
+    test('tên trùng nhiều học sinh cần STT để phân biệt', () {
+      final students = {
+        for (final id in [1, 2])
+          id: [
+            _cell(
+              studentId: id,
+              name: 'Nguyễn An',
+              componentId: 11,
+              componentName: 'TX1',
+            ),
+          ],
+      };
+      final ok = _run(
+        'STT;Họ tên;Điểm\n2;Nguyễn An;9,0\n',
+        students: students,
+        scoreColumn: true,
+      );
+      expect(ok.scores, {'c-2-11': '9.0'});
+      final ambiguous = _run(
+        'Họ tên;Điểm\nNguyễn An;9,0\n',
+        students: students,
+        scoreColumn: true,
+      );
+      expect(ambiguous.errors.single.message, contains('trùng'));
+    });
+  });
+
+  group('dựng file mẫu', () {
+    test('chỉ có ba cột STT, Họ tên, Điểm và điền sẵn điểm hiện có', () {
+      final students = _students();
+      final target = students.values.first.first;
+      final table = readExcelTable(
+        buildGradeTemplate(students: students, target: target),
+      );
+      expect(table.headers, ['STT', 'Họ tên', 'Điểm']);
+      expect(table.rows.map((r) => r.take(2).toList()), [
+        ['1', 'Nguyễn An'],
+        ['2', 'Trần Bình'],
+      ]);
+      expect(table.rows.every((r) => r.length == 3), isTrue);
+    });
+
+    test('file mẫu tải lại được vào đúng cột đã chọn', () {
+      final students = _students();
+      final target = students.values.first[1];
+      final table = readExcelTable(
+        buildGradeTemplate(students: students, target: target),
+      );
+      final filled = [
+        for (final row in table.rows) [row[0], row[1], '7,5'],
+      ];
+      final result = analyzeGradeImport(
+        headers: table.headers,
+        rows: filled,
+        students: students,
+        components: students.values.first,
+        scoreComponent: target,
+      );
+      expect(result.hasErrors, isFalse);
+      expect(result.scores, {'c-1-12': '7.5', 'c-2-12': '7.5'});
+    });
+  });
+
+  group('tên file Excel', () {
+    test('ghép các phần bằng dấu gạch và bỏ ký tự không hợp lệ', () {
+      expect(
+        excelFileName(['Bảng điểm', '12A7', 'Vật lí', 'Học kỳ 2']),
+        'Bảng điểm - 12A7 - Vật lí - Học kỳ 2.xlsx',
+      );
+      expect(
+        excelFileName(['Mẫu nhập điểm', null, 'Toán/Lý: 10', '']),
+        'Mẫu nhập điểm - Toán Lý 10.xlsx',
+      );
+      expect(excelFileName([null, '']), 'Bảng điểm.xlsx');
     });
   });
 

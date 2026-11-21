@@ -89,7 +89,7 @@ export class PrismaReportStore implements ReportStore {
           SELECT hs.ma_hoc_sinh AS "studentId",hs.ho_ten AS "studentName",
             coalesce(jsonb_agg(jsonb_build_object('name',tp.ten_thanh_phan,
               'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,'value',CASE WHEN d.trang_thai='DA_DUYET'
-              THEN d.gia_tri::text ELSE NULL END,'exempt',coalesce(d.trang_thai='MIEN',false)) ORDER BY tp.thu_tu_hien_thi)
+              THEN d.gia_tri::text ELSE NULL END,'exempt',coalesce(d.trang_thai='MIEN',false),'kind',tp.loai_he_so) ORDER BY tp.thu_tu_hien_thi)
               FILTER(WHERE tp.ma_thanh_phan IS NOT NULL),'[]'::jsonb) AS components,
             k.diem_tong_ket::text AS "finalScore",k.xep_loai AS classification
           FROM public.bang_diem b CROSS JOIN LATERAL public.hoc_sinh_cua_lop(b.ma_lop,b.ma_hoc_ky) hs

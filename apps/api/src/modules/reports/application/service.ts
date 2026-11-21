@@ -29,6 +29,44 @@ function numericCell(value: string | null | undefined) {
   return value == null ? null : Number(value);
 }
 
+function slug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .replace(/[^A-Za-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+}
+
+type ScoreKind = "TX" | "GK" | "CK";
+
+function scoreKind(kind: string | null | undefined, name: string) {
+  if (kind === "TX" || kind === "GK" || kind === "CK") return kind;
+  if (/tx/i.test(name)) return "TX";
+  if (/gk/i.test(name)) return "GK";
+  if (/ck/i.test(name)) return "CK";
+  return null;
+}
+
+function columnLabels(
+  columns: Array<{ name: string; kind: ScoreKind | null }>,
+) {
+  const total = new Map<ScoreKind, number>();
+  for (const column of columns)
+    if (column.kind) total.set(column.kind, (total.get(column.kind) ?? 0) + 1);
+  const seen = new Map<ScoreKind, number>();
+  return columns.map((column) => {
+    if (!column.kind) return safeCell(column.name);
+    const order = (seen.get(column.kind) ?? 0) + 1;
+    seen.set(column.kind, order);
+    const base = `ĐG${column.kind}`;
+    return total.get(column.kind) === 1 && column.kind !== "TX"
+      ? base
+      : `${base} ${order}`;
+  });
+}
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -89,11 +127,19 @@ export class ReportsService {
         .map((row) => ({ row, stt: order.get(row.studentId) ?? 0 }))
         .sort((a, b) => a.stt - b.stt);
 
-      const componentNames = [
-        ...new Set(
-          rows.flatMap(({ row }) => row.components.map((item) => item.name)),
-        ),
-      ];
+      const columnByName = new Map<
+        string,
+        { name: string; kind: ScoreKind | null }
+      >();
+      for (const { row } of rows)
+        for (const item of row.components)
+          if (!columnByName.has(item.name))
+            columnByName.set(item.name, {
+              name: item.name,
+              kind: scoreKind(item.kind, item.name),
+            });
+      const columns = [...columnByName.values()];
+      const componentNames = columns.map((column) => column.name);
       const passFail =
         (await tx.authorization.find("mon_hoc", { ma_mon: book.subjectId }))
           ?.danh_gia_dat === true;
@@ -114,15 +160,13 @@ export class ReportsService {
       });
       const headers = [
         "STT",
-        "Mã học sinh",
         "Họ tên",
-        ...componentNames.map((name) => safeCell(name)),
-        "Điểm tổng kết",
+        ...columnLabels(columns),
+        "ĐTB",
         "Xếp loại",
       ];
       sheet.columns = [
         { key: "stt", width: 8 },
-        { key: "studentId", width: 15 },
         { key: "studentName", width: 28 },
         ...componentNames.map((_, index) => ({
           key: `component${index}`,
@@ -141,7 +185,6 @@ export class ReportsService {
         );
         sheet.addRow({
           stt,
-          studentId: row.studentId,
           studentName: safeCell(row.studentName),
           ...Object.fromEntries(
             componentNames.map((name, index) => [
@@ -178,7 +221,10 @@ export class ReportsService {
       await tx.recordExport(actor.id, gradebookId);
       return {
         bytes: Buffer.from(data),
-        filename: `bang-diem-${gradebookId}.xlsx`,
+        filename: `bang-diem-${[book.className, book.subjectName, book.termName]
+          .map(slug)
+          .filter(Boolean)
+          .join("-")}.xlsx`,
       };
     });
   }

@@ -1,12 +1,11 @@
 import 'package:api_client_dart/api_client_dart.dart';
-import 'package:excel/excel.dart' hide Border;
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/design_tokens.dart';
 import '../../app/widgets/app_badge.dart';
 import '../../app/widgets/app_dialog.dart';
+import 'excel_file_name.dart';
 import 'grade_import.dart';
 
 class ExcelImportDialog extends StatefulWidget {
@@ -16,8 +15,12 @@ class ExcelImportDialog extends StatefulWidget {
     required this.students,
     required this.components,
     required this.onApply,
+    this.className,
+    this.subjectName,
   });
 
+  final String? className;
+  final String? subjectName;
   final num bookId;
   final Map<num, List<GradeCellDto>> students;
   final List<GradeCellDto> components;
@@ -38,79 +41,31 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
   final List<String> _skippedExemptCells = [];
   final List<Map<String, dynamic>> _previewRows = [];
   final List<GradeImportRowError> _rowErrors = [];
+  late GradeCellDto _target = _defaultTarget();
+
+  GradeCellDto _defaultTarget() => widget.components.firstWhere(
+    (c) => c.openForInput != false && c.columnLocked != true,
+    orElse: () => widget.components.first,
+  );
 
   Future<void> _downloadTemplate() async {
     try {
-      final excel = Excel.createExcel();
-      const sheetName = 'BangDiem';
-      excel.rename('Sheet1', sheetName);
-      final sheet = excel[sheetName];
-
-      final headers = <CellValue>[
-        TextCellValue('STT'),
-        TextCellValue('Mã học sinh'),
-        TextCellValue('Họ và tên'),
-      ];
-
-      for (final comp in widget.components) {
-        final lockStatus = comp.openForInput == false ? ' [KHÓA]' : '';
-        headers.add(
-          TextCellValue(
-            '${comp.componentName} (ID:${comp.componentId})$lockStatus',
-          ),
-        );
-      }
-      sheet.appendRow(headers);
-
-      final sortedStudents = widget.students.values.toList()
-        ..sort((a, b) {
-          final sttA = a.isNotEmpty ? a.first.stt : null;
-          final sttB = b.isNotEmpty ? b.first.stt : null;
-          if (sttA != null && sttB != null) {
-            final cmp = sttA.compareTo(sttB);
-            if (cmp != 0) return cmp;
-          } else if (sttA != null && sttB == null) {
-            return -1;
-          } else if (sttA == null && sttB != null) {
-            return 1;
-          }
-          final idA = a.isNotEmpty ? a.first.studentId : 0;
-          final idB = b.isNotEmpty ? b.first.studentId : 0;
-          return idA.compareTo(idB);
-        });
-
-      for (final studentRow in sortedStudents) {
-        if (studentRow.isEmpty) continue;
-        final student = studentRow.first;
-        final CellValue sttValue = student.stt != null
-            ? IntCellValue(student.stt!.toInt())
-            : TextCellValue('—');
-        final rowValues = <CellValue>[
-          sttValue,
-          IntCellValue(student.studentId.toInt()),
-          TextCellValue(student.studentName),
-        ];
-
-        for (final comp in widget.components) {
-          final cell = studentRow.firstWhere(
-            (c) => c.componentId == comp.componentId,
-            orElse: () => student,
-          );
-          final valStr = cell.value ?? '';
-          rowValues.add(TextCellValue(valStr));
-        }
-        sheet.appendRow(rowValues);
-      }
-
-      final fileBytes = excel.save();
-      if (fileBytes == null) throw Exception('Không thể tạo file Excel.');
+      final fileBytes = buildGradeTemplate(
+        students: widget.students,
+        target: _target,
+      );
 
       final path = await FilePicker.saveFile(
         dialogTitle: 'Lưu file mẫu Excel',
-        fileName: 'Mau_BangDiem_${widget.bookId}.xlsx',
+        fileName: excelFileName([
+          'Mẫu nhập điểm',
+          widget.className,
+          widget.subjectName,
+          _target.componentName,
+        ]),
         type: FileType.custom,
         allowedExtensions: const ['xlsx'],
-        bytes: Uint8List.fromList(fileBytes),
+        bytes: fileBytes,
       );
 
       if (!mounted) return;
@@ -170,6 +125,7 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
           rows: table.rows,
           students: widget.students,
           components: widget.components,
+          scoreComponent: _target,
         ),
       );
     } on GradeImportException catch (e) {
@@ -238,10 +194,50 @@ class _ExcelImportDialogState extends State<ExcelImportDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Tải file mẫu Excel có sẵn danh sách học sinh của lớp, nhập điểm vào các cột tương ứng và tải lên lại để cập nhật tự động.',
+            'Chọn cột điểm cần nhập, tải file mẫu (STT, Họ tên, Điểm) có sẵn danh sách học sinh của lớp, điền điểm rồi tải lên lại để cập nhật tự động.',
             style: theme.textTheme.bodyMedium?.copyWith(color: t.ink2),
           ),
           const SizedBox(height: 16),
+          InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Cột điểm cần nhập',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<num>(
+                key: const ValueKey('excel-import-target'),
+                value: _target.componentId,
+                isExpanded: true,
+                isDense: true,
+                items: [
+                  for (final comp in widget.components)
+                    DropdownMenuItem<num>(
+                      value: comp.componentId,
+                      child: Text(
+                        comp.openForInput == false || comp.columnLocked == true
+                            ? '${comp.componentName} (đã khóa)'
+                            : comp.componentName,
+                      ),
+                    ),
+                ],
+                onChanged: (id) {
+                  if (id == null) return;
+                  setState(() {
+                    _target = widget.components.firstWhere(
+                      (c) => c.componentId == id,
+                    );
+                    _parsedScores.clear();
+                    _previewRows.clear();
+                    _rowErrors.clear();
+                    _errorMessage = null;
+                    _selectedFileName = null;
+                  });
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
 
           Wrap(
             spacing: 12,

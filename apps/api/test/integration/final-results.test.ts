@@ -234,7 +234,7 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
       },
     );
     const exported = await reports.export(teacher, book.id);
-    assert.equal(exported.filename, `bang-diem-${book.id}.xlsx`);
+    assert.match(exported.filename, /^bang-diem-[a-z0-9-]+\.xlsx$/);
     assert.equal(exported.bytes.subarray(0, 2).toString("ascii"), "PK");
     const exportedBook = new ExcelJS.Workbook();
     await exportedBook.xlsx.load(exported.bytes as unknown as ArrayBuffer);

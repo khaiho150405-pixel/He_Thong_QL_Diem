@@ -465,6 +465,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       context: context,
       builder: (ctx) => ExcelImportDialog(
         bookId: widget.data.book.id,
+        className: widget.data.book.className,
+        subjectName: widget.data.book.subjectName,
         students: students,
         components: components,
         onApply: (updatedValues, reason) async {
@@ -1652,7 +1654,11 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ReportsPanel(gradebookId: widget.data.book.id, compact: false),
+          ReportsPanel(
+            gradebookId: widget.data.book.id,
+            book: widget.data.book,
+            compact: false,
+          ),
           const SizedBox(height: 16),
           _buildAdjustmentsHistorySection(),
           const SizedBox(height: 16),

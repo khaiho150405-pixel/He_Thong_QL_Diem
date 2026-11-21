@@ -7,6 +7,7 @@ import '../../app/design_tokens.dart';
 import '../../app/widgets/app_charts.dart';
 import '../../app/widgets/stat_card.dart';
 import '../authentication/session.dart';
+import '../gradebooks/excel_file_name.dart';
 import '../final_results/student_results_screen.dart'
     show classificationBadgeOf;
 import 'repository.dart';
@@ -16,8 +17,10 @@ class ReportsPanel extends ConsumerStatefulWidget {
     super.key,
     required this.gradebookId,
     this.compact = false,
+    this.book,
   });
 
+  final GradebookDto? book;
   final num gradebookId;
   final bool compact;
 
@@ -43,7 +46,12 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
           .export(widget.gradebookId);
       final path = await FilePicker.saveFile(
         dialogTitle: 'Lưu báo cáo Excel',
-        fileName: 'bang-diem-${widget.gradebookId}.xlsx',
+        fileName: excelFileName([
+          'Bảng điểm',
+          widget.book?.className ?? 'Lớp ${widget.gradebookId}',
+          widget.book?.subjectName,
+          widget.book?.termName,
+        ]),
         type: FileType.custom,
         allowedExtensions: const ['xlsx'],
         bytes: bytes,

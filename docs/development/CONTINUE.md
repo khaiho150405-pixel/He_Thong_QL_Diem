@@ -2,6 +2,24 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Excel: file mẫu nhập điểm và file bảng điểm tổng (2026-11-21; chưa commit)
+
+- File mẫu nhập điểm (`excel_import_dialog.dart`, dựng ở `buildGradeTemplate` trong `grade_import.dart`): chỉ còn 3 cột **STT, Họ tên, Điểm**, cho đúng một cột điểm do người dùng chọn ở hộp thoại (mặc định cột đầu tiên còn mở nhập). Điểm hiện có được điền sẵn (môn Đạt/Không đạt điền chữ). Không còn cột "Mã học sinh" và cột theo từng thành phần.
+- Đọc file nhập (`analyzeGradeImport`): cột "Điểm" nạp vào cột đã chọn (`scoreComponent`); vẫn đọc được file cũ có cột `TX1 (ID:11)` và `Mã học sinh`. Khớp học sinh theo họ tên và STT: STT lệch với họ tên thì báo lỗi dòng, tên trùng nhiều học sinh phải có STT đúng, chỉ có STT cũng khớp được.
+- File xuất bảng điểm tổng (`reports/application/service.ts`): cột **STT, Họ tên, ĐGTX 1..n, ĐGGK, ĐGCK, ĐTB, Xếp loại**; bỏ cột "Mã học sinh". Nhóm cột theo `thanh_phan_diem.loai_he_so` (truy vấn `exportRows` có thêm `kind`), thiếu thì suy từ tên (tx/gk/ck).
+- Tên file: client đặt tên qua `excelFileName` (`Bảng điểm - 12A7 - Vật lí - Học kỳ 2.xlsx`, `Mẫu nhập điểm - 12A7 - Vật lí - ĐĐGtx 1.xlsx`); API trả `filename` dạng không dấu (`bang-diem-12a7-vat-li-hoc-ky-2.xlsx`) cho tiêu đề tải về. `ReportsPanel` nhận thêm `book`.
+- Không đổi DTO/OpenAPI. Kiểm tra: `pnpm check` 209/209, `reports-export.test.ts` 2/2, `final-results` tích hợp đạt, `flutter test` 747/747, `dart analyze` sạch, `contracts:check` đạt (cần JDK 17+: dùng `C:\Program Files\Android\Android Studio\jbr`, Java mặc định của máy là 1.8). Đã mở app (web, API trỏ `qld_phase7_test`) xem hộp thoại chọn cột điểm và tải file xuất thật; ảnh minh chứng ở `.local/evidence/` (ngoài git).
+- Lưu ý môi trường: DB dev `quan_ly_diem_dev` còn thiếu 3 migration (`202611020001_auto_gradebook_on_assignment`, `202611070001_drop_manual_gradebook_init`, `202611210001_strict_relations`) nên API chạy với DB dev báo lỗi 500 ở danh sách bảng điểm (thiếu hàm `dam_bao_bang_diem_cua_toi`). Chạy `pnpm db:migrate` trước khi dùng DB dev.
+
+## Siết liên kết giữa các bảng (migration 202611210001_strict_relations; 2026-11-21; chưa commit)
+
+- Migration mới thêm trigger/ràng buộc ở PostgreSQL (mã lỗi SQLSTATE 23514, thông báo tiếng Việt đã map trong `apps/api/src/common/transaction.ts`): `GRADEBOOK_YEAR_MISMATCH`, `ASSIGNMENT_YEAR_MISMATCH`, `TIMETABLE_YEAR_MISMATCH` (lớp và học kỳ cùng năm học); `TIMETABLE_ASSIGNMENT_REQUIRED` (tiết học phải có phân công cùng lớp, môn, học kỳ, giáo viên) và `ASSIGNMENT_IN_TIMETABLE` (không xóa/đổi khóa phân công đang dùng trong thời khóa biểu); `COMPONENT_SUBJECT_MISMATCH` (thành phần điểm thuộc môn của bảng điểm, áp cho 4 bảng); `GRADE_STUDENT_NOT_ENROLLED` (học sinh có điểm phải ghi danh ở lớp của bảng điểm); `TICKET_BATCH_MISMATCH`, `ROW_STUDENT_NOT_IN_ROSTER`, `ROW_CELL_MISMATCH`, `ADJUSTMENT_LINE_BOOK_MISMATCH`; `PROFILE_ROLE_MISMATCH` (vai trò tài khoản khớp hồ sơ giáo viên/học sinh, cả hai chiều); `TERM_OUTSIDE_YEAR`, `YEAR_RANGE_EXCLUDES_TERM`; `UNKNOWN_CLASSIFICATION`.
+- Bỏ 8 index trùng với unique/khóa chính sẵn có (hoc_ky, lop, thanh_phan_diem, phan_cong_giang_day, bang_diem, diem_thanh_phan, ket_qua_tong_ket, ket_qua_dong); đã xóa dòng `@@index` tương ứng trong `database/prisma/schema.prisma`. Rollback ghi ở đầu file migration.
+- Đã áp dụng cho `qld_phase7_test`. **Chưa áp dụng cho `quan_ly_diem_dev`** (đã kiểm tra: 0 vi phạm dữ liệu hiện có); chạy `pnpm db:migrate` khi cần.
+- Test: `database/tests/strict-relations.test.ts` (mới, chạy trong transaction rồi rollback); `constraints.test.ts`, `academic-year-scope.test.ts`, `gradebooks.test.ts` sửa fixture cho khớp luật mới (dùng tài khoản GIAO_VIEN thật, thêm phân công trước tiết học, test năm học sai nay kỳ vọng chính trigger chặn).
+- Kết quả: `pnpm check` 209/209, `test:db` 43/43, `test:integration` 54/55. Test còn lại (`recognition-infrastructure`) lỗi do `fetch` timeout tới địa chỉ Cloudflare, là mạng/endpoint công khai trong `.env`, không do migration. Khi chạy test nhận dạng phải tắt pilot stack (`scripts/recognition/pilot/stack.ps1 stop`), nếu không worker giữ khóa BullMQ.
+- Lưu ý chạy test tích hợp: cần `TEST_MIGRATION_URL`/`TEST_RUNTIME_URL` trỏ DB kết thúc `_test` (ví dụ `qld_phase7_test`).
+
 ## Đợt test 2: nghiệm thu và kết quả (2026-11-20; đã commit)
 
 - Báo cáo tổng hợp: `test-dot-2.md` ở gốc repo. Bằng chứng chi tiết ở `.local/dot2/`, ngoài git.

@@ -165,18 +165,35 @@ GradeImportTable readExcelTable(Uint8List bytes) {
 
 final _gradePattern = RegExp(r'^\d{1,2}([.]\d+)?$');
 
+int? _parseStt(String text) {
+  if (text.isEmpty) return null;
+  final value = double.tryParse(text.replaceAll(',', '.'));
+  if (value == null || value != value.roundToDouble()) return null;
+  return value.toInt();
+}
+
 GradeImportResult analyzeGradeImport({
   required List<String> headers,
   required List<List<String>> rows,
   required Map<num, List<GradeCellDto>> students,
   required List<GradeCellDto> components,
+  GradeCellDto? scoreComponent,
 }) {
   int? idColIndex;
   int? nameColIndex;
+  int? sttColIndex;
   final compColMap = <int, GradeCellDto>{};
 
   for (var i = 0; i < headers.length; i++) {
     final h = headers[i].trim().toLowerCase();
+    if (scoreComponent != null && (h == 'điểm' || h == 'diem')) {
+      compColMap[i] = scoreComponent;
+      continue;
+    }
+    if (h == 'stt' || h == 'số thứ tự') {
+      sttColIndex = i;
+      continue;
+    }
     if (h.contains('mã học sinh') ||
         h.contains('mã hs') ||
         h.contains('ma_hoc_sinh') ||
@@ -201,19 +218,24 @@ GradeImportResult analyzeGradeImport({
     }
   }
 
-  if (idColIndex == null && nameColIndex == null) {
+  if (idColIndex == null && nameColIndex == null && sttColIndex == null) {
     throw const GradeImportException(
-      'Không tìm thấy cột "Mã học sinh" hoặc "Họ và tên" trong file.',
+      'Không tìm thấy cột "STT", "Họ tên" hoặc "Mã học sinh" trong file.',
     );
   }
 
   final studentMapById = <num, List<GradeCellDto>>{};
-  final studentMapByName = <String, List<GradeCellDto>>{};
+  final studentMapByName = <String, List<List<GradeCellDto>>>{};
+  final studentMapByStt = <int, List<GradeCellDto>>{};
   for (final entry in students.entries) {
     studentMapById[entry.key] = entry.value;
     if (entry.value.isNotEmpty) {
-      studentMapByName[entry.value.first.studentName.trim().toLowerCase()] =
-          entry.value;
+      final first = entry.value.first;
+      (studentMapByName[first.studentName.trim().toLowerCase()] ??= []).add(
+        entry.value,
+      );
+      final stt = first.stt;
+      if (stt != null) studentMapByStt[stt.toInt()] = entry.value;
     }
   }
 
@@ -236,14 +258,46 @@ GradeImportResult analyzeGradeImport({
         matchedStudentCells = studentMapById[idVal];
       }
     }
+    String? matchProblem;
     if (matchedStudentCells == null &&
-        nameColIndex != null &&
-        nameColIndex < row.length) {
-      final nameText = row[nameColIndex].trim();
-      if (nameText.isNotEmpty) identity = nameText;
-      final nameVal = nameText.toLowerCase();
-      if (studentMapByName.containsKey(nameVal)) {
-        matchedStudentCells = studentMapByName[nameVal];
+        (nameColIndex != null || sttColIndex != null)) {
+      final nameText = nameColIndex != null && nameColIndex < row.length
+          ? row[nameColIndex].trim()
+          : '';
+      final sttText = sttColIndex != null && sttColIndex < row.length
+          ? row[sttColIndex].trim()
+          : '';
+      final sttValue = _parseStt(sttText);
+      final bySttCells = sttValue == null ? null : studentMapByStt[sttValue];
+      if (nameText.isNotEmpty) {
+        identity = nameText;
+        final sameName = studentMapByName[nameText.toLowerCase()] ?? const [];
+        if (sameName.length == 1) {
+          matchedStudentCells = sameName.single;
+          if (bySttCells != null &&
+              bySttCells.first.studentId !=
+                  matchedStudentCells.first.studentId) {
+            matchedStudentCells = null;
+            matchProblem =
+                'STT $sttText không khớp với học sinh "$nameText" trong lớp.';
+          }
+        } else if (sameName.length > 1) {
+          for (final candidate in sameName) {
+            if (bySttCells != null &&
+                candidate.first.studentId == bySttCells.first.studentId) {
+              matchedStudentCells = candidate;
+            }
+          }
+          if (matchedStudentCells == null) {
+            matchProblem =
+                'tên "$nameText" trùng nhiều học sinh trong lớp, cần STT đúng để phân biệt.';
+          }
+        }
+      } else if (bySttCells != null) {
+        matchedStudentCells = bySttCells;
+        identity = 'STT $sttText';
+      } else if (sttText.isNotEmpty) {
+        identity = 'STT $sttText';
       }
     }
 
@@ -251,9 +305,10 @@ GradeImportResult analyzeGradeImport({
       result.errors.add(
         GradeImportRowError(
           fileRow,
-          identity.isEmpty
-              ? 'không xác định được học sinh trong lớp.'
-              : 'không tìm thấy học sinh "$identity" trong lớp.',
+          matchProblem ??
+              (identity.isEmpty
+                  ? 'không xác định được học sinh trong lớp.'
+                  : 'không tìm thấy học sinh "$identity" trong lớp.'),
         ),
       );
       continue;
@@ -374,4 +429,57 @@ GradeImportResult analyzeGradeImport({
   result.matchedStudents = firstRowOfStudent.length;
   if (!result.hasErrors) result.scores.addAll(pendingScores);
   return result;
+}
+
+String _templateScore(GradeCellDto cell) {
+  final raw = cell.value;
+  if (raw == null || raw.isEmpty) return '';
+  if (cell.passFail == true) return raw == '10.0' ? 'Đạt' : 'Không đạt';
+  return raw;
+}
+
+Uint8List buildGradeTemplate({
+  required Map<num, List<GradeCellDto>> students,
+  required GradeCellDto target,
+}) {
+  final excel = Excel.createExcel();
+  const sheetName = 'BangDiem';
+  excel.rename('Sheet1', sheetName);
+  final sheet = excel[sheetName];
+  sheet.appendRow([
+    TextCellValue('STT'),
+    TextCellValue('Họ tên'),
+    TextCellValue('Điểm'),
+  ]);
+  final sorted = students.values.where((row) => row.isNotEmpty).toList()
+    ..sort((a, b) {
+      final sttA = a.first.stt;
+      final sttB = b.first.stt;
+      if (sttA != null && sttB != null) {
+        final cmp = sttA.compareTo(sttB);
+        if (cmp != 0) return cmp;
+      } else if (sttA != null) {
+        return -1;
+      } else if (sttB != null) {
+        return 1;
+      }
+      return a.first.studentId.compareTo(b.first.studentId);
+    });
+  for (final row in sorted) {
+    final student = row.first;
+    final cell = row.firstWhere(
+      (c) => c.componentId == target.componentId,
+      orElse: () => student,
+    );
+    sheet.appendRow([
+      student.stt != null
+          ? IntCellValue(student.stt!.toInt())
+          : TextCellValue('—'),
+      TextCellValue(student.studentName),
+      TextCellValue(
+        cell.componentId == target.componentId ? _templateScore(cell) : '',
+      ),
+    ]);
+  }
+  return Uint8List.fromList(excel.save()!);
 }

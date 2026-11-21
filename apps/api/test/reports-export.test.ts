@@ -90,20 +90,64 @@ test("Excel export orders students by the shared class STT, including duplicate 
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(bytes as unknown as ArrayBuffer);
   const sheet = workbook.getWorksheet("Bang diem")!;
-  const table: Array<[number, number]> = [];
+  const table: Array<[number, string]> = [];
   assert.equal(sheet.getCell(1, 1).value, "Trường Giả Lập");
   assert.equal(sheet.getCell(2, 1).value, "STT");
   assert.equal(sheet.views[0]?.state, "frozen");
   assert.equal((sheet.views[0] as { ySplit?: number }).ySplit, 2);
   sheet.eachRow((row, index) => {
     if (index > 2)
-      table.push([Number(row.getCell(1).value), Number(row.getCell(2).value)]);
+      table.push([Number(row.getCell(1).value), String(row.getCell(2).value)]);
   });
   assert.deepEqual(table, [
-    [1, 31],
-    [2, 40],
-    [3, 20],
-    [4, 21],
-    [5, 50],
+    [1, "Phạm Văn An"],
+    [2, "Lê Thị Bảo"],
+    [3, "Hoàng Minh Châu"],
+    [4, "Hoàng Minh Châu"],
+    [5, "Trần Văn Đạt"],
   ]);
+});
+
+test("Excel export has STT, Họ tên, ĐGTX, ĐGGK, ĐGCK, ĐTB and a readable file name", async () => {
+  const component = (name: string, kind: string, value: string) => ({
+    name,
+    coefficient: "1.00",
+    value,
+    kind,
+  });
+  const store = fakeStore([
+    {
+      studentId: 7,
+      studentName: "Nguyễn Hải Anh",
+      components: [
+        component("ĐĐGtx 1", "TX", "9.0"),
+        component("ĐĐGtx 2", "TX", "7.5"),
+        component("ĐĐGgk", "GK", "9.8"),
+        component("ĐĐGck", "CK", "8.8"),
+      ],
+      finalScore: "8.9",
+      classification: "GIOI",
+    },
+  ]);
+  const { bytes, filename } = await new ReportsService(
+    store,
+    fakeSchool,
+  ).export(admin, 9);
+  assert.equal(filename, "bang-diem-lop-gia-mon-gia-ky-gia.xlsx");
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(bytes as unknown as ArrayBuffer);
+  const sheet = workbook.getWorksheet("Bang diem")!;
+  const header = (sheet.getRow(2).values as unknown[]).slice(1);
+  assert.deepEqual(header, [
+    "STT",
+    "Họ tên",
+    "ĐGTX 1",
+    "ĐGTX 2",
+    "ĐGGK",
+    "ĐGCK",
+    "ĐTB",
+    "Xếp loại",
+  ]);
+  const first = (sheet.getRow(3).values as unknown[]).slice(1, 7);
+  assert.deepEqual(first, [1, "Nguyễn Hải Anh", 9, 7.5, 9.8, 8.8]);
 });

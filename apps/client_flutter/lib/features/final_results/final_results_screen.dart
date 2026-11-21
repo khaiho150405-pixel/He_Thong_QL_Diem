@@ -14,6 +14,7 @@ import '../../app/widgets/shimmer_loading.dart';
 import '../../core/text_search.dart';
 import '../academic_catalog/academic_year_scope.dart';
 import '../authentication/session.dart';
+import '../gradebooks/excel_file_name.dart';
 import '../gradebooks/gradebook_status.dart';
 import '../gradebooks/repository.dart';
 import '../reports/reports_panel.dart';
@@ -102,7 +103,12 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
       final bytes = await ref.read(reportsRepositoryProvider).export(book.id);
       final path = await FilePicker.saveFile(
         dialogTitle: 'Lưu báo cáo Excel',
-        fileName: 'tong-ket-${book.className}-${book.subjectName}.xlsx',
+        fileName: excelFileName([
+          'Bảng điểm',
+          book.className,
+          book.subjectName,
+          book.termName,
+        ]),
         type: FileType.custom,
         allowedExtensions: const ['xlsx'],
         bytes: bytes,
@@ -586,6 +592,7 @@ class _FinalResultsScreenState extends ConsumerState<FinalResultsScreen> {
         ReportsPanel(
           key: ValueKey('final-page-reports-${book.id}'),
           gradebookId: book.id,
+          book: book,
           compact: false,
         ),
         const SizedBox(height: AppSpacing.lg),
