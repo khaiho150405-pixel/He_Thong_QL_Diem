@@ -90,6 +90,30 @@ export async function transaction<T>(
             "Thành phần điểm này đang có phiếu chờ xử lý/đối chiếu; duyệt hoặc hủy phiếu đó trước.",
           INVALID_CANCEL_REQUEST: "Lý do hủy phải có từ 1 đến 200 ký tự.",
           VERSION_CONFLICT: "Phiếu vừa thay đổi, tải lại rồi thử lại.",
+          GRADEBOOK_YEAR_MISMATCH: "Lớp và học kỳ thuộc hai năm học khác nhau.",
+          ASSIGNMENT_YEAR_MISMATCH:
+            "Lớp và học kỳ của phân công thuộc hai năm học khác nhau.",
+          TIMETABLE_YEAR_MISMATCH:
+            "Lớp và học kỳ của tiết học thuộc hai năm học khác nhau.",
+          TIMETABLE_ASSIGNMENT_REQUIRED:
+            "Tiết học phải có phân công giảng dạy tương ứng (lớp, môn, học kỳ, giáo viên).",
+          ASSIGNMENT_IN_TIMETABLE:
+            "Phân công đang được dùng trong thời khóa biểu; xóa hoặc đổi các tiết học trước.",
+          COMPONENT_SUBJECT_MISMATCH:
+            "Thành phần điểm không thuộc môn của bảng điểm.",
+          GRADE_STUDENT_NOT_ENROLLED: "Học sinh không thuộc lớp của bảng điểm.",
+          PROFILE_ROLE_MISMATCH:
+            "Vai trò của tài khoản không khớp với hồ sơ giáo viên/học sinh.",
+          TERM_OUTSIDE_YEAR: "Học kỳ phải nằm trong thời gian của năm học.",
+          YEAR_RANGE_EXCLUDES_TERM:
+            "Khoảng thời gian năm học không bao trùm các học kỳ hiện có.",
+          UNKNOWN_CLASSIFICATION: "Mã xếp loại không có trong danh mục.",
+          TICKET_BATCH_MISMATCH: "Phiếu không thuộc lô nhận dạng đã chọn.",
+          ROW_STUDENT_NOT_IN_ROSTER:
+            "Học sinh của dòng không có trong danh sách lớp đã chốt của phiếu.",
+          ROW_CELL_MISMATCH: "Dòng nhận dạng không khớp với ô điểm.",
+          ADJUSTMENT_LINE_BOOK_MISMATCH:
+            "Dòng điều chỉnh không thuộc bảng điểm của đơn.",
         };
         throw new ConflictException(
           Object.entries(messages).find(([key]) =>

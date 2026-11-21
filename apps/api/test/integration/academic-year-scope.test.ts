@@ -578,9 +578,15 @@ test("timetable without semesterId shows the semester running today in the curre
         randomBytes(32).toString("hex"),
       ],
     );
+    const teacherId: number = (
+      await owner.query(
+        "INSERT INTO nguoi_dung(ten_dang_nhap,mat_khau_ma_hoa,vai_tro) VALUES($1,'test-only','GIAO_VIEN') RETURNING ma_nguoi_dung",
+        [`ttgv_${suffix}`],
+      )
+    ).rows[0].ma_nguoi_dung;
     await owner.query(
       "INSERT INTO giao_vien(ma_giao_vien,ho_ten) VALUES($1,'GV TKB giả')",
-      [adminId],
+      [teacherId],
     );
     const day = (offset: number) =>
       new Date(Date.now() + 7 * 3_600_000 + offset * 86_400_000)
@@ -610,7 +616,7 @@ test("timetable without semesterId shows the semester running today in the curre
     const cls: number = (
       await owner.query(
         "INSERT INTO lop(ma_nam_hoc,ma_gv_chu_nhiem,ten_lop,khoi) VALUES($1,$2,'tkb',10) RETURNING ma_lop",
-        [year, adminId],
+        [year, teacherId],
       )
     ).rows[0].ma_lop;
     const subject: number = (
@@ -622,11 +628,16 @@ test("timetable without semesterId shows the semester running today in the curre
     for (const [termId, tiet] of [
       [past, 1],
       [running, 2],
-    ] as const)
+    ] as const) {
+      await owner.query(
+        "INSERT INTO phan_cong_giang_day(ma_giao_vien,ma_lop,ma_mon,ma_hoc_ky,ngay_phan_cong) VALUES($1,$2,$3,$4,CURRENT_DATE)",
+        [teacherId, cls, subject, termId],
+      );
       await owner.query(
         "INSERT INTO thoi_khoa_bieu(ma_lop,ma_mon,ma_giao_vien,ma_hoc_ky,thu,tiet) VALUES($1,$2,$3,$4,2,$5)",
-        [cls, subject, adminId, termId, tiet],
+        [cls, subject, teacherId, termId, tiet],
       );
+    }
     const list = async (query = "") => {
       const response = await fetch(`${base}/timetable?classId=${cls}${query}`, {
         headers: { authorization: `Bearer ${token}` },

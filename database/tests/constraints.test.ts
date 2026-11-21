@@ -126,18 +126,20 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
       );
       await owner.query("ROLLBACK TO SAVEPOINT negative");
     };
-    const testTerm = (
+    const base = (
       await owner.query(
-        "INSERT INTO hoc_ky(ma_nam_hoc,ten,thu_tu,ngay_bat_dau,ngay_ket_thuc) SELECT ma_nam_hoc,'Constraint test',99,'2099-01-01','2099-06-01' FROM nam_hoc ORDER BY ma_nam_hoc LIMIT 1 RETURNING ma_hoc_ky",
-      )
-    ).rows[0].ma_hoc_ky;
-    const fixture = (
-      await owner.query(
-        `SELECT hs.ma_hoc_sinh, hs.ma_lop, pc.ma_mon, $1::int AS ma_hoc_ky, pc.ma_giao_vien, tp.ma_thanh_phan
-        FROM hoc_sinh hs JOIN phan_cong_giang_day pc ON pc.ma_lop=hs.ma_lop JOIN thanh_phan_diem tp ON tp.ma_mon=pc.ma_mon LIMIT 1`,
-        [testTerm],
+        `SELECT hs.ma_hoc_sinh, hs.ma_lop, l.ma_nam_hoc, pc.ma_mon, pc.ma_giao_vien, tp.ma_thanh_phan
+        FROM hoc_sinh hs JOIN lop l ON l.ma_lop=hs.ma_lop JOIN phan_cong_giang_day pc ON pc.ma_lop=hs.ma_lop JOIN thanh_phan_diem tp ON tp.ma_mon=pc.ma_mon LIMIT 1`,
       )
     ).rows[0];
+    assert.ok(base, "Run synthetic seed first");
+    const testTerm = (
+      await owner.query(
+        "INSERT INTO hoc_ky(ma_nam_hoc,ten,thu_tu,ngay_bat_dau,ngay_ket_thuc) SELECT ma_nam_hoc,'Constraint test',99,ngay_ket_thuc - 1,ngay_ket_thuc FROM nam_hoc WHERE ma_nam_hoc=$1 RETURNING ma_hoc_ky",
+        [base.ma_nam_hoc],
+      )
+    ).rows[0].ma_hoc_ky;
+    const fixture = { ...base, ma_hoc_ky: testTerm };
     assert.ok(fixture, "Run synthetic seed first");
     const {
       ma_hoc_sinh: student,

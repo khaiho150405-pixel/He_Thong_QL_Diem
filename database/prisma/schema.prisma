@@ -206,7 +206,6 @@ model hoc_ky {
   thoi_khoa_bieu_rows      thoi_khoa_bieu[]
 
   @@unique([ma_nam_hoc, thu_tu])
-  @@index([ma_nam_hoc])
 }
 
 model lop {
@@ -224,7 +223,6 @@ model lop {
   thoi_khoa_bieu_rows      thoi_khoa_bieu[]
 
   @@unique([ma_nam_hoc, ten_lop])
-  @@index([ma_nam_hoc])
   @@index([ma_gv_chu_nhiem])
 }
 
@@ -275,7 +273,6 @@ model thanh_phan_diem {
   phieu_nhan_dien_rows phieu_nhan_dien[]
 
   @@unique([ma_mon, ten_thanh_phan])
-  @@index([ma_mon])
 }
 
 model phan_cong_giang_day {
@@ -292,7 +289,6 @@ model phan_cong_giang_day {
 
   @@unique([ma_lop, ma_mon, ma_hoc_ky])
   @@index([ma_giao_vien])
-  @@index([ma_lop])
   @@index([ma_mon])
   @@index([ma_hoc_ky])
 }
@@ -316,7 +312,6 @@ model bang_diem {
   lo_nhan_dien_rows     lo_nhan_dien[]
 
   @@unique([ma_lop, ma_mon, ma_hoc_ky])
-  @@index([ma_lop])
   @@index([ma_mon])
   @@index([ma_hoc_ky])
 }
@@ -338,7 +333,6 @@ model diem_thanh_phan {
   lich_su_mien_rows     lich_su_mien_diem[]
 
   @@unique([ma_bang_diem, ma_hoc_sinh, ma_thanh_phan])
-  @@index([ma_bang_diem])
   @@index([ma_hoc_sinh])
   @@index([ma_thanh_phan])
 }
@@ -374,7 +368,6 @@ model ket_qua_tong_ket {
   lich_su_rows    lich_su_tong_ket[]
 
   @@unique([ma_hoc_sinh, ma_mon, ma_hoc_ky])
-  @@index([ma_hoc_sinh])
   @@index([ma_mon])
   @@index([ma_hoc_ky])
 }
@@ -593,7 +586,6 @@ model ket_qua_dong {
   nguoi_duyet_ref     nguoi_dung?      @relation(fields: [nguoi_duyet], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([ma_phieu, thu_tu_dong])
-  @@index([ma_phieu])
   @@index([ma_hoc_sinh])
   @@index([ma_diem])
   @@index([nguoi_duyet])

@@ -305,10 +305,11 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
         [secondYear],
       )
     ).rows[0].ma_hoc_ky;
-    const inconsistent = await makeSubject("wrong-year", true, wrongTerm);
     await assert.rejects(
-      service.create(teacher, inconsistent),
-      ConflictException,
+      makeSubject("wrong-year", true, wrongTerm),
+      (error: { code?: string; message?: string }) =>
+        error.code === "23514" &&
+        String(error.message).includes("ASSIGNMENT_YEAR_MISMATCH"),
     );
     const emptyClass = (
       await owner.query(
