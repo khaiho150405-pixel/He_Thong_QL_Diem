@@ -438,10 +438,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        Text(
-                          'Máy chỉ đề xuất kết quả; giáo viên đối chiếu trước khi ghi điểm chính thức.',
-                          style: theme.textTheme.bodySmall,
-                        ),
                       ],
                     ),
                   ),
@@ -500,9 +496,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
             fontWeight: FontWeight.w700,
           ),
         ),
-        subtitle: const Text(
-          'Máy chỉ đề xuất kết quả; giáo viên đối chiếu trước khi ghi điểm chính thức.',
-        ),
         childrenPadding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
         children: [
           const Divider(height: 24),
@@ -549,12 +542,12 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
           value: chosen?.id ?? _noTemplate,
           searchable: false,
           helperText: chosen == null
-              ? 'Một ảnh, một cột điểm, theo mẫu E0330113 cũ.'
+              ? 'Một ảnh, một cột điểm.'
               : 'Nhiều trang, nhiều cột điểm theo mẫu đã chọn.',
           items: [
             const DropdownMenuItem<num>(
               value: _noTemplate,
-              child: Text('Không dùng mẫu (mẫu E0330113 cũ)'),
+              child: Text('Không dùng mẫu'),
             ),
             for (final item in _templates)
               DropdownMenuItem<num>(value: item.id, child: Text(item.name)),
@@ -635,12 +628,6 @@ class _RecognitionPanelState extends ConsumerState<RecognitionPanel> {
               context,
               Icons.table_rows_rounded,
               'Bao gồm rõ các cột Họ tên, Điểm số, Điểm chữ (PNG/JPEG ≤ 10 MB)',
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            _buildChecklistItem(
-              context,
-              Icons.auto_awesome_rounded,
-              'Hệ thống tự động so khớp học sinh và đề xuất điểm',
             ),
           ],
         ),

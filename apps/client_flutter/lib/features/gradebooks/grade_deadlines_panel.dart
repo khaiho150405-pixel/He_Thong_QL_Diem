@@ -82,12 +82,10 @@ class _GradeDeadlinesPanelState extends ConsumerState<GradeDeadlinesPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '${widget.components.length} cột · Hết hạn: ô thiếu/chưa duyệt ghi 0 và tự khóa',
-          ),
+          Text('${widget.components.length} cột'),
           const SizedBox(height: 2),
           const Text(
-            'Hết hạn: cột bắt buộc còn trống sẽ ghi 0; cột không bắt buộc để trống, không tính vào điểm trung bình.',
+            'Hết hạn: cột tự khóa; cột bắt buộc còn trống ghi 0 (trừ học sinh vào lớp sau), cột không bắt buộc để trống.',
           ),
         ],
       ),
@@ -318,7 +316,7 @@ class _DeadlineDialogState extends ConsumerState<_DeadlineDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Giờ hiển thị theo thiết bị hiện tại. Đến hạn, điểm thiếu/chưa duyệt được ghi 0 và không thể mở lại cột đã khóa.',
+            'Giờ hiển thị theo thiết bị hiện tại. Đến hạn cột tự khóa; ô còn thiếu ở cột bắt buộc ghi 0, trừ học sinh vào lớp sau.',
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(

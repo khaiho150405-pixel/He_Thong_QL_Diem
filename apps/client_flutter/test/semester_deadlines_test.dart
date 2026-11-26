@@ -142,7 +142,7 @@ void main() {
 
       expect(
         find.text(
-          'Hết hạn: cột bắt buộc còn trống sẽ ghi 0; cột không bắt buộc để trống, không tính vào điểm trung bình.',
+          'Hết hạn: cột tự khóa; cột bắt buộc còn trống ghi 0 (trừ học sinh vào lớp sau), cột không bắt buộc để trống.',
         ),
         findsOneWidget,
       );

@@ -202,7 +202,7 @@ class _ClassificationPolicyScreenState
                               const SizedBox(height: AppSpacing.sm),
                               Text(
                                 'Mỗi lần lưu tạo một phiên bản mới. Kết quả đã tính giữ '
-                                'snapshot policy cũ để có thể giải thích về sau.',
+                                'nguyên chính sách tại thời điểm tính.',
                                 style: theme.textTheme.bodyMedium,
                               ),
                             ],

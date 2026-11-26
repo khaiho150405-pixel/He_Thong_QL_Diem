@@ -1022,8 +1022,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         t.ink,
         'Phiếu đã hủy — ${ticket.cancelReason ?? 'Không có lý do'}',
         ticket.cancelledAt != null
-            ? 'Đã hủy lúc ${formatDateTimeVi(ticket.cancelledAt!)}. Ảnh và dữ liệu đã bị xóa.'
-            : 'Ảnh và dữ liệu đối chiếu đã bị xóa khỏi hệ thống.',
+            ? 'Đã hủy lúc ${formatDateTimeVi(ticket.cancelledAt!)}. Không ghi điểm từ phiếu này.'
+            : 'Không ghi điểm từ phiếu này.',
       ),
       'LOI' => (
         Icons.error_outline_rounded,

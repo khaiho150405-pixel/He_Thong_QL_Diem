@@ -43,11 +43,6 @@ class AdminChartsSection extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              'Số liệu thực tế từ cơ sở dữ liệu hệ thống: phổ điểm, độ chính xác AI hai kênh và tiến độ nộp điểm',
-              style: TextStyle(fontSize: 12, color: t.ink2),
-            ),
             const SizedBox(height: AppSpacing.md),
 
             overviewAsync.when(
@@ -147,17 +142,17 @@ class AdminChartsSection extends ConsumerWidget {
 
 class _ChartCard extends StatelessWidget {
   const _ChartCard({
-    required this.eyebrow,
+    this.eyebrow,
     required this.title,
-    required this.badge,
+    this.badge,
     required this.body,
     required this.footerIcon,
     required this.footerText,
   });
 
-  final String eyebrow;
+  final String? eyebrow;
   final String title;
-  final Widget badge;
+  final Widget? badge;
   final Widget body;
   final IconData footerIcon;
   final String footerText;
@@ -186,18 +181,20 @@ class _ChartCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          eyebrow,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: t.ink3,
+                        if (eyebrow case final label?) ...[
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: t.ink3,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 1),
+                          const SizedBox(height: 1),
+                        ],
                         Text(
                           title,
                           style: TextStyle(
@@ -211,8 +208,10 @@ class _ChartCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  badge,
+                  if (badge case final value?) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    value,
+                  ],
                 ],
               ),
             ),
@@ -296,9 +295,8 @@ class _GradeDistributionCard extends StatelessWidget {
               '${(goodCount / totalRated * 100).toStringAsFixed(1)}%';
 
     return _ChartCard(
-      eyebrow: 'PHÂN BỐ HỌC LỰC',
+      eyebrow: 'KẾT QUẢ HỌC TẬP',
       title: 'Mức điểm toàn trường',
-      badge: const AppBadge('DB Thực tế', dot: false),
       body: Center(
         child: SingleChildScrollView(
           child: AppHBars(
@@ -329,14 +327,12 @@ class _OcrAccuracyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tokens;
     final hasCells = data.totalCells > 0;
     String pct(int count) =>
         hasCells ? '${((count / data.totalCells) * 100).round()}%' : '$count';
     double ratio(int count) => hasCells ? count / data.totalCells : 0;
 
     return _ChartCard(
-      eyebrow: 'NHẬN DẠNG AI (UC11–UC13)',
       title: 'Đối chiếu 2 kênh Số & Chữ',
       badge: hasCells
           ? AppBadge.ok('${data.accuracyRate}% Khớp')
@@ -345,32 +341,25 @@ class _OcrAccuracyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Máy chỉ đề xuất — Giáo viên so sánh ô cắt cạnh kết quả và bấm Duyệt chính thức.',
-              style: TextStyle(fontSize: 12, color: t.ink2),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AppSpacing.md),
             _OcrRow(
-              badge: const AppBadge.ok('Xanh (Khớp)'),
-              desc: '2 kênh khớp nhau',
+              badge: const AppBadge.ok('Xanh'),
+              desc: 'Hai kênh đọc khớp nhau',
               pct: pct(data.greenCount),
               value: ratio(data.greenCount),
               tone: AppProgressTone.ok,
             ),
             const SizedBox(height: AppSpacing.sm),
             _OcrRow(
-              badge: const AppBadge.warn('Vàng (Lệch)'),
-              desc: 'Giáo viên đã chỉnh sửa',
+              badge: const AppBadge.warn('Vàng'),
+              desc: 'Cần giáo viên kiểm tra',
               pct: pct(data.yellowCount),
               value: ratio(data.yellowCount),
               tone: AppProgressTone.warn,
             ),
             const SizedBox(height: AppSpacing.sm),
             _OcrRow(
-              badge: const AppBadge.bad('Đỏ (Ô trống)'),
-              desc: 'Giáo viên nhập tay lại',
+              badge: const AppBadge.bad('Đỏ'),
+              desc: 'Ô trống, mâu thuẫn hoặc khó đọc',
               pct: pct(data.redCount),
               value: ratio(data.redCount),
               tone: AppProgressTone.bad,
@@ -380,8 +369,8 @@ class _OcrAccuracyCard extends StatelessWidget {
       ),
       footerIcon: Icons.verified_outlined,
       footerText: hasCells
-          ? 'Đã đối chiếu ${data.totalCells} ô điểm · Độ chính xác 2 kênh: ${data.accuracyRate}%'
-          : 'Hệ thống sẵn sàng tiếp nhận ảnh phiếu điểm viết tay',
+          ? 'Đã nhận dạng ${data.totalCells} dòng điểm · ${data.accuracyRate}% mức Xanh'
+          : 'Chưa có dòng điểm nào được nhận dạng',
     );
   }
 }
@@ -506,13 +495,12 @@ class _RecentGradebookActivityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tokens;
     return _ChartCard(
-      eyebrow: 'NHẬT KÝ HỌC VỤ',
-      title: 'Hoạt động nộp điểm gần đây',
-      badge: const AppBadge('DB Thực tế', dot: false),
+      eyebrow: 'BẢNG ĐIỂM',
+      title: 'Bảng điểm mới tạo',
       body: activities.isEmpty
           ? Center(
               child: Text(
-                'Chưa có hoạt động cập nhật bảng điểm nào',
+                'Chưa có bảng điểm nào',
                 style: TextStyle(fontSize: 12, color: t.ink2),
                 textAlign: TextAlign.center,
               ),
@@ -607,7 +595,7 @@ class _AdminChartsLoadingSkeleton extends StatelessWidget {
             const CircularProgressIndicator(strokeWidth: 2.5),
             const SizedBox(height: AppSpacing.md),
             Text(
-              'Đang tải số liệu thống kê từ cơ sở dữ liệu...',
+              'Đang tải số liệu thống kê...',
               style: TextStyle(fontSize: 12, color: t.ink2),
             ),
           ],

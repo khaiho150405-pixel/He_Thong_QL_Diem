@@ -592,7 +592,7 @@ class _SemesterDeadlineEditDialogState
             const SizedBox(height: 8),
           ],
           const Text(
-            'Giờ hiển thị theo thiết bị hiện tại. Đến hạn, điểm thiếu/chưa duyệt được ghi 0 và không thể mở lại cột đã khóa.',
+            'Giờ hiển thị theo thiết bị hiện tại. Đến hạn cột tự khóa; ô còn thiếu ở cột bắt buộc ghi 0, trừ học sinh vào lớp sau.',
           ),
           const SizedBox(height: 16),
           OutlinedButton.icon(

@@ -1157,10 +1157,9 @@ class _EditDialogState extends ConsumerState<EditDialog> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Text(
-                        'Hệ số này thay thế hệ số mặc định của thành phần '
-                        'trong học kỳ đã chọn. Nhập từ 0.01 đến 9.99 '
-                        '(ví dụ 2.00). Khi môn học đã có bảng điểm khóa '
-                        'trong học kỳ, hệ số không thể sửa hoặc xóa.',
+                        'Hệ số dùng chung cho mọi môn trong học kỳ đã chọn. '
+                        'Nhập từ 0.01 đến 9.99 (ví dụ 2.00). Khi học kỳ đã '
+                        'có cột điểm khóa thì không sửa hoặc xóa được.',
                         style: TextStyle(color: t.ink2),
                       ),
                     ),

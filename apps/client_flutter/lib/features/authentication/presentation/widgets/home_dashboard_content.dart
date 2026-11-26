@@ -137,21 +137,11 @@ class HomeDashboardContent extends ConsumerWidget {
     final shortName = ref.watch(schoolProfileProvider).valueOrNull?.shortName;
     String eyebrow(String tail) =>
         [?term?.toUpperCase(), ?shortName?.toUpperCase(), tail].join(' · ');
-    String roleEyebrow;
-    String roleDesc;
-    if (role == 'QUAN_TRI_VIEN') {
-      roleEyebrow = eyebrow('BẢNG ĐIỀU HÀNH THỐNG KÊ');
-      roleDesc =
-          'Giám sát số liệu thống kê toàn trường, phân tích phổ điểm, quản lý danh mục và chính sách xếp loại.';
-    } else if (role == 'GIAO_VIEN') {
-      roleEyebrow = eyebrow('BỘ MÔN GIẢNG DẠY');
-      roleDesc =
-          'Quản lý bảng điểm lớp phân công, upload ảnh nhận diện 2 kênh (Số/Chữ), so sánh đối chiếu ô cắt và duyệt điểm chính thức.';
-    } else {
-      roleEyebrow = eyebrow('SỔ LIÊN LẠC ĐIỆN TỬ');
-      roleDesc =
-          'Tra cứu điểm thành phần, điểm tổng kết và xếp loại học lực của chính mình.';
-    }
+    final roleEyebrow = eyebrow(switch (role) {
+      'QUAN_TRI_VIEN' => 'BẢNG ĐIỀU HÀNH THỐNG KÊ',
+      'GIAO_VIEN' => 'BỘ MÔN GIẢNG DẠY',
+      _ => 'SỔ LIÊN LẠC ĐIỆN TỬ',
+    });
 
     final narrow = MediaQuery.sizeOf(context).width < 480;
 
@@ -213,11 +203,6 @@ class HomeDashboardContent extends ConsumerWidget {
                     ),
                     if (!narrow) RoleBadge(role: role),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  roleDesc,
-                  style: TextStyle(fontSize: 13, color: t.ink2, height: 1.4),
                 ),
               ],
             ),

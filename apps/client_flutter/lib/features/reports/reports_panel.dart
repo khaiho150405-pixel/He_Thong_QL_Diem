@@ -222,10 +222,6 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
                         color: t.ink,
                       ),
                     ),
-                    Text(
-                      'Dữ liệu tổng hợp từ các điểm chính thức đã duyệt',
-                      style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
-                    ),
                   ],
                 ),
               ),

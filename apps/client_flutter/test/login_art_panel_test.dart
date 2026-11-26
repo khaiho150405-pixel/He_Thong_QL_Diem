@@ -75,7 +75,7 @@ void main() {
       );
       expect(find.byType(Positioned), findsWidgets);
       final panel = tester.getRect(find.byType(LoginArtPanel));
-      for (final key in ['Đã số hóa', 'Kiểm tra lại', 'AI OCR']) {
+      for (final key in ['Đã số hóa', 'Kiểm tra lại', 'OCR']) {
         final r = tester.getRect(find.text(key));
         expect(panel.contains(r.topLeft), isTrue, reason: key);
         expect(panel.contains(r.bottomRight), isTrue, reason: key);

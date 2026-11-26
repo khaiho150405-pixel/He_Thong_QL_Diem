@@ -562,7 +562,7 @@ class _ScanConnector extends StatelessWidget {
       child: Icon(Icons.auto_awesome_rounded, size: 18, color: t.acc),
     );
     final label = Text(
-      'AI OCR',
+      'OCR',
       maxLines: 1,
       style: TextStyle(
         fontSize: 10.5,

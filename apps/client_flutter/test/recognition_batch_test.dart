@@ -370,7 +370,7 @@ void main() {
           ]);
         await _pumpPanel(tester, repo);
 
-        expect(find.text('Không dùng mẫu (mẫu E0330113 cũ)'), findsOneWidget);
+        expect(find.text('Không dùng mẫu'), findsOneWidget);
         expect(find.byKey(const ValueKey('recognition-pick')), findsOneWidget);
         expect(find.byKey(const ValueKey('batch-section')), findsNothing);
 
@@ -698,7 +698,7 @@ void main() {
         find.byKey(const ValueKey('recognition-template-select-5')),
       );
       await _settle(tester);
-      await tester.tap(find.text('Không dùng mẫu (mẫu E0330113 cũ)').last);
+      await tester.tap(find.text('Không dùng mẫu').last);
       await _settle(tester);
       expect(find.byKey(const ValueKey('batch-section')), findsNothing);
       expect(find.byKey(const ValueKey('recognition-pick')), findsOneWidget);

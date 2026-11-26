@@ -2,6 +2,11 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Bỏ mô tả không phù hợp trên giao diện (2026-11-27)
+
+- Theo yêu cầu chủ dự án: bỏ mô tả dưới lời chào và dưới tiêu đề biểu đồ ở tổng quan, bỏ mã UC, nhãn "DB Thực tế", các câu "Máy chỉ đề xuất"; sửa chữ nói sai hành vi (phiếu hủy không bị xóa ảnh, ý nghĩa Xanh/Vàng/Đỏ, tỷ lệ Xanh không phải độ chính xác, danh sách bảng mới tạo, quy tắc hết hạn, hệ số học kỳ, mã mẫu nội bộ E0330113).
+- `flutter test` 759/759, `flutter analyze` sạch, đã xem trang đăng nhập và tổng quan trên bản web build cục bộ. APK trong `Khoi_Dong_Nhan_Dang` đã build lại gồm thay đổi này (0.1.0+4, cùng khóa ký).
+
 ## Kiểm tra deploy trước bảo vệ và sửa lỗi tìm được (2026-11-26)
 
 - Đã kiểm trên bản sao `quan_ly_diem_dev`: 7 migration áp sạch, số liệu không đổi; API, worker, nhận dạng (ảnh giả lập 10/10), duyệt phiếu, Excel, phân quyền chạy đúng ở cổng không qua tunnel; web production build được.

@@ -260,10 +260,6 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                   color: t.ink,
                 ),
               ),
-              Text(
-                'Hiển thị dưới bảng điểm · UC14–UC15',
-                style: theme.textTheme.bodySmall?.copyWith(color: t.ink3),
-              ),
             ],
           ),
         ),
@@ -1059,7 +1055,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
             ),
           if (!widget.showResults)
             Text(
-              'Điểm tổng kết và xếp loại được hiển thị trực tiếp trong từng hàng của bảng điểm.',
+              'Điểm tổng kết được hiển thị trong từng hàng của bảng điểm.',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: t.ink2),

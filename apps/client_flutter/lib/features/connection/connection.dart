@@ -79,7 +79,7 @@ class ConnectionScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                     Text(
-                      'Kết nối máy chủ API',
+                      'Kết nối máy chủ',
                       style: theme.textTheme.headlineSmall,
                     ),
                     const SizedBox(height: AppSpacing.sm),

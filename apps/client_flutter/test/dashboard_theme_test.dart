@@ -329,7 +329,7 @@ void main() {
           'Mức điểm toàn trường',
           'Đối chiếu 2 kênh Số & Chữ',
           'Tỷ lệ khóa bảng điểm của giáo viên',
-          'Hoạt động nộp điểm gần đây',
+          'Bảng điểm mới tạo',
         ]) {
           expect(find.text(title), findsOneWidget);
         }
@@ -363,9 +363,9 @@ void main() {
         ]);
         expect(progress[0].valueText, '9 / 11 lớp (81%)');
 
-        expect(find.text('Xanh (Khớp)'), findsOneWidget);
-        expect(find.text('Vàng (Lệch)'), findsOneWidget);
-        expect(find.text('Đỏ (Ô trống)'), findsOneWidget);
+        expect(find.text('Xanh'), findsOneWidget);
+        expect(find.text('Vàng'), findsOneWidget);
+        expect(find.text('Đỏ'), findsOneWidget);
         expect(find.text('75%'), findsOneWidget);
         expect(find.text('75% Khớp'), findsOneWidget);
         expect(find.byType(AppProgress), findsNWidgets(3));
