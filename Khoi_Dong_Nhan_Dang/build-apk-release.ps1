@@ -35,11 +35,15 @@ try {
   $lastRoot = if (Test-Path $pathMark) { (Get-Content $pathMark -Raw).Trim() } else { $null }
   if ((Test-Path $buildDir) -and $lastRoot -ne $client) {
     Warn 'Phát hiện thư mục dự án đã đổi đường dẫn, xóa cache build cũ...'
-    Remove-Item $buildDir -Recurse -Force
+    cmd.exe /c rd /s /q "\\?\$buildDir"
+    if (Test-Path $buildDir) { throw "Không xóa được $buildDir. Đóng Android Studio và các cửa sổ build rồi chạy lại." }
     $flutterBuild = Join-Path $client '.dart_tool\flutter_build'
     if (Test-Path $flutterBuild) { Remove-Item $flutterBuild -Recurse -Force }
   }
 
+  $socketDir = Join-Path $env:PUBLIC 'jsock'
+  New-Item -ItemType Directory -Force $socketDir | Out-Null
+  $env:JAVA_TOOL_OPTIONS = ("$env:JAVA_TOOL_OPTIONS -Djdk.net.unixdomain.tmpdir=$socketDir").Trim()
   Warn 'Đang build APK release (vài phút)...'
   Get-ChildItem (Join-Path $client 'build\app\intermediates\flutter') -Recurse -Filter 'flutter_build.d' -ErrorAction SilentlyContinue | Remove-Item -Force
   Push-Location $client

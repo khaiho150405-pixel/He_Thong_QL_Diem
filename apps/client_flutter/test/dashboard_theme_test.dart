@@ -175,6 +175,7 @@ Future<void> _pump(
   required double width,
   required Brightness brightness,
   bool studentUnpublished = false,
+  AdminOverviewData data = _adminData,
 }) async {
   tester.view.physicalSize = Size(width, 3000);
   tester.view.devicePixelRatio = 1;
@@ -191,7 +192,7 @@ Future<void> _pump(
               ),
           ),
         ),
-        reportsRepositoryProvider.overrideWithValue(_FakeReports(_adminData)),
+        reportsRepositoryProvider.overrideWithValue(_FakeReports(data)),
         teacherOverviewProvider.overrideWith(
           (ref) async => const TeacherOverviewData(
             totalGradebooks: 5,
@@ -226,7 +227,54 @@ const _longTitle = 'B rất dài để xuống dòng thứ hai trong thẻ';
 Finder _statCard(String title) =>
     find.ancestor(of: find.text(title), matching: find.byType(StatCard)).first;
 
+AdminOverviewData _withLevels(Map<String, int> counts) => AdminOverviewData(
+  kpi: _adminData.kpi,
+  gradeDistribution: [
+    for (final entry in counts.entries)
+      AdminGradeDistributionItem(
+        code: entry.key,
+        label: entry.key,
+        count: entry.value,
+        percentage: 0,
+        color: '#173F43',
+      ),
+  ],
+  gradeLevelProgress: _adminData.gradeLevelProgress,
+  ocrAccuracy: _adminData.ocrAccuracy,
+  recentActivities: _adminData.recentActivities,
+);
+
 void main() {
+  testWidgets('tổng quan: chưa ai được xếp mức thì không báo tỷ lệ', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      role: 'QUAN_TRI_VIEN',
+      width: 1280,
+      brightness: Brightness.light,
+      data: _withLevels({'TOT': 0, 'KHA': 0, 'DAT': 0, 'CHUA_DAT': 0}),
+    );
+    expect(find.text('Chưa có học sinh được xếp mức học kỳ'), findsOneWidget);
+    expect(find.textContaining('100.0%'), findsNothing);
+    await _unmount(tester);
+  });
+
+  testWidgets('tổng quan: tỷ lệ Tốt và Khá tính cả mức Tốt', (tester) async {
+    await _pump(
+      tester,
+      role: 'QUAN_TRI_VIEN',
+      width: 1280,
+      brightness: Brightness.light,
+      data: _withLevels({'TOT': 3, 'KHA': 1, 'DAT': 4, 'CHUA_DAT': 0}),
+    );
+    expect(
+      find.text('Đã xếp mức 8 lượt học kỳ · Tỷ lệ Tốt & Khá: 50.0%'),
+      findsOneWidget,
+    );
+    await _unmount(tester);
+  });
+
   for (final brightness in Brightness.values) {
     final tokens = brightness == Brightness.dark
         ? AppTokens.dark
@@ -303,6 +351,10 @@ void main() {
         expect(grade[3].color, tokens.bad);
         expect(grade[1].color, isNot(tokens.pri));
         expect(grade[0].valueText, '400 học sinh · 40%');
+        expect(
+          find.text('Đã xếp mức 1000 lượt học kỳ · Tỷ lệ Tốt & Khá: 75.0%'),
+          findsOneWidget,
+        );
         final progress = bars.last.items;
         expect(progress.map((i) => i.color), [
           tokens.ok,

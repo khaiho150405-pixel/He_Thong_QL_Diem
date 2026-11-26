@@ -80,6 +80,9 @@ try {
       [System.IO.File]::WriteAllText($configFile, '{"APP_ENV":"development","API_BASE_URL":"http://localhost:3000"}' + "`n",
         (New-Object System.Text.UTF8Encoding($false)))
     }
+    $socketDir = Join-Path $env:PUBLIC 'jsock'
+    New-Item -ItemType Directory -Force $socketDir | Out-Null
+    $env:JAVA_TOOL_OPTIONS = ("$env:JAVA_TOOL_OPTIONS -Djdk.net.unixdomain.tmpdir=$socketDir").Trim()
     Warn 'Đang build APK (lần đầu 5–15 phút; sau đó 1–3 phút). Nếu đứng yên quá 20 phút: Ctrl+C, đóng bớt chương trình rồi bấm lại.'
     Get-ChildItem (Join-Path $client 'build\app\intermediates\flutter') -Recurse -Filter 'flutter_build.d' -ErrorAction SilentlyContinue | Remove-Item -Force
     Push-Location $client

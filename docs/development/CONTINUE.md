@@ -2,6 +2,13 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Kiểm tra deploy trước bảo vệ và sửa lỗi tìm được (2026-11-26)
+
+- Đã kiểm trên bản sao `quan_ly_diem_dev`: 7 migration áp sạch, số liệu không đổi; API, worker, nhận dạng (ảnh giả lập 10/10), duyệt phiếu, Excel, phân quyền chạy đúng ở cổng không qua tunnel; web production build được.
+- Sửa: dòng tỷ lệ ở tổng quan quản trị tính cả mức Tốt và không báo 100% khi chưa ai được xếp mức; build APK đặt `jdk.net.unixdomain.tmpdir` vào `%PUBLIC%\jsock` (lỗi `Unable to establish loopback connection`) ở `up.ps1` và hai script trong `Khoi_Dong_Nhan_Dang` (bản cũ của hai script và APK ngày 20/11 ở `.local/backups/khoi-dong-20261126`); phiên bản app `0.1.0+3`; script build release xóa thư mục build cũ qua đường dẫn `\\?\` vì đường dẫn quá dài. `flutter test` 759/759; APK release mới build bằng script đã sửa (versionCode 3, cùng khóa ký với bản cũ).
+- Database thử cũ đổi tên thành `qld_phase7_old_test`; `qld_phase7_test` tạo mới (seed, sample, lớp 10A10). Bản thử dùng Redis database 1 để mã công việc không trùng với bản deploy. Chạy `pnpm test:integration` trên `qld_phase7_test` sẽ làm bẩn lại database này.
+- Chủ máy còn phải làm trước deploy: khóa MinIO riêng trong `.env`, đổi mật khẩu 15 tài khoản còn mật khẩu thử. Chưa chạy `Khoi-Dong-Deploy.bat` đầu cuối, chưa kiểm qua Cloudflare và trên điện thoại.
+
 ## Bản chốt cuối năm và thống kê năm học, đợt 2 (2026-11-26)
 
 - ADR-0023, migration `202611300001_year_snapshot`: ba bảng `ban_chot_*`, bản chốt lập khi đóng năm, `xep_muc_hoc_tap` đọc mức đã chốt, `xoa_hoc_sinh` ẩn cả bản chốt, hàm `thong_ke_nam_hoc`/`so_sanh_nam_hoc`.

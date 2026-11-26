@@ -43,6 +43,7 @@ function Set-PilotEnvironment {
     $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$m@127.0.0.1:5433/$testDatabase"
     $env:TEST_MIGRATION_URL = $env:MIGRATION_DATABASE_URL
     $env:TEST_RUNTIME_URL = $env:DATABASE_URL
+    $env:REDIS_URL = 'redis://localhost:6379/1'
   }
   $env:RECOGNITION_SERVICE_URL = 'http://127.0.0.1:8000'
   $env:RECOGNITION_MODEL_MODE = 'weights'

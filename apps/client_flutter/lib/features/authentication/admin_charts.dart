@@ -83,7 +83,6 @@ class AdminChartsSection extends ConsumerWidget {
               data: (data) {
                 final distribution = _GradeDistributionCard(
                   items: data.gradeDistribution,
-                  totalStudents: data.kpi.totalStudents,
                 );
                 final ocr = _OcrAccuracyCard(data: data.ocrAccuracy);
                 final progress = _GradeLevelProgressCard(
@@ -262,16 +261,13 @@ class _ChartCard extends StatelessWidget {
 }
 
 class _GradeDistributionCard extends StatelessWidget {
-  const _GradeDistributionCard({
-    required this.items,
-    required this.totalStudents,
-  });
+  const _GradeDistributionCard({required this.items});
 
   final List<AdminGradeDistributionItem> items;
-  final int totalStudents;
 
   static Color colorOf(AppTokens t, String code) {
     switch (code) {
+      case 'TOT':
       case 'GIOI':
         return t.pri;
       case 'KHA':
@@ -292,11 +288,12 @@ class _GradeDistributionCard extends StatelessWidget {
     final t = context.tokens;
     final totalRated = items.fold<int>(0, (sum, item) => sum + item.count);
     final goodCount = items
-        .where((i) => i.code == 'GIOI' || i.code == 'KHA')
+        .where((i) => const {'TOT', 'GIOI', 'KHA'}.contains(i.code))
         .fold<int>(0, (sum, i) => sum + i.count);
-    final passRate = totalRated > 0
-        ? ((goodCount / totalRated) * 100).toStringAsFixed(1)
-        : '100.0';
+    final footer = totalRated == 0
+        ? 'Chưa có học sinh được xếp mức học kỳ'
+        : 'Đã xếp mức $totalRated lượt học kỳ · Tỷ lệ Tốt & Khá: '
+              '${(goodCount / totalRated * 100).toStringAsFixed(1)}%';
 
     return _ChartCard(
       eyebrow: 'PHÂN BỐ HỌC LỰC',
@@ -320,8 +317,7 @@ class _GradeDistributionCard extends StatelessWidget {
         ),
       ),
       footerIcon: Icons.check_circle_rounded,
-      footerText:
-          'Đã tổng kết $totalRated / $totalStudents học sinh · Tỷ lệ Giỏi & Khá: $passRate%',
+      footerText: footer,
     );
   }
 }
