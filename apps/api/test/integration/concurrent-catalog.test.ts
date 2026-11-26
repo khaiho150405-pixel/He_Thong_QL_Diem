@@ -158,9 +158,10 @@ test("the session is touched only when last activity is older than 60 seconds; i
     await setAge(120);
     assert.equal(await status(), 200);
     assert.ok((await ageSeconds()) < 10);
-    await setAge(31 * 60);
+    const eightDays = 8 * 24 * 3600;
+    await setAge(eightDays);
     assert.equal(await status(), 401);
-    assert.ok((await ageSeconds()) >= 31 * 60 - 5);
+    assert.ok((await ageSeconds()) >= eightDays - 5);
     await owner.query(
       "UPDATE phien_lam_viec SET hoat_dong_cuoi=now(), het_han=now()-interval '1 second' WHERE ma_bam=$1",
       [hash],

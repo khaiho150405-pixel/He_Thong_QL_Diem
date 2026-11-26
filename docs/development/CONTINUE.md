@@ -2,6 +2,12 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Tăng thời hạn phiên: web 3 ngày, app 7 ngày (2026-11-27)
+
+- ADR-0024: `session-policy.ts`, cookie 3 ngày, mã ghi nhớ giữ 30 ngày; migration `202612010001_session_lifetime` đổi mốc không hoạt động của 29 hàm SQL từ 30 phút sang 7 ngày.
+- `pnpm check` 216/216, `test:db` 48/48 (database dựng từ rỗng), `test:integration` 58/58, `flutter test` 759/759; migration áp sạch trên bản sao database deploy. APK không cần build lại (đổi phía máy chủ và web).
+- Chưa áp lên database deploy (lần deploy tới tự sao lưu rồi áp).
+
 ## Cho giữ mật khẩu thử của giáo viên, học sinh khi deploy (2026-11-27)
 
 - Chủ dự án chọn: giữ mật khẩu thử của giáo viên và học sinh, bắt buộc đổi mật khẩu quản trị viên.

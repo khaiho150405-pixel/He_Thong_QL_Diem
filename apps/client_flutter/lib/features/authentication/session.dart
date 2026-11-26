@@ -155,7 +155,7 @@ class SessionController extends StateNotifier<SessionDto?> {
     if (!kIsWeb) return;
     if (state != null) {
       expiry?.cancel();
-      expiry = Timer(const Duration(minutes: 30), clear);
+      expiry = Timer(const Duration(days: 3), clear);
     }
   }
 

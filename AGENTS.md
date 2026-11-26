@@ -305,7 +305,7 @@ Khi giáo viên chọn một **mẫu bảng điểm** do QTV khai báo (ADR-0016
 - API trả lỗi theo một envelope ổn định gồm `code`, `message`, `details`, `requestId`.
 - Dùng pagination cursor cho danh sách lớn; filter/sort phải được allowlist.
 - Endpoint ghi quan trọng nhận idempotency key; upload và duyệt phải chống gửi lặp.
-- Dùng access token ngắn hạn và refresh token rotation hoặc session bảo mật tương đương. Tạo `SessionStore` theo nền tảng: Android/iOS lưu secret trong Keychain/Keystore; Flutter Web ưu tiên cookie `HttpOnly`, `Secure`, `SameSite` do backend quản lý và có bảo vệ CSRF phù hợp. Không lưu refresh token trong `localStorage`.
+- Dùng access token ngắn hạn và refresh token rotation hoặc session bảo mật tương đương. Tạo `SessionStore` theo nền tảng: Android/iOS lưu secret trong Keychain/Keystore; Flutter Web ưu tiên cookie `HttpOnly`, `Secure`, `SameSite` do backend quản lý và có bảo vệ CSRF phù hợp. Không lưu refresh token trong `localStorage`. Thời hạn hiện hành do chủ dự án chốt (ADR-0024): phiên web 3 ngày, phiên app 7 ngày.
 - Mật khẩu băm bằng Argon2id với tham số được cấu hình; không log mật khẩu, token, ảnh hay dữ liệu điểm đầy đủ.
 - Kiểm MIME bằng nội dung thật, giới hạn kích thước/độ phân giải, chống path traversal và tên tệp độc hại.
 - Signed URL có thời hạn ngắn; object storage private mặc định.

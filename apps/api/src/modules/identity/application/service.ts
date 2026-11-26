@@ -24,6 +24,11 @@ import {
   type Role,
 } from "../../authorization/application/policy.js";
 import { pageSize } from "../../../common/query.js";
+import {
+  NATIVE_SESSION_MS,
+  SESSION_IDLE_MS,
+  WEB_SESSION_MS,
+} from "../../authorization/application/session-policy.js";
 import { audit } from "../../audit/application/write.js";
 
 export const digest = (token: string) =>
@@ -39,7 +44,6 @@ export function accountUsername(username: unknown, role: Role): boolean {
 }
 const ONLY_ADMIN_MESSAGE =
   "Hệ thống chỉ có một tài khoản quản trị viên duy nhất, không thể cấp thêm vai trò này.";
-const idle = 30 * 60 * 1000;
 const rememberLifetime = 30 * 24 * 3600 * 1000;
 const touchInterval = 60 * 1000;
 const publicUser = (u: Row) => ({
@@ -232,7 +236,9 @@ export class IdentityService {
         ma_bam: digest(token),
         ma_nguoi_dung: current.ma_nguoi_dung,
         csrf,
-        het_han: new Date(+now + 8 * 3600000),
+        het_han: new Date(
+          +now + (rememberToken ? NATIVE_SESSION_MS : WEB_SESSION_MS),
+        ),
         hoat_dong_cuoi: now,
       });
       if (rememberToken)
@@ -273,7 +279,7 @@ export class IdentityService {
         ma_bam: digest(token),
         ma_nguoi_dung: user.ma_nguoi_dung,
         csrf,
-        het_han: new Date(+now + 8 * 3600000),
+        het_han: new Date(+now + NATIVE_SESSION_MS),
         hoat_dong_cuoi: now,
       });
       await tx.create("phien_ghi_nho", {
@@ -315,7 +321,7 @@ export class IdentityService {
       if (
         !session ||
         (session.het_han as Date) <= now ||
-        +(session.hoat_dong_cuoi as Date) + idle <= +now
+        +(session.hoat_dong_cuoi as Date) + SESSION_IDLE_MS <= +now
       )
         throw new UnauthorizedException();
       const user = await tx.find("nguoi_dung", {

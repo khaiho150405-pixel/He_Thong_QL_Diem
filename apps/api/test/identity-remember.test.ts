@@ -149,6 +149,22 @@ test("app di động: mã ghi nhớ đổi được phiên mới, dùng một l�
   );
 });
 
+test("phiên web hết hạn sau 3 ngày, phiên app sau 7 ngày", async () => {
+  const { store, service } = await setup();
+  const days = () => {
+    const last = store.rows("phien_lam_viec").at(-1)!;
+    return Math.round(
+      (+(last.het_han as Date) - +(last.hoat_dong_cuoi as Date)) / 86400000,
+    );
+  };
+  await service.login("0900000001", password, "3.3.3.3");
+  assert.equal(days(), 3);
+  const native = await service.login("0900000001", password, "3.3.3.3", true);
+  assert.equal(days(), 7);
+  await service.resume(native.remember!);
+  assert.equal(days(), 7);
+});
+
 test("mã ghi nhớ hết hạn hoặc tài khoản bị khóa thì không đổi được phiên", async () => {
   const { store, service, admin, teacher } = await setup();
   const login = await service.login("0900000001", password, "2.2.2.2", true);

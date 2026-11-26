@@ -541,7 +541,15 @@ test("UC01–08: real PostgreSQL sessions, CSRF, catalog scope, rollback and rev
     );
     assert.equal((await login(phones["other"]!)).status, 200);
     await owner.query(
-      "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '31 minutes' WHERE ma_nguoi_dung=$1",
+      "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '2 days' WHERE ma_nguoi_dung=$1",
+      [student],
+    );
+    assert.equal(
+      (await call("identity/me", "GET", undefined, studentToken)).status,
+      200,
+    );
+    await owner.query(
+      "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '8 days' WHERE ma_nguoi_dung=$1",
       [student],
     );
     assert.equal(

@@ -674,7 +674,7 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       403,
     );
     await owner.query(
-      "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '31 minutes' WHERE ma_bam=$1",
+      "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '8 days' WHERE ma_bam=$1",
       [teacher.sessionHash],
     );
     assert.equal(

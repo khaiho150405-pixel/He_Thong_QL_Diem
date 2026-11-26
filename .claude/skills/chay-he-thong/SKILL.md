@@ -49,6 +49,6 @@ Bản thử và bản deploy dùng chung cổng 3000/8080 nên chỉ chạy mộ
 
 ## Phiên đăng nhập
 
-- Web: cookie `HttpOnly`, phiên 8 giờ / 30 phút không hoạt động.
-- App di động: lưu mã ghi nhớ 30 ngày trong Keychain/Keystore (`flutter_secure_storage`), đổi lấy phiên mới qua `POST /identity/resume`; mã dùng một lần, xóa khi đăng xuất/đổi mật khẩu/sửa tài khoản (bảng `phien_ghi_nho`).
+- Web: cookie `HttpOnly`, phiên 3 ngày, không đăng xuất vì không thao tác (ADR-0024).
+- App di động: phiên 7 ngày; lưu mã ghi nhớ 30 ngày trong Keychain/Keystore (`flutter_secure_storage`), đổi lấy phiên mới qua `POST /identity/resume`; mã dùng một lần, xóa khi đăng xuất/đổi mật khẩu/sửa tài khoản (bảng `phien_ghi_nho`).
 - Hệ thống chỉ có **một** quản trị viên; API từ chối cấp vai `QUAN_TRI_VIEN` cho tài khoản khác.

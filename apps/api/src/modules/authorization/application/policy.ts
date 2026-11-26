@@ -1,5 +1,6 @@
 import { ForbiddenException, UnauthorizedException } from "@nestjs/common";
 import type { Unit } from "../../../common/store.js";
+import { SESSION_IDLE_MS } from "./session-policy.js";
 export const roles = ["QUAN_TRI_VIEN", "GIAO_VIEN", "HOC_SINH"] as const;
 export type Role = (typeof roles)[number];
 export interface Actor {
@@ -20,7 +21,7 @@ export async function currentActor(tx: Unit, actor: Actor) {
     !user?.trang_thai ||
     user.vai_tro !== actor.role ||
     +(session.het_han as Date) <= Date.now() ||
-    +(session.hoat_dong_cuoi as Date) + 1800000 <= Date.now()
+    +(session.hoat_dong_cuoi as Date) + SESSION_IDLE_MS <= Date.now()
   )
     throw new UnauthorizedException();
 }

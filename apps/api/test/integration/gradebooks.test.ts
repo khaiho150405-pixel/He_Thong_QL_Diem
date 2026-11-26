@@ -391,7 +391,7 @@ test("UC09 part 1: PostgreSQL grid, scope, idempotency, pagination, rollback and
     assert.equal(functionSecurity.public_execute, false);
     assert.deepEqual(functionSecurity.proconfig, ["search_path=pg_catalog"]);
     await owner.query(
-      "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '31 minutes' WHERE ma_bam=$1",
+      "UPDATE phien_lam_viec SET hoat_dong_cuoi=now()-interval '8 days' WHERE ma_bam=$1",
       [teacher.sessionHash],
     );
     await assert.rejects(service.create(teacher, scope), UnauthorizedException);

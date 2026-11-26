@@ -32,6 +32,7 @@ import {
   type Role,
 } from "../../authorization/application/policy.js";
 import { IdentityService } from "../application/service.js";
+import { WEB_SESSION_MS } from "../../authorization/application/session-policy.js";
 export interface SessionRequest extends Request {
   actor: Actor;
   csrf: string;
@@ -133,7 +134,7 @@ export class IdentityController {
         secure: isPublicFacing(this.settings),
         sameSite: "strict",
         path: "/api/v1",
-        maxAge: 8 * 3600000,
+        maxAge: WEB_SESSION_MS,
       });
       return { ...session, token: null };
     }
