@@ -22,6 +22,7 @@ import 'fields.dart';
 import 'edit_dialog.dart';
 import 'catalog_import_dialog.dart';
 import 'student_enrollment_dialogs.dart';
+import 'year_closing_dialog.dart';
 
 class CatalogScreen extends ConsumerStatefulWidget {
   const CatalogScreen({super.key, required this.resource});
@@ -517,6 +518,24 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         ).showSnackBar(SnackBar(content: Text(errorMessage(e))));
       }
     }
+  }
+
+  Future<void> _showYearClosing(Json row) async {
+    final changed = await showAppDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => YearClosingDialog(
+        repository: ref.read(catalogRepositoryProvider),
+        yearId: row['ma_nam_hoc'] as num,
+        yearName: row['ten']?.toString() ?? rowLabel(row),
+      ),
+    );
+    if (changed != true || !mounted) return;
+    ref.invalidate(academicYearsProvider);
+    ref.invalidate(currentYearProvider);
+    _references.clear();
+    await _loadReferences();
+    if (mounted) await _softRefresh();
   }
 
   IconData _iconForResource(String key) {
@@ -2192,6 +2211,17 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
             Text('· NS: $dob', style: TextStyle(color: t.ink3, fontSize: 12)),
         ],
       );
+    } else if (spec.key == 'years' && row['da_dong_luc'] != null) {
+      badgeWidget = Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const AppBadge.warn('Đã đóng'),
+          if (_plainSubtitle(row) case final range?)
+            Text(range, style: TextStyle(color: t.ink3, fontSize: 12)),
+        ],
+      );
     } else if (spec.key == 'semester-weights') {
       badgeWidget = Text(
         'Hệ số: ${row['he_so']}',
@@ -2311,7 +2341,24 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 },
               ),
             if (admin && spec.key == 'students') _buildStudentMenu(t, row),
-            if (admin && !['accounts', 'students'].contains(spec.key))
+            if (admin && spec.key == 'years')
+              IconButton(
+                key: ValueKey('year-closing-${row['ma_nam_hoc']}'),
+                tooltip: row['da_dong_luc'] == null
+                    ? 'Đóng năm học'
+                    : 'Mở lại năm học',
+                icon: Icon(
+                  row['da_dong_luc'] == null
+                      ? Icons.lock_outline
+                      : Icons.lock_open_outlined,
+                  size: 20,
+                  color: t.priLink,
+                ),
+                onPressed: () => _showYearClosing(row),
+              ),
+            if (admin &&
+                !['accounts', 'students'].contains(spec.key) &&
+                !(spec.key == 'years' && row['da_dong_luc'] != null))
               IconButton(
                 tooltip: 'Xóa',
                 icon: Icon(Icons.delete_outline, size: 20, color: t.bad),

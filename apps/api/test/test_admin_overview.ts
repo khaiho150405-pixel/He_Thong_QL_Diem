@@ -13,7 +13,7 @@ const prisma = new PrismaClient({ adapter: pool });
 const store = new PrismaReportStore(prisma);
 
 async function run() {
-  const res = await store.run((tx) => tx.adminOverview());
+  const res = await store.run((tx) => tx.adminOverview(null));
   console.log("adminOverview result:", JSON.stringify(res, null, 2));
   await prisma.$disconnect();
 }

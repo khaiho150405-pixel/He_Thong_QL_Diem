@@ -226,6 +226,19 @@ class HomeDashboardContent extends ConsumerWidget {
 
         const SizedBox(height: AppSpacing.md),
 
+        if (role == 'QUAN_TRI_VIEN') ...[
+          Align(
+            key: const ValueKey('admin-overview-year'),
+            alignment: Alignment.centerLeft,
+            child: AcademicYearFilterControl(
+              label: 'Thống kê theo năm',
+              years: ref.watch(academicYearsProvider).valueOrNull ?? const [],
+              onChanged: () {},
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+
         if (role == 'QUAN_TRI_VIEN')
           Builder(
             builder: (context) {

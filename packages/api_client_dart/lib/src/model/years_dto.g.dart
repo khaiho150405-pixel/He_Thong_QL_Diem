@@ -19,6 +19,8 @@ abstract class _$YearsDtoCWProxy {
 
   YearsDto maNamHoc(num maNamHoc);
 
+  YearsDto daDongLuc(String? daDongLuc);
+
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `YearsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -32,6 +34,7 @@ abstract class _$YearsDtoCWProxy {
     bool hienHanh,
     String label,
     num maNamHoc,
+    String? daDongLuc,
   });
 }
 
@@ -60,6 +63,9 @@ class _$YearsDtoCWProxyImpl implements _$YearsDtoCWProxy {
   YearsDto maNamHoc(num maNamHoc) => this(maNamHoc: maNamHoc);
 
   @override
+  YearsDto daDongLuc(String? daDongLuc) => this(daDongLuc: daDongLuc);
+
+  @override
   /// This function **does support** nullification of nullable fields. All `null` values passed to `non-nullable` fields will be ignored. You can also use `YearsDto(...).copyWith.fieldName(...)` to override fields one at a time with nullification support.
   ///
   /// Usage
@@ -73,6 +79,7 @@ class _$YearsDtoCWProxyImpl implements _$YearsDtoCWProxy {
     Object? hienHanh = const $CopyWithPlaceholder(),
     Object? label = const $CopyWithPlaceholder(),
     Object? maNamHoc = const $CopyWithPlaceholder(),
+    Object? daDongLuc = const $CopyWithPlaceholder(),
   }) {
     return YearsDto(
       ten: ten == const $CopyWithPlaceholder()
@@ -99,6 +106,10 @@ class _$YearsDtoCWProxyImpl implements _$YearsDtoCWProxy {
           ? _value.maNamHoc
           // ignore: cast_nullable_to_non_nullable
           : maNamHoc as num,
+      daDongLuc: daDongLuc == const $CopyWithPlaceholder()
+          ? _value.daDongLuc
+          // ignore: cast_nullable_to_non_nullable
+          : daDongLuc as String?,
     );
   }
 }
@@ -135,6 +146,7 @@ YearsDto _$YearsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
       hienHanh: $checkedConvert('hien_hanh', (v) => v as bool),
       label: $checkedConvert('label', (v) => v as String),
       maNamHoc: $checkedConvert('ma_nam_hoc', (v) => v as num),
+      daDongLuc: $checkedConvert('da_dong_luc', (v) => v as String?),
     );
     return val;
   },
@@ -143,6 +155,7 @@ YearsDto _$YearsDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
     'ngayKetThuc': 'ngay_ket_thuc',
     'hienHanh': 'hien_hanh',
     'maNamHoc': 'ma_nam_hoc',
+    'daDongLuc': 'da_dong_luc',
   },
 );
 
@@ -153,4 +166,5 @@ Map<String, dynamic> _$YearsDtoToJson(YearsDto instance) => <String, dynamic>{
   'hien_hanh': instance.hienHanh,
   'label': instance.label,
   'ma_nam_hoc': instance.maNamHoc,
+  'da_dong_luc': ?instance.daDongLuc,
 };

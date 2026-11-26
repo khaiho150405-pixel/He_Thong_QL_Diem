@@ -4,6 +4,7 @@ import {
   Inject,
   Param,
   ParseIntPipe,
+  Query,
   Req,
   StreamableFile,
 } from "@nestjs/common";
@@ -12,9 +13,11 @@ import {
   ApiParam,
   ApiProduces,
   ApiProperty,
+  ApiQuery,
   ApiTags,
 } from "@nestjs/swagger";
 import type { Request } from "express";
+import { allowQuery } from "../../../common/query.js";
 import type { Actor } from "../../authorization/application/policy.js";
 import { ReportsService } from "../application/service.js";
 
@@ -134,8 +137,18 @@ export class AdminReportsController {
   ) {}
 
   @Get("overview")
+  @ApiQuery({
+    name: "yearId",
+    required: false,
+    type: Number,
+    description: "Chỉ thống kê một năm học; vắng = mọi năm",
+  })
   @ApiOkResponse({ type: AdminOverviewDto })
-  overview(@Req() req: Request & { actor: Actor }) {
-    return this.service.adminOverview(req.actor);
+  overview(
+    @Req() req: Request & { actor: Actor },
+    @Query("yearId") yearId?: string,
+  ) {
+    allowQuery(req.query, ["yearId"]);
+    return this.service.adminOverview(req.actor, yearId);
   }
 }

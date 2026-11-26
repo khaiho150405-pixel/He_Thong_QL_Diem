@@ -14,5 +14,6 @@ Name | Type | Description | Notes
 **hienHanh** | **bool** |  |
 **label** | **String** |  |
 **maNamHoc** | **num** |  |
+**daDongLuc** | **String** | Thời điểm đóng năm học; null khi năm còn mở | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

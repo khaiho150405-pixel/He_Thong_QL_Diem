@@ -29,6 +29,8 @@ class YearsDto {
     required this.label,
 
     required this.maNamHoc,
+
+    this.daDongLuc,
   });
 
   @JsonKey(name: r'ten', required: true, includeIfNull: false)
@@ -49,6 +51,10 @@ class YearsDto {
   @JsonKey(name: r'ma_nam_hoc', required: true, includeIfNull: false)
   final num maNamHoc;
 
+  /// Thời điểm đóng năm học; null khi năm còn mở
+  @JsonKey(name: r'da_dong_luc', required: false, includeIfNull: false)
+  final String? daDongLuc;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -58,7 +64,8 @@ class YearsDto {
           other.ngayKetThuc == ngayKetThuc &&
           other.hienHanh == hienHanh &&
           other.label == label &&
-          other.maNamHoc == maNamHoc;
+          other.maNamHoc == maNamHoc &&
+          other.daDongLuc == daDongLuc;
 
   @override
   int get hashCode =>
@@ -67,7 +74,8 @@ class YearsDto {
       ngayKetThuc.hashCode +
       hienHanh.hashCode +
       label.hashCode +
-      maNamHoc.hashCode;
+      maNamHoc.hashCode +
+      (daDongLuc == null ? 0 : daDongLuc.hashCode);
 
   factory YearsDto.fromJson(Map<String, dynamic> json) =>
       _$YearsDtoFromJson(json);

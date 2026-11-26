@@ -173,6 +173,22 @@ class CatalogRepository {
     return result.data!;
   }
 
+  Future<YearClosingDto> yearClosing(num id) async =>
+      (await api.getYearsApi().yearsClosing(id: id)).data!;
+
+  Future<void> changeYearClosing(
+    num id, {
+    required bool close,
+    required String reason,
+  }) async {
+    final input = YearClosingInput(reason: reason);
+    if (close) {
+      await api.getYearsApi().yearsClose(id: id, yearClosingInput: input);
+    } else {
+      await api.getYearsApi().yearsReopen(id: id, yearClosingInput: input);
+    }
+  }
+
   Future<void> save(String resource, Json input, {num? id}) async {
     switch (resource) {
       case 'years':

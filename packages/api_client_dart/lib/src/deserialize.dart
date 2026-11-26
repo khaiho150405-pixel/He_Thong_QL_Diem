@@ -147,6 +147,10 @@ import 'package:api_client_dart/src/model/update_school_profile_input.dart';
 import 'package:api_client_dart/src/model/updated_cell_dto.dart';
 import 'package:api_client_dart/src/model/versioned_definition_input.dart';
 import 'package:api_client_dart/src/model/withdraw_input.dart';
+import 'package:api_client_dart/src/model/year_closing_dto.dart';
+import 'package:api_client_dart/src/model/year_closing_event_dto.dart';
+import 'package:api_client_dart/src/model/year_closing_input.dart';
+import 'package:api_client_dart/src/model/year_closing_issue_dto.dart';
 import 'package:api_client_dart/src/model/year_pending_summary_dto.dart';
 import 'package:api_client_dart/src/model/years_dto.dart';
 import 'package:api_client_dart/src/model/years_input.dart';
@@ -598,6 +602,18 @@ ReturnType deserialize<ReturnType, BaseType>(
           as ReturnType;
     case 'WithdrawInput':
       return WithdrawInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'YearClosingDto':
+      return YearClosingDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'YearClosingEventDto':
+      return YearClosingEventDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'YearClosingInput':
+      return YearClosingInput.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'YearClosingIssueDto':
+      return YearClosingIssueDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'YearPendingSummaryDto':
       return YearPendingSummaryDto.fromJson(value as Map<String, dynamic>)

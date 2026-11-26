@@ -145,12 +145,14 @@ class AcademicYearFilterControl extends ConsumerWidget {
     required this.onChanged,
     this.width,
     this.allowAll = true,
+    this.label = 'Năm học',
   });
 
   final List<Json> years;
   final VoidCallback onChanged;
   final double? width;
   final bool allowAll;
+  final String label;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,11 +174,14 @@ class AcademicYearFilterControl extends ConsumerWidget {
 
     final isArchive =
         viewingYear != null && !viewingYear.isAll && !viewingYear.isCurrent;
+    final isClosed = years.any(
+      (y) => y['ma_nam_hoc'] == viewingYear?.id && y['da_dong_luc'] != null,
+    );
 
     final resolvedWidth = width != null ? math.max(300.0, width!) : 300.0;
 
     final dropdown = AppFilterDropdown<num?>(
-      label: 'Năm học',
+      label: label,
       icon: Icons.calendar_month_outlined,
       value: effectiveValue,
       width: resolvedWidth,
@@ -220,7 +225,11 @@ class AcademicYearFilterControl extends ConsumerWidget {
       runSpacing: 4,
       children: [
         dropdown,
-        const AppBadge('Năm lưu trữ', tone: AppBadgeTone.neutral, dot: false),
+        AppBadge(
+          isClosed ? 'Năm đã đóng' : 'Năm lưu trữ',
+          tone: AppBadgeTone.neutral,
+          dot: false,
+        ),
       ],
     );
   }

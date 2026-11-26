@@ -29,6 +29,7 @@ export class YearsService extends CatalogService {
         ngay_ket_thuc: { kind: "date" },
         hien_hanh: { kind: "boolean" },
       },
+      readOnly: ["da_dong_luc"],
       validate: validateYear,
     });
   }

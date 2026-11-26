@@ -12,6 +12,31 @@ export class CodedException extends ConflictException {
 
 const SQL_ERRORS: Array<[sql: string, code: string, message: string]> = [
   [
+    "YEAR_CLOSED",
+    "YEAR_CLOSED",
+    "Năm học đã đóng nên chỉ xem được; quản trị viên mở lại năm học nếu cần chỉnh.",
+  ],
+  [
+    "YEAR_NOT_READY",
+    "YEAR_NOT_READY",
+    "Năm học còn việc chưa xong nên chưa đóng được; xem danh sách cần xử lý.",
+  ],
+  [
+    "YEAR_ALREADY_CLOSED",
+    "YEAR_ALREADY_CLOSED",
+    "Năm học này đã đóng; tải lại để xem trạng thái mới nhất.",
+  ],
+  [
+    "YEAR_NOT_CLOSED",
+    "YEAR_NOT_CLOSED",
+    "Năm học này đang mở; tải lại để xem trạng thái mới nhất.",
+  ],
+  [
+    "INVALID_YEAR_CLOSE_REQUEST",
+    "INVALID_YEAR_CLOSE_REQUEST",
+    "Cần nhập lý do từ 1 đến 500 ký tự.",
+  ],
+  [
     "CELL_HAS_VALUE",
     "CELL_HAS_VALUE",
     "Ô đã có điểm hoặc đang chờ đối chiếu; chỉ miễn được ô còn trống.",

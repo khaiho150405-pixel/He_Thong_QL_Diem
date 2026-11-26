@@ -69,7 +69,7 @@ class _FakeReports extends ReportsRepository {
   final AdminOverviewData data;
 
   @override
-  Future<AdminOverviewData> adminOverview() async => data;
+  Future<AdminOverviewData> adminOverview({num? yearId}) async => data;
 }
 
 const _adminData = AdminOverviewData(

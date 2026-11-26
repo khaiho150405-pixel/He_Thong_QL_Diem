@@ -15,7 +15,7 @@ Method | HTTP request | Description
 
 
 # **adminReportsOverview**
-> AdminOverviewDto adminReportsOverview()
+> AdminOverviewDto adminReportsOverview(yearId)
 
 
 
@@ -28,9 +28,10 @@ import 'package:api_client_dart/api.dart';
 //defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
 
 final api = ApiClientDart().getReportsApi();
+final num yearId = 8.14; // num | Chỉ thống kê một năm học; vắng = mọi năm
 
 try {
-    final response = api.adminReportsOverview();
+    final response = api.adminReportsOverview(yearId);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling ReportsApi->adminReportsOverview: $e\n');
@@ -38,7 +39,10 @@ try {
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **yearId** | **num**| Chỉ thống kê một năm học; vắng = mọi năm | [optional]
 
 ### Return type
 

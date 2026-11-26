@@ -10,6 +10,7 @@ export type Table =
   | "nhat_ky_bao_mat"
   | "gioi_han_dang_nhap"
   | "nam_hoc"
+  | "lich_su_dong_nam"
   | "hoc_ky"
   | "lop"
   | "hoc_sinh"

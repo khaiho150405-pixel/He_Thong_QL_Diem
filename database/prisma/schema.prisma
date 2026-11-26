@@ -118,6 +118,7 @@ model nguoi_dung {
   idempotency_rows        khoa_idempotency[]
   lich_su_tong_ket_rows   lich_su_tong_ket[]
   gioi_han_tac_vu_rows    gioi_han_tac_vu[]
+  lich_su_dong_nam_rows   lich_su_dong_nam[]
 }
 
 model phien_ghi_nho {
@@ -178,14 +179,16 @@ model giao_vien {
 }
 
 model nam_hoc {
-  ghi_danh_rows hoc_sinh_lop[]
-  ma_nam_hoc    Int            @id @default(autoincrement())
-  ten           String         @unique @db.VarChar(20)
-  ngay_bat_dau  DateTime       @db.Date
-  ngay_ket_thuc DateTime       @db.Date
-  hien_hanh     Boolean        @default(false)
-  hoc_ky_rows   hoc_ky[]
-  lop_rows      lop[]
+  ghi_danh_rows     hoc_sinh_lop[]
+  ma_nam_hoc        Int                @id @default(autoincrement())
+  ten               String             @unique @db.VarChar(20)
+  ngay_bat_dau      DateTime           @db.Date
+  ngay_ket_thuc     DateTime           @db.Date
+  hien_hanh         Boolean            @default(false)
+  da_dong_luc       DateTime?          @db.Timestamptz(6)
+  lich_su_dong_rows lich_su_dong_nam[]
+  hoc_ky_rows       hoc_ky[]
+  lop_rows          lop[]
 }
 
 model hoc_ky {
@@ -795,4 +798,17 @@ model truong {
   cap_nhat_luc      DateTime    @default(now()) @db.Timestamptz(6)
   nguoi_cap_nhat    Int?
   nguoi             nguoi_dung? @relation(fields: [nguoi_cap_nhat], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: NoAction)
+}
+
+model lich_su_dong_nam {
+  ma              BigInt     @id @default(autoincrement())
+  ma_nam_hoc      Int
+  hanh_dong       String     @db.VarChar(10)
+  ly_do           String     @db.VarChar(500)
+  nguoi_thuc_hien Int
+  thoi_diem       DateTime   @default(now()) @db.Timestamptz(6)
+  nam_hoc         nam_hoc    @relation(fields: [ma_nam_hoc], references: [ma_nam_hoc], onDelete: Restrict, onUpdate: Restrict)
+  nguoi           nguoi_dung @relation(fields: [nguoi_thuc_hien], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([ma_nam_hoc, ma], map: "lich_su_dong_nam_nam_idx")
 }

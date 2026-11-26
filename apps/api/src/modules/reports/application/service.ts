@@ -12,6 +12,7 @@ import {
 } from "../../authorization/application/gradebook-policy.js";
 import { classStudentOrder } from "../../../common/student-order.js";
 import { SchoolService } from "../../school/application/service.js";
+import { parseYearId } from "../../../common/catalog.js";
 import { REPORT_STORE, type ReportStore } from "./port.js";
 
 function id(value: number) {
@@ -90,11 +91,17 @@ export class ReportsService {
     });
   }
 
-  adminOverview(actor: Actor) {
+  adminOverview(actor: Actor, yearIdInput?: unknown) {
     if (actor.role !== "QUAN_TRI_VIEN") throw new ForbiddenException();
+    const yearId = parseYearId(yearIdInput);
     return this.store.run(async (tx) => {
       await gradebookActor(tx.authorization, actor);
-      return tx.adminOverview();
+      if (
+        yearId !== null &&
+        !(await tx.authorization.find("nam_hoc", { ma_nam_hoc: yearId }))
+      )
+        throw new NotFoundException("Không tìm thấy năm học.");
+      return tx.adminOverview(yearId);
     });
   }
 

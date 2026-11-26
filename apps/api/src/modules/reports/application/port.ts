@@ -90,7 +90,7 @@ export interface ReportUnit {
   summary(gradebookId: number): Promise<GradebookSummary>;
   exportRows(gradebookId: number): Promise<ExportRow[]>;
   recordExport(actorId: number, gradebookId: number): Promise<void>;
-  adminOverview(): Promise<AdminOverview>;
+  adminOverview(yearId: number | null): Promise<AdminOverview>;
 }
 
 export interface ReportStore {

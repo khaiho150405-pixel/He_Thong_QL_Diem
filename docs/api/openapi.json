@@ -1189,6 +1189,265 @@
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
+    "/api/v1/catalog/years/{id}/closing": {
+      "get": {
+        "operationId": "yearsClosing",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/YearClosingDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["years"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/catalog/years/{id}/close": {
+      "post": {
+        "operationId": "yearsClose",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/YearClosingInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/YearClosingDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["years"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
+    "/api/v1/catalog/years/{id}/reopen": {
+      "post": {
+        "operationId": "yearsReopen",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/YearClosingInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/YearClosingDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["years"],
+        "security": [{ "bearer": [] }, { "cookie": [], "csrf": [] }]
+      }
+    },
     "/api/v1/catalog/years/{id}": {
       "put": {
         "operationId": "yearsUpdate",
@@ -6881,7 +7140,15 @@
     "/api/v1/reports/admin/overview": {
       "get": {
         "operationId": "adminReportsOverview",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "yearId",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ thống kê một năm học; vắng = mọi năm",
+            "schema": { "type": "number" }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -10416,7 +10683,12 @@
           },
           "hien_hanh": { "type": "boolean" },
           "label": { "type": "string" },
-          "ma_nam_hoc": { "type": "number" }
+          "ma_nam_hoc": { "type": "number" },
+          "da_dong_luc": {
+            "type": "string",
+            "nullable": true,
+            "description": "Thời điểm đóng năm học; null khi năm còn mở"
+          }
         },
         "required": [
           "ten",
@@ -10459,6 +10731,53 @@
           "pendingRecognitionTickets",
           "unpublishedSemesters"
         ]
+      },
+      "YearClosingIssueDto": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "description": "BLOCKING hoặc WARNING"
+          },
+          "label": { "type": "string" },
+          "count": { "type": "number" }
+        },
+        "required": ["code", "severity", "label", "count"]
+      },
+      "YearClosingEventDto": {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string", "description": "DONG hoặc MO_LAI" },
+          "reason": { "type": "string" },
+          "actor": { "type": "string" },
+          "at": { "type": "string" }
+        },
+        "required": ["action", "reason", "actor", "at"]
+      },
+      "YearClosingDto": {
+        "type": "object",
+        "properties": {
+          "yearId": { "type": "number" },
+          "closedAt": { "type": "string", "nullable": true },
+          "ready": { "type": "boolean" },
+          "issues": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/YearClosingIssueDto" }
+          },
+          "history": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/YearClosingEventDto" }
+          }
+        },
+        "required": ["yearId", "closedAt", "ready", "issues", "history"]
+      },
+      "YearClosingInput": {
+        "type": "object",
+        "properties": {
+          "reason": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "required": ["reason"]
       },
       "YearsInput": {
         "type": "object",

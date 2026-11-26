@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:api_client_dart/api_client_dart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../academic_catalog/academic_year_scope.dart';
 import '../authentication/session.dart';
 
 final reportsRepositoryProvider = Provider(
@@ -14,11 +15,17 @@ final adminOverviewProvider =
     StateNotifierProvider.autoDispose<
       AdminOverviewNotifier,
       AsyncValue<AdminOverviewData>
-    >((ref) => AdminOverviewNotifier(ref.watch(reportsRepositoryProvider)));
+    >(
+      (ref) => AdminOverviewNotifier(
+        ref.watch(reportsRepositoryProvider),
+        ref.watch(viewingYearProvider.select((year) => year?.id)),
+      ),
+    );
 
 class AdminOverviewNotifier
     extends StateNotifier<AsyncValue<AdminOverviewData>> {
-  AdminOverviewNotifier(this._repository) : super(const AsyncValue.loading()) {
+  AdminOverviewNotifier(this._repository, this.yearId)
+    : super(const AsyncValue.loading()) {
     refresh();
     _timer = Timer.periodic(const Duration(seconds: 10), (_) {
       refresh(silent: true);
@@ -26,6 +33,7 @@ class AdminOverviewNotifier
   }
 
   final ReportsRepository _repository;
+  final num? yearId;
   Timer? _timer;
 
   Future<void> refresh({bool silent = false}) async {
@@ -33,7 +41,7 @@ class AdminOverviewNotifier
       if (!silent) state = const AsyncValue.loading();
     }
     try {
-      final data = await _repository.adminOverview();
+      final data = await _repository.adminOverview(yearId: yearId);
       if (mounted) state = AsyncValue.data(data);
     } catch (e, st) {
       if (mounted && (!silent || state.value == null)) {
@@ -62,8 +70,11 @@ class ReportsRepository {
   Future<Uint8List> export(num gradebookId) async =>
       (await api.getReportsApi().reportsExport(gradebookId: gradebookId)).data!;
 
-  Future<AdminOverviewData> adminOverview() async {
-    final response = await api.dio.get('/api/v1/reports/admin/overview');
+  Future<AdminOverviewData> adminOverview({num? yearId}) async {
+    final response = await api.dio.get(
+      '/api/v1/reports/admin/overview',
+      queryParameters: {'yearId': ?yearId},
+    );
     return AdminOverviewData.fromJson(response.data as Map<String, dynamic>);
   }
 }

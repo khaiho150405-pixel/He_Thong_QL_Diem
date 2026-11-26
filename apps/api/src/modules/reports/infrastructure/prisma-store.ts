@@ -129,22 +129,42 @@ export class PrismaReportStore implements ReportStore {
             throw new ForbiddenException();
           }
         },
-        adminOverview: async () => {
-          const totalStudents = await tx.hoc_sinh.count({
-            where: { dang_theo_hoc: true },
+        adminOverview: async (yearId) => {
+          const inYear =
+            yearId === null ? {} : { ma_hoc_ky_ref: { ma_nam_hoc: yearId } };
+          const classYear = yearId === null ? {} : { ma_nam_hoc: yearId };
+          const totalStudents =
+            yearId === null
+              ? await tx.hoc_sinh.count({ where: { dang_theo_hoc: true } })
+              : (
+                  await tx.$queryRaw<{ count: number }[]>`
+                    SELECT count(DISTINCT g.ma_hoc_sinh)::integer AS count
+                    FROM public.hoc_sinh_lop g
+                    JOIN public.nam_hoc n USING(ma_nam_hoc)
+                    WHERE g.ma_nam_hoc=${yearId}::integer
+                      AND g.trang_thai<>'DA_CHUYEN_LOP'
+                      AND (g.den_ngay IS NULL OR g.den_ngay>=n.ngay_ket_thuc)`
+                )[0]!.count;
+          const totalClasses = await tx.lop.count({ where: classYear });
+          const totalTeachers = await tx.giao_vien.count({
+            where:
+              yearId === null
+                ? {}
+                : { phan_cong_giang_day_rows: { some: inYear } },
           });
-          const totalClasses = await tx.lop.count();
-          const totalTeachers = await tx.giao_vien.count();
-          const totalGradebooks = await tx.bang_diem.count();
+          const totalGradebooks = await tx.bang_diem.count({ where: inYear });
           const lockedGradebooks = await tx.bang_diem.count({
-            where: { trang_thai: "DA_CHOT" },
+            where: { ...inYear, trang_thai: "DA_CHOT" },
           });
           const completionRate =
             totalGradebooks > 0
               ? Math.round((lockedGradebooks / totalGradebooks) * 100)
               : 0;
           const pendingOcrTickets = await tx.phieu_nhan_dien.count({
-            where: { trang_thai: "CHO_DOI_CHIEU" },
+            where: {
+              trang_thai: "CHO_DOI_CHIEU",
+              ...(yearId === null ? {} : { ma_bang_diem_ref: inYear }),
+            },
           });
 
           const distRows = await tx.$queryRaw<
@@ -155,6 +175,7 @@ export class PrismaReportStore implements ReportStore {
             FROM (
               SELECT DISTINCT k.ma_hoc_sinh,k.ma_hoc_ky FROM public.ket_qua_tong_ket k
               JOIN public.hoc_ky h USING(ma_hoc_ky) WHERE h.da_cong_bo
+                AND (${yearId}::integer IS NULL OR h.ma_nam_hoc=${yearId}::integer)
             ) s GROUP BY 1
           `;
           const rated = distRows.filter((r) => r.level !== null);
@@ -178,6 +199,7 @@ export class PrismaReportStore implements ReportStore {
           });
 
           const classes = await tx.lop.findMany({
+            where: classYear,
             select: { ma_lop: true, khoi: true },
           });
           const gradeLevels = [10, 11, 12];
@@ -214,9 +236,13 @@ export class PrismaReportStore implements ReportStore {
           const ocrRows = await tx.$queryRaw<
             { muc_phan_loai: string; count: number }[]
           >`
-            SELECT muc_phan_loai, count(*)::integer AS count
-            FROM public.ket_qua_dong
-            GROUP BY muc_phan_loai
+            SELECT r.muc_phan_loai, count(*)::integer AS count
+            FROM public.ket_qua_dong r
+            JOIN public.phieu_nhan_dien p ON p.ma_phieu = r.ma_phieu
+            JOIN public.bang_diem b ON b.ma_bang_diem = p.ma_bang_diem
+            JOIN public.hoc_ky h ON h.ma_hoc_ky = b.ma_hoc_ky
+            WHERE ${yearId}::integer IS NULL OR h.ma_nam_hoc = ${yearId}::integer
+            GROUP BY r.muc_phan_loai
           `;
           let greenCount = 0;
           let yellowCount = 0;
@@ -244,6 +270,8 @@ export class PrismaReportStore implements ReportStore {
             JOIN public.mon_hoc m ON m.ma_mon = b.ma_mon
             LEFT JOIN public.phan_cong_giang_day pc ON pc.ma_lop = b.ma_lop AND pc.ma_mon = b.ma_mon AND pc.ma_hoc_ky = b.ma_hoc_ky
             LEFT JOIN public.giao_vien gv ON gv.ma_giao_vien = pc.ma_giao_vien
+            JOIN public.hoc_ky h ON h.ma_hoc_ky = b.ma_hoc_ky
+            WHERE ${yearId}::integer IS NULL OR h.ma_nam_hoc = ${yearId}::integer
             ORDER BY b.ma_bang_diem DESC
             LIMIT 4
           `;

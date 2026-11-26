@@ -23,6 +23,7 @@ class ReportsApi {
   ///
   ///
   /// Parameters:
+  /// * [yearId] - Chỉ thống kê một năm học; vắng = mọi năm
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -33,6 +34,7 @@ class ReportsApi {
   /// Returns a [Future] containing a [Response] with a [AdminOverviewDto] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<AdminOverviewDto>> adminReportsOverview({
+    num? yearId,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -59,9 +61,14 @@ class ReportsApi {
       validateStatus: validateStatus,
     );
 
+    final _queryParameters = <String, dynamic>{
+      if (yearId != null) r'yearId': yearId,
+    };
+
     final _response = await _dio.request<Object>(
       _path,
       options: _options,
+      queryParameters: _queryParameters,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
       onReceiveProgress: onReceiveProgress,

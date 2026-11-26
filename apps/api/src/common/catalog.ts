@@ -24,6 +24,7 @@ export interface CatalogSpec {
   table: Table;
   id: string;
   fields: Record<string, Field>;
+  readOnly?: string[];
   validate(
     tx: Unit,
     data: Row,
@@ -157,6 +158,10 @@ export class CatalogService {
             : row[key],
       ]),
     );
+    for (const key of this.spec.readOnly ?? []) {
+      const value = row[key];
+      data[key] = value instanceof Date ? value.toISOString() : (value ?? null);
+    }
     const name = String(
       (row.loai_he_so
         ? (
@@ -391,6 +396,7 @@ export class CatalogService {
             (
               {
                 hoc_ky: "học kỳ",
+                lich_su_dong_nam: "lịch sử đóng năm học",
                 lop: "lớp học",
                 he_so_hoc_ky: "hệ số học kỳ cũ",
                 he_so_hoc_ky_chung: "hệ số học kỳ",
@@ -414,6 +420,7 @@ export class CatalogService {
         return any([
           ["hoc_ky", { ma_nam_hoc: row.ma_nam_hoc }],
           ["lop", { ma_nam_hoc: row.ma_nam_hoc }],
+          ["lich_su_dong_nam", { ma_nam_hoc: row.ma_nam_hoc }],
         ]);
       case "hoc_ky":
         return any([

@@ -9,12 +9,111 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**yearsClose**](YearsApi.md#yearsclose) | **POST** /api/v1/catalog/years/{id}/close |
+[**yearsClosing**](YearsApi.md#yearsclosing) | **GET** /api/v1/catalog/years/{id}/closing |
 [**yearsCreate**](YearsApi.md#yearscreate) | **POST** /api/v1/catalog/years |
 [**yearsList**](YearsApi.md#yearslist) | **GET** /api/v1/catalog/years |
 [**yearsPendingSummary**](YearsApi.md#yearspendingsummary) | **GET** /api/v1/catalog/years/{id}/pending-summary |
 [**yearsRemove**](YearsApi.md#yearsremove) | **DELETE** /api/v1/catalog/years/{id} |
+[**yearsReopen**](YearsApi.md#yearsreopen) | **POST** /api/v1/catalog/years/{id}/reopen |
 [**yearsUpdate**](YearsApi.md#yearsupdate) | **PUT** /api/v1/catalog/years/{id} |
 
+
+# **yearsClose**
+> YearClosingDto yearsClose(id, yearClosingInput)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getYearsApi();
+final num id = 8.14; // num |
+final YearClosingInput yearClosingInput = ; // YearClosingInput |
+
+try {
+    final response = api.yearsClose(id, yearClosingInput);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling YearsApi->yearsClose: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **num**|  |
+ **yearClosingInput** | [**YearClosingInput**](YearClosingInput.md)|  |
+
+### Return type
+
+[**YearClosingDto**](YearClosingDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **yearsClosing**
+> YearClosingDto yearsClosing(id)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getYearsApi();
+final num id = 8.14; // num |
+
+try {
+    final response = api.yearsClosing(id);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling YearsApi->yearsClosing: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **num**|  |
+
+### Return type
+
+[**YearClosingDto**](YearClosingDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **yearsCreate**
 > YearsDto yearsCreate(yearsInput)
@@ -203,6 +302,57 @@ void (empty response body)
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **yearsReopen**
+> YearClosingDto yearsReopen(id, yearClosingInput)
+
+
+
+### Example
+```dart
+import 'package:api_client_dart/api.dart';
+// TODO Configure API key authorization: cookie
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('cookie').apiKeyPrefix = 'Bearer';
+// TODO Configure API key authorization: csrf
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKey = 'YOUR_API_KEY';
+// uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+//defaultApiClient.getAuthentication<ApiKeyAuth>('csrf').apiKeyPrefix = 'Bearer';
+
+final api = ApiClientDart().getYearsApi();
+final num id = 8.14; // num |
+final YearClosingInput yearClosingInput = ; // YearClosingInput |
+
+try {
+    final response = api.yearsReopen(id, yearClosingInput);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling YearsApi->yearsReopen: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **num**|  |
+ **yearClosingInput** | [**YearClosingInput**](YearClosingInput.md)|  |
+
+### Return type
+
+[**YearClosingDto**](YearClosingDto.md)
+
+### Authorization
+
+[cookie](../README.md#cookie), [bearer](../README.md#bearer), [csrf](../README.md#csrf)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

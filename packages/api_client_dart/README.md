@@ -179,10 +179,13 @@ Class | Method | HTTP request | Description
 [*TimetableApi*](doc/TimetableApi.md) | [**timetableList**](doc/TimetableApi.md#timetablelist) | **GET** /api/v1/timetable |
 [*TimetableApi*](doc/TimetableApi.md) | [**timetableRemove**](doc/TimetableApi.md#timetableremove) | **DELETE** /api/v1/timetable/{id} |
 [*TimetableApi*](doc/TimetableApi.md) | [**timetableUpdate**](doc/TimetableApi.md#timetableupdate) | **PUT** /api/v1/timetable/{id} |
+[*YearsApi*](doc/YearsApi.md) | [**yearsClose**](doc/YearsApi.md#yearsclose) | **POST** /api/v1/catalog/years/{id}/close |
+[*YearsApi*](doc/YearsApi.md) | [**yearsClosing**](doc/YearsApi.md#yearsclosing) | **GET** /api/v1/catalog/years/{id}/closing |
 [*YearsApi*](doc/YearsApi.md) | [**yearsCreate**](doc/YearsApi.md#yearscreate) | **POST** /api/v1/catalog/years |
 [*YearsApi*](doc/YearsApi.md) | [**yearsList**](doc/YearsApi.md#yearslist) | **GET** /api/v1/catalog/years |
 [*YearsApi*](doc/YearsApi.md) | [**yearsPendingSummary**](doc/YearsApi.md#yearspendingsummary) | **GET** /api/v1/catalog/years/{id}/pending-summary |
 [*YearsApi*](doc/YearsApi.md) | [**yearsRemove**](doc/YearsApi.md#yearsremove) | **DELETE** /api/v1/catalog/years/{id} |
+[*YearsApi*](doc/YearsApi.md) | [**yearsReopen**](doc/YearsApi.md#yearsreopen) | **POST** /api/v1/catalog/years/{id}/reopen |
 [*YearsApi*](doc/YearsApi.md) | [**yearsUpdate**](doc/YearsApi.md#yearsupdate) | **PUT** /api/v1/catalog/years/{id} |
 
 
@@ -337,6 +340,10 @@ Class | Method | HTTP request | Description
  - [UpdatedCellDto](doc/UpdatedCellDto.md)
  - [VersionedDefinitionInput](doc/VersionedDefinitionInput.md)
  - [WithdrawInput](doc/WithdrawInput.md)
+ - [YearClosingDto](doc/YearClosingDto.md)
+ - [YearClosingEventDto](doc/YearClosingEventDto.md)
+ - [YearClosingInput](doc/YearClosingInput.md)
+ - [YearClosingIssueDto](doc/YearClosingIssueDto.md)
  - [YearPendingSummaryDto](doc/YearPendingSummaryDto.md)
  - [YearsDto](doc/YearsDto.md)
  - [YearsInput](doc/YearsInput.md)

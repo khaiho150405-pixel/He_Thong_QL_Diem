@@ -2,6 +2,14 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Đóng năm học và tổng quan theo năm, đợt 1 lưu trữ năm học (2026-11-26)
+
+- ADR-0022, migration `202611290001_year_closing`: cột `nam_hoc.da_dong_luc`, bảng `lich_su_dong_nam`, hàm `kiem_san_sang_dong_nam` và `doi_trang_thai_nam_hoc`, trigger `a_year_closed_guard`.
+- API `catalog/years/{id}/closing|close|reopen`, `reports/admin/overview?yearId=`; client sinh lại. Flutter: nút khóa trên danh sách năm học, bộ chọn "Thống kê theo năm" ở tổng quan quản trị.
+- Kết quả: `pnpm check` 214/214, `test:db` 47/47 (cả trên database dựng từ rỗng), `test:integration` 57/57, `contracts:check` đạt, Flutter 755/755.
+- Chưa thử trên web/Android/iOS thật. `quan_ly_diem_dev` chưa áp migration `202611280001` và `202611290001`.
+- Còn lại theo lộ trình: đợt 2 bản chốt cuối năm và thống kê nhiều năm; đợt 3 cấu trúc cột theo năm; đợt 4 kết quả cả năm (cần chủ dự án quyết định vì đang cấm gộp HK1/HK2).
+
 ## Học sinh vào lớp sau, đánh giá theo Thông tư 22 và thông báo lỗi rõ ràng (2026-11-26)
 
 - ADR-0021, migration `202611280001_tt22_late_students`: tự tạo ô khi ghi danh; không ghi 0 cho học sinh vào sau; môn tính điểm không còn xếp loại; môn nhận xét Đạt khi mọi lần đều Đạt; hàm `xep_muc_hoc_tap` xếp mức học kỳ.
