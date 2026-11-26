@@ -2,7 +2,17 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
-## Giảm rủi ro khi mở bản deploy ra Internet (2026-11-26; chưa commit)
+## Xóa thông tin học sinh, kiểm thử đầu cuối và cắt dữ liệu còn mỗi khối một lớp (2026-11-27)
+
+- ADR-0020: migration `202611270001_student_removal` (hàm `xoa_hoc_sinh`, cột `hoc_sinh.da_xoa_luc`), module `students` gọi hàm; menu học sinh trên Flutter có "Xóa thông tin". Test `database/tests/student-removal.test.ts`.
+- Kết quả: `pnpm check` 214/214, `test:db` 44/44, `test:integration` 55/55, `contracts:check` đạt, test Flutter ghi danh/danh mục đạt.
+- Kiểm thử đầu cuối cục bộ trên `qld_phase7_test` (API cổng 3101, MinIO tạm cổng 9100, đã trả về 9000): 41/41 gồm CRUD tài khoản, giáo viên, lớp, học sinh, xóa học sinh, nhận dạng lô 2 trang 2 cột (ảnh giả lập, đọc đúng 30/30 mỗi cột); web release xem được và xóa được học sinh qua giao diện.
+- Phát hiện chưa sửa: `duyet_phieu_nhan_dien` chỉ tính "máy đúng" khi cả hai kênh bằng giá trị duyệt, nên cột một kênh (mẫu không có Điểm chữ) luôn báo người sửa toàn bộ dù giữ nguyên gợi ý.
+- `quan_ly_diem_dev`: đã cắt còn 10A1, 11A1, 12A1 (123 học sinh, 15 bảng điểm, 1476 giá trị điểm, 1 phiếu). Sao lưu trước khi cắt: `.local/backups/quan_ly_diem_dev-20261126T135753Z.dump` (chứa dữ liệu đã xóa). Ảnh của 6 phiếu đã xóa vẫn còn trong MinIO. DB này còn 4 migration chưa áp (chạy thử trên bản sao đã đạt); deploy sẽ sao lưu rồi áp.
+- Kiểm thử luồng tự động trên DB test (tự tạo bảng điểm khi phân công, lịch nhập và hết hạn, tổng kết, đơn điều chỉnh sau khóa, công bố): 53/53 đạt. Lưu ý vận hành: xử lý hết hạn chỉ chạy khi API bật; tổng kết phải bấm tay; học sinh vào lớp sát hạn vẫn bị ghi 0 ở cột bắt buộc; môn chỉ có cột không bắt buộc mà không có điểm chặn công bố (gỡ bằng đơn điều chỉnh); chính sách xếp loại đang áp dụng ở DB deploy là `DEV-2026-01`, cần chốt trước khi dùng thật.
+- Chưa kiểm: đường qua Internet (chủ dự án chọn bỏ qua), Android (không có thiết bị, ổ C còn 5,6 GB), chữ viết tay thật.
+
+## Giảm rủi ro khi mở bản deploy ra Internet (2026-11-26)
 
 - `PUBLIC_DEPLOYMENT=1` (đặt bởi `stack.ps1` khi deploy) bật cookie `Secure`, tắt Swagger, thêm CSP/HSTS mà vẫn giữ `APP_ENV=development` cho backend nội bộ không TLS (`isPublicFacing` trong `common/config.ts`).
 - Mới: `apps/api/src/ops/public-deploy-check.ts` (`pnpm ops:deploy-check`), `scripts/recognition/pilot/backup-db.ps1`, `infrastructure/docker/storage-init.sh` (tạo tài khoản MinIO chỉ có quyền bucket ảnh khi `S3_ACCESS_KEY` khác root), biến `DEPLOY_BLOCKED_PASSWORDS`.
@@ -11,7 +21,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 - Việc chủ máy phải làm trước lần deploy tới (nếu không sẽ bị chặn): tạo khóa MinIO riêng trong `.env`; đổi mật khẩu tài khoản còn dùng mật khẩu thử.
 - Chưa làm: tự khởi động lại dịch vụ, lịch sao lưu, xoay vòng log, CI cho nhánh `khai`.
 
-## Excel: file mẫu nhập điểm và file bảng điểm tổng (2026-11-21; chưa commit)
+## Excel: file mẫu nhập điểm và file bảng điểm tổng (2026-11-21)
 
 - File mẫu nhập điểm (`excel_import_dialog.dart`, dựng ở `buildGradeTemplate` trong `grade_import.dart`): chỉ còn 3 cột **STT, Họ tên, Điểm**, cho đúng một cột điểm do người dùng chọn ở hộp thoại (mặc định cột đầu tiên còn mở nhập). Điểm hiện có được điền sẵn (môn Đạt/Không đạt điền chữ). Không còn cột "Mã học sinh" và cột theo từng thành phần.
 - Đọc file nhập (`analyzeGradeImport`): cột "Điểm" nạp vào cột đã chọn (`scoreComponent`); vẫn đọc được file cũ có cột `TX1 (ID:11)` và `Mã học sinh`. Khớp học sinh theo họ tên và STT: STT lệch với họ tên thì báo lỗi dòng, tên trùng nhiều học sinh phải có STT đúng, chỉ có STT cũng khớp được.
@@ -20,7 +30,7 @@ Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này*
 - Không đổi DTO/OpenAPI. Kiểm tra: `pnpm check` 209/209, `reports-export.test.ts` 2/2, `final-results` tích hợp đạt, `flutter test` 747/747, `dart analyze` sạch, `contracts:check` đạt (cần JDK 17+: dùng `C:\Program Files\Android\Android Studio\jbr`, Java mặc định của máy là 1.8). Đã mở app (web, API trỏ `qld_phase7_test`) xem hộp thoại chọn cột điểm và tải file xuất thật; ảnh minh chứng ở `.local/evidence/` (ngoài git).
 - Lưu ý môi trường: DB dev `quan_ly_diem_dev` còn thiếu 3 migration (`202611020001_auto_gradebook_on_assignment`, `202611070001_drop_manual_gradebook_init`, `202611210001_strict_relations`) nên API chạy với DB dev báo lỗi 500 ở danh sách bảng điểm (thiếu hàm `dam_bao_bang_diem_cua_toi`). Chạy `pnpm db:migrate` trước khi dùng DB dev.
 
-## Siết liên kết giữa các bảng (migration 202611210001_strict_relations; 2026-11-21; chưa commit)
+## Siết liên kết giữa các bảng (migration 202611210001_strict_relations; 2026-11-21)
 
 - Migration mới thêm trigger/ràng buộc ở PostgreSQL (mã lỗi SQLSTATE 23514, thông báo tiếng Việt đã map trong `apps/api/src/common/transaction.ts`): `GRADEBOOK_YEAR_MISMATCH`, `ASSIGNMENT_YEAR_MISMATCH`, `TIMETABLE_YEAR_MISMATCH` (lớp và học kỳ cùng năm học); `TIMETABLE_ASSIGNMENT_REQUIRED` (tiết học phải có phân công cùng lớp, môn, học kỳ, giáo viên) và `ASSIGNMENT_IN_TIMETABLE` (không xóa/đổi khóa phân công đang dùng trong thời khóa biểu); `COMPONENT_SUBJECT_MISMATCH` (thành phần điểm thuộc môn của bảng điểm, áp cho 4 bảng); `GRADE_STUDENT_NOT_ENROLLED` (học sinh có điểm phải ghi danh ở lớp của bảng điểm); `TICKET_BATCH_MISMATCH`, `ROW_STUDENT_NOT_IN_ROSTER`, `ROW_CELL_MISMATCH`, `ADJUSTMENT_LINE_BOOK_MISMATCH`; `PROFILE_ROLE_MISMATCH` (vai trò tài khoản khớp hồ sơ giáo viên/học sinh, cả hai chiều); `TERM_OUTSIDE_YEAR`, `YEAR_RANGE_EXCLUDES_TERM`; `UNKNOWN_CLASSIFICATION`.
 - Bỏ 8 index trùng với unique/khóa chính sẵn có (hoc_ky, lop, thanh_phan_diem, phan_cong_giang_day, bang_diem, diem_thanh_phan, ket_qua_tong_ket, ket_qua_dong); đã xóa dòng `@@index` tương ứng trong `database/prisma/schema.prisma`. Rollback ghi ở đầu file migration.
