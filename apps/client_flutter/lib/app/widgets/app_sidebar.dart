@@ -722,6 +722,12 @@ class _AppSidebarState extends ConsumerState<AppSidebar> {
                           countBadge: null,
                         ),
                         (
+                          icon: Icons.query_stats_outlined,
+                          title: 'Thống kê năm học',
+                          route: '/admin/year-statistics',
+                          countBadge: null,
+                        ),
+                        (
                           icon: Icons.workspace_premium_outlined,
                           title: 'Tổng kết & xếp loại',
                           route: '/final-results',

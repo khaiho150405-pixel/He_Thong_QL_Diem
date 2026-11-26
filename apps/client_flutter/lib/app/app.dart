@@ -15,6 +15,7 @@ import '../features/academic_catalog/semester_deadlines_screen.dart';
 import '../features/academic_catalog/subjects_weights_screen.dart';
 import '../features/academic_catalog/teaching_assignments_screen.dart';
 import '../features/form_templates/form_templates_screen.dart';
+import '../features/reports/year_statistics_screen.dart';
 import '../features/school_profile/school_profile.dart';
 import '../features/school_profile/school_profile_screen.dart';
 import '../features/form_templates/template_detail_screen.dart';
@@ -70,6 +71,10 @@ final routerProvider = Provider.family<GoRouter, String>((
       GoRoute(
         path: '/admin/semester-deadlines',
         builder: (_, state) => const SemesterDeadlinesScreen(),
+      ),
+      GoRoute(
+        path: '/admin/year-statistics',
+        builder: (_, state) => const YearStatisticsScreen(),
       ),
       GoRoute(
         path: '/admin/school-profile',
@@ -178,6 +183,10 @@ final routerProvider = Provider.family<GoRouter, String>((
         return '/';
       }
       if (state.uri.path == '/admin/school-profile' &&
+          user.role.value != 'QUAN_TRI_VIEN') {
+        return '/';
+      }
+      if (state.uri.path == '/admin/year-statistics' &&
           user.role.value != 'QUAN_TRI_VIEN') {
         return '/';
       }

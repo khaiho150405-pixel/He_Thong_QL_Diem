@@ -14,6 +14,7 @@ import { classStudentOrder } from "../../../common/student-order.js";
 import { SchoolService } from "../../school/application/service.js";
 import { parseYearId } from "../../../common/catalog.js";
 import { REPORT_STORE, type ReportStore } from "./port.js";
+import { safeCell, slug } from "./cells.js";
 
 function id(value: number) {
   if (!Number.isSafeInteger(value) || value < 1 || value > 2147483647)
@@ -21,22 +22,8 @@ function id(value: number) {
   return value;
 }
 
-function safeCell(value: string) {
-  return /^[=+\-@]/.test(value) ? `'${value}` : value;
-}
-
 function numericCell(value: string | null | undefined) {
   return value == null ? null : Number(value);
-}
-
-function slug(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/gi, "d")
-    .replace(/[^A-Za-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase();
 }
 
 type ScoreKind = "TX" | "GK" | "CK";

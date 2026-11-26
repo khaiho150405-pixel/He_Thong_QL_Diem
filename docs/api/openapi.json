@@ -7219,6 +7219,264 @@
         "security": [{ "bearer": [] }, { "cookie": [] }]
       }
     },
+    "/api/v1/reports/admin/years/comparison": {
+      "get": {
+        "operationId": "yearReportsComparison",
+        "parameters": [
+          {
+            "name": "term",
+            "required": true,
+            "in": "query",
+            "description": "Thứ tự học kỳ: 1, 2 hoặc 3",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/YearComparisonDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["reports"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/reports/admin/years/{yearId}/statistics": {
+      "get": {
+        "operationId": "yearReportsStatistics",
+        "parameters": [
+          {
+            "name": "term",
+            "required": true,
+            "in": "query",
+            "description": "Thứ tự học kỳ: 1, 2 hoặc 3",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "yearId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/YearStatisticsDto" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["reports"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
+    "/api/v1/reports/admin/years/{yearId}/export.xlsx": {
+      "get": {
+        "operationId": "yearReportsExport",
+        "parameters": [
+          {
+            "name": "term",
+            "required": true,
+            "in": "query",
+            "description": "Thứ tự học kỳ: 1, 2 hoặc 3",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "yearId",
+            "required": true,
+            "in": "path",
+            "schema": { "type": "number" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Excel workbook",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "400": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "401": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "403": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "409": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "429": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Error envelope",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        },
+        "tags": ["reports"],
+        "security": [{ "bearer": [] }, { "cookie": [] }]
+      }
+    },
     "/api/v1/school-profile": {
       "get": {
         "operationId": "schoolProfilePublicProfile",
@@ -12755,6 +13013,163 @@
           "gradeLevelProgress",
           "ocrAccuracy",
           "recentActivities"
+        ]
+      },
+      "LevelCountsDto": {
+        "type": "object",
+        "properties": {
+          "TOT": { "type": "number" },
+          "KHA": { "type": "number" },
+          "DAT": { "type": "number" },
+          "CHUA_DAT": { "type": "number" },
+          "CHUA_DU_MON": { "type": "number" }
+        },
+        "required": ["TOT", "KHA", "DAT", "CHUA_DAT", "CHUA_DU_MON"]
+      },
+      "YearComparisonItemDto": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "number" },
+          "label": { "type": "string" },
+          "students": { "type": "number" },
+          "average": {
+            "type": "string",
+            "nullable": true,
+            "description": "Trung bình các điểm tổng kết môn tính điểm"
+          },
+          "fromEight": { "type": "number" },
+          "fromSixHalf": { "type": "number" },
+          "fromFive": { "type": "number" },
+          "belowFive": { "type": "number" },
+          "passed": { "type": "number" },
+          "failed": { "type": "number" },
+          "missing": {
+            "type": "number",
+            "description": "Lượt môn chưa có điểm tổng kết"
+          },
+          "levels": {
+            "nullable": true,
+            "description": "null ở nhóm theo môn",
+            "type": "object",
+            "allOf": [{ "$ref": "#/components/schemas/LevelCountsDto" }]
+          },
+          "yearId": { "type": "number" },
+          "yearName": { "type": "string" },
+          "source": {
+            "type": "string",
+            "description": "BAN_CHOT hoặc HIEN_TAI"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "students",
+          "average",
+          "fromEight",
+          "fromSixHalf",
+          "fromFive",
+          "belowFive",
+          "passed",
+          "failed",
+          "missing",
+          "levels",
+          "yearId",
+          "yearName",
+          "source"
+        ]
+      },
+      "YearComparisonDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/YearComparisonItemDto" }
+          }
+        },
+        "required": ["items"]
+      },
+      "StatisticsGroupDto": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "number" },
+          "label": { "type": "string" },
+          "students": { "type": "number" },
+          "average": {
+            "type": "string",
+            "nullable": true,
+            "description": "Trung bình các điểm tổng kết môn tính điểm"
+          },
+          "fromEight": { "type": "number" },
+          "fromSixHalf": { "type": "number" },
+          "fromFive": { "type": "number" },
+          "belowFive": { "type": "number" },
+          "passed": { "type": "number" },
+          "failed": { "type": "number" },
+          "missing": {
+            "type": "number",
+            "description": "Lượt môn chưa có điểm tổng kết"
+          },
+          "levels": {
+            "nullable": true,
+            "description": "null ở nhóm theo môn",
+            "type": "object",
+            "allOf": [{ "$ref": "#/components/schemas/LevelCountsDto" }]
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "students",
+          "average",
+          "fromEight",
+          "fromSixHalf",
+          "fromFive",
+          "belowFive",
+          "passed",
+          "failed",
+          "missing",
+          "levels"
+        ]
+      },
+      "YearStatisticsDto": {
+        "type": "object",
+        "properties": {
+          "yearId": { "type": "number" },
+          "yearName": { "type": "string" },
+          "source": {
+            "type": "string",
+            "description": "BAN_CHOT hoặc HIEN_TAI"
+          },
+          "snapshotVersion": { "type": "number", "nullable": true },
+          "snapshotAt": { "type": "string", "nullable": true },
+          "total": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [{ "$ref": "#/components/schemas/StatisticsGroupDto" }]
+          },
+          "grades": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StatisticsGroupDto" }
+          },
+          "classes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StatisticsGroupDto" }
+          },
+          "subjects": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StatisticsGroupDto" }
+          }
+        },
+        "required": [
+          "yearId",
+          "yearName",
+          "source",
+          "snapshotVersion",
+          "snapshotAt",
+          "total",
+          "grades",
+          "classes",
+          "subjects"
         ]
       },
       "SchoolProfileDto": {

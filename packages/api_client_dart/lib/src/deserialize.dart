@@ -69,6 +69,7 @@ import 'package:api_client_dart/src/model/gradebook_summary_dto.dart';
 import 'package:api_client_dart/src/model/health_dto.dart';
 import 'package:api_client_dart/src/model/late_student_input.dart';
 import 'package:api_client_dart/src/model/late_student_result_dto.dart';
+import 'package:api_client_dart/src/model/level_counts_dto.dart';
 import 'package:api_client_dart/src/model/lock_input.dart';
 import 'package:api_client_dart/src/model/login_input.dart';
 import 'package:api_client_dart/src/model/mapping_dto.dart';
@@ -113,6 +114,7 @@ import 'package:api_client_dart/src/model/semesters_input.dart';
 import 'package:api_client_dart/src/model/semesters_page.dart';
 import 'package:api_client_dart/src/model/session_dto.dart';
 import 'package:api_client_dart/src/model/skipped_student_dto.dart';
+import 'package:api_client_dart/src/model/statistics_group_dto.dart';
 import 'package:api_client_dart/src/model/student_approved_component_dto.dart';
 import 'package:api_client_dart/src/model/student_result_summary_dto.dart';
 import 'package:api_client_dart/src/model/student_results_dto.dart';
@@ -151,7 +153,10 @@ import 'package:api_client_dart/src/model/year_closing_dto.dart';
 import 'package:api_client_dart/src/model/year_closing_event_dto.dart';
 import 'package:api_client_dart/src/model/year_closing_input.dart';
 import 'package:api_client_dart/src/model/year_closing_issue_dto.dart';
+import 'package:api_client_dart/src/model/year_comparison_dto.dart';
+import 'package:api_client_dart/src/model/year_comparison_item_dto.dart';
 import 'package:api_client_dart/src/model/year_pending_summary_dto.dart';
+import 'package:api_client_dart/src/model/year_statistics_dto.dart';
 import 'package:api_client_dart/src/model/years_dto.dart';
 import 'package:api_client_dart/src/model/years_input.dart';
 import 'package:api_client_dart/src/model/years_page.dart';
@@ -382,6 +387,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'LateStudentResultDto':
       return LateStudentResultDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'LevelCountsDto':
+      return LevelCountsDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'LockInput':
       return LockInput.fromJson(value as Map<String, dynamic>) as ReturnType;
     case 'LoginInput':
@@ -510,6 +518,9 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'SkippedStudentDto':
       return SkippedStudentDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'StatisticsGroupDto':
+      return StatisticsGroupDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'StudentApprovedComponentDto':
       return StudentApprovedComponentDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
@@ -615,8 +626,17 @@ ReturnType deserialize<ReturnType, BaseType>(
     case 'YearClosingIssueDto':
       return YearClosingIssueDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
+    case 'YearComparisonDto':
+      return YearComparisonDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'YearComparisonItemDto':
+      return YearComparisonItemDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
     case 'YearPendingSummaryDto':
       return YearPendingSummaryDto.fromJson(value as Map<String, dynamic>)
+          as ReturnType;
+    case 'YearStatisticsDto':
+      return YearStatisticsDto.fromJson(value as Map<String, dynamic>)
           as ReturnType;
     case 'YearsDto':
       return YearsDto.fromJson(value as Map<String, dynamic>) as ReturnType;

@@ -70,6 +70,21 @@ class ReportsRepository {
   Future<Uint8List> export(num gradebookId) async =>
       (await api.getReportsApi().reportsExport(gradebookId: gradebookId)).data!;
 
+  Future<YearStatisticsDto> yearStatistics(num yearId, int term) async =>
+      (await api.getReportsApi().yearReportsStatistics(
+        yearId: yearId,
+        term: term,
+      )).data!;
+
+  Future<List<YearComparisonItemDto>> yearComparison(int term) async =>
+      (await api.getReportsApi().yearReportsComparison(term: term)).data!.items;
+
+  Future<Uint8List> exportYear(num yearId, int term) async =>
+      (await api.getReportsApi().yearReportsExport(
+        yearId: yearId,
+        term: term,
+      )).data!;
+
   Future<AdminOverviewData> adminOverview({num? yearId}) async {
     final response = await api.dio.get(
       '/api/v1/reports/admin/overview',

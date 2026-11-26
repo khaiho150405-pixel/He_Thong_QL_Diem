@@ -11,6 +11,7 @@ export type Table =
   | "gioi_han_dang_nhap"
   | "nam_hoc"
   | "lich_su_dong_nam"
+  | "ban_chot_nam"
   | "hoc_ky"
   | "lop"
   | "hoc_sinh"

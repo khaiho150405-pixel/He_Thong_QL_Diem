@@ -143,6 +143,9 @@ Class | Method | HTTP request | Description
 [*ReportsApi*](doc/ReportsApi.md) | [**adminReportsOverview**](doc/ReportsApi.md#adminreportsoverview) | **GET** /api/v1/reports/admin/overview |
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsExport**](doc/ReportsApi.md#reportsexport) | **GET** /api/v1/reports/gradebooks/{gradebookId}/export.xlsx |
 [*ReportsApi*](doc/ReportsApi.md) | [**reportsSummary**](doc/ReportsApi.md#reportssummary) | **GET** /api/v1/reports/gradebooks/{gradebookId}/summary |
+[*ReportsApi*](doc/ReportsApi.md) | [**yearReportsComparison**](doc/ReportsApi.md#yearreportscomparison) | **GET** /api/v1/reports/admin/years/comparison |
+[*ReportsApi*](doc/ReportsApi.md) | [**yearReportsExport**](doc/ReportsApi.md#yearreportsexport) | **GET** /api/v1/reports/admin/years/{yearId}/export.xlsx |
+[*ReportsApi*](doc/ReportsApi.md) | [**yearReportsStatistics**](doc/ReportsApi.md#yearreportsstatistics) | **GET** /api/v1/reports/admin/years/{yearId}/statistics |
 [*ReviewApi*](doc/ReviewApi.md) | [**reviewApprove**](doc/ReviewApi.md#reviewapprove) | **POST** /api/v1/gradebooks/{gradebookId}/recognition-tickets/{ticketId}/approve |
 [*SchoolApi*](doc/SchoolApi.md) | [**schoolProfileAdminRemoveLogo**](doc/SchoolApi.md#schoolprofileadminremovelogo) | **DELETE** /api/v1/admin/school-profile/logo |
 [*SchoolApi*](doc/SchoolApi.md) | [**schoolProfileAdminSetLogo**](doc/SchoolApi.md#schoolprofileadminsetlogo) | **PUT** /api/v1/admin/school-profile/logo |
@@ -262,6 +265,7 @@ Class | Method | HTTP request | Description
  - [HealthDto](doc/HealthDto.md)
  - [LateStudentInput](doc/LateStudentInput.md)
  - [LateStudentResultDto](doc/LateStudentResultDto.md)
+ - [LevelCountsDto](doc/LevelCountsDto.md)
  - [LockInput](doc/LockInput.md)
  - [LoginInput](doc/LoginInput.md)
  - [MappingDto](doc/MappingDto.md)
@@ -306,6 +310,7 @@ Class | Method | HTTP request | Description
  - [SemestersPage](doc/SemestersPage.md)
  - [SessionDto](doc/SessionDto.md)
  - [SkippedStudentDto](doc/SkippedStudentDto.md)
+ - [StatisticsGroupDto](doc/StatisticsGroupDto.md)
  - [StudentApprovedComponentDto](doc/StudentApprovedComponentDto.md)
  - [StudentResultSummaryDto](doc/StudentResultSummaryDto.md)
  - [StudentResultsDto](doc/StudentResultsDto.md)
@@ -344,7 +349,10 @@ Class | Method | HTTP request | Description
  - [YearClosingEventDto](doc/YearClosingEventDto.md)
  - [YearClosingInput](doc/YearClosingInput.md)
  - [YearClosingIssueDto](doc/YearClosingIssueDto.md)
+ - [YearComparisonDto](doc/YearComparisonDto.md)
+ - [YearComparisonItemDto](doc/YearComparisonItemDto.md)
  - [YearPendingSummaryDto](doc/YearPendingSummaryDto.md)
+ - [YearStatisticsDto](doc/YearStatisticsDto.md)
  - [YearsDto](doc/YearsDto.md)
  - [YearsInput](doc/YearsInput.md)
  - [YearsPage](doc/YearsPage.md)

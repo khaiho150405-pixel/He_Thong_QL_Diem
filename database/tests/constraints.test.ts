@@ -20,7 +20,7 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
   const runtime = await runtimePool.connect();
   try {
     const tables = await owner.query(
-      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','phien_ghi_nho','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu','he_so_hoc_ky','he_so_hoc_ky_chung','chot_cot_diem','lich_nhap_diem','lich_nhap_hoc_ky','danh_sach_phieu','mau_bang_diem','cot_mau','lo_nhan_dien','trang_lo_nhan_dien','lich_su_mien_diem','phieu_dieu_chinh','dong_dieu_chinh','hoc_sinh_lop','truong','lich_su_dong_nam')",
+      "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT IN ('_prisma_migrations','phien_lam_viec','phien_ghi_nho','nhat_ky_bao_mat','gioi_han_dang_nhap','gioi_han_tac_vu','khoa_idempotency','recognition_outbox','chinh_sach_xep_loai','tieu_chi_xep_loai','lich_su_tong_ket','thoi_khoa_bieu','he_so_hoc_ky','he_so_hoc_ky_chung','chot_cot_diem','lich_nhap_diem','lich_nhap_hoc_ky','danh_sach_phieu','mau_bang_diem','cot_mau','lo_nhan_dien','trang_lo_nhan_dien','lich_su_mien_diem','phieu_dieu_chinh','dong_dieu_chinh','hoc_sinh_lop','truong','lich_su_dong_nam','ban_chot_nam','ban_chot_hoc_sinh','ban_chot_mon')",
     );
     assert.equal(tables.rows[0].n, 16);
     const timetable = await owner.query(
@@ -50,6 +50,8 @@ test("PostgreSQL constraints and actual runtime permissions", async () => {
     await denied(
       "INSERT INTO lich_su_dong_nam(ma_nam_hoc,hanh_dong,ly_do,nguoi_thuc_hien) VALUES(1,'DONG','x',1)",
     );
+    await denied("UPDATE ban_chot_hoc_sinh SET ho_ten=ho_ten");
+    await denied("DELETE FROM ban_chot_mon");
     await denied("UPDATE truong SET ten_ngan=ten_ngan");
     await denied("DELETE FROM truong");
     await denied("TRUNCATE truong");

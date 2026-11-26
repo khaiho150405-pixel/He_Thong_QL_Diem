@@ -397,6 +397,7 @@ export class CatalogService {
               {
                 hoc_ky: "học kỳ",
                 lich_su_dong_nam: "lịch sử đóng năm học",
+                ban_chot_nam: "bản chốt cuối năm",
                 lop: "lớp học",
                 he_so_hoc_ky: "hệ số học kỳ cũ",
                 he_so_hoc_ky_chung: "hệ số học kỳ",
@@ -421,6 +422,7 @@ export class CatalogService {
           ["hoc_ky", { ma_nam_hoc: row.ma_nam_hoc }],
           ["lop", { ma_nam_hoc: row.ma_nam_hoc }],
           ["lich_su_dong_nam", { ma_nam_hoc: row.ma_nam_hoc }],
+          ["ban_chot_nam", { ma_nam_hoc: row.ma_nam_hoc }],
         ]);
       case "hoc_ky":
         return any([

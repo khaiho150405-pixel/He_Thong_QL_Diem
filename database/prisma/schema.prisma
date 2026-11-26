@@ -119,6 +119,7 @@ model nguoi_dung {
   lich_su_tong_ket_rows   lich_su_tong_ket[]
   gioi_han_tac_vu_rows    gioi_han_tac_vu[]
   lich_su_dong_nam_rows   lich_su_dong_nam[]
+  ban_chot_nam_rows       ban_chot_nam[]
 }
 
 model phien_ghi_nho {
@@ -187,6 +188,7 @@ model nam_hoc {
   hien_hanh         Boolean            @default(false)
   da_dong_luc       DateTime?          @db.Timestamptz(6)
   lich_su_dong_rows lich_su_dong_nam[]
+  ban_chot_rows     ban_chot_nam[]
   hoc_ky_rows       hoc_ky[]
   lop_rows          lop[]
 }
@@ -811,4 +813,61 @@ model lich_su_dong_nam {
   nguoi           nguoi_dung @relation(fields: [nguoi_thuc_hien], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([ma_nam_hoc, ma], map: "lich_su_dong_nam_nam_idx")
+}
+
+model ban_chot_nam {
+  ma            BigInt              @id @default(autoincrement())
+  ma_nam_hoc    Int
+  phien_ban     Int
+  ten_nam       String              @db.VarChar(20)
+  ten_truong    String              @db.VarChar(200)
+  ngay_bat_dau  DateTime            @db.Date
+  ngay_ket_thuc DateTime            @db.Date
+  nguoi_tao     Int
+  thoi_diem     DateTime            @default(now()) @db.Timestamptz(6)
+  nam_hoc       nam_hoc             @relation(fields: [ma_nam_hoc], references: [ma_nam_hoc], onDelete: Restrict, onUpdate: Restrict)
+  nguoi         nguoi_dung          @relation(fields: [nguoi_tao], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
+  hoc_sinh_rows ban_chot_hoc_sinh[]
+
+  @@unique([ma_nam_hoc, phien_ban])
+}
+
+model ban_chot_hoc_sinh {
+  ma_ban_chot         BigInt
+  ma_hoc_ky           Int
+  ten_hoc_ky          String         @db.VarChar(20)
+  thu_tu              Int            @db.SmallInt
+  ma_hoc_sinh         Int
+  ho_ten              String         @db.VarChar(100)
+  ngay_sinh           DateTime       @db.Date
+  ma_lop              Int
+  ten_lop             String         @db.VarChar(20)
+  khoi                Int            @db.SmallInt
+  gv_chu_nhiem        String         @db.VarChar(100)
+  trang_thai_ghi_danh String         @db.VarChar(20)
+  muc_hoc_tap         String?        @db.VarChar(10)
+  so_mon_diem         Int            @db.SmallInt
+  so_mon_nhan_xet     Int            @db.SmallInt
+  nang_muc            Boolean
+  ban_chot            ban_chot_nam   @relation(fields: [ma_ban_chot], references: [ma], onDelete: Restrict, onUpdate: Restrict)
+  mon_rows            ban_chot_mon[]
+
+  @@id([ma_ban_chot, ma_hoc_ky, ma_hoc_sinh])
+  @@index([ma_hoc_sinh], map: "ban_chot_hoc_sinh_hs_idx")
+}
+
+model ban_chot_mon {
+  ma_ban_chot   BigInt
+  ma_hoc_ky     Int
+  ma_hoc_sinh   Int
+  ma_mon        Int
+  ten_mon       String            @db.VarChar(100)
+  danh_gia_dat  Boolean
+  giao_vien     String?           @db.VarChar(100)
+  diem_tong_ket Decimal?          @db.Decimal(3, 1)
+  xep_loai      String?           @db.VarChar(20)
+  thanh_phan    Json
+  hoc_sinh      ban_chot_hoc_sinh @relation(fields: [ma_ban_chot, ma_hoc_ky, ma_hoc_sinh], references: [ma_ban_chot, ma_hoc_ky, ma_hoc_sinh], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([ma_ban_chot, ma_hoc_ky, ma_hoc_sinh, ma_mon])
 }

@@ -274,6 +274,7 @@ Quyết định mới của chủ dự án (ADR-0013): hệ số TX/GK/CK dùng 
 15. Môn Đạt/Không đạt chỉ nhập Đạt hoặc Không đạt, không tính vào ĐTB. Đạt khi mọi cột đã duyệt đều Đạt (ADR-0021); thiếu cột bắt buộc thì chưa tổng kết. Lưu kiểu đánh giá và hệ số trong snapshot.
 16. Tài khoản giáo viên/học sinh mới dùng số điện thoại 10 chữ số bắt đầu 0 làm username. Không tự đổi username tài khoản cũ. Hai vai trò không đổi tên; học sinh không đổi mật khẩu; danh mục quản trị chỉ QTV truy cập giao diện.
 17. Năm học đã đóng (ADR-0022) chỉ để xem và thống kê: database chặn mọi ghi vào dữ liệu của năm đó, kể cả bỏ công bố học kỳ. Chỉ QTV đóng hoặc mở lại, bắt buộc lý do và có lịch sử; chỉ đóng được khi không còn việc dở và năm đó không phải năm hiện hành.
+18. Đóng năm lập bản chốt cuối năm chỉ ghi thêm (ADR-0023); thống kê và mức học tập của năm đã đóng đọc phiên bản mới nhất. Ngoại lệ duy nhất là ẩn họ tên, ngày sinh khi xóa thông tin học sinh. Không lưu sẵn tệp xuất chứa thông tin học sinh.
 
 Thời khóa biểu là phần mở rộng được chủ dự án yêu cầu sau baseline: chỉ QTV CRUD, giáo viên/học sinh đọc trong phạm vi được phép. Học sinh không thấy phòng học; QTV chọn nhóm theo lớp/phòng.
 

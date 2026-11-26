@@ -2,6 +2,14 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Bản chốt cuối năm và thống kê năm học, đợt 2 (2026-11-26)
+
+- ADR-0023, migration `202611300001_year_snapshot`: ba bảng `ban_chot_*`, bản chốt lập khi đóng năm, `xep_muc_hoc_tap` đọc mức đã chốt, `xoa_hoc_sinh` ẩn cả bản chốt, hàm `thong_ke_nam_hoc`/`so_sanh_nam_hoc`.
+- API `reports/admin/years/{id}/statistics|export.xlsx`, `reports/admin/years/comparison`; Flutter màn `/admin/year-statistics`.
+- Kết quả: `pnpm check` 214/214, `test:db` 48/48 (cả database dựng từ rỗng, bước lập bản chốt bù đã thử), `test:integration` 58/58, `contracts:check` đạt, Flutter 757/757.
+- Chưa thử trên web/Android/iOS thật, chưa mở tệp Excel bằng Excel, chưa đo tải. `quan_ly_diem_dev` chưa áp ba migration `2026112800*`–`2026113000*`.
+- Còn lại: đợt 3 cấu trúc cột theo năm; đợt 4 kết quả cả năm (cần chủ dự án quyết định).
+
 ## Đóng năm học và tổng quan theo năm, đợt 1 lưu trữ năm học (2026-11-26)
 
 - ADR-0022, migration `202611290001_year_closing`: cột `nam_hoc.da_dong_luc`, bảng `lich_su_dong_nam`, hàm `kiem_san_sang_dong_nam` và `doi_trang_thai_nam_hoc`, trigger `a_year_closed_guard`.
