@@ -24,6 +24,7 @@ import {
 } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { SETTINGS, type Settings } from "../../../common/database.js";
+import { isPublicFacing } from "../../../common/config.js";
 import { allowQuery } from "../../../common/query.js";
 import {
   type Actor,
@@ -129,7 +130,7 @@ export class IdentityController {
     if (req.header("x-client-platform") === "web") {
       res.cookie("qld_session", result.token, {
         httpOnly: true,
-        secure: this.settings.environment !== "development",
+        secure: isPublicFacing(this.settings),
         sameSite: "strict",
         path: "/api/v1",
         maxAge: 8 * 3600000,
@@ -177,7 +178,7 @@ export class IdentityController {
       path: "/api/v1",
       httpOnly: true,
       sameSite: "strict",
-      secure: this.settings.environment !== "development",
+      secure: isPublicFacing(this.settings),
     });
   }
   @Post("password")

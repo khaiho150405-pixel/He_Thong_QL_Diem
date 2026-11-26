@@ -37,6 +37,7 @@ function Set-PilotEnvironment {
   Import-DotEnv
   $m = $env:MIGRATION_PASSWORD; $r = $env:RUNTIME_PASSWORD
   $env:APP_ENV = 'development'
+  $env:PUBLIC_DEPLOYMENT = $(if ($env:PILOT_DEPLOY -eq '1') { '1' } else { '0' })
   if ($env:PILOT_DEPLOY -ne '1') {
     $env:DATABASE_URL = "postgresql://app_runtime:$r@127.0.0.1:5433/$testDatabase"
     $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$m@127.0.0.1:5433/$testDatabase"

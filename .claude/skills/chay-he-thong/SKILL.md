@@ -30,6 +30,15 @@ Bản thử và bản deploy dùng chung cổng 3000/8080 nên chỉ chạy mộ
 - Kiểm tra từ ngoài mạng nhà (4G): `/api/v1/health/ready` trên API trả 200, `storage.../minio/health/live` trả 200.
 - 502 từ Cloudflare = tunnel chạy nhưng API/MinIO phía sau chưa bật → bấm `Khoi-Dong-Deploy.bat`. Client tự thử lại GET 2 lần khi mất kết nối/502-504; thông báo lỗi phân loại quá chậm / máy chủ bận / mất mạng.
 
+### An toàn khi mở công khai
+
+- Bản deploy đặt `PUBLIC_DEPLOYMENT=1`: cookie phiên có cờ `Secure`, tắt Swagger `/api/docs`, bật CSP và HSTS. `APP_ENV` vẫn là `development` vì PostgreSQL, Redis, MinIO và dịch vụ nhận dạng chạy nội bộ không TLS.
+- Trước migration, `up.ps1 -Deploy` sao lưu database vào `.local\backups` (`backup-db.ps1`, kèm tệp `.sha256`). Sao lưu chưa mã hóa và chưa gồm ảnh trong MinIO.
+- Trước khi bật dịch vụ, chạy `pnpm ops:deploy-check`: dừng nếu API dùng tài khoản root của MinIO, hoặc tài khoản quản trị/giáo viên (và 20 học sinh lấy ngẫu nhiên) còn dùng `SEED_PASSWORD` hay mật khẩu trong `DEPLOY_BLOCKED_PASSWORDS`. Bỏ qua một lần bằng `$env:DEPLOY_ALLOW_RISK='1'` (không khuyến nghị).
+- Tài khoản MinIO riêng: tự đặt `S3_ACCESS_KEY` (khác `MINIO_ROOT_USER`) và `S3_SECRET_KEY` mới trong `.env`, rồi `pnpm infra:up`; `storage-init` tạo tài khoản chỉ có quyền trên bucket ảnh. `ops:storage-restore-rehearsal` cần quyền trên bucket khác nên chạy bằng tài khoản root.
+- `up.ps1` không còn tự tắt chương trình lạ ở cổng 3000/8080/8000; thêm `-ForceFreePorts` nếu muốn tắt tiến trình node/python.
+- Tắt dịch vụ không đóng tunnel: dừng `cloudflared` (`Stop-Service cloudflared`, quyền Administrator) khi không deploy.
+
 ## Build và cập nhật APK
 
 1. `config/production.json` trỏ `https://api.eduscore.id.vn` (đóng sẵn vào APK lúc build).

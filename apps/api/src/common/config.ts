@@ -12,6 +12,14 @@ export interface AppConfig {
   recognitionServiceUrl: string;
   recognitionTimeoutMs: number;
   uploadRateLimitPerMinute: number;
+  publicDeployment?: boolean;
+}
+
+export function isPublicFacing(settings: {
+  environment: string;
+  publicDeployment?: boolean;
+}) {
+  return settings.publicDeployment ?? settings.environment !== "development";
 }
 
 export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
@@ -112,5 +120,7 @@ export function readConfig(env: NodeJS.ProcessEnv): AppConfig {
     recognitionServiceUrl,
     recognitionTimeoutMs,
     uploadRateLimitPerMinute,
+    publicDeployment:
+      environment !== "development" || env.PUBLIC_DEPLOYMENT === "1",
   };
 }

@@ -26,6 +26,7 @@ import {
   securityHeaders,
 } from "./common/http.js";
 import type { AppConfig } from "./common/config.js";
+import { isPublicFacing } from "./common/config.js";
 import * as domainModules from "./modules/index.js";
 import { DatabaseModule } from "./common/database.js";
 import { FilesModule } from "./modules/files/module.js";
@@ -56,6 +57,7 @@ export async function createApp(
         | "uploadRateLimitPerMinute"
         | "recognitionServiceUrl"
         | "recognitionTimeoutMs"
+        | "publicDeployment"
       >
     >,
   probe: DependencyProbe,
@@ -105,7 +107,8 @@ export async function createApp(
   })
   class AppModule {}
   const app = await NestFactory.create(AppModule, { logger: false });
-  app.use(securityHeaders(config.environment));
+  const publicFacing = isPublicFacing(config);
+  app.use(securityHeaders(publicFacing));
   app.use(requestContext);
   app.enableCors({
     origin: config.origins,
@@ -122,7 +125,7 @@ export async function createApp(
     }),
   );
   app.useGlobalFilters(new ErrorFilter());
-  if (config.environment === "development")
+  if (config.environment === "development" && !publicFacing)
     SwaggerModule.setup("api/docs", app, makeOpenApi(app));
   return app;
 }

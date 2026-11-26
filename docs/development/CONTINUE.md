@@ -2,6 +2,15 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Giảm rủi ro khi mở bản deploy ra Internet (2026-11-26; chưa commit)
+
+- `PUBLIC_DEPLOYMENT=1` (đặt bởi `stack.ps1` khi deploy) bật cookie `Secure`, tắt Swagger, thêm CSP/HSTS mà vẫn giữ `APP_ENV=development` cho backend nội bộ không TLS (`isPublicFacing` trong `common/config.ts`).
+- Mới: `apps/api/src/ops/public-deploy-check.ts` (`pnpm ops:deploy-check`), `scripts/recognition/pilot/backup-db.ps1`, `infrastructure/docker/storage-init.sh` (tạo tài khoản MinIO chỉ có quyền bucket ảnh khi `S3_ACCESS_KEY` khác root), biến `DEPLOY_BLOCKED_PASSWORDS`.
+- `up.ps1`: chạy `storage-init`; deploy sao lưu trước migration và chặn khi kiểm tra an toàn chưa đạt; không tự tắt tiến trình lạ nếu thiếu `-ForceFreePorts`. `down.ps1` cảnh báo tunnel còn chạy.
+- Đã kiểm: `pnpm check`; phân quyền tài khoản MinIO bằng user/bucket tạm (đã xóa); `backup-db.ps1` trên `qld_phase7_test`; `ops:deploy-check` trên DB test báo đúng các vi phạm. **Chưa chạy** `Khoi-Dong-Deploy.bat` đầu cuối.
+- Việc chủ máy phải làm trước lần deploy tới (nếu không sẽ bị chặn): tạo khóa MinIO riêng trong `.env`; đổi mật khẩu tài khoản còn dùng mật khẩu thử.
+- Chưa làm: tự khởi động lại dịch vụ, lịch sao lưu, xoay vòng log, CI cho nhánh `khai`.
+
 ## Excel: file mẫu nhập điểm và file bảng điểm tổng (2026-11-21; chưa commit)
 
 - File mẫu nhập điểm (`excel_import_dialog.dart`, dựng ở `buildGradeTemplate` trong `grade_import.dart`): chỉ còn 3 cột **STT, Họ tên, Điểm**, cho đúng một cột điểm do người dùng chọn ở hộp thoại (mặc định cột đầu tiên còn mở nhập). Điểm hiện có được điền sẵn (môn Đạt/Không đạt điền chữ). Không còn cột "Mã học sinh" và cột theo từng thành phần.

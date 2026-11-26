@@ -3,7 +3,8 @@
   [switch]$InstallApp,
   [string]$Serial = '',
   [switch]$NoBrowser,
-  [switch]$Deploy
+  [switch]$Deploy,
+  [switch]$ForceFreePorts
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -80,6 +81,9 @@ try {
   & $docker compose --env-file .env -f infrastructure/compose.yaml up -d --wait postgres redis minio
   if ($LASTEXITCODE -ne 0) { throw 'Không bật được PostgreSQL/Redis/MinIO (docker compose).' }
   Ok 'PostgreSQL / Redis / MinIO sẵn sàng'
+  & $docker compose --env-file .env -f infrastructure/compose.yaml run --rm storage-init
+  if ($LASTEXITCODE -ne 0) { throw 'Không chuẩn bị được bucket ảnh (storage-init).' }
+  Ok 'Bucket ảnh sẵn sàng'
 
   Step 'Kiểm tra cổng 3000 / 8080 / 8000'
   $ourPids = @()
@@ -100,6 +104,7 @@ try {
     return $false
   }
   $killed = $false
+  $blocked = @()
   foreach ($port in 3000, 8080, 8000) {
     $owners = @(Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue |
       Select-Object -ExpandProperty OwningProcess -Unique)
@@ -110,6 +115,7 @@ try {
       $name = if ($p) { $p.Name } else { '?' }
       Warn "Cổng $port bị tiến trình lạ chiếm: PID $owner ($name)"
       if ($p -and $p.CommandLine) { Write-Host "      $($p.CommandLine)" -ForegroundColor DarkGray }
+      if (-not $ForceFreePorts) { $blocked += "cổng $port (PID $owner, $name)"; continue }
       if ($name -notmatch '^(node|python|pythonw)(\.exe)?$') {
         throw "Cổng $port đang bị chương trình '$name' (PID $owner) dùng. Hãy tắt chương trình đó rồi bấm lại."
       }
@@ -126,6 +132,9 @@ try {
       Ok "Đã tắt PID $target"
       $killed = $true
     }
+  }
+  if ($blocked.Count -gt 0) {
+    throw "Chương trình khác đang dùng $($blocked -join '; '). Tắt chương trình đó rồi chạy lại, hoặc chạy up.ps1 -ForceFreePorts để tự tắt tiến trình node/python."
   }
   if ($killed) { Start-Sleep -Seconds 2 } else { Ok 'Không có tiến trình lạ' }
 
@@ -198,6 +207,10 @@ try {
       $dbCreated = $true
     }
   }
+  if ($Deploy) {
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'backup-db.ps1') -Database $pilotDb
+    if ($LASTEXITCODE -ne 0) { throw "Không sao lưu được $pilotDb nên không chạy migration." }
+  }
   $oldMigUrl = $env:MIGRATION_DATABASE_URL
   try {
     $env:MIGRATION_DATABASE_URL = "postgresql://app_migration:$migPass@127.0.0.1:5433/$pilotDb"
@@ -223,6 +236,15 @@ try {
     $env:MIGRATION_DATABASE_URL = $oldMigUrl
   }
   Ok "Database $pilotDb đã đủ migration, Prisma client mới"
+
+  if ($Deploy) {
+    Step 'Kiểm tra an toàn trước khi mở công khai'
+    & pnpm exec tsx apps/api/src/ops/public-deploy-check.ts
+    if ($LASTEXITCODE -ne 0) {
+      if ($env:DEPLOY_ALLOW_RISK -eq '1') { Warn 'Bỏ qua kiểm tra an toàn vì DEPLOY_ALLOW_RISK=1.' }
+      else { throw 'Chưa đạt kiểm tra an toàn (xem các dòng trên). Sửa rồi chạy lại; chỉ khi thật cần mới đặt DEPLOY_ALLOW_RISK=1.' }
+    } else { Ok 'Kiểm tra an toàn' }
+  }
 
   Step 'Bật dịch vụ (recognition, api, dispatcher, worker, web)'
   & powershell -NoProfile -ExecutionPolicy Bypass -File $stack start
