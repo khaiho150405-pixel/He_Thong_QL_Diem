@@ -266,6 +266,7 @@ export class CatalogService {
           AND: [
             scope,
             { [this.spec.id]: { gt: Number(cursor ?? 0) } },
+            ...(this.spec.table === "hoc_sinh" ? [{ da_xoa_luc: null }] : []),
             ...(yearId !== null && YEAR_SCOPES[this.spec.table]
               ? [YEAR_SCOPES[this.spec.table]!(yearId)]
               : []),

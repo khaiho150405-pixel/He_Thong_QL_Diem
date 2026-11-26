@@ -234,6 +234,7 @@ model hoc_sinh {
   ho_ten                String             @db.VarChar(100)
   ngay_sinh             DateTime           @db.Date
   dang_theo_hoc         Boolean            @default(true)
+  da_xoa_luc            DateTime?          @db.Timestamptz(6)
   ma_nguoi_dung_ref     nguoi_dung?        @relation(fields: [ma_nguoi_dung], references: [ma_nguoi_dung], onDelete: Restrict, onUpdate: Restrict)
   ma_lop_ref            lop                @relation(fields: [ma_lop], references: [ma_lop], onDelete: Restrict, onUpdate: Restrict)
   diem_thanh_phan_rows  diem_thanh_phan[]

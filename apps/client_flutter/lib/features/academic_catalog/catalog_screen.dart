@@ -471,14 +471,23 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   }
 
   Future<void> remove(Json row) async {
+    final student = spec.key == 'students';
     final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (ctx) => AppDialog(
-        title: 'Xóa bản ghi chưa sử dụng?',
-        confirmLabel: 'Xóa',
+        title: student
+            ? 'Xóa thông tin học sinh?'
+            : 'Xóa bản ghi chưa sử dụng?',
+        confirmLabel: student ? 'Xóa thông tin' : 'Xóa',
         danger: true,
         child: Text(
-          'Xóa ${rowLabel(row)}? Dữ liệu đã được tham chiếu sẽ được giữ lại.',
+          student
+              ? 'Xóa thông tin của ${row['ho_ten'] ?? rowLabel(row)}?\n\n'
+                    '• Chưa có điểm: hồ sơ bị xóa hẳn.\n'
+                    '• Đã có điểm: xóa họ tên, ngày sinh và khóa tài khoản; '
+                    'điểm và lịch sử được giữ lại dưới dạng ẩn danh.\n\n'
+                    'Không hoàn tác được.'
+              : 'Xóa ${rowLabel(row)}? Dữ liệu đã được tham chiếu sẽ được giữ lại.',
         ),
       ),
     );
@@ -1877,6 +1886,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 _softRefresh();
               }
               break;
+            case 'delete':
+              await remove(row);
+              break;
             case 'history':
               if (mounted) {
                 await showAppDialog<void>(
@@ -1935,6 +1947,17 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 Icon(Icons.history_rounded, size: 18),
                 SizedBox(width: 8),
                 Text('Lịch sử xếp lớp'),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            key: ValueKey('student-delete-$studentId'),
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_outline, size: 18, color: t.bad),
+                const SizedBox(width: 8),
+                Text('Xóa thông tin', style: TextStyle(color: t.bad)),
               ],
             ),
           ),

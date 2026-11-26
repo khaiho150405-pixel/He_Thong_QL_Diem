@@ -90,6 +90,9 @@ export async function transaction<T>(
             "Thành phần điểm này đang có phiếu chờ xử lý/đối chiếu; duyệt hoặc hủy phiếu đó trước.",
           INVALID_CANCEL_REQUEST: "Lý do hủy phải có từ 1 đến 200 ký tự.",
           VERSION_CONFLICT: "Phiếu vừa thay đổi, tải lại rồi thử lại.",
+          STUDENT_ALREADY_REMOVED: "Hồ sơ học sinh này đã được xóa.",
+          STUDENT_REMOVED_READONLY:
+            "Hồ sơ học sinh đã xóa, không sửa được nữa.",
           GRADEBOOK_YEAR_MISMATCH: "Lớp và học kỳ thuộc hai năm học khác nhau.",
           ASSIGNMENT_YEAR_MISMATCH:
             "Lớp và học kỳ của phân công thuộc hai năm học khác nhau.",
