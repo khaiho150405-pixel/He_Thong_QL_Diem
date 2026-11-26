@@ -27,6 +27,35 @@ export function blockedPasswords(env: NodeJS.ProcessEnv) {
   ];
 }
 
+const OPTIONAL_ROLES = ["GIAO_VIEN", "HOC_SINH"];
+
+export function allowedTestRoles(env: NodeJS.ProcessEnv) {
+  return new Set(
+    (env.DEPLOY_ALLOW_TEST_PASSWORD_ROLES ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter((value) => OPTIONAL_ROLES.includes(value)),
+  );
+}
+
+export function accountFindings(
+  counts: Map<string, number>,
+  allowed: Set<string>,
+) {
+  const problems: string[] = [];
+  const warnings: string[] = [];
+  for (const [role, total] of counts)
+    if (allowed.has(role))
+      warnings.push(
+        `${total} tài khoản ${role} vẫn dùng mật khẩu thử (được cho phép trong .env). Ai đoán được mật khẩu sẽ đăng nhập được.`,
+      );
+    else
+      problems.push(
+        `${total} tài khoản ${role} còn dùng mật khẩu thử. Đổi mật khẩu trước khi mở công khai.`,
+      );
+  return { problems, warnings };
+}
+
 export async function weakAccountCounts(
   accounts: AccountHash[],
   passwords: string[],
@@ -71,10 +100,10 @@ async function main() {
       await readAccounts(databaseUrl),
       passwords,
     );
-    for (const [role, total] of counts)
-      problems.push(
-        `${total} tài khoản ${role} còn dùng mật khẩu thử. Đổi mật khẩu trước khi mở công khai.`,
-      );
+    const found = accountFindings(counts, allowedTestRoles(process.env));
+    problems.push(...found.problems);
+    for (const warning of found.warnings)
+      process.stdout.write(`! ${warning}\n`);
   }
   if (!problems.length) {
     process.stdout.write("Kiểm tra trước khi mở công khai: đạt.\n");

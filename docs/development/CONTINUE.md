@@ -2,6 +2,15 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Cho giữ mật khẩu thử của giáo viên, học sinh khi deploy (2026-11-27)
+
+- Chủ dự án chọn: giữ mật khẩu thử của giáo viên và học sinh, bắt buộc đổi mật khẩu quản trị viên.
+- `DEPLOY_ALLOW_TEST_PASSWORD_ROLES` (chỉ nhận `GIAO_VIEN`, `HOC_SINH`) biến lỗi của hai vai trò thành cảnh báo; `.env` máy này đã đặt cả hai.
+- Lệnh mới `pnpm ops:set-admin-password` (gõ mật khẩu ẩn, xóa phiên cũ, ghi `PASSWORD_RESET_LOCAL`).
+- `.env` đã có khóa MinIO riêng chỉ có quyền trên bucket ảnh (bản cũ: `.local/backups/env-truoc-khoa-s3-*`); đã kiểm đọc ảnh cũ, ghi, xóa và bị từ chối tạo bucket.
+- Đã thử trên bản sao database: đổi mật khẩu admin rồi `ops:deploy-check` đạt. Database deploy chưa đổi. `pnpm check` 215/215.
+- Rủi ro còn lại: ai đoán được mật khẩu thử đăng nhập được tài khoản giáo viên và sửa điểm; tắt tunnel hoặc đổi mật khẩu sau buổi bảo vệ.
+
 ## Bỏ mô tả không phù hợp trên giao diện (2026-11-27)
 
 - Theo yêu cầu chủ dự án: bỏ mô tả dưới lời chào và dưới tiêu đề biểu đồ ở tổng quan, bỏ mã UC, nhãn "DB Thực tế", các câu "Máy chỉ đề xuất"; sửa chữ nói sai hành vi (phiếu hủy không bị xóa ảnh, ý nghĩa Xanh/Vàng/Đỏ, tỷ lệ Xanh không phải độ chính xác, danh sách bảng mới tạo, quy tắc hết hạn, hệ số học kỳ, mã mẫu nội bộ E0330113).

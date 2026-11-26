@@ -4,10 +4,13 @@ import { test } from "node:test";
 import { createApp } from "../src/app.js";
 import { isPublicFacing, readConfig } from "../src/common/config.js";
 import {
+  accountFindings,
+  allowedTestRoles,
   blockedPasswords,
   storageProblems,
   weakAccountCounts,
 } from "../src/ops/public-deploy-check.js";
+import { passwordProblem } from "../src/ops/set-admin-password.js";
 
 const env = {
   APP_ENV: "development",
@@ -55,6 +58,34 @@ for (const publicDeployment of [false, true])
       await app.close();
     }
   });
+
+test("test passwords can be allowed for teachers and students, never for the administrator", () => {
+  assert.deepEqual([...allowedTestRoles({})], []);
+  const allowed = allowedTestRoles({
+    DEPLOY_ALLOW_TEST_PASSWORD_ROLES:
+      " GIAO_VIEN, HOC_SINH ,QUAN_TRI_VIEN,khac",
+  });
+  assert.deepEqual([...allowed], ["GIAO_VIEN", "HOC_SINH"]);
+  const found = accountFindings(
+    new Map([
+      ["QUAN_TRI_VIEN", 1],
+      ["GIAO_VIEN", 10],
+      ["HOC_SINH", 4],
+    ]),
+    allowed,
+  );
+  assert.equal(found.problems.length, 1);
+  assert.match(found.problems[0]!, /1 tài khoản QUAN_TRI_VIEN/);
+  assert.equal(found.warnings.length, 2);
+  assert.equal(passwordProblem("ngan", {}) !== null, true);
+  assert.equal(
+    passwordProblem("mat-khau-thu-dung-chung", {
+      SEED_PASSWORD: "mat-khau-thu-dung-chung",
+    }) !== null,
+    true,
+  );
+  assert.equal(passwordProblem("mot-mat-khau-rieng-dai", {}), null);
+});
 
 test("deploy check rejects the MinIO root account and shared test passwords", async () => {
   assert.equal(

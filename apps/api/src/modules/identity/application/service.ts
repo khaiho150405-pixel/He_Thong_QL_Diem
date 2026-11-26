@@ -63,7 +63,7 @@ async function displayNameOf(
   }
   return null;
 }
-async function passwordHash(password: string) {
+export async function passwordHash(password: string) {
   if (
     typeof password !== "string" ||
     password.length < 12 ||
