@@ -2,6 +2,15 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Học sinh vào lớp sau, đánh giá theo Thông tư 22 và thông báo lỗi rõ ràng (2026-11-26)
+
+- ADR-0021, migration `202611280001_tt22_late_students`: tự tạo ô khi ghi danh; không ghi 0 cho học sinh vào sau; môn tính điểm không còn xếp loại; môn nhận xét Đạt khi mọi lần đều Đạt; hàm `xep_muc_hoc_tap` xếp mức học kỳ.
+- Thông báo lỗi: bảng chung `apps/api/src/common/db-messages.ts`; tổng kết bảng chưa khóa trả `GRADEBOOK_NOT_LOCKED`, sửa điểm sau hạn chỉ rõ phải gửi đơn điều chỉnh. Test DB kiểm mọi mã lỗi trong hàm SQL đều có thông báo.
+- Sửa trong lúc kiểm thử: truy vấn xuất Excel thiếu `GROUP BY`; `newClassification` của lịch sử tổng kết thành nullable.
+- Kết quả: `pnpm check` 214/214, `test:db` 46/46 (cả trên database dựng từ rỗng), `test:integration` đạt đủ 56 ca, `contracts:check` đạt, Flutter 752/752, `flutter analyze` sạch.
+- Chưa kiểm trên giao diện thật/Android/iOS cho thay đổi này. `quan_ly_diem_dev` chưa áp migration (deploy tự sao lưu rồi áp). Các script thử cũ `.local/tmp/e2e3.mjs`, `e2e4.mjs` còn theo hành vi cũ.
+- Giới hạn: chưa có kết quả cả năm; lớp dưới 6 môn tính điểm hiện "Chưa đủ môn để xếp mức"; môn chỉ có cột không bắt buộc, không ai có điểm vẫn chặn công bố (gỡ bằng đơn điều chỉnh).
+
 ## Xóa thông tin học sinh, kiểm thử đầu cuối và cắt dữ liệu còn mỗi khối một lớp (2026-11-27)
 
 - ADR-0020: migration `202611270001_student_removal` (hàm `xoa_hoc_sinh`, cột `hoc_sinh.da_xoa_luc`), module `students` gọi hàm; menu học sinh trên Flutter có "Xóa thông tin". Test `database/tests/student-removal.test.ts`.

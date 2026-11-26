@@ -183,8 +183,8 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
         .map((item) => [item.finalScore, item.classification])
         .sort((a, b) => a[0]!.localeCompare(b[0]!)),
       [
-        ["4.0", "CHUA_CONG_BO"],
-        ["8.7", "CHUA_CONG_BO"],
+        ["4.0", null],
+        ["8.7", null],
       ],
     );
     assert.deepEqual(
@@ -333,7 +333,7 @@ test("UC14-15 calculates approved grades, snapshots policy and preserves append-
       (item) => item.studentId === linkedStudentId,
     )!.finalScore;
     assert.equal(published[0]!.finalScore, expectedScore);
-    assert.notEqual(published[0]!.classification, null);
+    assert.equal(published[0]!.classification, null);
     const publishedOverview = await finalResults.myOverview(studentActor, term);
     assert.equal(
       publishedOverview.items[0]!.termAverage,

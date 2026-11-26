@@ -293,9 +293,11 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
     switch (code.trim().toUpperCase()) {
       case 'GIOI':
       case 'GIỎI':
+      case 'DIEM_TU_8':
         return t.pri;
       case 'KHA':
       case 'KHÁ':
+      case 'DIEM_6_5':
         return t.brightness == Brightness.dark
             ? t.priLink
             : Color.lerp(t.pri, t.priLine, 0.45)!;
@@ -307,6 +309,7 @@ class _ReportsPanelState extends ConsumerState<ReportsPanel> {
       case 'YẾU':
       case 'KEM':
       case 'KÉM':
+      case 'DIEM_DUOI_5':
         return t.bad;
       default:
         return t.neu;

@@ -242,7 +242,7 @@ void main() {
             'STT',
             'Học sinh',
             'Điểm tổng kết',
-            'Xếp loại',
+            'Kết quả',
             'Chi tiết',
           ]) {
             expect(find.text(column), findsOneWidget);

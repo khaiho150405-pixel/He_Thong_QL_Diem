@@ -171,7 +171,7 @@ test("school deadlines enforce windows, atomically zero missing grades, preserve
     );
     try {
       await assert.rejects(service.processDue(), ConflictException);
-      assert.equal((await service.cells(teacher, book.id)).book.version, 0);
+      assert.equal((await service.cells(teacher, book.id)).book.version, 1);
     } finally {
       await owner.query(`DROP TRIGGER ${name} ON lich_su_sua_diem`);
       await owner.query(`DROP FUNCTION ${name}()`);
@@ -919,6 +919,109 @@ test("late student after every column is locked: publishing is blocked, then fix
         reason,
       }),
       codeIs("TERM_ALREADY_PUBLISHED"),
+    );
+  } finally {
+    await f.done();
+  }
+});
+
+test("students who join a class late get empty cells and are not zero-filled for columns assessed before them", async () => {
+  const f = await fixture();
+  try {
+    const subject = await f.subject("join", [["TX", true]]);
+    const enrol = async (cls: number, name: string) =>
+      (
+        await f.owner.query(
+          "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,$2,'2010-01-01') RETURNING ma_hoc_sinh",
+          [cls, name],
+        )
+      ).rows[0].ma_hoc_sinh as number;
+    const prepare = async (name: string, subjectId = subject.id) => {
+      const cls = await f.klass(name, 2);
+      await f.assign(cls, subjectId);
+      const book = await f.service.create(f.teacher, {
+        classId: cls,
+        subjectId,
+        termId: f.term,
+      });
+      return { cls, book };
+    };
+
+    const first = await prepare("jn1");
+    await f.service.setSemesterDeadline(
+      f.admin,
+      f.term,
+      "TX",
+      f.window(-60, 60),
+    );
+    await f.owner.query(
+      "UPDATE hoc_sinh_lop SET tao_luc=now()-interval '3 days' WHERE ma_lop=$1",
+      [first.cls],
+    );
+    const lateId = await enrol(first.cls, "Học sinh chuyển đến");
+    const opened = await bookView(f, first.book.id);
+    assert.equal(opened.items.length, 3);
+    await f.expire("TX");
+    await f.service.processDue();
+    const closed = await bookView(f, first.book.id);
+    assert.equal(closed.status, "DA_CHOT");
+    for (const cell of closed.items) {
+      assert.ok(cell.columnLocked);
+      assert.equal(cell.value, cell.studentId === lateId ? null : "0.0");
+      assert.equal(
+        cell.status,
+        cell.studentId === lateId ? "CHUA_CO" : "DA_DUYET",
+      );
+    }
+    const pending = await f.owner.query(
+      "SELECT 1 FROM nhat_ky_bao_mat WHERE hanh_dong='GRADE_LATE_STUDENT_PENDING' AND doi_tuong=$1",
+      [`${first.book.id}:${subject.ids[0]}:${lateId}`],
+    );
+    assert.equal(pending.rowCount, 1);
+    const calculated = await f.finalResults.calculate(
+      f.teacher,
+      first.book.id,
+      uniqueKey("calc"),
+      { expectedVersion: closed.version, reason: "Tổng kết" },
+    );
+    assert.equal(calculated.calculatedStudents, 2);
+    assert.deepEqual(
+      calculated.skipped.map((s) => s.studentId),
+      [lateId],
+    );
+
+    const other = await f.subject("join2", [["GK", true]]);
+    const second = await prepare("jn2", other.id);
+    await f.service.setSemesterDeadline(
+      f.admin,
+      f.term,
+      "GK",
+      f.window(-60, 60),
+    );
+    const before = await bookView(f, second.book.id);
+    await f.service.batchUpdate(f.teacher, second.book.id, uniqueKey("score"), {
+      expectedVersion: before.version,
+      changes: [
+        { cellId: before.items[0]!.id, value: "7.0", reason: "Nhập điểm" },
+      ],
+    });
+    const joinedId = await enrol(second.cls, "Học sinh vào sau");
+    await f.owner.query(
+      "UPDATE lich_nhap_hoc_ky SET mo_luc=clock_timestamp(),dong_luc=clock_timestamp()+interval '50 milliseconds' WHERE ma_hoc_ky=$1 AND loai_he_so='GK'",
+      [f.term],
+    );
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await f.service.processDue();
+    const done = await bookView(f, second.book.id);
+    assert.deepEqual(
+      done.items
+        .map((c) => [c.studentId === joinedId, c.value])
+        .sort((a, b) => String(a).localeCompare(String(b))),
+      [
+        [false, "0.0"],
+        [false, "7.0"],
+        [true, null],
+      ],
     );
   } finally {
     await f.done();

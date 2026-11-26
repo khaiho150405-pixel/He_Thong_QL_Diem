@@ -19,7 +19,8 @@ import 'repository.dart';
 import 'student_results_screen.dart'
     show classificationBadgeOf, classificationLabel;
 
-Widget _classificationBadge(String code, {bool dot = true}) {
+Widget _classificationBadge(String? code, {bool dot = true}) {
+  if (code == null) return const Text('—');
   final badge = classificationBadgeOf(code);
   return AppBadge(badge.label, tone: badge.tone, dot: dot);
 }
@@ -871,7 +872,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                     DataColumn(
                       label: SizedBox(
                         width: colClassif,
-                        child: const Center(child: Text('Xếp loại')),
+                        child: const Center(child: Text('Kết quả')),
                       ),
                     ),
                     DataColumn(
@@ -1109,7 +1110,8 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
 
                     final availableClassifications =
                         rawItems
-                            .map((i) => i.classification.trim().toUpperCase())
+                            .map((i) => i.classification?.trim().toUpperCase())
+                            .whereType<String>()
                             .toSet()
                             .toList()
                           ..sort();
@@ -1123,7 +1125,7 @@ class FinalResultsPanelState extends ConsumerState<FinalResultsPanel> {
                         return false;
                       }
                       if (_classificationFilter != null &&
-                          item.classification.trim().toUpperCase() !=
+                          item.classification?.trim().toUpperCase() !=
                               _classificationFilter) {
                         return false;
                       }
@@ -1269,8 +1271,11 @@ class _FinalResultHistoryDialog extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${item.oldScore ?? 'Chưa có'} → ${item.newScore} · '
-          '${classificationLabel(item.newClassification)}',
+          [
+            '${item.oldScore ?? 'Chưa có'} → ${item.newScore}',
+            if (item.newClassification case final code?)
+              classificationLabel(code),
+          ].join(' · '),
           style: theme.textTheme.titleSmall?.copyWith(
             color: t.ink,
             fontWeight: FontWeight.w600,

@@ -15,7 +15,7 @@ abstract class _$FinalResultDtoCWProxy {
 
   FinalResultDto finalScore(String finalScore);
 
-  FinalResultDto classification(String classification);
+  FinalResultDto classification(String? classification);
 
   FinalResultDto weightVersion(String weightVersion);
 
@@ -34,7 +34,7 @@ abstract class _$FinalResultDtoCWProxy {
     num studentId,
     String studentName,
     String finalScore,
-    String classification,
+    String? classification,
     String weightVersion,
     String policyVersion,
     DateTime calculatedAt,
@@ -61,7 +61,7 @@ class _$FinalResultDtoCWProxyImpl implements _$FinalResultDtoCWProxy {
   FinalResultDto finalScore(String finalScore) => this(finalScore: finalScore);
 
   @override
-  FinalResultDto classification(String classification) =>
+  FinalResultDto classification(String? classification) =>
       this(classification: classification);
 
   @override
@@ -113,7 +113,7 @@ class _$FinalResultDtoCWProxyImpl implements _$FinalResultDtoCWProxy {
       classification: classification == const $CopyWithPlaceholder()
           ? _value.classification
           // ignore: cast_nullable_to_non_nullable
-          : classification as String,
+          : classification as String?,
       weightVersion: weightVersion == const $CopyWithPlaceholder()
           ? _value.weightVersion
           // ignore: cast_nullable_to_non_nullable
@@ -160,7 +160,7 @@ FinalResultDto _$FinalResultDtoFromJson(Map<String, dynamic> json) =>
         studentId: $checkedConvert('studentId', (v) => v as num),
         studentName: $checkedConvert('studentName', (v) => v as String),
         finalScore: $checkedConvert('finalScore', (v) => v as String),
-        classification: $checkedConvert('classification', (v) => v as String),
+        classification: $checkedConvert('classification', (v) => v as String?),
         weightVersion: $checkedConvert('weightVersion', (v) => v as String),
         policyVersion: $checkedConvert('policyVersion', (v) => v as String),
         calculatedAt: $checkedConvert(

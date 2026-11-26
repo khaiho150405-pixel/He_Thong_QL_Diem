@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { DB_MESSAGES } from "../../../common/db-messages.js";
 import {
   BadRequestException,
   ForbiddenException,
@@ -46,6 +47,10 @@ function page<T extends { id: string }>(rows: T[]) {
   };
 }
 
+function published(classification: string | null, visible: unknown) {
+  return visible || classification === null ? classification : "CHUA_CONG_BO";
+}
+
 export function calculationInput(input: unknown) {
   if (!input || typeof input !== "object" || Array.isArray(input))
     throw new BadRequestException();
@@ -64,7 +69,7 @@ export function calculationInput(input: unknown) {
     data.reason.trim().length < 1 ||
     data.reason.trim().length > 500
   )
-    throw new BadRequestException();
+    throw new BadRequestException(DB_MESSAGES.INVALID_FINAL_RESULT_REQUEST);
   return {
     expectedVersion: data.expectedVersion,
     reason: data.reason.trim(),
@@ -149,9 +154,7 @@ export class FinalResultsService {
         ...page(
           rows.map((r) => ({
             ...r,
-            classification: term?.da_cong_bo
-              ? r.classification
-              : "CHUA_CONG_BO",
+            classification: published(r.classification, term?.da_cong_bo),
           })),
         ),
         exemptedStudents: groups.exempted.length,
@@ -200,7 +203,7 @@ export class FinalResultsService {
         exempted: result.exempted ?? [],
         results: result.results.map((r) => ({
           ...r,
-          classification: term?.da_cong_bo ? r.classification : "CHUA_CONG_BO",
+          classification: published(r.classification, term?.da_cong_bo),
         })),
       };
     });
@@ -223,9 +226,7 @@ export class FinalResultsService {
         rows.map((r) => ({
           ...r,
           oldClassification: term?.da_cong_bo ? r.oldClassification : null,
-          newClassification: term?.da_cong_bo
-            ? r.newClassification
-            : "CHUA_CONG_BO",
+          newClassification: published(r.newClassification, term?.da_cong_bo),
         })),
       );
     });

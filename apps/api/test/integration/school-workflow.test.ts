@@ -305,7 +305,7 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
       expectedVersion: locked.version,
       reason: "Test school results",
     });
-    assert.ok(result.results.every((r) => r.classification === "CHUA_CONG_BO"));
+    assert.ok(result.results.every((r) => r.classification === null));
     assert.ok(
       (await finalResults.myResults(studentActor, term)).every(
         (r) =>
@@ -381,8 +381,7 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
       changes: pfCells.map((c) => ({
         cellId: c.id,
         value:
-          c.componentName === "CK" ||
-          (c.studentId === linkedStudentId && c.componentName === "GK")
+          c.studentId === linkedStudentId || c.componentName === "CK"
             ? "10.0"
             : "0.0",
         reason: "Pass/fail fixture",
@@ -405,20 +404,32 @@ test("school workflow: column locks, publication, global coefficients, pass/fail
       "pf-calculate",
       { expectedVersion: pfBook.version, reason: "Weighted pass/fail" },
     );
-    assert.ok(pfResult.results.every((r) => r.finalScore === "10.0"));
+    assert.deepEqual(
+      pfResult.results
+        .map((r) => [
+          r.studentId === linkedStudentId,
+          r.finalScore,
+          r.classification,
+        ])
+        .sort((a, b) => Number(a[0]) - Number(b[0])),
+      [
+        [false, "0.0", "CHUA_CONG_BO"],
+        [true, "10.0", "CHUA_CONG_BO"],
+      ],
+    );
     await semesters.save(admin, termInput, term);
     const pfSummary = await reports.summary(teacher, pf.id);
     assert.equal(pfSummary.average, null);
-    assert.equal(pfSummary.passed, 2);
+    assert.equal(pfSummary.passed, 1);
     const mine = await finalResults.myResults(studentActor, term);
-    assert.ok(mine.every((r) => r.classification !== null));
+    assert.ok(mine.every((r) => r.passFail || r.classification === null));
     assert.equal(mine.find((r) => r.passFail)!.classification, "DAT");
     const summary = (await finalResults.myOverview(studentActor, term)).summary;
     const numericScore = mine.find((r) => !r.passFail)!.finalScore;
     assert.equal(Number(summary!.averageScore), Number(numericScore));
     assert.ok(mine.every((r) => r.finalScore !== null));
     assert.ok(mine.every((r) => r.termAverage === summary!.averageScore));
-    assert.ok(mine.every((r) => r.termClassification !== null));
+    assert.ok(mine.every((r) => r.termClassification === "CHUA_DU_MON"));
     await assert.rejects(
       finalResults.calculate(teacher, book.id, "after-publish", {
         expectedVersion: locked.version,

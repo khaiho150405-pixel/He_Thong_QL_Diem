@@ -15,6 +15,19 @@ import '../school_profile/school_profile.dart';
 
 ({AppBadgeTone tone, String label}) classificationBadgeOf(String code) {
   switch (code.trim().toUpperCase()) {
+    case 'TOT':
+    case 'TỐT':
+      return (tone: AppBadgeTone.ok, label: 'Tốt');
+    case 'CHUA_DU_MON':
+      return (tone: AppBadgeTone.neutral, label: 'Chưa đủ môn để xếp mức');
+    case 'DIEM_TU_8':
+      return (tone: AppBadgeTone.ok, label: 'Từ 8,0');
+    case 'DIEM_6_5':
+      return (tone: AppBadgeTone.info, label: '6,5 – 7,9');
+    case 'DIEM_5':
+      return (tone: AppBadgeTone.neutral, label: '5,0 – 6,4');
+    case 'DIEM_DUOI_5':
+      return (tone: AppBadgeTone.bad, label: 'Dưới 5,0');
     case 'GIOI':
     case 'GIỎI':
       return (tone: AppBadgeTone.ok, label: 'Giỏi');
@@ -492,9 +505,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                     DataColumn(
                       label: SizedBox(
                         width: colClassif,
-                        child: Center(
-                          child: Text('Xếp loại', style: headStyle),
-                        ),
+                        child: Center(child: Text('Kết quả', style: headStyle)),
                       ),
                     ),
                   ],
@@ -614,7 +625,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                           SizedBox(
                             width: colSubject,
                             child: Text(
-                              'Điểm TB học kỳ',
+                              'Kết quả học tập học kỳ',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: t.heading,
@@ -649,9 +660,7 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
                           SizedBox(
                             width: colClassif,
                             child: Center(
-                              child:
-                                  termAverage != null &&
-                                      termClassification != null
+                              child: termClassification != null
                                   ? _classificationBadge(termClassification)
                                   : dash(),
                             ),
@@ -801,10 +810,10 @@ class _StudentResultsScreenState extends ConsumerState<StudentResultsScreen> {
         : item.finalScore;
     final code = item.classification;
     final badge = code == null ? null : studentClassificationOf(code);
-    return AppBadge(
-      '$score · ${badge?.label ?? 'Chưa xếp loại'}',
-      tone: badge?.tone ?? AppBadgeTone.neutral,
-    );
+    if (badge == null) {
+      return AppBadge(score ?? 'Chưa công bố', tone: AppBadgeTone.neutral);
+    }
+    return AppBadge('$score · ${badge.label}', tone: badge.tone);
   }
 }
 

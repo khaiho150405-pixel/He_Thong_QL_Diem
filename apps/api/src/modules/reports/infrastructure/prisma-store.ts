@@ -64,24 +64,27 @@ export class PrismaReportStore implements ReportStore {
         summary: async (gradebookId) => {
           const rows = await tx.$queryRaw<GradebookSummary[]>`
             WITH scoped AS (
-              SELECT k.*, (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=k.ma_mon) AS pass_fail,
-                CASE WHEN (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=k.ma_mon) THEN k.diem_tong_ket=10.0 ELSE coalesce((SELECT c.dat FROM public.chinh_sach_xep_loai p
-                  JOIN public.tieu_chi_xep_loai c USING(ma_chinh_sach)
-                  WHERE p.phien_ban=k.bo_he_so->'classificationPolicy'->>'version'
-                    AND c.ma_xep_loai=k.xep_loai LIMIT 1),false) END AS dat
+              SELECT k.diem_tong_ket, m.danh_gia_dat AS pass_fail,
+                CASE WHEN m.danh_gia_dat THEN k.xep_loai
+                  WHEN k.diem_tong_ket>=8.0 THEN 'DIEM_TU_8'
+                  WHEN k.diem_tong_ket>=6.5 THEN 'DIEM_6_5'
+                  WHEN k.diem_tong_ket>=5.0 THEN 'DIEM_5'
+                  ELSE 'DIEM_DUOI_5' END AS nhom,
+                CASE WHEN m.danh_gia_dat THEN k.diem_tong_ket=10.0 ELSE k.diem_tong_ket>=5.0 END AS dat
               FROM public.ket_qua_tong_ket k
               JOIN public.bang_diem b ON b.ma_bang_diem=${gradebookId}::integer
                 AND b.ma_mon=k.ma_mon AND b.ma_hoc_ky=k.ma_hoc_ky
+              JOIN public.mon_hoc m ON m.ma_mon=k.ma_mon
               JOIN public.hoc_sinh_cua_lop(b.ma_lop,b.ma_hoc_ky) hs ON hs.ma_hoc_sinh=k.ma_hoc_sinh
             ), dist AS (
-              SELECT xep_loai,count(*)::integer AS students FROM scoped GROUP BY xep_loai
+              SELECT nhom,count(*)::integer AS students FROM scoped GROUP BY nhom
             )
             SELECT ${gradebookId}::integer AS "gradebookId",count(*)::integer AS students,
               round(avg(diem_tong_ket) FILTER(WHERE NOT pass_fail),1)::text AS average,max(diem_tong_ket) FILTER(WHERE NOT pass_fail)::text AS highest,
               min(diem_tong_ket) FILTER(WHERE NOT pass_fail)::text AS lowest,count(*) FILTER(WHERE dat)::integer AS passed,
               count(*) FILTER(WHERE NOT dat)::integer AS failed,
-              coalesce((SELECT jsonb_agg(jsonb_build_object('classification',xep_loai,
-                'students',students) ORDER BY xep_loai) FROM dist),'[]'::jsonb) AS distribution
+              coalesce((SELECT jsonb_agg(jsonb_build_object('classification',nhom,
+                'students',students) ORDER BY nhom) FROM dist),'[]'::jsonb) AS distribution
             FROM scoped`;
           return rows[0]!;
         },
@@ -91,7 +94,8 @@ export class PrismaReportStore implements ReportStore {
               'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,'value',CASE WHEN d.trang_thai='DA_DUYET'
               THEN d.gia_tri::text ELSE NULL END,'exempt',coalesce(d.trang_thai='MIEN',false),'kind',tp.loai_he_so) ORDER BY tp.thu_tu_hien_thi)
               FILTER(WHERE tp.ma_thanh_phan IS NOT NULL),'[]'::jsonb) AS components,
-            k.diem_tong_ket::text AS "finalScore",k.xep_loai AS classification
+            k.diem_tong_ket::text AS "finalScore",
+            CASE WHEN (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=b.ma_mon) THEN k.xep_loai END AS classification
           FROM public.bang_diem b CROSS JOIN LATERAL public.hoc_sinh_cua_lop(b.ma_lop,b.ma_hoc_ky) hs
           LEFT JOIN public.thanh_phan_diem tp ON tp.ma_mon=b.ma_mon
           LEFT JOIN public.diem_thanh_phan d ON d.ma_bang_diem=b.ma_bang_diem
@@ -99,7 +103,7 @@ export class PrismaReportStore implements ReportStore {
           LEFT JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
             AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
           WHERE b.ma_bang_diem=${gradebookId}::integer AND hs.con_hoc
-          GROUP BY hs.ma_hoc_sinh,hs.ho_ten,k.diem_tong_ket,k.xep_loai ORDER BY hs.ma_hoc_sinh`,
+          GROUP BY b.ma_mon,hs.ma_hoc_sinh,hs.ho_ten,k.diem_tong_ket,k.xep_loai ORDER BY hs.ma_hoc_sinh`,
         recordExport: async (actorId, gradebookId) => {
           const count = await tx.nhat_ky_bao_mat.count({
             where: {
@@ -144,34 +148,25 @@ export class PrismaReportStore implements ReportStore {
           });
 
           const distRows = await tx.$queryRaw<
-            { xep_loai: string; count: number }[]
+            { level: string | null; count: number }[]
           >`
-            SELECT xep_loai, count(*)::integer AS count
-            FROM public.ket_qua_tong_ket
-            WHERE xep_loai IS NOT NULL
-            GROUP BY xep_loai
+            SELECT public.xep_muc_hoc_tap(s.ma_hoc_sinh,s.ma_hoc_ky)->>'level' AS level,
+              count(*)::integer AS count
+            FROM (
+              SELECT DISTINCT k.ma_hoc_sinh,k.ma_hoc_ky FROM public.ket_qua_tong_ket k
+              JOIN public.hoc_ky h USING(ma_hoc_ky) WHERE h.da_cong_bo
+            ) s GROUP BY 1
           `;
-          const totalDist = distRows.reduce(
-            (sum, r) => sum + Number(r.count),
-            0,
-          );
+          const rated = distRows.filter((r) => r.level !== null);
+          const totalDist = rated.reduce((sum, r) => sum + Number(r.count), 0);
           const bucketColors: Record<string, string> = {
-            GIOI: "#173F43",
+            TOT: "#173F43",
             KHA: "#2D7D75",
-            TRUNG_BINH: "#C69C3C",
-            YEU: "#C87858",
-          };
-          const bucketOf = (code: string) => {
-            const normalized = code.trim().toUpperCase();
-            if (normalized === "DAT") return "TRUNG_BINH";
-            if (normalized === "CHUA_DAT" || normalized === "KHONG_DAT")
-              return "YEU";
-            return normalized;
+            DAT: "#C69C3C",
+            CHUA_DAT: "#C87858",
           };
           const gradeDistribution = Object.keys(bucketColors).map((code) => {
-            const cnt = distRows
-              .filter((r) => bucketOf(r.xep_loai) === code)
-              .reduce((sum, r) => sum + Number(r.count), 0);
+            const cnt = Number(rated.find((r) => r.level === code)?.count ?? 0);
             const pct = totalDist > 0 ? Math.round((cnt / totalDist) * 100) : 0;
             return {
               code,

@@ -536,7 +536,8 @@ test("UC09-10 part 2: batch update, lock, history, idempotency, IDOR and version
       "INSERT INTO hoc_sinh(ma_lop,ho_ten,ngay_sinh) VALUES($1,'HS giả mới','2010-01-01')",
       [cls],
     );
-    assert.equal((await service.cells(teacher, book.id)).items.length, 6);
+    assert.equal((await service.cells(teacher, book.id)).items.length, 8);
+    version++;
     const syncInput = { expectedVersion: version };
     const synced = await request(
       "/" + book.id + "/sync-roster",

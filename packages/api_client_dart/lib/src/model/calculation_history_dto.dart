@@ -55,8 +55,8 @@ class CalculationHistoryDto {
   @JsonKey(name: r'newScore', required: true, includeIfNull: false)
   final String newScore;
 
-  @JsonKey(name: r'newClassification', required: true, includeIfNull: false)
-  final String newClassification;
+  @JsonKey(name: r'newClassification', required: true, includeIfNull: true)
+  final String? newClassification;
 
   @JsonKey(name: r'reason', required: true, includeIfNull: false)
   final String reason;
@@ -86,7 +86,7 @@ class CalculationHistoryDto {
       (oldScore == null ? 0 : oldScore.hashCode) +
       (oldClassification == null ? 0 : oldClassification.hashCode) +
       newScore.hashCode +
-      newClassification.hashCode +
+      (newClassification == null ? 0 : newClassification.hashCode) +
       reason.hashCode +
       calculatedAt.hashCode;
 

@@ -92,6 +92,15 @@ export class ErrorFilter implements ExceptionFilter {
       429: "RATE_LIMITED",
       503: "DEPENDENCY_UNAVAILABLE",
     };
+    const defaults: Record<number, string> = {
+      400: "Dữ liệu gửi lên không hợp lệ; kiểm tra lại các trường vừa nhập.",
+      401: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn; hãy đăng nhập lại.",
+      403: "Bạn không có quyền thực hiện thao tác này.",
+      404: "Không tìm thấy dữ liệu được yêu cầu, có thể đã bị xóa.",
+      409: "Dữ liệu vừa thay đổi hoặc không còn cho phép thao tác này; tải lại rồi thử lại.",
+      413: "Tệp tải lên quá lớn.",
+      429: "Bạn thao tác quá nhanh; đợi một lát rồi thử lại.",
+    };
     const detail = error instanceof HttpException ? error.getResponse() : null;
     const message =
       typeof detail === "string"
@@ -121,7 +130,9 @@ export class ErrorFilter implements ExceptionFilter {
       message:
         status >= 500
           ? "Dịch vụ tạm thời không sẵn sàng."
-          : (safeMessage ?? "Yêu cầu không hợp lệ."),
+          : (safeMessage ??
+            defaults[status] ??
+            "Không thực hiện được yêu cầu."),
       details: coded?.details ?? null,
       requestId: response.getHeader("x-request-id"),
     });

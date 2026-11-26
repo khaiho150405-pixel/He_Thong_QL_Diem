@@ -29,7 +29,13 @@ export class FinalResultDto {
   @ApiProperty({ type: Number }) studentId!: number;
   @ApiProperty({ type: String }) studentName!: string;
   @ApiProperty({ type: String, example: "8.5" }) finalScore!: string;
-  @ApiProperty({ type: String, example: "GIOI" }) classification!: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description:
+      "Chỉ môn đánh giá bằng nhận xét có mức DAT/CHUA_DAT (Thông tư 22/2021); môn có điểm trả null",
+  })
+  classification!: string | null;
   @ApiProperty({ type: String }) weightVersion!: string;
   @ApiProperty({ type: String }) policyVersion!: string;
   @ApiProperty({ type: String, format: "date-time" }) calculatedAt!: string;
@@ -104,7 +110,8 @@ export class CalculationHistoryDto {
   @ApiProperty({ type: String, nullable: true })
   oldClassification!: string | null;
   @ApiProperty({ type: String }) newScore!: string;
-  @ApiProperty({ type: String }) newClassification!: string;
+  @ApiProperty({ type: String, nullable: true })
+  newClassification!: string | null;
   @ApiProperty({ type: String }) reason!: string;
   @ApiProperty({ type: String, format: "date-time" }) calculatedAt!: string;
 }

@@ -190,6 +190,17 @@ class _ClassificationPolicyScreenState
                                 const SizedBox(height: AppSpacing.md),
                               ],
                               Text(
+                                'Theo Thông tư 22/2021/TT-BGDĐT, mức Tốt, Khá, Đạt, Chưa đạt '
+                                'được xếp theo kết quả của tất cả các môn trong học kỳ. '
+                                'Các ngưỡng ở đây không còn dùng để xếp loại từng môn; '
+                                'chỉ số chữ số làm tròn còn được áp dụng.',
+                                key: const ValueKey('tt22-policy-note'),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
                                 'Mỗi lần lưu tạo một phiên bản mới. Kết quả đã tính giữ '
                                 'snapshot policy cũ để có thể giải thích về sau.',
                                 style: theme.textTheme.bodyMedium,

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { DB_MESSAGES } from "../../../common/db-messages.js";
 import {
   BadRequestException,
   ConflictException,
@@ -77,24 +78,25 @@ export interface GradeChange {
 }
 export function gradeChanges(input: unknown): GradeChange[] {
   if (!Array.isArray(input) || !input.length || input.length > 100)
-    throw new BadRequestException();
+    throw new BadRequestException(DB_MESSAGES.INVALID_BATCH_SIZE);
   const seen = new Set<string>();
   return input.map((change) => {
     const c = objectInput(change, ["cellId", "value", "reason"]);
     bigintCursor(c.cellId as string, false);
-    if (seen.has(c.cellId as string)) throw new BadRequestException();
+    if (seen.has(c.cellId as string))
+      throw new BadRequestException(DB_MESSAGES.DUPLICATE_CELL);
     seen.add(c.cellId as string);
     if (
       c.value !== null &&
       (typeof c.value !== "string" || !/^(10[.]0|[0-9][.][0-9])$/.test(c.value))
     )
-      throw new BadRequestException();
+      throw new BadRequestException(DB_MESSAGES.INVALID_GRADE);
     if (
       typeof c.reason !== "string" ||
       !c.reason.trim() ||
       c.reason.length > 500
     )
-      throw new BadRequestException();
+      throw new BadRequestException(DB_MESSAGES.INVALID_REASON);
     return {
       cellId: c.cellId as string,
       value: c.value as string | null,
@@ -189,7 +191,7 @@ export class GradebooksService {
     expectedVersion: unknown,
     operation: string,
     payload: unknown,
-    action: (tx: GradebookUnit, version: number) => Promise<T>,
+    action: (tx: GradebookUnit, version: number, book: Gradebook) => Promise<T>,
   ) {
     id(bookId);
     if (typeof idemKey !== "string" || !/^[a-zA-Z0-9_-]{1,64}$/.test(idemKey))
@@ -210,10 +212,11 @@ export class GradebooksService {
         operation,
       );
       if (existing) {
-        if (existing.requestHash !== hash) throw new ConflictException();
+        if (existing.requestHash !== hash)
+          throw new ConflictException(DB_MESSAGES.IDEMPOTENCY_MISMATCH);
         return existing.result as T;
       }
-      const result = await action(tx, version);
+      const result = await action(tx, version, book);
       await tx.saveIdempotencyKey(idemKey, actor.id, operation, hash, result);
       return result;
     });
@@ -228,7 +231,15 @@ export class GradebooksService {
       body.expectedVersion,
       "BATCH_UPDATE",
       changes,
-      (tx, v) => tx.updateGrades(actor.sessionHash, bookId, v, changes),
+      (tx, v, book) => {
+        if (book.status === "DA_CHOT")
+          throw new ConflictException(DB_MESSAGES.GRADEBOOK_NOT_EDITABLE);
+        if (book.version !== v)
+          throw new ConflictException(
+            DB_MESSAGES.GRADEBOOK_VERSION_OR_STATE_CONFLICT,
+          );
+        return tx.updateGrades(actor.sessionHash, bookId, v, changes);
+      },
     );
   }
   processDue() {

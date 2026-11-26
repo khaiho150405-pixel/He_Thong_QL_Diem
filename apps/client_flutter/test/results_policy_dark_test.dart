@@ -214,7 +214,7 @@ void main() {
     expect(unknown.label, 'XUAT_SAC_LA');
   });
 
-  group('Hàng Điểm TB học kỳ lấy từ API, client không tự tính (B-07)', () {
+  group('Hàng kết quả học kỳ lấy từ API, client không tự tính (B-07)', () {
     Map<String, dynamic> subj(
       String name,
       String score, {
@@ -293,7 +293,7 @@ void main() {
             'classRank': null,
           },
         );
-        expect(find.text('Điểm TB học kỳ'), findsOneWidget);
+        expect(find.text('Kết quả học tập học kỳ'), findsOneWidget);
         expect(find.text('Giỏi'), findsNothing);
         expect(find.text('Khá'), findsNothing);
         expect(find.text('Chờ công bố'), findsNothing);
@@ -346,7 +346,7 @@ void main() {
         expect(find.text('Đạt'), findsOneWidget);
         expect(find.text('Chưa đạt'), findsOneWidget);
         expect(find.text('XUAT_SAC_LA'), findsOneWidget);
-        expect(find.text('Điểm TB học kỳ'), findsOneWidget);
+        expect(find.text('Kết quả học tập học kỳ'), findsOneWidget);
         expect(tester.takeException(), isNull);
 
         await tester.tap(find.text('Thẻ theo môn'));

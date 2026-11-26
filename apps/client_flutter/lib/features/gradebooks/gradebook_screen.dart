@@ -1812,7 +1812,7 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                       constraints: BoxConstraints(
                         minWidth: sizes.classification,
                       ),
-                      child: const Text('Xếp loại'),
+                      child: const Text('Kết quả'),
                     ),
                   ),
                 ],
@@ -1910,11 +1910,16 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
     );
   }
 
-  Widget _classificationBadge(String code) => AppBadge(
-    classificationLabel(code),
-    tone: classificationBadgeOf(code).tone,
-    dot: false,
-  );
+  String _resultSuffix(String? code) =>
+      code == null ? '' : ' · Kết quả: ${classificationLabel(code)}';
+
+  Widget _classificationBadge(String? code) => code == null
+      ? const Text('—')
+      : AppBadge(
+          classificationLabel(code),
+          tone: classificationBadgeOf(code).tone,
+          dot: false,
+        );
 
   Widget _mobileGrid(
     Map<num, List<GradeCellDto>> students,
@@ -1968,8 +1973,8 @@ class _GradebookEditorState extends ConsumerState<GradebookEditor> {
                         ),
                         child: Text(
                           'Điểm tổng kết: '
-                          '${resultScore(results[entry.value.first.studentId]?.finalScore)} · '
-                          'Xếp loại: ${classificationLabel(results[entry.value.first.studentId]?.classification ?? 'CHUA_CONG_BO')}',
+                          '${resultScore(results[entry.value.first.studentId]?.finalScore)}'
+                          '${_resultSuffix(results[entry.value.first.studentId]?.classification)}',
                           style: Theme.of(context).textTheme.labelMedium
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),

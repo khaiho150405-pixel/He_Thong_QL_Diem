@@ -47,8 +47,9 @@ class FinalResultDto {
   @JsonKey(name: r'finalScore', required: true, includeIfNull: false)
   final String finalScore;
 
-  @JsonKey(name: r'classification', required: true, includeIfNull: false)
-  final String classification;
+  /// Chỉ môn đánh giá bằng nhận xét có mức DAT/CHUA_DAT (Thông tư 22/2021); môn có điểm trả null
+  @JsonKey(name: r'classification', required: true, includeIfNull: true)
+  final String? classification;
 
   @JsonKey(name: r'weightVersion', required: true, includeIfNull: false)
   final String weightVersion;
@@ -78,7 +79,7 @@ class FinalResultDto {
       studentId.hashCode +
       studentName.hashCode +
       finalScore.hashCode +
-      classification.hashCode +
+      (classification == null ? 0 : classification.hashCode) +
       weightVersion.hashCode +
       policyVersion.hashCode +
       calculatedAt.hashCode;

@@ -634,10 +634,14 @@ test("mid-year transfer keeps the old class's grades and blocks invalid moves", 
       ],
     );
     assert.deepEqual(
-      (await f.gradebooks.missingStudents(f.admin, bookNew.id)).items.map(
-        (s) => s.studentId,
-      ),
-      [mover],
+      (await f.gradebooks.missingStudents(f.admin, bookNew.id)).items,
+      [],
+    );
+    assert.deepEqual(
+      (await f.gradebooks.cells(f.teacher, bookNew.id)).items
+        .filter((c) => c.studentId === mover)
+        .map((c) => [c.value, c.status]),
+      [[null, "CHUA_CO"]],
     );
 
     const view = await f.gradebooks.cells(f.teacher, book1.id);

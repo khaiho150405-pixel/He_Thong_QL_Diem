@@ -146,7 +146,6 @@ test("Excel export has STT, Họ tên, ĐGTX, ĐGGK, ĐGCK, ĐTB and a readable 
     "ĐGGK",
     "ĐGCK",
     "ĐTB",
-    "Xếp loại",
   ]);
   const first = (sheet.getRow(3).values as unknown[]).slice(1, 7);
   assert.deepEqual(first, [1, "Nguyễn Hải Anh", 9, 7.5, 9.8, 8.8]);

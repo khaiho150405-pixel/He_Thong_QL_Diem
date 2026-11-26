@@ -5,7 +5,7 @@ export interface FinalResult {
   studentId: number;
   studentName: string;
   finalScore: string;
-  classification: string;
+  classification: string | null;
   weightVersion: string;
   policyVersion: string;
   calculatedAt: string;
@@ -47,7 +47,7 @@ export interface CalculationHistory {
   oldScore: string | null;
   oldClassification: string | null;
   newScore: string;
-  newClassification: string;
+  newClassification: string | null;
   reason: string;
   calculatedAt: string;
 }

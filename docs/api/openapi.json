@@ -11442,7 +11442,11 @@
           "studentId": { "type": "number" },
           "studentName": { "type": "string" },
           "finalScore": { "type": "string", "example": "8.5" },
-          "classification": { "type": "string", "example": "GIOI" },
+          "classification": {
+            "type": "string",
+            "nullable": true,
+            "description": "Chỉ môn đánh giá bằng nhận xét có mức DAT/CHUA_DAT (Thông tư 22/2021); môn có điểm trả null"
+          },
           "weightVersion": { "type": "string" },
           "policyVersion": { "type": "string" },
           "calculatedAt": { "type": "string", "format": "date-time" }
@@ -11576,7 +11580,7 @@
           "oldScore": { "type": "string", "nullable": true },
           "oldClassification": { "type": "string", "nullable": true },
           "newScore": { "type": "string" },
-          "newClassification": { "type": "string" },
+          "newClassification": { "type": "string", "nullable": true },
           "reason": { "type": "string" },
           "calculatedAt": { "type": "string", "format": "date-time" }
         },

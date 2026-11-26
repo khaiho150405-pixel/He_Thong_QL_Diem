@@ -19,7 +19,7 @@ abstract class _$CalculationHistoryDtoCWProxy {
 
   CalculationHistoryDto newScore(String newScore);
 
-  CalculationHistoryDto newClassification(String newClassification);
+  CalculationHistoryDto newClassification(String? newClassification);
 
   CalculationHistoryDto reason(String reason);
 
@@ -38,7 +38,7 @@ abstract class _$CalculationHistoryDtoCWProxy {
     String? oldScore,
     String? oldClassification,
     String newScore,
-    String newClassification,
+    String? newClassification,
     String reason,
     DateTime calculatedAt,
   });
@@ -72,7 +72,7 @@ class _$CalculationHistoryDtoCWProxyImpl
   CalculationHistoryDto newScore(String newScore) => this(newScore: newScore);
 
   @override
-  CalculationHistoryDto newClassification(String newClassification) =>
+  CalculationHistoryDto newClassification(String? newClassification) =>
       this(newClassification: newClassification);
 
   @override
@@ -128,7 +128,7 @@ class _$CalculationHistoryDtoCWProxyImpl
       newClassification: newClassification == const $CopyWithPlaceholder()
           ? _value.newClassification
           // ignore: cast_nullable_to_non_nullable
-          : newClassification as String,
+          : newClassification as String?,
       reason: reason == const $CopyWithPlaceholder()
           ? _value.reason
           // ignore: cast_nullable_to_non_nullable
@@ -179,7 +179,10 @@ CalculationHistoryDto _$CalculationHistoryDtoFromJson(
       (v) => v as String?,
     ),
     newScore: $checkedConvert('newScore', (v) => v as String),
-    newClassification: $checkedConvert('newClassification', (v) => v as String),
+    newClassification: $checkedConvert(
+      'newClassification',
+      (v) => v as String?,
+    ),
     reason: $checkedConvert('reason', (v) => v as String),
     calculatedAt: $checkedConvert(
       'calculatedAt',

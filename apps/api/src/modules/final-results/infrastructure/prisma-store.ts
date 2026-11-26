@@ -109,7 +109,8 @@ export class PrismaFinalResultStore implements FinalResultStore {
           },
           list: (gradebookId, after) => tx.$queryRaw<FinalResult[]>`
             SELECT k.ma_ket_qua::text AS id,hs.ma_hoc_sinh AS "studentId",hs.ho_ten AS "studentName",
-              k.diem_tong_ket::text AS "finalScore",k.xep_loai AS classification,
+              k.diem_tong_ket::text AS "finalScore",
+              CASE WHEN (SELECT danh_gia_dat FROM public.mon_hoc WHERE ma_mon=k.ma_mon) THEN k.xep_loai END AS classification,
               k.phien_ban_he_so AS "weightVersion",
               k.bo_he_so->'classificationPolicy'->>'version' AS "policyVersion",
               to_char(k.ngay_tinh AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "calculatedAt"
@@ -167,8 +168,9 @@ export class PrismaFinalResultStore implements FinalResultStore {
                   'componentName',tp.ten_thanh_phan,'coefficient',public.he_so_ap_dung(tp.ma_thanh_phan,b.ma_hoc_ky)::text,
                   'value',d.gia_tri::text,'status',d.trang_thai) ORDER BY tp.thu_tu_hien_thi) AS components,
                 CASE WHEN h.da_cong_bo THEN k.diem_tong_ket::text ELSE NULL END AS "finalScore",
-                CASE WHEN h.da_cong_bo THEN k.xep_loai ELSE NULL END AS classification,
-                ta.average_score::text AS "termAverage",ta.classification AS "termClassification"
+                CASE WHEN h.da_cong_bo AND m.danh_gia_dat THEN k.xep_loai ELSE NULL END AS classification,
+                tt.average_score::text AS "termAverage",
+                CASE WHEN h.da_cong_bo THEN coalesce(tt.result->>'level','CHUA_DU_MON') END AS "termClassification"
               FROM public.hoc_sinh hs
               JOIN public.hoc_sinh_lop g ON g.ma_hoc_sinh=hs.ma_hoc_sinh
               JOIN public.bang_diem b ON b.ma_lop=g.ma_lop
@@ -182,29 +184,25 @@ export class PrismaFinalResultStore implements FinalResultStore {
               LEFT JOIN public.ket_qua_tong_ket k ON k.ma_hoc_sinh=hs.ma_hoc_sinh
                 AND k.ma_mon=b.ma_mon AND k.ma_hoc_ky=b.ma_hoc_ky
               LEFT JOIN LATERAL (
-                SELECT t.average_score,(
-                  SELECT c.ma_xep_loai FROM public.chinh_sach_xep_loai p
-                  JOIN public.tieu_chi_xep_loai c ON c.ma_chinh_sach=p.ma_chinh_sach
-                  WHERE p.dang_ap_dung AND round(t.average_score,p.so_chu_so_lam_tron)>=c.diem_toi_thieu
-                  ORDER BY c.diem_toi_thieu DESC LIMIT 1) AS classification
-                FROM (
-                  SELECT avg(k2.diem_tong_ket)::numeric(4,2) AS average_score
+                SELECT public.xep_muc_hoc_tap(hs.ma_hoc_sinh,b.ma_hoc_ky) AS result,(
+                  SELECT avg(k2.diem_tong_ket)::numeric(4,2)
                   FROM public.bang_diem b2
                   JOIN public.ket_qua_tong_ket k2 ON k2.ma_hoc_sinh=hs.ma_hoc_sinh
                     AND k2.ma_mon=b2.ma_mon AND k2.ma_hoc_ky=b2.ma_hoc_ky
                   JOIN LATERAL public.hoc_sinh_cua_lop(b2.ma_lop,b2.ma_hoc_ky) s
                     ON s.ma_hoc_sinh=hs.ma_hoc_sinh AND s.con_hoc
                   WHERE b2.ma_lop=b.ma_lop AND b2.ma_hoc_ky=b.ma_hoc_ky
-                    AND b2.trang_thai='DA_CHOT' AND h.da_cong_bo
+                    AND b2.trang_thai='DA_CHOT'
                     AND NOT EXISTS(SELECT 1 FROM public.mon_hoc m2 WHERE m2.ma_mon=b2.ma_mon AND m2.danh_gia_dat)
-                ) t WHERE t.average_score IS NOT NULL
-              ) ta ON true
+                ) AS average_score
+                WHERE h.da_cong_bo
+              ) tt ON true
               WHERE hs.ma_nguoi_dung=${userId}::integer
                 AND (b.trang_thai='DA_CHOT' OR EXISTS(SELECT 1 FROM public.chot_cot_diem c WHERE c.ma_bang_diem=b.ma_bang_diem AND c.ma_thanh_phan=d.ma_thanh_phan))
                 AND (${termId}::integer IS NULL OR b.ma_hoc_ky=${termId}::integer)
                 AND (${yearId}::integer IS NULL OR h.ma_nam_hoc=${yearId}::integer)
               GROUP BY b.ma_bang_diem,m.ma_mon,m.ten_mon,h.ma_hoc_ky,h.ten,h.ma_nam_hoc,ny.ten,cl.ten_lop,
-                k.diem_tong_ket,k.xep_loai,k.ngay_tinh,h.da_cong_bo,ta.average_score,ta.classification
+                k.diem_tong_ket,k.xep_loai,k.ngay_tinh,h.da_cong_bo,m.danh_gia_dat,tt.result,tt.average_score
               ORDER BY h.ma_hoc_ky DESC,m.ten_mon`,
           studentYears: async (userId) => {
             const rows = await tx.$queryRaw<

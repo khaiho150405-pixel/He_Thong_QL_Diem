@@ -405,7 +405,7 @@ model lich_su_tong_ket {
   xep_loai_cu    String?          @db.VarChar(20)
   bo_he_so_cu    Json?
   diem_moi       Decimal          @db.Decimal(3, 1)
-  xep_loai_moi   String           @db.VarChar(20)
+  xep_loai_moi   String?          @db.VarChar(20)
   bo_he_so_moi   Json
   ly_do          String           @db.VarChar(500)
   thoi_diem      DateTime         @default(now()) @db.Timestamptz(6)

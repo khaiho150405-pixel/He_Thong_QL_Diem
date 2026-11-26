@@ -11,7 +11,6 @@ import {
   gradebookActor,
 } from "../../authorization/application/gradebook-policy.js";
 import { classStudentOrder } from "../../../common/student-order.js";
-import { classificationLabel } from "../../../common/labels.js";
 import { SchoolService } from "../../school/application/service.js";
 import { REPORT_STORE, type ReportStore } from "./port.js";
 
@@ -106,13 +105,7 @@ export class ReportsService {
       const book = await tx.findBook(gradebookId);
       if (!book) throw new NotFoundException();
       await gradebookAccess(tx.authorization, actor, book);
-      const term = await tx.authorization.find("hoc_ky", {
-        ma_hoc_ky: book.termId,
-      });
-      const rawRows = (await tx.exportRows(gradebookId)).map((r) => ({
-        ...r,
-        classification: term?.da_cong_bo ? r.classification : "CHUA_CONG_BO",
-      }));
+      const rawRows = await tx.exportRows(gradebookId);
       if (!rawRows.length) throw new NotFoundException();
 
       const order = classStudentOrder(
@@ -158,13 +151,7 @@ export class ReportsService {
       const sheet = workbook.addWorksheet("Bang diem", {
         views: [{ state: "frozen", ySplit: 2 }],
       });
-      const headers = [
-        "STT",
-        "Họ tên",
-        ...columnLabels(columns),
-        "ĐTB",
-        "Xếp loại",
-      ];
+      const headers = ["STT", "Họ tên", ...columnLabels(columns), "ĐTB"];
       sheet.columns = [
         { key: "stt", width: 8 },
         { key: "studentName", width: 28 },
@@ -173,7 +160,6 @@ export class ReportsService {
           width: 16,
         })),
         { key: "finalScore", width: 16 },
-        { key: "classification", width: 18 },
       ];
       sheet.addRow([safeCell(profile.name)]);
       sheet.mergeCells(1, 1, 1, headers.length);
@@ -195,7 +181,6 @@ export class ReportsService {
             ]),
           ),
           finalScore: gradeCell(row.finalScore),
-          classification: classificationLabel(row.classification),
         });
       }
       sheet.getRow(2).font = { bold: true, color: { argb: "FFFFFFFF" } };

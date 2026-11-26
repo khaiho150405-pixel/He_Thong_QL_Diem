@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 **studentId** | **num** |  |
 **studentName** | **String** |  |
 **finalScore** | **String** |  |
-**classification** | **String** |  |
+**classification** | **String** | Chỉ môn đánh giá bằng nhận xét có mức DAT/CHUA_DAT (Thông tư 22/2021); môn có điểm trả null |
 **weightVersion** | **String** |  |
 **policyVersion** | **String** |  |
 **calculatedAt** | [**DateTime**](DateTime.md) |  |
