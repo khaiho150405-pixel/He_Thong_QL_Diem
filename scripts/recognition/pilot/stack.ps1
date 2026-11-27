@@ -76,20 +76,29 @@ function Set-PilotEnvironment {
 
 function Get-Command-Line([string]$name) {
   switch ($name) {
-    'recognition' { @{ File = (Join-Path $root '.local\venv-ml\Scripts\python.exe'); Args = @('-m', 'uvicorn', 'src.api.main:app', '--app-dir', 'apps/recognition-service', '--host', '127.0.0.1', '--port', '8000') } }
-    'api' { @{ File = 'node'; Args = @('--import', 'tsx', 'apps/api/src/main.ts') } }
-    'dispatcher' { @{ File = 'node'; Args = @('--import', 'tsx', 'apps/api/src/modules/recognition/dispatch.ts') } }
-    'worker' { @{ File = 'node'; Args = @('--import', 'tsx', 'apps/api/src/modules/recognition/run-worker.ts') } }
-    'web' { @{ File = 'node'; Args = @('scripts/serve-web.mjs') } }
+    'recognition' { @{ File = (Join-Path $root '.local\venv-ml\Scripts\python.exe'); Marker = 'src.api.main:app'; Args = @('-m', 'uvicorn', 'src.api.main:app', '--app-dir', 'apps/recognition-service', '--host', '127.0.0.1', '--port', '8000') } }
+    'api' { @{ File = 'node'; Marker = 'apps/api/src/main.ts'; Args = @('--import', 'tsx', 'apps/api/src/main.ts') } }
+    'dispatcher' { @{ File = 'node'; Marker = 'recognition/dispatch.ts'; Args = @('--import', 'tsx', 'apps/api/src/modules/recognition/dispatch.ts') } }
+    'worker' { @{ File = 'node'; Marker = 'recognition/run-worker.ts'; Args = @('--import', 'tsx', 'apps/api/src/modules/recognition/run-worker.ts') } }
+    'web' { @{ File = 'node'; Marker = 'scripts/serve-web.mjs'; Args = @('scripts/serve-web.mjs') } }
   }
 }
 
-function Test-Running([string]$name) {
+function Get-Service-Process([string]$name) {
   $file = Join-Path $pidDir "$name.pid"
-  if (-not (Test-Path $file)) { return $false }
+  if (-not (Test-Path $file)) { return $null }
   $id = [int](Get-Content $file)
-  return [bool](Get-Process -Id $id -ErrorAction SilentlyContinue)
+  $p = Get-CimInstance Win32_Process -Filter "ProcessId=$id" -ErrorAction SilentlyContinue
+  if (-not $p) { return $null }
+  if ($p.CommandLine) {
+    if ($p.CommandLine -like "*$((Get-Command-Line $name).Marker)*") { return $p }
+    return $null
+  }
+  if ($p.Name -match '^(node|python|pythonw)\.exe$') { return $p }
+  return $null
 }
+
+function Test-Running([string]$name) { return [bool](Get-Service-Process $name) }
 
 function Start-Service-Pilot([string]$name) {
   if (Test-Running $name) { Write-Output "${name}: running"; return }
@@ -102,12 +111,19 @@ function Start-Service-Pilot([string]$name) {
 
 function Stop-Service-Pilot([string]$name) {
   $file = Join-Path $pidDir "$name.pid"
-  if (Test-Path $file) {
-    $id = [int](Get-Content $file)
-    if (Get-Process -Id $id -ErrorAction SilentlyContinue) { & taskkill /PID $id /T /F | Out-Null; Write-Output "${name}: stopped" }
-    else { Write-Output "${name}: not running" }
-    Remove-Item $file
-  } else { Write-Output "${name}: no PID file" }
+  if (-not (Test-Path $file)) { Write-Output "${name}: no PID file"; return }
+  $p = Get-Service-Process $name
+  if ($p) {
+    $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    & taskkill /PID $p.ProcessId /T /F 2>&1 | Out-Null
+    $killExit = $LASTEXITCODE
+    $ErrorActionPreference = $old
+    if ($killExit -ne 0 -and (Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue)) {
+      throw "Không tắt được $name (PID $($p.ProcessId)). Chạy lại bằng quyền Administrator."
+    }
+    Write-Output "${name}: stopped"
+  } else { Write-Output "${name}: not running" }
+  Remove-Item $file
 }
 
 $targets = if ($Service -eq 'all') { $all } else { @($Service) }

@@ -17,7 +17,7 @@ Mọi lệnh chạy ở **thư mục gốc repo**. Trên PowerShell dùng `pnpm.
 | `Build-APK-Release.bat`  | Build APK production ký khóa release, ra `Khoi_Dong_Nhan_Dang\APK\EduScore.apk`.                                                                             |
 | `NangCao\*.bat` | Hiếm dùng: cài app debug qua USB, nối lại USB, máy ảo Android. Xem `Khoi_Dong_Nhan_Dang/HUONG_DAN.txt`. |
 
-Bản thử và bản deploy dùng chung cổng 3000/8080 nên chỉ chạy một trong hai. Logic nằm ở `scripts/recognition/pilot/` (`up.ps1 [-Deploy] [-Usb] [-InstallApp]`, `stack.ps1`, `down.ps1`, `usb-*.ps1`); log và PID ở `.local/pilot/`.
+Bản thử và bản deploy dùng chung cổng 3000/8080 nên chỉ chạy một trong hai; `up.ps1` tự tắt 5 dịch vụ còn chạy rồi mới bật lại, nên bấm file khởi động nào thì hệ thống chạy đúng chế độ đó. Logic nằm ở `scripts/recognition/pilot/` (`up.ps1 [-Deploy] [-Usb] [-InstallApp]`, `stack.ps1`, `down.ps1`, `usb-*.ps1`); log và PID ở `.local/pilot/`.
 
 Điều kiện cài một lần (Docker Desktop, `.env`, `.local\venv-ml`, 3 file trọng số `.pth`, lớp thử): xem [references/cai-dat-nhan-dang.md](references/cai-dat-nhan-dang.md). Máy mới và toolchain: [references/may-moi.md](references/may-moi.md), [references/toolchain.md](references/toolchain.md). Lần đầu `up.ps1` hỏi thư mục trọng số rồi nhớ lại.
 

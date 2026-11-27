@@ -2,6 +2,12 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Script khởi động tự tắt dịch vụ cũ (2026-11-27)
+
+- Trước đây bản thử còn chạy thì `Khoi-Dong-Deploy.bat` giữ nguyên dịch vụ, trang công khai dùng database thử (và ngược lại). Nay `up.ps1` gọi `stack.ps1 stop` ở bước đầu; bỏ phần loại trừ "tiến trình của mình" khi kiểm tra cổng.
+- `stack.ps1` chỉ coi PID là dịch vụ của mình khi dòng lệnh khớp (tránh tắt nhầm sau khi khởi động lại máy); tắt không được thì báo lỗi và giữ tệp PID.
+- Đã thử: cú pháp hai script, tắt khi không có gì chạy, PID cũ trỏ chương trình khác, bật/tắt `recognition`, `dispatcher`, `worker` (không sót tiến trình). Chưa chạy trọn `up.ps1`, chưa thử với tiến trình bật bằng quyền Administrator.
+
 ## Tăng thời hạn phiên: web 3 ngày, app 7 ngày (2026-11-27)
 
 - ADR-0024: `session-policy.ts`, cookie 3 ngày, mã ghi nhớ giữ 30 ngày; migration `202612010001_session_lifetime` đổi mốc không hoạt động của 29 hàm SQL từ 30 phút sang 7 ngày.

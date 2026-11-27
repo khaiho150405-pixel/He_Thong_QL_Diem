@@ -11,6 +11,7 @@ Chỉ cần nhớ 4 file, bấm đúp là chạy (cửa sổ hiện từng bư�
   Build-APK-Release.bat   Tạo Khoi_Dong_Nhan_Dang\APK\EduScore.apk (chỉ cần khi đổi code app).
 
 Khoi-Dong và Khoi-Dong-Deploy dùng chung cổng 3000/8080: chỉ chạy một trong hai.
+Bấm file nào thì dịch vụ còn chạy từ lần trước được tắt rồi bật lại đúng chế độ đó, không cần bấm Tat-nhan-dang trước.
 Thư mục này có thể đặt BÊN TRONG thư mục dự án hoặc cạnh He_Thong_QL_Diem. Không nằm trong git: sang máy khác thì chép cả thư mục.
 
 Thư mục NangCao\ (hiếm dùng, thử app debug):

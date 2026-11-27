@@ -15,7 +15,6 @@ Set-Location $root
 $stack = Join-Path $PSScriptRoot 'stack.ps1'
 if ($Deploy) { $env:PILOT_DEPLOY = '1' } else { $env:PILOT_DEPLOY = '0' }
 $pilotDir = Join-Path $root '.local\pilot'
-$pidDir = Join-Path $pilotDir 'pids'
 $logDir = Join-Path $pilotDir 'logs'
 New-Item -ItemType Directory -Force $pilotDir | Out-Null
 
@@ -48,6 +47,12 @@ function Wait-Http([string]$url, [int]$seconds) {
 try {
   if (-not (Test-Path (Join-Path $root '.env'))) { throw 'Chưa có file .env ở thư mục gốc. Chạy "pnpm setup:local" trước.' }
   if ($InstallApp -and -not $Usb) { $Usb = $true }
+
+  Step 'Tắt dịch vụ còn chạy từ lần trước'
+  & powershell -NoProfile -ExecutionPolicy Bypass -File $stack stop
+  if ($LASTEXITCODE -ne 0) { throw 'Không tắt được dịch vụ đang chạy (xem dòng lỗi ở trên). Chạy lại file .bat bằng Run as administrator.' }
+  Start-Sleep -Seconds 2
+  Ok 'Không còn dịch vụ cũ'
 
   Step 'Docker (PostgreSQL, Redis, MinIO)'
   $docker = (Get-Command docker -ErrorAction SilentlyContinue).Source
@@ -86,23 +91,6 @@ try {
   Ok 'Bucket ảnh sẵn sàng'
 
   Step 'Kiểm tra cổng 3000 / 8080 / 8000'
-  $ourPids = @()
-  if (Test-Path $pidDir) {
-    Get-ChildItem $pidDir -Filter *.pid | ForEach-Object {
-      $v = Get-Content $_.FullName -ErrorAction SilentlyContinue | Select-Object -First 1
-      if ($v -match '^\d+$') { $ourPids += [int]$v }
-    }
-  }
-  function Test-Ours([int]$procId) {
-    $cur = $procId
-    for ($i = 0; $i -lt 6 -and $cur -gt 0; $i++) {
-      if ($ourPids -contains $cur) { return $true }
-      $p = Get-CimInstance Win32_Process -Filter "ProcessId=$cur" -ErrorAction SilentlyContinue
-      if (-not $p) { break }
-      $cur = [int]$p.ParentProcessId
-    }
-    return $false
-  }
   $killed = $false
   $blocked = @()
   foreach ($port in 3000, 8080, 8000) {
@@ -110,7 +98,7 @@ try {
       Select-Object -ExpandProperty OwningProcess -Unique)
     foreach ($owner in $owners) {
       $owner = [int]$owner
-      if ($owner -le 4 -or (Test-Ours $owner)) { continue }
+      if ($owner -le 4) { continue }
       $p = Get-CimInstance Win32_Process -Filter "ProcessId=$owner" -ErrorAction SilentlyContinue
       $name = if ($p) { $p.Name } else { '?' }
       Warn "Cổng $port bị tiến trình lạ chiếm: PID $owner ($name)"
