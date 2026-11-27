@@ -122,6 +122,7 @@ class MergedTable extends StatelessWidget {
                   vertical: AppSpacing.md,
                 ),
                 child: Row(
+                  spacing: AppSpacing.lg,
                   children: [
                     for (final column in columns)
                       _cell(
@@ -145,6 +146,7 @@ class MergedTable extends StatelessWidget {
                   vertical: AppSpacing.md,
                 ),
                 child: Row(
+                  spacing: AppSpacing.lg,
                   children: [
                     for (var i = 0; i < columns.length; i++)
                       _cell(columns[i], row[i]),

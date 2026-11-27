@@ -409,6 +409,26 @@ void main() {
         },
       );
 
+      if (wide) {
+        testWidgets('Giáo viên & phân công: các cột không dính nhau', (
+          tester,
+        ) async {
+          await _pump(
+            tester,
+            role: 'QUAN_TRI_VIEN',
+            location: '/admin/teaching-assignments',
+            width: width,
+          );
+          expect(
+            tester.getTopLeft(find.text('CHỦ NHIỆM')).dx -
+                tester.getTopRight(find.text('SỐ LỚP')).dx,
+            greaterThanOrEqualTo(AppSpacing.lg),
+          );
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox.shrink());
+        });
+      }
+
       testWidgets('Giáo viên & phân công: nút sang màn quản lý', (
         tester,
       ) async {

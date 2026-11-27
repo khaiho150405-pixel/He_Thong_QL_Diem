@@ -2,6 +2,11 @@
 
 Chủ dự án chỉ cần nhắn **`continue` trong Codex tại workspace này**. Agent đọc AGENTS.md và note này, đối chiếu git, rồi tiếp tục đúng phần còn lại. Không cần người dùng dán lại lịch sử chat. Đây không phải lệnh PowerShell hay tác vụ tự chạy nền.
 
+## Màn Giáo viên & phân công: giáo viên bị nhân đôi, tiêu đề cột dính nhau (2026-11-27)
+
+- Nhân đôi do dữ liệu: database deploy còn 5 tài khoản `giaovien.*` từ bộ mẫu cũ (seed đã bỏ ngày 17/10). Đã sao lưu rồi xóa 5 hồ sơ và 5 tài khoản (không có tham chiếu nghiệp vụ); bản thử không bị. Không đổi mã.
+- `MergedTable` thêm khoảng cách giữa các cột; thêm một test trong `new_routes_test.dart`. `flutter analyze` sạch, `flutter test` 760/760. Chưa build web deploy (lần bật deploy tới tự build). Điện thoại dùng dạng thẻ nên không cần build lại APK.
+
 ## Script khởi động tự tắt dịch vụ cũ (2026-11-27)
 
 - Trước đây bản thử còn chạy thì `Khoi-Dong-Deploy.bat` giữ nguyên dịch vụ, trang công khai dùng database thử (và ngược lại). Nay `up.ps1` gọi `stack.ps1 stop` ở bước đầu; bỏ phần loại trừ "tiến trình của mình" khi kiểm tra cổng.
